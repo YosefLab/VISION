@@ -1,0 +1,10 @@
+Package: FastProjectR
+Title: What the Package Does (one line, title case)
+Version: 0.0.0.9000
+Authors@R: person("Matt", "Jones", email = "mattjones315@gmail.com", role = c("aut", "cre"))
+Description: What the package does (one paragraph).
+Depends: R (>= 3.3.2)
+Imports: cogena
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
