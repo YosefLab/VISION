@@ -1,2 +1,2 @@
-# FastProject_R
+# FastProjectR
 FastProject for R
