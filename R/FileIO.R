@@ -1,10 +1,9 @@
 require(cogena)
-require(reshape2)
 require(data.table)
 
-readTextToMatrix <- function(filename, delimiter) {
+readTextToMatrix <- function(filename, delimiter="\t") {
   
-  sprintf("Loading data from %s ...", filename)
+  message("Loading data from ", filename, " ...")
   
   data <- as.matrix(read.table(filename, sep= delimiter, header=TRUE, row.names=1))
   
@@ -13,19 +12,12 @@ readTextToMatrix <- function(filename, delimiter) {
   col_labels <- data2[1,]
   row_labels <- data2[,1]
   
-  #if (nrows(data2) != nrows(data)) {
-  #  printf("WARNING: Row labels (gene identifiers) are not unique.\n")
-    #, paste(row_labels_copy))
-  #  printf("Removing these genes...")
-  #}
-  
   return(list(data2, col_labels, row_labels))
 }
 
 
-## TODO: find a file with a "_down" or "_up" and implement this featurization ##
 readSignaturesGmtToMatrix <- function(filename) {
-
+  message("Loading data from ", filename, " ...")
   inp <- gmt2list(filename)
   
   header <- c("signature", "description", "genes", "expression_values", "file_of_origin")
@@ -34,24 +26,47 @@ readSignaturesGmtToMatrix <- function(filename) {
   fp <- strsplit(filename, "/")
   f <- last(fp[[1]])
   
+  keys <- c("none" = 1.0,  'up' = 1.0, 'plus' = 1.0, 'down' = -1.0, 'dn' = -1.0, 'minus' = -1.0)
+  
   for (sig in names(inp)) {
     genes <- c()
     values <- c()
+    
+    sig_parts = strsplit(sig, "_")
+    key <- "none"
+    
+    if (is.element(tolower(last(sig_parts[[1]])), names(keys))) {
+      key <- tolower(last(sig_parts[[1]]))
+    }
+    
+    contains = FALSE
+    
+    if (sig %in% sig_data[,1]) {
+      contains = TRUE  
+    }
+    
     for (k in inp[[sig]]) {
       elem <- strsplit(k, ",")
       if (length(elem[[1]]) > 1) {
         genes <- c(genes, elem[[1]][1])
-        values <- c(values, as.numeric(elem[[1]][2]))
+        values <- c(values, as.numeric(elem[[1]][2]) * keys[key])
       } else {
         genes <- c(genes, elem[[1]][1])
-        values <- c(values, 1.0)
+        values <- c(values, 1.0 * keys[key])
       }
     }
-    entry <- c(sig, "None", list(genes), list(values), f)
-    sig_data <- rbind(sig_data, matrix(entry, nrow=1, ncol=5))
+    
+    if (contains) {
+      sig_data[sig, 3] <- c(sig_data[sig,3], list(genes))
+      sig_data[sig, 4] <- c(sig_data[sig,4], list(values))
+    }
+    else{
+      entry <- c(sig,"None", list(genes), list(values), f)
+      sig_data <- rbind(sig_data, matrix(entry, nrow=1, ncol=5))
+      rn <- c(rownames(sig_data), sig)
+    }
   }
   
-  return(as.matrix(sig_data, row.names=1, header=TRUE))
-
+  return (as.matrix(sig_data))
 }
 
