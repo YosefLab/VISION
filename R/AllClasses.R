@@ -7,18 +7,53 @@
 # scores, distance matrices, and anything else, is computed
 # on the different types of data.
 
-.ExpressionData <- setClass("ExpressionData", 
+ExpressionData <- setClass("ExpressionData", 
     representation(
-      data = "data.frame",
-      row_labels = "data.frame",
-      col_labels = "data.frame"
+      data = "data.frame"
 ))
 
-.PCData <- setClass("PCData",
-    representation(
-      variance = "numeric",
-      row_labels = "list",
-      parent_data = "ExpressionData"
+FastProject <- setClass("FastProject",
+    slots = c(
+      data_file = "character",
+      housekeeping = "character",
+      signatures = "character",
+      precomputed = "character",
+      output_dir = "character",
+      nofilter = "logical",
+      nomodel = "logical",
+      pca_filter = "logical",
+      all_sigs = "logical",
+      debug = "logical",
+      lean = "logical",
+      subsample_size = "numeric",
+      min_signature_genes = "numeric",
+      projections = "character",
+      weights = "character",
+      threshold = "numeric",
+      sig_norm_method = "character",
+      sig_score_method = "character",
+      exprData = "data.frame",
+      houskeepingData = "data.frame",
+      sigData = "data.frame"),
+    prototype = list(
+      precomputed = NULL,
+      output_dir = "FastProject_Output",
+      nofilter = FALSE,
+      nomodel = FALSE,
+      pca_filter = FALSE,
+      all_sigs = FALSE,
+      debug = FALSE,
+      lean = FALSE,
+      subsample_size = 1000,
+      min_signature_genes = 5,
+      projections = NULL,
+      weights = NULL,
+      threshold = 0,
+      sig_norm_method = "znorm_rows",
+      sig_score_method ="weighted avg",
+      exprData = NULL,
+      housekeepingData = NULL,
+      sigData = NULL
 ))
 
 .Signature <- setClass("Signature",
