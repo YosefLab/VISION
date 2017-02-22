@@ -1,18 +1,14 @@
 require(cogena)
-require(data.table)
 
 readTextToMatrix <- function(filename, delimiter="\t") {
   
   message("Loading data from ", filename, " ...")
   
-  data <- as.matrix(read.table(filename, sep= delimiter, header=TRUE, row.names=1))
+  data <- data.frame(read.table(filename, sep= delimiter))
   
   data2 <- unique(data)
-  
-  col_labels <- data2[1,]
-  row_labels <- data2[,1]
-  
-  return(list(data2, col_labels, row_labels))
+
+  return(data2)
 }
 
 
