@@ -9,7 +9,8 @@ setMethod("initialize", signature(.Object="ExpressionData"),
                    "\n ExpressionData 'initialize' could not add data:",
                    "\n perhap data was not entered correctly")
             })
-            .Object@data <- data
+            
+            .Object@data <- data.frame(data)
             return(.Object)
             
           })
