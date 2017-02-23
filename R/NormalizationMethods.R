@@ -9,11 +9,14 @@ require(matrixStats)
 noNormalization <- function(data) {
   #' Does nothing, return the original data
   
+  message("No normalization applied")
   return(data)
 }
 
 colNormalization <- function(data) {
   #' Perform z-normalization on all columns
+  
+  message("Applying z-normalization on all columns...")
   
   ndata <- data[-1, -1]
   
@@ -34,6 +37,8 @@ colNormalization <- function(data) {
 rowNormalization <- function(data) {
   #' Perform z-normalization on all rows
 
+  message("Applying z-normalization on all rows...")
+  
   ndata <- data[-1,-1]
   
   data <- apply(data, 2, as.character)
@@ -53,6 +58,8 @@ rowNormalization <- function(data) {
 rowAndColNormalization <- function(data) {
   #' Normalize rows, then columns
   
+  message("Applying row and column normalization...")
+  
   data = rowNormalization(data)
   data = colNormalization(data)
   
@@ -62,6 +69,8 @@ rowAndColNormalization <- function(data) {
 colRankNormalization <- function(data) {
   #' Create new version of data that has ranks (column-wise) instead of values
 
+  message("Applying column rank normalization...")
+  
   ndata <- data[-1, -1]
   ndata <- apply(ndata, 2, as.numeric)
   data <- apply(data, 2, as.character)

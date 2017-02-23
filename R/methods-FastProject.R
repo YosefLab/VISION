@@ -99,13 +99,8 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     func <- falseneg_out[1]
     params <- falseneg_out[2]
     
-    norm_methods = c("none" = noNormalization, 
-                     "znorm_columns" = colNormalization,
-                     "znorm_rows" = rowNormalization,
-                     "znorm_rows_then_columns" = rowAndColNormalization,
-                     "rank_norm_columns" = colRankNormalization)
     
-    normalizedData <- getNormalizedCopy(norm_methods[.Object@sig_norm_method])
+    normalizedData <- getNormalizedCopy(edata, object@sig_norm_method)
     
   }
   

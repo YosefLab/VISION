@@ -29,4 +29,19 @@ setMethod("updateExprData", signature("ExpressionData"), function(object, newDat
   return()
 })
 
+setMethod("getNormalizedCopy", signature("ExpressionData"), function(object, func) {
+  if (func == "none") {
+    return(noNormalization(object@data))
+  } else if (func == "znorm_columns") {
+    return(colNormalization(object@data))
+  } else if (func == "znorm_rows") {
+    return(rowNormalization(object@data))
+  } else if (func == "znorm_rows_then_columns") {
+    return(rowAndColNormalization(object@data))
+  } else if (func == "rank_norm_columns") {
+    return(colRankNormalization(object@data))
+  }
+  stop("Normalization method not recognized.")
+}) 
+
 
