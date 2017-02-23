@@ -5,42 +5,45 @@
 ## genes that are more biologically informative.
 
 
-applyFilters <- function(data, threshold, nofilter, fano) {
+applyFilters <- function(data, threshold, nofilter, lean) {
   #'Applies filters to the inputted expression data (may remove rows)
   #'
   #'Parameters:
-  #'  data: (data.frame) expression matrix
+  #'  data: (ExpressionData) expression matrix
   #'  threshold: (int) minimum number of samples gene must be detected in to pass
   #'  nofilter: (logical) if true, only filter rows that have all identical values
-  #'  fano: (logical) if true, apply the fano filter to the expression matrix
+  #'  lean: (logical) if true, skip extra filtering methods (Fano)
   #'Returns: (data.frame) filtered expression matrix
   
+  expr <- getExprData(data)
+  
+  message("Applying filters...")
   
   if(nofilter) {
-  
-    data <- filterGenesNovar(data.frame(data))
+    message("Applying no variance filter...")
+    expr <- filterGenesNovar(data.frame(expr))
 
   } else {
 
-    if (!fano) {
-      
-      data <- filterGenesThreshold(data.frame(data), threshold)
+    if (lean) {
+      message("Applying threshold filter...")
+      expr <- filterGenesThreshold(data.frame(expr), threshold)
       
     } else {
-      
-      data <- filterGenesFano(data.frame(data))
+      message("Applying threshold filter...")
+      expr <- filterGenesThreshold(data.frame(expr), threshold)
+      message("Applying fano filter...")
+      expr <- filterGenesFano(data.frame(expr))
       
     }
     
   }
   
-  col_labels <- data[1,]
-  row_labels <- data[,1]
+  updateExprData(data, expr)
   
-  return(list(data, row_labels, col_labels))
 }
 
-# Remove genes with 0 variance
+
 filterGenesNovar <- function(data) {
   #' Eliminate genes whose sample variance is equal to 0 (may remove rows); run when --nofilter option 
   #' is selected
@@ -50,7 +53,7 @@ filterGenesNovar <- function(data) {
   #' Returns: (data.frame) filtered expression matrix
   
   d <- data.frame(data)
-  return (subset(d, apply(d[,-1], 1, var) != 0))
+  return (subset(d, apply(d[-1,-1], 1, var) != 0))
   
 }
 
