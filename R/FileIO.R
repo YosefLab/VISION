@@ -13,6 +13,8 @@ readTextToMatrix <- function(filename, delimiter="\t") {
 
 
 readSignaturesGmtToMatrix <- function(filename) {
+  #TODO: ADD FUNCTIONALITY TO READ IN LIST OF FILENAMES FOR SIGNATURES
+  
   message("Loading data from ", filename, " ...")
   inp <- gmt2list(filename)
   
@@ -63,6 +65,6 @@ readSignaturesGmtToMatrix <- function(filename) {
     }
   }
   
-  return (as.matrix(sig_data))
+  return (data.frame(sig_data))
 }
 

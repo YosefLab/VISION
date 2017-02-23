@@ -9,6 +9,7 @@ setMethod("initialize", signature(.Object="ExpressionData"),
                    "\n ExpressionData 'initialize' could not add data:",
                    "\n perhap data was not entered correctly")
             })
+            .Object@data <- data
             return(.Object)
             
           })
@@ -16,6 +17,10 @@ setMethod("initialize", signature(.Object="ExpressionData"),
 setMethod("readExprData", signature("ExpressionData"), function(object) {
   print(object@data)
   return()
+})
+
+setMethod("getExprData", signature("ExpressionData"), function(object) {
+  return(object@data)
 })
 
 setMethod("updateExprData", signature("ExpressionData"), function(object, newData=data.frame()) {

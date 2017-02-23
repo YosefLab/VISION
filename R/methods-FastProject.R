@@ -1,12 +1,12 @@
 require(logging)
 
 setMethod("initialize", signature(.Object="FastProject"),
-          function(.Object, data_file, housekeeping, signatures, precomputed,
-                   output_dir = "FastProject_Output", nofilter = FALSE, nomodel = FALSE, pca_filter = FALSE,
-                   all_sigs = FALSE, debug = FALSE, lean = FALSE, subsample_size = 1000, min_signature_genes = 5,
-                   projections = NULL, weights = NULL, threshold = 0, sig_norm_method = "znorm_rows",
-                   sig_score_method ="weighted avg", exprData = NULL, housekeepingData = NULL,
-                   sigData = NULL) {
+          function(.Object, data_file, housekeeping, signatures, precomputed=NULL,
+                   output_dir = "FastProject_Output", nofilter=FALSE, nomodel=FALSE, pca_filter=FALSE,
+                   all_sigs=FALSE, debug=FALSE, lean=FALSE, subsample_size=FALSE, qc=FALSE, 
+                   min_signature_genes=5, projections="", weights="", threshold=0, 
+                   sig_norm_method="znorm_rows", sig_score_method="weighted_avg", exprData=NULL, 
+                   housekeepingData=NULL, sigData=NULL) {
             
             ## Make sure that the minimum files are being read in.
             if (missing(data_file) && is.null(exprData)) {
@@ -18,16 +18,26 @@ setMethod("initialize", signature(.Object="FastProject"),
             }
             
             if (is.null(exprData)) {
-              exprData <- readTextToMatrix(data_file)
+              .Object@exprData <- readTextToMatrix(data_file)
             }
             if (is.null(housekeepingData)) {
-              housekeepingData = readTextToMatrix(housekeeping)
+              .Object@housekeepingData = readTextToMatrix(housekeeping)
             }
             if (is.null(sigData)) {
-              sigData = readSignaturesGmtToMatrix(signatures)
-            }
+                .Object@sigData = readSignaturesGmtToMatrix(signatures)
+              }
+          
+            .Object@nofilter <- nofilter
+            .Object@output_dir <- output_dir
+            .Object@nomodel <- nomodel
+            .Object@pca_filter <- pca_filter
+            .Object@projections <- projections
+            .Object@weights <- weights
+            .Object@threshold <- threshold
+            .Object@sig_norm_method <- sig_norm_method
+            .Object@sig_score_method <- sig_score_method
             
-            createOutputDirectory(.Object)
+            #createOutputDirectory(.Object)
             return(.Object) 
           }
 )
@@ -65,7 +75,34 @@ setMethod("createOutputDirectory", "FastProject", function(object) {
 )
 
 setMethod("Analyze", signature(object="FastProject"), function(object) {
-  return(NULL)
+  
+  # Wrap expression data frame into a ExpressionData class
+  eData <- ExpressionData(object@exprData)
+  
+  # TODO: ADD SUBSAMPLE CLASS, THEN ADD THRESHOLD CALCULATION
+  #holdouts <- NULL
+  #split_samples <- SubSample.split_samples(exprData, .Object@subsample_size)
+  
+  # If no filter threshold was specified, set it to 20% of samples
+  #if (.Object@threshold == 0) {
+  #  
+  #}
+  
+  originalData <- copy(getExprData(eData))
+  
+  applyFilters(eData, object@threshold, object@nofilter, object@lean)
+  
+  if (!object@nomodel) {
+    
+    falseneg_out <- createFalseNegativeMap(originalData, object@housekeepingData)
+    
+    func <- falseneg_out[1]
+    params <- falseneg_out[2]
+    
+  }
+  
+  
+  
   
   }
 )

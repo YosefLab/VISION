@@ -6,6 +6,10 @@ setGeneric("createOutputDirectory", function(object) {
   standardGeneric("createOutputDirectory")
 })
 
+setGeneric("getExprData", function(object) {
+  standardGeneric("getExprData")
+})
+
 setGeneric("readExprData", function(object) {
   standardGeneric("readExprData")
 })
