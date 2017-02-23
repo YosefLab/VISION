@@ -10,6 +10,10 @@ setGeneric("getExprData", function(object) {
   standardGeneric("getExprData")
 })
 
+setGeneric("getNormalizedCopy", function(object, func) {
+  standardGeneric("getNormalizedCopy")
+})
+
 setGeneric("readExprData", function(object) {
   standardGeneric("readExprData")
 })

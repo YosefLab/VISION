@@ -8,6 +8,7 @@ createFalseNegativeMap <- function(data, housekeeping_genes) {
   #'          params: (data.frame - Num_Params x Num_Samples) 
   #'                  Sample-specific parameters to use with fit_func
  
+  message("creating False Negative Map...")
   # get subset of genes to be used, ie those included in the housekeeping genes set
   data_hk <- subset(data,  data[,1] %in% housekeeping_genes[[1]])[,-1]
   
