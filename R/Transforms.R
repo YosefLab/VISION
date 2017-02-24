@@ -1,6 +1,6 @@
 ## Functions to transform the data and calculate weights
 
-createFalseNegativeMap <- function(data, housekeeping_genes) {
+createFalseNegativeMap <- function(data, housekeeping_genes, debug=NULL) {
   #' Uses gene names in `housekeeping_genes` to create a mapping of false negatives.
   #' Creates a functional fit for each sample based on that samples HK genes
   #'
@@ -8,7 +8,8 @@ createFalseNegativeMap <- function(data, housekeeping_genes) {
   #'          params: (data.frame - Num_Params x Num_Samples) 
   #'                  Sample-specific parameters to use with fit_func
  
-  message("creating False Negative Map...")
+  message("Creating False Negative Map...")
+  sample_names <- data[1,-1]
   # get subset of genes to be used, ie those included in the housekeeping genes set
   data_hk <- subset(data,  data[,1] %in% housekeeping_genes[[1]])[,-1]
   
@@ -103,6 +104,19 @@ createFalseNegativeMap <- function(data, housekeeping_genes) {
         
       }
     }
+  }
+  
+  if (debug > 0) {
+    i = debug;
+    domain=seq(0,10,0.001)
+    
+    plot(domain, func(domain, params[1,i], params[2,i], params[3,i], params[4,i]), 
+        type='l', xlim=c(0, 10), ylim=c(0, 1), 
+        ylab = paste0("P(gene not expressed in ", sample_names[[1]][i], ")"),
+        xlab = "Gene average in samples expressing gene")
+    points(x,y[,i], 'p', col='blue');
+    points(x_quant, y_quant[,i], 'p', col='red')
+    print(params[,i])
   }
   
   return(c(func, params))

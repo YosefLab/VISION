@@ -10,7 +10,7 @@ noNormalization <- function(data) {
   #' Does nothing, return the original data
   
   message("No normalization applied")
-  return(data)
+  return(data.fram(data))
 }
 
 colNormalization <- function(data) {
@@ -30,7 +30,7 @@ colNormalization <- function(data) {
   ndata <- apply(ndata,2, as.character)
  
   data[-1, -1] <- ndata
-  return(data)
+  return(data.frame(data))
 
 }
 
@@ -52,7 +52,7 @@ rowNormalization <- function(data) {
   
   ndata <- apply(ndata, 2, as.character)
   data[-1, -1] <- ndata
-  return(data)
+  return(data.frame(data))
 }
 
 rowAndColNormalization <- function(data) {
@@ -63,7 +63,7 @@ rowAndColNormalization <- function(data) {
   data = rowNormalization(data)
   data = colNormalization(data)
   
-  return(data)
+  return(data.frame(data))
 }
 
 colRankNormalization <- function(data) {
@@ -81,5 +81,5 @@ colRankNormalization <- function(data) {
   }
   rdata <- apply(rdata, 2, as.character)
   data[-1,-1] <- rdata
-  return(data)
+  return(data.frame(data))
 }
