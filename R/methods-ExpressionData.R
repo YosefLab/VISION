@@ -1,8 +1,8 @@
 setMethod("initialize", signature(.Object="ExpressionData"),
-          function(.Object, data=data.frame(), ...) {
+          function(.Object, data, ...) {
             tryCatch({
               if (missing(data)) {
-                data <- data.frame(labelDescription = rep(NA, ncol(data)))
+                data <- matrix(labelDescription = rep(NA, ncol(data)))
               }
             }, error=function(err) {
               stop(conditionMessage(err),
@@ -10,7 +10,7 @@ setMethod("initialize", signature(.Object="ExpressionData"),
                    "\n perhap data was not entered correctly")
             })
             
-            .Object@data <- data.frame(data)
+            .Object@data <- data
             return(.Object)
             
           })

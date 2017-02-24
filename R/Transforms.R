@@ -1,6 +1,6 @@
 ## Functions to transform the data and calculate weights
 
-createFalseNegativeMap <- function(data, housekeeping_genes, debug=NULL) {
+createFalseNegativeMap <- function(data, housekeeping_genes, debug=0) {
   #' Uses gene names in `housekeeping_genes` to create a mapping of false negatives.
   #' Creates a functional fit for each sample based on that samples HK genes
   #'
@@ -9,13 +9,12 @@ createFalseNegativeMap <- function(data, housekeeping_genes, debug=NULL) {
   #'                  Sample-specific parameters to use with fit_func
  
   message("Creating False Negative Map...")
-  sample_names <- data[1,-1]
-  # get subset of genes to be used, ie those included in the housekeeping genes set
-  data_hk <- subset(data,  data[,1] %in% housekeeping_genes[[1]])[,-1]
   
-  # convert data frame to numeric, and filter out genes with no variance
-  data_hk <- sapply(data_hk, as.character)
-  data_hk <- apply(data_hk, 2, as.numeric)
+  # get subset of genes to be used, ie those included in the housekeeping genes set
+  keep_ii <- which(rownames(data) %in% housekeeping_genes[[1]])
+  
+  # Filter out genes with no variance
+  data_hk <- data[keep_ii, ]
   data_hk <- filterGenesNovar(data_hk)
   
   # calculate the distributions for hk gene
