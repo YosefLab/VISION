@@ -3,7 +3,7 @@ require(logging)
 setMethod("initialize", signature(.Object="FastProject"),
           function(.Object, data_file, housekeeping, signatures, precomputed=NULL,
                    output_dir = "FastProject_Output", nofilter=FALSE, nomodel=FALSE, pca_filter=FALSE,
-                   all_sigs=FALSE, debug=FALSE, lean=FALSE, subsample_size=FALSE, qc=FALSE, 
+                   all_sigs=FALSE, debug=0, lean=FALSE, subsample_size=0, qc=FALSE, 
                    min_signature_genes=5, projections="", weights="", threshold=0, 
                    sig_norm_method="znorm_rows", sig_score_method="weighted_avg", exprData=NULL, 
                    housekeepingData=NULL, sigData=NULL) {
@@ -30,12 +30,14 @@ setMethod("initialize", signature(.Object="FastProject"),
             .Object@nofilter <- nofilter
             .Object@output_dir <- output_dir
             .Object@nomodel <- nomodel
+            .Object@subsample_size <- subsample_size
             .Object@pca_filter <- pca_filter
             .Object@projections <- projections
             .Object@weights <- weights
             .Object@threshold <- threshold
             .Object@sig_norm_method <- sig_norm_method
             .Object@sig_score_method <- sig_score_method
+            .Object@debug = debug
             
             #createOutputDirectory(.Object)
             return(.Object) 
@@ -78,30 +80,39 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   
   # Wrap expression data frame into a ExpressionData class
   eData <- ExpressionData(object@exprData)
-  
+
   # TODO: ADD SUBSAMPLE CLASS, THEN ADD THRESHOLD CALCULATION
-  #holdouts <- NULL
-  #split_samples <- SubSample.split_samples(exprData, .Object@subsample_size)
+  holdouts <- NULL
+  if (object@subsample_size != 0) {
+    split_samples <- splitSamples(getExprData(eData), object@subsample_size)
+    holdouts <- split_samples[[1]]
+    subdata <- split_samples[[2]]
+    eData <- updateExprData(eData, split_samples[[2]])
+  }
   
   # If no filter threshold was specified, set it to 20% of samples
-  #if (.Object@threshold == 0) {
-  #  
-  #}
+  if (object@threshold == 0) {
+    num_samples <- ncol(getExprData(eData)) - 1
+    object@threshold <- (0.2 * num_samples)
+  }
   
   originalData <- copy(getExprData(eData))
   
-  applyFilters(eData, object@threshold, object@nofilter, object@lean)
+  filtered <- applyFilters(eData, object@threshold, object@nofilter, object@lean)
+  return(filtered)
+  eData <- updateExprData(eData, filtered)
   
   if (!object@nomodel) {
-    
-    falseneg_out <- createFalseNegativeMap(originalData, object@housekeepingData)
+    print(object@debug)
+    falseneg_out <- createFalseNegativeMap(originalData, object@housekeepingData, object@debug)
     
     func <- falseneg_out[1]
     params <- falseneg_out[2]
     
     
-    normalizedData <- getNormalizedCopy(edata, object@sig_norm_method)
-    
+    normalizedData <- getNormalizedCopy(eData, object@sig_norm_method)
+    eData <- updateExprData(eData, normalizedData)
+    return(getExprData(eData))
   }
   
   

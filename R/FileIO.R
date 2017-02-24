@@ -1,4 +1,5 @@
 require(cogena)
+require(data.table)
 
 readTextToMatrix <- function(filename, delimiter="\t") {
   
