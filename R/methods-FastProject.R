@@ -99,7 +99,6 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   originalData <- copy(getExprData(eData))
   
   filtered <- applyFilters(eData, object@threshold, object@nofilter, object@lean)
-  return(filtered)
   eData <- updateExprData(eData, filtered)
   
   if (!object@nomodel) {
