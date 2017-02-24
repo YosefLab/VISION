@@ -18,10 +18,10 @@ setMethod("initialize", signature(.Object="FastProject"),
             }
             
             if (is.null(exprData)) {
-              .Object@exprData <- readTextToMatrix(data_file)
+              .Object@exprData <- readExprToMatrix(data_file)
             }
             if (is.null(housekeepingData)) {
-              .Object@housekeepingData = readTextToMatrix(housekeeping)
+              .Object@housekeepingData = readHKGToMatrix(housekeeping)
             }
             if (is.null(sigData)) {
                 .Object@sigData = readSignaturesGmtToMatrix(signatures)
@@ -47,6 +47,7 @@ setMethod("initialize", signature(.Object="FastProject"),
 setMethod("createOutputDirectory", "FastProject", function(object) {
   #' Creates the output directory structure
   mainDir <- getwd()
+  
   if (dir.exists(file.path(mainDir, object@output_dir))) {
     i = 1
     while(TRUE) {
@@ -102,20 +103,29 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   eData <- updateExprData(eData, filtered)
   
   if (!object@nomodel) {
-    print(object@debug)
     falseneg_out <- createFalseNegativeMap(originalData, object@housekeepingData, object@debug)
     
     func <- falseneg_out[1]
     params <- falseneg_out[2]
     
+    #zero_locations <- (apply(getExprData(eData), 2, as.character) == "0.0")
     
     normalizedData <- getNormalizedCopy(eData, object@sig_norm_method)
     eData <- updateExprData(eData, normalizedData)
+    
+    ## TODO: IMPLEMENT SIGNATURE EVALUATION 
+    #if (object@sig_score_method == "naive") {
+    #  sig_scores <- naiveEvalSignature(getExprData(eData), fp@sigData, zero_locations, object@min_signature_genes)
+    #} else if (object@sig_score_method == "weighted_avg") {
+    #  sig_scores <- weightedEvalSignature(getExprData(eData), fp@sigData, zero_locations, object@min_signature_genes)
+    #} else if (object@sig_score_method == "imputed") {
+    #  sig_scores <- imputedEvalSignature(getExprData(eData), fp@sigData, zero_locations, object@min_signature_genes)
+    #} else if (object@sig_score_method == "only_nonzero") {
+    #  sig_scores <- nonzeroEvalSignature(getExprData(eData), fp@sigData, zero_locations, object@min_signature_genes)
+    #}
+    
     return(getExprData(eData))
   }
-  
-  
-  
   
   }
 )

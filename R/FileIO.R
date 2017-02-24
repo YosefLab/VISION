@@ -1,15 +1,18 @@
 require(cogena)
 require(data.table)
 
-readTextToMatrix <- function(filename, delimiter="\t") {
+readExprToMatrix <- function(filename, delimiter="\t") {
   
   message("Loading data from ", filename, " ...")
   
-  data <- data.frame(read.table(filename, sep= delimiter))
-  
+  data <- as.matrix(read.table(filename, sep= delimiter, header=TRUE, row.names=1))
   data2 <- unique(data)
-
   return(data2)
+}
+
+readHKGToMatrix <- function(filename, delimiter="\t") {
+  message("Loading data from ", filename, "...")
+  return(read.table(filename, sep=delimiter))
 }
 
 

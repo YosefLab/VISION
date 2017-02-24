@@ -4,7 +4,6 @@
 ## of genes to a more manageable size - ideally extracting the
 ## genes that are more biologically informative.
 
-
 applyFilters <- function(data, threshold, nofilter, lean) {
   #'Applies filters to the inputted expression data (may remove rows)
   #'
@@ -20,20 +19,20 @@ applyFilters <- function(data, threshold, nofilter, lean) {
   message("Applying filters...")
   
   if(nofilter) {
-    expr <- filterGenesNovar(data.frame(expr))
+    expr <- filterGenesNovar(expr)
     
   } else {
 
     if (lean) {
-      expr <- filterGenesThreshold(data.frame(expr), threshold)
+      expr <- filterGenesThreshold(expr, threshold)
       
     } else {
-      expr <- filterGenesThreshold(data.frame(expr), threshold)
-      expr <- filterGenesFano(data.frame(expr))
+      expr <- filterGenesThreshold(expr, threshold)
+      expr <- filterGenesFano(expr)
     }
     
   }
-  
+
   return(expr)
   
 }
@@ -48,8 +47,8 @@ filterGenesNovar <- function(data) {
   #' Returns: (data.frame) filtered expression matrix
   message("Applying no variance filter...")
   
-  d <- data.frame(data)
-  return (subset(d, apply(d[-1,-1], 1, var) != 0))
+  #d <- data.frame(data)
+  return (subset(data, apply(data, 1, var) != 0))
   
 }
 
@@ -63,11 +62,8 @@ filterGenesThreshold <- function(data, threshold) {
   #' 
   #' 
   message("Applying threshold filter...")
-  data <- apply(data, 2, as.character)
-  d <- apply(data[-1, -1], 2, as.numeric)
-  rSums <- apply(d, 1, sum)
-  keep_ii <- c(1, which(rSums >= threshold))
-  return(data[keep_ii,])
+  
+  return(subset(data, apply(data, 1, function(r) sum(r)) >= threshold))
   
   
 }
@@ -81,10 +77,8 @@ filterGenesFano <- function(data, num_mad=2) {
   #' Returns: (data.frame) matrix with logical values, TRUE if gene passes fano filter; else FALSE
   message("Applying fano filter...")
   
-  d <- apply(data[-1, -1], 2, as.numeric)
-  
-  mu <- apply(d, 1, mean)
-  sigma <- apply(d, 1, sd)
+  mu <- apply(data, 1, mean)
+  sigma <- apply(data, 1, sd)
   
   
   aa <- order(mu)
@@ -95,7 +89,7 @@ filterGenesFano <- function(data, num_mad=2) {
   N_QUANTS <- 30
   m <- floor(length(mu_sort) / N_QUANTS)
   
-  gene_passes <- rep(0, nrow(d)) == 1
+  gene_passes <- rep(0, nrow(data)) == 1
   
   for (i in 0:N_QUANTS) {
     if (i == N_QUANTS - 1) {
@@ -119,7 +113,7 @@ filterGenesFano <- function(data, num_mad=2) {
   original_ii = order(aa)
   gene_passes <- gene_passes[original_ii]
   print(length(which(gene_passes == TRUE)))
-  keep_ii <- c(1, which(gene_passes == TRUE))
+  keep_ii <- which(gene_passes == TRUE)
   return(data[keep_ii,])
 }
 

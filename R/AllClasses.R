@@ -9,7 +9,7 @@
 
 ExpressionData <- setClass("ExpressionData", 
     representation(
-      data = "data.frame"
+      data = "matrix"
 ))
 
 FastProject <- setClass("FastProject",
@@ -33,7 +33,7 @@ FastProject <- setClass("FastProject",
       threshold = "numeric",
       sig_norm_method = "character",
       sig_score_method = "character",
-      exprData = "data.frame",
+      exprData = "matrix",
       housekeepingData = "data.frame",
       sigData = "data.frame"),
     prototype = list(
