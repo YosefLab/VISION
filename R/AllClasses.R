@@ -58,13 +58,23 @@ FastProject <- setClass("FastProject",
       sigData = NULL
 ))
 
-.Signature <- setClass("Signature",
-    representation(
-      sig_dict = "data.frame",
-      signed = "logical",
+Signature <- setClass("Signature",
+    slots = c(
+      sigDict = "vector",
+      name = "character",
       source = "character",
-      name = "character"
-))
+      metaData = "character"
+    ),
+    prototype = list(
+      metaData = NULL
+    )
+)
+
+SignatureList <- setClass("SignatureList",
+    slots = c(
+      sigList = "list"
+    )
+)
 
 .SignatureScores <- setClass("SignatureScores",
     representation(
