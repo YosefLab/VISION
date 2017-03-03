@@ -111,7 +111,7 @@ createFalseNegativeMap <- function(data, housekeeping_genes, debug=0) {
     
     plot(domain, func(domain, params[1,i], params[2,i], params[3,i], params[4,i]), 
         type='l', xlim=c(0, 10), ylim=c(0, 1), 
-        ylab = paste0("P(gene not expressed in ", sample_names[[1]][i], ")"),
+        ylab = paste0("P(gene not expressed in ", colnames(data)[i], ")"),
         xlab = "Gene average in samples expressing gene")
     points(x,y[,i], 'p', col='blue');
     points(x_quant, y_quant[,i], 'p', col='red')
@@ -119,6 +119,28 @@ createFalseNegativeMap <- function(data, housekeeping_genes, debug=0) {
   }
   
   return(c(func, params))
+  
+}
+
+computeWeights <- function(fit_func, params, data) {
+  #' Calculates weights for the data from the FNR curves
+  #' Weights represent p(not expressed | not detected) for zero values
+  #' and are equal to 1.0 for detected values.
+  #' Parameters: 
+  #'  fit_func
+  #' ----------
+  #' fit_func : function (mu_h, params)
+  #' Function, parameterized by params, that maps each mu_h to a false negative estimate
+  #' params : (4 x Num_Samples) numpy.ndarray
+  #' Matrix containing parameters for the false-negative fit function (fit_func)
+  #' data : ExpressionData object from which prob derives
+  #' Returns
+  #' -------
+  #' weights : (Num_Genes x Num_Samples) numpy.ndarray
+  #' Estimated weight for each data point in input matrix.
+  #' Ranges from 0 to 1.
+  return()
+ 
   
   
 }

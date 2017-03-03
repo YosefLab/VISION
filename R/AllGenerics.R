@@ -14,6 +14,10 @@ setGeneric("getNormalizedCopy", function(object, func) {
   standardGeneric("getNormalizedCopy")
 })
 
+setGeneric("sigEqual", function(object, compareSig) {
+  standardGeneric("sigEqual")
+})
+
 setGeneric("readExprData", function(object) {
   standardGeneric("readExprData")
 })

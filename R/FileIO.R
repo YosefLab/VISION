@@ -22,12 +22,13 @@ readSignaturesGmtToMatrix <- function(filename) {
   message("Loading data from ", filename, " ...")
   inp <- gmt2list(filename)
   
-  header <- c("signature", "description", "genes", "expression_values", "file_of_origin")
-  sig_data <- matrix(header, nrow=1, ncol=5)
+  # Create a list to store all signatures
+  sig_data = c()
   
   fp <- strsplit(filename, "/")
   f <- last(fp[[1]])
   
+  # Create a dictionary to easily compute signature sign
   keys <- c("none" = 1.0,  'up' = 1.0, 'plus' = 1.0, 'down' = -1.0, 'dn' = -1.0, 'minus' = -1.0)
   
   for (sig in names(inp)) {
@@ -43,15 +44,15 @@ readSignaturesGmtToMatrix <- function(filename) {
     
     contains = FALSE
     
-    if (sig %in% sig_data[,1]) {
-      contains = TRUE  
-    }
+    #if (sig %in% sig_data[,1]) {
+    #  contains = TRUE  
+    #}
     
     for (k in inp[[sig]]) {
       elem <- strsplit(k, ",")
       if (length(elem[[1]]) > 1) {
-        genes <- c(genes, elem[[1]][1])
-        values <- c(values, as.numeric(elem[[1]][2]) * keys[key])
+        genes <- c(genes, elem[[1]][1]) 
+        values <- c(values, as.numeric(elem[[1]][2])*keys[key])
       } else {
         genes <- c(genes, elem[[1]][1])
         values <- c(values, 1.0 * keys[key])
@@ -62,13 +63,16 @@ readSignaturesGmtToMatrix <- function(filename) {
       sig_data[sig, 3] <- c(sig_data[sig,3], list(genes))
       sig_data[sig, 4] <- c(sig_data[sig,4], list(values))
     }
+    
     else{
-      entry <- c(sig,"None", list(genes), list(values), f)
-      sig_data <- rbind(sig_data, matrix(entry, nrow=1, ncol=5))
-      rn <- c(rownames(sig_data), sig)
+
+      names(values) <- genes
+      newSig <- Signature(values, "None", f, sig)
+      sig_data <- c(sig_data, newSig)
+
     }
   }
   
-  return (data.frame(sig_data))
+  return (sig_data)
 }
 

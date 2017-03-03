@@ -82,7 +82,6 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   # Wrap expression data frame into a ExpressionData class
   eData <- ExpressionData(object@exprData)
 
-  # TODO: ADD SUBSAMPLE CLASS, THEN ADD THRESHOLD CALCULATION
   holdouts <- NULL
   if (object@subsample_size != 0) {
     split_samples <- splitSamples(getExprData(eData), object@subsample_size)
@@ -117,7 +116,8 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     #if (object@sig_score_method == "naive") {
     #  sig_scores <- naiveEvalSignature(getExprData(eData), fp@sigData, zero_locations, object@min_signature_genes)
     #} else if (object@sig_score_method == "weighted_avg") {
-    #  sig_scores <- weightedEvalSignature(getExprData(eData), fp@sigData, zero_locations, object@min_signature_genes)
+    ## ONLY DO THE WEIGHTED EVAL SIGNATURE
+  #  sig_scores <- weightedEvalSignature(getExprData(eData), fp@sigData, zero_locations, object@min_signature_genes)
     #} else if (object@sig_score_method == "imputed") {
     #  sig_scores <- imputedEvalSignature(getExprData(eData), fp@sigData, zero_locations, object@min_signature_genes)
     #} else if (object@sig_score_method == "only_nonzero") {
