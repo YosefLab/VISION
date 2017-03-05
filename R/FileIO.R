@@ -44,9 +44,9 @@ readSignaturesGmtToMatrix <- function(filename) {
     
     contains = FALSE
     
-    #if (sig %in% sig_data[,1]) {
-    #  contains = TRUE  
-    #}
+    if (sig %in% names(sig_data)) {
+      contains = TRUE  
+    }
     
     for (k in inp[[sig]]) {
       elem <- strsplit(k, ",")
@@ -60,14 +60,14 @@ readSignaturesGmtToMatrix <- function(filename) {
     }
     
     if (contains) {
-      sig_data[sig, 3] <- c(sig_data[sig,3], list(genes))
-      sig_data[sig, 4] <- c(sig_data[sig,4], list(values))
+      ## ADD FUNCTIONALITY TO MERGE DIFFERENT GENE LISTS IF SIGNATURE ALREADY EXISTS
+      ## IN SIGLIST
     }
     
     else{
 
       names(values) <- genes
-      newSig <- Signature(values, "None", f, sig)
+      newSig <- Signature(values, NULL, f, sig)
       sig_data <- c(sig_data, newSig)
 
     }

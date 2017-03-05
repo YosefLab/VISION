@@ -48,9 +48,9 @@ createFalseNegativeMap <- function(data, housekeeping_genes, debug=0) {
     return(sum((out-y)**2))
   }
 
-  print(ncol(gamma))
+ 
   params <- matrix(0L, ncol=ncol(gamma), nrow=4)
-  print(ncol(params))
+  
   x <- c(mu_h)
   
   if(length(x) > 30) {
@@ -118,29 +118,51 @@ createFalseNegativeMap <- function(data, housekeeping_genes, debug=0) {
     print(params[,i])
   }
   
-  return(c(func, params))
+  return(list(func, params))
   
 }
 
-computeWeights <- function(fit_func, params, data) {
+computeWeights <- function(fit_func, params, expr) {
   #' Calculates weights for the data from the FNR curves
   #' Weights represent p(not expressed | not detected) for zero values
   #' and are equal to 1.0 for detected values.
-  #' Parameters: 
-  #'  fit_func
-  #' ----------
-  #' fit_func : function (mu_h, params)
-  #' Function, parameterized by params, that maps each mu_h to a false negative estimate
-  #' params : (4 x Num_Samples) numpy.ndarray
-  #' Matrix containing parameters for the false-negative fit function (fit_func)
-  #' data : ExpressionData object from which prob derives
-  #' Returns
-  #' -------
-  #' weights : (Num_Genes x Num_Samples) numpy.ndarray
-  #' Estimated weight for each data point in input matrix.
-  #' Ranges from 0 to 1.
-  return()
- 
+  #' Parameters: fit_func (function) (mu_h, params) 
+  #'             Function parametrized by params thatmaps each mu_h to a false negative estimate
+  #'             
+  #'             params (4 x Num_Samples Matrix) 
+  #'             Matrix containing parameters for the false negative  fit function (fit_func)
+  #'             
+  #'             expr (ExpressionData) 
+  #'             Data from which prob derives
+  #'             
+  #' Returns: weights (Num_Genes x Num_Samples Matrix) Estimated weight for each dta point in input matrix
+  #'                  Ranges from 0 to 1. 
   
+  #data <- getExprData(expr);
+  
+  fnProb <- matrix(0L, nrow = nrow(expr), ncol = ncol(expr))
+  countNonZero <- apply(expr, 1, function(c) sum(c!=0))
+  countNonZero[which(countNonZero == 0)] <- 1;
+  mu_h <- apply(expr, 1, function(r) sum(r)) / countNonZero
+  
+  for (i in 1:ncol(fnProb)) {
+    fnProb[,i] = fit_func(mu_h, params[,i][1], params[,i][2], params[,i][3], params[,i][4])
+  }
+  
+  pdE <- 1 - fnProb
+  pnd <- apply(expr, 1, function(r) sum(r==0)) / ncol(expr)
+  pe <- (1 - pnd) / apply(pdE, 1, function(r) mean(r))
+  
+  pe[which(is.na(pe))] <- 1.0
+  pnd[which(pnd == 0)] <- 1.0 / ncol(expr)
+  
+  pne_nd <- 1 - (1-pdE)* (pe / pnd)
+  pne_nd[which(pne_nd < 0)] <- 0.0
+  pne_nd[which(pne_nd > 1)] <- 1.0
+  
+  weights <- pne_nd
+  weights[which(expr > 0)] <- 1.0
+  
+  return(weights)
   
 }
