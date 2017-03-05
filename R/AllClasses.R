@@ -76,9 +76,9 @@ SignatureList <- setClass("SignatureList",
     )
 )
 
-.SignatureScores <- setClass("SignatureScores",
-    representation(
-      scores = "list",
+SignatureScores <- setClass("SignatureScores",
+    slots = c(
+      scores = "vector",
       name = "character",
       sample_labels = "list",
       isFactor = "logical",
