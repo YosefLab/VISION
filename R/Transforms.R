@@ -122,7 +122,7 @@ createFalseNegativeMap <- function(data, housekeeping_genes, debug=0) {
   
 }
 
-computeWeights <- function(fit_func, params, expr) {
+computeWeights <- function(fit_func, params, exprData) {
   #' Calculates weights for the data from the FNR curves
   #' Weights represent p(not expressed | not detected) for zero values
   #' and are equal to 1.0 for detected values.
@@ -138,7 +138,7 @@ computeWeights <- function(fit_func, params, expr) {
   #' Returns: weights (Num_Genes x Num_Samples Matrix) Estimated weight for each dta point in input matrix
   #'                  Ranges from 0 to 1. 
   
-  #data <- getExprData(expr);
+  expr <- getExprData(exprData);
   
   fnProb <- matrix(0L, nrow = nrow(expr), ncol = ncol(expr))
   countNonZero <- apply(expr, 1, function(c) sum(c!=0))
