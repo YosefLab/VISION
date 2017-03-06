@@ -121,7 +121,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     params <- falseneg_out[[2]]
     
     if (all(is.na(object@weights))) {
-      object@weights <- computeWeights(func, params, getExprData(eData))
+      object@weights <- computeWeights(func, params, eData)
     }
     #zero_locations <- (apply(getExprData(eData), 2, as.character) == "0.0")
     zero_locations <- which(getExprData(eData) == 0.0) 
@@ -133,10 +133,11 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     
     sig_scores <- c()
     if (object@sig_score_method == "naive") {
+      message("Applying naive signature scoring method...")
       for (sig in fp@sigData) {
 
         tryCatch({
-          sig_scores <- c(sig_scores, naiveEvalSignature(getExprData(eData), 
+          sig_scores <- c(sig_scores, naiveEvalSignature(eData, 
                                           sig, zero_locations, object@min_signature_genes))
         }, error=function(e){})
       }

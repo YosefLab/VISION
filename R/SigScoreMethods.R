@@ -7,7 +7,7 @@
 #' Specified by FastProject argument (sig_score_method), default = naiveEvalSignature
 
 
-naiveEvalSignature <- function(exprData, sig, zeros, min_signature_genes) {
+naiveEvalSignature <- function(expr, sig, zeros, min_signature_genes) {
   #' Naive eval signature, just sums the columns * sign
   #' Equivalent to all weights = 0
   #' 
@@ -18,7 +18,7 @@ naiveEvalSignature <- function(exprData, sig, zeros, min_signature_genes) {
   #'            
   #' Returns: sigObj (SignatureScore) Evaluation of signature
   
-  #expr <- getExprData(exprData)
+  exprData <- getExprData(expr)
   
   # Select genes in signature that are in the expression matrix
   keep_ii <- which(names(sig@sigDict) %in% rownames(exprData))
