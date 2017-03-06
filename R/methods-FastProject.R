@@ -4,7 +4,7 @@ setMethod("initialize", signature(.Object="FastProject"),
           function(.Object, data_file, housekeeping, signatures, precomputed=NULL,
                    output_dir = "FastProject_Output", nofilter=FALSE, nomodel=FALSE, pca_filter=FALSE,
                    all_sigs=FALSE, debug=0, lean=FALSE, subsample_size=0, qc=FALSE, 
-                   min_signature_genes=5, projections="", weights="", threshold=0, 
+                   min_signature_genes=5, projections="", weights=NULL, threshold=0, 
                    sig_norm_method="znorm_rows", sig_score_method="weighted_avg", exprData=NULL, 
                    housekeepingData=NULL, sigData=NULL) {
             
@@ -19,21 +19,34 @@ setMethod("initialize", signature(.Object="FastProject"),
             
             if (is.null(exprData)) {
               .Object@exprData <- readExprToMatrix(data_file)
+            } else {
+              .Object@exprData <- exprData
             }
+            
             if (is.null(housekeepingData)) {
-              .Object@housekeepingData = readHKGToMatrix(housekeeping)
+              .Object@housekeepingData <- readHKGToMatrix(housekeeping)
+            } else {
+              .Object@housekeepingData <- housekeepingData
             }
+              
             if (is.null(sigData)) {
-                .Object@sigData = readSignaturesGmtToMatrix(signatures)
-              }
-          
+              .Object@sigData <- readSignaturesGmtToMatrix(signatures)
+            } else {
+              .Object@sigData <- sigData
+            }
+            
+            if (is.null(weights)) {
+              .Object@weights <- matrix(NA, nrow=10, ncol=0)
+            } else {
+              .Object@weights <- weights
+            }
+            
             .Object@nofilter <- nofilter
             .Object@output_dir <- output_dir
             .Object@nomodel <- nomodel
             .Object@subsample_size <- subsample_size
             .Object@pca_filter <- pca_filter
             .Object@projections <- projections
-            .Object@weights <- weights
             .Object@threshold <- threshold
             .Object@sig_norm_method <- sig_norm_method
             .Object@sig_score_method <- sig_score_method
@@ -102,19 +115,33 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   eData <- updateExprData(eData, filtered)
   
   if (!object@nomodel) {
+    
     falseneg_out <- createFalseNegativeMap(originalData, object@housekeepingData, object@debug)
+    func <- falseneg_out[[1]]
+    params <- falseneg_out[[2]]
     
-    func <- falseneg_out[1]
-    params <- falseneg_out[2]
-    
+    if (all(is.na(object@weights))) {
+      object@weights <- computeWeights(func, params, getExprData(eData))
+    }
     #zero_locations <- (apply(getExprData(eData), 2, as.character) == "0.0")
+    zero_locations <- which(getExprData(eData) == 0.0) 
     
     normalizedData <- getNormalizedCopy(eData, object@sig_norm_method)
     eData <- updateExprData(eData, normalizedData)
     
     ## TODO: IMPLEMENT SIGNATURE EVALUATION 
-    #if (object@sig_score_method == "naive") {
-    #  sig_scores <- naiveEvalSignature(getExprData(eData), fp@sigData, zero_locations, object@min_signature_genes)
+    
+    sig_scores <- c()
+    if (object@sig_score_method == "naive") {
+      for (sig in fp@sigData) {
+
+        tryCatch({
+          sig_scores <- c(sig_scores, naiveEvalSignature(getExprData(eData), 
+                                          sig, zero_locations, object@min_signature_genes))
+        }, error=function(e){})
+      }
+    }
+    
     #} else if (object@sig_score_method == "weighted_avg") {
     ## ONLY DO THE WEIGHTED EVAL SIGNATURE
   #  sig_scores <- weightedEvalSignature(getExprData(eData), fp@sigData, zero_locations, object@min_signature_genes)

@@ -1,5 +1,5 @@
 setMethod("initialize", signature(.Object="Signature"),
-          function(.Object, sigDict, name, source, metaData=NULL) {
+          function(.Object, sigDict, name, source, metaData="") {
             if (missing(sigDict)) {
               stop("Missing sigDict information.")
             } else if (missing(name)) {
@@ -30,4 +30,6 @@ setMethod("sigEqual", signature(object="Signature"),
             
             return(object@sigDict == compareSig@sigDict)
             
-          })
+          }
+)
+
