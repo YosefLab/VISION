@@ -67,7 +67,7 @@ readSignaturesGmtToMatrix <- function(filename) {
     else{
 
       names(values) <- genes
-      newSig <- Signature(values, NULL, f, sig)
+      newSig <- Signature(values, sig, f, "")
       sig_data <- c(sig_data, newSig)
 
     }

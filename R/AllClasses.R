@@ -29,13 +29,13 @@ FastProject <- setClass("FastProject",
       min_signature_genes = "numeric",
       qc = "logical",
       projections = "character",
-      weights = "character",
+      weights = "matrix",
       threshold = "numeric",
       sig_norm_method = "character",
       sig_score_method = "character",
       exprData = "matrix",
       housekeepingData = "data.frame",
-      sigData = "data.frame"),
+      sigData = "list"),
     prototype = list(
       precomputed = NULL,
       output_dir = "FastProject_Output",
@@ -66,13 +66,7 @@ Signature <- setClass("Signature",
       metaData = "character"
     ),
     prototype = list(
-      metaData = NULL
-    )
-)
-
-SignatureList <- setClass("SignatureList",
-    slots = c(
-      sigList = "list"
+      metaData = ""
     )
 )
 
