@@ -61,6 +61,13 @@ FastProject <- setClass("FastProject",
       sigData = NULL
 ))
 
+ProjectionData <- setClass("ProjectionData", 
+    slots = c(
+      name = "character",
+      data = "matrix"
+    )
+)
+
 Signature <- setClass("Signature",
     slots = c(
       sigDict = "vector",
