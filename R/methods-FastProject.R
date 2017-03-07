@@ -160,7 +160,25 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
         randomSigs <- c(randomSigs, newSig)
       }
     }
-    return(randomSigs)
+    
+    randomSigScores <- c()
+    if (object@sig_score_method == "naive") {
+      message("Applying naive signature scoring method on random signatures...")
+      for (sig in randomSigs) {
+        tryCatch({
+          randomSigScores <- c(randomSigScores, naiveEvalSignature(eData, 
+                                                         sig, fp@weights, object@min_signature_genes))
+        }, error=function(e){})
+      }
+    } else if (object@sig_score_method == "weighted_avg") {
+      message("Applying weighted signature scoring method on random signatures...")
+      for (sig in randomSigs) {
+        tryCatch({
+          randomSigScores <- c(randomSigScores, weightedEvalSignature(eData, 
+                                                            sig, fp@weights, object@min_signature_genes))
+        }, error=function(e){})
+      }
+    }
     
     return(getExprData(eData))
   }
