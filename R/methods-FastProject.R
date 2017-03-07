@@ -123,12 +123,14 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     if (all(is.na(object@weights))) {
       object@weights <- computeWeights(func, params, eData)
     }
-    #zero_locations <- (apply(getExprData(eData), 2, as.character) == "0.0")
-    zero_locations <- which(getExprData(eData) == 0.0) 
+    
+    zero_locations <- which(getExprData(eData) == 0.0, arr.ind=TRUE) 
     
     normalizedData <- getNormalizedCopy(eData, object@sig_norm_method)
     eData <- updateExprData(eData, normalizedData)
     
+    
+    # Score user defined signatures with defined method (default = weighted)
     sig_scores <- c()
     if (object@sig_score_method == "naive") {
       message("Applying naive signature scoring method...")
@@ -148,6 +150,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
       }
     }
     
+    # Construct random signatures for background distribution
     randomSigs <- c()
     randomSizes <- c(5, 10, 20, 50, 100, 200)
     for (size in randomSizes) {
@@ -161,6 +164,8 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
       }
     }
     
+    
+    # Compute signature scores for random signatures generated
     randomSigScores <- c()
     if (object@sig_score_method == "naive") {
       message("Applying naive signature scoring method on random signatures...")
