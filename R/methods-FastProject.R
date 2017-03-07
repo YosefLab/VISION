@@ -135,10 +135,17 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     if (object@sig_score_method == "naive") {
       message("Applying naive signature scoring method...")
       for (sig in fp@sigData) {
-
         tryCatch({
           sig_scores <- c(sig_scores, naiveEvalSignature(eData, 
-                                          sig, zero_locations, object@min_signature_genes))
+                                          sig, fp@weights, object@min_signature_genes))
+        }, error=function(e){})
+      }
+    } else if (object@sig_score_method == "weighted_avg") {
+      message("Applying weighted signature scoring method...")
+      for (sig in fp@sigData) {
+        tryCatch({
+          sig_scores <- c(sig_scores, weightedEvalSignature(eData, 
+                                          sig, fp@weights, object@min_signature_genes))
         }, error=function(e){})
       }
     }
