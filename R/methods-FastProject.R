@@ -129,8 +129,6 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     normalizedData <- getNormalizedCopy(eData, object@sig_norm_method)
     eData <- updateExprData(eData, normalizedData)
     
-    ## TODO: IMPLEMENT SIGNATURE EVALUATION 
-    
     sig_scores <- c()
     if (object@sig_score_method == "naive") {
       message("Applying naive signature scoring method...")
@@ -150,14 +148,19 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
       }
     }
     
-    #} else if (object@sig_score_method == "weighted_avg") {
-    ## ONLY DO THE WEIGHTED EVAL SIGNATURE
-  #  sig_scores <- weightedEvalSignature(getExprData(eData), fp@sigData, zero_locations, object@min_signature_genes)
-    #} else if (object@sig_score_method == "imputed") {
-    #  sig_scores <- imputedEvalSignature(getExprData(eData), fp@sigData, zero_locations, object@min_signature_genes)
-    #} else if (object@sig_score_method == "only_nonzero") {
-    #  sig_scores <- nonzeroEvalSignature(getExprData(eData), fp@sigData, zero_locations, object@min_signature_genes)
-    #}
+    randomSigs <- c()
+    randomSizes <- c(5, 10, 20, 50, 100, 200)
+    for (size in randomSizes) {
+      message("Creating random signature of size ", size, "...")
+      for (j in 1:3000) {
+        newSigGenes <- sample(rownames(getExprData(eData)), size)
+        newSigExpr <- rep(1, size)
+        names(newSigExpr) <- newSigGenes
+        newSig <- Signature(newSigExpr, paste0("RANDOM_BG_", size, "_", j), 'x')
+        randomSigs <- c(randomSigs, newSig)
+      }
+    }
+    return(randomSigs)
     
     return(getExprData(eData))
   }
