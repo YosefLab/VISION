@@ -11,6 +11,9 @@ setMethod("initialize", signature(.Object="ExpressionData"),
             })
             
             .Object@data <- data
+            .Object@fanoFilter <- matrix(NA)
+            .Object@thresholdFilter <-matrix(NA)
+            .Object@noVarFilter <- matrix(NA)
             return(.Object)
             
           })

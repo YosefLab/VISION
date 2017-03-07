@@ -8,8 +8,11 @@
 # on the different types of data.
 
 ExpressionData <- setClass("ExpressionData", 
-    representation(
-      data = "matrix"
+    slots = c(
+      data = "matrix",
+      fanoFilter = "matrix",
+      noVarFilter = "matrix",
+      thresholdFilter = "matrix"
 ))
 
 FastProject <- setClass("FastProject",

@@ -20,15 +20,18 @@ applyFilters <- function(data, threshold, nofilter, lean) {
   
   if(nofilter) {
     expr <- filterGenesNovar(expr)
-    
+    data@noVarFilter <- expr
   } else {
 
     if (lean) {
       expr <- filterGenesThreshold(expr, threshold)
-      
+      data@thresholdFilter <- expr
     } else {
       expr <- filterGenesThreshold(expr, threshold)
+      data@thresholdFilter <- expr
+      
       expr <- filterGenesFano(expr)
+      data@fanoFilter <- expr
     }
     
   }
