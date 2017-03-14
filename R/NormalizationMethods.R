@@ -6,6 +6,18 @@
 #' Determined by the sig_norm_method value in the FastProject call
 require(matrixStats)
 
+biasedSD <- function(data, byRow=TRUE) {
+  a <- 1
+  d <- ncol(data)
+  if (!byRow) {
+    a = 2
+    d <- nrow(data)
+  }
+  std <- apply(data, a, sd) * sqrt(((d-1)/d))
+  return(std)
+}
+
+
 noNormalization <- function(data) {
   #' Does nothing, return the original data
   
@@ -18,10 +30,13 @@ colNormalization <- function(data) {
   
   message("Applying z-normalization on all columns...")
 
-  # Normalize columns of data
-  ndata <- scale(data)
+  ndata <- t(data)
+  mu <- apply(ndata, 1, mean)
+  sigma <- biasedSD(ndata)
   
-  return(ndata)
+  ndata <- (ndata - mu) / sigma
+  
+  return(t(ndata))
 
 }
 
@@ -31,7 +46,7 @@ rowNormalization <- function(data) {
   message("Applying z-normalization on all rows...")
   
   mu <- rowMeans(data)
-  sigma <- rowSds(data)
+  sigma <- biasedSD(data)
   sigma[sigma == 0] <- 1.0
   
   ndata = ((data - mu) / sigma)
