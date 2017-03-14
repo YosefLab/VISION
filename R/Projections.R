@@ -29,7 +29,7 @@ registerMethods <- function(lean=FALSE) {
   return(projMethods)
 }
 
-generateProjections <- function(expr, filterName="", inputProjections=NULL, lean=FALSE) {
+generateProjections <- function(expr, filterName="", inputProjections=c(), lean=FALSE) {
   #' Projects data into 2 dimensions using a variety of linear and non-linear methods
   #' 
   #' Parameters:
@@ -40,7 +40,7 @@ generateProjections <- function(expr, filterName="", inputProjections=NULL, lean
   #'              character, mapping to a projection             
   #' 
   #' Returns:
-  #'  projections: (list of ProjectionData) collection mapping projection type to the actual projection
+  #'  projections: (list of Projection) collection mapping projection type to the actual projection
   #'  PC_data: (matrix) weighted PCA of original data type
   
   if (filterName == "novar") {
@@ -53,31 +53,65 @@ generateProjections <- function(expr, filterName="", inputProjections=NULL, lean
     stop("FilterName not recognized: ", filterName)
   }
   
-  if (inputProjections == NULL) {
-    inputProjections = c()
-  }
+  methodList = registerMethods(lean)
   
-  method_list = registerMethods(lean)
-  
-  for (method in names(method_list)){
+  for (method in names(methodList)){
+    
+    # Check if method is PCA because function call isn't general
     if (method == "PCA") {
-      pca_res <- performPCA(exprData, N=3)
+      pca_res <- applyPCA(exprData, N=3)
       proj <- Projection("PCA", pca_res)
       inputProjections <- c(inputProjections, proj)
     }
     else {
-      res <- method_list[[method]](exprData)
+      res <- methodList[[method]](exprData)
       proj <- Projection(method, res)
       inputProjections <- c(inputProjections, proj)
     }
   }  
   
   
-  return(inputProjections)
+  return(list(inputProjections, rownames(exprData)))
 }
 
+defineClusters <- function(projections) {
+  #' Creates several different clusterings of the data in projections
+  #' 
+  #' Parameters:
+  #'  projections: (list of Projection Objects) 
+  #'    List of Projection objects, each of a different projection algorithm.
+  #'  
+  #' Returns:
+  #'  clusters: (list of Cluster Objects)
+  #'    list of cluster objects, each wrapping a projection with a groupings of different clusters
 
-performPCA <- function(data, N=0, variance_proportion=1.0) {
+  # List of ClusterData Objects to be returned 
+  outClusters <- c()
+  
+  for(proj in projections) {
+    
+    # List of Clusters for a given projection
+    projClusters <- c()
+    key <- proj@name
+    
+    for (k in 2:6) {
+      clustName = paste0("K-Means, k=", k)
+      km <- kmeans(t(proj@pData), centers=k)
+      clus <- Cluster(clustName, km$centers, t(as.matrix(km$cluster)))
+      projClusters <- c(projClusters, clus)
+    }
+    
+    cData <- ClusterData(key, projClusters)
+    outClusters <- c(outClusters, cData)
+  }
+  
+  return(outClusters)
+  
+  
+  
+}
+
+applyPCA <- function(data, N=0, variance_proportion=1.0) {
   #' Performs PCA on data
   #' 
   #' Parameters:

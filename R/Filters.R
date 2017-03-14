@@ -23,8 +23,8 @@ applyFilters <- function(data, threshold, nofilter, lean) {
     filterList <- c(filteList, "novar")
     expr <- filterGenesNovar(expr)
     data@noVarFilter <- expr
-    
-    return(c(expr, filterList))
+    data <- updateExprData(data, expr)
+    return(c(data, filterList))
     
   } else {
     filterList <- c(filterList, "threshold")
@@ -35,10 +35,10 @@ applyFilters <- function(data, threshold, nofilter, lean) {
       filterList <- c(filterList, "fano")
       expr <- filterGenesFano(expr)
       data@fanoFilter <- expr
-      
+
     }
-    
-    return(c(expr, filterList))
+    data <- updateExprData(data, expr)    
+    return(list(data, filterList))
   }
   
 }
