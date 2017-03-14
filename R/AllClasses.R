@@ -7,6 +7,21 @@
 # scores, distance matrices, and anything else, is computed
 # on the different types of data.
 
+Cluster <- setClass("Cluster",
+  slots = c(
+    name = "character",
+    centers = "matrix",
+    data = "matrix"
+  )
+)
+
+ClusterData <- setClass("ClusterData",
+  slots = c(
+    projectionName = "character",
+    clusters = "list"
+  )
+)
+
 ExpressionData <- setClass("ExpressionData", 
     slots = c(
       data = "matrix",
