@@ -27,7 +27,7 @@ setMethod("getExprData", signature("ExpressionData"), function(object) {
   return(object@data)
 })
 
-setMethod("updateExprData", signature("ExpressionData"), function(object, newData=data.frame()) {
+setMethod("updateExprData", signature("ExpressionData"), function(object, newData) {
   object@data <- newData
   return(object)
 })

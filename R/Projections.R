@@ -3,27 +3,79 @@
 #' This module handles the generation of lower-dimensional
 #' projections from the higher-dimensional data objects.
 
+require("fastICA")
+require('tsne')
+require('dimRed')
+require("RANN")
+require('igraph')
+require('kernlab')
 
-generateProjections <- function(exprData, filterName="", inputProjections=NULL) {
+
+registerMethods <- function(lean=FALSE) {
+  
+  projMethods <- c("ICA" = applyICA)
+  
+  if (!lean) {
+    projMethods <- c(projMethods, "Spectral Embedding" = applySpectralEmbedding)
+    projMethods <- c(projMethods, "MDS" = applyMDS)
+  }
+  
+  projMethods <- c(projMethods, "RBF Kernel PCA" = applyRBFPCA)
+  projMethods <- c(projMethods, "ISOMap" = applyISOMap)
+  projMethods <- c(projMethods, "tSNE30" = applytSNE30)
+  projMethods <- c(projMethods, "tSNE10" = applytSNE10)
+  projMethods <- c(projMethods, "PCA" = applyPCA)
+  
+  return(projMethods)
+}
+
+generateProjections <- function(expr, filterName="", inputProjections=NULL, lean=FALSE) {
   #' Projects data into 2 dimensions using a variety of linear and non-linear methods
   #' 
   #' Parameters:
-  #'  exprData: (ExpressionData) expression matrix to project into 2D
+  #'  expr: (ExpressionData) expression matrix to project into 2D
   #'  filterName: (character) name of filter to apply to signatures, should match a filter that was
   #'              applied to the exprData before
   #'  inputProjections: (list of ProjectionData) collection of projection data types; names are of type
   #'              character, mapping to a projection             
   #' 
   #' Returns:
-  #'  projections: (list of ProjectionData) dictionary mapping projection type to the actual projection
+  #'  projections: (list of ProjectionData) collection mapping projection type to the actual projection
   #'  PC_data: (matrix) weighted PCA of original data type
+  
+  if (filterName == "novar") {
+    exprData <- expr@noVarFilter
+  } else if (filterName == "threshold") {
+    exprData <- expr@thresholdFilter
+  } else if (filterName == "fano") {
+    exprData <- expr@fanoFilter
+  } else {
+    stop("FilterName not recognized: ", filterName)
+  }
   
   if (inputProjections == NULL) {
     inputProjections = c()
   }
-
   
+  method_list = registerMethods(lean)
+  
+  for (method in names(method_list)){
+    if (method == "PCA") {
+      pca_res <- performPCA(exprData, N=3)
+      proj <- Projection("PCA", pca_res)
+      inputProjections <- c(inputProjections, proj)
+    }
+    else {
+      res <- method_list[[method]](exprData)
+      proj <- Projection(method, res)
+      inputProjections <- c(inputProjections, proj)
+    }
+  }  
+  
+  
+  return(inputProjections)
 }
+
 
 performPCA <- function(data, N=0, variance_proportion=1.0) {
   #' Performs PCA on data
@@ -52,5 +104,92 @@ performPCA <- function(data, N=0, variance_proportion=1.0) {
     N <- last_i
   }
   
-  return (res$x[,1:N])
+  return (t(res$x[,1:N]))
+}
+
+applyICA <- function(exprData, projWeights=NULL) {
+  set.seed(RANDOM_SEED)
+  
+  ndata <- colNormalization(exprData)
+  ndataT <- t(ndata)
+  res <- fastICA(ndataT, n.comp=2, maxit=100, tol=.0001, alg.typ="parallel", fun="logcosh", alpha=1,
+                 method = "R", row.norm=FALSE, verbose=TRUE)
+  
+  return(t(res$S))
+}
+
+applySpectralEmbedding <- function(exprData, projWeights=NULL) {
+  set.seed(RANDOM_SEED)
+  
+  ndata <- colNormalization(exprData)
+  ndataT <- t(ndata)
+  res <- specc(ndataT, centers=2)
+  res <- specc(ndata, centers=2)
+  res <- as.matrix(res@centers)
+  
+  colnames(res) = colnames(exprData)
+  
+  return(res)
+  
+}
+
+applyMDS <- function(exprData, projWeights=NULL) {
+  set.seed(RANDOM_SEED)
+  
+  ndata <- colNormalization(exprData)
+  ndataT <- t(ndata)
+  distN <- dist(ndataT)
+  
+  res <- cmdscale(distN, k=2)
+  return(t(res))
+}
+
+applytSNE10 <- function(exprData, projWeights=NULL) {
+  set.seed(RANDOM_SEED)
+  
+  ndata <- colNormalization(exprData)
+  ndataT <- t(ndata)
+  res <- tsne(ndataT, k=2, perplexity=10.0, max_iter=200)
+  
+  rownames(res) = colnames(exprData)
+  return(t(res))
+  
+}
+
+applytSNE30 <- function(exprData, projWeights=NULL) {
+  set.seed(RANDOM_SEED)
+  
+  ndata <- colNormalization(exprData)
+  ndataT <- t(ndata)
+  res <- tsne(ndataT, k=2, perplexity=30.0, max_iter=200)
+  
+  rownames(res) = colnames(exprData)
+  
+  return(t(res))
+}
+
+applyISOMap <- function(exprData, projWeights=NULL) {
+  set.seed(RANDOM_SEED)
+  
+  ndata <- colNormalization(exprData)
+  ndataT <- dimRedData(t(ndata))
+  res <- embed(ndataT, "Isomap", knn=4, ndim=2)
+  
+  res <- res@data@data
+  rownames(res) = colnames(exprData)
+  return(t(res))
+  
+}
+
+applyRBFPCA <- function(exprData, projWeights=NULL) {
+  set.seed(RANDOM_SEED)
+  
+  ndata <- colNormalization(exprData)
+  ndataT <- t(ndata)
+  res <- kpca(ndataT, features=2, kernel='rbfdot')
+  res <- res@pcv
+  
+  rownames(res) <- colnames(exprData)
+  return(t(res))
+  
 }

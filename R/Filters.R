@@ -14,29 +14,32 @@ applyFilters <- function(data, threshold, nofilter, lean) {
   #'  lean: (logical) if true, skip extra filtering methods (Fano)
   #'Returns: (data.frame) filtered expression matrix
   
+  filterList <- c()
   expr <- getExprData(data)
   
   message("Applying filters...")
   
   if(nofilter) {
+    filterList <- c(filteList, "novar")
     expr <- filterGenesNovar(expr)
     data@noVarFilter <- expr
+    
+    return(c(expr, filterList))
+    
   } else {
-
-    if (lean) {
-      expr <- filterGenesThreshold(expr, threshold)
-      data@thresholdFilter <- expr
-    } else {
-      expr <- filterGenesThreshold(expr, threshold)
-      data@thresholdFilter <- expr
-      
+    filterList <- c(filterList, "threshold")
+    expr <- filterGenesThreshold(expr, threshold)
+    data@thresholdFilter <- expr
+    
+    if (!lean) {
+      filterList <- c(filterList, "fano")
       expr <- filterGenesFano(expr)
       data@fanoFilter <- expr
+      
     }
     
+    return(c(expr, filterList))
   }
-
-  return(expr)
   
 }
 

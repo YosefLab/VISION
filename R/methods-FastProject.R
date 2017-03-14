@@ -110,9 +110,10 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   }
   
   originalData <- copy(getExprData(eData))
-  
+
   filtered <- applyFilters(eData, object@threshold, object@nofilter, object@lean)
-  eData <- updateExprData(eData, filtered)
+  eData <- updateExprData(eData, filtered[[1]])
+  filterList <- filtered[[2]]
   
   if (!object@nomodel) {
     
@@ -184,6 +185,23 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
         }, error=function(e){})
       }
     }
+  
+    
+    # Apply projections to filtered gene sets, create new projectionData object
+    for (filter in filterList) {
+      message("Filter level: ", filter)
+      
+      message("Projecting data into 2 dimensions...")
+      
+      projections <- generateProjections(edata, filter)
+      
+      #define clusters, etcs.
+      
+      projData <- projectionData(filter=filter, pca=TRUE, projections=projections)
+      
+      
+    }
+    
     
     return(getExprData(eData))
   }

@@ -22,6 +22,10 @@ setGeneric("readExprData", function(object) {
   standardGeneric("readExprData")
 })
 
-setGeneric("updateExprData", function(object, newData=data.frame()) {
+setGeneric("updateExprData", function(object, newData) {
   standardGeneric("updateExprData")
+})
+
+setGeneric("updateProjection", function(object, name, data) {
+  standardGeneric("updateProjection")
 })

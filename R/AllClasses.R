@@ -61,10 +61,18 @@ FastProject <- setClass("FastProject",
       sigData = NULL
 ))
 
-ProjectionData <- setClass("ProjectionData", 
+Projection <- setClass("Projection", 
     slots = c(
       name = "character",
-      data = "matrix"
+      pData = "matrix"
+    )
+)
+
+ProjectionData <- setClass("ProjectionData", 
+    slots = c(
+      filter = 'character', 
+      projections = "list",
+      pca = "logical"
     )
 )
 
