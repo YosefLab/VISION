@@ -1,0 +1,255 @@
+html {
+	width: 100%;
+	height: 100%;
+}
+
+body {
+	font-family: Arial, sans-serif;
+	min-width: 1300px;
+	min-height: 710px;
+}
+
+a, a:visited {
+	color: #4d4d4d;
+	text-decoration: underline;
+}
+
+.legend-subs {
+	font-size: 12px;
+	font-family: Arial sans-serif;
+	fill: black;
+}
+
+#vis {
+	width: 903px;
+	height: 100%;
+	background: #262228;
+	font-family: Arial sans-serif;
+	color: white;
+	font-size: 20px;
+	display: inline-block;
+}
+
+#container {
+	min-width: 1300px;
+	margin: auto;
+	display: inline-block;
+}
+
+input.text-input {
+	background-color: inherit;
+	color: inherit;
+}
+
+aside {
+	width: 198px;
+	min-height: 710px;
+	background: #565656;
+	color: white;
+}
+
+#menu-bar {
+	float: left;
+	overflow-y: auto;
+}
+
+
+#controls {
+	width: 100px;
+	float: left;
+	margin-bottom: 10px;
+}
+
+.control {
+	float: left;
+	padding-top: 20px;
+	padding-left: 20px;
+}
+
+.control a {
+	color: black;
+	font-size: 12px;
+	padding-top: 10px;
+	padding: 5px;
+	background: #E2E2E2;
+	cursor: points;
+	margin-right: 3px;
+	text-decoration: none;
+}
+
+.control i:hover {
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+.control i.active {
+}
+
+#sims {
+	height: 100px;
+}
+
+.list-header	{
+	list-style: none;
+}
+
+#options-list li ol {
+	padding-left: 20px;
+}
+
+#options-list ol li ol i {
+	height: 15px;
+	margin-left: 10px;
+}
+
+.tooltip {
+	position: absolute;
+	top: 100px;
+	left: 100px;
+	-moz-border-radius: 3px;
+	border-radius: 3px;
+	border: 2px solid #DDD;
+	background: #ffffff;
+	opacity: 80%;
+	color: #000;
+	padding: 10px;
+	width: 300px;
+	font-size: 15px;
+	z-index: 120;
+}
+
+.tooltip p.main {
+	font-size: 15px;
+	text-align: left;
+	padding: 0;
+	margin: 0;
+}
+
+.tooltip .title {
+	font-size: 20px;
+	font-family: "Arial", Helvetica, sans-serif;
+	border-bottom: 2px solid #dedede;
+}
+
+.tooltip .name {
+	font-weight: bold;
+}
+
+.summarybox {
+	float: right;
+	color: white;
+	font-size: 12px;
+	height: 710px;
+	z-index: 130;
+}
+
+#vis-summary {
+	height: 50%;
+	width: 100%;
+	overflow-y: auto;	
+}
+
+#vis-summary p.main {
+	font-size: 12px;
+	text-align: left;
+}
+
+
+h3 {
+	text-align: center;
+}
+
+h3.menu-bar-titles {
+	text-align: left;
+}
+
+#vis-summary .title {
+	font-size: 20px;
+	text-align: center;
+	font-family: "Arial", Helvetica, sans-serif;
+}
+
+.sub {
+	text-align: left;
+	margin-left: 5%;
+}
+
+#vis-summary-node {
+	height: 50%;
+	width: 100%;
+}
+
+#text-container-vis-node {
+	height: 80%;
+	width: 90%;
+	overflow-y: auto;
+	margin-left: 10px;
+}
+
+
+.mini-summary {
+	border-top: 1px solid white;
+}
+
+.total-summary {
+	border-top: 1px solid #000;
+}
+
+line.link {
+	fill: none;
+	stroke-width: 1.5px;
+}
+
+.active-node {
+	-webkit-animation: pulse 1.33s ease-out;
+	-webkit-animation-iteration-count: infinite;
+}
+
+@-webkit-keyframes pulse {
+	0% {
+		opacity: 0.0;
+	}
+
+	50% {
+		opacity: 1.0;	
+	}
+	
+	100% {
+		opacity: 0.0;
+	}
+}
+
+table {
+	margin: 5%;
+	align: center;
+	border-collapse: collapse;
+	width: 85%;
+}
+
+td, th {
+	border: 1px solid #dddddd;
+	text-align: left;
+	padding: 8px;
+	max-width: 50%;
+}
+
+::-webkit-scrollbar {
+	width: 12px;
+}
+
+::-webkit-scrollbar-track {
+	background: lightgrey;
+	border-left: 1px solid #ccc;
+	border-radius: 10px;
+	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+}
+
+::-webkit-scrollbar-track-piece {
+	height: 33%;
+}
+
+::-webkit-scrollbar-thumb {
+	background: black;
+	border-radius: 10px;
+	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
+}	

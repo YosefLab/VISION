@@ -95,7 +95,7 @@ defineClusters <- function(projections) {
     key <- proj@name
     
     for (k in 2:6) {
-      clustName = paste0("K-Means, k=", k)
+      clustName <- paste0("K-Means, k=", k)
       km <- kmeans(t(proj@pData), centers=k)
       clus <- Cluster(clustName, km$centers, t(as.matrix(km$cluster)))
       projClusters <- c(projClusters, clus)

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" contents="IE=edge, chrome=1">
+	
+ 	<title>Innovation Network</title>
+
+	<link rel="stylesheet" href="css/custom.css">
+	<link rel="stylesheet" href="css/reset.css">
+	<link rel="stylesheet" href="css/animation.css">
+	<link rel="stylesheet" href="css/fontello.css">
+	<script src="js/libs/modernizr-2.0.6.min.js"></script>
+</head>
+
+<body>
+
+	<div id = "container">
+		<div class="main">
+			<aside id="menu-bar">
+				<ol id="options-list" class="control">
+					<li id="layouts" class="list-header">
+						<h3 class="menu-bar-titles">Layouts</h3>
+						<ol>
+							<i class="icon icon-ok active" id="force">Spread</i>
+							<br>
+							<!--<i class="icon icon-ok-outline" id="radial">Radial</i>-->
+						</ol>
+					</li>
+					<li id="layers" class="list-header">
+						<h3 class="menu-bar-titles">Sub-Networks</h3>
+						<ol id="layer-sub">
+						</ol>
+					</li>
+					<li id="process" class="list-header">
+						<h3 class="menu-bar-titles">Processes</h3>
+						<ol id="process-sub">
+						</ol>
+					</li>
+					<br>
+					<li id="cal" class="list-header">
+						<h3 class="menu-bar-titles">Insights Calendar</h3>
+						<form id="search-section" action="">
+							Start:<br>
+							<input type="date" class="text-input" id="begin-date">
+						</form>
+						<form id="search-section" action="">
+							End: <br>
+							<input type="date" class="text-input" id="end-date">
+						</form>
+						<br>
+						<i class='icon icon-ok-outline' id='start'>Activate Insights</i>
+					</li>
+				</ol>
+			</aside>
+
+			<div id="vis"></div>
+			<aside class="summarybox"> 
+				<div id="vis-summary">
+					<h3>Network Overview</h3>
+				</div>
+				<hr class="total-summary">
+				<div id="vis-summary-node">
+					<h3>Node Overview</h3>
+						<div id="text-container-vis-node">
+						</div>
+				</div>
+			</aside>
+			
+		</div>
+	</div>
+
+
+	<script> window.jQuery || document.write('<script src="js/libs/jquery-1.7.2.min.js"><\/script>')</script>
+
+	<!--<script defer src="js/script.js"></script>-->
+	<script src="js/Window.js"></script>
+	<script src="js-xlsx-master/jszip.js"></script>
+	<script src="js-xlsx-master/xlsx.js"></script>
+	<script src="js/upload.js"></script>
+	<script src="js/influence.js"></script>
+	<script src="js/Tooltip.js"></script>
+	<script src="js/Summary.js"></script>
+	<script src="js/connectivity.js"></script>
+	<script src="js/libs/d3.v2.js"></script>
+	<script src="js/libs/coffee-script.js"></script>
+	<script type="text/coffeescript" src="coffee/vis.coffee"></script>
+
+
+</body>
+
+</html>

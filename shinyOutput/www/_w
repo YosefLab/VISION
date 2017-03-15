@@ -1,0 +1,15 @@
+function findSize() {
+	var windowX = $(window).width();
+	var visX = 900;
+	var a_w = 175;
+	var c_w = 1300;
+	if (windowX > 1300) {
+		a_w = ((windowX - visX) / 2) - 32;
+		c_w = windowX;
+	}
+	console.log(a_w);
+	$(".container").css("width", c_w + 'px');
+	//$("#menu-bar").css("width", a_w + 'px');
+	//$(".summarybox").css("width", a_w + 'px');
+	$("aside").css('width', a_w + 'px');
+}
