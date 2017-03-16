@@ -87,7 +87,8 @@ ProjectionData <- setClass("ProjectionData",
     slots = c(
       filter = 'character', 
       projections = "list",
-      pca = "logical"
+      pca = "logical",
+      keys = "list"
     )
 )
 
