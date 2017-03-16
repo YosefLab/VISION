@@ -17,6 +17,12 @@ biasedSD <- function(data, byRow=TRUE) {
   return(std)
 }
 
+biasedVectorSD <- function(data) {
+  d <- length(data)
+  std <- sd(data) * sqrt((d-1)/d)
+  return(std)
+}
+
 
 noNormalization <- function(data) {
   #' Does nothing, return the original data
@@ -49,7 +55,7 @@ rowNormalization <- function(data) {
   sigma <- biasedSD(data)
   sigma[sigma == 0] <- 1.0
   
-  ndata = ((data - mu) / sigma)
+  ndata <- ((data - mu) / sigma)
   
   return(ndata)
 }

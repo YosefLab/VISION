@@ -199,7 +199,12 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
       
       clusters <- defineClusters(projections)
       
-      projData <- projectionData(filter=filter, pca=TRUE, projections=projections, genes=genes)
+      pKeys <- c()
+      for (p in projections) {
+        pKeys <- c(pKeys, p@name)
+      }
+      
+      projData <- projectionData(filter=filter, pca=TRUE, projections=projections, genes=genes, keys=pKeys)
       
       
     }

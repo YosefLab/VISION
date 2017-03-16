@@ -6,11 +6,12 @@
 
 
 setMethod("initialize", signature(.Object="ProjectionData"),
-          function(.Object, filter = "", projections=NULL, pca=TRUE) {
+          function(.Object, filter = "", projections=NULL, pca=TRUE, keys) {
             
-            .Object@filter = filter
-            .Object@projections = projections
-            .Object@pca = pca
+            .Object@filter <- filter
+            .Object@projections <- projections
+            .Object@keys <- keys
+            .Object@pca <- pca
             
             return(.Object)
             
