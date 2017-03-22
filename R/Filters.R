@@ -20,7 +20,7 @@ applyFilters <- function(data, threshold, nofilter, lean) {
   message("Applying filters...")
   
   if(nofilter) {
-    filterList <- c(filteList, "novar")
+    filterList <- c(filterList, "novar")
     expr <- filterGenesNovar(expr)
     data@noVarFilter <- expr
     data <- updateExprData(data, expr)
