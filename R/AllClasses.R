@@ -94,8 +94,8 @@ ProjectionData <- setClass("ProjectionData",
     slots = c(
       filter = 'character', 
       projections = "list",
-      pca = "logical",
-      keys = "list"
+      genes = "character",
+      keys = "character"
     )
 )
 
