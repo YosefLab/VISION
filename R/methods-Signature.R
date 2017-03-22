@@ -33,6 +33,12 @@ setMethod("sigEqual", signature(object="Signature"),
           }
 )
 
+setMethod("addSigData", signature(object="Signature"),
+          function(object, data) {
+            object@sigDict <- list(object@sigDict, data)
+            retunr(object)
+          })
+
 sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBORHOOD_SIZE = 0.33) {
   #' Evaluates the significance of each signature vs. each projection. 
   #' 
@@ -178,7 +184,7 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
     # Apply CDF function to medDissimilarityPrime pointwise
     pValues <- apply(medDissimilarityPrime, c(1, 2), pcdf)
     
-    sigProjMatrix[:,i] <- 1 - (medDissimilarity / N_SAMPLES)
+    sigProjMatrix[,i] <- 1 - (medDissimilarity / N_SAMPLES)
     sigProjMatrixP[,i] <- pValues
    
     ## TODO 

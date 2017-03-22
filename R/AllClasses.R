@@ -76,6 +76,13 @@ FastProject <- setClass("FastProject",
       sigData = NULL
 ))
 
+FastProjectOutput <- setClass("FastProjectOutput",
+    slots = c(
+      exprData = "ExpressionData",
+      projData = "list"
+    )
+)
+
 Projection <- setClass("Projection", 
     slots = c(
       name = "character",

@@ -30,7 +30,7 @@ setMethod("initialize", signature(.Object="FastProject"),
             }
               
             if (is.null(sigData)) {
-              .Object@sigData <- readSignaturesGmtToMatrix(signatures)
+              .Object@sigData <- readSignaturesInput(signatures)
             } else {
               .Object@sigData <- sigData
             }
@@ -188,6 +188,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   
     
     # Apply projections to filtered gene sets, create new projectionData object
+    projDataList <- c()
     for (filter in filterList) {
       message("Filter level: ", filter)
       
@@ -197,6 +198,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
       projections <- projectData[[1]]
       genes <- projectData[[2]]
       
+      message("Generating clusters...")
       clusters <- defineClusters(projections)
       
       pKeys <- c()
@@ -205,12 +207,12 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
       }
       
       projData <- projectionData(filter=filter, pca=TRUE, projections=projections, genes=genes, keys=pKeys)
-      
+      projDataList <- c(projDataList, projData)
       
     }
     
-    
-    return(getExprData(eData))
+    fpOut <- FastProjectOutput(eData, projDataList)
+    return(fpOut)
   }
   
   }

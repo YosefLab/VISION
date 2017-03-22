@@ -9,12 +9,13 @@ require('dimRed')
 require("RANN")
 require('igraph')
 require('kernlab')
+require("vegan")
 
 
 registerMethods <- function(lean=FALSE) {
   
-  projMethods <- c("ICA" = applyICA)
-  
+  #projMethods <- c("ICA" = applyICA)
+  projMethods <- c()
   if (!lean) {
     projMethods <- c(projMethods, "Spectral Embedding" = applySpectralEmbedding)
     projMethods <- c(projMethods, "MDS" = applyMDS)
@@ -24,7 +25,6 @@ registerMethods <- function(lean=FALSE) {
   projMethods <- c(projMethods, "ISOMap" = applyISOMap)
   projMethods <- c(projMethods, "tSNE30" = applytSNE30)
   projMethods <- c(projMethods, "tSNE10" = applytSNE10)
-  projMethods <- c(projMethods, "PCA" = applyPCA)
   
   return(projMethods)
 }
@@ -54,17 +54,20 @@ generateProjections <- function(expr, filterName="", inputProjections=c(), lean=
   }
   
   methodList = registerMethods(lean)
+
+  pca_res <- applyPCA(exprData, N=35)
+  proj <- Projection("PCA", pca_res)
+  inputProjections <- c(inputProjections, proj)
   
   for (method in names(methodList)){
-    
-    # Check if method is PCA because function call isn't general
-    if (method == "PCA") {
-      pca_res <- applyPCA(exprData, N=3)
-      proj <- Projection("PCA", pca_res)
-      inputProjections <- c(inputProjections, proj)
-    }
-    else {
+    print(method)
+    if (method == "ICA" || method == "RBF Kernel PCA") {
       res <- methodList[[method]](exprData)
+      proj <- Projection(method, res)
+      inputProjections <- c(inputProjections, proj)
+    } else {
+      # Check if method is PCA because function call isn't general
+      res <- methodList[[method]](pca_res)
       proj <- Projection(method, res)
       inputProjections <- c(inputProjections, proj)
     }
@@ -145,11 +148,20 @@ applyICA <- function(exprData, projWeights=NULL) {
   set.seed(RANDOM_SEED)
   
   ndata <- colNormalization(exprData)
-  ndataT <- t(ndata)
-  res <- fastICA(ndataT, n.comp=2, maxit=100, tol=.0001, alg.typ="parallel", fun="logcosh", alpha=1,
-                 method = "R", row.norm=FALSE, verbose=TRUE)
+  ndataT <- dimRedData(t(ndata))
+  res <- embed(ndataT, "FastICA", ndim=2)
   
-  return(t(res$S))
+  res <- res@data@data
+  rownames(res) = colnames(exprData)
+  return(t(res))
+  
+  
+  #ndata <- colNormalization(exprData)
+  #ndataT <- t(ndata)
+  #res <- fastICA(ndataT, n.comp=2, maxit=100, tol=.00001, alg.typ="parallel", fun="logcosh", alpha=1,
+  #               method = "C", row.norm=FALSE, verbose=TRUE)
+  
+  #return(t(res$S))
 }
 
 applySpectralEmbedding <- function(exprData, projWeights=NULL) {
@@ -206,6 +218,7 @@ applyISOMap <- function(exprData, projWeights=NULL) {
   set.seed(RANDOM_SEED)
   
   ndata <- colNormalization(exprData)
+  which(is.na(ndata), arr.ind=T)
   ndataT <- dimRedData(t(ndata))
   res <- embed(ndataT, "Isomap", knn=4, ndim=2)
   
