@@ -6,12 +6,12 @@
 
 
 setMethod("initialize", signature(.Object="ProjectionData"),
-          function(.Object, filter = "", projections=NULL, pca=TRUE, keys) {
+          function(.Object, filter = "", projections=NULL, genes, keys) {
             
             .Object@filter <- filter
             .Object@projections <- projections
+            .Object@genes <- genes
             .Object@keys <- keys
-            .Object@pca <- pca
             
             return(.Object)
             

@@ -194,19 +194,19 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
       
       message("Projecting data into 2 dimensions...")
       
-      projectData <- generateProjections(edata, filter)
-      projections <- projectData[[1]]
-      genes <- projectData[[2]]
-      
+      projectData <- generateProjections(eData, filter)
+      projs <- projectData[[1]]
+      g <- projectData[[2]]
+
       message("Generating clusters...")
-      clusters <- defineClusters(projections)
+      clusters <- defineClusters(projs)
       
       pKeys <- c()
-      for (p in projections) {
+      for (p in projs) {
         pKeys <- c(pKeys, p@name)
       }
       
-      projData <- projectionData(filter=filter, pca=TRUE, projections=projections, genes=genes, keys=pKeys)
+      projData <- ProjectionData(filter=filter, projections=projs, genes=g, keys=pKeys)
       projDataList <- c(projDataList, projData)
       
     }

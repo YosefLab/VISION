@@ -17,8 +17,7 @@ readHKGToMatrix <- function(filename, delimiter="\t") {
 
 
 readSignaturesInput <- function(filenames) {
-  #TODO: ADD FUNCTIONALITY TO READ IN LIST OF FILENAMES FOR SIGNATURES
-  
+
   # Create a dictionary to easily compute signature sign
   keys <- c("none" = 1.0,  'up' = 1.0, 'plus' = 1.0, 'down' = -1.0, 'dn' = -1.0, 'minus' = -1.0)
   
