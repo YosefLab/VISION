@@ -2,10 +2,13 @@
 #' FastProject object.
 
 setMethod("initialize", signature(.Object="FastProjectOutput"), 
-          function(.Object, eData, projDataList) {
+          function(.Object, eData, projDataList, sigScores, randomSigScores, weights) {
             
             .Object@exprData <- eData
             .Object@projData <- projDataList
+            .Object@sigScores <- sigScores
+            .Object@randomSigScores <- randomSigScores
+            .Object@weights <- weights
             
             return(.Object)
           }

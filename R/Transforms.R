@@ -139,7 +139,7 @@ computeWeights <- function(fit_func, params, exprData) {
   #'                  Ranges from 0 to 1. 
   
   expr <- getExprData(exprData);
-  
+  print(dim(expr))
   fnProb <- matrix(0L, nrow = nrow(expr), ncol = ncol(expr))
   countNonZero <- apply(expr, 1, function(c) sum(c!=0))
   countNonZero[which(countNonZero == 0)] <- 1;

@@ -37,7 +37,6 @@ applyFilters <- function(data, threshold, nofilter, lean) {
       data@fanoFilter <- expr
 
     }
-    data <- updateExprData(data, expr)    
     return(list(data, filterList))
   }
   

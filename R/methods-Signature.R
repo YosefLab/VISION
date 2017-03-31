@@ -1,3 +1,5 @@
+require(geometry)
+
 setMethod("initialize", signature(.Object="Signature"),
           function(.Object, sigDict, name, source, metaData="") {
             if (missing(sigDict)) {
@@ -82,17 +84,21 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
     }
   }
   
-  spColLabels <- projections@keys
-  spColLabels <- sort(spColLabels)
+  pKeys <- c()
+  for (p in projections) {
+    pKeys <- c(pKeys, p@name)
+  }
   
-  N_SAMPLES <- ncol(sigScoresData[1]@scores)
+  spColLabels <- pKeys
+  spColLabels <- sort(spColLabels)
+  N_SAMPLES <- length(sigScoresData[[1]]@sample_labels)
   N_SIGNATURES <- length(spRowLabels)
   N_SIGNATURE_FACTORS <- length(spRowLabelsFactors)
   N_SIGNATURE_PNUM <- length(spRowLabelsPNum)
   N_PROJECTIONS <- length(spColLabels)
   
-  spProjMatrix <- matrix(0L, nrow=N_SIGNATURES, ncol=N_PROJECTIONS)
-  spProjMatrixP <- matrix(0L, nrow=N_SIGNATURES, ncol=N_PROJECTIONS)
+  sigProjMatrix <- matrix(0L, nrow=N_SIGNATURES, ncol=N_PROJECTIONS)
+  sigProjMatrixP <- matrix(0L, nrow=N_SIGNATURES, ncol=N_PROJECTIONS)
   
   factorSigProjMatrix <- matrix(0L, nrow=N_SIGNATURE_FACTORS, ncol=N_PROJECTIONS)
   factorSigProjMatrixP <- matrix(0L, nrow=N_SIGNATURE_FACTORS, ncol=N_PROJECTIONS)
@@ -108,14 +114,19 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
     sigScoreMatrix[,j] <- rank(sig@scores, ties.method="average")
     j <- j+1
   }
-  
+
+  sigScoreMatrix <- t(apply(sigScoreMatrix, 1, as.numeric))
+
   randomSigScoreMatrix <- matrix(0L, nrow=N_SAMPLES, ncol=length(randomSigData))
   
   j <- 1
   for (rsig in randomSigData) {
-    randomSigData[,j] <- rank(rsig@scores, ties.method="average")
+    randomSigScoreMatrix[,j] <- rank(rsig@scores, ties.method="average")
     j <- j + 1
   }
+  
+  randomSigScoreMatrix <- t(apply(randomSigScoreMatrix, 1, as.numeric))
+
   
   ### TODO: BUILD ONE HOT MATRIX FOR FACTORS 
   
@@ -123,58 +134,60 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   
   i <- 1
   for (proj in projections) {
-    dataLoc <- proj
-    distanceMatrix <- dist(t(dataLoc), metric="euclidean")
-    
-    weights <- exp(-1 * distanceMatrix^2 / NEIGHBORHOOD_SIZE^2)
+    dataLoc <- proj@pData
+    distanceMatrix <- (dist(t(dataLoc), method="euclidean"))
+
+    weights <- as.matrix(exp(-1 * ((distanceMatrix*distanceMatrix) / NEIGHBORHOOD_SIZE^2)))
     diag(weights) <- 0
     weightsNormFactor <- apply(weights, 1, sum)
     weightsNormFactor[weightsNormFactor == 0] <- 1.0
-    weights <- weights / weightsNormFactor
-    
-    neighborhoodPrediction <- dot(weights, sigScoreMatrix)
-    
+    weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
+    weights <-(weights / weightsNormFactor)
+  
+    neighborhoodPrediction <- (weights %*% sigScoreMatrix)
+  
     ## Neighborhood dissimilatory score = |actual - predicted|
     dissimilarity <- abs(sigScoreMatrix - neighborhoodPrediction)
-    medDissimilarity <- apply(dissimilarity, 2, median)
-    
-    # Calculate scores for random signatrues
-    randomNeighborhoodPrediction <- dot(weights, randomSigScoreMatrix)
+    medDissimilarity <- as.matrix(apply(dissimilarity, 2, median))
+    # Calculate scores for random signatures
+    randomNeighborhoodPrediction <- (weights %*% randomSigScoreMatrix)
     randomDissimilarity <- abs(randomSigScoreMatrix - randomNeighborhoodPrediction)
-    randomMedDissimilarity <- apply(randomDissimilarity, 2, median)
-    
+    randomMedDissimilarity <- as.matrix(apply(randomDissimilarity, 2, median))
+
     # Group by number of genes
     backgrounds <- list()
     k <- 1
     for (rsig in randomSigData) {
-      numGenes <- rsig@numGenes
-      if (!numGenes %in% names(backgrounds)){
-        backgrounds <- c(backgrounds, list(numGenes=randomMedDissimilarity[k]))
+      numGenes <- as.character(rsig@numGenes)
+      if (!(numGenes %in% names(backgrounds))) {
+        backgrounds[[numGenes]] <- c(randomMedDissimilarity[k])
       } else {
-        backgrounds[numGenes] <- c(backgrounds[numGenes], randomMedDissimilarity[k])
+        backgrounds[[numGenes]] <- c(backgrounds[[numGenes]], randomMedDissimilarity[k])
       }
       k <- k + 1
     }
-    
+   
     bgStat <- matrix(0L, nrow=length(backgrounds), ncol=3)
     k <- 1
     for (numGenes in names(backgrounds)) {
-      mu_x <- mean(backgrounds[numGenes])
-      std_x <- biasedVectorSD(backgrounds[numGenes])
-      bgStat[k, 1] <- numGenes
+      mu_x <- mean(backgrounds[[numGenes]])
+      std_x <- biasedVectorSD(as.matrix(backgrounds[[numGenes]]))
+      bgStat[k, 1] <- as.numeric(numGenes)
       bgStat[k, 2] <- mu_x
       bgStat[k, 3] <- std_x
       k <- k + 1
     }
+  
     
     mu <- matrix(0L, nrow=nrow(medDissimilarity), ncol=ncol(medDissimilarity))
-    sigma <- matrix(0, nrow=nrow(medDissimilarity), ncol=nocl(medDissimilarity))
+    sigma <- matrix(0L, nrow=nrow(medDissimilarity), ncol=ncol(medDissimilarity))
+
     for (k in 1:length(medDissimilarity)) {
       # Find background with closest number of genes 
-      numGenes <- spRows[k]@numGenes
-      row_i <- which.min(abs(numGenes - bgStat[,1]))
-      mu[k] <- bigStat[row_i, 1]
-      sigma[k] <- bigStat[row_i, 2]
+      numG <- spRows[[k]]@numGenes
+      row_i <- which.min(abs(numG - bgStat[,1]))
+      mu[k] <- bgStat[row_i, 1]
+      sigma[k] <- bgStat[row_i, 2]
     }
     
     medDissimilarityPrime <- (medDissimilarity - mu) / sigma
@@ -186,6 +199,7 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
     
     sigProjMatrix[,i] <- 1 - (medDissimilarity / N_SAMPLES)
     sigProjMatrixP[,i] <- pValues
+    
    
     ## TODO 
     # Calculate significance for precomputed numerical signatures 
@@ -200,10 +214,15 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   ## TODO 
   # Concatenate Factor Sig-proj entries back in 
   
-
-  sigProjMatrixP <- p.adjust(sigProjMatrixP, method="BH")
+  sigProjMatrixP <- apply(sigProjMatrix, 1, function(x) p.adjust(x, method="BH"))
   sigProjMatrixP[sigProjMatrixP == 0] <- 10^(-300)
-  sigProjMatrixP = apply(sigProjMatrixP, c(1, 2), log10)
+  
+  sigProjMatrixP <- t(apply(sigProjMatrixP, c(1,2), log10))
+  colnames(sigProjMatrixP) <- spColLabels
+  rownames(sigProjMatrixP) <- spRowLabels
+  
+  colnames(sigProjMatrix) <- spColLabels
+  rownames(sigProjMatrix) <- spRowLabels
   
   return(list(spRowLabels, spColLabels, sigProjMatrix, sigProjMatrixP))
     
