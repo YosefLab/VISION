@@ -31,6 +31,7 @@ setGeneric("updateExprData", function(object, newData) {
   standardGeneric("updateExprData")
 })
 
+
 setGeneric("updateProjection", function(object, name, data) {
   standardGeneric("updateProjection")
 })

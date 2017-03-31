@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>FastProject Viewer</title>
+    <script type="text/javascript" src="_resources/jquery-2.1.4.min.js"></script>
+    <script type="text/javascript" src="_resources/d3.min.js"></script>
+    <script type="text/javascript" src="_resources/FP_data.jsdata"></script>
+    <script type="text/javascript" src="_resources/ColorScatter.js"></script>
+    <script type="text/javascript" src="_resources/Clustered_HeatMap.js"></script>
+    <script type="text/javascript" src="_resources/d3tip.js"></script>
+    <script type="text/javascript" src="_resources/Utilities.js"></script>
+    <script type="text/javascript" src="_resources/jszip.min.js"></script>
+
+    <!-- Bootstrap Stuff -->
+    <link rel="stylesheet" href="_resources/bootstrap.css">
+    <script src="_resources/bootstrap.min.js"></script>
+
+    <link rel="stylesheet" href="_resources/styles.css">
+    <script type="text/javascript">
+
+        var global_status = {};
+        global_status.plotted_projection = "";
+        global_status.plotted_signature = "";
+        global_status.sorted_column = "";
+        global_status.signature_filter = "";
+        global_status.scatterColorOption = "rank";
+
+        var global_options = {};
+        var global_scatter = {};
+        var global_heatmap = {};
+
+        $(window).resize(function()
+        {
+            $('#scatter_div').children().remove();
+            global_scatter = new ColorScatter('#scatter_div', true);
+
+            if($('#heatmap_div').is(":visible"))
+            {
+                $('#heatmap_div').find('svg').remove();
+                global_heatmap = new HeatMap('#heatmap_div');
+            }
+
+            //Link the scatter/heatmap
+            global_scatter.hovered_links.push(global_heatmap);
+            global_heatmap.hovered_links.push(global_scatter);
+
+            //Render
+            drawChart();
+            drawHeat();
+        });
+
+        window.onload = function()
+        {
+            //Define some globals
+            global_scatter = new ColorScatter("#scatter_div", true);
+            global_heatmap = new HeatMap("#heatmap_div");
+            
+            //Link the scatter/heatmap
+            global_scatter.hovered_links.push(global_heatmap);
+            global_heatmap.hovered_links.push(global_scatter);
+            
+            //Make the options update the table
+            $("#pca_checkbox").change(updateTable);
+            $("#filter_dropdown").change(updateTable);
+
+            var filterSig = $('#sig_filt_input');
+            var filterSigTimer;
+            var filterSigTimer_Timeout = 500;
+
+            filterSig.on('input', function(){
+                global_status.signature_filter = this.value;
+                clearTimeout(filterSigTimer);
+                filterSigTimer = setTimeout(doneTyping, filterSigTimer_Timeout);
+            });
+
+            function doneTyping()
+            {
+                var val = global_status.signature_filter.toLowerCase();
+                var vals = val.split(",");
+                vals = vals.map(function(str){return str.trim();})
+                    .filter(function(str){ return str.length > 0;});
+
+                var tablerows = $('#table_div table').find('tr');
+                tablerows.removeClass('hidden');
+
+                var posvals = vals.filter(function(str){ return str[0] != '!';});
+                var negvals = vals.filter(function(str){ return str[0] == '!';})
+                    .map(function(str){ return str.slice(1);})
+                    .filter( function(str){return str.length > 0;});
+
+                if(posvals.length > 0){
+                    tablerows.filter(function(i, element){
+                            if(i == 0){return false;} // Don't filter out the header row
+                            var sig_text = $(element).children('td').first().html().toLowerCase();
+                            for(var j = 0; j < posvals.length; j++)
+                            {
+                                if(sig_text.indexOf(posvals[j]) > -1)
+                                {
+                                    return false;
+                                }
+                            }
+                            return true;
+                        }).addClass('hidden');
+                }
+
+                if(negvals.length > 0){
+                    tablerows.filter(function(i, element){
+                            if(i == 0){return false;} // Don't filter out the header row
+                            var sig_text = $(element).children('td').first().html().toLowerCase();
+                            for(var j = 0; j < negvals.length; j++)
+                            {
+                                if(sig_text.indexOf(negvals[j]) > -1)
+                                {
+                                    return true;
+                                }
+                            }
+                            return false;
+                        }).addClass('hidden');
+                }
+
+                tablerows.removeClass('altRow')
+                        .not('.hidden').filter(':odd').addClass('altRow');
+            }
+            
+            //Populate select dropdown
+            var filter_options = {};
+            for(model_name in FP_Models)
+            {
+                var modelPD = FP_Models[model_name].projectionData;
+                for(var j = 0; j < modelPD.length; j++)
+                {
+                    var fname = modelPD[j].filter;
+                    filter_options[fname] = true;
+                }
+            }
+            
+            for(key in filter_options)
+            {
+                var option = $(document.createElement("option"));
+                option.text(key).val(key);
+                $('#filter_dropdown').append(option);
+            }
+            
+            //Define cluster dropdown's change function
+            $('#cluster_select').change(function(){
+                drawHeat();
+            });
+
+            //Define color option (for scatter) change function
+            $('input[name=scatterColorButtons]').change(function(){
+                var val = $('input[name=scatterColorButtons]:checked').val();
+                global_status.scatterColorOption = val;
+                drawChart();
+            });
+
+            updateTable();
+        };
+
+        function updateCurrentSelections()
+        {
+            //Sort the data initially by PC 1,2
+            var data = getDataContext();
+            if(data.ProjectionKeys.indexOf(global_status.sorted_column) == -1 )
+            {
+                if(data.ProjectionKeys.indexOf("PCA: 1,2" ) != -1){
+                    global_status.sorted_column = "PCA: 1,2";
+                }
+                else
+                {
+                    global_status.sorted_column = "";
+                }
+            }
+
+            if(data.ProjectionKeys.indexOf(global_status.plotted_projection) == -1)
+            {
+                if(data.ProjectionKeys.indexOf("PCA: 1,2" ) != -1){
+                    global_status.plotted_projection = "PCA: 1,2";
+                }
+                else
+                {
+                    global_status.plotted_projection = data.ProjectionKeys[0];
+                }
+            }
+
+            if(data.SignatureKeys.indexOf(global_status.plotted_signature) == -1)
+            {
+                //Select top signature of sorted projection by default
+                var j = data.ProjectionKeys.indexOf(global_status.plotted_projection);
+                var s_i = data.SigProjMatrix_p.map(function(e){return e[j];}).argSort();
+
+                global_status.plotted_signature = data.SignatureKeys[s_i[0]];
+
+            }
+
+
+        }
+
+        function updateTable()
+        {
+            updateCurrentSelections();
+            updateMenuBar();
+            createTableFromData();
+            drawChart();
+            populateClusterDropdown();
+            drawHeat();
+        }
+
+        function updateMenuBar()
+        {
+            var button = $('#show_genes_button');
+            var data = getDataContext();
+            var num_genes = data.genes.length;
+            button.text(num_genes + " Genes");
+        }
+
+        function populateClusterDropdown()
+        {
+            var data = getDataContext();
+            var proj_key = global_status.plotted_projection;
+            var clusters = data.Clusters[proj_key];
+            var clust_dropdown = $('#cluster_select');
+            var old_i = clust_dropdown.prop('selectedIndex');
+            if(old_i == -1){
+                if(Object.keys(clusters).length > 3){ old_i = 2;}
+                else { old_i = 0;}
+            }
+            clust_dropdown.empty();
+            $.each(clusters, function(name, value){
+                clust_dropdown.append($("<option />").val(name).text(name));
+            });
+            clust_dropdown[0].selectedIndex = old_i; // Restore index on model change
+        }
+
+        function getDataContext()
+        {
+            var probability = false;
+            var model_name = 'Expression';
+            if(probability){ model_name = 'Expression';}
+            
+            //Find right model
+            var model;
+            for (name in FP_Models)
+            {
+                if(name.toUpperCase() === model_name.toUpperCase())
+                {
+                    model = FP_Models[name];
+                    break;
+                }
+            }
+            
+            //Find the right projection object
+            
+            var filter_name = $('#filter_dropdown').val();
+            var pca = $('#pca_checkbox').is(":checked");
+            
+            var projection_data;
+            
+            for (var i = 0; i < model.projectionData.length; i++)
+            {
+                var pd = model.projectionData[i];
+                if(pd.filter.toUpperCase() === filter_name.toUpperCase() && pd.pca === pca)
+                {
+                    projection_data = pd;
+                    break;
+                }
+            }
+            
+            //Build the data object
+            var data = {};
+            data['Clusters'] = projection_data.clusters;
+            data['genes'] = projection_data.genes;
+            data['ProjectionKeys'] = projection_data.projectionKeys;
+            data['Projections'] = projection_data.projections;
+            data['SigProjMatrix'] = projection_data.sigProjMatrix;
+            data['SigProjMatrix_p'] = projection_data.sigProjMatrix_p;
+            data['SignatureKeys'] = projection_data.signatureKeys;
+            data['SigScores'] = model.signatureScores;
+            
+            return data;
+        }
+
+
+        Array.prototype.argSort = function()
+        {
+            var out = new Array(this.length);
+            for(var i = 0; i < out.length; i++) out[i] = i;
+            var that = this;
+            out.sort(function(a,b){return that[a] - that[b];});
+            return out;
+        };
+
+        function sortByColumn(col_name)
+        {
+            global_status.sorted_column = col_name;
+            createTableFromData();
+        }
+
+        function tableClickFunction(row_key, col_key)
+        {
+            global_status.plotted_signature  = row_key;
+            global_status.plotted_projection = col_key;
+            drawChart();
+            drawHeat();
+        }
+
+        function drawChart() {
+            var sig_key = global_status.plotted_signature;
+            var proj_key = global_status.plotted_projection;
+            
+            var points = [];
+            
+            if(sig_key.length > 0 && proj_key.length > 0){
+                var data = getDataContext();
+
+                $('#plot_title_div').children().eq(0).text(proj_key);
+                $('#plot_title_div').children().eq(1).text(sig_key);
+
+                var proj = data.Projections[proj_key];
+                var sig = data.SigScores[sig_key];
+                var sig_scores;
+
+                if(sig.isFactor) { sig_scores = sig.scores;}
+                else { 
+                    if(global_status.scatterColorOption == "rank") {sig_scores = sig.ranks;}
+                    if(global_status.scatterColorOption == "value") {sig_scores = sig.scores;}
+                }
+
+                var xcoords = proj[0];
+                var ycoords = proj[1];
+                var sample_labels = FP_ExpressionMatrix.sample_labels;
+                //Zip up the data into a new points object
+                for(i = 0; i<xcoords.length; i++)
+                {
+                    points.push([xcoords[i], ycoords[i], sig_scores[i], sample_labels[i]]);
+                }
+            }
+            else{
+                $('#plot_title_div').children().eq(0).text("");
+                $('#plot_title_div').children().eq(1).text("");
+            }
+
+            global_scatter.setData(points, sig.isFactor);
+        }
+
+        function drawHeat(){
+            var sig_key = global_status.plotted_signature;
+            var data = getDataContext();
+            if(sig_key.length > 0)
+            {
+                if( !$('#heatmap_div').is(":visible"))
+                {
+                    $('#heatmap_div').find('svg').remove();
+                    $('#heatmap_div').show();
+                    global_heatmap = new HeatMap('#heatmap_div');
+                    global_scatter.hovered_links.push(global_heatmap);
+                    global_heatmap.hovered_links.push(global_scatter);
+                }
+                var sig = FP_Signatures[sig_key];
+                if(sig !== undefined){  //undefined sig if it's precomputed
+                    var genes = sig.Genes;
+
+                    //Construct data matrix
+                    //Look up gene indices
+                    var gene_indices = [];
+                    for(var j = 0; j < genes.length; j++)
+                    {
+                        var gene_index = FP_ExpressionMatrix.gene_labels.indexOf(genes[j]);
+                        if(gene_index > -1) //Some genes are in signature, but not in data
+                        {
+                            gene_indices.push(gene_index);
+                        }
+                    }
+
+                    gene_indices.sort();  //So heatmap drawn in same order as data
+
+                    var dataMat = gene_indices.map(function(e,i){
+                        return FP_ExpressionMatrix.data[e];
+                    });
+                    
+                    var gene_labels = gene_indices.map(function(e,i){
+                        return FP_ExpressionMatrix.gene_labels[e];
+                    });
+
+                    var gene_signs = gene_labels.map(function(e,i){
+                        var s_i = sig.Genes.indexOf(e);
+                        return sig.Signs[s_i];
+                    });
+
+                    var proj_key = global_status.plotted_projection;
+                    var choice = $('#cluster_select').val();
+                    var assignments = data.Clusters[proj_key][choice];
+
+                    global_heatmap.setData(dataMat,
+                           assignments,
+                           gene_labels,
+                           gene_signs,
+                           FP_ExpressionMatrix.sample_labels);
+                }
+                else
+                {
+                    $('#heatmap_div').hide();
+                }
+
+            }
+
+        }
+
+        function createTableFromData()
+        {
+            //Detach filter sig box for later
+            var filterSig = $('#sig_filt_input');
+            filterSig.detach();
+
+            var data = getDataContext();
+            data_matrix = data.SigProjMatrix_p;
+            col_labels = data.ProjectionKeys;
+            row_labels = data.SignatureKeys;
+
+            var colorScale = d3.scale.linear()
+                .domain([0,-3,-50])
+                .range(["steelblue","white", "lightcoral"])
+                .clamp(true);
+
+            var header_row = d3.select('#table_div').select('thead').select('tr').selectAll('th')
+                .data([""].concat(col_labels));
+
+            header_row.enter().append('th');
+            header_row.html(function(d){return "<div>"+d+"</div>";})
+                .filter(function(d,i) {return i > 0;})
+                .on("click", function(d,i) { sortByColumn(d);});
+
+            header_row.exit().remove();
+
+            //Format cell data for better d3 binding
+            var formatted_data_matrix = data_matrix.map(function(row, i){
+                    return row.map(function(val, j){
+                        return {"val":val, "row":i, "col":j}
+                        });
+                    });
+
+            var formatted_data_w_row_labels = d3.zip(row_labels, formatted_data_matrix);
+
+            //Sort data if necessary
+            var sort_col = data.ProjectionKeys.indexOf(global_status.sorted_column);
+            if(sort_col > -1){
+                sortFun = function(a,b){
+                    a_precomp = data.SigScores[a[0]].isPrecomputed;
+                    b_precomp = data.SigScores[b[0]].isPrecomputed;
+                    if(a_precomp && b_precomp || !a_precomp && !b_precomp){
+                        return a[1][sort_col].val - b[1][sort_col].val;
+                    }
+                    else if (a_precomp) { return -1;}
+                    else {return 1;}
+                };
+                formatted_data_w_row_labels.sort(sortFun);
+            }
+
+            var content_rows = d3.select('#table_div').select('tbody').selectAll('tr')
+                .data(formatted_data_w_row_labels);
+
+            content_rows.enter().append('tr');
+            content_rows.exit().remove();
+
+            var content_row = content_rows.selectAll("td")
+                .data(function(d, row_num){return [d[0]].concat(d[1]);})
+
+            content_row.enter().append('td');
+            content_row.exit().remove();
+
+            content_row
+                .filter(function(d,i) { return i > 0;})
+                .text(function(d){
+                    if(d.val < -50) { return "< -50";}
+                    else if(d.val > -1) { return d.val.toFixed(2);}
+                    else { return d.val.toPrecision(2);}
+                        })
+                .style('background-color', function(d){return colorScale(d.val);})
+                .on("click", function(d){tableClickFunction(row_labels[d.row], col_labels[d.col])});
+
+            //Make signature names click-able
+            content_row.filter(function(d,i) { return i == 0;})
+                .text(function(d){return d;})
+                .on("click", function(d){createSigModal(d)});
+                
+            //Create filter signature box
+            var th = $('#table_div').children('table').children('thead').children('tr').children('th:first-child');
+            $(th).append(filterSig);
+            filterSig.show();
+            filterSig.trigger('input');
+        }
+
+        function createSigModal(signature_label){
+            var sig_obj = FP_Signatures[signature_label];
+            var sig_data = [];
+            for(var i = 0; i < sig_obj.Genes.length; i++)
+            {
+                sig_data.push({'Gene': sig_obj.Genes[i], 'Sign': sig_obj.Signs[i]});
+            }
+            var sigModal = $('#signatureModal');
+            sigModal.find('h4').text(signature_label);
+            var tableRows = d3.select('#signatureModal').select('tbody').selectAll('tr')
+                    .data(sig_data);
+            tableRows.enter().append('tr');
+            tableRows.exit().remove();
+
+            var tableCells = tableRows.selectAll('td').data(function(d){return [d.Gene, d.Sign];});
+            tableCells.enter().append('td');
+            tableCells.text(function(d, i){
+                if(i == 0){return d;}
+                else{
+                    if(d == 1)  {return "+";}
+                    if(d == -1) {return "-";}
+                    if(d == 0)  {return "Unsigned";}
+                    return "Unknown";
+                    }
+                });
+
+            tableCells.exit().remove();
+
+            sigModal.modal();
+        }
+        
+        function createGeneModal()
+        {
+            data = getDataContext();
+            //Calculate max width
+            var width_and_index = data.genes.map(function(e,i){return [e.length, i]});
+            width_and_index.sort(function(a,b){return Math.sign(b[0] - a[0]);});
+            var top10 = width_and_index.slice(0,10).map(function(e,i){return data.genes[e[1]];});
+            var widths = [];
+            for(var i = 0; i < top10.length; i++)
+            {
+                var div = document.createElement("div");
+                $(div).text(top10[i]).css("position","absolute").css("left", "-9999px");
+                $('body').append(div);
+                widths.push($(div).width());
+            }
+            
+            var maxWidth = d3.max(widths);
+            
+            var geneDivs = d3.select('#geneModal').select('.modal-body').selectAll('div')
+                .data(data.genes.sort());
+                
+            geneDivs.enter().append('div');
+            geneDivs.exit().remove();
+            
+            geneDivs
+                .text(function(d){return d;})
+                .style("width", maxWidth + "px");
+            
+            $('#geneModal').modal();
+            
+        }
+
+    </script>
+</head>
+<body>
+<div class="modal fade" id="signatureModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel">Signature Info</h4>
+            </div>
+            <div class="modal-body">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Gene</th>
+                        <th>Sign</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="geneModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel">Genes Used for Projection</h4>
+            </div>
+            <div class="modal-body">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="content_wrapper" style="display: flex; flex-direction: row; justify-content: center;">
+    <div style="width: 700px; max-width: 850px; height: 100%; flex: 1 0 auto;">
+        <div id="title_div" class="color_panel">
+            <h1>FastProject Viewer</h1>
+        </div>
+        <div id="data_options_div" class="color_panel">
+            <!--<span>
+                <label for="probability_checkbox">Probability Model?</label>
+                <input id="probability_checkbox" type="checkbox" disabled>
+                </span>-->
+            <span>
+                <label for="pca_checkbox">PCA Before Project?</label>
+                <input id="pca_checkbox" type="checkbox">
+            </span>
+            <span>
+                <label for="filter_dropdown">Filter Level</label>
+                <select id="filter_dropdown">
+                </select>
+            </span>
+            <span>
+                <button id="show_genes_button" type="button" class="btn btn-default" onclick=createGeneModal()>
+                    +Show Genes
+                </button>
+            </span>
+        </div>
+        <div id="table_div" class="color_panel" style="height: calc(100vh - 156px);">
+            <table>
+                <thead><tr></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+    <div style="width: 500px; height: 100%; max-width: 500px; flex: 1 1 auto;">
+        <div id="plot_title_div" class="color_panel">
+            <div class="title"></div>
+            <div class="subtitle"></div>
+            <div class="colorOptions">
+                <span>Signature Score Colors:</span>
+                <div class="btn-group" data-toggle="buttons">
+                    <label class="btn btn-default">
+                        <input type="radio" name="scatterColorButtons" id="valueoption" value="value" autocomplete="off"> Value
+                    </label>
+                    <label class="btn btn-default active">
+                        <input type="radio" name="scatterColorButtons" id="rankoption" value="rank" autocomplete="off" checked> Rank
+                    </label>
+                </div>
+                <div style="float: right">
+                    <button type="button" class="btn btn-default" onclick=exportSigProj()>&#x21e9;Export</button>
+                </div>
+            </div>
+        </div>
+        <div id="scatter_div" class="color_panel" style="height: calc((100vh - 165px)/2);"></div>
+        <div id="heatmap_div" class="color_panel" style="height: calc((100vh - 165px)/2);">
+            <select id="cluster_select" class="form-control" style="width: 200px;"></select>
+        </div>
+    </div>
+</div>
+<input id="sig_filt_input" type="text" placeholder="Filter Signatures..." style="display: none;">
+</body>
+</html>

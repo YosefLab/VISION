@@ -79,7 +79,10 @@ FastProject <- setClass("FastProject",
 FastProjectOutput <- setClass("FastProjectOutput",
     slots = c(
       exprData = "ExpressionData",
-      projData = "list"
+      projData = "list", 
+      sigScores = "matrix",
+      randomSigScores = "list", 
+      weights = "matrix"
     )
 )
 
@@ -95,7 +98,9 @@ ProjectionData <- setClass("ProjectionData",
       filter = 'character', 
       projections = "list",
       genes = "character",
-      keys = "character"
+      keys = "character",
+      sigProjMatrix = "matrix",
+      pMatrix="matrix"
     )
 )
 
@@ -115,7 +120,7 @@ SignatureScores <- setClass("SignatureScores",
     slots = c(
       scores = "vector",
       name = "character",
-      sample_labels = "list",
+      sample_labels = "character",
       isFactor = "logical",
       isPrecomputed = "logical",
       numGenes = "numeric"

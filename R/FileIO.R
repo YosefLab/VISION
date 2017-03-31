@@ -1,5 +1,6 @@
 require(cogena)
 require(data.table)
+require(tools)
 
 readExprToMatrix <- function(filename, delimiter="\t") {
   

@@ -13,7 +13,7 @@ setMethod("initialize", signature(.Object = "Projection"),
 
 setMethod("updateProjection", signature(object = "Projection"),
           function(object, data) {
-            
-            return(.Object)
+            object@pData <- data
+            return(object)
           }
 )

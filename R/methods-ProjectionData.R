@@ -6,12 +6,14 @@
 
 
 setMethod("initialize", signature(.Object="ProjectionData"),
-          function(.Object, filter = "", projections=NULL, genes, keys) {
+          function(.Object, filter = "", projections=NULL, genes, keys, sigProjMatrix, pMatrix) {
             
             .Object@filter <- filter
             .Object@projections <- projections
             .Object@genes <- genes
             .Object@keys <- keys
+            .Object@sigProjMatrix <- sigProjMatrix
+            .Object@pMatrix <- pMatrix
             
             return(.Object)
             

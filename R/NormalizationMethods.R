@@ -36,27 +36,25 @@ colNormalization <- function(data) {
   
   message("Applying z-normalization on all columns...")
 
+  #ndata <- apply(data, 2, function(c) (c - mean(c)) / biasedVectorSD(c))
+  #return(ndata)
   ndata <- t(data)
   mu <- apply(ndata, 1, mean)
   sigma <- biasedSD(ndata)
-  
   ndata <- (ndata - mu) / sigma
-  
   return(t(ndata))
-
 }
 
 rowNormalization <- function(data) {
   #' Perform z-normalization on all rows
 
   message("Applying z-normalization on all rows...")
-  
   mu <- rowMeans(data)
   sigma <- biasedSD(data)
   sigma[sigma == 0] <- 1.0
-  
-  ndata <- ((data - mu) / sigma)
-  
+  ndata <- apply(data, 1, function(r) (r - mean(r)) / biasedVectorSD(r))
+  #return(ndata)
+  ndata <- ( (data - mu) / sigma)
   return(ndata)
 }
 

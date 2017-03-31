@@ -1,0 +1,265 @@
+html {
+    height: 100%;
+}
+
+body {
+    height: 100%;
+    padding-top: 1px;
+    padding-left: 20px;
+    background-color: #aaa;
+}
+
+input[type=text]
+{
+    border-radius: 4px;
+    padding-left: 10px;
+    border: 1px gray; 
+}
+
+.color_panel
+{
+    background-color: #ccc;
+    padding: 5px;
+    margin: 10px;
+    /*box-shadow: 0 10px 6px -6px #777;*/
+    box-shadow: -8px 8px 10px -3px #777;
+
+}
+
+#data_options_div span{
+    margin-left: 20px;
+    vertical-align: middle;
+}
+
+#data_options_div button{
+    padding: 0 6px;
+    vertical-align: baseline;
+}
+
+#table_div table{
+    margin-right: 50px; /* So the table div accounts for angled labels */
+    margin-top: 30px;
+    width: calc(100% - 50px);
+    table-layout: fixed;
+}
+
+#table_div table th:first-child{
+    text-align:left;
+}
+
+#table_div table th:not(:first-child) div {
+    transform-origin: left center 0;
+    transform: translate(15px,0.5em) rotate(-50deg);
+    width: 100px;
+    text-align: left;
+}
+
+#table_div table td:first-child{
+    max-width:350px;
+    width:350px;
+    font-size: 0.8em;
+    font-weight: bold;
+    -ms-word-wrap: break-word;
+    word-wrap: break-word;
+    cursor: pointer;
+    padding-left: 5px;
+}
+
+#table_div table td:not(:first-child), #table_div table th:not(:first-child){
+    text-align: center;
+    width: 35px;
+    cursor: pointer;
+    font-size: 0.8em;
+}
+
+#table_div table td:not(:first-child){
+    padding: 3px 0;
+    border: 1px solid black;
+}
+
+.altRow{
+    background-color: rgb(220,220,220);
+}
+
+.hidden {
+    display: none;
+}
+
+#table_div{
+    padding-top: 20px;
+    overflow: auto;
+}
+
+
+#scatter_div svg {
+    font: 10px sans-serif;
+    shape-rendering: crispEdges;
+    background-color: rgba(255,255,255,0);
+}
+
+#scatter_div rect {
+    fill: #ddd;
+}
+
+#scatter_div svg circle{
+    fill-opacity: 0.7;
+}
+
+#scatter_div .axis path,
+#scatter_div .axis line {
+    fill: none;
+    stroke: #fff;
+}
+
+#heatmap_div{
+}
+
+#title_div{
+    padding-left: 15px;
+}
+
+#plot_title_div{
+    text-align: center;
+    word-wrap: break-word;
+    font-size: 18px;
+}
+
+#plot_title_div .subtitle, #plot_title_div .title{
+    margin: 5px 0;
+}
+
+#plot_title_div .subtitle{
+    font-size: 13px;
+}
+
+#plot_title_div .colorOptions{
+    font-size: 13px;
+    text-align: left;
+    margin: 10px 70px;
+}
+
+#plot_title_div .colorOptions label{
+    padding: 0 6px;
+}
+
+#plot_title_div .colorOptions .btn-group{
+    vertical-align: bottom;
+}
+
+#plot_title_div button
+{
+    padding: 0 6px;
+    vertical-align: baseline;
+}
+
+#spacer{
+    width: 830px;
+    height: 800px;
+}
+
+.point-faded{
+    fill-opacity: 0.3 !important;
+}
+
+.point-hover{
+    fill-opacity: 1.0 !important;
+}
+
+.point-selected{
+    stroke: yellow !important;
+    stroke-width: 2px !important;
+}
+
+/* Style for hovered heatmap rows */
+.heatmap-hover {
+    fill-opacity: .7 !important;
+}
+
+/*For bootstrap modal header*/
+.modal-header{
+    word-break: break-all;
+}
+
+.modal-body table{
+    margin: 0 auto;
+}
+
+.modal-body table td:not(:first-child)
+{
+    text-align: center;
+}
+
+#geneModal .modal-body div
+{
+    float: left;
+    margin: 5px;
+    text-align: center;
+}
+
+#geneModal .modal-body div:last-child{
+    float: none;
+    clear: both;
+}
+
+#geneModal .modal-dialog
+{
+    width: 900px;
+}
+
+/* Stying for d3 tooltips on the scatter */
+.d3-tip {
+  line-height: 1;
+  font-weight: bold;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+/* Creates a small triangle extender for the tooltip */
+.d3-tip:after {
+  box-sizing: border-box;
+  display: inline;
+  font-size: 10px;
+  width: 100%;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.8);
+  position: absolute;
+  pointer-events: none;
+}
+
+/* Northward tooltips */
+.d3-tip.n:after {
+  content: "\25BC";
+  margin: -1px 0 0 0;
+  top: 100%;
+  left: 0;
+  text-align: center;
+}
+
+/* Eastward tooltips */
+.d3-tip.e:after {
+  content: "\25C0";
+  margin: -4px 0 0 0;
+  top: 50%;
+  left: -8px;
+}
+
+/* Southward tooltips */
+.d3-tip.s:after {
+  content: "\25B2";
+  margin: 0 0 1px 0;
+  top: -8px;
+  left: 0;
+  text-align: center;
+}
+
+/* Westward tooltips */
+.d3-tip.w:after {
+  content: "\25B6";
+  margin: -4px 0 0 -1px;
+  top: 50%;
+  left: 100%;
+}
+
