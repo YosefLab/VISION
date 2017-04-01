@@ -209,8 +209,8 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     clusters <- defineClusters(projs)
       
     message("Computing significance of signatures...")
+    return(list(sigScores, randomSigScores))
     sigVProj <- sigsVsProjections(projs, sigScores, randomSigScores)
-
 
     sigKeys <- sigVProj[[1]]
     projKeys <- sigVProj[[2]]

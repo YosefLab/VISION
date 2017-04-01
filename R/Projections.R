@@ -20,11 +20,11 @@ registerMethods <- function(lean=FALSE) {
   #projMethods <- c("ICA" = applyICA)
   projMethods <- c()
   if (!lean) {
-    projMethods <- c(projMethods, "Spectral Embedding" = applySpectralEmbedding)
+    #projMethods <- c(projMethods, "Spectral Embedding" = applySpectralEmbedding)
     projMethods <- c(projMethods, "MDS" = applyMDS)
   }
   
-  #projMethods <- c(projMethods, "RBF Kernel PCA" = applyRBFPCA)
+  projMethods <- c(projMethods, "RBF Kernel PCA" = applyRBFPCA)
   #projMethods <- c(projMethods, "ISOMap" = applyISOMap)
   projMethods <- c(projMethods, "tSNE30" = applytSNE30)
   projMethods <- c(projMethods, "tSNE10" = applytSNE10)
@@ -237,6 +237,7 @@ applytSNE30 <- function(exprData, projWeights=NULL) {
   ndataT <- t(ndata)
   res <- Rtsne(ndataT, dims=2, perplexity=30.0, pca=FALSE, theta=0.0)
   res <- res$Y
+  
   rownames(res) <- colnames(exprData)
   
   return(res)
@@ -246,13 +247,11 @@ applyISOMap <- function(exprData, projWeights=NULL) {
   set.seed(RANDOM_SEED)
   
   ndata <- colNormalization(exprData)
-  which(is.na(ndata), arr.ind=T)
-  ndataT <- dimRedData(t(ndata))
-  res <- embed(ndataT, "Isomap", knn=4, ndim=2)
+  d <- dist(t(ndata), method="eucildean")
+  res <- isomap(d, k=4, ndim=2, fragmentedOK=TRUE)
+  res <- res$points
   
-  res <- res@data@data
-  colnames(res) = colnames(exprData)
-  return(t(res))
+  return(res)
   
 }
 
@@ -265,6 +264,6 @@ applyRBFPCA <- function(exprData, projWeights=NULL) {
   res <- res@pcv
   
   rownames(res) <- colnames(exprData)
-  return(t(res))
+  return(res)
   
 }
