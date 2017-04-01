@@ -98,13 +98,13 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   N_PROJECTIONS <- length(spColLabels)
   
   sigProjMatrix <- matrix(0L, nrow=N_SIGNATURES, ncol=N_PROJECTIONS)
-  sigProjMatrixP <- matrix(0L, nrow=N_SIGNATURES, ncol=N_PROJECTIONS)
+  sigProjMatrix_P <- matrix(0L, nrow=N_SIGNATURES, ncol=N_PROJECTIONS)
   
   factorSigProjMatrix <- matrix(0L, nrow=N_SIGNATURE_FACTORS, ncol=N_PROJECTIONS)
-  factorSigProjMatrixP <- matrix(0L, nrow=N_SIGNATURE_FACTORS, ncol=N_PROJECTIONS)
+  factorSigProjMatrix_P <- matrix(0L, nrow=N_SIGNATURE_FACTORS, ncol=N_PROJECTIONS)
   
   pnumSigProjMatrix <- matrix(0L, nrow=N_SIGNATURE_PNUM, ncol=N_PROJECTIONS)
-  pnumSigProjMatrixP <- matrix(0L, nrow=N_SIGNATURE_PNUM, ncol=N_PROJECTIONS)
+  pnumSigProjMatrix_P <- matrix(0L, nrow=N_SIGNATURE_PNUM, ncol=N_PROJECTIONS)
   
   # Build a matrix of all signatures
   sigScoreMatrix <- matrix(0L, nrow=N_SAMPLES, ncol=N_SIGNATURES)
@@ -137,18 +137,20 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
     dataLoc <- proj@pData
     distanceMatrix <- (dist(t(dataLoc), method="euclidean"))
 
-    weights <- as.matrix(exp(-1 * ((distanceMatrix*distanceMatrix) / NEIGHBORHOOD_SIZE^2)))
+    weights <- as.matrix(exp(-1 * (distanceMatrix*distanceMatrix) / NEIGHBORHOOD_SIZE^2))
     diag(weights) <- 0
     weightsNormFactor <- apply(weights, 1, sum)
     weightsNormFactor[weightsNormFactor == 0] <- 1.0
     weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
-    weights <-(weights / weightsNormFactor)
-  
+    weights <- weights / weightsNormFactor
+    print(proj@name)
+    print(dim(weights))
     neighborhoodPrediction <- (weights %*% sigScoreMatrix)
   
     ## Neighborhood dissimilatory score = |actual - predicted|
     dissimilarity <- abs(sigScoreMatrix - neighborhoodPrediction)
     medDissimilarity <- as.matrix(apply(dissimilarity, 2, median))
+    
     # Calculate scores for random signatures
     randomNeighborhoodPrediction <- (weights %*% randomSigScoreMatrix)
     randomDissimilarity <- abs(randomSigScoreMatrix - randomNeighborhoodPrediction)
@@ -166,7 +168,8 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
       }
       k <- k + 1
     }
-   
+    
+    
     bgStat <- matrix(0L, nrow=length(backgrounds), ncol=3)
     k <- 1
     for (numGenes in names(backgrounds)) {
@@ -177,7 +180,6 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
       bgStat[k, 3] <- std_x
       k <- k + 1
     }
-  
     
     mu <- matrix(0L, nrow=nrow(medDissimilarity), ncol=ncol(medDissimilarity))
     sigma <- matrix(0L, nrow=nrow(medDissimilarity), ncol=ncol(medDissimilarity))
@@ -186,20 +188,15 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
       # Find background with closest number of genes 
       numG <- spRows[[k]]@numGenes
       row_i <- which.min(abs(numG - bgStat[,1]))
-      mu[k] <- bgStat[row_i, 1]
-      sigma[k] <- bgStat[row_i, 2]
+      mu[k] <- bgStat[row_i, 2]
+      sigma[k] <- bgStat[row_i, 3]
     }
-    
-    medDissimilarityPrime <- (medDissimilarity - mu) / sigma
-    
-    #Create CDF function for medDissmilarityPrime
-    pcdf <- ecdf(medDissimilarityPrime)
-    # Apply CDF function to medDissimilarityPrime pointwise
-    pValues <- apply(medDissimilarityPrime, c(1, 2), pcdf)
-    
+
+    #Create CDF function for medDissmilarityPrime and apply CDF function to medDissimilarityPrime pointwise
+    pValues <- pnorm( ((medDissimilarity - mu) / sigma))
+
     sigProjMatrix[,i] <- 1 - (medDissimilarity / N_SAMPLES)
-    sigProjMatrixP[,i] <- pValues
-    
+    sigProjMatrix_P[,i] <- pValues
    
     ## TODO 
     # Calculate significance for precomputed numerical signatures 
@@ -214,17 +211,20 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   ## TODO 
   # Concatenate Factor Sig-proj entries back in 
   
-  sigProjMatrixP <- apply(sigProjMatrix, 1, function(x) p.adjust(x, method="BH"))
-  sigProjMatrixP[sigProjMatrixP == 0] <- 10^(-300)
+  original_shape <- dim(sigProjMatrix_P)
+  sigProjMatrix_P <- p.adjust(sigProjMatrix_P, method="BH")
+  dim(sigProjMatrix_P) <- original_shape
+  sigProjMatrix_P[sigProjMatrix_P == 0] <- 10^(-300)
   
-  sigProjMatrixP <- t(apply(sigProjMatrixP, c(1,2), log10))
-  colnames(sigProjMatrixP) <- spColLabels
-  rownames(sigProjMatrixP) <- spRowLabels
+  sigProjMatrix_P <- as.matrix(log10(sigProjMatrix_P))
+  
+  colnames(sigProjMatrix_P) <- spColLabels
+  rownames(sigProjMatrix_P) <- spRowLabels
   
   colnames(sigProjMatrix) <- spColLabels
   rownames(sigProjMatrix) <- spRowLabels
   
-  return(list(spRowLabels, spColLabels, sigProjMatrix, sigProjMatrixP))
+  return(list(spRowLabels, spColLabels, sigProjMatrix, sigProjMatrix_P))
     
     
 }
