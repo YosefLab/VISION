@@ -41,6 +41,21 @@ setMethod("addSigData", signature(object="Signature"),
             retunr(object)
           })
 
+
+BG_DIST <- matrix(0L, nrow=0, ncol=0)
+
+getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
+  
+  if (nrow(BG_DIST) != N_SAMPLES || ncol(BG_DIST) != NUM_REPLICATES) {
+    set.seed(RANDOM_SEED)
+    BG_DIST <- matrix(rnorm(N_SAMPLES*NUM_REPLICATES), nrow=N_SAMPLES, ncol=NUM_REPLICATES)
+    BG_DIST <- apply(BG_DIST, 2, order)
+  }
+  
+  return(BG_DIST)
+  
+}
+
 sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBORHOOD_SIZE = 0.33) {
   #' Evaluates the significance of each signature vs. each projection. 
   #' 
@@ -59,7 +74,7 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   #'    Labels for columns of the output matrices
   #'  sigProjMatrix: matrix (Num_Signatures x Num_Projections)
   #'    sigProj dissimilarity score
-  #'  SigProjMatrixP: matrix (Num_Signatures x Num_Projections)
+  #'  SigProjMatrix_P: matrix (Num_Signatures x Num_Projections)
   
   set.seed(RANDOM_SEED)
   spRowLabels <- c()
@@ -69,14 +84,21 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   spRowLabelsPNum <- c()
   spRowPNums <- c()
   
+  precomputedSigs <- c()
+  precomputedNumerical <- c()
+  precomputedFactor <- c()
   for (sig in sigScoresData) {
     if (sig@isPrecomputed) {
       if (sig@isFactor) {
         spRowLabelsFactors <- c(spRowLabelsFactors, sig@name)
         spRowFactors <- c(spRowFactors, sig)
+        precomputedSigs <- c(precomputedSigs, sig)
+        precomputedFactor <- c(precomputedFactor, sig)
       } else{
         spRowLabelsPNum <- c(spRowLabelsPNum, sig@name)
         spRowPNums <- c(spRowPNums, sig)
+        precomputedSigs <- c(precomputedSigs, sig)
+        precomputedNumerical <- c(precomputedNumerical, sig)
       }
     } else {
       spRowLabels <- c(spRowLabels, sig@name)
@@ -129,6 +151,27 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
 
   
   ### TODO: BUILD ONE HOT MATRIX FOR FACTORS 
+  factorSigs <- list()
+  for (s in precomputedFactor) {
+    fValues <- s@scores
+    fLevels <- unique(fValues)
+    factorFreq <- matrix(0L, ncol=length(fLevels))
+    factorMatrix <- matrix(0L, nrow=N_SAMPLES, ncol=length(fLevels))
+    j <- 1
+    for (fval in fLevels) {
+      factorMatrixRow <- matrix(0L, nrow=N_SAMPLES, ncol=1)
+      equal_ii <- which(fValues == fval)
+      factorMatrixRow[equal_ii] <- 1
+      factorFreq[j] <- length(equal_ii) / length(fValues)
+      factorMatrix[,j] <- factorMatrixRow
+      j <- j+1 
+    }
+
+    factorSigs[[s@name]] <- list(fLevels, factorFreq, factorMatrix)
+  
+  }
+  
+  
   
   message("Evaluating signatures against projections...")
   
@@ -144,7 +187,7 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
     weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
     weights <- weights / weightsNormFactor
     print(proj@name)
-    print(dim(weights))
+    print(dim(sigScoreMatrix))
     neighborhoodPrediction <- (weights %*% sigScoreMatrix)
   
     ## Neighborhood dissimilatory score = |actual - predicted|
@@ -198,18 +241,96 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
     sigProjMatrix[,i] <- 1 - (medDissimilarity / N_SAMPLES)
     sigProjMatrix_P[,i] <- pValues
    
-    ## TODO 
     # Calculate significance for precomputed numerical signatures 
     # This is done separately because there are likely to be many repeats (e.g. for a time coordinate)
+    j <- 1
+    for (s in precomputedNumerical) {
+      
+      sigScores <- rank(s@scores)
+      if (all(sigScores == sigScores[1])) {
+        pnumSigProjMatrix[j,i] <- 0.0
+        pnumSigProjMatrix_P[j,i] <- 1.0
+        next
+      }
+      
+      sigPredictions <- (weights %*% sigScores)
+      dissimilarity <- abs(sigScores - sigPredictions)
+      medDissimilarity <- as.matrix(apply(dissimilarity, 2, median))
+      
+      #Compute a background for numerical signatures
+      NUM_REPLICATES <- 10000
+      randomSigValues <- get_bg_dist(N_SAMPLES, NUM_REPLICATES)
+      bgValues <- as.vector(t(sigScores))[randomSigValues]
+      randomPredictions <- (weights %*% bgValues)
+      rDissimilarity <- abs(bgValues <- randomPredictions)
+      randomScores <- as.matrix(apply(rDissimilarity, 2, median))
+      
+      mu <- mean(randomScores)
+      sigma <- biasedVectorSD(random_scores)
+      if (sigma != 0) {
+        p_value <- pnorm((medDissimilarity - mu) / sigma)
+      } else {
+        p_value <- 1.0
+      }
+      
+      pnumSigProjMatrix[j,i] <- 1 - (medDissimilarity / N_SAMPLES)
+      pnumSigProjMatrix_P[j,i] <- p_value
+      
+      j <- j + 1
+    }
+    
+    
+    # Calculate signficance for Factor signatures
+    j <- 1
+    for (s in factorSigs) {
+      fLevels <- s[[1]]
+      factorFreq <- s[[2]]
+      fMatrix <- s[[3]]
+      
+      if (1 %in% factorFreq) {
+        factorSigProjMatrix[j,i] <- 0.0
+        factorSigProjMatrix_P[j,i] <- 1.0
+        next
+      }
+      
+      N_LEVELS <- length(fLevels)
+      factorPredictions <- (weights %*% fMatrix)
+      
+      dissimilarity <- 1 - as.matrix(apply(fMatrix %*% t(factorPredictions), 1, sum))
 
-    ## TODO
-    # Calculate significance for Factor Signatures
+      medDissimilarity <- as.matrix(apply(dissimilarity, 2, median))
+      
+      NUM_REPLICATES <- 1000
+      columnSamples <- sample(N_LEVELS, NUM_REPLICATES, replace=TRUE)
+      columnAssignments <- factorFreq[columnSamples]
+      dim(columnAssignments) <- c(1, NUM_REPLICATES)
+      randFactors <- matrix(runif(N_SAMPLES*NUM_REPLICATES), nrow=N_SAMPLES, ncol=NUM_REPLICATES)
+      randPredictions <- (weights %*% randFactors)
+      for (ii in 1:nrow(randPredictions)) {
+        randPredictions[ii,] <- sample(randPredictions[ii,])
+      }
+      randMedDissimilarity <- as.matrix(apply(1-randPredictions, 2, median))
+      
+      mu <- mean(randMedDissimilarity)
+      sigma <- biasedVectorSD(randMedDissimilarity)
+      if (sigma == 0) {
+        p_value <- 1.0
+      } else{
+        p_value <- pnorm((medDissimilarity - mu) / sigma)
+      }
+      
+      factorSigProjMatrix[j,i] <- 1 - medDissimilarity
+      factorSigProjMatrix_P[j,i] <- p_value
+    }
     
     i <- i + 1
   }
   
-  ## TODO 
+
   # Concatenate Factor Sig-proj entries back in 
+  sigProjMatrix <- rbind(sigProjMatrix, factorSigProjMatrix, pnumSigProjMatrix)
+  sigProjMatrix_P <- rbind(sigProjMatrix_P, factorSigProjMatrix_P, pnumSigProjMatrix_P)
+  spRowLabels <- c(spRowLabels, spRowLabelsFactors, spRowLabelsPNum)
   
   original_shape <- dim(sigProjMatrix_P)
   sigProjMatrix_P <- p.adjust(sigProjMatrix_P, method="BH")

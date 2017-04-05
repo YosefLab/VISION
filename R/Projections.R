@@ -17,8 +17,8 @@ require("smacof")
 
 registerMethods <- function(lean=FALSE) {
   
-  #projMethods <- c("ICA" = applyICA)
-  projMethods <- c()
+  projMethods <- c("ICA" = applyICA)
+
   if (!lean) {
     #projMethods <- c(projMethods, "Spectral Embedding" = applySpectralEmbedding)
     projMethods <- c(projMethods, "MDS" = applyMDS)
@@ -60,8 +60,10 @@ generateProjections <- function(expr, filterName="", inputProjections=c(), lean=
   
   print("PCA")
   pca_res <- applyPCA(exprData, N=30)
-  proj <- Projection("PCA", pca_res)
+  proj <- Projection("PCA: 1,2", t(pca_res[c(1,2),]))
   inputProjections <- c(inputProjections, proj)
+  inputProjections <- c(inputProjections, Projection("PCA: 1,3", t(pca_res[c(1,3),])))
+  inputProjections <- c(inputProjections, Projection("PCA: 2,3", t(pca_res[c(2,3),])))
   
   for (method in names(methodList)){
     print(method)
@@ -80,12 +82,9 @@ generateProjections <- function(expr, filterName="", inputProjections=c(), lean=
   output <- c()
   
   for (p in inputProjections) {
-    if (p@name == "PCA") {
-      coordinates <- t(p@pData)
-      coordinates <- coordinates[,1:2]
-    } else {
-      coordinates <- p@pData
-    }
+
+    coordinates <- p@pData
+    
     
     for (i in 1:ncol(coordinates)) {
       coordinates[,i] <- coordinates[,i] - mean(coordinates[,i])
@@ -247,7 +246,7 @@ applyISOMap <- function(exprData, projWeights=NULL) {
   set.seed(RANDOM_SEED)
   
   ndata <- colNormalization(exprData)
-  d <- dist(t(ndata), method="eucildean")
+  d <- dist(t(ndata), method="euclidean")
   res <- isomap(d, k=4, ndim=2, fragmentedOK=TRUE)
   res <- res$points
   

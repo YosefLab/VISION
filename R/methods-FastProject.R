@@ -10,7 +10,7 @@ setMethod("initialize", signature(.Object="FastProject"),
                    all_sigs=FALSE, debug=0, lean=FALSE, subsample_size=0, qc=FALSE, 
                    min_signature_genes=5, projections="", weights=NULL, threshold=0, 
                    sig_norm_method="znorm_rows", sig_score_method="weighted_avg", exprData=NULL, 
-                   housekeepingData=NULL, sigData=NULL) {
+                   housekeepingData=NULL, sigData=NULL, precomputedData=NULL) {
             
             ## Make sure that the minimum files are being read in.
             if (missing(data_file) && is.null(exprData)) {
@@ -43,6 +43,10 @@ setMethod("initialize", signature(.Object="FastProject"),
               .Object@weights <- matrix(NA, nrow=10, ncol=0)
             } else {
               .Object@weights <- weights
+            }
+            
+            if (!is.null(precomputed)) {
+              .Object@precomputedData <- readPrecomputed(precomputed, colnames(expr))
             }
             
             .Object@nofilter <- nofilter
@@ -130,7 +134,6 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     message("Computing weights from False Negative Function...")
     object@weights <- computeWeights(func, params, eData)
   }
-  print(dim(object@weights))
     
   zero_locations <- which(getExprData(eData) == 0.0, arr.ind=TRUE) 
     
@@ -158,6 +161,10 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     }
   }
 
+  for (s in object@precomputedData) {
+    sigScores <- c(sigScores, s)
+  }
+  
   # Construct random signatures for background distribution
   randomSigs <- c()
   randomSizes <- c(5, 10, 20, 50, 100, 200)
@@ -209,18 +216,12 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     clusters <- defineClusters(projs)
       
     message("Computing significance of signatures...")
-    return(list(sigScores, randomSigScores))
     sigVProj <- sigsVsProjections(projs, sigScores, randomSigScores)
 
     sigKeys <- sigVProj[[1]]
     projKeys <- sigVProj[[2]]
     sigProjMatrix <- sigVProj[[3]]
     pVals <- sigVProj[[4]]
-      
-      #pKeys <- c()
-      #for (p in projs) {
-      #  pKeys <- c(pKeys, p@name)
-      #}
       
     projData <- ProjectionData(filter=filter, projections=projs, genes=g, keys=projKeys, 
                                           sigProjMatrix=sigProjMatrix, pMatrix=pVals)

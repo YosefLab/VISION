@@ -94,7 +94,6 @@ createFalseNegativeMap <- function(data, housekeeping_genes, debug=0) {
       
       if (res$value < best_eval) {
         best_eval <- res$value
-        print(best_eval)
         param <- res$par
         params[1,k] = param[1]
         params[2,k] = param[2]

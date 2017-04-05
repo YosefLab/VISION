@@ -1,6 +1,6 @@
 setMethod("initialize", signature(.Object="SignatureScores"),
           function(.Object, scores, name, sample_labels, 
-                   isFactor, isPrecomputed, numGenes = "numeric") {
+                   isFactor, isPrecomputed, numGenes) {
             
             .Object@scores = scores
             .Object@name = name
