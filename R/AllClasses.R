@@ -53,7 +53,8 @@ FastProject <- setClass("FastProject",
       sig_score_method = "character",
       exprData = "matrix",
       housekeepingData = "data.frame",
-      sigData = "list"),
+      sigData = "list",
+      precomputedData= "list"),
     prototype = list(
       precomputed = NULL,
       output_dir = "FastProject_Output",
@@ -73,7 +74,8 @@ FastProject <- setClass("FastProject",
       sig_score_method ="weighted avg",
       exprData = NULL,
       housekeepingData = NULL,
-      sigData = NULL
+      sigData = NULL,
+      precomputedData=NULL
 ))
 
 FastProjectOutput <- setClass("FastProjectOutput",
