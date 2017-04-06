@@ -161,6 +161,8 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     sigScores <- c(sigScores, s)
   }
   
+  return(sigScores)
+  
   # Construct random signatures for background distribution
   randomSigs <- c()
   randomSizes <- c(5, 10, 20, 50, 100, 200)
