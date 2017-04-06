@@ -70,13 +70,12 @@ weightedEvalSignature <- function(expr, sig, weights, min_signature_genes) {
   if (length(sigVector) < min_signature_genes) {
     stop("Too few genes match signature.")
   }
-  
+
   sigGenes_ii <- which(rownames(exprData) %in% names(sigVector))
   sigGenes <- exprData[sigGenes_ii,]
   weights <- weights[sigGenes_ii, ]
-  
   pdata <- sigGenes * sigVector * weights;  
-  
+
   sigScores <- colSums(pdata)
   sigScores <- sigScores / colSums(abs(sigVector) * weights)
   

@@ -17,10 +17,10 @@ require("smacof")
 
 registerMethods <- function(lean=FALSE) {
   
-  projMethods <- c("ICA" = applyICA)
-
+  #projMethods <- c("ICA" = applyICA)
+  projMethods <- c()
   if (!lean) {
-    #projMethods <- c(projMethods, "Spectral Embedding" = applySpectralEmbedding)
+    projMethods <- c(projMethods, "Spectral Embedding" = applySpectralEmbedding)
     projMethods <- c(projMethods, "MDS" = applyMDS)
   }
   

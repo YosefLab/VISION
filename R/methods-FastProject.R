@@ -1,9 +1,5 @@
 require(logging)
 
-## Test with netPath_ud.txt
-## Compare  P-Values between this and fastproject (weightings all 1 for signature eval / pca) 
-
-
 setMethod("initialize", signature(.Object="FastProject"),
           function(.Object, data_file, housekeeping, signatures, precomputed=NULL,
                    output_dir = "FastProject_Output", nofilter=FALSE, nomodel=FALSE, pca_filter=FALSE,
@@ -46,7 +42,7 @@ setMethod("initialize", signature(.Object="FastProject"),
             }
             
             if (!is.null(precomputed)) {
-              .Object@precomputedData <- readPrecomputed(precomputed, colnames(expr))
+              .Object@precomputedData <- readPrecomputed(precomputed, colnames(.Object@exprData))
             }
             
             .Object@nofilter <- nofilter
@@ -200,7 +196,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     }
   }
   
-    
+
   # Apply projections to filtered gene sets, create new projectionData object
   projDataList <- c()
   for (filter in filterList) {
@@ -239,7 +235,8 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   }
     
   rownames(sigMatrix) <- names
-  colnames(sigMatrix) <- colnames(fp@exprData)
+  #colnames(sigMatrix) <- colnames(fp@exprData)
+  colnames(sigMatrix) <- colnames(expr)
     
     
   fpOut <- FastProjectOutput(eData, projDataList, sigMatrix, randomSigScores, object@weights)

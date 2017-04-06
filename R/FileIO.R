@@ -34,7 +34,7 @@ readSignaturesInput <- function(filenames) {
     
     if (file_ext(f) == "gmt") {
       inp <- gmt2list(filename)
-      
+     
       for (sig in names(inp)) {
         genes <- c()
         values <- c()
@@ -49,7 +49,7 @@ readSignaturesInput <- function(filenames) {
         if (sig %in% sig_names) {
           next; 
         }
-        
+      
         for (k in inp[[sig]]) {
           elem <- strsplit(k, ",")
           if (length(elem[[1]]) > 1) {
@@ -88,10 +88,10 @@ readSignaturesInput <- function(filenames) {
         }
         
         if (sigName %in% names(sigList)) {
-          sigList[[sigName]][gene] <- 1.0*keys[key]
+          sigList[[sigName]][gene] <- as.numeric(1.0*keys[key])
         } else {
-          sigList[[sigName]] <- list()
-          sigList[[sigName]][[gene]] <- 1.0*keys[key]
+          sigList[[sigName]] <- c()
+          sigList[[sigName]][[gene]] <- as.numeric(1.0*keys[key])
         }
       
       }
@@ -138,7 +138,7 @@ readPrecomputed <- function(filename, sampleLabels, delimiter="\t") {
   }
   
   # Make sure that l1 is in the same order as sample_labels; match indices between signatrues in file & sampleLabels
-  sampleLabels <- as.character(sampleLabels)
+  sampleLabels <- as.character(as.matrix(sampleLabels))
   colnames(f) <- l1
 
   f[,3:ncol(f)] <- f[,sampleLabels]
