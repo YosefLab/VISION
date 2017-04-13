@@ -125,6 +125,8 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     
   if (object@nomodel) {
     object@weights <- matrix(1L, nrow=nrow(originalData), ncol=ncol(originalData))
+    rownames(object@weights) <- rownames(originalData)
+    colnames(object@weights) <- colnames(originalData)
   }
   else if (all(is.na(object@weights))) {
     message("Computing weights from False Negative Function...")

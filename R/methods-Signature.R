@@ -150,7 +150,7 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   randomSigScoreMatrix <- t(apply(randomSigScoreMatrix, 1, as.numeric))
 
   
-  ### TODO: BUILD ONE HOT MATRIX FOR FACTORS 
+  ### BUILD ONE HOT MATRIX FOR FACTORS 
   factorSigs <- list()
   for (s in precomputedFactor) {
     fValues <- s@scores

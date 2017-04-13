@@ -31,8 +31,7 @@ naiveEvalSignature <- function(expr, sig, weights, min_signature_genes) {
     stop("Too few genes match signature.")
   }
   
-  sigGenes_ii <- which(rownames(exprData) %in% names(sigVector))
-  sigGenes <- exprData[sigGenes_ii,]
+  sigGenes <- exprData[names(sigVector),]
 
   weights <- matrix(1, nrow=nrow(sigGenes), ncol=ncol(sigGenes))
   
@@ -71,10 +70,10 @@ weightedEvalSignature <- function(expr, sig, weights, min_signature_genes) {
     stop("Too few genes match signature.")
   }
 
-  sigGenes_ii <- which(rownames(exprData) %in% names(sigVector))
-  sigGenes <- exprData[sigGenes_ii,]
-  weights <- weights[sigGenes_ii, ]
-  pdata <- sigGenes * sigVector * weights;  
+  sigGenes <- exprData[names(sigVector),]
+  weights <- weights[names(sigVector),]
+
+  pdata <- sigGenes * sigVector * weights
 
   sigScores <- colSums(pdata)
   sigScores <- sigScores / colSums(abs(sigVector) * weights)

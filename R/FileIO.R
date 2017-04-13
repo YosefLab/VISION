@@ -20,7 +20,7 @@ readHKGToMatrix <- function(filename, delimiter="\t") {
 readSignaturesInput <- function(filenames) {
 
   # Create a dictionary to easily compute signature sign
-  keys <- c("none" = 1.0,  'up' = 1.0, 'plus' = 1.0, 'down' = -1.0, 'dn' = -1.0, 'minus' = -1.0)
+  keys <- c("none" = 1.0,  'up' = 1.0, 'plus' = 1.0, 'down' = -1.0, 'dn' = -1.0, 'minus' = -1.0, 'mius'=-1.0)
   
   # Create a list to store all signatures
   sig_data <- c()
@@ -77,10 +77,10 @@ readSignaturesInput <- function(filenames) {
 
         if (length(dat) == 2) {
           key <- "none"
-          gene <- dat[[2]]
+          gene <- toupper(dat[[2]])
         } else {
           key <- tolower(dat[[2]])
-          gene <- dat[[3]]
+          gene <- toupper(dat[[3]])
         }
         
         if (sigName %in% sig_names) {
