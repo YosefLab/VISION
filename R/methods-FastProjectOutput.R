@@ -13,4 +13,3 @@ setMethod("initialize", signature(.Object="FastProjectOutput"),
             return(.Object)
           }
 )
-

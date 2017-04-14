@@ -1,5 +1,12 @@
 require(logging)
 
+<<<<<<< HEAD
+=======
+## Test with netPath_ud.txt
+## Compare  P-Values between this and fastproject (weightings all 1 for signature eval / pca) 
+
+
+>>>>>>> 57e2cb75e66c2f61c1d8afea5d8fcb1c211c8e46
 setMethod("initialize", signature(.Object="FastProject"),
           function(.Object, data_file, housekeeping, signatures, precomputed=NULL,
                    output_dir = "FastProject_Output", nofilter=FALSE, nomodel=FALSE, pca_filter=FALSE,
@@ -42,7 +49,11 @@ setMethod("initialize", signature(.Object="FastProject"),
             }
             
             if (!is.null(precomputed)) {
+<<<<<<< HEAD
               .Object@precomputedData <- readPrecomputed(precomputed, colnames(.Object@exprData))
+=======
+              .Object@precomputedData <- readPrecomputed(precomputed, colnames(expr))
+>>>>>>> 57e2cb75e66c2f61c1d8afea5d8fcb1c211c8e46
             }
             
             .Object@nofilter <- nofilter
@@ -125,8 +136,11 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     
   if (object@nomodel) {
     object@weights <- matrix(1L, nrow=nrow(originalData), ncol=ncol(originalData))
+<<<<<<< HEAD
     rownames(object@weights) <- rownames(originalData)
     colnames(object@weights) <- colnames(originalData)
+=======
+>>>>>>> 57e2cb75e66c2f61c1d8afea5d8fcb1c211c8e46
   }
   else if (all(is.na(object@weights))) {
     message("Computing weights from False Negative Function...")
@@ -163,8 +177,11 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     sigScores <- c(sigScores, s)
   }
   
+<<<<<<< HEAD
   #return(sigScores)
   
+=======
+>>>>>>> 57e2cb75e66c2f61c1d8afea5d8fcb1c211c8e46
   # Construct random signatures for background distribution
   randomSigs <- c()
   randomSizes <- c(5, 10, 20, 50, 100, 200)
@@ -200,7 +217,11 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     }
   }
   
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> 57e2cb75e66c2f61c1d8afea5d8fcb1c211c8e46
   # Apply projections to filtered gene sets, create new projectionData object
   projDataList <- c()
   for (filter in filterList) {
@@ -224,7 +245,11 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     pVals <- sigVProj[[4]]
       
     projData <- ProjectionData(filter=filter, projections=projs, genes=g, keys=projKeys, 
+<<<<<<< HEAD
                                           sigProjMatrix=sigProjMatrix, pMatrix=pVals, clusters=clusters)
+=======
+                                          sigProjMatrix=sigProjMatrix, pMatrix=pVals)
+>>>>>>> 57e2cb75e66c2f61c1d8afea5d8fcb1c211c8e46
     projDataList <- c(projDataList, projData)
       
   }
@@ -240,15 +265,25 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     
   rownames(sigMatrix) <- names
   colnames(sigMatrix) <- colnames(fp@exprData)
+<<<<<<< HEAD
   #colnames(sigMatrix) <- colnames(expr)
+=======
+>>>>>>> 57e2cb75e66c2f61c1d8afea5d8fcb1c211c8e46
     
     
   fpOut <- FastProjectOutput(eData, projDataList, sigMatrix, randomSigScores, object@weights)
   return(fpOut)
+<<<<<<< HEAD
   
+=======
+>>>>>>> 57e2cb75e66c2f61c1d8afea5d8fcb1c211c8e46
 }
   
 )
 
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 57e2cb75e66c2f61c1d8afea5d8fcb1c211c8e46

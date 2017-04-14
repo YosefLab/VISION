@@ -21,6 +21,7 @@ readSignaturesInput <- function(filenames) {
 
   # Create a dictionary to easily compute signature sign
   keys <- c("none" = 1.0,  'up' = 1.0, 'plus' = 1.0, 'down' = -1.0, 'dn' = -1.0, 'minus' = -1.0, 'mius'=-1.0)
+
   
   # Create a list to store all signatures
   sig_data <- c()
@@ -34,7 +35,7 @@ readSignaturesInput <- function(filenames) {
     
     if (file_ext(f) == "gmt") {
       inp <- gmt2list(filename)
-     
+      
       for (sig in names(inp)) {
         genes <- c()
         values <- c()
@@ -49,7 +50,7 @@ readSignaturesInput <- function(filenames) {
         if (sig %in% sig_names) {
           next; 
         }
-      
+
         for (k in inp[[sig]]) {
           elem <- strsplit(k, ",")
           if (length(elem[[1]]) > 1) {
