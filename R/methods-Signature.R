@@ -1,7 +1,7 @@
 require(geometry)
 
 setMethod("initialize", signature(.Object="Signature"),
-          function(.Object, sigDict, name, source, metaData="") {
+          function(.Object, sigDict, name, source, metaData="", isPrecomputed=F, isFactor=F) {
             if (missing(sigDict)) {
               stop("Missing sigDict information.")
             } else if (missing(name)) {
@@ -14,6 +14,8 @@ setMethod("initialize", signature(.Object="Signature"),
             .Object@name = name
             .Object@source = source
             .Object@metaData = metaData
+            .Object@isPrecomputed = isPrecomputed
+            .Object@isFactor = isFactor
             
             return(.Object);
             
@@ -346,7 +348,6 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   rownames(sigProjMatrix) <- spRowLabels
   
   return(list(spRowLabels, spColLabels, sigProjMatrix, sigProjMatrix_P))
-    
     
 }
 

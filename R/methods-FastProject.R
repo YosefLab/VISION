@@ -163,7 +163,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     sigScores <- c(sigScores, s)
   }
   
-  return(sigScores)
+  #return(sigScores)
   
   # Construct random signatures for background distribution
   randomSigs <- c()
@@ -224,7 +224,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     pVals <- sigVProj[[4]]
       
     projData <- ProjectionData(filter=filter, projections=projs, genes=g, keys=projKeys, 
-                                          sigProjMatrix=sigProjMatrix, pMatrix=pVals)
+                                          sigProjMatrix=sigProjMatrix, pMatrix=pVals, clusters=clusters)
     projDataList <- c(projDataList, projData)
       
   }
@@ -239,16 +239,16 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   }
     
   rownames(sigMatrix) <- names
-  #colnames(sigMatrix) <- colnames(fp@exprData)
-  colnames(sigMatrix) <- colnames(expr)
+  colnames(sigMatrix) <- colnames(fp@exprData)
+  #colnames(sigMatrix) <- colnames(expr)
     
     
   fpOut <- FastProjectOutput(eData, projDataList, sigMatrix, randomSigScores, object@weights)
   return(fpOut)
+  
 }
   
 )
-
 
 
 

@@ -97,7 +97,7 @@ readSignaturesInput <- function(filenames) {
       }
       
       for (sig in names(sigList)) {
-        newSig <- Signature(sigList[[sig]], sig, f, "")
+        newSig <- Signature(sigList[[sig]], sig, f, "", isPrecomputed=FALSE, isFactor=FALSE)
         sig_data <- c(sig_data, newSig)
         sig_names <- c(sig_names, sig)
       } 

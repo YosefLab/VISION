@@ -102,7 +102,32 @@ ProjectionData <- setClass("ProjectionData",
       genes = "character",
       keys = "character",
       sigProjMatrix = "matrix",
-      pMatrix="matrix"
+      pMatrix="matrix",
+      clusters="list"
+    )
+)
+
+ServerExpression <- setClass("ServerExpression", 
+    slots = c(
+      data = "matrix", 
+      sample_labels = "character",
+      gene_labels = "character"
+    )
+)
+
+ServerSigProjMatrix <- setClass("ServerSigProjMatrix",
+    slots = c(
+      data = "matrix",
+      sample_labels = "character",
+      sig_labels = "character"
+    )
+)
+
+ServerPMatrix <- setClass("ServerPMatrix",
+    slots = c(
+      data = "matrix",
+      sample_labels = "character",
+      sig_labels = "character"
     )
 )
 
@@ -111,10 +136,14 @@ Signature <- setClass("Signature",
       sigDict = "vector",
       name = "character",
       source = "character",
-      metaData = "character"
+      metaData = "character",
+      isPrecomputed = "logical",
+      isFactor = "logical"
     ),
     prototype = list(
-      metaData = ""
+      metaData = "",
+      isPrecomputed=FALSE,
+      isFactor=FALSE
     )
 )
 
