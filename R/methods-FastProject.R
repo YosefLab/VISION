@@ -132,6 +132,8 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     message("Computing weights from False Negative Function...")
     object@weights <- computeWeights(func, params, eData)
   }
+  
+  return(object@weights)
     
   zero_locations <- which(getExprData(eData) == 0.0, arr.ind=TRUE) 
     

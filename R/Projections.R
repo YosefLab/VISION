@@ -13,6 +13,7 @@ require("vegan")
 require("loe")
 require("cluster")
 require("smacof")
+require("rARPACK")
 
 
 registerMethods <- function(lean=FALSE) {
@@ -143,6 +144,104 @@ defineClusters <- function(projections) {
   
 }
 
+applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
+  #' Performs Weighted PCA on the data
+  #' 
+  #' Parameters:
+  #'  data: (Num_Features x Num_Samples) matrix
+  #'    Matrix containing data to project 
+  #'  weights: (Num_Features x Num_Samples) matrix
+  #'    Matrix containing weights to use for each coordinate in data
+  #'  max_components: numeric
+  #'    Maximum number of components to calculate
+  #'    
+  #' Returns:
+  #'  pca_data: (Num_Components x Num_Samples) matrix
+  #'    Data transformed using PCA.  Num_Components = Num_Samples
+
+  set.seed(RANDOM_SEED)
+        
+  projData <- exprData
+  
+  # Center data
+  wmean <- as.matrix(apply(projData * weights, 1, sum) / apply(weights, 1, sum))
+  dataCentered <- as.matrix(apply(projData, 2, function(x) x - wmean))
+
+  # Compute weighted data
+  wDataCentered <- dataCentered * weights
+  
+  # Weighted covariance / correlation matrices
+  print("wcov")
+  W <- wDataCentered %*% t(wDataCentered)
+  Z <- weights %*% t(weights)
+  wcov <- W / Z
+  wcov[which(is.na(wcov))] <- 0.0
+  var <- diag(wcov)
+  cor <- wcov / sqrt(var %*% t(var))
+  
+  # SVD of wieghted correlation matrix
+  ncomp <- min(ncol(projData), nrow(projData), maxComponents)
+  eig_obj = eigs(cor,k = ncomp,which = "LM")
+  evec <- t(eig_obj$vectors)
+  
+  
+  # Project down using computed eigenvectors
+  dataCentered <- dataCentered / sqrt(var)
+  wpcaData <- evec %*% dataCentered
+  eval <- as.matrix(apply(wpcaData, 1, var))
+  totalVar <- sum(apply(projData, 1, var))
+  eval <- eval / totalVar
+  
+  return(list(wpcaData, eval, t(eval)))
+    
+}
+
+applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, verbose=FALSE, debug=FALSE) {
+  #' Computes weighted PCA on data. Returns only significant components.
+  #' 
+  #' After performing PCA on the data matrix, this method then uses a permutation
+  #' procedure based on Buja A and Eyuboglu N (1992) to asses components for significance.
+  #' 
+  #' Paramaters:
+  #'  data: (Num_Features x Num_Samples) matrix
+  #'    Matrix containing data to project 
+  #'  weights: (Num_Features x Num_Samples) matrix
+  #'    Matrix containing weights to use for each coordinate in data
+  #'  components: numerical
+  #'    Max components to calculate
+  #'  p_threshold: numerical
+  #'    P-value to cutoff components at
+  #'  verbose: logical
+  #'  
+  #'  Return:
+  #'    reducedData: (Num_Components X Num_Samples)
+  
+  components <- min(components, nrow(expr), ncol(data))
+  
+  NUM_REPEATS <- 20;
+  
+  # Instantiate matrices for background distribution
+  bg_vals <- matrix(0L, nrow=NUM_REPEATS, ncol=components)
+  bg_data <- matrix(0L, dim=dim(expr))
+  bg_weights <- matrix(0L, dim=dim(expr))
+  
+  # Compute background data and PCAs for comparing p values 
+  for (i in 1:NUM_REPEATS) {
+    for (j in 1:nrow(expr) {
+      random_i <- sample(ncol(expr));
+      bg_data[j,] <- expr[j,random_i]
+      bg_weights[j,] <- weights[j,random_i]
+    }
+    
+    bg = applyWeightedPCA(bg_data, bg_weights, components)
+    bg_vals[i,] = bg[[2]]
+  }
+
+  
+  
+
+  return()
+}
 applyPCA <- function(exprData, N=0, variance_proportion=1.0) {
   #' Performs PCA on data
   #' 

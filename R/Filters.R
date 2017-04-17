@@ -117,7 +117,6 @@ filterGenesFano <- function(data, num_mad=2) {
 
   original_ii = order(aa)
   gene_passes <- gene_passes[original_ii]
-  print(length(which(gene_passes == TRUE)))
   keep_ii <- which(gene_passes == TRUE)
   return(data[keep_ii,])
 }
