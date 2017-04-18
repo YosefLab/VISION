@@ -171,7 +171,6 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
   wDataCentered <- dataCentered * weights
   
   # Weighted covariance / correlation matrices
-  print("wcov")
   W <- wDataCentered %*% t(wDataCentered)
   Z <- weights %*% t(weights)
   wcov <- W / Z
@@ -181,18 +180,19 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
   
   # SVD of wieghted correlation matrix
   ncomp <- min(ncol(projData), nrow(projData), maxComponents)
-  eig_obj = eigs(cor,k = ncomp,which = "LM")
+  # NOTE: Weighted Covariance works better than Weighted Correlation for computing the eigenvectors
+  eig_obj = eigs(wcov,k = ncomp,which = "LM")
   evec <- t(eig_obj$vectors)
   
   
   # Project down using computed eigenvectors
   dataCentered <- dataCentered / sqrt(var)
-  wpcaData <- evec %*% dataCentered
+  wpcaData <- as.matrix(evec %*% dataCentered)
   eval <- as.matrix(apply(wpcaData, 1, var))
   totalVar <- sum(apply(projData, 1, var))
   eval <- eval / totalVar
   
-  return(list(wpcaData, eval, t(eval)))
+  return(list(wpcaData, eval, t(evec)))
     
 }
 
@@ -220,27 +220,52 @@ applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, 
   
   NUM_REPEATS <- 20;
   
+  w <- applyWeightedPCA(expr, weights, components)
+  wPCA <- w[[1]]
+  eval <- w[[2]]
+  evec <- w[[3]]
+  
   # Instantiate matrices for background distribution
   bg_vals <- matrix(0L, nrow=NUM_REPEATS, ncol=components)
-  bg_data <- matrix(0L, dim=dim(expr))
-  bg_weights <- matrix(0L, dim=dim(expr))
+  bg_data <- matrix(0L, nrow=nrow(expr), ncol=ncol(expr))
+  bg_weights <- matrix(0L, nrow=nrow(expr), ncol=ncol(expr))
   
   # Compute background data and PCAs for comparing p values 
   for (i in 1:NUM_REPEATS) {
-    for (j in 1:nrow(expr) {
+    for (j in 1:nrow(expr)) {
       random_i <- sample(ncol(expr));
       bg_data[j,] <- expr[j,random_i]
       bg_weights[j,] <- weights[j,random_i]
     }
     
+    print(i)
     bg = applyWeightedPCA(bg_data, bg_weights, components)
     bg_vals[i,] = bg[[2]]
   }
 
+  mu <- as.matrix(apply(bg_vals, 2, mean))
+  sigma <- as.matrix(apply(bg_vals, 2, biasedVectorSD))
+  sigma[which(sigma==0)] <- 1.0
   
+  # Compute pvals from survival function & threshold components
+  pvals <- 1 - pnorm((eval - mu) / sigma)
+  thresholdComponent_i = which(pvals > p_threshold, arr.ind=TRUE)
+  if (length(thresholdComponent_i) == 0) {
+    thresholdComponent <- nrow(wPCA)
+  } else {
+    thresholdComponent <- thresholdComponent_i[[1]]
+  }
   
-
-  return()
+  if (thresholdComponent < 5) {
+    message("Less than 5 components identified as significant.  Preserving top 5.")
+    thresholdComponent <- 5
+  }
+  
+  wPCA <- wPCA[1:thresholdComponent, ]
+  eval <- eval[1:thresholdComponent]
+  evec = evec[1:thresholdComponent, ]
+  
+  return(list(wPCA, eval, evec))
 }
 applyPCA <- function(exprData, N=0, variance_proportion=1.0) {
   #' Performs PCA on data
