@@ -54,7 +54,8 @@ FastProject <- setClass("FastProject",
       exprData = "matrix",
       housekeepingData = "data.frame",
       sigData = "list",
-      precomputedData= "list"),
+      precomputedData= "list",
+      perm_wPCA = "logical"),
     prototype = list(
       precomputed = NULL,
       output_dir = "FastProject_Output",
@@ -75,16 +76,18 @@ FastProject <- setClass("FastProject",
       exprData = NULL,
       housekeepingData = NULL,
       sigData = NULL,
-      precomputedData=NULL
+      precomputedData=NULL,
+      perm_wPCA=FALSE
 ))
 
 FastProjectOutput <- setClass("FastProjectOutput",
     slots = c(
       exprData = "ExpressionData",
       projData = "list", 
-      sigScores = "matrix",
+      sigMatrix = "matrix",
       randomSigScores = "list", 
-      weights = "matrix"
+      weights = "matrix", 
+      sigList = "list"
     )
 )
 

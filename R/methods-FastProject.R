@@ -4,7 +4,7 @@ setMethod("initialize", signature(.Object="FastProject"),
           function(.Object, data_file, housekeeping, signatures, precomputed=NULL,
                    output_dir = "FastProject_Output", nofilter=FALSE, nomodel=FALSE, pca_filter=FALSE,
                    all_sigs=FALSE, debug=0, lean=FALSE, subsample_size=0, qc=FALSE, 
-                   min_signature_genes=5, projections="", weights=NULL, threshold=0, 
+                   min_signature_genes=5, projections="", weights=NULL, threshold=0, perm_wPCA=FALSE,
                    sig_norm_method="znorm_rows", sig_score_method="weighted_avg", exprData=NULL, 
                    housekeepingData=NULL, sigData=NULL, precomputedData=NULL) {
             
@@ -55,6 +55,8 @@ setMethod("initialize", signature(.Object="FastProject"),
             .Object@sig_norm_method <- sig_norm_method
             .Object@sig_score_method <- sig_score_method
             .Object@debug = debug
+            .Object@lean = lean
+            .Object@perm_wPCA = perm_wPCA
             
             #createOutputDirectory(.Object)
             return(.Object) 
@@ -132,9 +134,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     message("Computing weights from False Negative Function...")
     object@weights <- computeWeights(func, params, eData)
   }
-  
-  return(object@weights)
-    
+
   zero_locations <- which(getExprData(eData) == 0.0, arr.ind=TRUE) 
     
   normalizedData <- getNormalizedCopy(eData, object@sig_norm_method)
@@ -165,8 +165,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     sigScores <- c(sigScores, s)
   }
   
-  #return(sigScores)
-  
+
   # Construct random signatures for background distribution
   randomSigs <- c()
   randomSizes <- c(5, 10, 20, 50, 100, 200)
@@ -208,8 +207,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     message("Filter level: ", filter)
       
     message("Projecting data into 2 dimensions...")
-      
-    projectData <- generateProjections(eData, filter)
+    projectData <- generateProjections(eData, object@weights, filter, lean=object@lean, perm_wPCA = object@perm_wPCA)
     projs <- projectData[[1]]
     g <- projectData[[2]]
     
@@ -246,7 +244,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
 
     
     
-  fpOut <- FastProjectOutput(eData, projDataList, sigMatrix, randomSigScores, object@weights)
+  fpOut <- FastProjectOutput(eData, projDataList, sigMatrix, randomSigScores, object@weights, object@sigData)
   return(fpOut)
   
 }

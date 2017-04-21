@@ -33,7 +33,7 @@ registerMethods <- function(lean=FALSE) {
   return(projMethods)
 }
 
-generateProjections <- function(expr, filterName="", inputProjections=c(), lean=FALSE) {
+generateProjections <- function(expr, weights, filterName="", inputProjections=c(), lean=FALSE, perm_wPCA=FALSE) {
   #' Projects data into 2 dimensions using a variety of linear and non-linear methods
   #' 
   #' Parameters:
@@ -59,12 +59,26 @@ generateProjections <- function(expr, filterName="", inputProjections=c(), lean=
   
   methodList = registerMethods(lean)
   
-  print("PCA")
-  pca_res <- applyPCA(exprData, N=30)
-  proj <- Projection("PCA: 1,2", t(pca_res[c(1,2),]))
-  inputProjections <- c(inputProjections, proj)
-  inputProjections <- c(inputProjections, Projection("PCA: 1,3", t(pca_res[c(1,3),])))
-  inputProjections <- c(inputProjections, Projection("PCA: 2,3", t(pca_res[c(2,3),])))
+  if (lean) {
+    print("PCA")
+    pca_res <- applyPCA(exprData, N=30)
+    proj <- Projection("PCA: 1,2", t(pca_res[c(1,2),]))
+    inputProjections <- c(inputProjections, proj)
+    inputProjections <- c(inputProjections, Projection("PCA: 1,3", t(pca_res[c(1,3),])))
+    inputProjections <- c(inputProjections, Projection("PCA: 2,3", t(pca_res[c(2,3),])))
+  } else {
+    if (perm_wPCA) {
+      print("Permutation PCA")
+      pca_res <- applyPermutationWPCA(exprData, weights, components=30)[[1]]
+    } else {
+      print("Weighted PCA")
+      pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30)[[1]]
+    }
+    proj <- Projection("PCA: 1,2", t(pca_res[c(1,2),]))
+    inputProjections <- c(inputProjections, proj)
+    inputProjections <- c(inputProjections, Projection("PCA: 1,3", t(pca_res[c(1,3),])))
+    inputProjections <- c(inputProjections, Projection("PCA: 2,3", t(pca_res[c(2,3),])))
+  }
   
   for (method in names(methodList)){
     print(method)
@@ -162,6 +176,9 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
   set.seed(RANDOM_SEED)
         
   projData <- exprData
+  if (dim(projData) != dim(weights)) {
+    weights <- weights[rownames(exprData), ]
+  }
   
   # Center data
   wmean <- as.matrix(apply(projData * weights, 1, sum) / apply(weights, 1, sum))
@@ -170,6 +187,7 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
   # Compute weighted data
   wDataCentered <- dataCentered * weights
   
+  print("wcov")
   # Weighted covariance / correlation matrices
   W <- wDataCentered %*% t(wDataCentered)
   Z <- weights %*% t(weights)
@@ -180,11 +198,13 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
   
   # SVD of wieghted correlation matrix
   ncomp <- min(ncol(projData), nrow(projData), maxComponents)
+  print("eig")
   # NOTE: Weighted Covariance works better than Weighted Correlation for computing the eigenvectors
   eig_obj = eigs(wcov,k = ncomp,which = "LM")
   evec <- t(eig_obj$vectors)
   
   
+  print("eval")
   # Project down using computed eigenvectors
   dataCentered <- dataCentered / sqrt(var)
   wpcaData <- as.matrix(evec %*% dataCentered)
@@ -216,11 +236,11 @@ applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, 
   #'  Return:
   #'    reducedData: (Num_Components X Num_Samples)
   
-  components <- min(components, nrow(expr), ncol(data))
+  comp <- min(components, nrow(expr), ncol(data))
   
-  NUM_REPEATS <- 20;
+  NUM_REPEATS <- 1;
   
-  w <- applyWeightedPCA(expr, weights, components)
+  w <- applyWeightedPCA(expr, weights, comp)
   wPCA <- w[[1]]
   eval <- w[[2]]
   evec <- w[[3]]
@@ -239,7 +259,7 @@ applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, 
     }
     
     print(i)
-    bg = applyWeightedPCA(bg_data, bg_weights, components)
+    bg = applyWeightedPCA(bg_data, bg_weights, comp)
     bg_vals[i,] = bg[[2]]
   }
 

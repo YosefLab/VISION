@@ -11,6 +11,10 @@ setGeneric("createOutputDirectory", function(object) {
   standardGeneric("createOutputDirectory")
 })
 
+setGeneric("generateOutputReport", function(fpout, url="http://127.0.0.1:8080/html/Results.html") {
+  standardGeneric("generateOutputReport")
+})
+
 setGeneric("getExprData", function(object) {
   standardGeneric("getExprData")
 })
