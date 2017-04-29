@@ -31,6 +31,14 @@ jug() %>%
     }
     return(out)
   }) %>%
+  get("/Signature/ListPrecomputed", function(req, res, err){
+    signatures <- fpout@sigList
+    keys <- lapply(signatures, function(x) x@name)
+    vals <- lapply(signatures, function(x) x@isPrecomputed)
+    names(vals) <- keys
+    out <- toJSON(vals, auto_unbox=TRUE)
+    return(out)
+  }) %>%
   get("/Signature/Info/(?<sig_name2>.*)", function(req, res, err){
     signatures <- fpout@sigList
     name <- URLdecode(req$params$sig_name2)
@@ -49,6 +57,21 @@ jug() %>%
     out <- "Signature does not exist!"
     if (name %in% rownames(sigMatrix)) {
       out <- sigRanksToJSON(sigMatrix[name,])
+    }
+    return(out)
+  }) %>%
+  get("/Signature/Expression/(?<sig_name4>.*)", function(req, res, err) {
+    all_names = sapply(fpout@sigList, function(x){return(x@name)})
+    name <- URLdecode(req$params$sig_name4)
+    index = match(name, all_names)
+    if(is.na(index)){
+        out <- "Signature does not exist!"
+    }
+    else{
+        sig = fpout@sigList[[index]]
+        genes = names(sig@sigDict)
+        expMat = fpout@exprData@data
+        return(expressionToJSON(expMat, genes))
     }
     return(out)
   }) %>%
@@ -116,6 +139,25 @@ jug() %>%
     }
     return(out)
   }) %>%
+  get("/FilterGroup/(?<filter_name5>.*)/genes", function(req, res, err) {
+    projData <- fpout@projData
+    filter <- URLdecode(req$params$filter_name5)
+    out <- "Filter, Projection pair does not exist!"
+    for (pd in projData) {
+      if (pd@filter == filter) {
+        out <- toJSON(pd@genes)
+        break
+      }
+    }
+    return(out)
+  }) %>%
+  get("/FilterGroup/list", function(req, res, err) {
+    projData <- fpout@projData
+    filters <- sapply(projData, function(x){
+                      return(x@filter);
+                      });
+    return(toJSON(filters))
+  }) %>%
   get("/Expression", function(req, res, err) {
     return(expressionToJSON(fpout@exprData@data, matrix(NA)))
   }) %>%
@@ -172,5 +214,6 @@ jug() %>%
     return(out)
   }) %>%
   serve_static_files("html") %>%
+  serve_static_files("../html") %>%
   simple_error_handler_json() %>%
   serve_it()

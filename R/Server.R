@@ -17,10 +17,10 @@ setMethod("initialize", signature(.Object="ServerExpression"),
 )
 
 setMethod("initialize", signature(.Object="ServerSigProjMatrix"),
-          function(.Object, data, sample_labels, sig_labels) {
+          function(.Object, data, proj_labels, sig_labels) {
             
             .Object@data <- data
-            .Object@sample_labels <- sample_labels
+            .Object@proj_labels <- proj_labels
             .Object@sig_labels <- sig_labels
             
             return(.Object)
@@ -28,10 +28,10 @@ setMethod("initialize", signature(.Object="ServerSigProjMatrix"),
 )
 
 setMethod("initialize", signature(.Object="ServerPMatrix"),
-          function(.Object, data, sample_labels, sig_labels) {
+          function(.Object, data, proj_labels, sig_labels) {
             
             .Object@data <- data
-            .Object@sample_labels <- sample_labels
+            .Object@proj_labels <- proj_labels
             .Object@sig_labels <- sig_labels
             
             return(.Object)
@@ -47,11 +47,12 @@ signatureToJSON <- function(sig) {
  
 }
 
-expressionToJSON <- function(expr, geneList) {
+expressionToJSON <- function(expr, geneList=NULL) {
   #' Pass in an expression matrix from a FastProjectOutput Object
   #' Optionally, can specify a geneList which will select a subset of rows from the expression matrix
   
-  if (!is.na(geneList)) {
+  if (!is.null(geneList)) {
+    geneList = intersect(geneList, rownames(expr))
     expr <- expr[geneList,]
   }
   

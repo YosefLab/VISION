@@ -341,6 +341,7 @@ applySpectralEmbedding <- function(exprData, projWeights=NULL) {
   #adm <- graph_from_adjacency_matrix(adj)
 
   #res <- embed_adjacency_matrix(adm, 2)
+  rownames(res) <- colnames(exprData)
  
   return(res)
   

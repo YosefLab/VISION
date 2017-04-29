@@ -121,7 +121,7 @@ ServerExpression <- setClass("ServerExpression",
 ServerSigProjMatrix <- setClass("ServerSigProjMatrix",
     slots = c(
       data = "matrix",
-      sample_labels = "character",
+      proj_labels = "character",
       sig_labels = "character"
     )
 )
@@ -129,7 +129,7 @@ ServerSigProjMatrix <- setClass("ServerSigProjMatrix",
 ServerPMatrix <- setClass("ServerPMatrix",
     slots = c(
       data = "matrix",
-      sample_labels = "character",
+      proj_labels = "character",
       sig_labels = "character"
     )
 )

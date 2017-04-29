@@ -4,10 +4,21 @@ global_status.plotted_signature = "";
 global_status.sorted_column = "";
 global_status.signature_filter = "";
 global_status.scatterColorOption = "rank";
+global_status.filter_group = "";
+global_status.filter_group_genes = []
+
+var global_data = {};
+global_data.sigIsPrecomputed = {};
 
 var global_options = {};
 var global_scatter = {};
 var global_heatmap = {};
+
+var cluster_options = {
+    "Kmeans: K=3": {method: "Kmeans", params: [3]},
+    "Kmeans: K=4": {method: "Kmeans", params: [4]},
+    "Kmeans: K=5": {method: "Kmeans", params: [5]},
+}
 
 $(window).resize(function()
 {
@@ -29,6 +40,55 @@ $(window).resize(function()
     drawHeat();
 });
 
+function doneTyping()
+{
+    var val = global_status.signature_filter.toLowerCase();
+    var vals = val.split(",");
+    vals = vals.map(function(str){return str.trim();})
+        .filter(function(str){ return str.length > 0;});
+
+    var tablerows = $('#table_div table').find('tr');
+    tablerows.removeClass('hidden');
+
+    var posvals = vals.filter(function(str){ return str[0] != '!';});
+    var negvals = vals.filter(function(str){ return str[0] == '!';})
+        .map(function(str){ return str.slice(1);})
+        .filter( function(str){return str.length > 0;});
+
+    if(posvals.length > 0){
+        tablerows.filter(function(i, element){
+                if(i == 0){return false;} // Don't filter out the header row
+                var sig_text = $(element).children('td').first().html().toLowerCase();
+                for(var j = 0; j < posvals.length; j++)
+                {
+                    if(sig_text.indexOf(posvals[j]) > -1)
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }).addClass('hidden');
+    }
+
+    if(negvals.length > 0){
+        tablerows.filter(function(i, element){
+                if(i == 0){return false;} // Don't filter out the header row
+                var sig_text = $(element).children('td').first().html().toLowerCase();
+                for(var j = 0; j < negvals.length; j++)
+                {
+                    if(sig_text.indexOf(negvals[j]) > -1)
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }).addClass('hidden');
+    }
+
+    tablerows.removeClass('altRow')
+            .not('.hidden').filter(':odd').addClass('altRow');
+}
+
 window.onload = function()
 {
     //Define some globals
@@ -40,8 +100,17 @@ window.onload = function()
     global_heatmap.hovered_links.push(global_scatter);
     
     //Make the options update the table
-    $("#pca_checkbox").change(updateTable);
-    $("#filter_dropdown").change(updateTable);
+    $("#filter_dropdown").change(function(){
+        global_status.filter_group = $(this).val();
+
+        api.filterGroup.genes(global_status.filter_group)
+            .then(function(genes){
+                global_status.filter_group_genes = genes;
+                updateMenuBar();
+            })
+
+        updateTable()
+    });
 
     var filterSig = $('#sig_filt_input');
     var filterSigTimer;
@@ -53,73 +122,14 @@ window.onload = function()
         filterSigTimer = setTimeout(doneTyping, filterSigTimer_Timeout);
     });
 
-    function doneTyping()
-    {
-        var val = global_status.signature_filter.toLowerCase();
-        var vals = val.split(",");
-        vals = vals.map(function(str){return str.trim();})
-            .filter(function(str){ return str.length > 0;});
+    // Define cluster dropdown 
+    var clust_dropdown = $('#cluster_select');
+    clust_dropdown.empty();
+    $.each(cluster_options, function(name){
+        clust_dropdown.append($("<option />").val(name).text(name));
+    });
 
-        var tablerows = $('#table_div table').find('tr');
-        tablerows.removeClass('hidden');
-
-        var posvals = vals.filter(function(str){ return str[0] != '!';});
-        var negvals = vals.filter(function(str){ return str[0] == '!';})
-            .map(function(str){ return str.slice(1);})
-            .filter( function(str){return str.length > 0;});
-
-        if(posvals.length > 0){
-            tablerows.filter(function(i, element){
-                    if(i == 0){return false;} // Don't filter out the header row
-                    var sig_text = $(element).children('td').first().html().toLowerCase();
-                    for(var j = 0; j < posvals.length; j++)
-                    {
-                        if(sig_text.indexOf(posvals[j]) > -1)
-                        {
-                            return false;
-                        }
-                    }
-                    return true;
-                }).addClass('hidden');
-        }
-
-        if(negvals.length > 0){
-            tablerows.filter(function(i, element){
-                    if(i == 0){return false;} // Don't filter out the header row
-                    var sig_text = $(element).children('td').first().html().toLowerCase();
-                    for(var j = 0; j < negvals.length; j++)
-                    {
-                        if(sig_text.indexOf(negvals[j]) > -1)
-                        {
-                            return true;
-                        }
-                    }
-                    return false;
-                }).addClass('hidden');
-        }
-
-        tablerows.removeClass('altRow')
-                .not('.hidden').filter(':odd').addClass('altRow');
-    }
-    
-    //Populate select dropdown
-    var filter_options = {};
-    for(model_name in FP_Models)
-    {
-        var modelPD = FP_Models[model_name].projectionData;
-        for(var j = 0; j < modelPD.length; j++)
-        {
-            var fname = modelPD[j].filter;
-            filter_options[fname] = true;
-        }
-    }
-    
-    for(key in filter_options)
-    {
-        var option = $(document.createElement("option"));
-        option.text(key).val(key);
-        $('#filter_dropdown').append(option);
-    }
+    clust_dropdown[0].selectedIndex = 2; // Restore index on model change
     
     //Define cluster dropdown's change function
     $('#cluster_select').change(function(){
@@ -133,16 +143,41 @@ window.onload = function()
         drawChart();
     });
 
-    updateTable();
+    // Make some service calls here
+    // Get the list of filter groups
+    var filterGroupPromise = api.filterGroup.list()
+        .then(function(filters){
+
+        for(var i = 0; i < filters.length; i++){
+            filter = filters[i]
+            var option = $(document.createElement("option"));
+            option.text(filter).val(filter);
+            $('#filter_dropdown').append(option);
+        }
+
+    });
+
+    // Get the 'isPrecomputed' vector for signatures
+    var sigIsPrecomputedPromise = api.signature.listPrecomputed()
+        .then(function(sigIsPrecomputed) {
+            global_data.sigIsPrecomputed = sigIsPrecomputed;
+    });
+
+    // When it's all done, run this
+    $.when(filterGroupPromise, sigIsPrecomputedPromise)
+        .then(function(){
+        $("#filter_dropdown").change() // Change event updates the table
+    });
+
 };
 
-function updateCurrentSelections()
+function updateCurrentSelections(matrix)
 {
-    //Sort the data initially by PC 1,2
-    var data = getDataContext();
-    if(data.ProjectionKeys.indexOf(global_status.sorted_column) == -1 )
+
+    // If no sort specified, sort by PCA: 1,2
+    if(matrix.proj_labels.indexOf(global_status.sorted_column) == -1 )
     {
-        if(data.ProjectionKeys.indexOf("PCA: 1,2" ) != -1){
+        if(matrix.proj_labels.indexOf("PCA: 1,2" ) != -1){
             global_status.sorted_column = "PCA: 1,2";
         }
         else
@@ -151,64 +186,43 @@ function updateCurrentSelections()
         }
     }
 
-    if(data.ProjectionKeys.indexOf(global_status.plotted_projection) == -1)
+    // If no projection specified, select the PCA: 1,2 projection
+    if(matrix.proj_labels.indexOf(global_status.plotted_projection) == -1)
     {
-        if(data.ProjectionKeys.indexOf("PCA: 1,2" ) != -1){
+        if(matrix.proj_labels.indexOf("PCA: 1,2" ) != -1){
             global_status.plotted_projection = "PCA: 1,2";
         }
         else
         {
-            global_status.plotted_projection = data.ProjectionKeys[0];
+            global_status.plotted_projection = matrix.proj_labels[0];
         }
     }
 
-    if(data.SignatureKeys.indexOf(global_status.plotted_signature) == -1)
+    // If no signature specified, selected the top signature
+    if(matrix.sig_labels.indexOf(global_status.plotted_signature) == -1)
     {
         //Select top signature of sorted projection by default
-        var j = data.ProjectionKeys.indexOf(global_status.plotted_projection);
-        var s_i = data.SigProjMatrix_p.map(function(e){return e[j];}).argSort();
+        var j = matrix.proj_labels.indexOf(global_status.plotted_projection);
+        var s_i = matrix.data.map(function(e){return e[j];}).argSort();
 
-        global_status.plotted_signature = data.SignatureKeys[s_i[0]];
+        global_status.plotted_signature = matrix.sig_labels[s_i[0]];
 
     }
-
-
 }
 
 function updateTable()
 {
-    updateCurrentSelections();
-    updateMenuBar();
+    //updateMenuBar();
     createTableFromData();
     drawChart();
-    populateClusterDropdown();
     drawHeat();
 }
 
 function updateMenuBar()
 {
     var button = $('#show_genes_button');
-    var data = getDataContext();
-    var num_genes = data.genes.length;
+    var num_genes = global_status.filter_group_genes.length
     button.text(num_genes + " Genes");
-}
-
-function populateClusterDropdown()
-{
-    var data = getDataContext();
-    var proj_key = global_status.plotted_projection;
-    var clusters = data.Clusters[proj_key];
-    var clust_dropdown = $('#cluster_select');
-    var old_i = clust_dropdown.prop('selectedIndex');
-    if(old_i == -1){
-        if(Object.keys(clusters).length > 3){ old_i = 2;}
-        else { old_i = 0;}
-    }
-    clust_dropdown.empty();
-    $.each(clusters, function(name, value){
-        clust_dropdown.append($("<option />").val(name).text(name));
-    });
-    clust_dropdown[0].selectedIndex = old_i; // Restore index on model change
 }
 
 function getDataContext()
@@ -284,189 +298,193 @@ function tableClickFunction(row_key, col_key)
 }
 
 function drawChart() {
+
     var sig_key = global_status.plotted_signature;
     var proj_key = global_status.plotted_projection;
-    
-    var points = [];
-    
-    if(sig_key.length > 0 && proj_key.length > 0){
-        var data = getDataContext();
+    var filter_group = global_status.filter_group;
 
-        $('#plot_title_div').children().eq(0).text(proj_key);
-        $('#plot_title_div').children().eq(1).text(sig_key);
-
-        var proj = data.Projections[proj_key];
-        var sig = data.SigScores[sig_key];
-        var sig_scores;
-
-        if(sig.isFactor) { sig_scores = sig.scores;}
-        else { 
-            if(global_status.scatterColorOption == "rank") {sig_scores = sig.ranks;}
-            if(global_status.scatterColorOption == "value") {sig_scores = sig.scores;}
-        }
-
-        var xcoords = proj[0];
-        var ycoords = proj[1];
-        var sample_labels = FP_ExpressionMatrix.sample_labels;
-        //Zip up the data into a new points object
-        for(i = 0; i<xcoords.length; i++)
-        {
-            points.push([xcoords[i], ycoords[i], sig_scores[i], sample_labels[i]]);
-        }
-    }
-    else{
+    if(sig_key.length == 0 && proj_key.length == 0){
         $('#plot_title_div').children().eq(0).text("");
         $('#plot_title_div').children().eq(1).text("");
+        global_scatter.setData([], false);
+        return $().promise()
     }
 
-    global_scatter.setData(points, sig.isFactor);
+    var proj_promise = api.projection.coordinates(filter_group, proj_key);
+
+    var sig_promise;
+    if(global_status.scatterColorOption == "value" || 
+        global_data.sigIsPrecomputed[sig_key])
+        {sig_promise = api.signature.scores(sig_key)}
+
+    if(global_status.scatterColorOption == "rank") 
+        {sig_promise = api.signature.ranks(sig_key)}
+
+    var sig_info_promise = api.signature.info(sig_key)
+
+    return $.when(proj_promise, sig_promise, sig_info_promise) // Runs when both are completed
+        .then(function(projection, signature, sig_info){
+            
+            $('#plot_title_div').children().eq(0).text(proj_key);
+            $('#plot_title_div').children().eq(1).text(sig_key);
+
+            var points = [];
+            for(sample_label in signature){
+                var x = projection[sample_label][0]
+                var y = projection[sample_label][1]
+                var sig_score = signature[sample_label]
+                points.push([x, y, sig_score, sample_label]);
+            }
+
+            global_scatter.setData(points, sig_info.isFactor);
+
+        });
+
 }
 
 function drawHeat(){
     var sig_key = global_status.plotted_signature;
-    var data = getDataContext();
-    if(sig_key.length > 0)
-    {
-        if( !$('#heatmap_div').is(":visible"))
-        {
-            $('#heatmap_div').find('svg').remove();
-            $('#heatmap_div').show();
-            global_heatmap = new HeatMap('#heatmap_div');
-            global_scatter.hovered_links.push(global_heatmap);
-            global_heatmap.hovered_links.push(global_scatter);
-        }
-        var sig = FP_Signatures[sig_key];
-        if(sig !== undefined){  //undefined sig if it's precomputed
-            var genes = sig.Genes;
+    var proj_key = global_status.plotted_projection;
+    var cluster_choice = $('#cluster_select').val();
 
-            //Construct data matrix
-            //Look up gene indices
-            var gene_indices = [];
-            for(var j = 0; j < genes.length; j++)
-            {
-                var gene_index = FP_ExpressionMatrix.gene_labels.indexOf(genes[j]);
-                if(gene_index > -1) //Some genes are in signature, but not in data
-                {
-                    gene_indices.push(gene_index);
-                }
-            }
+    // TODO: get clusters working
 
-            gene_indices.sort();  //So heatmap drawn in same order as data
-
-            var dataMat = gene_indices.map(function(e,i){
-                return FP_ExpressionMatrix.data[e];
-            });
-            
-            var gene_labels = gene_indices.map(function(e,i){
-                return FP_ExpressionMatrix.gene_labels[e];
-            });
-
-            var gene_signs = gene_labels.map(function(e,i){
-                var s_i = sig.Genes.indexOf(e);
-                return sig.Signs[s_i];
-            });
-
-            var proj_key = global_status.plotted_projection;
-            var choice = $('#cluster_select').val();
-            var assignments = data.Clusters[proj_key][choice];
-
-            global_heatmap.setData(dataMat,
-                   assignments,
-                   gene_labels,
-                   gene_signs,
-                   FP_ExpressionMatrix.sample_labels);
-        }
-        else
-        {
-            $('#heatmap_div').hide();
-        }
-
+    if(sig_key.length == 0){
+        $('#heatmap_div').hide();
+        return $().promise();
     }
 
+    return $.when(api.signature.info(sig_key),
+        api.signature.expression(sig_key))
+        .then(function(sig_info, sig_expression){
+
+            if(sig_info.isPrecomputed){
+                $('#heatmap_div').hide();
+                return
+            }
+
+            // Heatmap doesn't show for precomputed sigs
+            // Need to recreate it if it isn't there
+            if( !$('#heatmap_div').is(":visible"))
+            {
+                $('#heatmap_div').find('svg').remove();
+                $('#heatmap_div').show();
+                global_heatmap = new HeatMap('#heatmap_div');
+                global_scatter.hovered_links.push(global_heatmap);
+                global_heatmap.hovered_links.push(global_scatter);
+            }
+            
+
+        //Construct data matrix
+        // TODO: sort genes
+
+        dataMat = sig_expression.data;
+        gene_labels = sig_expression.gene_labels;
+        sample_labels = sig_expression.sample_labels;
+
+        var gene_signs = gene_labels.map(function(e,i){
+            return sig_info.sigDict[e]
+        });
+
+        //var assignments = data.Clusters[proj_key][choice];
+        var assignments = sample_labels.map(x => 1);
+
+        global_heatmap.setData(dataMat,
+               assignments,
+               gene_labels,
+               gene_signs,
+               sample_labels);
+
+        });
 }
 
 function createTableFromData()
 {
-    //Detach filter sig box for later
-    var filterSig = $('#sig_filt_input');
-    filterSig.detach();
+    return api.filterGroup.sigProjMatrixP(global_status.filter_group)
+        .then(function(matrix){
 
-    var data = getDataContext();
-    data_matrix = data.SigProjMatrix_p;
-    col_labels = data.ProjectionKeys;
-    row_labels = data.SignatureKeys;
+        updateCurrentSelections(matrix);
 
-    var colorScale = d3.scale.linear()
-        .domain([0,-3,-50])
-        .range(["steelblue","white", "lightcoral"])
-        .clamp(true);
+        // Detach filter sig box for later
+        var filterSig = $('#sig_filt_input');
+        filterSig.detach();
 
-    var header_row = d3.select('#table_div').select('thead').select('tr').selectAll('th')
-        .data([""].concat(col_labels));
 
-    header_row.enter().append('th');
-    header_row.html(function(d){return "<div>"+d+"</div>";})
-        .filter(function(d,i) {return i > 0;})
-        .on("click", function(d,i) { sortByColumn(d);});
+        // Create the Header row
+        var header_row = d3.select('#table_div').select('thead').select('tr').selectAll('th')
+            .data([""].concat(matrix.proj_labels));
 
-    header_row.exit().remove();
+        header_row.enter().append('th');
+        header_row.html(function(d){return "<div>"+d+"</div>";})
+            .filter(function(d,i) {return i > 0;})
+            .on("click", function(d,i) { sortByColumn(d);});
 
-    //Format cell data for better d3 binding
-    var formatted_data_matrix = data_matrix.map(function(row, i){
-            return row.map(function(val, j){
-                return {"val":val, "row":i, "col":j}
+        header_row.exit().remove();
+
+        // Format cell data for better d3 binding
+        var formatted_data_matrix = matrix.data.map(function(row, i){
+                return row.map(function(val, j){
+                    return {"val":val, "row":i, "col":j}
+                    });
                 });
-            });
 
-    var formatted_data_w_row_labels = d3.zip(row_labels, formatted_data_matrix);
+        var formatted_data_w_row_labels = d3.zip(matrix.sig_labels, formatted_data_matrix);
 
-    //Sort data if necessary
-    var sort_col = data.ProjectionKeys.indexOf(global_status.sorted_column);
-    if(sort_col > -1){
-        sortFun = function(a,b){
-            a_precomp = data.SigScores[a[0]].isPrecomputed;
-            b_precomp = data.SigScores[b[0]].isPrecomputed;
-            if(a_precomp && b_precomp || !a_precomp && !b_precomp){
-                return a[1][sort_col].val - b[1][sort_col].val;
-            }
-            else if (a_precomp) { return -1;}
-            else {return 1;}
-        };
-        formatted_data_w_row_labels.sort(sortFun);
-    }
+        // Sort data if necessary
 
-    var content_rows = d3.select('#table_div').select('tbody').selectAll('tr')
-        .data(formatted_data_w_row_labels);
+        var sort_col = matrix.proj_labels.indexOf(global_status.sorted_column);
+        if(sort_col > -1){
+            sortFun = function(a,b){
+                a_precomp = global_data.sigIsPrecomputed[a[0]];
+                b_precomp = global_data.sigIsPrecomputed[b[0]];
+                if(a_precomp && b_precomp || !a_precomp && !b_precomp){
+                    return a[1][sort_col].val - b[1][sort_col].val;
+                }
+                else if (a_precomp) { return -1;}
+                else {return 1;}
+            };
+            formatted_data_w_row_labels.sort(sortFun);
+        }
 
-    content_rows.enter().append('tr');
-    content_rows.exit().remove();
+        var colorScale = d3.scale.linear()
+            .domain([0,-3,-50])
+            .range(["steelblue","white", "lightcoral"])
+            .clamp(true);
 
-    var content_row = content_rows.selectAll("td")
-        .data(function(d, row_num){return [d[0]].concat(d[1]);})
+        var content_rows = d3.select('#table_div').select('tbody').selectAll('tr')
+            .data(formatted_data_w_row_labels);
 
-    content_row.enter().append('td');
-    content_row.exit().remove();
+        content_rows.enter().append('tr');
+        content_rows.exit().remove();
 
-    content_row
-        .filter(function(d,i) { return i > 0;})
-        .text(function(d){
-            if(d.val < -50) { return "< -50";}
-            else if(d.val > -1) { return d.val.toFixed(2);}
-            else { return d.val.toPrecision(2);}
-                })
-        .style('background-color', function(d){return colorScale(d.val);})
-        .on("click", function(d){tableClickFunction(row_labels[d.row], col_labels[d.col])});
+        var content_row = content_rows.selectAll("td")
+            .data(function(d, row_num){return [d[0]].concat(d[1]);})
 
-    //Make signature names click-able
-    content_row.filter(function(d,i) { return i == 0;})
-        .text(function(d){return d;})
-        .on("click", function(d){createSigModal(d)});
-        
-    //Create filter signature box
-    var th = $('#table_div').children('table').children('thead').children('tr').children('th:first-child');
-    $(th).append(filterSig);
-    filterSig.show();
-    filterSig.trigger('input');
+        content_row.enter().append('td');
+        content_row.exit().remove();
+
+        content_row
+            .filter(function(d,i) { return i > 0;})
+            .text(function(d){
+                if(d.val < -50) { return "< -50";}
+                else if(d.val > -1) { return d.val.toFixed(2);}
+                else { return d.val.toPrecision(2);}
+                    })
+            .style('background-color', function(d){return colorScale(d.val);})
+            .on("click", function(d){tableClickFunction(matrix.sig_labels[d.row], matrix.proj_labels[d.col])});
+
+        // Make signature names click-able
+        content_row.filter(function(d,i) { return i == 0;})
+            .text(function(d){return d;})
+            .on("click", function(d){createSigModal(d)});
+            
+        // (Re)Create filter signature box
+        var th = $('#table_div').children('table').children('thead').children('tr').children('th:first-child');
+        $(th).append(filterSig);
+        filterSig.show();
+        filterSig.trigger('input');
+
+    });
 }
 
 function createSigModal(signature_label){
@@ -502,11 +520,11 @@ function createSigModal(signature_label){
 
 function createGeneModal()
 {
-    data = getDataContext();
+    genes = api.filterGroup.genes(global_status.filter_group)
     //Calculate max width
-    var width_and_index = data.genes.map(function(e,i){return [e.length, i]});
+    var width_and_index = genes.map(function(e,i){return [e.length, i]});
     width_and_index.sort(function(a,b){return Math.sign(b[0] - a[0]);});
-    var top10 = width_and_index.slice(0,10).map(function(e,i){return data.genes[e[1]];});
+    var top10 = width_and_index.slice(0,10).map(function(e,i){return genes[e[1]];});
     var widths = [];
     for(var i = 0; i < top10.length; i++)
     {
@@ -519,7 +537,7 @@ function createGeneModal()
     var maxWidth = d3.max(widths);
     
     var geneDivs = d3.select('#geneModal').select('.modal-body').selectAll('div')
-        .data(data.genes.sort());
+        .data(genes.sort());
         
     geneDivs.enter().append('div');
     geneDivs.exit().remove();
