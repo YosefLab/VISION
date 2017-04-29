@@ -117,22 +117,22 @@ jug() %>%
     }
     return(out)
   }) %>%
-  get("/FilterGroup/(?<filter_name4>.*)/(?<proj_name2>.*)/clusters/(?<cluster_procedure>.*)", function(req, res, err) {
+  get("/FilterGroup/(?<filter_name4>.*)/(?<proj_name2>.*)/clusters/(?<cluster_procedure>.*)/(?<param>.*)", function(req, res, err) {
     projData <- fpout@projData
+
     filter <- URLdecode(req$params$filter_name4)
     proj <- URLdecode(req$params$proj_name2)
-    clust <- URLdecode(req$params$cluster_procedure)
+    method <- URLdecode(req$params$cluster_procedure)
+    param <- as.numeric(URLdecode(req$params$param))
+
     out <- "Filter, Projection pair does not exist!"
     for (pd in projData) {
       if (pd@filter == filter) {
-        for (cd in pd@clusters) {
-          if (cd@projectionName == proj) {
-            for (c in cd@clusters) {
-              if (c@name == clust) {
-                out <- clusterToJSON(c@data)
-                break
-              }
-            }
+        for (projection in pd@projections) {
+          if (projection@name == proj) {
+              clust = cluster(projection, method, param)
+              out <- clusterToJSON(clust)
+              break
           }
         }
       }

@@ -14,10 +14,11 @@ var global_options = {};
 var global_scatter = {};
 var global_heatmap = {};
 
-var cluster_options = {
-    "Kmeans: K=3": {method: "Kmeans", params: [3]},
-    "Kmeans: K=4": {method: "Kmeans", params: [4]},
-    "Kmeans: K=5": {method: "Kmeans", params: [5]},
+// Keys are cluster methods
+// Values are list of allowed method parameter
+var cluster_options = { // Note: param values should be strings
+    "KMeans": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"]
+    //"PAM": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
 }
 
 $(window).resize(function()
@@ -123,16 +124,40 @@ window.onload = function()
     });
 
     // Define cluster dropdown 
-    var clust_dropdown = $('#cluster_select');
+    var clust_dropdown = $('#cluster_select_method');
     clust_dropdown.empty();
     $.each(cluster_options, function(name){
         clust_dropdown.append($("<option />").val(name).text(name));
     });
+    clust_dropdown[0].selectedIndex = 0; // Restore index on model change
 
-    clust_dropdown[0].selectedIndex = 2; // Restore index on model change
+    build_cluster_dropdown_param = function()
+    {
+        // Rebuild the 'param' if the first dropdown is changed
+        var vals = cluster_options[$('#cluster_select_method').val()]
+        var clust_dropdown_param = $('#cluster_select_param');
+        var old_val = clust_dropdown_param.val()
+
+        clust_dropdown_param.empty();
+        for(var i=0; i<vals.length; i++){
+            clust_dropdown_param.append($("<option />").val(vals[i]).text(vals[i]));
+        }
+
+        if(vals.indexOf(old_val) > -1){
+            clust_dropdown_param[0].selectedIndex = vals.indexOf(old_val)
+        }
+    }
+
+    build_cluster_dropdown_param() // Call it now to initially populate it
     
     //Define cluster dropdown's change function
-    $('#cluster_select').change(function(){
+    $('#cluster_select_method').change(function(){
+        build_cluster_dropdown_param()
+        drawHeat();
+    });
+
+    //Define cluster dropdown's change function
+    $('#cluster_select_param').change(function(){
         drawHeat();
     });
 
@@ -345,9 +370,9 @@ function drawChart() {
 function drawHeat(){
     var sig_key = global_status.plotted_signature;
     var proj_key = global_status.plotted_projection;
-    var cluster_choice = $('#cluster_select').val();
-
-    // TODO: get clusters working
+    var filter_group = global_status.filter_group
+    var cluster_method = $('#cluster_select_method').val();
+    var cluster_param = $('#cluster_select_param').val();
 
     if(sig_key.length == 0){
         $('#heatmap_div').hide();
@@ -355,8 +380,9 @@ function drawHeat(){
     }
 
     return $.when(api.signature.info(sig_key),
-        api.signature.expression(sig_key))
-        .then(function(sig_info, sig_expression){
+        api.signature.expression(sig_key),
+        api.projection.clusters(filter_group, proj_key, cluster_method, cluster_param))
+        .then(function(sig_info, sig_expression, cluster){
 
             if(sig_info.isPrecomputed){
                 $('#heatmap_div').hide();
@@ -387,7 +413,7 @@ function drawHeat(){
         });
 
         //var assignments = data.Clusters[proj_key][choice];
-        var assignments = sample_labels.map(x => 1);
+        var assignments = sample_labels.map(sample => cluster['data'][sample])
 
         global_heatmap.setData(dataMat,
                assignments,

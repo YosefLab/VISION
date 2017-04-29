@@ -1,4 +1,5 @@
 ## Projection wrapper class
+require("cluster")
 
 
 setMethod("initialize", signature(.Object = "Projection"), 
@@ -16,4 +17,21 @@ setMethod("updateProjection", signature(object = "Projection"),
             object@pData <- data
             return(object)
           }
+)
+
+setMethod("cluster", signature(object = "Projection"),
+          function(object, method, param) {
+
+            if(method == "KMeans")
+            {
+                km <- kmeans(t(object@pData), centers=param)
+                clust <- Cluster(method, param, km$centers, t(as.matrix(km$cluster)))
+            }
+            else
+            {
+                stop(paste("Unknown Cluter Method:", method));
+            }
+
+            return(clust)
+    }
 )

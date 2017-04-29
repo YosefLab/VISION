@@ -121,43 +121,6 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
   return(list(output, rownames(exprData)))
 }
 
-defineClusters <- function(projections) {
-  #' Creates several different clusterings of the data in projections
-  #' 
-  #' Parameters:
-  #'  projections: (list of Projection Objects) 
-  #'    List of Projection objects, each of a different projection algorithm.
-  #'  
-  #' Returns:
-  #'  clusters: (list of Cluster Objects)
-  #'    list of cluster objects, each wrapping a projection with a groupings of different clusters
-
-  # List of ClusterData Objects to be returned 
-  outClusters <- c()
-  
-  for(proj in projections) {
-    
-    # List of Clusters for a given projection
-    projClusters <- c()
-    key <- proj@name
-    
-    for (k in 2:6) {
-      clustName <- paste0("K-Means, k=", k)
-      km <- kmeans(t(proj@pData), centers=k)
-      clus <- Cluster(clustName, km$centers, t(as.matrix(km$cluster)))
-      projClusters <- c(projClusters, clus)
-    }
-    
-    cData <- ClusterData(key, projClusters)
-    outClusters <- c(outClusters, cData)
-  }
-  
-  return(outClusters)
-  
-  
-  
-}
-
 applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
   #' Performs Weighted PCA on the data
   #' 

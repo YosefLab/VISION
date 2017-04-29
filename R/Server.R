@@ -119,14 +119,15 @@ sigProjMatrixPToJSON <- function(sigpmp) {
 }
 
 clusterToJSON <- function(cluster) {
-  # Convert a cluster on some projection into a JSON object
-  
-  cl <- as.list(cluster)
-  names(cl) <- colnames(cluster)
-  
-  json <- toJSON(cl, force=T, pretty=T, auto_unbox=T)
-  
+  #' Convert a Cluster object into a json output
+
+  out <- list()
+  out[['method']] <- cluster@method
+  out[['param']] <- cluster@param
+  out[['centers']] <- cluster@centers
+  out[['data']] <- as.list(cluster@data[1,])
+  json <- toJSON(out, force=T, pretty=T, auto_unbox=TRUE)
+
   return(json)
-  
 }
 

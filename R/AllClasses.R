@@ -9,16 +9,10 @@
 
 Cluster <- setClass("Cluster",
   slots = c(
-    name = "character",
+    method = "character",
+    param = "numeric",
     centers = "matrix",
     data = "matrix"
-  )
-)
-
-ClusterData <- setClass("ClusterData",
-  slots = c(
-    projectionName = "character",
-    clusters = "list"
   )
 )
 
@@ -105,8 +99,7 @@ ProjectionData <- setClass("ProjectionData",
       genes = "character",
       keys = "character",
       sigProjMatrix = "matrix",
-      pMatrix="matrix",
-      clusters="list"
+      pMatrix="matrix"
     )
 )
 

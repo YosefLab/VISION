@@ -211,9 +211,6 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     projs <- projectData[[1]]
     g <- projectData[[2]]
     
-    message("Generating clusters...")
-    clusters <- defineClusters(projs)
-      
     message("Computing significance of signatures...")
     sigVProj <- sigsVsProjections(projs, sigScores, randomSigScores)
 
@@ -223,7 +220,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     pVals <- sigVProj[[4]]
       
     projData <- ProjectionData(filter=filter, projections=projs, genes=g, keys=projKeys, 
-                                          sigProjMatrix=sigProjMatrix, pMatrix=pVals, clusters=clusters)
+                                          sigProjMatrix=sigProjMatrix, pMatrix=pVals)
 
     projDataList <- c(projDataList, projData)
       

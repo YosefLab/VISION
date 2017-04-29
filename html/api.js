@@ -79,11 +79,11 @@ var api = (function(){
     }
 
     output.projection.clusters = function(filter_group, projection_name,
-            cluster_method)
+            cluster_method, parameter)
     {
       var query = "/FilterGroup/"
       query = query.concat(encodeURI(filter_group), "/", encodeURI(projection_name),
-              "/clusters/", encodeURI(cluster_method))
+              "/clusters/", encodeURI(cluster_method), "/", encodeURI(parameter))
       return $.ajax(query).then(x => JSON.parse(x))
 
     }
