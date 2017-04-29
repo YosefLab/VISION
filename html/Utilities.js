@@ -190,3 +190,15 @@ function apply_styles(original_node, unstyled_node)
         apply_styles(original_children[i], unstyled_children[i]);
     }
 }
+
+
+// Argsort an array in javascript
+// Return the indices that would sort the array
+Array.prototype.argSort = function()
+{
+    var out = new Array(this.length);
+    for(var i = 0; i < out.length; i++) out[i] = i;
+    var that = this;
+    out.sort(function(a,b){return that[a] - that[b];});
+    return out;
+};

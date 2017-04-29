@@ -110,7 +110,13 @@ window.onload = function()
                 updateMenuBar();
             })
 
-        updateTable()
+        // When this dropdown changes, everything should update
+        createTableFromData().then(function(){
+            // Needs to happen after createTableFromData because that function
+            //   updates selected sig/proj
+            drawChart();
+            drawHeat();
+        });
     });
 
     var filterSig = $('#sig_filt_input');
@@ -235,85 +241,21 @@ function updateCurrentSelections(matrix)
     }
 }
 
-function updateTable()
-{
-    //updateMenuBar();
-    createTableFromData();
-    drawChart();
-    drawHeat();
-}
-
-function updateMenuBar()
+function updateMenuBar()  // Updates the ### Genes button in the menu bar
 {
     var button = $('#show_genes_button');
     var num_genes = global_status.filter_group_genes.length
     button.text(num_genes + " Genes");
 }
 
-function getDataContext()
-{
-    var probability = false;
-    var model_name = 'Expression';
-    if(probability){ model_name = 'Expression';}
-    
-    //Find right model
-    var model;
-    for (name in FP_Models)
-    {
-        if(name.toUpperCase() === model_name.toUpperCase())
-        {
-            model = FP_Models[name];
-            break;
-        }
-    }
-    
-    //Find the right projection object
-    
-    var filter_name = $('#filter_dropdown').val();
-    var pca = $('#pca_checkbox').is(":checked");
-    
-    var projection_data;
-    
-    for (var i = 0; i < model.projectionData.length; i++)
-    {
-        var pd = model.projectionData[i];
-        if(pd.filter.toUpperCase() === filter_name.toUpperCase() && pd.pca === pca)
-        {
-            projection_data = pd;
-            break;
-        }
-    }
-    
-    //Build the data object
-    var data = {};
-    data['Clusters'] = projection_data.clusters;
-    data['genes'] = projection_data.genes;
-    data['ProjectionKeys'] = projection_data.projectionKeys;
-    data['Projections'] = projection_data.projections;
-    data['SigProjMatrix'] = projection_data.sigProjMatrix;
-    data['SigProjMatrix_p'] = projection_data.sigProjMatrix_p;
-    data['SignatureKeys'] = projection_data.signatureKeys;
-    data['SigScores'] = model.signatureScores;
-    
-    return data;
-}
-
-
-Array.prototype.argSort = function()
-{
-    var out = new Array(this.length);
-    for(var i = 0; i < out.length; i++) out[i] = i;
-    var that = this;
-    out.sort(function(a,b){return that[a] - that[b];});
-    return out;
-};
-
-function sortByColumn(col_name)
+// Function that's triggered when clicking on table header column
+function sortByColumn(col_name)  
 {
     global_status.sorted_column = col_name;
     createTableFromData();
 }
 
+// Function that's triggered when clicking on table cell
 function tableClickFunction(row_key, col_key)
 {
     global_status.plotted_signature  = row_key;
@@ -322,6 +264,7 @@ function tableClickFunction(row_key, col_key)
     drawHeat();
 }
 
+// Draw the scatter plot
 function drawChart() {
 
     var sig_key = global_status.plotted_signature;
@@ -367,6 +310,7 @@ function drawChart() {
 
 }
 
+// Draw the heatmap
 function drawHeat(){
     var sig_key = global_status.plotted_signature;
     var proj_key = global_status.plotted_projection;
