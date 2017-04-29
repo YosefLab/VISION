@@ -19,7 +19,7 @@ library(jsonlite)
 fpout <- readRDS(arg1)
 
 
-browseURL("http://127.0.0.1:8080/FastProject_Output/html/Results.html")
+browseURL("http://127.0.0.1:8080/html/Results.html")
 # Launch the server
 jug() %>%
   get("/Signature/Scores/(?<sig_name1>.*)", function(req, res, err) {
@@ -213,7 +213,6 @@ jug() %>%
     }
     return(out)
   }) %>%
-  serve_static_files("html") %>%
   serve_static_files("../html") %>%
   simple_error_handler_json() %>%
   serve_it()
