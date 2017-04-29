@@ -457,65 +457,70 @@ function createTableFromData()
     });
 }
 
-function createSigModal(signature_label){
-    var sig_obj = FP_Signatures[signature_label];
-    var sig_data = [];
-    for(var i = 0; i < sig_obj.Genes.length; i++)
-    {
-        sig_data.push({'Gene': sig_obj.Genes[i], 'Sign': sig_obj.Signs[i]});
-    }
-    var sigModal = $('#signatureModal');
-    sigModal.find('h4').text(signature_label);
-    var tableRows = d3.select('#signatureModal').select('tbody').selectAll('tr')
-            .data(sig_data);
-    tableRows.enter().append('tr');
-    tableRows.exit().remove();
+function createSigModal(sig_key){
 
-    var tableCells = tableRows.selectAll('td').data(function(d){return [d.Gene, d.Sign];});
-    tableCells.enter().append('td');
-    tableCells.text(function(d, i){
-        if(i == 0){return d;}
-        else{
-            if(d == 1)  {return "+";}
-            if(d == -1) {return "-";}
-            if(d == 0)  {return "Unsigned";}
-            return "Unknown";
-            }
-        });
+    return api.signature.info(sig_key).then(function(sig_info){
 
-    tableCells.exit().remove();
+        var sig_data = [];
+        for(gene in sig_info['sigDict'])
+        {
+            sig_data.push({'Gene': gene, 'Sign': sig_info['sigDict'][gene]});
+        }
+        var sigModal = $('#signatureModal');
+        sigModal.find('h4').text(sig_key);
+        var tableRows = d3.select('#signatureModal').select('tbody').selectAll('tr')
+                .data(sig_data);
+        tableRows.enter().append('tr');
+        tableRows.exit().remove();
 
-    sigModal.modal();
+        var tableCells = tableRows.selectAll('td').data(function(d){return [d.Gene, d.Sign];});
+        tableCells.enter().append('td');
+        tableCells.text(function(d, i){
+            if(i == 0){return d;}
+            else{
+                if(d == 1)  {return "+";}
+                if(d == -1) {return "-";}
+                if(d == 0)  {return "Unsigned";}
+                return "Unknown";
+                }
+            });
+
+        tableCells.exit().remove();
+
+        sigModal.modal();
+    });
 }
 
 function createGeneModal()
 {
-    genes = api.filterGroup.genes(global_status.filter_group)
-    //Calculate max width
-    var width_and_index = genes.map(function(e,i){return [e.length, i]});
-    width_and_index.sort(function(a,b){return Math.sign(b[0] - a[0]);});
-    var top10 = width_and_index.slice(0,10).map(function(e,i){return genes[e[1]];});
-    var widths = [];
-    for(var i = 0; i < top10.length; i++)
-    {
-        var div = document.createElement("div");
-        $(div).text(top10[i]).css("position","absolute").css("left", "-9999px");
-        $('body').append(div);
-        widths.push($(div).width());
-    }
-    
-    var maxWidth = d3.max(widths);
-    
-    var geneDivs = d3.select('#geneModal').select('.modal-body').selectAll('div')
-        .data(genes.sort());
-        
-    geneDivs.enter().append('div');
-    geneDivs.exit().remove();
-    
-    geneDivs
-        .text(function(d){return d;})
-        .style("width", maxWidth + "px");
-    
-    $('#geneModal').modal();
-    
+    return api.filterGroup.genes(global_status.filter_group)
+        .then(function(genes){
+
+            //Calculate max width
+            var width_and_index = genes.map(function(e,i){return [e.length, i]});
+            width_and_index.sort(function(a,b){return Math.sign(b[0] - a[0]);});
+            var top10 = width_and_index.slice(0,10).map(function(e,i){return genes[e[1]];});
+            var widths = [];
+            for(var i = 0; i < top10.length; i++)
+            {
+                var div = document.createElement("div");
+                $(div).text(top10[i]).css("position","absolute").css("left", "-9999px");
+                $('body').append(div);
+                widths.push($(div).width());
+            }
+            
+            var maxWidth = d3.max(widths);
+            
+            var geneDivs = d3.select('#geneModal').select('.modal-body').selectAll('div')
+                .data(genes.sort());
+                
+            geneDivs.enter().append('div');
+            geneDivs.exit().remove();
+            
+            geneDivs
+                .text(function(d){return d;})
+                .style("width", maxWidth + "px");
+            
+            $('#geneModal').modal();
+        });
 }
