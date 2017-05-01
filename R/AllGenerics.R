@@ -39,3 +39,7 @@ setGeneric("updateExprData", function(object, newData) {
 setGeneric("updateProjection", function(object, name, data) {
   standardGeneric("updateProjection")
 })
+
+setGeneric("cluster", function(object, method, param) {
+  standardGeneric("cluster")
+})

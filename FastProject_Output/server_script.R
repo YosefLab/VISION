@@ -19,7 +19,7 @@ library(jsonlite)
 fpout <- readRDS(arg1)
 
 
-browseURL("http://127.0.0.1:8080/FastProject_Output/html/Results.html")
+browseURL("http://127.0.0.1:8080/html/Results.html")
 # Launch the server
 jug() %>%
   get("/Signature/Scores/(?<sig_name1>.*)", function(req, res, err) {
@@ -29,6 +29,14 @@ jug() %>%
     if (name %in% rownames(sigMatrix)) {
       out <- sigScoresToJSON(sigMatrix[name,])
     }
+    return(out)
+  }) %>%
+  get("/Signature/ListPrecomputed", function(req, res, err){
+    signatures <- fpout@sigList
+    keys <- lapply(signatures, function(x) x@name)
+    vals <- lapply(signatures, function(x) x@isPrecomputed)
+    names(vals) <- keys
+    out <- toJSON(vals, auto_unbox=TRUE)
     return(out)
   }) %>%
   get("/Signature/Info/(?<sig_name2>.*)", function(req, res, err){
@@ -49,6 +57,21 @@ jug() %>%
     out <- "Signature does not exist!"
     if (name %in% rownames(sigMatrix)) {
       out <- sigRanksToJSON(sigMatrix[name,])
+    }
+    return(out)
+  }) %>%
+  get("/Signature/Expression/(?<sig_name4>.*)", function(req, res, err) {
+    all_names = sapply(fpout@sigList, function(x){return(x@name)})
+    name <- URLdecode(req$params$sig_name4)
+    index = match(name, all_names)
+    if(is.na(index)){
+        out <- "Signature does not exist!"
+    }
+    else{
+        sig = fpout@sigList[[index]]
+        genes = names(sig@sigDict)
+        expMat = fpout@exprData@data
+        return(expressionToJSON(expMat, genes))
     }
     return(out)
   }) %>%
@@ -94,27 +117,46 @@ jug() %>%
     }
     return(out)
   }) %>%
-  get("/FilterGroup/(?<filter_name4>.*)/(?<proj_name2>.*)/clusters/(?<cluster_procedure>.*)", function(req, res, err) {
+  get("/FilterGroup/(?<filter_name4>.*)/(?<proj_name2>.*)/clusters/(?<cluster_procedure>.*)/(?<param>.*)", function(req, res, err) {
     projData <- fpout@projData
+
     filter <- URLdecode(req$params$filter_name4)
     proj <- URLdecode(req$params$proj_name2)
-    clust <- URLdecode(req$params$cluster_procedure)
+    method <- URLdecode(req$params$cluster_procedure)
+    param <- as.numeric(URLdecode(req$params$param))
+
     out <- "Filter, Projection pair does not exist!"
     for (pd in projData) {
       if (pd@filter == filter) {
-        for (cd in pd@clusters) {
-          if (cd@projectionName == proj) {
-            for (c in cd@clusters) {
-              if (c@name == clust) {
-                out <- clusterToJSON(c@data)
-                break
-              }
-            }
+        for (projection in pd@projections) {
+          if (projection@name == proj) {
+              clust = cluster(projection, method, param)
+              out <- clusterToJSON(clust)
+              break
           }
         }
       }
     }
     return(out)
+  }) %>%
+  get("/FilterGroup/(?<filter_name5>.*)/genes", function(req, res, err) {
+    projData <- fpout@projData
+    filter <- URLdecode(req$params$filter_name5)
+    out <- "Filter, Projection pair does not exist!"
+    for (pd in projData) {
+      if (pd@filter == filter) {
+        out <- toJSON(pd@genes)
+        break
+      }
+    }
+    return(out)
+  }) %>%
+  get("/FilterGroup/list", function(req, res, err) {
+    projData <- fpout@projData
+    filters <- sapply(projData, function(x){
+                      return(x@filter);
+                      });
+    return(toJSON(filters))
   }) %>%
   get("/Expression", function(req, res, err) {
     return(expressionToJSON(fpout@exprData@data, matrix(NA)))
@@ -171,6 +213,6 @@ jug() %>%
     }
     return(out)
   }) %>%
-  serve_static_files("html") %>%
+  serve_static_files("../html") %>%
   simple_error_handler_json() %>%
   serve_it()

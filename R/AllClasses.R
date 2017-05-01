@@ -9,16 +9,10 @@
 
 Cluster <- setClass("Cluster",
   slots = c(
-    name = "character",
+    method = "character",
+    param = "numeric",
     centers = "matrix",
     data = "matrix"
-  )
-)
-
-ClusterData <- setClass("ClusterData",
-  slots = c(
-    projectionName = "character",
-    clusters = "list"
   )
 )
 
@@ -105,8 +99,7 @@ ProjectionData <- setClass("ProjectionData",
       genes = "character",
       keys = "character",
       sigProjMatrix = "matrix",
-      pMatrix="matrix",
-      clusters="list"
+      pMatrix="matrix"
     )
 )
 
@@ -121,7 +114,7 @@ ServerExpression <- setClass("ServerExpression",
 ServerSigProjMatrix <- setClass("ServerSigProjMatrix",
     slots = c(
       data = "matrix",
-      sample_labels = "character",
+      proj_labels = "character",
       sig_labels = "character"
     )
 )
@@ -129,7 +122,7 @@ ServerSigProjMatrix <- setClass("ServerSigProjMatrix",
 ServerPMatrix <- setClass("ServerPMatrix",
     slots = c(
       data = "matrix",
-      sample_labels = "character",
+      proj_labels = "character",
       sig_labels = "character"
     )
 )
