@@ -19,11 +19,11 @@ applyFilters <- function(data, threshold, nofilter, lean) {
   
   message("Applying filters...")
   
+  
   if(nofilter) {
     filterList <- c(filterList, "novar")
     expr <- filterGenesNovar(expr)
     data@noVarFilter <- expr
-    data <- updateExprData(data, expr)
     return(c(data, filterList))
     
   } else {
@@ -52,7 +52,7 @@ filterGenesNovar <- function(data) {
   #' Returns: (data.frame) filtered expression matrix
   message("Applying no variance filter...")
   
-  #d <- data.frame(data)
+
   return (subset(data, apply(data, 1, var) != 0))
   
 }

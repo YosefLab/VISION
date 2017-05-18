@@ -7,13 +7,15 @@ setGeneric("Analyze", function(object) {
   standardGeneric("Analyze")
 })
 
+
+setGeneric("cluster", function(object, method, param) {
+  standardGeneric("cluster")
+})
+
 setGeneric("createOutputDirectory", function(object) {
   standardGeneric("createOutputDirectory")
 })
 
-setGeneric("generateOutputReport", function(fpout, url="http://127.0.0.1:8080/html/Results.html") {
-  standardGeneric("generateOutputReport")
-})
 
 setGeneric("getExprData", function(object) {
   standardGeneric("getExprData")
@@ -21,6 +23,10 @@ setGeneric("getExprData", function(object) {
 
 setGeneric("getNormalizedCopy", function(object, func) {
   standardGeneric("getNormalizedCopy")
+})
+
+setGeneric("saveFPOutAndViewResults", function(fpout) {
+  standardGeneric("saveFPOutAndViewResults")
 })
 
 setGeneric("sigEqual", function(object, compareSig) {
@@ -40,6 +46,7 @@ setGeneric("updateProjection", function(object, name, data) {
   standardGeneric("updateProjection")
 })
 
-setGeneric("cluster", function(object, method, param) {
-  standardGeneric("cluster")
+setGeneric("viewResults", function(fpout) {
+  standardGeneric("viewResults")
 })
+

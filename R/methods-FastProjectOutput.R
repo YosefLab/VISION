@@ -18,9 +18,9 @@ setMethod("initialize", signature(.Object="FastProjectOutput"),
           }
 )
 
-setMethod("generateOutputReport", signature(fpout="FastProjectOutput"),
-          function(fpout, url="http://127.0.0.1:8080/FastProject_Output/html/Results.html") {
-            #' Generate an HTML Output Report from a FastProjectOutput Object
+setMethod("saveFPOutAndViewResults", signature(fpout="FastProjectOutput"),
+          function(fpout) {
+            #' Generate an HTML Output Report from a FastProjectOutput Object by first saving the object
             #' Includes a server script for getting json data from FastProjectOutput
             #' 
             #' Parameters:
@@ -35,9 +35,19 @@ setMethod("generateOutputReport", signature(fpout="FastProjectOutput"),
               i <- i+1
               ofile <- paste0("FastProject_Output/fpout", i, ".rds")
             }
-            
+              
             saveRDS(fpout, file=ofile)
             arg1 <<- ofile
+            
+            message("Launching the server...")
+            message("Press exit or ctrl c to exit")
+            source("FastProject_Output/server_script.R")
+})
+
+setMethod("viewResults", signature(fpout="FastProjectOutput"), 
+          function(fpout) {
+            
+            arg1 <<- fpout
             message("Launching the server...")
             message("Press exit or ctrl c to exit")
             source("FastProject_Output/server_script.R")

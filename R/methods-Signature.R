@@ -180,7 +180,13 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   i <- 1
   for (proj in projections) {
     dataLoc <- proj@pData
+    
+    # TODO: EXPERIMENT WITH A K X D DISTANCE MATRIX -- COMPUTE KERNEL ON THIS MATRIX WITH K NEAREST NEIGHBORS
+    # DETERMINE K AS LOG NUMBER OF CELLS / SQRT ( NUMBER CELLS )
     distanceMatrix <- (dist(t(dataLoc), method="euclidean"))
+    
+    ##TODO: compute the neighborhood size off of the distance Matrix 
+    ## Maybe use a K=D tree to find the neighborhood of the matrix 
 
     weights <- as.matrix(exp(-1 * (distanceMatrix*distanceMatrix) / NEIGHBORHOOD_SIZE^2))
     diag(weights) <- 0
@@ -297,6 +303,9 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
       
       N_LEVELS <- length(fLevels)
       factorPredictions <- (weights %*% fMatrix)
+      
+      ## TODO: OR BUILD AN ROC CURVE AND PR -- take AUC as dissimilarity metric, and can compute p-value from it 
+      
       
       dissimilarity <- 1 - as.matrix(apply(fMatrix %*% t(factorPredictions), 1, sum))
 

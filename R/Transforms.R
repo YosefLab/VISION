@@ -134,7 +134,7 @@ computeWeights <- function(fit_func, params, exprData) {
   #'             expr (ExpressionData) 
   #'             Data from which prob derives
   #'             
-  #' Returns: weights (Num_Genes x Num_Samples Matrix) Estimated weight for each dta point in input matrix
+  #' Returns: weights (Num_Genes x Num_Samples Matrix) Estimated weight for each data point in input matrix
   #'                  Ranges from 0 to 1. 
   
   expr <- getExprData(exprData);

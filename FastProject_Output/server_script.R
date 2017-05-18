@@ -16,8 +16,11 @@ library(jsonlite)
 # Sample API BELOW
 # ----------------
 
-fpout <- readRDS(arg1)
-
+if (class(arg1) == "FastProjectOutput") {
+  fpout <- arg1
+} else {
+  fpout <- readRDS(arg1)
+}
 
 browseURL("http://127.0.0.1:8080/html/Results.html")
 # Launch the server
@@ -84,7 +87,6 @@ jug() %>%
       if (pd@filter == filter) {
         for (p in pd@projections) {
           if (p@name == proj) {
-            print('here')
             out <- coordinatesToJSON(p@pData)
             break
           }

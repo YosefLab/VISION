@@ -14,6 +14,7 @@ require("loe")
 require("cluster")
 require("smacof")
 require("rARPACK")
+require("BKPC")
 
 
 registerMethods <- function(lean=FALSE) {
@@ -367,9 +368,8 @@ applyRBFPCA <- function(exprData, projWeights=NULL) {
   
   ndata <- colNormalization(exprData)
   ndataT <- t(ndata)
-  res <- kpca(ndataT, features=2, kernel='rbfdot')
+  res <- kpca(ndataT, features=2, kpar=list(sigma=0.2), kernel='rbfdot')
   res <- res@pcv
-  
   rownames(res) <- colnames(exprData)
   return(res)
   
