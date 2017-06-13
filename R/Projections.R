@@ -16,6 +16,7 @@ require("smacof")
 require("rARPACK")
 require("BKPC")
 require("rsvd")
+require("profmem")
 
 
 registerMethods <- function(lean=FALSE) {
@@ -137,12 +138,13 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
   #' Returns:
   #'  pca_data: (Num_Components x Num_Samples) matrix
   #'    Data transformed using PCA.  Num_Components = Num_Samples
+  
   ptm <- proc.time()
   
   set.seed(RANDOM_SEED)
         
   projData <- exprData
-  if (dim(projData) != dim(weights)) {
+  if (nrow(projData) != nrow(weights) || ncol(projData) != ncol(weights)) {
     weights <- weights[rownames(exprData), ]
   }
   
@@ -166,15 +168,9 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
   ncomp <- min(ncol(projData), nrow(projData), maxComponents)
   print("eig")
   # NOTE: Weighted Covariance works better than Weighted Correlation for computing the eigenvectors
-  # NOTE: rsvd() method tends to be the more efficient method  
-
-  #eig_obj = eigs(wcov,k = ncomp,which = "LM")
-  #evec <- t(eig_obj$vectors)
+  # NOTE: rsvd() method is 5x more memory efficent than eigs(); eigs() is slightly faster  
   decomp <- rsvd(wcov, k=ncomp)
   evec <- t(decomp$u)
-  
-  print(dim(evec))
-  print(dim(dataCentered))
   
   print("eval")
   # Project down using computed eigenvectors
@@ -184,6 +180,7 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
   totalVar <- sum(apply(projData, 1, var))
   eval <- eval / totalVar
   print(proc.time() - ptm)
+  
   return(list(wpcaData, eval, t(evec)))
     
 }

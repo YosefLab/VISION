@@ -247,6 +247,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     message("Computing significance of signatures...")
     sigVProj <- sigsVsProjections(projs, sigScores, randomSigScores)
     
+    
     sigKeys <- sigVProj[[1]]
     projKeys <- sigVProj[[2]]
     sigProjMatrix <- sigVProj[[3]]

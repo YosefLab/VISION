@@ -1,4 +1,6 @@
 require(geometry)
+require(pROC)
+require(verification)
 
 setMethod("initialize", signature(.Object="Signature"),
           function(.Object, sigDict, name, source, metaData="", isPrecomputed=F, isFactor=F) {
@@ -152,7 +154,7 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   randomSigScoreMatrix <- t(apply(randomSigScoreMatrix, 1, as.numeric))
 
   
-  ### BUILD ONE HOT MATRIX FOR FACTORS 
+  ### build one hot matrix for factors
   factorSigs <- list()
   for (s in precomputedFactor) {
     fValues <- s@scores
@@ -186,7 +188,7 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
     distanceMatrix <- (dist(t(dataLoc), method="euclidean"))
     
     ##TODO: compute the neighborhood size off of the distance Matrix 
-    ## Maybe use a K=D tree to find the neighborhood of the matrix 
+    ## Maybe use a K-D tree to find the neighborhood of the matrix 
 
     weights <- as.matrix(exp(-1 * (distanceMatrix*distanceMatrix) / NEIGHBORHOOD_SIZE^2))
     diag(weights) <- 0
@@ -262,27 +264,35 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
       }
       
       sigPredictions <- (weights %*% sigScores)
-      dissimilarity <- abs(sigScores - sigPredictions)
-      medDissimilarity <- as.matrix(apply(dissimilarity, 2, median))
+      r <- roc.area(sigScores, sigPredictions)
+      a <- r$A
+      #dissimilarity <- abs(sigScores - sigPredictions)
+      #medDissimilarity <- as.matrix(apply(dissimilarity, 2, median))
       
       #Compute a background for numerical signatures
-      NUM_REPLICATES <- 10000
-      randomSigValues <- get_bg_dist(N_SAMPLES, NUM_REPLICATES)
-      bgValues <- as.vector(t(sigScores))[randomSigValues]
-      randomPredictions <- (weights %*% bgValues)
-      rDissimilarity <- abs(bgValues <- randomPredictions)
-      randomScores <- as.matrix(apply(rDissimilarity, 2, median))
+      #NUM_REPLICATES <- 10000
+      #randomSigValues <- get_bg_dist(N_SAMPLES, NUM_REPLICATES)
+      #bgValues <- as.vector(t(sigScores))[randomSigValues]
+      #randomPredictions <- (weights %*% bgValues)
+      #randR <- roc(sigScores, sigPredictions)
+      #randA <- randR$auc
       
-      mu <- mean(randomScores)
-      sigma <- biasedVectorSD(random_scores)
-      if (sigma != 0) {
-        p_value <- pnorm((medDissimilarity - mu) / sigma)
-      } else {
-        p_value <- 1.0
-      }
+      #rDissimilarity <- abs(bgValues <- randomPredictions)
+      #randomScores <- as.matrix(apply(rDissimilarity, 2, median))
       
-      pnumSigProjMatrix[j,i] <- 1 - (medDissimilarity / N_SAMPLES)
-      pnumSigProjMatrix_P[j,i] <- p_value
+      #mu <- mean(randomScores)
+      #sigma <- biasedVectorSD(random_scores)
+      #if (sigma != 0) {
+      #  p_value <- pnorm((medDissimilarity - mu) / sigma)
+      #} else {
+      #  p_value <- 1.0
+      #}
+      
+      #pnumSigProjMatrix[j,i] <- 1 - (medDissimilarity / N_SAMPLES)
+      #pnumSigProjMatrix_P[j,i] <- p_value
+      #rTest <- roc.test(r, randR)
+      pnumSigProjMatrix[j,i] <- a
+      pnumSigProjMatrix_P[j,i] <- r$p.value
       
       j <- j + 1
     }
@@ -305,33 +315,46 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
       factorPredictions <- (weights %*% fMatrix)
       
       ## TODO: OR BUILD AN ROC CURVE AND PR -- take AUC as dissimilarity metric, and can compute p-value from it 
+      r <- roc.area(fMatrix, factorPredictions)
+      a <- r$A
       
-      
-      dissimilarity <- 1 - as.matrix(apply(fMatrix %*% t(factorPredictions), 1, sum))
+      #dissimilarity <- 1 - as.matrix(apply(fMatrix %*% t(factorPredictions), 1, sum))
 
-      medDissimilarity <- as.matrix(apply(dissimilarity, 2, median))
+      #medDissimilarity <- as.matrix(apply(dissimilarity, 2, median))
       
-      NUM_REPLICATES <- 1000
-      columnSamples <- sample(N_LEVELS, NUM_REPLICATES, replace=TRUE)
-      columnAssignments <- factorFreq[columnSamples]
-      dim(columnAssignments) <- c(1, NUM_REPLICATES)
-      randFactors <- matrix(runif(N_SAMPLES*NUM_REPLICATES), nrow=N_SAMPLES, ncol=NUM_REPLICATES)
-      randPredictions <- (weights %*% randFactors)
-      for (ii in 1:nrow(randPredictions)) {
-        randPredictions[ii,] <- sample(randPredictions[ii,])
-      }
-      randMedDissimilarity <- as.matrix(apply(1-randPredictions, 2, median))
+      #NUM_REPLICATES <- 1000
+      #columnSamples <- sample(N_LEVELS, NUM_REPLICATES, replace=TRUE)
+      #columnAssignments <- factorFreq[columnSamples]
+      #dim(columnAssignments) <- c(1, NUM_REPLICATES)
+      #randFactors <- matrix(runif(N_SAMPLES*NUM_REPLICATES), nrow=N_SAMPLES, ncol=NUM_REPLICATES)
+      #randPredictions <- (weights %*% randFactors)
       
-      mu <- mean(randMedDissimilarity)
-      sigma <- biasedVectorSD(randMedDissimilarity)
-      if (sigma == 0) {
-        p_value <- 1.0
-      } else{
-        p_value <- pnorm((medDissimilarity - mu) / sigma)
-      }
       
-      factorSigProjMatrix[j,i] <- 1 - medDissimilarity
-      factorSigProjMatrix_P[j,i] <- p_value
+      #for (ii in 1:nrow(randPredictions)) {
+      #  randPredictions[ii,] <- sample(randPredictions[ii,])
+      #}
+      #print(dim(fMatrix))
+      #print(dim(randPredictions))
+      #randR <- roc(fMatrix, t(randPredictions))
+      #randA <- randR$auc
+      #randMedDissimilarity <- as.matrix(apply(1-randPredictions, 2, median))
+      
+      #mu <- mean(randMedDissimilarity)
+      #sigma <- biasedVectorSD(randMedDissimilarity)
+      #if (sigma == 0) {
+      #  p_value <- 1.0
+      #} else{
+      #  p_value <- pnorm((medDissimilarity - mu) / sigma)
+      #}
+      
+      #factorSigProjMatrix[j,i] <- 1 - medDissimilarity
+      #factorSigProjMatrix_P[j,i] <- p_value
+      #rTest <- roc.test(r, randR)
+      
+      
+      factorSigProjMatrix[j,i] <- a
+      factorSigProjMatrix_P[j,i] <- r$p.value
+      
     }
     
     i <- i + 1
