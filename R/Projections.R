@@ -56,11 +56,16 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
     exprData <- expr@thresholdFilter
   } else if (filterName == "fano") {
     exprData <- expr@fanoFilter
+  } else if (filterName == "") {
+    exprData <- expr@data
   } else {
     stop("FilterName not recognized: ", filterName)
   }
   
   methodList = registerMethods(lean)
+  #t <- proc.time()
+  #timingList <- c(t-t)
+  #timingNames <- c("Start")
   
   if (lean) {
     print("PCA")
@@ -75,28 +80,41 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
       pca_res <- applyPermutationWPCA(exprData, weights, components=30)[[1]]
     } else {
       print("Weighted PCA")
-      pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30)[[1]]
+      m <- profmem(pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30)[[1]])
     }
     proj <- Projection("PCA: 1,2", t(pca_res[c(1,2),]))
     inputProjections <- c(inputProjections, proj)
     inputProjections <- c(inputProjections, Projection("PCA: 1,3", t(pca_res[c(1,3),])))
     inputProjections <- c(inputProjections, Projection("PCA: 2,3", t(pca_res[c(2,3),])))
   }
+  #timingList <- rbind(timingList, proc.time() - t)
+  #timingNames <- c(timingNames, "wPCA")
+  memProf <- c(total(m)/1e6)
+  memNames <- c("wPCA")
   
   for (method in names(methodList)){
     print(method)
+    m <- profmem({
     if (method == "ICA" || method == "RBF Kernel PCA") {
       res <- methodList[[method]](exprData)
       proj <- Projection(method, res)
       inputProjections <- c(inputProjections, proj)
     } else {
-      # Check if method is PCA because function call isn't general
       res <- methodList[[method]](pca_res)
       proj <- Projection(method, res)
       inputProjections <- c(inputProjections, proj)
     }
+    })
+    memProf <- rbind(memProf, total(m)/1e6)
+    memNames <- c(memNames, method)
+    
+    #timingList <- rbind(timingList, proc.time() - t)
+    #timingNames <- c(timingNames, method)
   }  
-  
+  #rownames(timingList) <- timingNames
+  #return(timingList)
+  rownames(memProf) <- memNames
+  #return(memProf)
   output <- c()
   
   for (p in inputProjections) {
@@ -139,8 +157,6 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
   #'  pca_data: (Num_Components x Num_Samples) matrix
   #'    Data transformed using PCA.  Num_Components = Num_Samples
   
-  ptm <- proc.time()
-  
   set.seed(RANDOM_SEED)
         
   projData <- exprData
@@ -179,7 +195,7 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
   eval <- as.matrix(apply(wpcaData, 1, var))
   totalVar <- sum(apply(projData, 1, var))
   eval <- eval / totalVar
-  print(proc.time() - ptm)
+  
   
   return(list(wpcaData, eval, t(evec)))
     
@@ -373,6 +389,28 @@ applyRBFPCA <- function(exprData, projWeights=NULL) {
   
   ndata <- colNormalization(exprData)
   ndataT <- t(ndata)
+  
+  # WORK IN PROGRESS: MANUALLY IMPLEMENTING RBF KERNEL
+  #sqDist <- ndata %*% t(ndata)
+  #gamma <- 15
+  
+  #kMat <- exp(-gamma * sqDist)
+  #kMat[which(kMat == Inf)] <- 100000
+  #kMat[which(kMat == -Inf)] <- -100000
+  
+  #decomp <- rsvd(kMat, k=2)
+  #evec <- t(decomp$u)
+  
+  # Project down using computed eigenvectors
+  #kMat <- kMat / sd(kMat)
+  #projected <- as.matrix(evec %*% kMat)
+  #eval <- as.matrix(apply(projected, 1, var))
+  #totalVar <- sum(apply(projected, 1, var))
+  #eval <- eval / totalVar
+  
+  
+  #return(projected[1:2,])
+  
   res <- kpca(ndataT, features=2, kpar=list(sigma=0.2), kernel='rbfdot')
   res <- res@pcv
   rownames(res) <- colnames(exprData)

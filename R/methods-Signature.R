@@ -170,10 +170,10 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
       factorMatrix[,j] <- factorMatrixRow
       j <- j+1 
     }
-
+    
     factorSigs[[s@name]] <- list(fLevels, factorFreq, factorMatrix)
-  
   }
+
   
   
   
@@ -196,8 +196,6 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
     weightsNormFactor[weightsNormFactor == 0] <- 1.0
     weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
     weights <- weights / weightsNormFactor
-    print(proj@name)
-    print(dim(sigScoreMatrix))
     neighborhoodPrediction <- (weights %*% sigScoreMatrix)
   
     ## Neighborhood dissimilatory score = |actual - predicted|
@@ -290,7 +288,8 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
       
       #pnumSigProjMatrix[j,i] <- 1 - (medDissimilarity / N_SAMPLES)
       #pnumSigProjMatrix_P[j,i] <- p_value
-      #rTest <- roc.test(r, randR)
+
+      
       pnumSigProjMatrix[j,i] <- a
       pnumSigProjMatrix_P[j,i] <- r$p.value
       
@@ -314,11 +313,16 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
       N_LEVELS <- length(fLevels)
       factorPredictions <- (weights %*% fMatrix)
       
-      ## TODO: OR BUILD AN ROC CURVE AND PR -- take AUC as dissimilarity metric, and can compute p-value from it 
-      r <- roc.area(fMatrix, factorPredictions)
-      a <- r$A
+      labels <- apply(fMatrix, 1, which.max)
       
-      #dissimilarity <- 1 - as.matrix(apply(fMatrix %*% t(factorPredictions), 1, sum))
+      # Get predicted index and corresponding probability
+      preds_ii <- apply(factorPredictions, 1, which.max)
+      preds <- factorPredictions[cbind(1:nrow(factorPredictions),preds_ii)]
+
+      r <- multiclass.roc(labels, preds_ii, levels=seq(1,length(fLevels)))
+      a <- r$auc
+      
+      #dissimilarity <- 1 - as.matrix(apply(fMatrix * factorPredictions, 1, sum))
 
       #medDissimilarity <- as.matrix(apply(dissimilarity, 2, median))
       
@@ -333,10 +337,7 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
       #for (ii in 1:nrow(randPredictions)) {
       #  randPredictions[ii,] <- sample(randPredictions[ii,])
       #}
-      #print(dim(fMatrix))
-      #print(dim(randPredictions))
-      #randR <- roc(fMatrix, t(randPredictions))
-      #randA <- randR$auc
+      
       #randMedDissimilarity <- as.matrix(apply(1-randPredictions, 2, median))
       
       #mu <- mean(randMedDissimilarity)
@@ -349,14 +350,20 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
       
       #factorSigProjMatrix[j,i] <- 1 - medDissimilarity
       #factorSigProjMatrix_P[j,i] <- p_value
-      #rTest <- roc.test(r, randR)
       
+      # Calculate the p value for precomputed signature
+      krList <- list()
+      for (k in 1:length(fLevels)) {
+        krList <- c(krList, list(preds_ii[labels==k]))
+      }
+      
+      krtest <- kruskal.test(krList)
       
       factorSigProjMatrix[j,i] <- a
-      factorSigProjMatrix_P[j,i] <- r$p.value
+      factorSigProjMatrix_P[j,i] <- krtest$p.value
       
+      j <- j + 1
     }
-    
     i <- i + 1
   }
   

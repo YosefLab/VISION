@@ -244,6 +244,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     timingList <- rbind(timingList, proc.time() - ptm)
     tRows <- c(tRows, paste0("Pr. ", filter))
 
+    #return(list(projs, sigScores, randomSigScores))
     message("Computing significance of signatures...")
     sigVProj <- sigsVsProjections(projs, sigScores, randomSigScores)
     
