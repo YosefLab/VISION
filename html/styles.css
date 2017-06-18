@@ -19,11 +19,26 @@ input[type=text]
 .color_panel
 {
     background-color: #ccc;
-    padding: 5px;
-    margin: 10px;
+    /*padding: 5px;*/
+    /*margin: 10px;*/
     /*box-shadow: 0 10px 6px -6px #777;*/
-    box-shadow: -8px 8px 10px -3px #777;
+    /*box-shadow: -8px 8px 10px -3px #777;*/
 
+}
+
+.colorOptions {
+	margin-left: 40px;
+}
+
+.content_wrapper {
+	style=display: inline-block; 
+	position: absolute; 
+	justify-content: center;
+	width=100%;
+}
+
+#data_options_div {
+	margin-top: 10px;
 }
 
 #data_options_div span{
@@ -34,13 +49,15 @@ input[type=text]
 #data_options_div button{
     padding: 0 6px;
     vertical-align: baseline;
+    margin-top: 20px;
 }
 
 #table_div table{
-    margin-right: 50px; /* So the table div accounts for angled labels */
+    /*margin-right: 50px;*/ /* So the table div accounts for angled labels */
     margin-top: 30px;
-    width: calc(100% - 50px);
+    width: calc(100% - 10px);
     table-layout: fixed;
+    overflow:auto;
 }
 
 #table_div table th:first-child{
@@ -63,6 +80,7 @@ input[type=text]
     word-wrap: break-word;
     cursor: pointer;
     padding-left: 5px;
+	overflow:auto;
 }
 
 #table_div table td:not(:first-child), #table_div table th:not(:first-child){
@@ -79,10 +97,11 @@ input[type=text]
 
 .altRow{
     background-color: rgb(220,220,220);
+    max-width: 100px;
 }
 
-.hidden {
-    display: none;
+#export-button {
+	margin-right: 20px;
 }
 
 #table_div{
@@ -111,11 +130,13 @@ input[type=text]
     stroke: #fff;
 }
 
+#sig_filt_input {
+}
+
 #heatmap_div{
 }
 
-#title_div{
-    padding-left: 15px;
+#title_div{;
 }
 
 #plot_title_div{
@@ -125,7 +146,7 @@ input[type=text]
 }
 
 #plot_title_div .subtitle, #plot_title_div .title{
-    margin: 5px 0;
+    margin: 10px;
 }
 
 #plot_title_div .subtitle{
@@ -135,7 +156,7 @@ input[type=text]
 #plot_title_div .colorOptions{
     font-size: 13px;
     text-align: left;
-    margin: 10px 70px;
+    /*margin: 10px 70px;*/
 }
 
 #plot_title_div .colorOptions label{
@@ -173,6 +194,10 @@ input[type=text]
 /* Style for hovered heatmap rows */
 .heatmap-hover {
     fill-opacity: .7 !important;
+}
+
+div.hidden {
+	display: none;
 }
 
 /*For bootstrap modal header*/

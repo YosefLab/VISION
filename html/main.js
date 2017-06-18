@@ -39,6 +39,8 @@ $(window).resize(function()
     //Render
     drawChart();
     drawHeat();
+
+
 });
 
 function doneTyping()
@@ -199,7 +201,6 @@ window.onload = function()
         .then(function(){
         $("#filter_dropdown").change() // Change event updates the table
     });
-
 };
 
 function updateCurrentSelections(matrix)
@@ -367,6 +368,7 @@ function drawHeat(){
 
         });
 }
+
 
 function createTableFromData()
 {

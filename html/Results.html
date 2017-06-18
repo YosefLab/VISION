@@ -61,10 +61,7 @@
     </div>
 </div>
 <div id="content_wrapper" style="display: flex; flex-direction: row; justify-content: center;">
-    <div style="width: 700px; max-width: 850px; height: 100%; flex: 1 0 auto;">
-        <div id="title_div" class="color_panel">
-            <h1>FastProject Viewer</h1>
-        </div>
+    <div style="width: 35%; min-width: 350px; flex: 1 0 auto;">
         <div id="data_options_div" class="color_panel">
             <span>
                 <label for="filter_dropdown">Filter Level</label>
@@ -77,14 +74,20 @@
                 </button>
             </span>
         </div>
-        <div id="table_div" class="color_panel" style="height: calc(100vh - 156px);">
+        <div id="table_div" class="color_panel" style="height: calc((100vh - 88px)/2);">
             <table>
                 <thead><tr></tr></thead>
                 <tbody></tbody>
             </table>
         </div>
+        <div id="heatmap_div" class="color_panel" style="height: calc((100vh - 165px)/2);">
+            <div class="form-inline">
+                <select id="cluster_select_method" class="form-control" style="width: 100px;"></select>
+                <select id="cluster_select_param" class="form-control" style="width: 70px;"></select>
+            </div>
+        </div>
     </div>
-    <div style="width: 500px; height: 100%; max-width: 500px; flex: 1 1 auto;">
+    <div style="width: 65%; height: 100%; min-width: 600pxx; flex: 1 1 auto;">
         <div id="plot_title_div" class="color_panel">
             <div class="title"></div>
             <div class="subtitle"></div>
@@ -99,17 +102,11 @@
                     </label>
                 </div>
                 <div style="float: right">
-                    <button type="button" class="btn btn-default" onclick=exportSigProj()>&#x21e9;Export</button>
+                    <button type="button" class="btn btn-default" id="export-button" onclick=exportSigProj()>&#x21e9;Export</button>
                 </div>
             </div>
         </div>
-        <div id="scatter_div" class="color_panel" style="height: calc((100vh - 165px)/2);"></div>
-        <div id="heatmap_div" class="color_panel" style="height: calc((100vh - 165px)/2);">
-            <div class="form-inline">
-                <select id="cluster_select_method" class="form-control" style="width: 100px;"></select>
-                <select id="cluster_select_param" class="form-control" style="width: 70px;"></select>
-            </div>
-        </div>
+        <div id="scatter_div" class="color_panel" style="height: calc((100vh - 165px));"></div>
     </div>
 </div>
 <input id="sig_filt_input" type="text" placeholder="Filter Signatures..." style="display: none;">

@@ -388,32 +388,10 @@ applyRBFPCA <- function(exprData, projWeights=NULL) {
   set.seed(RANDOM_SEED)
   
   ndata <- colNormalization(exprData)
-  ndataT <- t(ndata)
   
-  # WORK IN PROGRESS: MANUALLY IMPLEMENTING RBF KERNEL
-  #sqDist <- ndata %*% t(ndata)
-  #gamma <- 15
-  
-  #kMat <- exp(-gamma * sqDist)
-  #kMat[which(kMat == Inf)] <- 100000
-  #kMat[which(kMat == -Inf)] <- -100000
-  
-  #decomp <- rsvd(kMat, k=2)
-  #evec <- t(decomp$u)
-  
-  # Project down using computed eigenvectors
-  #kMat <- kMat / sd(kMat)
-  #projected <- as.matrix(evec %*% kMat)
-  #eval <- as.matrix(apply(projected, 1, var))
-  #totalVar <- sum(apply(projected, 1, var))
-  #eval <- eval / totalVar
-  
-  
-  #return(projected[1:2,])
-  
-  res <- kpca(ndataT, features=2, kpar=list(sigma=0.2), kernel='rbfdot')
+  res <- kpca(ndata, features=2, kpar=list(sigma=0.001), kernel='rbfdot')
   res <- res@pcv
-  rownames(res) <- colnames(exprData)
-  return(res)
+  colnames(res) <- colnames(exprData)
+  return(t(res))
   
 }
