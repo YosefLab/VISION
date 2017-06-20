@@ -1,5 +1,14 @@
 ## Functions to transform the data and calculate weights
 
+matprod.par <- function(cl, A, B) {
+  
+  if (ncol(A) != nrow(B)) stop("Matrices do not conform")
+  idx <- splitIndices(nrow(A), length(cl))
+  Alist <- lapply(idx, function(ii) A[ii,,drop=FALSE])
+  ans <- clusterApply(cl, Alist, get("%*%"), B)
+  do.call(rbind, ans)
+}
+
 createFalseNegativeMap <- function(data, housekeeping_genes, debug=0) {
   #' Uses gene names in `housekeeping_genes` to create a mapping of false negatives.
   #' Creates a functional fit for each sample based on that samples HK genes

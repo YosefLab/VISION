@@ -1,6 +1,7 @@
 require(geometry)
 require(pROC)
 require(verification)
+require(parallel)
 
 setMethod("initialize", signature(.Object="Signature"),
           function(.Object, sigDict, name, source, metaData="", isPrecomputed=F, isFactor=F) {
@@ -60,7 +61,7 @@ getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
   
 }
 
-sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBORHOOD_SIZE = 0.33) {
+sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBORHOOD_SIZE = 0.33, numCores=0) {
   #' Evaluates the significance of each signature vs. each projection. 
   #' 
   #' Paramters:
@@ -81,6 +82,15 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   #'  SigProjMatrix_P: matrix (Num_Signatures x Num_Projections)
   
   set.seed(RANDOM_SEED)
+  ptm <- proc.time()
+  # Set up cluster for parallel computing
+  if (numCores == 0) {
+    nc <- min(4, detectCores()-1)
+  } else {
+    nc <- numCores
+  }
+  cl <- makeCluster(rep("localhost", nc))
+  
   spRowLabels <- c()
   spRows <- c()
   spRowLabelsFactors <- c()
@@ -185,25 +195,26 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
     
     # TODO: EXPERIMENT WITH A K X D DISTANCE MATRIX -- COMPUTE KERNEL ON THIS MATRIX WITH K NEAREST NEIGHBORS
     # DETERMINE K AS LOG NUMBER OF CELLS / SQRT ( NUMBER CELLS )
-    distanceMatrix <- (dist(t(dataLoc), method="euclidean"))
+    distanceMatrix <- as.matrix((dist(t(dataLoc), method="euclidean")))
     
     ##TODO: compute the neighborhood size off of the distance Matrix 
     ## Maybe use a K-D tree to find the neighborhood of the matrix 
-
-    weights <- as.matrix(exp(-1 * (distanceMatrix*distanceMatrix) / NEIGHBORHOOD_SIZE^2))
+    
+    weights <- as.matrix(exp(-1 * matprod.par(cl, distanceMatrix, distanceMatrix) / NEIGHBORHOOD_SIZE^2))
     diag(weights) <- 0
     weightsNormFactor <- apply(weights, 1, sum)
     weightsNormFactor[weightsNormFactor == 0] <- 1.0
     weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
     weights <- weights / weightsNormFactor
-    neighborhoodPrediction <- (weights %*% sigScoreMatrix)
+    neighborhoodPrediction <- matprod.par(cl, weights, sigScoreMatrix)
   
     ## Neighborhood dissimilatory score = |actual - predicted|
     dissimilarity <- abs(sigScoreMatrix - neighborhoodPrediction)
     medDissimilarity <- as.matrix(apply(dissimilarity, 2, median))
     
     # Calculate scores for random signatures
-    randomNeighborhoodPrediction <- (weights %*% randomSigScoreMatrix)
+    #randomNeighborhoodPrediction <- (weights %*% randomSigScoreMatrix)
+    randomNeighborhoodPrediction <- matprod.par(cl, weights, randomSigScoreMatrix)
     randomDissimilarity <- abs(randomSigScoreMatrix - randomNeighborhoodPrediction)
     randomMedDissimilarity <- as.matrix(apply(randomDissimilarity, 2, median))
 
@@ -261,7 +272,7 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
         next
       }
       
-      sigPredictions <- (weights %*% sigScores)
+      sigPredictions <- matprod.par(cl, weights, sigScores)
       r <- roc.area(sigScores, sigPredictions)
       a <- r$A
       #dissimilarity <- abs(sigScores - sigPredictions)
@@ -311,7 +322,7 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
       }
       
       N_LEVELS <- length(fLevels)
-      factorPredictions <- (weights %*% fMatrix)
+      factorPredictions <- matprod.par(cl, weights, fMatrix)
       
       labels <- apply(fMatrix, 1, which.max)
       
@@ -385,6 +396,8 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   
   colnames(sigProjMatrix) <- spColLabels
   rownames(sigProjMatrix) <- spRowLabels
+  
+  stopCluster(cl)
   
   return(list(spRowLabels, spColLabels, sigProjMatrix, sigProjMatrix_P))
 }

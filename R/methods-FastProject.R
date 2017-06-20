@@ -5,7 +5,7 @@ require(logging)
 setMethod("initialize", signature(.Object="FastProject"),
           function(.Object, data_file, housekeeping, signatures, precomputed=NULL,
                    output_dir = "FastProject_Output", nofilter=FALSE, nomodel=FALSE, pca_filter=FALSE,
-                   all_sigs=FALSE, debug=0, lean=FALSE, subsample_size=0, qc=FALSE, 
+                   all_sigs=FALSE, debug=0, lean=FALSE, subsample_size=0, qc=FALSE, num_cores=0, 
                    min_signature_genes=5, projections="", weights=NULL, threshold=0, perm_wPCA=FALSE,
                    sig_norm_method="znorm_rows", sig_score_method="weighted_avg", exprData=NULL, 
                    housekeepingData=NULL, sigData=NULL, precomputedData=NULL) {
@@ -59,6 +59,7 @@ setMethod("initialize", signature(.Object="FastProject"),
             .Object@debug = debug
             .Object@lean = lean
             .Object@perm_wPCA = perm_wPCA
+            .Object@numCores = num_cores
             
             #createOutputDirectory(.Object)
             return(.Object) 
@@ -237,16 +238,15 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     message("Filter level: ", filter)
       
     message("Projecting data into 2 dimensions...")
-    projectData <- generateProjections(eData, object@weights, filter, lean=object@lean, perm_wPCA = object@perm_wPCA)
+    projectData <- generateProjections(eData, object@weights, filter, lean=object@lean, perm_wPCA = object@perm_wPCA, numCores = object@numCores)
     projs <- projectData[[1]]
     g <- projectData[[2]]
     
     timingList <- rbind(timingList, proc.time() - ptm)
     tRows <- c(tRows, paste0("Pr. ", filter))
 
-    #return(list(projs, sigScores, randomSigScores))
     message("Computing significance of signatures...")
-    sigVProj <- sigsVsProjections(projs, sigScores, randomSigScores)
+    sigVProj <- sigsVsProjections(projs, sigScores, randomSigScores, numCores=object@numCores)
     
     
     sigKeys <- sigVProj[[1]]

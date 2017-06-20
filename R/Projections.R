@@ -36,7 +36,7 @@ registerMethods <- function(lean=FALSE) {
   return(projMethods)
 }
 
-generateProjections <- function(expr, weights, filterName="", inputProjections=c(), lean=FALSE, perm_wPCA=FALSE) {
+generateProjections <- function(expr, weights, filterName="", inputProjections=c(), lean=FALSE, perm_wPCA=FALSE, numCores=0) {
   #' Projects data into 2 dimensions using a variety of linear and non-linear methods
   #' 
   #' Parameters:
@@ -77,10 +77,10 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
   } else {
     if (perm_wPCA) {
       print("Permutation PCA")
-      pca_res <- applyPermutationWPCA(exprData, weights, components=30)[[1]]
+      pca_res <- applyPermutationWPCA(exprData, weights, components=30, numCores=numCores)[[1]]
     } else {
       print("Weighted PCA")
-      m <- profmem(pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30)[[1]])
+      m <- profmem(pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30, numCores=numCores)[[1]])
     }
     proj <- Projection("PCA: 1,2", t(pca_res[c(1,2),]))
     inputProjections <- c(inputProjections, proj)
@@ -142,7 +142,7 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
   return(list(output, rownames(exprData)))
 }
 
-applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
+applyWeightedPCA <- function(exprData, weights, maxComponents=200, numCores=0) {
   #' Performs Weighted PCA on the data
   #' 
   #' Parameters:
@@ -159,6 +159,14 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
   
   set.seed(RANDOM_SEED)
         
+  # Set up cluster for parallel computing
+  if (numCores == 0) {
+    nc <- min(4, detectCores()-1)
+  } else {
+    nc <- numCores
+  }
+  cl <- makeCluster(rep("localhost", nc))
+  
   projData <- exprData
   if (nrow(projData) != nrow(weights) || ncol(projData) != ncol(weights)) {
     weights <- weights[rownames(exprData), ]
@@ -170,11 +178,12 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
 
   # Compute weighted data
   wDataCentered <- dataCentered * weights
-  
+
   print("wcov")
   # Weighted covariance / correlation matrices
-  W <- wDataCentered %*% t(wDataCentered)
-  Z <- weights %*% t(weights)
+  W <- matprod.par(cl, wDataCentered, t(wDataCentered))
+  Z <- matprod.par(cl, weights, t(weights))
+  
   wcov <- W / Z
   wcov[which(is.na(wcov))] <- 0.0
   var <- diag(wcov)
@@ -191,17 +200,18 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
   print("eval")
   # Project down using computed eigenvectors
   dataCentered <- dataCentered / sqrt(var)
-  wpcaData <- as.matrix(evec %*% dataCentered)
+  wpcaData <- as.matrix(matprod.par(cl, evec, dataCentered))
   eval <- as.matrix(apply(wpcaData, 1, var))
   totalVar <- sum(apply(projData, 1, var))
   eval <- eval / totalVar
   
+  stopCluster(cl)
   
   return(list(wpcaData, eval, t(evec)))
     
 }
 
-applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, verbose=FALSE, debug=FALSE) {
+applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, verbose=FALSE, debug=FALSE, numCores=0) {
   #' Computes weighted PCA on data. Returns only significant components.
   #' 
   #' After performing PCA on the data matrix, this method then uses a permutation
@@ -225,7 +235,7 @@ applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, 
   
   NUM_REPEATS <- 1;
   
-  w <- applyWeightedPCA(expr, weights, comp)
+  w <- applyWeightedPCA(expr, weights, comp, numCores=numCores)
   wPCA <- w[[1]]
   eval <- w[[2]]
   evec <- w[[3]]
@@ -388,10 +398,231 @@ applyRBFPCA <- function(exprData, projWeights=NULL) {
   set.seed(RANDOM_SEED)
   
   ndata <- colNormalization(exprData)
+  ndataT <- t(ndata)
   
-  res <- kpca(ndata, features=2, kpar=list(sigma=0.001), kernel='rbfdot')
+  res <- kpca(t(ndata), features=2, kpar=list(sigma=0.001), kernel='rbfdot')
   res <- res@pcv
   colnames(res) <- colnames(exprData)
   return(t(res))
   
 }
+
+
+applySimplePPT <- function(exprData, projWeights=NULL, nNodes_ = 0, sigma=0, gamma=0, numCores=0) {
+  #' Principle Tree Analysis
+  #' 
+  #' After begin initialized by either the fit or autoFit functions, the resulting tree structure
+  #' is contained within these fields:
+  #'  C: (NUM_FEATURES x NUM_NODES) matrix
+  #'    positions of the nodes in NUM_FEATURES dimensional space
+  #'  W: (NUM_NODES X NUM_NODES) matrix
+  #'    binary adjacency matrix of the fitted tree
+  #'  Distmat: (NUM_NODES X NUM_SAMPLES) matrix
+  #'    distance matrix between fitted tree nodes and the data points
+  #'  structScore: (numeric)
+  #'    score indicating how structured the data is, as the z-score of the data MSE from shuffled MSE
+  
+  MIN_GAMMA <- 1e-5
+  MAX_GAMMA <- 1e5
+  DEF_TOL <- 1e-3
+  DEF_MAX_ITER <- 50
+  
+  C <- NULL
+  Wt <- NULL
+  
+  if (nNodes_ == 0) {
+    nNodes_ <- round(sqrt(ncol(exprData)))
+  }
+  if (sigma == 0) {
+    km <- kmeans(t(exprData), centers=round(sqrt(ncol(exprData))), nstart=1, iter.max=50)
+    km <- t(as.matrix(km$centers))
+    
+    sigma <- mean(apply(as.matrix(sqdist(exprData, km)), 1, min))
+  }
+  
+  if (gamma == 0) {
+    
+    currGamma <- MIN_GAMMA
+    nNodes <- round(log(ncol(expr)))
+    
+    prevMSE <- -Inf
+    minMSE <- Inf
+    minMSEGamma <- MIN_GAMMA
+  
+    tr <- fitTree(expr, nNodes, sigma, currGamma, DEF_TOL, DEF_MAX_ITER, numCores)
+    C <- tr[[1]]
+    Wt <- tr[[2]]
+    currMSE <- tr[[3]]
+    
+    while ( ((prevMSE / currMSE) - 1 < 0.05) && currGamma <= MAX_GAMMA) {
+      prevMSE <- currMSE
+      currGamma <- currGamma * 10
+      tr <- fitTree(expr, nNodes, sigma, currGamma, DEF_TOL, DEF_MAX_ITER, numCores)
+      C <- tr[[1]]
+      Wt <- tr[[2]]
+      currMSE <- tr[[3]]
+      if (currMSE < minMSE) {
+        minMSE <- currMSE
+        minMSEGamma <- currGamma
+      }
+    }
+    if (currGamma == MAX_GAMMA) {
+      gamma <- minGamma
+      tr <- fitTree(expr, nNodes, sigma, currGamma, DEF_TOL, DEF_MAX_ITER, numCores)
+    }
+    minGamma <- currGamma
+    
+    while( (currMSE < prevMSE) && ((prevMSE / currMSE) - 1 > 0.05) ) {
+      prevMSE <- currMSE
+      currGamma <- currGamma * 10
+      minGamma <- minGamma * (10^(1/3))
+      tr <- fitTree(expr, nNodes, sigma, currGamma, DEF_TOL, DEF_MAX_ITER, numCores)
+      C <- tr[[1]]
+      Wt <- tr[[2]]
+      currMSE <- tr[[3]]
+    }
+    
+    if (nNodes_ > nNodes) {
+      if (nNodes_ != 0) {
+        nNodes <- nNodes_
+      } else {
+        nNodes <- round(sqrt(ncol(expr)))
+      }
+      tr <- fitTree(expr, nNodes, sigma, currGamma, DEF_TOL, DEF_MAX_ITER, numCores)
+      C <- tr[[1]]
+      Wt <- tr[[2]]
+      currMSE <- tr[[3]]
+      
+      # Calculate the degree distribution
+      deg <- apply(Wt, 2, sum)
+      br <- seq(0, max(1, max(deg)))
+      degDist <- hist(deg, br, plot=F)$counts
+      if (length(degDist) > 3) {
+        deg_g2c <- sum(degDist[4:length(degDist)])
+      } else {
+        deg_g2c = 0
+      }
+      deg_g2f <- deg_g2c / nNodes
+
+      while ( !(deg_g2c > 0 && (deg_g2f <= 0.1 || deg_g2c < 5)) && (currGamma >= minGamma) ) {
+        currGamma <- currGamma / sqrt(10)
+        tr <- fitTree(expr, nNodes, sigma, currGamma, DEF_TOL, DEF_MAX_ITER, numCores)
+        C <- tr[[1]]
+        Wt <- tr[[2]]
+        currMSE <- tr[[3]]
+        
+        deg <- apply(Wt, 2, sum)
+        br <- seq(0, max(1, max(deg)))
+        degDist <- hist(deg, br, plot=F)$counts
+        deg_g2c <- sum(degDist[4:length(degDist)])
+        deg_g2f <- deg_g2c / nNodes
+        
+      }
+      
+    }
+    
+    gamma <- currGamma
+    
+  }
+  
+  tr <- fitTree(expr, nNodes, sigma, gamma, DEF_TOL, DEF_MAX_ITER, numCores = 0)
+  C <- tr[[1]]
+  Wt <- tr[[2]]
+  mse <- tr[[3]]
+  
+  return(list(C, Wt, sqdist(expr, C), mse))
+}
+
+fitTree <- function(expr, nNodes, sigma, gamma, tol, maxIter, numCores=0) {
+  #' Fit tree using input parameters
+  #' 
+  #' Paramters:
+  #'  expr: (NUM_GENES x NUM_SAMPLES) matrix
+  #'    data to fit
+  #'  nNodes: numeric
+  #'    number of nodes in the fitted tree, default is the square-root of number of data points
+  #'  sigma: numeric
+  #'    regularization paramter for soft-assignment of data points to nodes, used as the
+  #'    variance of a guassian kernel. If 0, this is estimated automatically
+  #'  gamma: numeric
+  #'    graph-level regularization parameter, controlling the tradeoff between the noise-levels
+  #'    in the data and the graph smoothness. If 0, the is estimated automatically.
+  
+  # Set up cores for parallel computation
+  if (numCores == 0) {
+    nc <- min(4, detectCores()-1)
+  } else {
+    nc <- numCores
+  }
+  cl <- makeCluster(rep("localhost", nc))
+  
+  km <- kmeans(t(expr), centers=nNodes, nstart=10, iter.max=100)$centers
+  km <- t(km)
+  cc_dist <- as.matrix(sqdist(km, km))
+  cx_dist <- as.matrix(sqdist(expr, km))
+  prevScore = Inf
+  currScore = 0
+  currIter = 0
+  
+  while (!( (prevScore - currScore < tol) || (currIter > maxIter) )){
+    currIter <- currIter + 1
+    prevScore <- currScore
+    W <- mst(graph_from_adjacency_matrix(cc_dist))
+    Wt <- get.adjacency(W, sparse=FALSE)
+    
+    Ptmp <- -(cx_dist / sigma)
+    Psums <- matrix(rep(apply(Ptmp, 1, logSumExp), each=ncol(Ptmp)), ncol=ncol(Ptmp), byrow=T)
+    P <- exp(Ptmp - Psums)
+    
+    delta <- diag(apply(P, 2, sum))
+    L <- laplacian_matrix(W)
+    xp <- matprod.par(cl, expr, P)
+    invg <- as.matrix(solve( ((2 / gamma) * L) + delta))
+    C <- matprod.par(cl, xp, invg)
+    
+    cc_dist <- as.matrix(sqdist(C, C))
+    cx_dist <- as.matrix(sqdist(expr, C))
+    
+    P <- clipBottom(P, mi=min(P[P>0]))
+    currScore <- sum(Wt * cc_dist) + (gamma * sum(P * ((cx_dist) + (sigma * log(P)))))
+    
+  }
+  
+  stopCluster(cl)
+  mse <- getMSE(C, expr)
+  print(mse)
+  return(list(C, Wt, mse))
+  
+}
+
+getMSE <- function(C, X) {
+  if (is.na(C) || is.na(X)) {
+    return(NULL)
+  }
+  mse <- mean( apply( as.matrix(sqdist(X, C)), 1, min))
+  return(mse)
+  
+}
+
+sqdist <- function(X, Y) {
+  #' Alternative computation of distance matrix, based on matrix multiplication.
+  
+  xtx <- as.vector( apply(X^2, 2, sum))
+  yty <- as.vector( apply(Y^2, 2, sum))
+  xy <- 2 * (t(X) %*% Y)
+  
+  res <- matrix(0L, nrow=length(xtx), ncol=length(yty))
+  for (i in 1:length(xtx)) {
+    r <- sapply(yty, function(y) y + xtx[[i]])
+    res[i,] <- as.vector(r)
+  }
+  
+  return(res - xy)
+  
+}
+
+clipBottom <- function(x, mi) {
+  x[x < mi] <- mi
+  return(x)
+}
+

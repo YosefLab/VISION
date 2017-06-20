@@ -49,7 +49,8 @@ FastProject <- setClass("FastProject",
       housekeepingData = "data.frame",
       sigData = "list",
       precomputedData= "list",
-      perm_wPCA = "logical"),
+      perm_wPCA = "logical",
+      numCores = "numeric"),
     prototype = list(
       precomputed = NULL,
       output_dir = "FastProject_Output",
@@ -71,7 +72,8 @@ FastProject <- setClass("FastProject",
       housekeepingData = NULL,
       sigData = NULL,
       precomputedData=NULL,
-      perm_wPCA=FALSE
+      perm_wPCA=FALSE,
+      numCores = 0
 ))
 
 FastProjectOutput <- setClass("FastProjectOutput",
