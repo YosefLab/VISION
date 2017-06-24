@@ -16,6 +16,48 @@ input[type=text]
     border: 1px gray; 
 }
 
+button.accordion {
+	background-color: #eee;
+	color: #444;
+	cursor: pointer;
+	padding: 0px;
+	width: 100%;
+	text-align: left;
+	border: none;
+	outline: none;
+	transition: 0.4s;
+}
+
+.command-title {
+	margin-left: 5px;
+	float: left;
+}
+
+button.accordion.active, button.accordion.hover {
+	background-color: #ddd;
+}
+
+button.accordion:after {
+	content: '\002b';
+	color: #777;
+	font-weight: bold;
+	float: right;
+	margin-left: 5px;
+}
+
+button.accordion.active:after {
+	content: "\2212";
+}
+
+div.panel {
+	padding: 0 18px;
+	display: none;
+	max-height: 0px;
+	overflow: hidden;
+	transition: max-height 0.2s ease-out;
+	background-color: #ccc
+}
+
 .color_panel
 {
     background-color: #ccc;
@@ -24,6 +66,10 @@ input[type=text]
     /*box-shadow: 0 10px 6px -6px #777;*/
     /*box-shadow: -8px 8px 10px -3px #777;*/
 
+}
+
+#command-panel {
+	margin-top: 10px;
 }
 
 .colorOptions {
@@ -35,6 +81,10 @@ input[type=text]
 	position: absolute; 
 	justify-content: center;
 	width=100%;
+}
+
+#bottom_visual_div {
+    border-top: 3px solid #eee;
 }
 
 #data_options_div {
@@ -105,7 +155,6 @@ input[type=text]
 }
 
 #table_div{
-    padding-top: 20px;
     overflow: auto;
 }
 
@@ -117,23 +166,26 @@ input[type=text]
 }
 
 #scatter_div rect {
-    fill: #ddd;
+    fill: #292928;
 }
 
 #scatter_div svg circle{
-    fill-opacity: 0.7;
+    fill-opacity: 0.8;
 }
 
 #scatter_div .axis path,
 #scatter_div .axis line {
     fill: none;
-    stroke: #fff;
+    /*stroke: #fff;*/
 }
 
 #sig_filt_input {
 }
 
 #heatmap_div{
+}
+
+#heatmap_div rect {
 }
 
 #title_div{;

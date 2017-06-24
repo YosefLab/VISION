@@ -17,7 +17,7 @@ var global_heatmap = {};
 // Keys are cluster methods
 // Values are list of allowed method parameter
 var cluster_options = { // Note: param values should be strings
-    "KMeans": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"]
+    "KMeans": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"],
     //"PAM": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
 }
 
@@ -97,11 +97,16 @@ window.onload = function()
     //Define some globals
     global_scatter = new ColorScatter("#scatter_div", true);
     global_heatmap = new HeatMap("#heatmap_div");
+    //global_tree = new TreeMap("#tree_div");
     
     //Link the scatter/heatmap
     global_scatter.hovered_links.push(global_heatmap);
     global_heatmap.hovered_links.push(global_scatter);
-    
+    //global_tree.hovered_links.push(global_scatter);
+    //global_scatter.hovered_links.push(global_tree);
+   
+   	global_status.precomputed = false;
+
     //Make the options update the table
     $("#filter_dropdown").change(function(){
         global_status.filter_group = $(this).val();
@@ -201,6 +206,23 @@ window.onload = function()
         .then(function(){
         $("#filter_dropdown").change() // Change event updates the table
     });
+
+	var acc = document.getElementsByClassName("accordion");
+	var i;
+	for (i = 0; i < acc.length; i++) {
+		acc[i].onclick = function() {
+			this.classList.toggle("active");
+			var panel = this.nextElementSibling;
+			if (panel.style.display == "inline") {
+				panel.style.display = "none";
+				panel.style.maxHeight = null;
+			} else {
+				panel.style.maxHeight = panel.scrollHeight + "px";
+				panel.style.display = "inline";
+			}
+		}
+	}
+
 };
 
 function updateCurrentSelections(matrix)
@@ -281,7 +303,7 @@ function drawChart() {
 
     var proj_promise = api.projection.coordinates(filter_group, proj_key);
 
-    var sig_promise;
+	var sig_promise;
     if(global_status.scatterColorOption == "value" || 
         global_data.sigIsPrecomputed[sig_key])
         {sig_promise = api.signature.scores(sig_key)}
@@ -323,58 +345,58 @@ function drawHeat(){
         $('#heatmap_div').hide();
         return $().promise();
     }
+    $("#heatmap_div rect").show();
+	return $.when(api.signature.info(sig_key),
+		api.signature.expression(sig_key),
+		api.projection.clusters(filter_group, proj_key, cluster_method, cluster_param))
+			.then(function(sig_info, sig_expression, cluster){
 
-    return $.when(api.signature.info(sig_key),
-        api.signature.expression(sig_key),
-        api.projection.clusters(filter_group, proj_key, cluster_method, cluster_param))
-        .then(function(sig_info, sig_expression, cluster){
+			if(sig_info.isPrecomputed){
+				//$('#heatmap_div').hide();
+				return
+			}
 
-            if(sig_info.isPrecomputed){
-                $('#heatmap_div').hide();
-                return
-            }
-
-            // Heatmap doesn't show for precomputed sigs
-            // Need to recreate it if it isn't there
-            if( !$('#heatmap_div').is(":visible"))
-            {
-                $('#heatmap_div').find('svg').remove();
-                $('#heatmap_div').show();
-                global_heatmap = new HeatMap('#heatmap_div');
-                global_scatter.hovered_links.push(global_heatmap);
-                global_heatmap.hovered_links.push(global_scatter);
-            }
+			// Heatmap doesn't show for precomputed sigs
+			// Need to recreate it if it isn't there
+			if( !$('#heatmap_div').is(":visible"))
+			{
+				$('#heatmap_div').find('svg').remove();
+				$('#heatmap_div').show();
+				global_heatmap = new HeatMap('#heatmap_div');
+				global_scatter.hovered_links.push(global_heatmap);
+				global_heatmap.hovered_links.push(global_scatter);
+			}
             
 
-        //Construct data matrix
-        // TODO: sort genes
+		//Construct data matrix
+		// TODO: sort genes
 
-        dataMat = sig_expression.data;
-        gene_labels = sig_expression.gene_labels;
-        sample_labels = sig_expression.sample_labels;
+		dataMat = sig_expression.data;
+		gene_labels = sig_expression.gene_labels;
+		sample_labels = sig_expression.sample_labels;
 
-        var gene_signs = gene_labels.map(function(e,i){
-            return sig_info.sigDict[e]
-        });
+		var gene_signs = gene_labels.map(function(e,i){
+			return sig_info.sigDict[e]
+		});
 
-        //var assignments = data.Clusters[proj_key][choice];
-        var assignments = sample_labels.map(sample => cluster['data'][sample])
+		//var assignments = data.Clusters[proj_key][choice];
+		var assignments = sample_labels.map(sample => cluster['data'][sample])
 
-        global_heatmap.setData(dataMat,
-               assignments,
-               gene_labels,
-               gene_signs,
-               sample_labels);
+		global_heatmap.setData(dataMat,
+				assignments,
+				gene_labels,
+				gene_signs,
+				sample_labels);
 
-        });
+    });
 }
 
 
 function createTableFromData()
 {
-    return api.filterGroup.sigProjMatrixP(global_status.filter_group)
+    return api.filterGroup.sigProjMatrixP(global_status.filter_group, global_status.precomputed)
         .then(function(matrix){
-
+			
         updateCurrentSelections(matrix);
 
         // Detach filter sig box for later
@@ -400,6 +422,9 @@ function createTableFromData()
                     });
                 });
 
+		if (typeof(matrix.sig_labels) == "string") {
+			matrix.sig_labels = [matrix.sig_labels];
+		}
         var formatted_data_w_row_labels = d3.zip(matrix.sig_labels, formatted_data_matrix);
 
         // Sort data if necessary
@@ -428,9 +453,9 @@ function createTableFromData()
 
         content_rows.enter().append('tr');
         content_rows.exit().remove();
-
-        var content_row = content_rows.selectAll("td")
-            .data(function(d, row_num){return [d[0]].concat(d[1]);})
+        
+		var content_row = content_rows.selectAll("td")
+			.data(function(d, row_num){ return [d[0]].concat(d[1]);})
 
         content_row.enter().append('td');
         content_row.exit().remove();
@@ -525,4 +550,83 @@ function createGeneModal()
             
             $('#geneModal').modal();
         });
+}
+
+function changeTableView()
+{
+	var precomp = document.getElementById("precomputed_button").innerHTML;
+	if (precomp == "Precomputed") {
+		document.getElementById("precomputed_button").innerHTML = "Computed";
+	} else {
+		document.getElementById("precomputed_button").innerHTML = "Precomputed";
+	}
+	global_status.precomputed = !(global_status.precomputed);
+	return createTableFromData(); 
+}
+
+function exportSigProj() {
+	
+    var sig_key = global_status.plotted_signature;
+    var proj_key = global_status.plotted_projection;
+    var filter_group = global_status.filter_group;
+
+    if(sig_key.length == 0 && proj_key.length == 0){
+        $('#plot_title_div').children().eq(0).text("");
+        $('#plot_title_div').children().eq(1).text("");
+        global_scatter.setData([], false);
+        return $().promise()
+    }
+
+    var proj_promise = api.projection.coordinates(filter_group, proj_key);
+	
+	var sig_promise;
+    if(global_status.scatterColorOption == "value" || 
+        global_data.sigIsPrecomputed[sig_key])
+        {sig_promise = api.signature.scores(sig_key)}
+
+    if(global_status.scatterColorOption == "rank") 
+        {sig_promise = api.signature.ranks(sig_key)}
+
+
+    return $.when(proj_promise, sig_promise) // Runs when both are completed
+        .then(function(projection, signature, sig_info){
+            
+            $('#plot_title_div').children().eq(0).text(proj_key);
+            $('#plot_title_div').children().eq(1).text(sig_key);
+
+            var points = [];
+            for(sample_label in signature){
+                var x = projection[sample_label][0]
+                var y = projection[sample_label][1]
+                var sig_score = signature[sample_label]
+                points.push([x, y, sig_score, sample_label]);
+            }
+			
+			var lineArray = [];
+			points.forEach(function(infoArray, index) {
+				var line = infoArray.join(",");
+				lineArray.push(index == 0 ? "data:text/csv;charset=utf-8," + line : line);
+			});
+			var csvContent = lineArray.join("\n");
+
+			/* var textToSaveAsBlob = new Blob(csvContent, {type:"/text/csv;charset=utf-8"});
+			var textToSaveAsURL = window.URL.createObjectURL(textToSaveAsBlob);
+
+			var fileNameToSaveAs = proj_key + ".csv";*/
+			var encodedURI = encodeURI(csvContent);
+			var downloadLink = document.createElement("a");
+			downloadLink.setAttribute("href", encodedURI);
+			downloadLink.setAttribute("download", proj_key + ".csv");
+			downloadLink.onclick = destroyClickedElement;
+			downloadLink.style.display = "none";
+			document.body.appendChild(downloadLink);
+
+			downloadLink.click();
+
+        });
+
+}
+
+function destroyClickedElement(event) {
+	document.body.removeChild(event.target);
 }

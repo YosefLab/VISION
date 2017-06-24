@@ -5,18 +5,10 @@
 
 require("fastICA")
 require('Rtsne')
-require('dimRed')
-require("RANN")
 require('igraph')
-require('kernlab')
-require("vegan")
-require("loe")
-require("cluster")
-require("smacof")
-require("rARPACK")
-require("BKPC")
 require("rsvd")
-require("profmem")
+require("RDRToolbox")
+#require("profmem")
 
 
 registerMethods <- function(lean=FALSE) {
@@ -29,9 +21,10 @@ registerMethods <- function(lean=FALSE) {
   }
   
   projMethods <- c(projMethods, "RBF Kernel PCA" = applyRBFPCA)
-  #projMethods <- c(projMethods, "ISOMap" = applyISOMap)
+  projMethods <- c(projMethods, "ISOMap" = applyISOMap)
   projMethods <- c(projMethods, "tSNE30" = applytSNE30)
   projMethods <- c(projMethods, "tSNE10" = applytSNE10)
+  #projMethods <- c(projMethods, "PPT" = applySimplePPT)
   
   return(projMethods)
 }
@@ -80,7 +73,8 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
       pca_res <- applyPermutationWPCA(exprData, weights, components=30, numCores=numCores)[[1]]
     } else {
       print("Weighted PCA")
-      m <- profmem(pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30, numCores=numCores)[[1]])
+      pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30, numCores=numCores)[[1]]
+      #m <- profmem(pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30, numCores=numCores)[[1]])
     }
     proj <- Projection("PCA: 1,2", t(pca_res[c(1,2),]))
     inputProjections <- c(inputProjections, proj)
@@ -89,33 +83,38 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
   }
   #timingList <- rbind(timingList, proc.time() - t)
   #timingNames <- c(timingNames, "wPCA")
-  memProf <- c(total(m)/1e6)
-  memNames <- c("wPCA")
+  #memProf <- c(total(m)/1e6)
+  #memNames <- c("wPCA")
   
   for (method in names(methodList)){
     print(method)
-    m <- profmem({
+    #m <- profmem({
     if (method == "ICA" || method == "RBF Kernel PCA") {
       res <- methodList[[method]](exprData)
       proj <- Projection(method, res)
       inputProjections <- c(inputProjections, proj)
     } else {
       res <- methodList[[method]](pca_res)
+      #if (method == "PPT") {
+      #  proj <- Projection(method, res[[0]])
+      #} else {
       proj <- Projection(method, res)
+      #}
       inputProjections <- c(inputProjections, proj)
     }
-    })
-    memProf <- rbind(memProf, total(m)/1e6)
-    memNames <- c(memNames, method)
+    #})
+    #memProf <- rbind(memProf, total(m)/1e6)
+    #memNames <- c(memNames, method)
     
     #timingList <- rbind(timingList, proc.time() - t)
     #timingNames <- c(timingNames, method)
   }  
   #rownames(timingList) <- timingNames
   #return(timingList)
-  rownames(memProf) <- memNames
+  #rownames(memProf) <- memNames
   #return(memProf)
-  output <- c()
+  
+  output <- list()
   
   for (p in inputProjections) {
 
@@ -135,9 +134,9 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
 
     coordinates <- t(coordinates)
     p <- updateProjection(p, data=coordinates)
-    output <- c(output, p)
+    output[[p@name]] = p
+    
   }
-  
   
   return(list(output, rownames(exprData)))
 }
@@ -158,14 +157,6 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200, numCores=0) {
   #'    Data transformed using PCA.  Num_Components = Num_Samples
   
   set.seed(RANDOM_SEED)
-        
-  # Set up cluster for parallel computing
-  if (numCores == 0) {
-    nc <- min(4, detectCores()-1)
-  } else {
-    nc <- numCores
-  }
-  cl <- makeCluster(rep("localhost", nc))
   
   projData <- exprData
   if (nrow(projData) != nrow(weights) || ncol(projData) != ncol(weights)) {
@@ -173,7 +164,7 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200, numCores=0) {
   }
   
   # Center data
-  wmean <- as.matrix(apply(projData * weights, 1, sum) / apply(weights, 1, sum))
+  wmean <- as.matrix(rowSums(projData * weights) / rowSums(weights))
   dataCentered <- as.matrix(apply(projData, 2, function(x) x - wmean))
 
   # Compute weighted data
@@ -181,13 +172,12 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200, numCores=0) {
 
   print("wcov")
   # Weighted covariance / correlation matrices
-  W <- matprod.par(cl, wDataCentered, t(wDataCentered))
-  Z <- matprod.par(cl, weights, t(weights))
+  W <- wDataCentered %*% t(wDataCentered)
+  Z <- weights %*% t(weights)
   
   wcov <- W / Z
   wcov[which(is.na(wcov))] <- 0.0
   var <- diag(wcov)
-  cor <- wcov / sqrt(var %*% t(var))
   
   # SVD of wieghted correlation matrix
   ncomp <- min(ncol(projData), nrow(projData), maxComponents)
@@ -200,12 +190,11 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200, numCores=0) {
   print("eval")
   # Project down using computed eigenvectors
   dataCentered <- dataCentered / sqrt(var)
-  wpcaData <- as.matrix(matprod.par(cl, evec, dataCentered))
+  wpcaData <- evec %*% dataCentered
   eval <- as.matrix(apply(wpcaData, 1, var))
   totalVar <- sum(apply(projData, 1, var))
   eval <- eval / totalVar
-  
-  stopCluster(cl)
+
   
   return(list(wpcaData, eval, t(evec)))
     
@@ -328,14 +317,11 @@ applySpectralEmbedding <- function(exprData, projWeights=NULL) {
   set.seed(RANDOM_SEED)
   
   ndata <- colNormalization(exprData)
-  ndataT <- t(ndata)
   
-  #adj <- make.distmat(ndataT)
-  adj <- as.matrix(dist(ndataT, method="euclidean"))
-  res <- spec.emb(adj, 2, norm=TRUE)
-  #adm <- graph_from_adjacency_matrix(adj)
-
-  #res <- embed_adjacency_matrix(adm, 2)
+  adj <- as.matrix(sqdist(ndata, ndata))
+  adm <- graph_from_adjacency_matrix(adj)
+  res <- embed_adjacency_matrix(adm, 2)$X
+  
   rownames(res) <- colnames(exprData)
  
   return(res)
@@ -346,13 +332,11 @@ applyMDS <- function(exprData, projWeights=NULL) {
   set.seed(RANDOM_SEED)
   
   ndata <- colNormalization(exprData)
-  ndataT <- t(ndata)
-  distN <- dist(ndataT, method="euclidean")
+  d <- sqdist(ndata, ndata)
+  res <- cmdscale(d, k=2)
   
-  #res <- cmdscale(distN, k=2, eig=TRUE)
-  res <- mds(distN, ndim=2)
-  res <- res$conf
   rownames(res) <- colnames(exprData)
+  
   return(res)
   
 }
@@ -385,10 +369,10 @@ applytSNE30 <- function(exprData, projWeights=NULL) {
 applyISOMap <- function(exprData, projWeights=NULL) {
   set.seed(RANDOM_SEED)
   
-  ndata <- colNormalization(exprData)
-  d <- dist(t(ndata), method="euclidean")
-  res <- isomap(d, k=4, ndim=2, fragmentedOK=TRUE)
-  res <- res$points
+  res <- Isomap(t(exprData), dims=2)
+  res <- res$dim2
+  
+  rownames(res) <- colnames(exprData)
   
   return(res)
   
@@ -398,12 +382,22 @@ applyRBFPCA <- function(exprData, projWeights=NULL) {
   set.seed(RANDOM_SEED)
   
   ndata <- colNormalization(exprData)
-  ndataT <- t(ndata)
+  distanceMatrix <- sqdist(ndata, ndata)
+  kMat <- as.matrix(exp(-1 * (distanceMatrix * distanceMatrix) / .33))
+
+  # Compute normalized matrix & covariance matrix
+  kMat <- as.matrix(kMat, 1, function(x) (x - mean(x)) / sd(x))
+  W <- kMat %*% t(kMat)
   
-  res <- kpca(t(ndata), features=2, kpar=list(sigma=0.001), kernel='rbfdot')
-  res <- res@pcv
-  colnames(res) <- colnames(exprData)
-  return(t(res))
+  decomp <- rsvd(W, k=2)
+  evec <- decomp$u
+  
+  # project down using evec
+  rbfpca <- kMat %*% evec
+  
+  rownames(rbfpca) <- colnames(exprData)
+  
+  return(rbfpca)
   
 }
 
@@ -494,7 +488,7 @@ applySimplePPT <- function(exprData, projWeights=NULL, nNodes_ = 0, sigma=0, gam
       currMSE <- tr[[3]]
       
       # Calculate the degree distribution
-      deg <- apply(Wt, 2, sum)
+      deg <- colSums(Wt)
       br <- seq(0, max(1, max(deg)))
       degDist <- hist(deg, br, plot=F)$counts
       if (length(degDist) > 3) {
@@ -511,7 +505,7 @@ applySimplePPT <- function(exprData, projWeights=NULL, nNodes_ = 0, sigma=0, gam
         Wt <- tr[[2]]
         currMSE <- tr[[3]]
         
-        deg <- apply(Wt, 2, sum)
+        deg <- colSums(Wt)
         br <- seq(0, max(1, max(deg)))
         degDist <- hist(deg, br, plot=F)$counts
         deg_g2c <- sum(degDist[4:length(degDist)])
@@ -574,11 +568,11 @@ fitTree <- function(expr, nNodes, sigma, gamma, tol, maxIter, numCores=0) {
     Psums <- matrix(rep(apply(Ptmp, 1, logSumExp), each=ncol(Ptmp)), ncol=ncol(Ptmp), byrow=T)
     P <- exp(Ptmp - Psums)
     
-    delta <- diag(apply(P, 2, sum))
+    delta <- diag(colSums(P))
     L <- laplacian_matrix(W)
-    xp <- matprod.par(cl, expr, P)
+    xp <- expr %*% P
     invg <- as.matrix(solve( ((2 / gamma) * L) + delta))
-    C <- matprod.par(cl, xp, invg)
+    C <- xp %*% invg
     
     cc_dist <- as.matrix(sqdist(C, C))
     cx_dist <- as.matrix(sqdist(expr, C))
@@ -607,8 +601,8 @@ getMSE <- function(C, X) {
 sqdist <- function(X, Y) {
   #' Alternative computation of distance matrix, based on matrix multiplication.
   
-  xtx <- as.vector( apply(X^2, 2, sum))
-  yty <- as.vector( apply(Y^2, 2, sum))
+  xtx <- as.vector( colSums(X^2) )
+  yty <- as.vector( colSums(Y^2) )
   xy <- 2 * (t(X) %*% Y)
   
   res <- matrix(0L, nrow=length(xtx), ncol=length(yty))

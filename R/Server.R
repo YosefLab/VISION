@@ -39,7 +39,6 @@ setMethod("initialize", signature(.Object="ServerPMatrix"),
 
 signatureToJSON <- function(sig) {
   # Pass in a Signature object from a FastProjectOutput Object to be converted into a JSON object
-  
   sig@sigDict <- as.list(sig@sigDict)
   
   json <- toJSON(sig, force=T, pretty=T, auto_unbox=T)
@@ -97,20 +96,20 @@ coordinatesToJSON <- function(p) {
   return(json)
 }
 
-sigProjMatrixToJSON <- function(sigpm) {
+sigProjMatrixToJSON <- function(sigpm, sigs) {
   #' Converts a sigProjMatrix from an FastProjectOutput Object to a JSON object
-  
-  sSPM <- ServerSigProjMatrix(unname(sigpm), colnames(sigpm), rownames(sigpm))
+  sigpm <- sigpm[sigs,, drop=F]
+  sSPM <- ServerSigProjMatrix(unname(sigpm), colnames(sigpm), sigs)
   
   json <- toJSON(sSPM, force=T, pretty=T, auto_unbox=T)
   
   return(json)
 }
 
-sigProjMatrixPToJSON <- function(sigpmp) {
+sigProjMatrixPToJSON <- function(sigpmp, sigs) {
   #' Converts the -log10(pvalues) of the consistency scores into a JSON object
-  
-  sPM <- ServerPMatrix(unname(sigpmp), colnames(sigpmp), rownames(sigpmp))
+  sigpmp <- as.matrix(sigpmp[sigs,, drop=F])
+  sPM <- ServerPMatrix(unname(sigpmp), colnames(sigpmp), sigs)
   
   json <- toJSON(sPM, force=T, pretty=T, auto_unbox=T)
   

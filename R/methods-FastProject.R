@@ -1,28 +1,29 @@
 require(logging)
-
-## TODO: RUN BENCHMARKING SIMULATIONS ON FASTPROJECT FOR VARYING SAMPLE SIZES
+require(BiocParallel)
 
 setMethod("initialize", signature(.Object="FastProject"),
-          function(.Object, data_file, housekeeping, signatures, precomputed=NULL,
-                   output_dir = "FastProject_Output", nofilter=FALSE, nomodel=FALSE, pca_filter=FALSE,
+          function(.Object, data_file, housekeeping, signatures, scone = NULL, norm_methods = NULL, 
+                   precomputed=NULL, output_dir = "FastProject_Output", nofilter=FALSE, nomodel=FALSE, pca_filter=FALSE,
                    all_sigs=FALSE, debug=0, lean=FALSE, subsample_size=0, qc=FALSE, num_cores=0, 
                    min_signature_genes=5, projections="", weights=NULL, threshold=0, perm_wPCA=FALSE,
                    sig_norm_method="znorm_rows", sig_score_method="weighted_avg", exprData=NULL, 
                    housekeepingData=NULL, sigData=NULL, precomputedData=NULL) {
             
             ## Make sure that the minimum files are being read in.
-            if (missing(data_file) && is.null(exprData)) {
-              stop("Missing expression data file in input.")
+            if (missing(data_file) && is.null(exprData) && is.null(scone)) {
+              stop("Missing expression data file or SCONE object in input.")
             } else if (missing(housekeeping) && is.null(housekeepingData)) {
               stop("Missing housekeeping data file in input.")
             } else if (missing(signatures) && is.null(sigData)) {
-              stop("Missing signature data file in input.")
+              stop("Missing signature data file in input.") 
             }
             
-            if (is.null(exprData)) {
-              .Object@exprData <- readExprToMatrix(data_file)
-            } else {
-              .Object@exprData <- exprData
+            if (is.null(scone)) {
+              if (is.null(exprData)) {
+                .Object@exprData <- readExprToMatrix(data_file)
+              } else {
+                .Object@exprData <- exprData
+              }
             }
             
             if (is.null(housekeepingData)) {
@@ -101,7 +102,11 @@ setMethod("createOutputDirectory", "FastProject", function(object) {
 
 setMethod("Analyze", signature(object="FastProject"), function(object) {
   
-  ptm <- proc.time()
+  BiocParallel::register(
+    BiocParallel::SerialParam()
+  )
+  
+  ptm <- Sys.time()
   timingList <- (ptm - ptm)
   tRows <- c("Start")
   
@@ -116,7 +121,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     eData <- updateExprData(eData, split_samples[[2]])
   }
   
-  timingList <- rbind(timingList, proc.time() - ptm)
+  timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "Holdouts")
 
   # If no filter threshold was specified, set it to 20% of samples
@@ -125,23 +130,23 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     object@threshold <- (0.2 * num_samples)
   }
   
-  timingList <- rbind(timingList,  proc.time() - ptm)
+  timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "Threshold")
 
-  originalData <- copy(getExprData(eData))
+  originalData <- getExprData(eData)
 
   filtered <- applyFilters(eData, object@threshold, object@nofilter, object@lean)
   eData <- filtered[[1]]
   filterList <- filtered[[2]]
   
-  timingList <- rbind(timingList,  proc.time() - ptm)
+  timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "Filter") 
 
   falseneg_out <- createFalseNegativeMap(originalData, object@housekeepingData, object@debug)
   func <- falseneg_out[[1]]
   params <- falseneg_out[[2]]
   
-  timingList <- rbind(timingList,  proc.time() - ptm)
+  timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "FN Function")
 
   if (object@nomodel) {
@@ -154,7 +159,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     object@weights <- computeWeights(func, params, eData)
   }
 
-  timingList <- rbind(timingList,  proc.time() - ptm)
+  timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "Weights")
 
   zero_locations <- which(getExprData(eData) == 0.0, arr.ind=TRUE) 
@@ -162,7 +167,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   normalizedData <- getNormalizedCopy(eData, object@sig_norm_method)
   eData <- updateExprData(eData, normalizedData)
   
-  timingList <- rbind(timingList,  proc.time() - ptm)  
+  timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "Normalize")    
 
   # Score user defined signatures with defined method (default = weighted)
@@ -185,11 +190,16 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     }
   }
   
+  sigList <- object@sigData
+  sigNames <- names(object@sigData)
   for (s in object@precomputedData) {
     sigScores <- c(sigScores, s)
+    sigList<- c(sigList, Signature(list(), s@name, "", "", isPrecomputed=TRUE, isFactor=s@isFactor))
+    sigNames <- c(sigNames, s@name)
   }
-
-  timingList <- rbind(timingList,  proc.time() - ptm)
+  names(sigList) <- sigNames
+  
+  timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "Sig Scores")
 
   # Construct random signatures for background distribution
@@ -206,7 +216,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     }
   }
   
-  timingList <- rbind(timingList,  proc.time() - ptm)
+  timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "Random Sigs")
 
   # Compute signature scores for random signatures generated
@@ -229,11 +239,11 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     }
   }
   
-  timingList <- rbind(timingList,  proc.time() - ptm)
+  timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "Rand Sig Scores")
 
   # Apply projections to filtered gene sets, create new projectionData object
-  projDataList <- c()
+  projDataList <- list()
   for (filter in filterList) {
     message("Filter level: ", filter)
       
@@ -242,25 +252,24 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     projs <- projectData[[1]]
     g <- projectData[[2]]
     
-    timingList <- rbind(timingList, proc.time() - ptm)
+    timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, paste0("Pr. ", filter))
 
     message("Computing significance of signatures...")
     sigVProj <- sigsVsProjections(projs, sigScores, randomSigScores, numCores=object@numCores)
-    
     
     sigKeys <- sigVProj[[1]]
     projKeys <- sigVProj[[2]]
     sigProjMatrix <- sigVProj[[3]]
     pVals <- sigVProj[[4]]
     
-    timingList <- rbind(timingList,  proc.time() - ptm)
+    timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, paste0("SigVPr ", filter))
 
     projData <- ProjectionData(filter=filter, projections=projs, genes=g, keys=projKeys, 
                                           sigProjMatrix=sigProjMatrix, pMatrix=pVals)
 
-    projDataList <- c(projDataList, projData)
+    projDataList[[filter]] <- projData
       
   }
     
@@ -276,15 +285,14 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   rownames(sigMatrix) <- names
   colnames(sigMatrix) <- colnames(fp@exprData)
 
-  timingList <- rbind(timingList, proc.time() - ptm)
+  timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "Final")
 
   timingList <- as.matrix(timingList)
   rownames(timingList) <- tRows
   
-  fpOut <- FastProjectOutput(eData, projDataList, sigMatrix, randomSigScores, object@weights, object@sigData)
-  return(list(fpOut, timingList))
-  
+  fpOut <- FastProjectOutput(eData, projDataList, sigMatrix, randomSigScores, object@weights, sigList)
+  return(fpOut)
 }
   
 )

@@ -135,7 +135,7 @@ computeWeights <- function(fit_func, params, exprData) {
   #' Weights represent p(not expressed | not detected) for zero values
   #' and are equal to 1.0 for detected values.
   #' Parameters: fit_func (function) (mu_h, params) 
-  #'             Function parametrized by params thatmaps each mu_h to a false negative estimate
+  #'             Function parametrized by params that maps each mu_h to a false negative estimate
   #'             
   #'             params (4 x Num_Samples Matrix) 
   #'             Matrix containing parameters for the false negative  fit function (fit_func)

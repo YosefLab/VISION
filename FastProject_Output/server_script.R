@@ -46,11 +46,9 @@ jug() %>%
     signatures <- fpout@sigList
     name <- URLdecode(req$params$sig_name2)
     out <- "Signature does not exist!"
-    for (sig in signatures) {
-      if (sig@name == name) {
-        out <- signatureToJSON(sig)
-        break
-      }
+    if (name %in% names(signatures)) {
+      sig <- signatures[[name]]
+      out <- signatureToJSON(sig)
     }
     return(out)
   }) %>%
@@ -82,75 +80,83 @@ jug() %>%
     projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name1)
     proj <- URLdecode(req$params$proj_name1)
-    out <- "Filter, Projection pair does not exist!"
-    for (pd in projData) {
-      if (pd@filter == filter) {
-        for (p in pd@projections) {
-          if (p@name == proj) {
-            out <- coordinatesToJSON(p@pData)
-            break
-          }
-        }
-      }
-    }
+    out <- coordinatesToJSON(projData[[filter]]@projections[[proj]]@pData)
     return(out)
   }) %>%
-  get("/FilterGroup/(?<filter_name2>.*)/SigProjMatrix", function(req, res, err) {
+  get("/FilterGroup/(?<filter_name2>.*)/SigProjMatrix/Normal", function(req, res, err) {
     projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name2)
-    out <- "Filter, Projection pair does not exist!"
-    for (pd in projData) {
-      if (pd@filter == filter) {
-        out <- sigProjMatrixToJSON(pd@sigProjMatrix)
-        break
-      }
-    }
+
+    signatures <- fpout@sigList
+    keys <- lapply(signatures, function(x) x@name)
+    vals <- lapply(signatures, function(x) x@isPrecomputed)
+    names(vals) <- keys
+	  sigvals <- vals[which(vals == FALSE)]
+	  sigs <- names(sigvals)
+	  
+    out <- sigProjMatrixToJSON(projData[[filter]]@sigProjMatrix, sigs)
     return(out)
   }) %>%
-  get("/FilterGroup/(?<filter_name3>.*)/SigProjMatrix_P", function(req, res, err) {
+  get("/FilterGroup/(?<filter_name3>.*)/SigProjMatrix/Precomputed", function(req, res, err) {
     projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name3)
-    out <- "Filter, Projection pair does not exist!"
-    for (pd in projData) {
-      if (pd@filter == filter) {
-        out <- sigProjMatrixToJSON(pd@pMatrix)
-        break
-      }
-    }
+
+    signatures <- fpout@sigList
+    keys <- lapply(signatures, function(x) x@name)
+    vals <- lapply(signatures, function(x) x@isPrecomputed)
+    names(vals) <- keys
+	  sigvals <- vals[which(vals == TRUE)]
+	  sigs <- names(sigvals)
+	  
+    out <- sigProjMatrixToJSON(projData[[filter]]@sigProjMatrix, sigs)
     return(out)
   }) %>%
-  get("/FilterGroup/(?<filter_name4>.*)/(?<proj_name2>.*)/clusters/(?<cluster_procedure>.*)/(?<param>.*)", function(req, res, err) {
+  get("/FilterGroup/(?<filter_name4>.*)/SigProjMatrix_P/Normal", function(req, res, err) {
+    projData <- fpout@projData
+    filter <- URLdecode(req$params$filter_name4)
+
+    signatures <- fpout@sigList
+    keys <- lapply(signatures, function(x) x@name)
+    vals <- lapply(signatures, function(x) x@isPrecomputed)
+    names(vals) <- keys
+	  sigvals <- vals[which(vals == FALSE)]
+	  sigs <- names(sigvals)
+
+    out <- sigProjMatrixPToJSON(projData[[filter]]@pMatrix, sigs)
+    return(out)
+  }) %>%
+  get("/FilterGroup/(?<filter_name5>.*)/SigProjMatrix_P/Precomputed", function(req, res, err) {
+    projData <- fpout@projData
+    filter <- URLdecode(req$params$filter_name5)
+
+    signatures <- fpout@sigList
+    keys <- lapply(signatures, function(x) x@name)
+    vals <- lapply(signatures, function(x) x@isPrecomputed)
+    names(vals) <- keys
+	  sigvals <- vals[which(vals == TRUE)]
+	  sigs <- names(sigvals)
+    
+    out <- sigProjMatrixPToJSON(projData[[filter]]@pMatrix, sigs)
+    return(out)
+  }) %>%
+  get("/FilterGroup/(?<filter_name6>.*)/(?<proj_name2>.*)/clusters/(?<cluster_procedure>.*)/(?<param>.*)", function(req, res, err) {
     projData <- fpout@projData
 
-    filter <- URLdecode(req$params$filter_name4)
+    filter <- URLdecode(req$params$filter_name6)
     proj <- URLdecode(req$params$proj_name2)
     method <- URLdecode(req$params$cluster_procedure)
     param <- as.numeric(URLdecode(req$params$param))
-
-    out <- "Filter, Projection pair does not exist!"
-    for (pd in projData) {
-      if (pd@filter == filter) {
-        for (projection in pd@projections) {
-          if (projection@name == proj) {
-              clust = cluster(projection, method, param)
-              out <- clusterToJSON(clust)
-              break
-          }
-        }
-      }
-    }
+    
+    clust = cluster(projData[[filter]]@projections[[proj]], method, param)
+    out <- clusterToJSON(clust)
     return(out)
   }) %>%
-  get("/FilterGroup/(?<filter_name5>.*)/genes", function(req, res, err) {
+  get("/FilterGroup/(?<filter_name7>.*)/genes", function(req, res, err) {
     projData <- fpout@projData
-    filter <- URLdecode(req$params$filter_name5)
-    out <- "Filter, Projection pair does not exist!"
-    for (pd in projData) {
-      if (pd@filter == filter) {
-        out <- toJSON(pd@genes)
-        break
-      }
-    }
+    filter <- URLdecode(req$params$filter_name7)
+
+    out <- toJSON(projData[[filter]]@genes)
+
     return(out)
   }) %>%
   get("/FilterGroup/list", function(req, res, err) {

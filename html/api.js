@@ -39,17 +39,25 @@ var api = (function(){
 
     output.filterGroup = {}
 
-    output.filterGroup.sigProjMatrix = function(filter_group)
+    output.filterGroup.sigProjMatrix = function(filter_group, precomputed)
     {
       var query = "/FilterGroup/"
-      query = query.concat(encodeURI(filter_group), "/SigProjMatrix")
+      if (precomputed) {
+		query = query.concat(encodeURI(filter_group), "/SigProjMatrix/Precomputed")
+	  } else {
+	  	query = query.concat(encodeURI(filter_group), "/SigProjMatrix/Normal")
+	  }
       return $.ajax(query).then(x => JSON.parse(x))
     }
 
-    output.filterGroup.sigProjMatrixP = function(filter_group)
+    output.filterGroup.sigProjMatrixP = function(filter_group, precomputed)
     {
       var query = "/FilterGroup/"
-      query = query.concat(encodeURI(filter_group), "/SigProjMatrix_P")
+      if (precomputed) {
+		query = query.concat(encodeURI(filter_group), "/SigProjMatrix_P/Precomputed")
+	  } else {
+	  	query = query.concat(encodeURI(filter_group), "/SigProjMatrix_P/Normal")
+	  }
       return $.ajax(query).then(x => JSON.parse(x))
     }
 

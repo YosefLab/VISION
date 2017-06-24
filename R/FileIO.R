@@ -1,6 +1,4 @@
 require(cogena)
-require(data.table)
-require(tools)
 
 readExprToMatrix <- function(filename, delimiter="\t") {
   
@@ -24,27 +22,30 @@ readSignaturesInput <- function(filenames) {
 
   
   # Create a list to store all signatures
-  sig_data <- c()
+  sig_data <- list()
   # Create list to store all relevant sig names
   sig_names <- c()
   
   for (filename in filenames) {
     message("Loading data from ", filename, " ...")
-    fp <- strsplit(filename, "/")
-    f <- last(fp[[1]])
+    fp <- unlist(strsplit(filename, "/"))
+    f <- fp[[length(fp)]]
+    fsplit <- unlist(strsplit(f, "[.]"))
     
-    if (file_ext(f) == "gmt") {
+    file_ext <- fsplit[[length(fsplit)]]
+    
+    if (file_ext == "gmt") {
       inp <- gmt2list(filename)
       
       for (sig in names(inp)) {
         genes <- c()
         values <- c()
         
-        sig_parts = strsplit(sig, "_")
+        sig_parts = unlist(strsplit(sig, "_"))
         key <- "none"
         
-        if (is.element(tolower(last(sig_parts[[1]])), names(keys))) {
-          key <- tolower(last(sig_parts[[1]]))
+        if (is.element(tolower(sig_parts[[length(sig_parts)]]), names(keys))) {
+          key <- tolower(sig_parts[[length(sig_parts)]])
         }
         
         if (sig %in% sig_names) {
@@ -68,7 +69,7 @@ readSignaturesInput <- function(filenames) {
         sig_names <- c(sig_names, sig)
       }
       
-    } else if (file_ext(filename) == "txt") {
+    } else if (file_ext == "txt") {
       sigList <- list()
       inp <- as.matrix(read.table(filename, sep="\t"))
       
@@ -104,6 +105,8 @@ readSignaturesInput <- function(filenames) {
       } 
     }
   }
+  
+  names(sig_data) <- sig_names
   
   return (sig_data)
 }

@@ -39,7 +39,7 @@ colNormalization <- function(data) {
   #ndata <- apply(data, 2, function(c) (c - mean(c)) / biasedVectorSD(c))
   #return(ndata)
   ndata <- t(data)
-  mu <- apply(ndata, 1, mean)
+  mu <- rowMeans2(ndata)
   sigma <- biasedSD(ndata)
   ndata <- (ndata - mu) / sigma
   return(t(ndata))
