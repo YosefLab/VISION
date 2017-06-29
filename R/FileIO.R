@@ -64,7 +64,7 @@ readSignaturesInput <- function(filenames) {
         }
     
         names(values) <- genes
-        newSig <- Signature(values, sig, f, "")
+        newSig <- Signature(values, sig, f, "", cluster=0)
         sig_data <- c(sig_data, newSig)
         sig_names <- c(sig_names, sig)
       }
@@ -99,7 +99,7 @@ readSignaturesInput <- function(filenames) {
       }
       
       for (sig in names(sigList)) {
-        newSig <- Signature(sigList[[sig]], sig, f, "", isPrecomputed=FALSE, isFactor=FALSE)
+        newSig <- Signature(sigList[[sig]], sig, f, "", isPrecomputed=FALSE, isFactor=FALSE, cluster=0)
         sig_data <- c(sig_data, newSig)
         sig_names <- c(sig_names, sig)
       } 
@@ -170,7 +170,7 @@ readPrecomputed <- function(filename, sampleLabels, delimiter="\t") {
       sigVals <- as.numeric(as.matrix(sigVals))
       
     } else {
-      stop("Column 2 of precomputed signature file should specify eitehr 'numerical' or 'factor'")
+      stop("Column 2 of precomputed signature file should specify either 'numerical' or 'factor'")
     }
     
     sigScores <- c(sigScores, SignatureScores(sigVals, sigName, sampleLabels, sigIsFactor, TRUE, 0))

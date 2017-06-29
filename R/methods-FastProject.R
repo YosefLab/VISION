@@ -3,8 +3,8 @@ require(BiocParallel)
 
 setMethod("initialize", signature(.Object="FastProject"),
           function(.Object, data_file, housekeeping, signatures, scone = NULL, norm_methods = NULL, 
-                   precomputed=NULL, output_dir = "FastProject_Output", nofilter=FALSE, nomodel=FALSE, pca_filter=FALSE,
-                   all_sigs=FALSE, debug=0, lean=FALSE, subsample_size=0, qc=FALSE, num_cores=0, 
+                   precomputed=NULL, output_dir = "FastProject_Output", nofilter=FALSE, nomodel=FALSE, filters=c("fano"),
+                   all_sigs=FALSE, debug=0, lean=FALSE, subsample_size=0, qc=FALSE, num_cores=0, approximate=F, optClust=0, 
                    min_signature_genes=5, projections="", weights=NULL, threshold=0, perm_wPCA=FALSE,
                    sig_norm_method="znorm_rows", sig_score_method="weighted_avg", exprData=NULL, 
                    housekeepingData=NULL, sigData=NULL, precomputedData=NULL) {
@@ -52,7 +52,7 @@ setMethod("initialize", signature(.Object="FastProject"),
             .Object@output_dir <- output_dir
             .Object@nomodel <- nomodel
             .Object@subsample_size <- subsample_size
-            .Object@pca_filter <- pca_filter
+            .Object@filters <- filters
             .Object@projections <- projections
             .Object@threshold <- threshold
             .Object@sig_norm_method <- sig_norm_method
@@ -60,7 +60,8 @@ setMethod("initialize", signature(.Object="FastProject"),
             .Object@debug = debug
             .Object@lean = lean
             .Object@perm_wPCA = perm_wPCA
-            .Object@numCores = num_cores
+            .Object@approximate = approximate
+            .Object@optClust = optClust
             
             #createOutputDirectory(.Object)
             return(.Object) 
@@ -135,7 +136,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
 
   originalData <- getExprData(eData)
 
-  filtered <- applyFilters(eData, object@threshold, object@nofilter, object@lean)
+  filtered <- applyFilters(eData, object@threshold, object@filters)
   eData <- filtered[[1]]
   filterList <- filtered[[2]]
   
@@ -194,7 +195,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   sigNames <- names(object@sigData)
   for (s in object@precomputedData) {
     sigScores <- c(sigScores, s)
-    sigList<- c(sigList, Signature(list(), s@name, "", "", isPrecomputed=TRUE, isFactor=s@isFactor))
+    sigList<- c(sigList, Signature(list(), s@name, "", "", isPrecomputed=TRUE, isFactor=s@isFactor, cluster=0))
     sigNames <- c(sigNames, s@name)
   }
   names(sigList) <- sigNames
@@ -246,17 +247,30 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   projDataList <- list()
   for (filter in filterList) {
     message("Filter level: ", filter)
+
+	if (object@approximate && object@optClust == 0) {
+		if (filter == "fano") {
+			object@optClust <- optimalClusters(eData@fanoFilter)
+		} else if (filter == "threshold") {
+			object@optClust <- optimalClusters(eData@thresholdFilter)
+		} else if (filter == "novar") {
+			object@optClust <- optimalClusters(eData@noVarFilter)
+		} else {
+			object@optClust <- optimalCluster(eData@exprData)
+		}	
+	}
       
     message("Projecting data into 2 dimensions...")
-    projectData <- generateProjections(eData, object@weights, filter, lean=object@lean, perm_wPCA = object@perm_wPCA, numCores = object@numCores)
+    projectData <- generateProjections(eData, object@weights, filter, inputProjections <- c(), lean=object@lean, perm_wPCA = object@perm_wPCA, optClust = object@optClust, approximate = object@approximate)
     projs <- projectData[[1]]
     g <- projectData[[2]]
+    PPT <- projectData[[3]]
     
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, paste0("Pr. ", filter))
 
     message("Computing significance of signatures...")
-    sigVProj <- sigsVsProjections(projs, sigScores, randomSigScores, numCores=object@numCores)
+    sigVProj <- sigsVsProjections(projs, sigScores, randomSigScores)
     
     sigKeys <- sigVProj[[1]]
     projKeys <- sigVProj[[2]]
@@ -267,7 +281,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     tRows <- c(tRows, paste0("SigVPr ", filter))
 
     projData <- ProjectionData(filter=filter, projections=projs, genes=g, keys=projKeys, 
-                                          sigProjMatrix=sigProjMatrix, pMatrix=pVals)
+                                          sigProjMatrix=sigProjMatrix, pMatrix=pVals, PPT=PPT)
 
     projDataList[[filter]] <- projData
       
@@ -281,9 +295,12 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     scores <- t(as.matrix(sigScores[[sig]]@scores))
     sigMatrix[sig,] <- scores
   }
-    
+  
   rownames(sigMatrix) <- names
   colnames(sigMatrix) <- colnames(fp@exprData)
+  
+  sigClusters <- clusterSignatures(sigMatrix, k=10)
+    
 
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "Final")
@@ -291,7 +308,8 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   timingList <- as.matrix(timingList)
   rownames(timingList) <- tRows
   
-  fpOut <- FastProjectOutput(eData, projDataList, sigMatrix, randomSigScores, object@weights, sigList)
+  fpOut <- FastProjectOutput(eData, projDataList, sigMatrix, sigList, sigClusters)
+  #return(list(fpOut, timingList))
   return(fpOut)
 }
   

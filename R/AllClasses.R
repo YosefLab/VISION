@@ -33,7 +33,7 @@ FastProject <- setClass("FastProject",
       output_dir = "character",
       nofilter = "logical",
       nomodel = "logical",
-      pca_filter = "logical",
+      filters = "character",
       all_sigs = "logical",
       debug = "numeric",
       lean = "logical",
@@ -50,7 +50,9 @@ FastProject <- setClass("FastProject",
       sigData = "list",
       precomputedData= "list",
       perm_wPCA = "logical",
-      numCores = "numeric"),
+      numCores = "numeric",
+      approximate = "logical",
+      optClust = "numeric"), 
     prototype = list(
       precomputed = NULL,
       output_dir = "FastProject_Output",
@@ -73,7 +75,9 @@ FastProject <- setClass("FastProject",
       sigData = NULL,
       precomputedData=NULL,
       perm_wPCA=FALSE,
-      numCores = 0
+      numCores = 0,
+      optClust = 0,
+      approximate=F
 ))
 
 FastProjectOutput <- setClass("FastProjectOutput",
@@ -81,9 +85,8 @@ FastProjectOutput <- setClass("FastProjectOutput",
       exprData = "ExpressionData",
       projData = "list", 
       sigMatrix = "matrix",
-      randomSigScores = "list", 
-      weights = "matrix", 
-      sigList = "list"
+      sigList = "list",
+      sigClusters = "list"
     )
 )
 
@@ -101,7 +104,8 @@ ProjectionData <- setClass("ProjectionData",
       genes = "character",
       keys = "character",
       sigProjMatrix = "matrix",
-      pMatrix="matrix"
+      pMatrix="matrix",
+      PPT = "list"
     )
 )
 
@@ -136,12 +140,14 @@ Signature <- setClass("Signature",
       source = "character",
       metaData = "character",
       isPrecomputed = "logical",
-      isFactor = "logical"
+      isFactor = "logical",
+      cluster = "numeric"
     ),
     prototype = list(
       metaData = "",
       isPrecomputed=FALSE,
-      isFactor=FALSE
+      isFactor=FALSE,
+      cluster=0
     )
 )
 

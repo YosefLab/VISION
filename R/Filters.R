@@ -4,7 +4,7 @@
 ## of genes to a more manageable size - ideally extracting the
 ## genes that are more biologically informative.
 
-applyFilters <- function(data, threshold, nofilter, lean) {
+applyFilters <- function(data, threshold, filterInput) {
   #'Applies filters to the inputted expression data (may remove rows)
   #'
   #'Parameters:
@@ -19,26 +19,25 @@ applyFilters <- function(data, threshold, nofilter, lean) {
   
   message("Applying filters...")
   
-  
-  if(nofilter) {
-    filterList <- c(filterList, "novar")
-    expr <- filterGenesNovar(expr)
-    data@noVarFilter <- expr
-    return(c(data, filterList))
-    
-  } else {
-    filterList <- c(filterList, "threshold")
-    expr <- filterGenesThreshold(expr, threshold)
-    data@thresholdFilter <- expr
-    
-    if (!lean) {
+  for (filter in filterInput) {
+    if (filter == "novar") {
+      filterList <- c(filterList, "novar")
+      expr <- filterGenesNovar(expr)
+      data@noVarFilter <- expr
+    } else if (filter == "threshold") {
+      filterList <- c(filterList, "threshold")
+      expr <- filterGenesThreshold(expr, threshold)
+      data@thresholdFilter <- expr
+    } else if (filter == "fano") {
       filterList <- c(filterList, "fano")
       expr <- filterGenesFano(expr)
       data@fanoFilter <- expr
-
+    } else {
+      stop("Filter not recognized")
     }
-    return(list(data, filterList))
   }
+  
+  return(list(data, filterList))
   
 }
 

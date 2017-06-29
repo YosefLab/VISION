@@ -5,14 +5,13 @@ library(jug)
 library(jsonlite)
 
 setMethod("initialize", signature(.Object="FastProjectOutput"), 
-          function(.Object, eData, projDataList, sigMatrix, randomSigScores, weights, sigList) {
+          function(.Object, eData, projDataList, sigMatrix, sigList, sigClusters) {
             
             .Object@exprData <- eData
             .Object@projData <- projDataList
             .Object@sigMatrix <- sigMatrix
-            .Object@randomSigScores <- randomSigScores
-            .Object@weights <- weights
             .Object@sigList <- sigList
+            .Object@sigClusters <- sigClusters
             
             return(.Object)
           }

@@ -6,7 +6,7 @@
 
 
 setMethod("initialize", signature(.Object="ProjectionData"),
-          function(.Object, filter = "", projections=NULL, genes, keys, sigProjMatrix, pMatrix) {
+          function(.Object, filter = "", projections=NULL, genes, keys, sigProjMatrix, pMatrix, PPT) {
             
             .Object@filter <- filter
             .Object@projections <- projections
@@ -14,6 +14,7 @@ setMethod("initialize", signature(.Object="ProjectionData"),
             .Object@keys <- keys
             .Object@sigProjMatrix <- sigProjMatrix
             .Object@pMatrix <- pMatrix
+            .Object@PPT <- PPT
             
             return(.Object)
             

@@ -35,6 +35,16 @@ var api = (function(){
         return $.ajax(query).then(x => JSON.parse(x))
     }
 
+    output.signature.clusters = function(precomputed) {
+		var query = ""
+		if (precomputed) {
+			query = "/SigClusters/Precomputed"
+		} else {
+			query = "/SigClusters/Normal"
+		}
+		return $.ajax(query).then(x => JSON.parse(x))
+	}
+
     // FilterGroup API
 
     output.filterGroup = {}

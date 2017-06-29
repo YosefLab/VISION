@@ -8,6 +8,7 @@ require('Rtsne')
 require('igraph')
 require("rsvd")
 require("RDRToolbox")
+require("wordspace")
 #require("profmem")
 
 
@@ -17,7 +18,6 @@ registerMethods <- function(lean=FALSE) {
   projMethods <- c()
   if (!lean) {
     projMethods <- c(projMethods, "Spectral Embedding" = applySpectralEmbedding)
-    projMethods <- c(projMethods, "MDS" = applyMDS)
   }
   
   projMethods <- c(projMethods, "RBF Kernel PCA" = applyRBFPCA)
@@ -29,7 +29,7 @@ registerMethods <- function(lean=FALSE) {
   return(projMethods)
 }
 
-generateProjections <- function(expr, weights, filterName="", inputProjections=c(), lean=FALSE, perm_wPCA=FALSE, numCores=0) {
+generateProjections <- function(expr, weights, filterName="", inputProjections=c(), lean=FALSE, perm_wPCA=FALSE, optClust=0, approximate=F) {
   #' Projects data into 2 dimensions using a variety of linear and non-linear methods
   #' 
   #' Parameters:
@@ -69,12 +69,10 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
     inputProjections <- c(inputProjections, Projection("PCA: 2,3", t(pca_res[c(2,3),])))
   } else {
     if (perm_wPCA) {
-      print("Permutation PCA")
-      pca_res <- applyPermutationWPCA(exprData, weights, components=30, numCores=numCores)[[1]]
+      pca_res <- applyPermutationWPCA(exprData, weights, components=30)[[1]]
     } else {
-      print("Weighted PCA")
-      pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30, numCores=numCores)[[1]]
-      #m <- profmem(pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30, numCores=numCores)[[1]])
+      pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30)[[1]]
+      #m <- profmem(pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30)[[1]])
     }
     proj <- Projection("PCA: 1,2", t(pca_res[c(1,2),]))
     inputProjections <- c(inputProjections, proj)
@@ -85,9 +83,11 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
   #timingNames <- c(timingNames, "wPCA")
   #memProf <- c(total(m)/1e6)
   #memNames <- c("wPCA")
+
+  PPT <- list() 
   
   for (method in names(methodList)){
-    print(method)
+    message(method)
     #m <- profmem({
     if (method == "ICA" || method == "RBF Kernel PCA") {
       res <- methodList[[method]](exprData)
@@ -95,12 +95,12 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
       inputProjections <- c(inputProjections, proj)
     } else {
       res <- methodList[[method]](pca_res)
-      #if (method == "PPT") {
-      #  proj <- Projection(method, res[[0]])
-      #} else {
-      proj <- Projection(method, res)
-      #}
-      inputProjections <- c(inputProjections, proj)
+      if (method == "PPT") {
+        PPT <- list(res[[2]], res[[3]])
+      } else {
+        proj <- Projection(method, res)
+        inputProjections <- c(inputProjections, proj)
+      }
     }
     #})
     #memProf <- rbind(memProf, total(m)/1e6)
@@ -117,31 +117,30 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
   output <- list()
   
   for (p in inputProjections) {
-
     coordinates <- p@pData
-    
-    
+      
+      
     for (i in 1:ncol(coordinates)) {
       coordinates[,i] <- coordinates[,i] - mean(coordinates[,i])
     }
-    
+      
     r <- apply(coordinates, 1, function(x) sum(x^2))^(0.5)
     r90 <- quantile(r, c(.9))[[1]]
-
+  
     if (r90 > 0) {
       coordinates <- coordinates / r90
     }
-
+  
     coordinates <- t(coordinates)
     p <- updateProjection(p, data=coordinates)
     output[[p@name]] = p
-    
-  }
+
+}
   
-  return(list(output, rownames(exprData)))
+  return(list(output, rownames(exprData), PPT))
 }
 
-applyWeightedPCA <- function(exprData, weights, maxComponents=200, numCores=0) {
+applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
   #' Performs Weighted PCA on the data
   #' 
   #' Parameters:
@@ -156,6 +155,7 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200, numCores=0) {
   #'  pca_data: (Num_Components x Num_Samples) matrix
   #'    Data transformed using PCA.  Num_Components = Num_Samples
   
+  message("Weighted PCA")
   set.seed(RANDOM_SEED)
   
   projData <- exprData
@@ -164,13 +164,12 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200, numCores=0) {
   }
   
   # Center data
-  wmean <- as.matrix(rowSums(projData * weights) / rowSums(weights))
+  wmean <- as.matrix(rowSums(multMat(projData, weights)) / rowSums(weights))
   dataCentered <- as.matrix(apply(projData, 2, function(x) x - wmean))
 
   # Compute weighted data
-  wDataCentered <- dataCentered * weights
+  wDataCentered <- multMat(dataCentered, weights)
 
-  print("wcov")
   # Weighted covariance / correlation matrices
   W <- wDataCentered %*% t(wDataCentered)
   Z <- weights %*% t(weights)
@@ -181,13 +180,11 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200, numCores=0) {
   
   # SVD of wieghted correlation matrix
   ncomp <- min(ncol(projData), nrow(projData), maxComponents)
-  print("eig")
   # NOTE: Weighted Covariance works better than Weighted Correlation for computing the eigenvectors
   # NOTE: rsvd() method is 5x more memory efficent than eigs(); eigs() is slightly faster  
-  decomp <- rsvd(wcov, k=ncomp)
+  decomp <- rsvd::rsvd(wcov, k=ncomp)
   evec <- t(decomp$u)
   
-  print("eval")
   # Project down using computed eigenvectors
   dataCentered <- dataCentered / sqrt(var)
   wpcaData <- evec %*% dataCentered
@@ -200,7 +197,7 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200, numCores=0) {
     
 }
 
-applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, verbose=FALSE, debug=FALSE, numCores=0) {
+applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, verbose=FALSE, debug=FALSE) {
   #' Computes weighted PCA on data. Returns only significant components.
   #' 
   #' After performing PCA on the data matrix, this method then uses a permutation
@@ -220,11 +217,12 @@ applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, 
   #'  Return:
   #'    reducedData: (Num_Components X Num_Samples)
   
+  message("Permutation WPCA")
   comp <- min(components, nrow(expr), ncol(data))
   
   NUM_REPEATS <- 1;
   
-  w <- applyWeightedPCA(expr, weights, comp, numCores=numCores)
+  w <- applyWeightedPCA(expr, weights, comp)
   wPCA <- w[[1]]
   eval <- w[[2]]
   evec <- w[[3]]
@@ -318,8 +316,8 @@ applySpectralEmbedding <- function(exprData, projWeights=NULL) {
   
   ndata <- colNormalization(exprData)
   
-  adj <- as.matrix(sqdist(ndata, ndata))
-  adm <- graph_from_adjacency_matrix(adj)
+  adj <- as.matrix(dist.matrix(t(ndata)))
+  adm <- graph_from_adjacency_matrix(adj, weighted=T)
   res <- embed_adjacency_matrix(adm, 2)$X
   
   rownames(res) <- colnames(exprData)
@@ -332,7 +330,7 @@ applyMDS <- function(exprData, projWeights=NULL) {
   set.seed(RANDOM_SEED)
   
   ndata <- colNormalization(exprData)
-  d <- sqdist(ndata, ndata)
+  d <- dist.matrix(t(ndata))
   res <- cmdscale(d, k=2)
   
   rownames(res) <- colnames(exprData)
@@ -346,7 +344,8 @@ applytSNE10 <- function(exprData, projWeights=NULL) {
   
   ndata <- colNormalization(exprData)
   ndataT <- t(ndata)
-  res <- Rtsne(ndataT, dims=2, perplexity=10.0, pca=FALSE, theta=0.0)
+  d <- dist.matrix(ndataT, method="euclidean")
+  res <- Rtsne(d, is_distance=T, dims=2, perplexity=10.0, pca=FALSE, theta=0.0)
   res <- res$Y
   rownames(res) <- colnames(exprData)
   return(res)
@@ -358,7 +357,8 @@ applytSNE30 <- function(exprData, projWeights=NULL) {
   
   ndata <- colNormalization(exprData)
   ndataT <- t(ndata)
-  res <- Rtsne(ndataT, dims=2, perplexity=30.0, pca=FALSE, theta=0.0)
+  d <- dist.matrix(ndataT, method="euclidean")
+  res <- Rtsne(d, is_distance=T, dims=2, perplexity=30.0, pca=FALSE, theta=0.0)
   res <- res$Y
   
   rownames(res) <- colnames(exprData)
@@ -382,27 +382,33 @@ applyRBFPCA <- function(exprData, projWeights=NULL) {
   set.seed(RANDOM_SEED)
   
   ndata <- colNormalization(exprData)
-  distanceMatrix <- sqdist(ndata, ndata)
-  kMat <- as.matrix(exp(-1 * (distanceMatrix * distanceMatrix) / .33))
-
+  distanceMatrix <- as.matrix(dist.matrix(t(ndata)))
+  distanceMatrix <- log(distanceMatrix)
+  point_mult(distanceMatrix, distanceMatrix)
+  kMat <- as.matrix(exp(-1 * (distanceMatrix) / .33^2))
+  diag(kMat) <- 0
+  kMatNormFactor <- rowSums(kMat)
+  kMatNormFactor[kMatNormFactor == 0] <- 1.0
+  kMatNormFactor[is.na(kMatNormFactor)] <- 1.0
+  kMat <- kMat / kMatNormFactor
+  
   # Compute normalized matrix & covariance matrix
   kMat <- as.matrix(kMat, 1, function(x) (x - mean(x)) / sd(x))
   W <- kMat %*% t(kMat)
   
-  decomp <- rsvd(W, k=2)
+  decomp <- rsvd::rsvd(W, k=2)
   evec <- decomp$u
   
   # project down using evec
   rbfpca <- kMat %*% evec
-  
   rownames(rbfpca) <- colnames(exprData)
   
   return(rbfpca)
-  
+
 }
 
 
-applySimplePPT <- function(exprData, projWeights=NULL, nNodes_ = 0, sigma=0, gamma=0, numCores=0) {
+applySimplePPT <- function(exprData, projWeights=NULL, nNodes_ = 0, sigma=0, gamma=0) {
   #' Principle Tree Analysis
   #' 
   #' After begin initialized by either the fit or autoFit functions, the resulting tree structure
@@ -416,6 +422,8 @@ applySimplePPT <- function(exprData, projWeights=NULL, nNodes_ = 0, sigma=0, gam
   #'  structScore: (numeric)
   #'    score indicating how structured the data is, as the z-score of the data MSE from shuffled MSE
   
+  exprData <- t(exprData)
+  
   MIN_GAMMA <- 1e-5
   MAX_GAMMA <- 1e5
   DEF_TOL <- 1e-3
@@ -428,22 +436,21 @@ applySimplePPT <- function(exprData, projWeights=NULL, nNodes_ = 0, sigma=0, gam
     nNodes_ <- round(sqrt(ncol(exprData)))
   }
   if (sigma == 0) {
-    km <- kmeans(t(exprData), centers=round(sqrt(ncol(exprData))), nstart=1, iter.max=50)
-    km <- t(as.matrix(km$centers))
-    
-    sigma <- mean(apply(as.matrix(sqdist(exprData, km)), 1, min))
+    km <- kmeans(t(exprData), centers=round(sqrt(ncol(exprData))), nstart=1, iter.max=50)$centers
+
+    sigma <- mean(apply(as.matrix(sqdist(t(exprData), km)), 1, min))
   }
   
   if (gamma == 0) {
     
     currGamma <- MIN_GAMMA
-    nNodes <- round(log(ncol(expr)))
+    nNodes <- round(log(ncol(exprData)))
     
     prevMSE <- -Inf
     minMSE <- Inf
     minMSEGamma <- MIN_GAMMA
   
-    tr <- fitTree(expr, nNodes, sigma, currGamma, DEF_TOL, DEF_MAX_ITER, numCores)
+    tr <- fitTree(exprData, nNodes, sigma, currGamma, DEF_TOL, DEF_MAX_ITER)
     C <- tr[[1]]
     Wt <- tr[[2]]
     currMSE <- tr[[3]]
@@ -451,7 +458,7 @@ applySimplePPT <- function(exprData, projWeights=NULL, nNodes_ = 0, sigma=0, gam
     while ( ((prevMSE / currMSE) - 1 < 0.05) && currGamma <= MAX_GAMMA) {
       prevMSE <- currMSE
       currGamma <- currGamma * 10
-      tr <- fitTree(expr, nNodes, sigma, currGamma, DEF_TOL, DEF_MAX_ITER, numCores)
+      tr <- fitTree(exprData, nNodes, sigma, currGamma, DEF_TOL, DEF_MAX_ITER)
       C <- tr[[1]]
       Wt <- tr[[2]]
       currMSE <- tr[[3]]
@@ -460,9 +467,10 @@ applySimplePPT <- function(exprData, projWeights=NULL, nNodes_ = 0, sigma=0, gam
         minMSEGamma <- currGamma
       }
     }
+    minGamma <- MIN_GAMMA
     if (currGamma == MAX_GAMMA) {
-      gamma <- minGamma
-      tr <- fitTree(expr, nNodes, sigma, currGamma, DEF_TOL, DEF_MAX_ITER, numCores)
+      currGamma <- minGamma
+      tr <- fitTree(exprData, nNodes, sigma, currGamma, DEF_TOL, DEF_MAX_ITER)
     }
     minGamma <- currGamma
     
@@ -470,19 +478,21 @@ applySimplePPT <- function(exprData, projWeights=NULL, nNodes_ = 0, sigma=0, gam
       prevMSE <- currMSE
       currGamma <- currGamma * 10
       minGamma <- minGamma * (10^(1/3))
-      tr <- fitTree(expr, nNodes, sigma, currGamma, DEF_TOL, DEF_MAX_ITER, numCores)
+      tr <- fitTree(exprData, nNodes, sigma, currGamma, DEF_TOL, DEF_MAX_ITER)
       C <- tr[[1]]
       Wt <- tr[[2]]
       currMSE <- tr[[3]]
     }
     
     if (nNodes_ > nNodes) {
+      
       if (nNodes_ != 0) {
         nNodes <- nNodes_
       } else {
-        nNodes <- round(sqrt(ncol(expr)))
+        nNodes <- round(sqrt(ncol(exprData)))
       }
-      tr <- fitTree(expr, nNodes, sigma, currGamma, DEF_TOL, DEF_MAX_ITER, numCores)
+      
+      tr <- fitTree(exprData, nNodes, sigma, currGamma, DEF_TOL, DEF_MAX_ITER)
       C <- tr[[1]]
       Wt <- tr[[2]]
       currMSE <- tr[[3]]
@@ -491,16 +501,15 @@ applySimplePPT <- function(exprData, projWeights=NULL, nNodes_ = 0, sigma=0, gam
       deg <- colSums(Wt)
       br <- seq(0, max(1, max(deg)))
       degDist <- hist(deg, br, plot=F)$counts
-      if (length(degDist) > 3) {
-        deg_g2c <- sum(degDist[4:length(degDist)])
-      } else {
-        deg_g2c = 0
+      deg_g2c <- 0
+      if (length(degDist) > 2) {
+        deg_g2c <- sum(degDist[seq(3, length(degDist))])
       }
       deg_g2f <- deg_g2c / nNodes
 
       while ( !(deg_g2c > 0 && (deg_g2f <= 0.1 || deg_g2c < 5)) && (currGamma >= minGamma) ) {
         currGamma <- currGamma / sqrt(10)
-        tr <- fitTree(expr, nNodes, sigma, currGamma, DEF_TOL, DEF_MAX_ITER, numCores)
+        tr <- fitTree(exprData, nNodes, sigma, currGamma, DEF_TOL, DEF_MAX_ITER)
         C <- tr[[1]]
         Wt <- tr[[2]]
         currMSE <- tr[[3]]
@@ -508,7 +517,9 @@ applySimplePPT <- function(exprData, projWeights=NULL, nNodes_ = 0, sigma=0, gam
         deg <- colSums(Wt)
         br <- seq(0, max(1, max(deg)))
         degDist <- hist(deg, br, plot=F)$counts
-        deg_g2c <- sum(degDist[4:length(degDist)])
+        if (length(degDist) > 2) {
+          deg_g2c <- sum(degDist[seq(3, length(degDist))])
+        }
         deg_g2f <- deg_g2c / nNodes
         
       }
@@ -519,15 +530,15 @@ applySimplePPT <- function(exprData, projWeights=NULL, nNodes_ = 0, sigma=0, gam
     
   }
   
-  tr <- fitTree(expr, nNodes, sigma, gamma, DEF_TOL, DEF_MAX_ITER, numCores = 0)
+  tr <- fitTree(exprData, nNodes, sigma, gamma, DEF_TOL, DEF_MAX_ITER)
   C <- tr[[1]]
   Wt <- tr[[2]]
   mse <- tr[[3]]
   
-  return(list(C, Wt, sqdist(expr, C), mse))
+  return(list(C, Wt, sqdist(t(exprData), t(C)), mse))
 }
 
-fitTree <- function(expr, nNodes, sigma, gamma, tol, maxIter, numCores=0) {
+fitTree <- function(expr, nNodes, sigma, gamma, tol, maxIter) {
   #' Fit tree using input parameters
   #' 
   #' Paramters:
@@ -542,18 +553,10 @@ fitTree <- function(expr, nNodes, sigma, gamma, tol, maxIter, numCores=0) {
   #'    graph-level regularization parameter, controlling the tradeoff between the noise-levels
   #'    in the data and the graph smoothness. If 0, the is estimated automatically.
   
-  # Set up cores for parallel computation
-  if (numCores == 0) {
-    nc <- min(4, detectCores()-1)
-  } else {
-    nc <- numCores
-  }
-  cl <- makeCluster(rep("localhost", nc))
   
   km <- kmeans(t(expr), centers=nNodes, nstart=10, iter.max=100)$centers
-  km <- t(km)
-  cc_dist <- as.matrix(sqdist(km, km))
-  cx_dist <- as.matrix(sqdist(expr, km))
+  cc_dist <- as.matrix(dist.matrix(km))
+  cx_dist <- as.matrix(sqdist(t(expr), km))
   prevScore = Inf
   currScore = 0
   currIter = 0
@@ -561,7 +564,7 @@ fitTree <- function(expr, nNodes, sigma, gamma, tol, maxIter, numCores=0) {
   while (!( (prevScore - currScore < tol) || (currIter > maxIter) )){
     currIter <- currIter + 1
     prevScore <- currScore
-    W <- mst(graph_from_adjacency_matrix(cc_dist))
+    W <- mst(graph_from_adjacency_matrix(cc_dist, weighted=T, mode="undirected"))
     Wt <- get.adjacency(W, sparse=FALSE)
     
     Ptmp <- -(cx_dist / sigma)
@@ -574,18 +577,15 @@ fitTree <- function(expr, nNodes, sigma, gamma, tol, maxIter, numCores=0) {
     invg <- as.matrix(solve( ((2 / gamma) * L) + delta))
     C <- xp %*% invg
     
-    cc_dist <- as.matrix(sqdist(C, C))
-    cx_dist <- as.matrix(sqdist(expr, C))
+    cc_dist <- as.matrix(dist.matrix(t(C)))
+    cx_dist <- as.matrix(sqdist(t(expr), t(C)))
     
     P <- clipBottom(P, mi=min(P[P>0]))
     currScore <- sum(Wt * cc_dist) + (gamma * sum(P * ((cx_dist) + (sigma * log(P)))))
     
   }
   
-  stopCluster(cl)
-  mse <- getMSE(C, expr)
-  print(mse)
-  return(list(C, Wt, mse))
+  return(list(C, Wt, getMSE(C, expr)))
   
 }
 
@@ -593,26 +593,25 @@ getMSE <- function(C, X) {
   if (is.na(C) || is.na(X)) {
     return(NULL)
   }
-  mse <- mean( apply( as.matrix(sqdist(X, C)), 1, min))
+  mse <- mean( apply( as.matrix(sqdist(t(X), t(C))), 1, min))
   return(mse)
   
 }
 
 sqdist <- function(X, Y) {
   #' Alternative computation of distance matrix, based on matrix multiplication.
-  
-  xtx <- as.vector( colSums(X^2) )
-  yty <- as.vector( colSums(Y^2) )
-  xy <- 2 * (t(X) %*% Y)
-  
-  res <- matrix(0L, nrow=length(xtx), ncol=length(yty))
-  for (i in 1:length(xtx)) {
-    r <- sapply(yty, function(y) y + xtx[[i]])
-    res[i,] <- as.vector(r)
-  }
-  
-  return(res - xy)
-  
+  #' X is n x d matrix
+  #' Y is m x d matrix
+  #' Returns n x m distance matrix
+
+	aa = rowSums(X**2)
+	bb = rowSums(Y**2)
+	x = -2 * X %*% t(Y)
+	x = x + aa
+	x = t(t(x) + bb)
+	x[which(x<0)] <- 0
+	return(sqrt(x))
+
 }
 
 clipBottom <- function(x, mi) {

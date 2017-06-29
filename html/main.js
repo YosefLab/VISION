@@ -107,6 +107,42 @@ window.onload = function()
    
    	global_status.precomputed = false;
 
+	for (curr_cl = 0; curr_cl <= 10; curr_cl++) {
+			// Create new table and add to table_div
+			var new_table_div = document.createElement("div");
+			new_table_div.setAttribute("style", "height=calc((100vh - 88px) / 2)");
+			new_table_div.setAttribute("class", "table_div");
+			//new_table_div.setAttribute("style", "display:none");
+
+			//var acc_button = document.createElement("button");
+			//var acc_table = document.createElement("table");
+			//acc_button.innerHTML = "Signature Cluster " + curr_cl;
+			//acc_button.setAttribute("class", "table_accordion");
+			//acc_table.setAttribute("class", "table_div color_panel panel")
+			//acc_table.setAttribute("id", "table_acc"+curr_cl);
+
+
+			var table_div_container = document.getElementById("table_div_container");
+
+			var new_table = document.createElement("table");
+			new_table.setAttribute("id", "table"+ curr_cl);
+
+			var thead = document.createElement("thead");
+			var tr = document.createElement("tr");
+			thead.appendChild(tr);
+
+			var tbody = document.createElement("tbody");
+			
+			new_table.appendChild(thead);
+			new_table.appendChild(tbody);
+
+			//acc_button.appendChild(acc_table);
+			//table_div_container.appendChild(acc_button);
+
+			new_table_div.appendChild(new_table);
+			table_div_container.appendChild(new_table_div);
+			//acc_table.appendChild(new_table_div);
+	}
     //Make the options update the table
     $("#filter_dropdown").change(function(){
         global_status.filter_group = $(this).val();
@@ -394,93 +430,102 @@ function drawHeat(){
 
 function createTableFromData()
 {
-    return api.filterGroup.sigProjMatrixP(global_status.filter_group, global_status.precomputed)
-        .then(function(matrix){
-			
+    return $.when(api.filterGroup.sigProjMatrixP(global_status.filter_group, global_status.precomputed),
+					api.signature.clusters(global_status.precomputed))
+        .then(function(matrix, cls){
+        	
         updateCurrentSelections(matrix);
 
         // Detach filter sig box for later
         var filterSig = $('#sig_filt_input');
         filterSig.detach();
 
+		for (curr_cl = 1; curr_cl <= 10; curr_cl++) {
+			
+			// Create the Header row
+			var header_row = d3.select("#table"+curr_cl).select("thead").select("tr").selectAll("th")
+				.data([""].concat(matrix.proj_labels));
+	        header_row.enter().append('th');
+		    header_row.html(function(d){return "<div>"+d+"</div>";})
+			    .filter(function(d,i) {return i > 0;})
+				.on("click", function(d,i) { sortByColumn(d);});
 
-        // Create the Header row
-        var header_row = d3.select('#table_div').select('thead').select('tr').selectAll('th')
-            .data([""].concat(matrix.proj_labels));
+			header_row.exit().remove();
 
-        header_row.enter().append('th');
-        header_row.html(function(d){return "<div>"+d+"</div>";})
-            .filter(function(d,i) {return i > 0;})
-            .on("click", function(d,i) { sortByColumn(d);});
+			// Format cell data for better d3 binding
+			var sig_labels = matrix.sig_labels.filter(function(x) { return cls[x] == curr_cl; });
+			var data = [];
+			for (var ind = 0; ind < sig_labels.length; ind++) {
+				var sig = sig_labels[ind];
+				data.push(matrix.data[matrix.sig_labels.indexOf(sig)]);
+			}
 
-        header_row.exit().remove();
+			var formatted_data_matrix = sig_labels.map(function(row, i){
+				    return data[i].map(function(val, j){
+					    return {"val":val, "row":matrix.sig_labels.indexOf(sig_labels[i]), "col":j}
+						});
+				    });
 
-        // Format cell data for better d3 binding
-        var formatted_data_matrix = matrix.data.map(function(row, i){
-                return row.map(function(val, j){
-                    return {"val":val, "row":i, "col":j}
-                    });
-                });
+			if (typeof(sig_labels) == "string") {
+				sig_labels = [sig_labels];
+			}
 
-		if (typeof(matrix.sig_labels) == "string") {
-			matrix.sig_labels = [matrix.sig_labels];
-		}
-        var formatted_data_w_row_labels = d3.zip(matrix.sig_labels, formatted_data_matrix);
+			var formatted_data_w_row_labels = d3.zip(sig_labels, formatted_data_matrix);
 
-        // Sort data if necessary
+			// Sort data if necessary
 
-        var sort_col = matrix.proj_labels.indexOf(global_status.sorted_column);
-        if(sort_col > -1){
-            sortFun = function(a,b){
-                a_precomp = global_data.sigIsPrecomputed[a[0]];
-                b_precomp = global_data.sigIsPrecomputed[b[0]];
-                if(a_precomp && b_precomp || !a_precomp && !b_precomp){
-                    return a[1][sort_col].val - b[1][sort_col].val;
-                }
-                else if (a_precomp) { return -1;}
-                else {return 1;}
-            };
-            formatted_data_w_row_labels.sort(sortFun);
-        }
+			var sort_col = matrix.proj_labels.indexOf(global_status.sorted_column);
+			if(sort_col > -1){
+				sortFun = function(a,b){
+					a_precomp = global_data.sigIsPrecomputed[a[0]];
+					b_precomp = global_data.sigIsPrecomputed[b[0]];
+					if(a_precomp && b_precomp || !a_precomp && !b_precomp){
+						return a[1][sort_col].val - b[1][sort_col].val;
+					}
+					else if (a_precomp) { return -1;}
+					else {return 1;}
+				};
+				formatted_data_w_row_labels.sort(sortFun);
+			}
 
-        var colorScale = d3.scale.linear()
-            .domain([0,-3,-50])
-            .range(["steelblue","white", "lightcoral"])
-            .clamp(true);
+			var colorScale = d3.scale.linear()
+				.domain([0,-3,-50])
+				.range(["steelblue","white", "lightcoral"])
+				.clamp(true);
 
-        var content_rows = d3.select('#table_div').select('tbody').selectAll('tr')
-            .data(formatted_data_w_row_labels);
-
-        content_rows.enter().append('tr');
-        content_rows.exit().remove();
+			var content_rows = d3.select('#table'+curr_cl).select('tbody').selectAll('tr')
+				.data(formatted_data_w_row_labels);
+			content_rows.enter().append('tr');
+			content_rows.exit().remove();
         
-		var content_row = content_rows.selectAll("td")
-			.data(function(d, row_num){ return [d[0]].concat(d[1]);})
+			var content_row = content_rows.selectAll("td")
+				.data(function(d, row_num){return [d[0]].concat(d[1]);})
 
-        content_row.enter().append('td');
-        content_row.exit().remove();
+			content_row.enter().append('td');
+			content_row.exit().remove();
 
-        content_row
-            .filter(function(d,i) { return i > 0;})
-            .text(function(d){
-                if(d.val < -50) { return "< -50";}
-                else if(d.val > -1) { return d.val.toFixed(2);}
-                else { return d.val.toPrecision(2);}
-                    })
-            .style('background-color', function(d){return colorScale(d.val);})
-            .on("click", function(d){tableClickFunction(matrix.sig_labels[d.row], matrix.proj_labels[d.col])});
+			content_row
+				.filter(function(d,i) { return i > 0;})
+				.text(function(d){
+					if(d.val < -50) { return "< -50";}
+					else if(d.val > -1) { return d.val.toFixed(2);}
+					else { console.log(d); return d.val.toPrecision(2);}
+						})
+			    .style('background-color', function(d){return colorScale(d.val);})
+				.on("click", function(d){tableClickFunction(matrix.sig_labels[d.row], matrix.proj_labels[d.col])});
 
-        // Make signature names click-able
-        content_row.filter(function(d,i) { return i == 0;})
-            .text(function(d){return d;})
-            .on("click", function(d){createSigModal(d)});
+			// Make signature names click-able
+			content_row.filter(function(d,i) { return i == 0;})
+				.text(function(d){return d;})
+				.on("click", function(d){createSigModal(d)});
+
             
-        // (Re)Create filter signature box
-        var th = $('#table_div').children('table').children('thead').children('tr').children('th:first-child');
-        $(th).append(filterSig);
-        filterSig.show();
-        filterSig.trigger('input');
-
+			// (Re)Create filter signature box
+			var th = $('#table_div').children('table').children('thead').children('tr').children('th:first-child');
+			$(th).append(filterSig);
+			filterSig.show();
+			filterSig.trigger('input');
+		}
     });
 }
 

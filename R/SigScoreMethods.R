@@ -35,6 +35,7 @@ naiveEvalSignature <- function(expr, sig, weights, min_signature_genes) {
 
   weights <- matrix(1, nrow=nrow(sigGenes), ncol=ncol(sigGenes))
   
+
   pdata <- sigGenes * sigVector * weights;  
 
   sigScores <- colSums(pdata)
@@ -73,12 +74,14 @@ weightedEvalSignature <- function(expr, sig, weights, min_signature_genes) {
   sigGenes <- exprData[names(sigVector),]
   weights <- weights[names(sigVector),]
 
+  ## UNCOMMENT OUT THIS LINE TO ENABLE C++ SIG SCORE CALCULATION
+  #pdata <- calcSigScore(sigGenes, sigVector, weights)
   pdata <- sigGenes * sigVector * weights
 
   sigScores <- colSums(pdata)
   sigScores <- sigScores / colSums(abs(sigVector) * weights)
   
-  sigObj <- SignatureScores(sigScores, sig@name, colnames(pdata), 
+  sigObj <- SignatureScores(sigScores, sig@name, colnames(weights), 
                             isFactor=FALSE, isPrecomputed=FALSE, numGenes=length(sigVector))
   
   return(sigObj)

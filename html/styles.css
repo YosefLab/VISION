@@ -49,6 +49,34 @@ button.accordion.active:after {
 	content: "\2212";
 }
 
+button.table_accodion {
+	background-color: #eee;
+	color: #444;
+	cursor: pointer;
+	padding: 0px;
+	width: 100%;
+	text-align: left;
+	border: none;
+	outline: none;
+	transition: 0.4s;
+}
+
+button.table_accordion.active, button.table_accordion.hover {
+	background-color: #ddd;
+}
+
+button.table_accordion:after {
+	content: '\002b';
+	color: #777;
+	font-weight: bold;
+	float:right;
+	margin-left: 5px;
+}
+
+button.table_accordion.active:after {
+	content: "\2212";
+}
+
 div.panel {
 	padding: 0 18px;
 	display: none;
@@ -102,7 +130,7 @@ div.panel {
     margin-top: 20px;
 }
 
-#table_div table{
+.table_div table{
     /*margin-right: 50px;*/ /* So the table div accounts for angled labels */
     margin-top: 30px;
     width: calc(100% - 10px);
@@ -110,18 +138,18 @@ div.panel {
     overflow:auto;
 }
 
-#table_div table th:first-child{
+.table_div table th:first-child{
     text-align:left;
 }
 
-#table_div table th:not(:first-child) div {
+.table_div table th:not(:first-child) div {
     transform-origin: left center 0;
     transform: translate(15px,0.5em) rotate(-50deg);
     width: 100px;
     text-align: left;
 }
 
-#table_div table td:first-child{
+.table_div table td:first-child{
     max-width:350px;
     width:350px;
     font-size: 0.8em;
@@ -133,14 +161,14 @@ div.panel {
 	overflow:auto;
 }
 
-#table_div table td:not(:first-child), #table_div table th:not(:first-child){
+.table_div table td:not(:first-child), .table_div table th:not(:first-child){
     text-align: center;
     width: 35px;
     cursor: pointer;
     font-size: 0.8em;
 }
 
-#table_div table td:not(:first-child){
+.table_div table td:not(:first-child){
     padding: 3px 0;
     border: 1px solid black;
 }
@@ -154,7 +182,7 @@ div.panel {
 	margin-right: 20px;
 }
 
-#table_div{
+.table_div{
     overflow: auto;
 }
 

@@ -2,7 +2,7 @@ require(geometry)
 require(pROC)
 
 setMethod("initialize", signature(.Object="Signature"),
-          function(.Object, sigDict, name, source, metaData="", isPrecomputed=F, isFactor=F) {
+          function(.Object, sigDict, name, source, metaData="", isPrecomputed=F, isFactor=F, cluster=0) {
             if (missing(sigDict)) {
               stop("Missing sigDict information.")
             } else if (missing(name)) {
@@ -17,6 +17,8 @@ setMethod("initialize", signature(.Object="Signature"),
             .Object@metaData = metaData
             .Object@isPrecomputed = isPrecomputed
             .Object@isFactor = isFactor
+            .Object@cluster = cluster
+            
             
             return(.Object);
             
@@ -186,14 +188,14 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
     
     # TODO: EXPERIMENT WITH A K X D DISTANCE MATRIX -- COMPUTE KERNEL ON THIS MATRIX WITH K NEAREST NEIGHBORS
     # DETERMINE K AS LOG NUMBER OF CELLS / SQRT ( NUMBER CELLS )
-    distanceMatrix <- as.matrix((dist(t(dataLoc), method="euclidean")))
+    distanceMatrix <- dist.matrix(t(dataLoc), method="euclidean")
     
     ##TODO: compute the neighborhood size off of the distance Matrix 
     ## Maybe use a K-D tree to find the neighborhood of the matrix 
-    
-    weights <- as.matrix(exp(-1 * (distanceMatrix * distanceMatrix) / NEIGHBORHOOD_SIZE^2))
+    point_mult(distanceMatrix, distanceMatrix); 
+    weights <- as.matrix(exp(-1 * (distanceMatrix) / NEIGHBORHOOD_SIZE^2))
     diag(weights) <- 0
-    weightsNormFactor <- apply(weights, 1, sum)
+    weightsNormFactor <- rowSums(weights)
     weightsNormFactor[weightsNormFactor == 0] <- 1.0
     weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
     weights <- weights / weightsNormFactor
@@ -359,5 +361,16 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
 
   
   return(list(spRowLabels, spColLabels, sigProjMatrix, sigProjMatrix_P))
+}
+
+clusterSignatures <- function(sigMatrix, k=10) {
+  
+  res <- prcomp(na.omit(sigMatrix), scale=T)$x[,1:30]
+  km <- kmeans(res, centers=k, nstart=1, iter.max=100)
+  
+  cls <- as.list(km$cluster)
+  cls <- cls[order(unlist(cls), decreasing=F)]
+  
+  return(cls)
 }
 

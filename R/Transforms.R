@@ -1,4 +1,5 @@
 ## Functions to transform the data and calculate weights
+require(loe)
 
 matprod.par <- function(cl, A, B) {
   
@@ -7,6 +8,45 @@ matprod.par <- function(cl, A, B) {
   Alist <- lapply(idx, function(ii) A[ii,,drop=FALSE])
   ans <- clusterApply(cl, Alist, get("%*%"), B)
   do.call(rbind, ans)
+}
+
+
+optimalClusters <- function(data) {
+	#' Calculate the optimal number of clusters for a given data set
+	#' Paramters:
+	#'  data: (matrix) NUM_GENES X NUM_SAMPLES
+	
+	k.max <- round(ncol(data)^(1/2))
+	print(k.max)
+	wss <- sapply(1:k.max, function(k) {gc(); kmeans(t(data), k, nstart=5, iter.max=40, algorithm="Lloyd")$tot.withinss})
+	x_val <- seq(1, k.max);
+	max_df <- data.frame(x = c(1, k.max), y=c(wss[1], wss[k.max]))
+    fit <- lm(max_df$y ~ max_df$x)
+    distances <- c()
+    for (i in 1:k.max) {
+         distances <- c(distances, abs(coef(fit)[2]*x_val[i] - wss[i] + coef(fit)[1]) / sqrt(coef(fit)[2]^2 + 1^2))
+    }
+    optclust <- x_val[which.max(distances)]
+    return(optclust)
+}
+
+kmDist <- function(data, optClust) {
+	#' Calculate an approximated distance matrix with the sqrt(num samples) clusters
+	#' Parameters:
+	#'	data: (array) NUM_GENES x NUM_SAMPLES
+
+	if (optClust == 0) {
+		optClust = round(sqrt(ncol(data)))
+	} 
+
+	km <- kmeans(t(data), centers=optClust, nstart=1, iter.max=100)
+	kmd <- sqdist(data, t(km$centers))
+	c <- apply(kmd, 1, which.min)
+	kd <- make.distmat(km$centers)
+	diag(kd) <- 0L
+
+	return(list(c, kmd))
+
 }
 
 createFalseNegativeMap <- function(data, housekeeping_genes, debug=0) {
