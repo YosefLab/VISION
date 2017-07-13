@@ -6,7 +6,8 @@ body {
     height: 100%;
     padding-top: 1px;
     padding-left: 20px;
-    background-color: #aaa;
+    background-color: #868685;
+    font-family: "Arial", Helvetica, sans-serif;
 }
 
 input[type=text]
@@ -30,11 +31,23 @@ button.accordion {
 
 .command-title {
 	margin-left: 5px;
-	float: left;
+	font-size: 20px;
+	text-align: center;
+	font-family: "Arial", Helvetica, sans-serif;
+	font-weight: bold;
+}
+
+.link {
+	stroke: #eee;
+}
+
+.node {
+	stroke: #fff;
+	fill: white;
 }
 
 button.accordion.active, button.accordion.hover {
-	background-color: #ddd;
+	background-color: #DCDCDC;
 }
 
 button.accordion:after {
@@ -49,46 +62,17 @@ button.accordion.active:after {
 	content: "\2212";
 }
 
-button.table_accodion {
-	background-color: #eee;
-	color: #444;
-	cursor: pointer;
-	padding: 0px;
-	width: 100%;
-	text-align: left;
-	border: none;
-	outline: none;
-	transition: 0.4s;
-}
-
-button.table_accordion.active, button.table_accordion.hover {
-	background-color: #ddd;
-}
-
-button.table_accordion:after {
-	content: '\002b';
-	color: #777;
-	font-weight: bold;
-	float:right;
-	margin-left: 5px;
-}
-
-button.table_accordion.active:after {
-	content: "\2212";
-}
-
 div.panel {
 	padding: 0 18px;
 	display: none;
-	max-height: 0px;
 	overflow: hidden;
 	transition: max-height 0.2s ease-out;
-	background-color: #ccc
+	background-color: #868685;
 }
 
 .color_panel
 {
-    background-color: #ccc;
+    background-color: #868685;
     /*padding: 5px;*/
     /*margin: 10px;*/
     /*box-shadow: 0 10px 6px -6px #777;*/
@@ -96,8 +80,99 @@ div.panel {
 
 }
 
+#side-menu {
+	position: absolute;
+	left: -240px;
+	background: #DF314D;
+	width: 240px;
+	height: 100%;
+	box-sizing: border-box;
+}
+
+#side-menu ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+#side-menu ul li {
+	margin: 0;
+}
+
+#side-menu ul li a {
+	padding: 15px, 20px;
+	font-size: 16px;
+	font-weight: 100;
+	color: white;
+	text-decoration: none;
+	display: block;
+	border-bottom: 1px solid #C9223D;
+	-webkit-transition: background 0.3s ease-in-out;
+	-moz-transition: background 0.3s ease-in-out;
+	-ms-transition: background 0.3s ease-in-out;
+	-o-transition: background 0.3s ease-in-out;
+	transition: background 0.3s ease-in-out;
+}
+
+#side-menu ul li:hover a{
+	background: #C9223D;
+}
+
+.command-panel-content {
+	width: 100%;
+	height: 100%;
+	padding: 10px;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	position: relative;
+}
+
+.command-panel-content .panel {
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	padding-left: 60px;
+	width: 100%;
+}
+
+.command-panel-content .panel h1 {
+	font-weight: 100;
+}
+
+.command-panel-content #sidebar-toggle {
+	background: #DF314D;
+	border-radius: 3px;
+	display: block;
+	position: relative;
+	padding: 10px 7px;
+	float: left;
+}
+
+.command-panel-content #sidebar-toggle .bar {
+	display: block;
+	width: 18px;
+	margin-bottom: 3px;
+	height: 2px;
+	background-color: #fff;
+	border-radius: 1px;
+}
+
+.command-panel-content #sidebar-toggle .bar:last-child {
+	margin-bottom: 0;
+}
+
 #command-panel {
-	margin-top: 10px;
+	position: relative;
+	height: 100%;
+	width: 100%;
+	-webkit-transition: left 0.4s ease-in-out;
+	-moz-transition: left 0.4s ease-in-out;
+	-ms-transition: left 0.4s ease-in-out;
+	-o-transition: left 0.4s ease-in-out;
+	transition: left 0.4s ease-in-out;
+}
+
+#command-panel .open-sidebar {
+	left: 240px;
 }
 
 .colorOptions {
@@ -112,7 +187,7 @@ div.panel {
 }
 
 #bottom_visual_div {
-    border-top: 3px solid #eee;
+    border-top: 3px solid #000;
 }
 
 #data_options_div {
@@ -186,6 +261,15 @@ div.panel {
     overflow: auto;
 }
 
+#tree_div svg {
+    font: 10px sans-serif;
+    shape-rendering: crispEdges;
+    background-color: rgba(255,255,255,0);
+}
+
+#tree_div rect {
+	fill: #292928;
+}
 
 #scatter_div svg {
     font: 10px sans-serif;
@@ -227,6 +311,8 @@ div.panel {
 
 #plot_title_div .subtitle, #plot_title_div .title{
     margin: 10px;
+    font-family: "Arial", Helvetica, sans-serif;
+    text-align: left;
 }
 
 #plot_title_div .subtitle{
@@ -259,7 +345,7 @@ div.panel {
 }
 
 .point-faded{
-    fill-opacity: 0.3 !important;
+    fill-opacity: 0.15 !important;
 }
 
 .point-hover{

@@ -199,14 +199,14 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
     weightsNormFactor[weightsNormFactor == 0] <- 1.0
     weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
     weights <- weights / weightsNormFactor
-    neighborhoodPrediction <- weights %*% sigScoreMatrix
+    neighborhoodPrediction <- crossprod(weights, sigScoreMatrix)
 
     ## Neighborhood dissimilatory score = |actual - predicted|
     dissimilarity <- abs(sigScoreMatrix - neighborhoodPrediction)
     medDissimilarity <- as.matrix(apply(dissimilarity, 2, median))
 
     # Calculate scores for random signatures
-    randomNeighborhoodPrediction <- weights %*% randomSigScoreMatrix  
+    randomNeighborhoodPrediction <- crossprod(weights, randomSigScoreMatrix)
     randomDissimilarity <- abs(randomSigScoreMatrix - randomNeighborhoodPrediction)
     randomMedDissimilarity <- as.matrix(apply(randomDissimilarity, 2, median))
     # Group by number of genes
@@ -263,7 +263,7 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
         next
       }
       
-      sigPredictions <- weights %*% sigScores
+      sigPredictions <- crossprod(weights, sigScores)
       r <- roc.area(sigScores, sigPredictions)
       a <- r$A
       #dissimilarity <- abs(sigScores - sigPredictions)
@@ -313,7 +313,7 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
       }
       
       N_LEVELS <- length(fLevels)
-      factorPredictions <- weights %*% fMatrix
+      factorPredictions <- crossprod(weights, fMatrix)
 
       labels <- apply(fMatrix, 1, which.max)
       
@@ -363,14 +363,53 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   return(list(spRowLabels, spColLabels, sigProjMatrix, sigProjMatrix_P))
 }
 
-clusterSignatures <- function(sigMatrix, k=10) {
-  
-  res <- prcomp(na.omit(sigMatrix), scale=T)$x[,1:30]
-  km <- kmeans(res, centers=k, nstart=1, iter.max=100)
-  
-  cls <- as.list(km$cluster)
-  cls <- cls[order(unlist(cls), decreasing=F)]
-  
-  return(cls)
+clusterSignatures <- function(sigList, sigMatrix, k=10) {
+
+  precomputed <- lapply(sigList, function(x) x@isPrecomputed)
+	
+  # Cluster computed signatures and precomputed signatures separately
+  computedSigsToCluster <- names(precomputed[which(precomputed == F)])
+  computedSigMatrix <- sigMatrix[computedSigsToCluster,]  
+
+  r <- matrix(rank(computedSigMatrix, ties="min"), ncol=ncol(sigMatrix))
+  r_rs <- as.matrix(rowSums(r))
+  rownames(r_rs) <- rownames(computedSigMatrix)
+
+  compkm <- kmeans(r_rs, centers=k, nstart=1, iter.max=100)
+  compcls <- as.list(compkm$cluster)
+  compcls <- compcls[order(unlist(compcls), decreasing=F)]
+
+  #compres <- prcomp(na.omit(computedSigMatrix), scale=T)$x[,1:30]
+  #compkm <- kmeans(compres, centers=min(k, length(computedSigsToCluster)), nstart=1, iter.max=100)
+  #compcls <- as.list(compkm$cluster)
+  #compcls <- compcls[order(unlist(compcls), decreasing=F)]
+
+  precompcls <- list()
+  if (length(which(precomputed==T)) > 0) {
+	precomputedSigsToCluster <- names(precomputed[which(precomputed==T)])
+	precomputedSigMatrix <- sigMatrix[precomputedSigsToCluster,]
+
+	rp <- matrix(rank(precomputedSigMatrix, ties="min"), ncol=col(sigMatrix))
+	rp_rs <- as.matrix(rowSums(rp))
+	rownames(rp_rs) <- rownames(precomputedSigMatrix)
+
+	if (length(precomputedSigsToCluster) == 1) {
+		precompcls <- list()
+		precompcls[precomputedSigsToCluster[[1]]] <- 1
+	} else {
+		#prcompres <- prcomp(na.omit(precomputedSigMatrix), scale=T)
+		#prcompres <- prcompres$x[1, min(ncol(prcompres$x), 30)]
+		#precompkm <- kmeans(prcompres, centers=min(k, length(precomputedSigsToCluster)), nstart=1, iter.max=100)
+		precompkm <- kmeans(rp_rs, centers=min(k, length(precomputedSigsToCluster)), nstart=1, iter.max=100)
+		precompcls <- as.list(precompkm$cluster)
+		precompcls <- precompcls[order(unlist(precompcls), decreasing=F)]
+
+	}
+  }
+
+  output <- list(compcls, precompcls)
+  names(output) <- c("Computed", "Precomputed")
+
+  return(output)
 }
 

@@ -30,11 +30,18 @@ $(window).resize(function()
     {
         $('#heatmap_div').find('svg').remove();
         global_heatmap = new HeatMap('#heatmap_div');
-    }
+    } 
+
+    if ($('#tree_div').is(":visible"))
+	{ 
+		$('#tree_div').find('svg').remove();
+		global_tree = new TreeMap("#tree_div");
+	}
 
     //Link the scatter/heatmap
     global_scatter.hovered_links.push(global_heatmap);
     global_heatmap.hovered_links.push(global_scatter);
+    global_tree.hovered_links.push(global_tree);
 
     //Render
     drawChart();
@@ -94,55 +101,73 @@ function doneTyping()
 
 window.onload = function()
 {
+
+	tooltip = new Tooltip("main-tooltip", 230);
+
+	$(".sigclust").on("mouseover", function(d) {
+		tooltip.showTooltip("Click To Toggle Cluster Display", d);
+	})
+	.on("mouseout", function(d) {
+		tooltip.hideTooltip();
+	});
+
+
     //Define some globals
     global_scatter = new ColorScatter("#scatter_div", true);
     global_heatmap = new HeatMap("#heatmap_div");
-    //global_tree = new TreeMap("#tree_div");
+    global_tree = new TreeMap("#tree_div");
     
     //Link the scatter/heatmap
     global_scatter.hovered_links.push(global_heatmap);
     global_heatmap.hovered_links.push(global_scatter);
-    //global_tree.hovered_links.push(global_scatter);
-    //global_scatter.hovered_links.push(global_tree);
+	global_tree.hovered_links.push(global_scatter);
    
    	global_status.precomputed = false;
 
-	for (curr_cl = 0; curr_cl <= 10; curr_cl++) {
+
+	var clusters_promise = api.signature.clusters(global_status.precomputed)
+		.then(function(cls) {
+
+		var clusarr = Object.keys( cls ).map(function ( key ) {return cls[key];});
+		var clusmax = Math.max.apply(null, clusarr);
+
+		for (curr_cl = 1; curr_cl <= clusmax; curr_cl++) {
 			// Create new table and add to table_div
 			var new_table_div = document.createElement("div");
 			new_table_div.setAttribute("style", "height=calc((100vh - 88px) / 2)");
 			new_table_div.setAttribute("class", "table_div");
-			//new_table_div.setAttribute("style", "display:none");
-
-			//var acc_button = document.createElement("button");
-			//var acc_table = document.createElement("table");
-			//acc_button.innerHTML = "Signature Cluster " + curr_cl;
-			//acc_button.setAttribute("class", "table_accordion");
-			//acc_table.setAttribute("class", "table_div color_panel panel")
-			//acc_table.setAttribute("id", "table_acc"+curr_cl);
+			new_table_div.setAttribute("style", "overflow: hidden");
 
 
 			var table_div_container = document.getElementById("table_div_container");
 
 			var new_table = document.createElement("table");
 			new_table.setAttribute("id", "table"+ curr_cl);
+			new_table.setAttribute("class", "sig-cluster-table");
 
 			var thead = document.createElement("thead");
 			var tr = document.createElement("tr");
+			var tr2 = document.createElement("tr");
+			tr.setAttribute("id", "proj_row"+curr_cl);
+			tr2.setAttribute("id", "summary_row"+curr_cl);
+			tr2.setAttribute("class", "summary-row");
 			thead.appendChild(tr);
+			thead.appendChild(tr2);
 
 			var tbody = document.createElement("tbody");
 			
 			new_table.appendChild(thead);
 			new_table.appendChild(tbody);
 
-			//acc_button.appendChild(acc_table);
-			//table_div_container.appendChild(acc_button);
 
 			new_table_div.appendChild(new_table);
 			table_div_container.appendChild(new_table_div);
-			//acc_table.appendChild(new_table_div);
-	}
+			new_table_div.appendChild(document.createElement("br"));
+		}
+
+	});
+
+
     //Make the options update the table
     $("#filter_dropdown").change(function(){
         global_status.filter_group = $(this).val();
@@ -159,6 +184,7 @@ window.onload = function()
             //   updates selected sig/proj
             drawChart();
             drawHeat();
+            drawTree();
         });
     });
 
@@ -203,6 +229,7 @@ window.onload = function()
     $('#cluster_select_method').change(function(){
         build_cluster_dropdown_param()
         drawHeat();
+
     });
 
     //Define cluster dropdown's change function
@@ -244,11 +271,12 @@ window.onload = function()
     });
 
 	var acc = document.getElementsByClassName("accordion");
-	var i;
 	for (i = 0; i < acc.length; i++) {
-		acc[i].onclick = function() {
+		acc[i].onclick = function(d) {
 			this.classList.toggle("active");
 			var panel = this.nextElementSibling;
+			if (d.target.getAttribute("id") == "clustering-options") { drawHeat(); } 
+			if (d.target.getAttribute("id") == "tree-options") { drawTree(); }
 			if (panel.style.display == "inline") {
 				panel.style.display = "none";
 				panel.style.maxHeight = null;
@@ -259,7 +287,63 @@ window.onload = function()
 		}
 	}
 
+	$("[data-toggle]").click(function() {
+		var toggle_el = $(this).data("toggle");
+		$(toggle_el).toggleClass("open-sidebar");
+	});
+
 };
+
+Element.prototype.remove = function() {
+	this.parentElement.removeChild(this);
+}
+
+function addSigClusterDivs() {
+
+	$(".table_div").remove()
+
+	var num_clusters_promise = api.signature.clusters(global_status.precomputed)
+		.then(function(cls) {
+
+		var clusarr = Object.keys( cls ).map(function ( key ) {return cls[key];});
+		var clusmax = Math.max.apply(null, clusarr);
+
+		for (curr_cl = 1; curr_cl <= clusmax; curr_cl++) {
+			// Create new table and add to table_div
+			var new_table_div = document.createElement("div");
+			new_table_div.setAttribute("style", "height=calc((100vh - 88px) / 2)");
+			new_table_div.setAttribute("id", "new_table_div");
+			new_table_div.setAttribute("class", "table_div");
+
+
+			var table_div_container = document.getElementById("table_div_container");
+
+			var new_table = document.createElement("table");
+			new_table.setAttribute("id", "table"+ curr_cl);
+			new_table.setAttribute("class", "sig-cluster-table");
+
+			var thead = document.createElement("thead");
+			var tr = document.createElement("tr");
+			var tr2 = document.createElement("tr");
+			tr.setAttribute("id", "proj_row"+curr_cl);
+			tr2.setAttribute("id", "summary_row"+curr_cl);
+			thead.appendChild(tr);
+			thead.appendChild(tr2);
+
+			var tbody = document.createElement("tbody");
+			
+			new_table.appendChild(thead);
+			new_table.appendChild(tbody);
+
+
+			new_table_div.appendChild(new_table);
+			table_div_container.appendChild(new_table_div);
+			new_table_div.appendChild(document.createElement("br"));
+		}
+
+	});
+
+}
 
 function updateCurrentSelections(matrix)
 {
@@ -321,6 +405,7 @@ function tableClickFunction(row_key, col_key)
     global_status.plotted_projection = col_key;
     drawChart();
     drawHeat();
+    drawTree();
 }
 
 // Draw the scatter plot
@@ -331,8 +416,8 @@ function drawChart() {
     var filter_group = global_status.filter_group;
 
     if(sig_key.length == 0 && proj_key.length == 0){
-        $('#plot_title_div').children().eq(0).text("");
         $('#plot_title_div').children().eq(1).text("");
+        $('#plot_title_div').children().eq(2).text("");
         global_scatter.setData([], false);
         return $().promise()
     }
@@ -352,8 +437,8 @@ function drawChart() {
     return $.when(proj_promise, sig_promise, sig_info_promise) // Runs when both are completed
         .then(function(projection, signature, sig_info){
             
-            $('#plot_title_div').children().eq(0).text(proj_key);
-            $('#plot_title_div').children().eq(1).text(sig_key);
+            $('#plot_title_div').children().eq(1).text(proj_key);
+            $('#plot_title_div').children().eq(2).text(sig_key);
 
             var points = [];
             for(sample_label in signature){
@@ -369,6 +454,48 @@ function drawChart() {
 
 }
 
+// Draw the Tree
+function drawTree() {
+	var sig_key = global_status.plotted_signature;
+	var proj_key = global_status.plotted_projection;
+	var filter_group = global_status.filter_group;
+
+	if (!$('#tree-options').hasClass('active')) {
+		$("#tree_div").hide();
+		$('#instructions').show();
+		return;
+	}
+	$("#instructions").hide();
+	if (sig_key.length == 0) {
+		$('#tree_div').hide();
+		return $().promise();
+	}
+	$("#tree_div rect").show();
+	return $.when(api.signature.info(sig_key),
+			api.signature.expression(sig_key),
+			api.projection.tree(filter_group, proj_key))
+				.then(function(sig_info, sig_expression, tree_data) {
+			
+			console.log(tree_data[3]);
+			if (sig_info.isPrecomputed) {
+				return;
+			}
+
+			if (!$('#tree_div').is(":visible"))
+			{
+				$("#tree_div").find("svg").remove();
+				$("#tree_div").show();
+				global_tree = new TreeMap("#tree_div", document);
+				global_tree.hovered_links.push(global_scatter);
+			}
+
+			sample_labels = sig_expression.sample_labels;
+			
+			return global_tree.setData(tree_data[1], tree_data[3], sample_labels);
+	});
+}
+
+
 // Draw the heatmap
 function drawHeat(){
     var sig_key = global_status.plotted_signature;
@@ -377,6 +504,12 @@ function drawHeat(){
     var cluster_method = $('#cluster_select_method').val();
     var cluster_param = $('#cluster_select_param').val();
 
+	if (!$('#clustering-options').hasClass('active')) {
+		$("#heatmap_div").hide();
+		$("#instructions").show();
+		return;
+	}
+	$("#instructions").hide();
     if(sig_key.length == 0){
         $('#heatmap_div').hide();
         return $().promise();
@@ -416,7 +549,7 @@ function drawHeat(){
 		});
 
 		//var assignments = data.Clusters[proj_key][choice];
-		var assignments = sample_labels.map(sample => cluster['data'][sample])
+		var assignments = sample_labels.map(sample => cluster['data'][sample]);
 
 		global_heatmap.setData(dataMat,
 				assignments,
@@ -430,20 +563,26 @@ function drawHeat(){
 
 function createTableFromData()
 {
+
+	addSigClusterDivs();
     return $.when(api.filterGroup.sigProjMatrixP(global_status.filter_group, global_status.precomputed),
 					api.signature.clusters(global_status.precomputed))
         .then(function(matrix, cls){
         	
+
+        var clusarr = Object.keys( cls ).map(function(key) { return cls[key]; });
+        var clusmax = Math.max.apply(null, clusarr);
         updateCurrentSelections(matrix);
 
         // Detach filter sig box for later
         var filterSig = $('#sig_filt_input');
         filterSig.detach();
 
-		for (curr_cl = 1; curr_cl <= 10; curr_cl++) {
+
+		for (curr_cl = 1; curr_cl <= clusmax; curr_cl++) {
 			
 			// Create the Header row
-			var header_row = d3.select("#table"+curr_cl).select("thead").select("tr").selectAll("th")
+			var header_row = d3.select("#table"+curr_cl).select("thead").select("#proj_row"+curr_cl).selectAll("th")
 				.data([""].concat(matrix.proj_labels));
 	        header_row.enter().append('th');
 		    header_row.html(function(d){return "<div>"+d+"</div>";})
@@ -452,12 +591,20 @@ function createTableFromData()
 
 			header_row.exit().remove();
 
+			if (typeof(matrix.sig_labels) == "string") {
+				matrix.sig_labels = [matrix.sig_labels];
+			}
+
 			// Format cell data for better d3 binding
 			var sig_labels = matrix.sig_labels.filter(function(x) { return cls[x] == curr_cl; });
 			var data = [];
 			for (var ind = 0; ind < sig_labels.length; ind++) {
 				var sig = sig_labels[ind];
 				data.push(matrix.data[matrix.sig_labels.indexOf(sig)]);
+			}
+			
+			if (typeof(sig_labels) == "string") {
+				sig_labels = [sig_labels];
 			}
 
 			var formatted_data_matrix = sig_labels.map(function(row, i){
@@ -466,11 +613,12 @@ function createTableFromData()
 						});
 				    });
 
-			if (typeof(sig_labels) == "string") {
-				sig_labels = [sig_labels];
-			}
 
 			var formatted_data_w_row_labels = d3.zip(sig_labels, formatted_data_matrix);
+
+			var summary_data_matrix = computeDataAverages(formatted_data_matrix);
+			var summary_data_matrix_w_row_labels = {name:"Signature Cluster " + curr_cl, vals:summary_data_matrix};
+
 
 			// Sort data if necessary
 
@@ -492,6 +640,22 @@ function createTableFromData()
 				.domain([0,-3,-50])
 				.range(["steelblue","white", "lightcoral"])
 				.clamp(true);
+			
+			
+
+			var summary_row = d3.select('#table'+curr_cl).select('thead').select("#summary_row"+curr_cl).selectAll("td")
+				.data(["Signature Cluster " + curr_cl].concat(summary_data_matrix));
+			summary_row.enter().append('td');
+			summary_row.html(function(d) {return "<div class='sigclust' id='sigclust-title_"+curr_cl+ "' onclick=clickSummaryRow(this)>" + d + "</div>";})
+				.filter(function(d,i) { return i > 0; })
+				.text(function(d, i) {
+					if (d < -50) {return '< -50';}
+					else if (d > -1) { return d.toFixed(2);}
+					else {return d.toPrecision(2);}
+				})
+				.style('background-color', function(d) {return colorScale(d);})
+			summary_row.exit().remove();
+
 
 			var content_rows = d3.select('#table'+curr_cl).select('tbody').selectAll('tr')
 				.data(formatted_data_w_row_labels);
@@ -509,7 +673,7 @@ function createTableFromData()
 				.text(function(d){
 					if(d.val < -50) { return "< -50";}
 					else if(d.val > -1) { return d.val.toFixed(2);}
-					else { console.log(d); return d.val.toPrecision(2);}
+					else {return d.val.toPrecision(2);}
 						})
 			    .style('background-color', function(d){return colorScale(d.val);})
 				.on("click", function(d){tableClickFunction(matrix.sig_labels[d.row], matrix.proj_labels[d.col])});
@@ -519,14 +683,52 @@ function createTableFromData()
 				.text(function(d){return d;})
 				.on("click", function(d){createSigModal(d)});
 
+			
+			$('#table'+curr_cl).children('tbody').hide();
             
-			// (Re)Create filter signature box
-			var th = $('#table_div').children('table').children('thead').children('tr').children('th:first-child');
-			$(th).append(filterSig);
-			filterSig.show();
-			filterSig.trigger('input');
 		}
+
+		// (Re)Create filter signature box
+		/*var th = $('.table_div').children('table').children('thead').children('tr').children('th:first-child');
+		$(th).append(filterSig);
+		filterSig.show();
+		filterSig.trigger('input'); */
+
+		$(".sigclust").on("mouseover", function(d) {
+			tooltip.showTooltip("Click To Toggle Cluster Display", d);
+		})
+		.on("mouseout", function(d) {
+			tooltip.hideTooltip();
+		});
     });
+}
+
+function clickSummaryRow(d) {
+	var clust = d.id.split("_")[1];
+	var summary_row_ind = $("#table"+clust).children('thead').children('#summary_row'+clust).children('td:last');
+	if (summary_row_ind.is(":visible")) {
+		$("#table"+clust).children('thead').children('#summary_row'+clust).children('td').hide();
+		$("#table"+clust).children('thead').children('#summary_row'+clust).children('td:first').show();
+		$("#table"+clust).children('tbody').show();
+	} else {
+		$("#table"+clust).children('thead').children('#summary_row'+clust).children('td').show();
+		$("#table"+clust).children('tbody').hide();
+	}
+}
+
+function computeDataAverages(data) {
+
+	// We want one average per projection 
+	averages = Array.apply(null, Array(data[0].length)).map(Number.prototype.valueOf, 0);
+	for (i = 0; i < data.length; i++) {
+		for (j = 0; j < data[i].length; j++) {
+			averages[j] += data[i][j].val;
+		}
+	}
+	for (i = 0; i < averages.length; i++) {
+		averages[i] /= data.length;
+	}
+	return averages;
 }
 
 function createSigModal(sig_key){
@@ -654,10 +856,6 @@ function exportSigProj() {
 			});
 			var csvContent = lineArray.join("\n");
 
-			/* var textToSaveAsBlob = new Blob(csvContent, {type:"/text/csv;charset=utf-8"});
-			var textToSaveAsURL = window.URL.createObjectURL(textToSaveAsBlob);
-
-			var fileNameToSaveAs = proj_key + ".csv";*/
 			var encodedURI = encodeURI(csvContent);
 			var downloadLink = document.createElement("a");
 			downloadLink.setAttribute("href", encodedURI);

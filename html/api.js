@@ -106,6 +106,13 @@ var api = (function(){
 
     }
 
+    output.projection.tree = function(filter_group, projection_name) 
+	{
+		var query = "/FilterGroup/";
+		query = query.concat(encodeURI(filter_group), "/Tree");
+		return $.ajax(query).then(x => JSON.parse(x));
+	}
+
 
     // Expression API
 

@@ -298,8 +298,12 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   
   rownames(sigMatrix) <- names
   colnames(sigMatrix) <- colnames(fp@exprData)
+
+  sigList <- sigList[rownames(sigMatrix)]
   
-  sigClusters <- clusterSignatures(sigMatrix, k=10)
+  message("Clustering Signatures")
+  sigClusters <- clusterSignatures(sigList, sigMatrix, k=10)
+
     
 
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))

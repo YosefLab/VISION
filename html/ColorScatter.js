@@ -80,13 +80,13 @@ function ColorScatter(parent, colorbar)
         .call(self.yAxis);
 
     if(this.colorbar_enabled){
-        this.colorbar_svg = d3.select(parent).append("svg")
+        this.colorbar_svg = this.svg
             .attr("width", this.width + this.margin.left + this.margin.right)
             .attr("height", colorbar_height+20);
 
         this.colorbar = this.colorbar_svg.append("rect")
-            .attr("x", this.width + this.margin.left + this.margin.right - colorbar_width - 50)
-            .attr("y", 0)
+            .attr("x", this.width + this.margin.left + this.margin.right - colorbar_width - 75)
+            .attr("y", 10)
             .attr("width", colorbar_width)
             .attr("height", colorbar_height);
     }
@@ -100,6 +100,8 @@ function ColorScatter(parent, colorbar)
     this.hovered_links = [];
 
     this.last_event = -1;
+
+    this.curr_tree_node = {};
 }
 
 ColorScatter.prototype.setData = function(points, isFactor)
@@ -126,7 +128,7 @@ ColorScatter.prototype.setData = function(points, isFactor)
 
         this.colorScale = d3.scale.linear()
             .domain([low, mid, high])
-            .range(["blue", "green", "red"]);
+            .range(["#48D1CC", "#7CFC00", "red"]);
 
         // Format the bound labels
         var label_low = parseFloat(low.toFixed(2)).toString();
@@ -180,21 +182,23 @@ ColorScatter.prototype.setColorBar = function(colors, label_low, label_high)
 
         var label_low_x = this.colorbar.attr("x");
         var label_high_x = (parseInt(this.colorbar.attr("x")) +
-            parseInt(this.colorbar.attr("width"))).toString();
+            parseInt(this.colorbar.attr("width")-10)).toString();
 
         this.colorbar_svg.append("text")
             .attr("text-anchor", "middle")
             .attr("x", label_low_x)
-            .attr("y", 30)
+            .attr("y", 40)
             .attr("font-size", "10px")
-            .text(label_low);
+            .text(label_low)
+            .attr("fill", "white");
 
         this.colorbar_svg.append("text")
             .attr("text-anchor", "middle")
             .attr("x", label_high_x)
-            .attr("y", 30)
+            .attr("y", 40)
             .attr("font-size", "10px")
-            .text(label_high);
+            .text(label_high)
+            .attr("fill", "white");
     }
 };
 
@@ -214,6 +218,34 @@ ColorScatter.prototype.setSelected = function(selected_index, event_id)
         });
     }
 };
+
+ColorScatter.prototype.setHovered_TreeNode = function(node, clusters, event_id) {
+	var self = this;
+	self.curr_tree_node = node;
+
+	if (event_id === undefined) {
+		event_id = Math.random();
+	}
+
+	if (this.last_event !== event_id) {
+		this.last_event = event_id;
+		if (self.curr_tree_node == null) {
+			this.svg.selectAll("circle")
+				.classed("point-faded", false)
+				.classed("point-hover", false);
+		}
+		else {
+			this.svg.selectAll("circle")
+				.classed("point-faded", true)
+				.classed("point-hover", function(d, i) {
+					var sample_name = d[3];
+					return (clusters[sample_name] == self.curr_tree_node.name); 
+				});
+		}
+	}
+	return;
+
+}
 
 ColorScatter.prototype.setHovered = function(hovered_indices, event_id)
 {

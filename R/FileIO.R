@@ -49,6 +49,7 @@ readSignaturesInput <- function(filenames) {
         }
         
         if (sig %in% sig_names) {
+          print('here');
           next; 
         }
 
@@ -64,7 +65,7 @@ readSignaturesInput <- function(filenames) {
         }
     
         names(values) <- genes
-        newSig <- Signature(values, sig, f, "", cluster=0)
+        newSig <- Signature(values, sig, f, "", isPrecomputed=FALSE, isFactor=F, cluster=0)
         sig_data <- c(sig_data, newSig)
         sig_names <- c(sig_names, sig)
       }

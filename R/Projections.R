@@ -14,17 +14,17 @@ require("wordspace")
 
 registerMethods <- function(lean=FALSE) {
   
-  #projMethods <- c("ICA" = applyICA)
   projMethods <- c()
+  projMethods <- c("ICA" = applyICA)
   if (!lean) {
-    projMethods <- c(projMethods, "Spectral Embedding" = applySpectralEmbedding)
+    #projMethods <- c(projMethods, "Spectral Embedding" = applySpectralEmbedding)
+	projMethods <- c(projMethods, "ISOMap" = applyISOMap)
   }
   
   projMethods <- c(projMethods, "RBF Kernel PCA" = applyRBFPCA)
-  projMethods <- c(projMethods, "ISOMap" = applyISOMap)
   projMethods <- c(projMethods, "tSNE30" = applytSNE30)
   projMethods <- c(projMethods, "tSNE10" = applytSNE10)
-  #projMethods <- c(projMethods, "PPT" = applySimplePPT)
+  projMethods <- c(projMethods, "PPT" = applySimplePPT)
   
   return(projMethods)
 }
@@ -96,7 +96,8 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
     } else {
       res <- methodList[[method]](pca_res)
       if (method == "PPT") {
-        PPT <- list(res[[2]], res[[3]])
+      	ncls <- apply(res[[3]], 1, which.min)
+        PPT <- list(res[[1]], res[[2]], res[[3]], ncls)
       } else {
         proj <- Projection(method, res)
         inputProjections <- c(inputProjections, proj)
@@ -135,7 +136,7 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
     p <- updateProjection(p, data=coordinates)
     output[[p@name]] = p
 
-}
+  }
   
   return(list(output, rownames(exprData), PPT))
 }
@@ -171,8 +172,8 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
   wDataCentered <- multMat(dataCentered, weights)
 
   # Weighted covariance / correlation matrices
-  W <- wDataCentered %*% t(wDataCentered)
-  Z <- weights %*% t(weights)
+  W <- tcrossprod(wDataCentered)
+  Z <- tcrossprod(weights)
   
   wcov <- W / Z
   wcov[which(is.na(wcov))] <- 0.0
@@ -187,7 +188,7 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
   
   # Project down using computed eigenvectors
   dataCentered <- dataCentered / sqrt(var)
-  wpcaData <- evec %*% dataCentered
+  wpcaData <- crossprod(t(evec), dataCentered)
   eval <- as.matrix(apply(wpcaData, 1, var))
   totalVar <- sum(apply(projData, 1, var))
   eval <- eval / totalVar
@@ -306,9 +307,10 @@ applyICA <- function(exprData, projWeights=NULL) {
   ndata <- colNormalization(exprData)
   ndataT <- t(ndata)
   res <- fastICA(ndataT, n.comp=2, maxit=100, tol=.00001, alg.typ="parallel", fun="logcosh", alpha=1,
-                 method = "C", row.norm=FALSE, verbose=TRUE)
+                 method = "C", row.norm=FALSE, verbose=TRUE)$S
   
-  return(res$S)
+  rownames(res) <- colnames(exprData)
+  return(res)
 }
 
 applySpectralEmbedding <- function(exprData, projWeights=NULL) {
@@ -344,8 +346,7 @@ applytSNE10 <- function(exprData, projWeights=NULL) {
   
   ndata <- colNormalization(exprData)
   ndataT <- t(ndata)
-  d <- dist.matrix(ndataT, method="euclidean")
-  res <- Rtsne(d, is_distance=T, dims=2, perplexity=10.0, pca=FALSE, theta=0.0)
+  res <- Rtsne(ndataT, dims=2, perplexity=10.0, pca=FALSE, theta=0.05)
   res <- res$Y
   rownames(res) <- colnames(exprData)
   return(res)
@@ -357,8 +358,7 @@ applytSNE30 <- function(exprData, projWeights=NULL) {
   
   ndata <- colNormalization(exprData)
   ndataT <- t(ndata)
-  d <- dist.matrix(ndataT, method="euclidean")
-  res <- Rtsne(d, is_distance=T, dims=2, perplexity=30.0, pca=FALSE, theta=0.0)
+  res <- Rtsne(ndataT, dims=2, perplexity=30.0, pca=FALSE, theta=0.05)
   res <- res$Y
   
   rownames(res) <- colnames(exprData)
@@ -394,13 +394,13 @@ applyRBFPCA <- function(exprData, projWeights=NULL) {
   
   # Compute normalized matrix & covariance matrix
   kMat <- as.matrix(kMat, 1, function(x) (x - mean(x)) / sd(x))
-  W <- kMat %*% t(kMat)
+  W <- tcrossprod(kMat)
   
   decomp <- rsvd::rsvd(W, k=2)
   evec <- decomp$u
   
   # project down using evec
-  rbfpca <- kMat %*% evec
+  rbfpca <- crossprod(t(kMat), evec)
   rownames(rbfpca) <- colnames(exprData)
   
   return(rbfpca)
@@ -422,7 +422,7 @@ applySimplePPT <- function(exprData, projWeights=NULL, nNodes_ = 0, sigma=0, gam
   #'  structScore: (numeric)
   #'    score indicating how structured the data is, as the z-score of the data MSE from shuffled MSE
   
-  exprData <- t(exprData)
+  #exprData <- t(exprData)
   
   MIN_GAMMA <- 1e-5
   MAX_GAMMA <- 1e5
@@ -534,6 +534,7 @@ applySimplePPT <- function(exprData, projWeights=NULL, nNodes_ = 0, sigma=0, gam
   C <- tr[[1]]
   Wt <- tr[[2]]
   mse <- tr[[3]]
+
   
   return(list(C, Wt, sqdist(t(exprData), t(C)), mse))
 }
@@ -573,9 +574,9 @@ fitTree <- function(expr, nNodes, sigma, gamma, tol, maxIter) {
     
     delta <- diag(colSums(P))
     L <- laplacian_matrix(W)
-    xp <- expr %*% P
+    xp <- crossprod(t(expr), P)
     invg <- as.matrix(solve( ((2 / gamma) * L) + delta))
-    C <- xp %*% invg
+    C <- crossprod(t(xp), invg)
     
     cc_dist <- as.matrix(dist.matrix(t(C)))
     cx_dist <- as.matrix(sqdist(t(expr), t(C)))
@@ -606,7 +607,7 @@ sqdist <- function(X, Y) {
 
 	aa = rowSums(X**2)
 	bb = rowSums(Y**2)
-	x = -2 * X %*% t(Y)
+	x = -2 * tcrossprod(X, Y)
 	x = x + aa
 	x = t(t(x) + bb)
 	x[which(x<0)] <- 0

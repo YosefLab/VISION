@@ -5,6 +5,8 @@
     <title>FastProject Viewer</title>
     <script type="text/javascript" src="jquery-2.1.4.min.js"></script>
     <script type="text/javascript" src="d3.min.js"></script>
+	<script type="text/javascript" src="Tooltip.js"></script>
+	<script type="text/javascript" src="TreeMap.js"></script>
     <script type="text/javascript" src="ColorScatter.js"></script>
     <script type="text/javascript" src="Clustered_HeatMap.js"></script>
     <script type="text/javascript" src="d3tip.js"></script>
@@ -62,50 +64,58 @@
 </div>
 <div id="content_wrapper" style="display: flex; height: 100vh; flex-direction: row; justify-content: center;">
     <div style="width: 35%; min-width: 350px; flex: 1 0 auto; height: 100%">
-		<div id="command-panel" class="color_panel" style="max-height: 50%; overflow: scroll; height: calc((100vh - 70px)/2);">
-			<h4 class="command-title">FastProject Controls</h4>
-			<button class="accordion">Data Options</button>
-			<div id="data_options_div" class="color_panel panel" style="height:30%">
-				<span>
-					<label for="filter_dropdown">Filter Level</label>
-					<select id="filter_dropdown">
-					</select>
-				</span>
-				<span>
-					<button id="show_genes_button" type="button" class="btn btn-default" onclick=createGeneModal()>
-						+Show Genes
-					</button>
-				</span>
-				<span>
-					<button id="precomputed_button" type="button" class="btn btn-default" onclick=changeTableView()>Precomputed</button>
-				</span>
+		<div id="command-panel" class="color_panel" style="max-height: 50%; overflow: scroll; height: calc(50%);">
+			<h4 class="command-title">FastProject Controls</h4> 
+			<!-- <div id="side-menu"> 
+				<ul>
+					<li><a href="#data_options_div">Data Options</a></li>
+					<li id="clustering-options"><a href="#clustering-controls">Clustering</a></li>
+					<li id="tree-options" class="active"><a href="#tree-controls">Visualize Tree</a></li>
+					<li><a href="#table_div_container">View Signatures vs. Projections</a></li>
+				</ul>
 			</div>
-			<button class="accordion">Signatures vs. Projections</button>
-			<div id="table_div_container" class="color_panel panel" style="height: calc((100vh - 88px)/2);">
-			<!-- <div id="table_div" class="color_panel panel" style="height:calc((100vh - 88px)/2);">
-				<table>
-					<thead><tr></tr></thead>
-					<tbody></tbody>
-				</table> -->
+			<div class="command-panel-content">
+				<a href="#" data-toggle="#command-panel" id="sidebar-toggle">
+					<span class="bar"></span>
+					<span class="bar"></span>
+					<span class="bar"></span>
+				</a> -->
+				<button class="accordion"> Data Options </button>
+				<div id="data_options_div" class="color_panel panel" style="height:30%">
+					<span>
+						<label for="filter_dropdown">Filter Level</label>
+						<select id="filter_dropdown">
+						</select>
+					</span>
+					<span>
+						<button id="show_genes_button" type="button" class="btn btn-default" onclick=createGeneModal()>
+							+Show Genes
+						</button>
+					</span>
+					<span>
+						<button id="precomputed_button" type="button" class="btn btn-default" onclick=changeTableView()>Precomputed</button>
+					</span>
+				</div>
+				<button class="accordion" id="clustering-options">Clustering</button>
+				<div id="clustering-controls" class="form-inline panel">
+					<select id="cluster_select_method" class="form-control" style="width: 100px;"></select>
+					<select id="cluster_select_param" class="form-control" style="width: 70px;"></select>
+				</div>
+				<button class="accordion" id="tree-options">Visualize Tree</button>
+				<div id="tree-controls" class="form-inline panel">
+				</div>
+				<button class="accordion">Signatures vs. Projections</button>
+				<div id="table_div_container" class="color_panel panel" style="height: calc(50%); overflow:scroll"></div>
 			</div>
-			<button class="accordion">Clustering</button>
-			<div id="clustering-controls" class="form-inline panel">
-				<select id="cluster_select_method" class="form-control" style="width: 100px;"></select>
-				<select id="cluster_select_param" class="form-control" style="width: 70px;"></select>
-			</div>
-			<button class="accordion">Tree Visualization</button>
-			<div id="tree-controls" class="form-inline panel">
-			</div>
-		</div>
-		<div id="bottom_visual_div" class="color_panel" style="max-height: 50%; overflow: scroll; height: calc((100vh - 70px)/2);">
-			<div id="heatmap_div" class="color_panel" style="height: 100%;">
-			</div>
+			<!-- </div> -->
+		<div id="bottom_visual_div" class="color_panel" style="max-height: 50%; overflow: scroll; height: calc(50%);">
+			<h4 id="data-analysis-title" style="text-align: center">Data Analysis</h4>
+			<div id="heatmap_div" class="color_panel" style="height: 100%;"></div>
+			<div id="tree_div" class="color_panel" style="display: block; height: 100%"></div>
 		</div>
     </div>
     <div style="width: 65%; height: 100%; min-width: 600px; flex: 1 1 auto; overflow: scroll;">
         <div id="plot_title_div" class="color_panel">
-            <div class="title"></div>
-            <div class="subtitle"></div>
             <div class="colorOptions">
                 <span>Signature Score Colors:</span>
                 <div class="btn-group" data-toggle="buttons">
@@ -120,8 +130,10 @@
                     <button type="button" class="btn btn-default" id="export-button" onclick=exportSigProj()>&#x21e9;Export</button>
                 </div>
             </div>
+            <div class="title"></div>
+            <div class="subtitle"></div>
         </div>
-        <div id="scatter_div" class="color_panel" style="height: calc((100vh - 155px)); overflow: hidden;"></div>
+        <div id="scatter_div" class="color_panel" style="height: 100%; overflow: hidden;"></div>
     </div>
 </div>
 <input id="sig_filt_input" type="text" placeholder="Filter Signatures..." style="display: none;">

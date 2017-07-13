@@ -78,33 +78,15 @@ jug() %>%
   }) %>%
   get("/SigClusters/Normal", function(req, res, err) {
     cls <- fpout@sigClusters
-
-    signatures <- fpout@sigList
-    keys <- lapply(signatures, function(x) x@name)
-    vals <- lapply(signatures, function(x) x@isPrecomputed)
-    names(vals) <- keys
-	  sigvals <- vals[which(vals == FALSE)]
-	  sigs <- names(sigvals)
-
-	  cls <- cls[sigs]
-	  cls <- cls[order(unlist(cls), decreasing=F)]
+	cls <- cls$Computed
 	  
     out <- toJSON(cls, auto_unbox=TRUE)
     return(out)
   }) %>%
   get("/SigClusters/Precomputed", function(req, res, err) {
     cls <- fpout@sigClusters
-
-    signatures <- fpout@sigList
-    keys <- lapply(signatures, function(x) x@name)
-    vals <- lapply(signatures, function(x) x@isPrecomputed)
-    names(vals) <- keys
-	sigvals <- vals[which(vals == TRUE)]
-	sigs <- names(sigvals)
-
-	cls <- cls[sigs]
-	cls <- cls[order(unlist(cls), decreasing=F)]
-	  
+	cls <- cls$Precomputed
+	
     out <- toJSON(cls, auto_unbox=TRUE) 
     return(out)
   }) %>%
@@ -190,6 +172,15 @@ jug() %>%
     out <- toJSON(projData[[filter]]@genes)
 
     return(out)
+  }) %>%
+  get("/FilterGroup/(?<filter_name8>.*)/Tree", function(req, res, err) {
+    projData <- fpout@projData
+    filter <- URLdecode(req$params$filter_name8)
+
+    treeData <- projData[[filter]]@PPT
+    treeData[[4]] <- as.list(treeData[[4]])
+
+    return(toJSON(treeData))
   }) %>%
   get("/FilterGroup/list", function(req, res, err) {
     projData <- fpout@projData
