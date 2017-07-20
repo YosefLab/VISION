@@ -5,7 +5,7 @@ require(parallel)
 setMethod("initialize", signature(.Object="FastProject"),
           function(.Object, data_file, housekeeping, signatures, scone = NULL, norm_methods = NULL, 
                    precomputed=NULL, output_dir = "FastProject_Output", nofilter=FALSE, nomodel=FALSE, filters=c("fano"),
-                   all_sigs=FALSE, debug=0, lean=FALSE, subsample_size=0, qc=FALSE, num_cores=1, approximate=F, optClust=0, 
+                   all_sigs=FALSE, debug=0, lean=TRUE, subsample_size=0, qc=FALSE, num_cores=1, approximate=F, optClust=0, 
                    min_signature_genes=5, projections="", weights=NULL, threshold=0, perm_wPCA=FALSE,
                    sig_norm_method="znorm_rows", sig_score_method="weighted_avg", exprData=NULL, 
                    housekeepingData=NULL, sigData=NULL, precomputedData=NULL) {

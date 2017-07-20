@@ -73,12 +73,12 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
     } else {
       pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30)[[1]]
       #m <- profmem(pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30)[[1]])
-   # }
+	}
     proj <- Projection("PCA: 1,2", t(pca_res[c(1,2),]))
     inputProjections <- c(inputProjections, proj)
     inputProjections <- c(inputProjections, Projection("PCA: 1,3", t(pca_res[c(1,3),])))
     inputProjections <- c(inputProjections, Projection("PCA: 2,3", t(pca_res[c(2,3),])))
-  }
+  #}
   timingList <- rbind(timingList, c(difftime(Sys.time(), t, units="sec")))
   timingNames <- c(timingNames, "wPCA")
   #memProf <- c(total(m)/1e6)
