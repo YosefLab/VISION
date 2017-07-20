@@ -5,6 +5,7 @@
 
 require("fastICA")
 require('Rtsne')
+require("Rtsne.multicore")
 require('igraph')
 require("rsvd")
 require("RDRToolbox")
@@ -15,21 +16,20 @@ require("wordspace")
 registerMethods <- function(lean=FALSE) {
   
   projMethods <- c()
-  projMethods <- c("ICA" = applyICA)
   if (!lean) {
-    #projMethods <- c(projMethods, "Spectral Embedding" = applySpectralEmbedding)
 	projMethods <- c(projMethods, "ISOMap" = applyISOMap)
+	projMethods <- c(projMethods, "ICA" = applyICA)
+	#projMethods <- c(projMethods, "RBF Kernel PCA" = applyRBFPCA)
   }
   
-  projMethods <- c(projMethods, "RBF Kernel PCA" = applyRBFPCA)
   projMethods <- c(projMethods, "tSNE30" = applytSNE30)
   projMethods <- c(projMethods, "tSNE10" = applytSNE10)
-  projMethods <- c(projMethods, "PPT" = applySimplePPT)
+  #projMethods <- c(projMethods, "PPT" = applySimplePPT)
   
   return(projMethods)
 }
 
-generateProjections <- function(expr, weights, filterName="", inputProjections=c(), lean=FALSE, perm_wPCA=FALSE, optClust=0, approximate=F) {
+generateProjections <- function(expr, weights, filterName="", inputProjections=c(), numCores = 1, lean=FALSE, perm_wPCA=FALSE, optClust=0, approximate=F) {
   #' Projects data into 2 dimensions using a variety of linear and non-linear methods
   #' 
   #' Parameters:
@@ -56,37 +56,38 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
   }
   
   methodList = registerMethods(lean)
-  #t <- proc.time()
-  #timingList <- c(t-t)
-  #timingNames <- c("Start")
+  t <- Sys.time()
+  timingList <- (t - t)
+  timingNames <- c("Start")
   
-  if (lean) {
-    print("PCA")
-    pca_res <- applyPCA(exprData, N=30)
-    proj <- Projection("PCA: 1,2", t(pca_res[c(1,2),]))
-    inputProjections <- c(inputProjections, proj)
-    inputProjections <- c(inputProjections, Projection("PCA: 1,3", t(pca_res[c(1,3),])))
-    inputProjections <- c(inputProjections, Projection("PCA: 2,3", t(pca_res[c(2,3),])))
-  } else {
+  #if (lean) {
+  #  print("PCA")
+  #  pca_res <- applyPCA(exprData, N=30)
+  #  proj <- Projection("PCA: 1,2", t(pca_res[c(1,2),]))
+  #  inputProjections <- c(inputProjections, proj)
+  #  inputProjections <- c(inputProjections, Projection("PCA: 1,3", t(pca_res[c(1,3),])))
+  #  inputProjections <- c(inputProjections, Projection("PCA: 2,3", t(pca_res[c(2,3),])))
+  #} else {
     if (perm_wPCA) {
       pca_res <- applyPermutationWPCA(exprData, weights, components=30)[[1]]
     } else {
       pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30)[[1]]
       #m <- profmem(pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30)[[1]])
-    }
+   # }
     proj <- Projection("PCA: 1,2", t(pca_res[c(1,2),]))
     inputProjections <- c(inputProjections, proj)
     inputProjections <- c(inputProjections, Projection("PCA: 1,3", t(pca_res[c(1,3),])))
     inputProjections <- c(inputProjections, Projection("PCA: 2,3", t(pca_res[c(2,3),])))
   }
-  #timingList <- rbind(timingList, proc.time() - t)
-  #timingNames <- c(timingNames, "wPCA")
+  timingList <- rbind(timingList, c(difftime(Sys.time(), t, units="sec")))
+  timingNames <- c(timingNames, "wPCA")
   #memProf <- c(total(m)/1e6)
   #memNames <- c("wPCA")
 
   PPT <- list() 
   
   for (method in names(methodList)){
+  	gc()
     message(method)
     #m <- profmem({
     if (method == "ICA" || method == "RBF Kernel PCA") {
@@ -94,7 +95,7 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
       proj <- Projection(method, res)
       inputProjections <- c(inputProjections, proj)
     } else {
-      res <- methodList[[method]](pca_res)
+      res <- methodList[[method]](pca_res, numCores)
       if (method == "PPT") {
       	ncls <- apply(res[[3]], 1, which.min)
         PPT <- list(res[[1]], res[[2]], res[[3]], ncls)
@@ -107,10 +108,10 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
     #memProf <- rbind(memProf, total(m)/1e6)
     #memNames <- c(memNames, method)
     
-    #timingList <- rbind(timingList, proc.time() - t)
-    #timingNames <- c(timingNames, method)
+	timingList <- rbind(timingList, c(difftime(Sys.time(), t, units="sec")))
+	timingNames <- c(timingNames, method)
   }  
-  #rownames(timingList) <- timingNames
+  rownames(timingList) <- timingNames
   #return(timingList)
   #rownames(memProf) <- memNames
   #return(memProf)
@@ -120,10 +121,7 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
   for (p in inputProjections) {
     coordinates <- p@pData
       
-      
-    for (i in 1:ncol(coordinates)) {
-      coordinates[,i] <- coordinates[,i] - mean(coordinates[,i])
-    }
+    coordinates <- as.matrix(apply(coordinates, 2, function(x) return( x - mean(x) ))) 
       
     r <- apply(coordinates, 1, function(x) sum(x^2))^(0.5)
     r90 <- quantile(r, c(.9))[[1]]
@@ -136,7 +134,7 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
     p <- updateProjection(p, data=coordinates)
     output[[p@name]] = p
 
-  }
+}
   
   return(list(output, rownames(exprData), PPT))
 }
@@ -166,10 +164,12 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
   
   # Center data
   wmean <- as.matrix(rowSums(multMat(projData, weights)) / rowSums(weights))
+  #wmean <- as.matrix(rowSums(projData * weights) / rowSums(weights))
   dataCentered <- as.matrix(apply(projData, 2, function(x) x - wmean))
 
   # Compute weighted data
   wDataCentered <- multMat(dataCentered, weights)
+  #wDataCentered <- dataCentered * weights
 
   # Weighted covariance / correlation matrices
   W <- tcrossprod(wDataCentered)
@@ -300,20 +300,19 @@ applyPCA <- function(exprData, N=0, variance_proportion=1.0) {
   return(t(res$x[,1:N])*-1)
 }
 
-applyICA <- function(exprData, projWeights=NULL) {
+applyICA <- function(exprData, numCores, projWeights=NULL) {
   set.seed(RANDOM_SEED)
   
   
   ndata <- colNormalization(exprData)
   ndataT <- t(ndata)
   res <- fastICA(ndataT, n.comp=2, maxit=100, tol=.00001, alg.typ="parallel", fun="logcosh", alpha=1,
-                 method = "C", row.norm=FALSE, verbose=TRUE)$S
+                 method = "C", row.norm=FALSE, verbose=TRUE)
   
-  rownames(res) <- colnames(exprData)
-  return(res)
+  return(res$S)
 }
 
-applySpectralEmbedding <- function(exprData, projWeights=NULL) {
+applySpectralEmbedding <- function(exprData, numCores, projWeights=NULL) {
   set.seed(RANDOM_SEED)
   
   ndata <- colNormalization(exprData)
@@ -328,37 +327,24 @@ applySpectralEmbedding <- function(exprData, projWeights=NULL) {
   
 }
 
-applyMDS <- function(exprData, projWeights=NULL) {
-  set.seed(RANDOM_SEED)
-  
-  ndata <- colNormalization(exprData)
-  d <- dist.matrix(t(ndata))
-  res <- cmdscale(d, k=2)
-  
-  rownames(res) <- colnames(exprData)
-  
-  return(res)
-  
-}
-
-applytSNE10 <- function(exprData, projWeights=NULL) {
+applytSNE10 <- function(exprData, numCores, projWeights=NULL) {
   set.seed(RANDOM_SEED)
   
   ndata <- colNormalization(exprData)
   ndataT <- t(ndata)
-  res <- Rtsne(ndataT, dims=2, perplexity=10.0, pca=FALSE, theta=0.05)
+  res <- Rtsne.multicore(ndataT, dims=2, max_iter=600, perplexity=10.0, check_duplicates=F, pca=F, num_threads=numCores)
   res <- res$Y
   rownames(res) <- colnames(exprData)
   return(res)
   
 }
 
-applytSNE30 <- function(exprData, projWeights=NULL) {
+applytSNE30 <- function(exprData, numCores, projWeights=NULL) {
   set.seed(RANDOM_SEED)
   
   ndata <- colNormalization(exprData)
   ndataT <- t(ndata)
-  res <- Rtsne(ndataT, dims=2, perplexity=30.0, pca=FALSE, theta=0.05)
+  res <- Rtsne.multicore(ndataT, dims=2, max_iter=600,  perplexity=30.0, check_duplicates=F, pca=F, num_threads=numCores)
   res <- res$Y
   
   rownames(res) <- colnames(exprData)
@@ -366,7 +352,7 @@ applytSNE30 <- function(exprData, projWeights=NULL) {
   return(res)
 }
 
-applyISOMap <- function(exprData, projWeights=NULL) {
+applyISOMap <- function(exprData, numCores, projWeights=NULL) {
   set.seed(RANDOM_SEED)
   
   res <- Isomap(t(exprData), dims=2)
@@ -378,7 +364,7 @@ applyISOMap <- function(exprData, projWeights=NULL) {
   
 }
 
-applyRBFPCA <- function(exprData, projWeights=NULL) {
+applyRBFPCA <- function(exprData, numCores, projWeights=NULL) {
   set.seed(RANDOM_SEED)
   
   ndata <- colNormalization(exprData)
@@ -408,7 +394,7 @@ applyRBFPCA <- function(exprData, projWeights=NULL) {
 }
 
 
-applySimplePPT <- function(exprData, projWeights=NULL, nNodes_ = 0, sigma=0, gamma=0) {
+applySimplePPT <- function(exprData, numCores, projWeights=NULL, nNodes_ = 0, sigma=0, gamma=0) {
   #' Principle Tree Analysis
   #' 
   #' After begin initialized by either the fit or autoFit functions, the resulting tree structure
@@ -422,7 +408,7 @@ applySimplePPT <- function(exprData, projWeights=NULL, nNodes_ = 0, sigma=0, gam
   #'  structScore: (numeric)
   #'    score indicating how structured the data is, as the z-score of the data MSE from shuffled MSE
   
-  #exprData <- t(exprData)
+  exprData <- t(exprData)
   
   MIN_GAMMA <- 1e-5
   MAX_GAMMA <- 1e5
@@ -534,7 +520,6 @@ applySimplePPT <- function(exprData, projWeights=NULL, nNodes_ = 0, sigma=0, gam
   C <- tr[[1]]
   Wt <- tr[[2]]
   mse <- tr[[3]]
-
   
   return(list(C, Wt, sqdist(t(exprData), t(C)), mse))
 }

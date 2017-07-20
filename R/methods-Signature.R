@@ -1,4 +1,5 @@
 require(geometry)
+require(FNN)
 require(pROC)
 
 setMethod("initialize", signature(.Object="Signature"),
@@ -61,7 +62,7 @@ getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
   
 }
 
-sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBORHOOD_SIZE = 0.33, numCores=0) {
+sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBORHOOD_SIZE = 0.33, numCores=1) {
   #' Evaluates the significance of each signature vs. each projection. 
   #' 
   #' Paramters:
@@ -80,9 +81,11 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   #'  sigProjMatrix: matrix (Num_Signatures x Num_Projections)
   #'    sigProj dissimilarity score
   #'  SigProjMatrix_P: matrix (Num_Signatures x Num_Projections)
+
+  ptm <- Sys.time()
+  tRows <- c()
   
   set.seed(RANDOM_SEED)
-  ptm <- proc.time()
   
   spRowLabels <- c()
   spRows <- c()
@@ -134,27 +137,25 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   
   pnumSigProjMatrix <- matrix(0L, nrow=N_SIGNATURE_PNUM, ncol=N_PROJECTIONS)
   pnumSigProjMatrix_P <- matrix(0L, nrow=N_SIGNATURE_PNUM, ncol=N_PROJECTIONS)
+
+  timingList <- c(difftime(Sys.time(), ptm, units="secs"))
+  tRows <- c(tRows, "Initialize all Matrices")
   
   # Build a matrix of all signatures
-  sigScoreMatrix <- matrix(0L, nrow=N_SAMPLES, ncol=N_SIGNATURES)
-  
-  j <- 1
-  for (sig in spRows) {
-    sigScoreMatrix[,j] <- rank(sig@scores, ties.method="average")
-    j <- j+1
-  }
+  sigScoreMatrix <- matrix(unlist(bplapply(spRows, function(sig) { rank(sig@scores, ties.method="average") },
+  										   BPPARAM=MulticoreParam(workers=numCores))), nrow=N_SAMPLES, ncol=length(spRows))
 
-  sigScoreMatrix <- t(as.matrix(apply(sigScoreMatrix, 1, as.numeric)))
 
-  randomSigScoreMatrix <- matrix(0L, nrow=N_SAMPLES, ncol=length(randomSigData))
+  timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
+  tRows <- c(tRows, "SigScoreMatrix")
+
   
-  j <- 1
-  for (rsig in randomSigData) {
-    randomSigScoreMatrix[,j] <- rank(rsig@scores, ties.method="average")
-    j <- j + 1
-  }
+  randomSigScoreMatrix <- matrix(unlist(bplapply(randomSigData, function(rsig) { rank(rsig@scores, ties.method="average") },
+  										BPPARAM=MulticoreParam(workers=numCores))), nrow=N_SAMPLES, ncol=length(randomSigData))
   
-  randomSigScoreMatrix <- t(apply(randomSigScoreMatrix, 1, as.numeric))
+ 
+  timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
+  tRows <- c(tRows, "rSigScoreMatrix")
 
   
   ### build one hot matrix for factors
@@ -164,51 +165,76 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
     fLevels <- unique(fValues)
     factorFreq <- matrix(0L, ncol=length(fLevels))
     factorMatrix <- matrix(0L, nrow=N_SAMPLES, ncol=length(fLevels))
-    j <- 1
-    for (fval in fLevels) {
-      factorMatrixRow <- matrix(0L, nrow=N_SAMPLES, ncol=1)
-      equal_ii <- which(fValues == fval)
-      factorMatrixRow[equal_ii] <- 1
-      factorFreq[j] <- length(equal_ii) / length(fValues)
-      factorMatrix[,j] <- factorMatrixRow
-      j <- j+1 
-    }
+
+    factList <- lapply(fLevels, function(fval) {
+				factorMatrixRow <- matrix(0L, nrow=N_SAMPLES, ncol=1)
+				equal_ii <- which(fValues == fval)
+				factorMatrixRow[equal_ii] <- 1
+				return(list(length(equal_ii) / length(fValues), factorMatrixRow))
+			})
+	factorFreq <- lapply(factList, function(x) return(x[[1]]))
+	factorMatrix <- matrix(unlist(lapply(factList, function(x) return(x[[2]]))), nrow=N_SAMPLES, ncol=length(fLevels))
     
     factorSigs[[s@name]] <- list(fLevels, factorFreq, factorMatrix)
   }
 
-  
-  
-  
+  timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
+  tRows <- c(tRows, "Factor Matrix")
+
   message("Evaluating signatures against projections...")
   
   i <- 1
   for (proj in projections) {
     dataLoc <- proj@pData
+
+	distanceMatrix <- Matrix(0L, nrow=N_SAMPLES, ncol=N_SAMPLES, sparse=T)
+	k <- ball_tree_knn(t(dataLoc), round(sqrt(N_SAMPLES)), numCores)
+	nn <- k[[1]]
+	d <- k[[2]]
+
+
+    #distanceMatrix <- dist.matrix(t(dataLoc), method="euclidean")
+
+    timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
+    tRows <- c(tRows, paste0(proj@name, "distanceMatrix"))
     
-    # TODO: EXPERIMENT WITH A K X D DISTANCE MATRIX -- COMPUTE KERNEL ON THIS MATRIX WITH K NEAREST NEIGHBORS
-    # DETERMINE K AS LOG NUMBER OF CELLS / SQRT ( NUMBER CELLS )
-    distanceMatrix <- dist.matrix(t(dataLoc), method="euclidean")
-    
-    ##TODO: compute the neighborhood size off of the distance Matrix 
-    ## Maybe use a K-D tree to find the neighborhood of the matrix 
-    point_mult(distanceMatrix, distanceMatrix); 
-    weights <- as.matrix(exp(-1 * (distanceMatrix) / NEIGHBORHOOD_SIZE^2))
-    diag(weights) <- 0
-    weightsNormFactor <- rowSums(weights)
+    #point_mult(distanceMatrix, distanceMatrix) 
+	sparse_weights <- exp(-1 * (d * d) / NEIGHBORHOOD_SIZE^2)
+	weights <- Matrix(0L, nrow=N_SAMPLES, ncol=N_SAMPLES, sparse=T)
+	m <- 1
+	weights <- Matrix(t(as.matrix(apply(weights, 1, function(x) { 
+								x[nn[m,]] <- sparse_weights[m,]
+								m <<- m+1
+								return(x) 
+					}))), sparse=T)
+
+    weightsNormFactor <- Matrix::rowSums(weights, sparse=T)
     weightsNormFactor[weightsNormFactor == 0] <- 1.0
     weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
     weights <- weights / weightsNormFactor
-    neighborhoodPrediction <- crossprod(weights, sigScoreMatrix)
+	
+	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
+	tRows <- c(tRows, paste0(proj@name, "Gaussian"))
+
+
+    neighborhoodPrediction <- Matrix::crossprod(weights, sigScoreMatrix)
 
     ## Neighborhood dissimilatory score = |actual - predicted|
     dissimilarity <- abs(sigScoreMatrix - neighborhoodPrediction)
     medDissimilarity <- as.matrix(apply(dissimilarity, 2, median))
 
+	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
+	tRows <- c(tRows, paste0(proj@name, "Dissimilarity"))
+    
+
     # Calculate scores for random signatures
-    randomNeighborhoodPrediction <- crossprod(weights, randomSigScoreMatrix)
+    randomNeighborhoodPrediction <- Matrix::crossprod(weights, randomSigScoreMatrix)
     randomDissimilarity <- abs(randomSigScoreMatrix - randomNeighborhoodPrediction)
     randomMedDissimilarity <- as.matrix(apply(randomDissimilarity, 2, median))
+ 
+	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
+	tRows <- c(tRows, paste0(proj@name, "RandDissimilarity"))
+
     # Group by number of genes
     backgrounds <- list()
     k <- 1
@@ -221,51 +247,59 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
       }
       k <- k + 1
     }
-    
-    
-    bgStat <- matrix(0L, nrow=length(backgrounds), ncol=3)
-    k <- 1
-    for (numGenes in names(backgrounds)) {
-      mu_x <- mean(backgrounds[[numGenes]])
-      std_x <- biasedVectorSD(as.matrix(backgrounds[[numGenes]]))
-      bgStat[k, 1] <- as.numeric(numGenes)
-      bgStat[k, 2] <- mu_x
-      bgStat[k, 3] <- std_x
-      k <- k + 1
-    }
-    
-    mu <- matrix(0L, nrow=nrow(medDissimilarity), ncol=ncol(medDissimilarity))
-    sigma <- matrix(0L, nrow=nrow(medDissimilarity), ncol=ncol(medDissimilarity))
 
-    for (k in 1:length(medDissimilarity)) {
-      # Find background with closest number of genes 
-      numG <- spRows[[k]]@numGenes
-      row_i <- which.min(abs(numG - bgStat[,1]))
-      mu[k] <- bgStat[row_i, 2]
-      sigma[k] <- bgStat[row_i, 3]
-    }
+	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
+	tRows <- c(tRows, paste0(proj@name, "GroupNumGenes"))
+    
+    bgStat <- matrix(unlist(bplapply(names(backgrounds), function(x) {
+			mu_x <- mean(backgrounds[[x]])
+			std_x <- biasedVectorSD(as.matrix(backgrounds[[x]]))
+			return(list(as.numeric(x), mu_x, std_x))
+		  }, BPPARAM=MulticoreParam(workers=numCores))), nrow=length(names(backgrounds)), ncol=3, byrow=T)
+
+	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
+	tRows <- c(tRows, paste0(proj@name, "bgStat"))
+
+    
+	mu <- matrix(unlist(bplapply(spRows, function(x) {
+			numG <- x@numGenes
+			row_i <- which.min(abs(numG - bgStat[,1]))
+			return(bgStat[row_i, 2])
+		  }, BPPARAM=MulticoreParam(workers=numCores))), nrow=nrow(medDissimilarity), ncol=ncol(medDissimilarity))
+
+	sigma <- matrix(unlist(bplapply(spRows, function(x) {
+			numG <- x@numGenes
+			row_i <- which.min(abs(numG - bgStat[,1]))
+			return(bgStat[row_i,3])
+		  }, BPPARAM=MulticoreParam(workers=numCores))), nrow=nrow(medDissimilarity), ncol=ncol(medDissimilarity))
+
+	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
+	tRows <- c(tRows, paste0(proj@name, "Mu/Sigma"))
+	
 
     #Create CDF function for medDissmilarityPrime and apply CDF function to medDissimilarityPrime pointwise
     pValues <- pnorm( ((medDissimilarity - mu) / sigma))
 
+	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
+	tRows <- c(tRows, paste0(proj@name, "PValues"))
+
     sigProjMatrix[,i] <- 1 - (medDissimilarity / N_SAMPLES)
-    sigProjMatrix_P[,i] <- pValues
+	sigProjMatrix_P[,i] <- pValues
    
     # Calculate significance for precomputed numerical signatures 
     # This is done separately because there are likely to be many repeats (e.g. for a time coordinate)
-    j <- 1
-    for (s in precomputedNumerical) {
+    #j <- 1
+    #for (s in precomputedNumerical) {
       
-      sigScores <- rank(s@scores)
-      if (all(sigScores == sigScores[1])) {
-        pnumSigProjMatrix[j,i] <- 0.0
-        pnumSigProjMatrix_P[j,i] <- 1.0
-        next
-      }
-      
-      sigPredictions <- crossprod(weights, sigScores)
-      r <- roc.area(sigScores, sigPredictions)
-      a <- r$A
+    #  sigScores <- rank(s@scores)
+    #  if (all(sigScores == sigScores[1])) {
+    #    pnumSigProjMatrix[j,i] <- 0.0
+    #    pnumSigProjMatrix_P[j,i] <- 1.0
+    #    next
+    #  }
+    #  sigPredictions <- crossprod(weights, sigScores) 
+    #  r <- roc.area(sigScores, sigPredictions)
+    #  a <- r$A
       #dissimilarity <- abs(sigScores - sigPredictions)
       #medDissimilarity <- as.matrix(apply(dissimilarity, 2, median))
       
@@ -292,54 +326,80 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
       #pnumSigProjMatrix_P[j,i] <- p_value
 
       
-      pnumSigProjMatrix[j,i] <- a
-      pnumSigProjMatrix_P[j,i] <- r$p.value
+    #  pnumSigProjMatrix[j,i] <- a
+    #  pnumSigProjMatrix_P[j,i] <- r$p.value
       
-      j <- j + 1
-    }
+    #  j <- j + 1
+    #}
     
     
     # Calculate signficance for Factor signatures
-    j <- 1
-    for (s in factorSigs) {
-      fLevels <- s[[1]]
-      factorFreq <- s[[2]]
-      fMatrix <- s[[3]]
-      
-      if (1 %in% factorFreq) {
-        factorSigProjMatrix[j,i] <- 0.0
-        factorSigProjMatrix_P[j,i] <- 1.0
-        next
-      }
-      
-      N_LEVELS <- length(fLevels)
-      factorPredictions <- crossprod(weights, fMatrix)
 
-      labels <- apply(fMatrix, 1, which.max)
-      
-      # Get predicted index and corresponding probability
-      preds_ii <- apply(factorPredictions, 1, which.max)
-      preds <- factorPredictions[cbind(1:nrow(factorPredictions),preds_ii)]
+	factorSigProjList <- lapply(factorSigs, function(x) {
+			fLevels <- x[[1]]
+			factorFreq <- x[[2]]
+			fMatrix <- x[[3]]
 
-      r <- multiclass.roc(labels, preds_ii, levels=seq(1,length(fLevels)))
-      a <- r$auc
-      
-      # Calculate the p value for precomputed signature
-      krList <- list()
-      for (k in 1:length(fLevels)) {
-        krList <- c(krList, list(preds_ii[labels==k]))
-      }
-      
-      krtest <- kruskal.test(krList)
-      
-      factorSigProjMatrix[j,i] <- a
-      factorSigProjMatrix_P[j,i] <- krtest$p.value
-      
-      j <- j + 1
-    }
-    i <- i + 1
+			if (1 %in% factorFreq) {
+				return(list(0.0, 1.0))
+			}
+
+			N_LEVELS <- length(fLevels)
+			factorPredictions <- Matrix::crossprod(weights, fMatrix)
+
+			labels <- apply(fMatrix, 1, which.max)
+
+			# Get predicted index and corresponding probability
+			preds_ii <- apply(factorPredictions, 1, which.max)
+			preds <- factorPredictions[cbind(1:nrow(factorPredictions), preds_ii)]
+			
+			r <- multiclass.roc(labels, preds_ii, levels=seq(1, length(fLevels)))
+			a <- r$auc
+
+			# Calculate the p value for precomputed signature
+			krList <- list()
+			for (k in 1:length(fLevels)) {
+				krList <- c(krList, list(preds_ii[labels==k]))
+			}
+
+			krTest <- kruskal.test(krList)
+
+			return(list(a, krTest$p.value))
+		  })
+
+	factorSigProjMatrix[,i] <- unlist(lapply(factorSigProjList, function(x) x[[1]]))
+	factorSigProjMatrix_P[,i] <- unlist(lapply(factorSigProjList, function(x) x[[2]]))
+
+	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
+	tRows <- c(tRows, paste0(proj@name, "FactorSigs"))
+
+	#return(list((1-medDissimilarity/N_SAMPLES),
+	#			pValues,
+	#			unlist(lapply(factorSigProjList, function(x) return(x[[1]]))),
+	#			unlist(lapply(factorSigProjList, function(x) return(x[[2]])))
+	#			))
+
+	
+  i <- i+1
   }
+
+  #factorIncluded <- F
+  #sigNumIncluded <- F
+  #if (length(projDataList) == 4) { factorIncluded <- T }
+  #if (length(projDataList) == 6) { sigNumIncluded <- T } 
+
+  #sigProjMatrix <- matrix(unlist(lapply(projDataList, function(x) return(x[[1]]))), nrow=N_SIGNATURES, ncol=N_PROJECTIONS, 
+  #						  byrow=T)
+  #sigProjMatrix_P <- matrix(unlist(lapply(projDataList, function(x) return(x[[2]]))), nrow=N_SIGNATURES, ncol=N_PROJECTIONS, 
+  # 							byrow=T)
+  #if (factorIncluded) {
+  # 	factorSigProjMatrix <- matrix(unlist(lapply(projDataList, function(x) return(x[[3]]))), nrow=N_SIGNATURE_FACTORS,
+  #								ncol=N_PROJECTIONS, byrow=T)
+#	factorSigProjMatrix_P <- matrix(unlist(lapply(projDataList, function(x) return(x[[4]]))), nrow=N_SIGNATURE_FACTORS,
+ # 								  ncol=N_PROJECTIONS, byrow=T)
+  #}
   
+
 
   # Concatenate Factor Sig-proj entries back in 
   sigProjMatrix <- rbind(sigProjMatrix, factorSigProjMatrix, pnumSigProjMatrix)
@@ -359,17 +419,20 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   colnames(sigProjMatrix) <- spColLabels
   rownames(sigProjMatrix) <- spRowLabels
 
+  timingList <- as.matrix(timingList)
+  rownames(timingList) <- tRows
   
+  #return(list(list(spRowLabels, spColLabels, sigProjMatrix, sigProjMatrix_P), timingList))
   return(list(spRowLabels, spColLabels, sigProjMatrix, sigProjMatrix_P))
 }
 
 clusterSignatures <- function(sigList, sigMatrix, k=10) {
+  
+  precomputed = lapply(sigList, function(x) x@isPrecomputed)
 
-  precomputed <- lapply(sigList, function(x) x@isPrecomputed)
-	
   # Cluster computed signatures and precomputed signatures separately
-  computedSigsToCluster <- names(precomputed[which(precomputed == F)])
-  computedSigMatrix <- sigMatrix[computedSigsToCluster,]  
+  computedSigsToCluster <- names(precomputed[which(precomputed==F)])
+  computedSigMatrix <- sigMatrix[computedSigsToCluster,]
 
   r <- matrix(rank(computedSigMatrix, ties="min"), ncol=ncol(sigMatrix))
   r_rs <- as.matrix(rowSums(r))
@@ -379,34 +442,26 @@ clusterSignatures <- function(sigList, sigMatrix, k=10) {
   compcls <- as.list(compkm$cluster)
   compcls <- compcls[order(unlist(compcls), decreasing=F)]
 
-  #compres <- prcomp(na.omit(computedSigMatrix), scale=T)$x[,1:30]
-  #compkm <- kmeans(compres, centers=min(k, length(computedSigsToCluster)), nstart=1, iter.max=100)
-  #compcls <- as.list(compkm$cluster)
-  #compcls <- compcls[order(unlist(compcls), decreasing=F)]
-
   precompcls <- list()
   if (length(which(precomputed==T)) > 0) {
-	precomputedSigsToCluster <- names(precomputed[which(precomputed==T)])
-	precomputedSigMatrix <- sigMatrix[precomputedSigsToCluster,]
+  	  precomputedSigsToCluster <- names(precomputed[which(precomputed==T)])
+  	  precomputedSigMatrix <- sigMatrix[precomputedSigsToCluster,]
 
-	rp <- matrix(rank(precomputedSigMatrix, ties="min"), ncol=col(sigMatrix))
-	rp_rs <- as.matrix(rowSums(rp))
-	rownames(rp_rs) <- rownames(precomputedSigMatrix)
+  	  rp <- matrix(rank(precomputedSigMatrix, ties="min"), ncol=ncol(sigMatrix))
+  	  rp_rs <- as.matrix(rowSums(rp))
+  	  rownames(rp_rs) <- rownames(precomputedSigMatrix)
 
-	if (length(precomputedSigsToCluster) == 1) {
-		precompcls <- list()
-		precompcls[precomputedSigsToCluster[[1]]] <- 1
-	} else {
-		#prcompres <- prcomp(na.omit(precomputedSigMatrix), scale=T)
-		#prcompres <- prcompres$x[1, min(ncol(prcompres$x), 30)]
-		#precompkm <- kmeans(prcompres, centers=min(k, length(precomputedSigsToCluster)), nstart=1, iter.max=100)
+  	  if (length(precomputedSigsToCluster) == 1) {
+  	  	  precompcls <- list()
+  	  	  precompcls[precomputedSigsToCluster[[1]]] <- 1
+	  } else {
 		precompkm <- kmeans(rp_rs, centers=min(k, length(precomputedSigsToCluster)), nstart=1, iter.max=100)
-		precompcls <- as.list(precompkm$cluster)
-		precompcls <- precompcls[order(unlist(precompcls), decreasing=F)]
-
-	}
+	    precompcls <- as.list(precompkm$cluster)
+	    precompcls <- precompcls[order(unlist(precompcls), decreasing=F)]
+	  }
   }
-
+	
+  
   output <- list(compcls, precompcls)
   names(output) <- c("Computed", "Precomputed")
 

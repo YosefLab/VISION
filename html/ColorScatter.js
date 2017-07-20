@@ -15,13 +15,13 @@ function ColorScatter(parent, colorbar)
     var ydomain = [-2, 2];
 
     this.margin = {top: 20, right: 20, bottom: 15, left: 40};
-    this.width = $(parent).width() - this.margin.right - this.margin.left;
-    this.height = $(parent).height() - this.margin.top - this.margin.bottom;
+    this.width = $(parent).width();
+    this.height = $(parent).height();
 
-    if(this.colorbar_enabled){
-        this.height -= colorbar_height;
-        this.height -= 15;
-    }
+    //if(this.colorbar_enabled){
+    //    this.height -= colorbar_height;
+    //    this.height -= 15;
+    //}
 
     this.x = d3.scale.linear()
         .domain(xdomain)
@@ -59,10 +59,9 @@ function ColorScatter(parent, colorbar)
         .html(function(d){ return d[3]+": "+d[2]; });
 
     this.svg = d3.select(parent).append("svg")
-        .attr("width", self.width + self.margin.left + self.margin.right)
         .attr("height", self.height + self.margin.top + self.margin.bottom)
+        .attr("width", self.width)
         .append("g")
-        .attr("transform", "translate(" + self.margin.left + "," + self.margin.top + ")")
         .call(self.zoom)
         .call(self.tip);
 
@@ -72,7 +71,6 @@ function ColorScatter(parent, colorbar)
 
     this.svg.append("g")
         .attr("class", "x axis")
-        .attr("transform", "translate(0," + self.height + ")")
         .call(self.xAxis);
 
     this.svg.append("g")
@@ -85,7 +83,8 @@ function ColorScatter(parent, colorbar)
             .attr("height", colorbar_height+20);
 
         this.colorbar = this.colorbar_svg.append("rect")
-            .attr("x", this.width + this.margin.left + this.margin.right - colorbar_width - 75)
+            //.attr("x", this.width + this.margin.left + this.margin.right - colorbar_width - 120)
+            .attr("x", this.width - colorbar_width - 10)
             .attr("y", 10)
             .attr("width", colorbar_width)
             .attr("height", colorbar_height);

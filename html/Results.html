@@ -62,79 +62,112 @@
         </div>
     </div>
 </div>
-<div id="content_wrapper" style="display: flex; height: 100vh; flex-direction: row; justify-content: center;">
-    <div style="width: 35%; min-width: 350px; flex: 1 0 auto; height: 100%">
-		<div id="command-panel" class="color_panel" style="max-height: 50%; overflow: scroll; height: calc(50%);">
+<div id="content_wrapper" style="display: flex; height: 100%; flex-direction: row; justify-content: center;">
+    <div id="side-wrapper">
+		<div id="command-panel" class="color_panel" style="overflow: scroll; flex: 1 0 50%; max-height: 50%">
 			<h4 class="command-title">FastProject Controls</h4> 
-			<!-- <div id="side-menu"> 
-				<ul>
-					<li><a href="#data_options_div">Data Options</a></li>
-					<li id="clustering-options"><a href="#clustering-controls">Clustering</a></li>
-					<li id="tree-options" class="active"><a href="#tree-controls">Visualize Tree</a></li>
-					<li><a href="#table_div_container">View Signatures vs. Projections</a></li>
-				</ul>
+            <div style="margin: 10px; display:flex; flex-direction: row; width: 100%;flex: 1 0 auto">
+                <button type="button" style="flex: 1 0 auto" class="btn btn-default" id="export-button" onclick=exportSigProj()>&#x21e9; Export Projection CSV</button>
+                <button type="button" style="flex: 1 0 auto;" class="btn btn-default" id="export-button" onclick=exportSigProjPNG()>&#x21e9; Export Projection PNG</button>
+            </div>
+			<div id="data_options_div" class="color_panel" style="">
+				<span>
+					<label for="filter_dropdown">Filter Level</label>
+					<select id="filter_dropdown">
+					</select>
+				</span>
+				<span>
+					<button id="show_genes_button" type="button" class="btn btn-default" onclick=createGeneModal()>
+						+Show Genes
+					</button>
+				</span>
+				<span>
+					<button id="precomputed_button" type="button" class="btn btn-default" onclick=changeTableView()>Precomputed</button>
+				</span>
 			</div>
+			<div id="table_div_container" style="min-height: 100%; overflow: visible"></div>
+
 			<div class="command-panel-content">
-				<a href="#" data-toggle="#command-panel" id="sidebar-toggle">
-					<span class="bar"></span>
-					<span class="bar"></span>
-					<span class="bar"></span>
-				</a> -->
-				<button class="accordion"> Data Options </button>
-				<div id="data_options_div" class="color_panel panel" style="height:30%">
-					<span>
-						<label for="filter_dropdown">Filter Level</label>
-						<select id="filter_dropdown">
-						</select>
-					</span>
-					<span>
-						<button id="show_genes_button" type="button" class="btn btn-default" onclick=createGeneModal()>
-							+Show Genes
-						</button>
-					</span>
-					<span>
-						<button id="precomputed_button" type="button" class="btn btn-default" onclick=changeTableView()>Precomputed</button>
-					</span>
-				</div>
-				<button class="accordion" id="clustering-options">Clustering</button>
-				<div id="clustering-controls" class="form-inline panel">
-					<select id="cluster_select_method" class="form-control" style="width: 100px;"></select>
-					<select id="cluster_select_param" class="form-control" style="width: 70px;"></select>
-				</div>
-				<button class="accordion" id="tree-options">Visualize Tree</button>
 				<div id="tree-controls" class="form-inline panel">
 				</div>
-				<button class="accordion">Signatures vs. Projections</button>
-				<div id="table_div_container" class="color_panel panel" style="height: calc(50%); overflow:scroll"></div>
 			</div>
-			<!-- </div> -->
-		<div id="bottom_visual_div" class="color_panel" style="max-height: 50%; overflow: scroll; height: calc(50%);">
-			<h4 id="data-analysis-title" style="text-align: center">Data Analysis</h4>
-			<div id="heatmap_div" class="color_panel" style="height: 100%;"></div>
-			<div id="tree_div" class="color_panel" style="display: block; height: 100%"></div>
+		</div>
+		<div id="bottom_visual_div" class="color_panel" style="flex: 1 0 50%; max-height: 50%">
+			<div style="height: 100%; margin-top: 5px; position: relative;">
+
+				<input id="cluster_tab" type="radio" class="data-vis-tab" name="data_tabs" checked>
+				<label for="cluster_tab">Cluster Analysis</label>
+
+				<input id="info_tab" type="radio" class="data-vis-tab" name="data_tabs">
+				<label for="info_tab">Projection Information</label>
+				<hr/>
+
+				<div class="tab-content" id="cluster-wrapper" style="position: absolute; height: 90%; width: 100%">
+					<div id="clustering-controls" class="form-inline" style="margin-left: 20px; margin-top: 5px;">
+						<select id="cluster_select_method" class="form-control" style="width: 100px;"></select>
+						<select id="cluster_select_param" class="form-control" style="width: 70px;"></select>
+					</div>
+					<div id="heatmap_div" class="color_panel" style="height: 90%; width: 100%;"></div>
+				</div>
+				<div class="tab-content" id="projection-content-wrapper" style="position: absolute; height: 90%; width: 100%">
+					<div id="projection-div">
+						<h4 id="data-analysis-title" style="text-align: center"></h4>
+						<p style="margin-left: 10px;"> This is where information about the projection will go.</p>
+					</div>
+				</div>
+
+			<!-- <div id="tree_div" class="color_panel" style="height: 100%"></div> -->
+			</div>
 		</div>
     </div>
-    <div style="width: 65%; height: 100%; min-width: 600px; flex: 1 1 auto; overflow: scroll;">
-        <div id="plot_title_div" class="color_panel">
-            <div class="colorOptions">
-                <span>Signature Score Colors:</span>
-                <div class="btn-group" data-toggle="buttons">
-                    <label class="btn btn-default">
-                        <input type="radio" name="scatterColorButtons" id="valueoption" value="value" autocomplete="off"> Value
-                    </label>
-                    <label class="btn btn-default active">
-                        <input type="radio" name="scatterColorButtons" id="rankoption" value="rank" autocomplete="off" checked> Rank
-                    </label>
-                </div>
-                <div style="float: right">
-                    <button type="button" class="btn btn-default" id="export-button" onclick=exportSigProj()>&#x21e9;Export</button>
-                </div>
-            </div>
-            <div class="title"></div>
-            <div class="subtitle"></div>
-        </div>
-        <div id="scatter_div" class="color_panel" style="height: 100%; overflow: hidden;"></div>
-    </div>
+    <div id="main-vis-wrapper">
+		<input id="proj_tab" type="radio" name="vis-tabs" checked>
+		<label for="proj_tab">Projections</label>
+
+		<input id="pc_tab" type="radio" name="vis-tabs">
+		<label for="pc_tab">Principal Component Viewer</label>
+
+		<input id="tree_tab" type="radio" name="vis-tabs">
+		<label for="tree_tab">Simple PPT Viewer</label>
+
+		<hr/>
+
+		<div class="tab-content" id="sigvp-scatter-wrapper" >
+			<div id="sigvp-scatter-div">
+				<div id="plot_title_div" class="color_panel" style="display: flex; justify-content: space-between; flex-direction: row; flex: 1 1 5%">
+					<div style="flex: 1 1 auto; padding-top: 10px;">
+						<div class="title" id="plot-title" style=""></div>
+						<div class="subtitle" id="plot-subtitle" style=""></div>
+					</div>
+					<div class="colorOptions" style="flex: 1 1 20%; align-self: flex-end; padding-bottom: 10px;">
+						<span>Signature Score Colors:</span>
+						<div class="btn-group" data-toggle="buttons">
+							<label class="btn btn-default">
+							<input type="radio" name="scatterColorButtons" id="valueoption" value="value" autocomplete="off"> Value
+							</label>
+							<label class="btn btn-default active">
+							<input type="radio" name="scatterColorButtons" id="rankoption" value="rank" autocomplete="off" checked> Rank
+							</label>
+						</div>
+					</div>
+				</div>
+				<div id="scatter_div" class="color_panel" style="flex: 4 0 70%; margin-right: 10px; overflow: hidden;"></div>
+			</div>
+		</div>
+
+		<div class="tab-content" id="pc-viewer-wrapper">
+			<div id="pc-viewer-div">
+				<h1>PC Viewer</h1>
+			</div>
+		</div>
+
+		<div class='tab-content' id="ppt-wrapper">
+			<div id="ppt-div">
+				<h1>PPT Viewer</h1>
+			</div>
+		</div>
+
+	</div>
 </div>
 <input id="sig_filt_input" type="text" placeholder="Filter Signatures..." style="display: none;">
 </body>

@@ -138,7 +138,6 @@ window.onload = function()
 			new_table_div.setAttribute("class", "table_div");
 			new_table_div.setAttribute("style", "overflow: hidden");
 
-
 			var table_div_container = document.getElementById("table_div_container");
 
 			var new_table = document.createElement("table");
@@ -270,28 +269,7 @@ window.onload = function()
         $("#filter_dropdown").change() // Change event updates the table
     });
 
-	var acc = document.getElementsByClassName("accordion");
-	for (i = 0; i < acc.length; i++) {
-		acc[i].onclick = function(d) {
-			this.classList.toggle("active");
-			var panel = this.nextElementSibling;
-			if (d.target.getAttribute("id") == "clustering-options") { drawHeat(); } 
-			if (d.target.getAttribute("id") == "tree-options") { drawTree(); }
-			if (panel.style.display == "inline") {
-				panel.style.display = "none";
-				panel.style.maxHeight = null;
-			} else {
-				panel.style.maxHeight = panel.scrollHeight + "px";
-				panel.style.display = "inline";
-			}
-		}
-	}
-
-	$("[data-toggle]").click(function() {
-		var toggle_el = $(this).data("toggle");
-		$(toggle_el).toggleClass("open-sidebar");
-	});
-
+	//$('input[type="radio"]:checked + label').css("border-bottom-color", "#eee");
 };
 
 Element.prototype.remove = function() {
@@ -416,8 +394,8 @@ function drawChart() {
     var filter_group = global_status.filter_group;
 
     if(sig_key.length == 0 && proj_key.length == 0){
-        $('#plot_title_div').children().eq(1).text("");
-        $('#plot_title_div').children().eq(2).text("");
+        $('#plot-title').text("");
+        $('#plot-subtitle').text("");
         global_scatter.setData([], false);
         return $().promise()
     }
@@ -437,8 +415,8 @@ function drawChart() {
     return $.when(proj_promise, sig_promise, sig_info_promise) // Runs when both are completed
         .then(function(projection, signature, sig_info){
             
-            $('#plot_title_div').children().eq(1).text(proj_key);
-            $('#plot_title_div').children().eq(2).text(sig_key);
+			$('#plot-title').text(proj_key);
+			$('#plot-subtitle').text(sig_key);
 
             var points = [];
             for(sample_label in signature){
@@ -504,16 +482,11 @@ function drawHeat(){
     var cluster_method = $('#cluster_select_method').val();
     var cluster_param = $('#cluster_select_param').val();
 
-	if (!$('#clustering-options').hasClass('active')) {
-		$("#heatmap_div").hide();
-		$("#instructions").show();
-		return;
-	}
-	$("#instructions").hide();
     if(sig_key.length == 0){
         $('#heatmap_div').hide();
         return $().promise();
     }
+
     $("#heatmap_div rect").show();
 	return $.when(api.signature.info(sig_key),
 		api.signature.expression(sig_key),
@@ -521,7 +494,7 @@ function drawHeat(){
 			.then(function(sig_info, sig_expression, cluster){
 
 			if(sig_info.isPrecomputed){
-				//$('#heatmap_div').hide();
+				$('#heatmap_div').hide();
 				return
 			}
 
@@ -798,6 +771,7 @@ function createGeneModal()
             $('#geneModal').modal();
         });
 }
+
 
 function changeTableView()
 {
