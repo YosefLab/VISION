@@ -309,8 +309,8 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   timingList <- as.matrix(timingList)
   rownames(timingList) <- tRows
 
-  return(list(fpOut, timingList))
-  #return(fpOut)
+  #return(list(fpOut, timingList))
+  return(fpOut)
 }
   
 )
