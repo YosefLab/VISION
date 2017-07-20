@@ -28,16 +28,16 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// calcSigScore
-NumericMatrix calcSigScore(NumericMatrix& X, NumericVector& y, NumericMatrix& Z);
-RcppExport SEXP FastProjectR_calcSigScore(SEXP XSEXP, SEXP ySEXP, SEXP ZSEXP) {
+// ball_tree_knn
+List ball_tree_knn(NumericMatrix X, int K, int n_threads);
+RcppExport SEXP FastProjectR_ball_tree_knn(SEXP XSEXP, SEXP KSEXP, SEXP n_threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix& >::type X(XSEXP);
-    Rcpp::traits::input_parameter< NumericVector& >::type y(ySEXP);
-    Rcpp::traits::input_parameter< NumericMatrix& >::type Z(ZSEXP);
-    rcpp_result_gen = Rcpp::wrap(calcSigScore(X, y, Z));
+    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    Rcpp::traits::input_parameter< int >::type n_threads(n_threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(ball_tree_knn(X, K, n_threads));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -45,7 +45,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"FastProjectR_point_mult", (DL_FUNC) &FastProjectR_point_mult, 2},
     {"FastProjectR_multMat", (DL_FUNC) &FastProjectR_multMat, 2},
-    {"FastProjectR_calcSigScore", (DL_FUNC) &FastProjectR_calcSigScore, 3},
+    {"FastProjectR_ball_tree_knn", (DL_FUNC) &FastProjectR_ball_tree_knn, 3},
     {NULL, NULL, 0}
 };
 
