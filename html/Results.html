@@ -64,7 +64,7 @@
 </div>
 <div id="content_wrapper" style="display: flex; height: 100%; flex-direction: row; justify-content: center;">
     <div id="side-wrapper">
-		<div id="command-panel" class="color_panel" style="overflow: scroll; flex: 1 0 50%; max-height: 50%">
+		<div id="command-panel" class="color_panel" style="overflow: hidden; flex: 1 0 50%; max-height: 50%">
 			<h4 class="command-title">FastProject Controls</h4> 
             <div style="margin: 10px; display:flex; flex-direction: row; width: 100%;flex: 1 0 auto">
                 <button type="button" style="flex: 1 0 auto" class="btn btn-default" id="export-button" onclick=exportSigProj()>&#x21e9; Export Projection CSV</button>
@@ -85,7 +85,8 @@
 					<button id="precomputed_button" type="button" class="btn btn-default" onclick=changeTableView()>Precomputed</button>
 				</span>
 			</div>
-			<div id="table_div_container" style="min-height: 100%; overflow: visible"></div>
+			<br>
+			<div id="table_div_container" style="min-height: 100%; overflow: scroll"></div>
 
 			<div class="command-panel-content">
 				<div id="tree-controls" class="form-inline panel">
@@ -96,10 +97,13 @@
 			<div style="height: 100%; margin-top: 5px; position: relative;">
 
 				<input id="cluster_tab" type="radio" class="data-vis-tab" name="data_tabs" checked>
-				<label for="cluster_tab">Cluster Analysis</label>
+				<label for="cluster_tab" onclick=drawHeat() class="data-labels">Cluster Analysis</label>
 
 				<input id="info_tab" type="radio" class="data-vis-tab" name="data_tabs">
-				<label for="info_tab">Projection Information</label>
+				<label for="info_tab" class="data-labels">Projection Information</label>
+
+				<input id="cell_select_tab" type="radio" class="data-vis-tab" name="data_tabs">
+				<label for="cell_select_tab" class="data-labels">Cell Subset Analysis</label>
 				<hr/>
 
 				<div class="tab-content" id="cluster-wrapper" style="position: absolute; height: 90%; width: 100%">
@@ -107,16 +111,20 @@
 						<select id="cluster_select_method" class="form-control" style="width: 100px;"></select>
 						<select id="cluster_select_param" class="form-control" style="width: 70px;"></select>
 					</div>
-					<div id="heatmap_div" class="color_panel" style="height: 90%; width: 100%;"></div>
+					<div id="heatmap_div" class="color_panel" style="height: 80%; width: 100%;"></div>
 				</div>
 				<div class="tab-content" id="projection-content-wrapper" style="position: absolute; height: 90%; width: 100%">
 					<div id="projection-div">
 						<h4 id="data-analysis-title" style="text-align: center"></h4>
-						<p style="margin-left: 10px;"> This is where information about the projection will go.</p>
+						<p id="data-analysis-content" style="margin-left: 10px;"></p>
+					</div>
+				</div>
+				<div class="tab-content" id="cell-selection-wrapper" style="position: absolute; height=90%; width: 100%">
+					<div id="cell-selection-div">
+						<h4 style="text-align: center">Select Cells for Further Analysis</h4>
 					</div>
 				</div>
 
-			<!-- <div id="tree_div" class="color_panel" style="height: 100%"></div> -->
 			</div>
 		</div>
     </div>
@@ -125,7 +133,7 @@
 		<label for="proj_tab">Projections</label>
 
 		<input id="pc_tab" type="radio" name="vis-tabs">
-		<label for="pc_tab">Principal Component Viewer</label>
+		<label for="pc_tab">Principal Component Annotator</label>
 
 		<input id="tree_tab" type="radio" name="vis-tabs">
 		<label for="tree_tab">Simple PPT Viewer</label>
@@ -157,7 +165,7 @@
 
 		<div class="tab-content" id="pc-viewer-wrapper">
 			<div id="pc-viewer-div">
-				<h1>PC Viewer</h1>
+				<h1>PC Annotator</h1>
 			</div>
 		</div>
 

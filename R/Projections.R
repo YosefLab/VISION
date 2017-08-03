@@ -5,7 +5,7 @@
 
 require("fastICA")
 require('Rtsne')
-require("Rtsne.multicore")
+#require("Rtsne.multicore")
 require('igraph')
 require("rsvd")
 require("RDRToolbox")
@@ -309,7 +309,10 @@ applyICA <- function(exprData, numCores, projWeights=NULL) {
   res <- fastICA(ndataT, n.comp=2, maxit=100, tol=.00001, alg.typ="parallel", fun="logcosh", alpha=1,
                  method = "C", row.norm=FALSE, verbose=TRUE)
   
-  return(res$S)
+  res <- res$S
+  rownames(res) <- colnames(exprData)
+
+  return(res)
 }
 
 applySpectralEmbedding <- function(exprData, numCores, projWeights=NULL) {
@@ -332,7 +335,7 @@ applytSNE10 <- function(exprData, numCores, projWeights=NULL) {
   
   ndata <- colNormalization(exprData)
   ndataT <- t(ndata)
-  res <- Rtsne.multicore(ndataT, dims=2, max_iter=600, perplexity=10.0, check_duplicates=F, pca=F, num_threads=numCores)
+  res <- Rtsne(ndataT, dims=2, max_iter=600, perplexity=10.0, check_duplicates=F, pca=F)
   res <- res$Y
   rownames(res) <- colnames(exprData)
   return(res)
@@ -344,7 +347,7 @@ applytSNE30 <- function(exprData, numCores, projWeights=NULL) {
   
   ndata <- colNormalization(exprData)
   ndataT <- t(ndata)
-  res <- Rtsne.multicore(ndataT, dims=2, max_iter=600,  perplexity=30.0, check_duplicates=F, pca=F, num_threads=numCores)
+  res <- Rtsne(ndataT, dims=2, max_iter=600,  perplexity=30.0, check_duplicates=F, pca=F)
   res <- res$Y
   
   rownames(res) <- colnames(exprData)

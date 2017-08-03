@@ -2,13 +2,19 @@
    Initializes a zoomable scatter plot in the element "parent"
    parent = , for example, "#chart_div"
 */
-function ColorScatter(parent, colorbar)
+function ColorScatter(parent, colorbar, legend)
 {
     if(colorbar === undefined) { this.colorbar_enabled = false;}
     else {this.colorbar_enabled = colorbar;}
 
+    if (legend == undefined) { this.legend_enabled = false; }
+	else {this.legend_enabled = legend;}
+
     var colorbar_height = 20;
     var colorbar_width = 200;
+
+	this.legend_height = 20;
+	this.legend_width = 200;
 
     var self = this;
     var xdomain = [-2, 2];
@@ -17,11 +23,6 @@ function ColorScatter(parent, colorbar)
     this.margin = {top: 20, right: 20, bottom: 15, left: 40};
     this.width = $(parent).width();
     this.height = $(parent).height();
-
-    //if(this.colorbar_enabled){
-    //    this.height -= colorbar_height;
-    //    this.height -= 15;
-    //}
 
     this.x = d3.scale.linear()
         .domain(xdomain)
@@ -90,6 +91,18 @@ function ColorScatter(parent, colorbar)
             .attr("height", colorbar_height);
     }
 
+    if (this.legend_enabled) {
+		this.legend_svg = this.svg
+			.attr("width", this.width + this.margin.left + this.margin.right)
+			.attr("height", this.legend_height + 20);
+
+		this.legend = this.legend_svg.append("g")
+			.attr("x", this.width - this.legend_width - 10)
+			.attr("y", 10)
+			.attr("width", this.legend_width)
+			.attr("height", this.legend_height);
+	}
+
     this.points = [];
 
     this.selected = -1;
@@ -117,6 +130,9 @@ ColorScatter.prototype.setData = function(points, isFactor)
 
         this.colorScale.domain(unique);
         this.setColorBar();
+
+
+		this.setLegend(this.colorScale, unique);
     }
     else
     {
@@ -133,13 +149,59 @@ ColorScatter.prototype.setData = function(points, isFactor)
         var label_low = parseFloat(low.toFixed(2)).toString();
         var label_high = parseFloat(high.toFixed(2)).toString();
 
+        this.setLegend();
         this.setColorBar(this.colorScale.range(),
                label_low,
                label_high);
+
     }
 
     this.redraw(true)();
 };
+
+ColorScatter.prototype.setLegend = function(colors, values) {
+	
+	if (!this.legend_enabled) { return; } 
+
+	var self = this;
+
+	this.legend_svg.selectAll("text").remove();
+	this.legend_svg.select("defs").remove();
+
+
+	if (colors == undefined) {
+		this.legend
+			.style("fill", "rgba(0,0,0,0)")
+			.style("stroke", "none");
+	} else {
+        this.legend
+            .style("stroke", "black")
+            .style("stroke-width", "1px")
+
+		incr_x = self.legend_width / values.length;
+		l_x = self.width - self.legend_width - 10;
+		l_y = 10; 
+		i = 0;
+		values.forEach(function(n) {
+			curr_x = l_x + (i * incr_x);
+			self.legend.append("rect")
+				.attr("x", curr_x)
+				.attr("y", l_y)
+				.attr("width", incr_x)
+				.attr("height", self.legend_height)
+				.style("fill", colors(n));
+			self.legend.append("text")
+				.attr("x", curr_x + 3)
+				.attr("y", l_y + 15)
+				.attr("class", "legend-subs")
+				.text(n);
+			i += 1;
+		});
+	}
+
+
+	
+}	
 
 ColorScatter.prototype.setColorBar = function(colors, label_low, label_high)
 {

@@ -10,7 +10,6 @@ function HeatMap(parent)
     this.width = $(parent).width();
     this.height = $(parent).height();
 
-    console.log(this.width, this.height);
 
     var otherHeight = 0;
     //Subtract height of anything else

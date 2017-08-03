@@ -94,29 +94,29 @@ filterGenesFano <- function(data, num_mad=2) {
   m <- floor(length(mu_sort) / N_QUANTS)
   
   gene_passes <- rep(0, nrow(data)) == 1
+
+  genePassList <- bplapply(seq(0, N_QUANTS), function(i) {
+		if (i == N_QUANTS - 1) {
+			rr <- seq(i*m, length(mu_sort))
+		} else {
+			rr <- seq(i*m, (i+1)*m)
+		}
+
+		mu_quant <- mu_sort[rr]
+		mu_quant[mu_quant==0] = 1
+		sigma_quant <- sigma_sort[rr]
+		fano_quant <- (sigma_quant ** 2) / (mu_quant)
+		mad_quant <- median(abs(fano_quant - median(fano_quant)))
+		gene_passes_quant <- (fano_quant > (median(fano_quant) + num_mad * mad_quant))
+		gene_passes_quant_i <- which(gene_passes_quant != 0)
+		gene_passes_i <- gene_passes_quant_i + (i * m)
+		return(gene_passes_i)
+	}, BPPARAM=MulticoreParam(workers=1))
+
+  gpi <- unlist(genePassList)
+  gene_passes[gpi] <- T
+  gene_passes <- gene_passes[order(aa)]
+  return (data[which(gene_passes == T), ])
   
-  for (i in 0:N_QUANTS) {
-    if (i == N_QUANTS - 1) {
-      rr <- seq(from=i*m, to=length(mu_sort))
-    } else {
-      rr <- seq(i*m, (i+1) * m)
-    }
-    
-    mu_quant <- mu_sort[rr]
-    mu_quant[mu_quant==0] = 1
-    sigma_quant <- sigma_sort[rr]
-    fano_quant <- (sigma_quant ** 2) / (mu_quant)
-    mad_quant <- median(abs(fano_quant - median(fano_quant)))
-    gene_passes_quant <- fano_quant > (median(fano_quant) + num_mad * mad_quant)
-    gene_passes_quant_i = which(gene_passes_quant != 0)
-    gene_passes_i <- gene_passes_quant_i + (i * m);
-    gene_passes[gene_passes_i] <- TRUE
-
-  }
-
-  original_ii = order(aa)
-  gene_passes <- gene_passes[original_ii]
-  keep_ii <- which(gene_passes == TRUE)
-  return(data[keep_ii,])
 }
 

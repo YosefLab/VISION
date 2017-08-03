@@ -1,53 +1,85 @@
 ## Functions to transform the data and calculate weights
 require(loe)
 
-matprod.par <- function(cl, A, B) {
-  
-  if (ncol(A) != nrow(B)) stop("Matrices do not conform")
-  idx <- splitIndices(nrow(A), length(cl))
-  Alist <- lapply(idx, function(ii) A[ii,,drop=FALSE])
-  ans <- clusterApply(cl, Alist, get("%*%"), B)
-  do.call(rbind, ans)
-}
-
-
-optimalClusters <- function(data) {
-	#' Calculate the optimal number of clusters for a given data set
-	#' Paramters:
-	#'  data: (matrix) NUM_GENES X NUM_SAMPLES
+louvainCluster <- function(kn, data) {
 	
-	k.max <- round(ncol(data)^(1/2))
-	print(k.max)
-	wss <- sapply(1:k.max, function(k) {gc(); kmeans(t(data), k, nstart=5, iter.max=40, algorithm="Lloyd")$tot.withinss})
-	x_val <- seq(1, k.max);
-	max_df <- data.frame(x = c(1, k.max), y=c(wss[1], wss[k.max]))
-    fit <- lm(max_df$y ~ max_df$x)
-    distances <- c()
-    for (i in 1:k.max) {
-         distances <- c(distances, abs(coef(fit)[2]*x_val[i] - wss[i] + coef(fit)[1]) / sqrt(coef(fit)[2]^2 + 1^2))
-    }
-    optclust <- x_val[which.max(distances)]
-    return(optclust)
-}
+	nn <- kn[[1]]
+	d <- kn[[2]]
+	nnl <- lapply(1:nrow(nn), function(i) nn[i,])
 
-kmDist <- function(data, optClust) {
-	#' Calculate an approximated distance matrix with the sqrt(num samples) clusters
-	#' Parameters:
-	#'	data: (array) NUM_GENES x NUM_SAMPLES
+	# Create an undirected knn graph
+	g <- graph_from_adj_list(nnl, mode="out")
+	E(g)$weights <- as.vector(t(d))
+	g <- as.undirected(g, mode="each")
+	
+	# Now apply the louvain algorithm to cluster the graph
+	cl <- cluster_louvain(g)
 
-	if (optClust == 0) {
-		optClust = round(sqrt(ncol(data)))
-	} 
+	# Gather cluster vector to list of clusters
+	clusters <- list()
+	mem <- as.vector(membership(cl))
+	for (i in 1:length(mem)) {
+		n <- as.character(mem[[i]])
+		if (n %in% names(clusters)) {
+			clusters[[n]] <- c(clusters[[n]], i)
+		} else {
+			clusters[[n]] <- c(i)
+		}
+	}
 
-	km <- kmeans(t(data), centers=optClust, nstart=1, iter.max=100)
-	kmd <- sqdist(data, t(km$centers))
-	c <- apply(kmd, 1, which.min)
-	kd <- make.distmat(km$centers)
-	diag(kd) <- 0L
+	clusters <- lapply(clusters, function(i) i <- rownames(data)[i])
 
-	return(list(c, kmd))
+
+	return(clusters)
 
 }
+
+readjust_clusters <- function(clusters, data) {
+	#' Repartitions existing clusters to achieve desired granularity
+	#' Paramters:
+	#'	clusters: (List) list of clusters, each entry begin a vector of cells in a cluster
+	#'	data: (matrix) NUM_SAMPLES x NUM_FEATURES data matrix that was used to generate clusters
+
+	NUM_PARTITIONS = sqrt(nrow(data))
+	EPSILON = .15
+
+	currPart = length(clusters)
+	clusterList <- list()
+	
+	while (currPart < ((1 - EPSILON)*NUM_PARTITIONS)) {
+		clusterList <- list()
+		cluster_offset = 0
+		for (i in 1:length(clusters)) {
+
+			# Apply kmeans clustering to existing cluster
+			currCl = clusters[[i]]
+			subData <- data[currCl,]
+			nCl <- kmeans(subData, centers=round(sqrt(length(currCl))), iter.max=100)
+			
+			# Gather cluster vector to list of clusters
+			for (i in 1:length(nCl$cluster)) {
+				n <- as.character(nCl$cluster[[i]] + cluster_offset)
+				sample_n <- names(nCl$cluster)[[i]]
+				if (n %in% names(clusterList)) {
+					clusterList[[n]] <- c(clusterList[[n]], sample_n)
+				} else {
+					clusterList[[n]] <- c(sample_n)
+				}
+
+			}
+
+			# Now add to cluster offset for next re-clustering
+			cluster_offset <- cluster_offset + max(nCl$cluster)
+		}
+
+		currPart <- length(clusterList)
+		clusters <- clusterList
+
+	}
+
+	return(clusters)
+}
+
 
 createFalseNegativeMap <- function(data, housekeeping_genes, debug=0) {
   #' Uses gene names in `housekeeping_genes` to create a mapping of false negatives.

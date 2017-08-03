@@ -24,7 +24,7 @@ var cluster_options = { // Note: param values should be strings
 $(window).resize(function()
 {
     $('#scatter_div').children().remove();
-    global_scatter = new ColorScatter('#scatter_div', true);
+    global_scatter = new ColorScatter('#scatter_div', true, true);
 
     if($('#heatmap_div').is(":visible"))
     {
@@ -113,7 +113,7 @@ window.onload = function()
 
 
     //Define some globals
-    global_scatter = new ColorScatter("#scatter_div", true);
+    global_scatter = new ColorScatter("#scatter_div", true, true);
     global_heatmap = new HeatMap("#heatmap_div");
     global_tree = new TreeMap("#tree_div");
     
@@ -145,12 +145,14 @@ window.onload = function()
 			new_table.setAttribute("class", "sig-cluster-table");
 
 			var thead = document.createElement("thead");
-			var tr = document.createElement("tr");
+			if (curr_cl == 1) {
+				var tr = document.createElement("tr");
+				tr.setAttribute("id", "proj_row"+curr_cl);
+				thead.appendChild(tr);
+			}
 			var tr2 = document.createElement("tr");
-			tr.setAttribute("id", "proj_row"+curr_cl);
 			tr2.setAttribute("id", "summary_row"+curr_cl);
 			tr2.setAttribute("class", "summary-row");
-			thead.appendChild(tr);
 			thead.appendChild(tr2);
 
 			var tbody = document.createElement("tbody");
@@ -161,7 +163,6 @@ window.onload = function()
 
 			new_table_div.appendChild(new_table);
 			table_div_container.appendChild(new_table_div);
-			new_table_div.appendChild(document.createElement("br"));
 		}
 
 	});
@@ -181,6 +182,7 @@ window.onload = function()
         createTableFromData().then(function(){
             // Needs to happen after createTableFromData because that function
             //   updates selected sig/proj
+            $("#data-analysis-title").text(global_status.plotted_signature);
             drawChart();
             drawHeat();
             drawTree();
@@ -301,11 +303,15 @@ function addSigClusterDivs() {
 			new_table.setAttribute("class", "sig-cluster-table");
 
 			var thead = document.createElement("thead");
-			var tr = document.createElement("tr");
+			if (curr_cl == 1) {
+				var tr = document.createElement("tr");
+				tr.setAttribute("id", "proj_row"+curr_cl);
+				thead.appendChild(tr);
+			}
+
 			var tr2 = document.createElement("tr");
-			tr.setAttribute("id", "proj_row"+curr_cl);
 			tr2.setAttribute("id", "summary_row"+curr_cl);
-			thead.appendChild(tr);
+			tr2.setAttribute("class", "summary-row")
 			thead.appendChild(tr2);
 
 			var tbody = document.createElement("tbody");
@@ -316,7 +322,7 @@ function addSigClusterDivs() {
 
 			new_table_div.appendChild(new_table);
 			table_div_container.appendChild(new_table_div);
-			new_table_div.appendChild(document.createElement("br"));
+			//new_table_div.appendChild(document.createElement("br"));
 		}
 
 	});
@@ -357,9 +363,39 @@ function updateCurrentSelections(matrix)
         var j = matrix.proj_labels.indexOf(global_status.plotted_projection);
         var s_i = matrix.data.map(function(e){return e[j];}).argSort();
 
-        global_status.plotted_signature = matrix.sig_labels[s_i[0]];
-
+        if (typeof(matrix.sig_labels) == "string") {
+			global_status.plotted_signature = matrix.sig_labels;
+		} else {
+			global_status.plotted_signature = matrix.sig_labels[s_i[0]];
+		}
     }
+
+}
+
+function addToDataAnalysisBox(sig_info) {
+	dbid = "#data-analysis-content";
+	if (sig_info.isPrecomputed) {
+		$(dbid).html("");
+		return;
+	}
+	content = '<p> Source: ' + sig_info.source + '<br>';
+	content += "<table style='width:100%'>";
+	content += "<tr><th>Gene Name</th><th>Sign</th></tr>";
+
+	Object.keys(sig_info.sigDict).forEach(function(key) {
+		urllink = "http://www.genecards.org/cgi-bin/carddisp.pl?gene=" + key;
+		content += "<tr><td>";
+		content += "<a href=" + urllink + " target='_blank'>" + key + "</a></td>";
+		if (sig_info.sigDict[key] == 1) {
+			content += "<td>+</td></tr>";
+		} else {
+			content += "<td>-</td></tr>";
+		}
+	});
+	
+	content += "</table>";
+
+	$(dbid).html(content);
 }
 
 function updateMenuBar()  // Updates the ### Genes button in the menu bar
@@ -381,6 +417,7 @@ function tableClickFunction(row_key, col_key)
 {
     global_status.plotted_signature  = row_key;
     global_status.plotted_projection = col_key;
+	$('#data-analysis-title').text(global_status.plotted_signature);
     drawChart();
     drawHeat();
     drawTree();
@@ -428,6 +465,8 @@ function drawChart() {
 
             global_scatter.setData(points, sig_info.isFactor);
 
+            addToDataAnalysisBox(sig_info);
+
         });
 
 }
@@ -454,7 +493,6 @@ function drawTree() {
 			api.projection.tree(filter_group, proj_key))
 				.then(function(sig_info, sig_expression, tree_data) {
 			
-			console.log(tree_data[3]);
 			if (sig_info.isPrecomputed) {
 				return;
 			}
@@ -555,14 +593,16 @@ function createTableFromData()
 		for (curr_cl = 1; curr_cl <= clusmax; curr_cl++) {
 			
 			// Create the Header row
-			var header_row = d3.select("#table"+curr_cl).select("thead").select("#proj_row"+curr_cl).selectAll("th")
-				.data([""].concat(matrix.proj_labels));
-	        header_row.enter().append('th');
-		    header_row.html(function(d){return "<div>"+d+"</div>";})
-			    .filter(function(d,i) {return i > 0;})
-				.on("click", function(d,i) { sortByColumn(d);});
+			if (curr_cl == 1) {
+				var header_row = d3.select("#table"+curr_cl).select("thead").select("#proj_row"+curr_cl).selectAll("th")
+					.data([""].concat(matrix.proj_labels));
+				header_row.enter().append('th');
+			    header_row.html(function(d){return "<div>" + d+"</div>";})
+					.filter(function(d,i) {return i > 0;})
+					.on("click", function(d,i) { sortByColumn(d);});
+				header_row.exit().remove();
+			}
 
-			header_row.exit().remove();
 
 			if (typeof(matrix.sig_labels) == "string") {
 				matrix.sig_labels = [matrix.sig_labels];
@@ -607,6 +647,9 @@ function createTableFromData()
 					else {return 1;}
 				};
 				formatted_data_w_row_labels.sort(sortFun);
+				if (curr_cl == 1) {
+					global_status.plotted_signature = formatted_data_w_row_labels[0][0];
+				}
 			}
 
 			var colorScale = d3.scale.linear()

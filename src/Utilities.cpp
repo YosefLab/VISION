@@ -3,7 +3,7 @@
 #include <Rcpp.h> 
 #include "vptree.h"
 #include <iostream>
-#include <omp.h>
+// #include <omp.h>
 //[[Rcpp::plugins(openmp)]]
 using namespace Rcpp;
 
@@ -63,7 +63,7 @@ List ball_tree_knn(NumericMatrix X ,int K, int n_threads) {
 	std::vector< std::vector<int> > ind_arr(N, std::vector<int>(K+1));
 	std::vector< std::vector<double> > dist_arr(N, std::vector<double>(K+1));
 			
-	omp_set_num_threads(n_threads);
+	//omp_set_num_threads(n_threads);
 	
 	#pragma omp parallel
 	{

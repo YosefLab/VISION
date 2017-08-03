@@ -5,7 +5,7 @@ require(parallel)
 setMethod("initialize", signature(.Object="FastProject"),
           function(.Object, data_file, housekeeping, signatures, scone = NULL, norm_methods = NULL, 
                    precomputed=NULL, output_dir = "FastProject_Output", nofilter=FALSE, nomodel=FALSE, filters=c("fano"),
-                   all_sigs=FALSE, debug=0, lean=TRUE, subsample_size=0, qc=FALSE, num_cores=1, approximate=F, optClust=0, 
+                   all_sigs=FALSE, debug=0, lean=FALSE, subsample_size=0, qc=FALSE, num_cores=1, approximate=F, optClust=0, 
                    min_signature_genes=5, projections="", weights=NULL, threshold=0, perm_wPCA=FALSE,
                    sig_norm_method="znorm_rows", sig_score_method="weighted_avg", exprData=NULL, 
                    housekeepingData=NULL, sigData=NULL, precomputedData=NULL) {
@@ -64,6 +64,7 @@ setMethod("initialize", signature(.Object="FastProject"),
             .Object@approximate = approximate
             .Object@numCores = num_cores
             .Object@optClust = optClust
+            .Object@allData = .Object@exprData
             
             #createOutputDirectory(.Object)
             return(.Object) 
@@ -109,6 +110,26 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   timingList <- (ptm - ptm)
   tRows <- c("Start")
 
+  object@allData <- object@exprData
+
+  if (ncol(object@exprData) > 35000) {	
+
+	  fexpr <- filterGenesFano(object@exprData)
+  	  res <- applyPCA(fexpr, N=30)
+  	  kn <- ball_tree_knn(t(res), 30, object@numCores)
+  	  cl <- louvainCluster(kn, t(res))
+  	  cl <- readjust_clusters(cl, t(res)) 
+
+	  # Randomly select a representative cell from each cluster
+  	  cell_subset <- sapply(cl, function(i) sample(i, 1))
+  	  
+  	  object@exprData <- object@exprData[,cell_subset]
+
+  }
+
+  timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
+  tRows <- c(tRows, "Partition & Sample")
+
   # Wrap expression data frame into a ExpressionData class
   eData <- ExpressionData(object@exprData, distanceMatrix=sparseDistance)
   
@@ -132,12 +153,15 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "Threshold")
 
-  originalData <- getExprData(eData)
+  object@allData <- object@exprData
 
   filtered <- applyFilters(eData, object@threshold, object@filters)
   eData <- filtered[[1]]
   filterList <- filtered[[2]]
-  
+
+  originalData <- getExprData(eData)
+  print(ncol(originalData))
+
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "Filter") 
 
@@ -289,12 +313,13 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     scores <- t(as.matrix(sigScores[[sig]]@scores))
     sigMatrix[sig,] <- scores
   }
-  
+
   rownames(sigMatrix) <- names
-  colnames(sigMatrix) <- colnames(fp@exprData)
+  colnames(sigMatrix) <- colnames(object@exprData)
 
   sigList <- sigList[rownames(sigMatrix)]
   
+  message("Clustering Signatures...")
   sigClusters <- clusterSignatures(sigList, sigMatrix, k=10)
     
 
@@ -309,8 +334,8 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   timingList <- as.matrix(timingList)
   rownames(timingList) <- tRows
 
-  #return(list(fpOut, timingList))
-  return(fpOut)
+  return(list(fpOut, timingList))
+  #return(fpOut)
 }
   
 )

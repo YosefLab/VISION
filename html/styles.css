@@ -58,6 +58,10 @@ input[type=radio]:checked + label {
 	border-bottom: 2px solid #eee; 
 }
 
+.data-labels {
+	width: 30%;	
+}
+
 .tab-content {
 	display: none;
 	overflow: hidden;
@@ -71,9 +75,17 @@ hr {
 	padding: 0;
 	margin: 0;
 }
+
+.legend-subs {
+	font-size: 10px;
+	color: "white";
+	font: 10px/1 'Open Sans', sans-serif;
+
+}
 	
 #info_tab:checked ~ #projection-content-wrapper,
 #cluster_tab:checked ~ #cluster-wrapper,
+#cell-select-tab:checked ~ #cell-selection-wrapper,
 #proj_tab:checked ~ #sigvp-scatter-wrapper,
 #pc_tab:checked ~ #pc-viewer-wrapper,
 #tree_tab:checked ~ #ppt-wrapper {
@@ -96,7 +108,6 @@ hr {
 	margin-left: 40px;
 	display: inline-block;
 	/*margin-right: 20px;*/
-
  }
 
  #sigvp-scatter-wrapper {
@@ -112,6 +123,16 @@ hr {
 
  #projection-div {
 	overflow: scroll;
+	height: 100%;
+ }
+
+ #cell-selection-wrapper {
+ 	height: 100%;
+	overflow: scroll;
+ }
+
+ #cell-selection-div {
+	overflow: scroll:
 	height: 100%;
  }
 
@@ -220,12 +241,17 @@ div.panel {
 	width: 95%;
 }
 
+.summary-row td:first-child{
+	text-decoration: underline;
+}
+
 .table_div table{
-    /*margin-right: 50px;*/ /* So the table div accounts for angled labels */
+    margin-right: 50px; /* So the table div accounts for angled labels */
     margin-top: 30px;
     width: calc(100% - 10px);
     table-layout: fixed;
-    overflow:auto;
+    overflow: scroll;
+    height: 100%;
 }
 
 .table_div table th:first-child{
@@ -234,21 +260,20 @@ div.panel {
 
 .table_div table th:not(:first-child) div {
     transform-origin: left center 0;
-    transform: translate(15px,0.5em) rotate(-50deg);
+    transform: translate(15px,0.2em) rotate(-50deg);
     width: 100px;
     text-align: left;
 }
 
 .table_div table td:first-child{
-    max-width:350px;
-    width:350px;
+	width: 40%;
+	max-width: 50%;
     font-size: 0.8em;
     font-weight: bold;
     -ms-word-wrap: break-word;
     word-wrap: break-word;
     cursor: pointer;
     padding-left: 5px;
-	overflow:auto;
 }
 
 .table_div table td:not(:first-child), .table_div table th:not(:first-child){
@@ -273,7 +298,7 @@ div.panel {
 }
 
 .table_div{
-    overflow: auto;
+    overflow: scroll;
 }
 
 #tree_div svg {
