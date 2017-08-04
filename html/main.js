@@ -150,10 +150,10 @@ window.onload = function()
 				tr.setAttribute("id", "proj_row"+curr_cl);
 				thead.appendChild(tr);
 			}
-			var tr2 = document.createElement("tr");
+			/*var tr2 = document.createElement("tr");
 			tr2.setAttribute("id", "summary_row"+curr_cl);
 			tr2.setAttribute("class", "summary-row");
-			thead.appendChild(tr2);
+			thead.appendChild(tr2);*/
 
 			var tbody = document.createElement("tbody");
 			
@@ -282,6 +282,37 @@ function addSigClusterDivs() {
 
 	$(".table_div").remove()
 
+	if (global_status.precomputed) {
+		var new_table_div = document.createElement("div");
+		new_table_div.setAttribute("style", "height=calc((100vh-88px) / 2)");
+		
+		new_table_div.setAttribute("id", "new_table_div");
+		new_table_div.setAttribute("class", "table_div");
+
+
+		var table_div_container = document.getElementById("table_div_container");
+
+		var new_table = document.createElement("table");
+		new_table.setAttribute("id", "precomp-table");
+		new_table.setAttribute("class", "sig-cluster-table");
+
+		var thead = document.createElement("thead");
+		var tr = document.createElement("tr");
+			tr.setAttribute("id", "proj_row"+curr_cl);
+			thead.appendChild(tr);
+
+		var tbody = document.createElement("tbody");
+			
+		new_table.appendChild(thead);
+		new_table.appendChild(tbody);
+
+
+		new_table_div.appendChild(new_table);
+		table_div_container.appendChild(new_table_div);
+
+		return;
+	} 
+
 	var num_clusters_promise = api.signature.clusters(global_status.precomputed)
 		.then(function(cls) {
 
@@ -309,11 +340,6 @@ function addSigClusterDivs() {
 				thead.appendChild(tr);
 			}
 
-			var tr2 = document.createElement("tr");
-			tr2.setAttribute("id", "summary_row"+curr_cl);
-			tr2.setAttribute("class", "summary-row")
-			thead.appendChild(tr2);
-
 			var tbody = document.createElement("tbody");
 			
 			new_table.appendChild(thead);
@@ -322,8 +348,9 @@ function addSigClusterDivs() {
 
 			new_table_div.appendChild(new_table);
 			table_div_container.appendChild(new_table_div);
-			//new_table_div.appendChild(document.createElement("br"));
 		}
+
+		table_div_container.appendChild(document.createElement("br"));
 
 	});
 
@@ -575,12 +602,102 @@ function drawHeat(){
 function createTableFromData()
 {
 
+
 	addSigClusterDivs();
+
+	if (global_status.precomputed) {
+
+		return $.when(api.filterGroup.sigProjMatrixP(global_status.filter_group, global_status.precomputed)
+				.then(function(matrix) {
+
+			var header_row = d3.select("#precomp-table").select("thead").select("#proj_row"+curr_cl).selectAll("th")
+				.data([""].concat(matrix.proj_labels));
+			header_row.enter().append('th');
+			header_row.html(function(d){return "<div>" + d+"</div>";})
+				.filter(function(d,i) {return i > 0;})
+				.on("click", function(d,i) { sortByColumn(d);});
+			header_row.exit().remove();
+
+
+			if (typeof(matrix.sig_labels) == "string") {
+				matrix.sig_labels = [matrix.sig_labels];
+			}
+
+			// Format cell data for better d3 binding
+			var sig_labels = matrix.sig_labels;
+			var data = [];
+			for (var ind = 0; ind < sig_labels.length; ind++) {
+				var sig = sig_labels[ind];
+				data.push(matrix.data[matrix.sig_labels.indexOf(sig)]);
+			}
+			
+			if (typeof(sig_labels) == "string") {
+				sig_labels = [sig_labels];
+			}
+
+			var formatted_data_matrix = sig_labels.map(function(row, i){
+				    return data[i].map(function(val, j){
+					    return {"val":val, "row":matrix.sig_labels.indexOf(sig_labels[i]), "col":j}
+					});
+				});
+
+
+			var formatted_data_w_row_labels = d3.zip(sig_labels, formatted_data_matrix);
+
+			// Sort data if necessary
+
+			var sort_col = matrix.proj_labels.indexOf(global_status.sorted_column);
+			if(sort_col > -1){
+				sortFun = function(a,b){
+					a_precomp = global_data.sigIsPrecomputed[a[0]];
+					b_precomp = global_data.sigIsPrecomputed[b[0]];
+					if(a_precomp && b_precomp || !a_precomp && !b_precomp){
+						return a[1][sort_col].val - b[1][sort_col].val;
+					}
+					else if (a_precomp) { return -1;}
+					else {return 1;}
+				};
+				formatted_data_w_row_labels.sort(sortFun);
+			}
+
+			var colorScale = d3.scale.linear()
+				.domain([0,-3,-50])
+				.range(["steelblue","white", "lightcoral"])
+				.clamp(true);
+			
+
+			var content_rows = d3.select('#precomp-table').select('tbody').selectAll('tr')
+				.data(formatted_data_w_row_labels);
+			content_rows.enter().append('tr');
+			content_rows.exit().remove();
+        
+			var content_row = content_rows.selectAll("td")
+				.data(function(d, row_num){return [d[0]].concat(d[1]);})
+
+			content_row.enter().append('td');
+			content_row.exit().remove();
+
+			content_row
+				.filter(function(d,i) { return i > 0;})
+				.text(function(d){
+					if(d.val < -50) { return "< -50";}
+					else if(d.val > -1) { return d.val.toFixed(2);}
+					else {return d.val.toPrecision(2);}
+						})
+			    .style('background-color', function(d){return colorScale(d.val);})
+				.on("click", function(d){tableClickFunction(matrix.sig_labels[d.row], matrix.proj_labels[d.col])});
+
+			// Make signature names 
+			content_row.filter(function(d,i) { return i == 0;})
+				.text(function(d){console.log(d); return d;});
+
+		}));
+	}
+
     return $.when(api.filterGroup.sigProjMatrixP(global_status.filter_group, global_status.precomputed),
 					api.signature.clusters(global_status.precomputed))
         .then(function(matrix, cls){
         	
-
         var clusarr = Object.keys( cls ).map(function(key) { return cls[key]; });
         var clusmax = Math.max.apply(null, clusarr);
         updateCurrentSelections(matrix);
@@ -629,10 +746,6 @@ function createTableFromData()
 
 			var formatted_data_w_row_labels = d3.zip(sig_labels, formatted_data_matrix);
 
-			var summary_data_matrix = computeDataAverages(formatted_data_matrix);
-			var summary_data_matrix_w_row_labels = {name:"Signature Cluster " + curr_cl, vals:summary_data_matrix};
-
-
 			// Sort data if necessary
 
 			var sort_col = matrix.proj_labels.indexOf(global_status.sorted_column);
@@ -657,21 +770,6 @@ function createTableFromData()
 				.range(["steelblue","white", "lightcoral"])
 				.clamp(true);
 			
-			
-
-			var summary_row = d3.select('#table'+curr_cl).select('thead').select("#summary_row"+curr_cl).selectAll("td")
-				.data(["Signature Cluster " + curr_cl].concat(summary_data_matrix));
-			summary_row.enter().append('td');
-			summary_row.html(function(d) {return "<div class='sigclust' id='sigclust-title_"+curr_cl+ "' onclick=clickSummaryRow(this)>" + d + "</div>";})
-				.filter(function(d,i) { return i > 0; })
-				.text(function(d, i) {
-					if (d < -50) {return '< -50';}
-					else if (d > -1) { return d.toFixed(2);}
-					else {return d.toPrecision(2);}
-				})
-				.style('background-color', function(d) {return colorScale(d);})
-			summary_row.exit().remove();
-
 
 			var content_rows = d3.select('#table'+curr_cl).select('tbody').selectAll('tr')
 				.data(formatted_data_w_row_labels);
@@ -697,10 +795,17 @@ function createTableFromData()
 			// Make signature names click-able
 			content_row.filter(function(d,i) { return i == 0;})
 				.text(function(d){return d;})
-				.on("click", function(d){createSigModal(d)});
 
-			
-			$('#table'+curr_cl).children('tbody').hide();
+			$('#table'+curr_cl).children('tbody').children("tr:not(:first-child)").hide();
+			$("#table"+curr_cl).children("tbody").children("tr:first-child").children("td:first-child").attr("id", "sigclust_" + curr_cl);
+			$("#table"+curr_cl).children('tbody').children('tr:first-child').children("td:first-child")
+				.on("click", function(d) { clickSummaryRow(this); });
+
+			// Add '>' sign to top sig name to indiciate expandability
+			$("#table"+curr_cl).children("tbody").children("tr:first-child").children("td:first-child")
+				.text(function(i, origText) {
+					return origText + " \u25B6 ";
+				});
             
 		}
 
@@ -716,19 +821,30 @@ function createTableFromData()
 		.on("mouseout", function(d) {
 			tooltip.hideTooltip();
 		});
+
+
     });
 }
 
 function clickSummaryRow(d) {
 	var clust = d.id.split("_")[1];
-	var summary_row_ind = $("#table"+clust).children('thead').children('#summary_row'+clust).children('td:last');
-	if (summary_row_ind.is(":visible")) {
-		$("#table"+clust).children('thead').children('#summary_row'+clust).children('td').hide();
-		$("#table"+clust).children('thead').children('#summary_row'+clust).children('td:first').show();
-		$("#table"+clust).children('tbody').show();
+
+	var table_id = $("#table"+clust).children("tbody");
+	if (table_id.children("tr:not(:first-child)").is(":visible")) {
+		console.log("visible");
+		table_id.children("tr:not(:first-child)").hide();
+		table_id.children("tr:first-child").children("td:first-child")
+			.text(function(i, origText) {
+				origText = origText.split(" ")[0];
+				return origText + " \u25B6 ";
+			});
 	} else {
-		$("#table"+clust).children('thead').children('#summary_row'+clust).children('td').show();
-		$("#table"+clust).children('tbody').hide();
+		table_id.children("tr:not(:first-child)").show();
+		table_id.children("tr:first-child").children("td:first-child")
+			.text(function(i, origText) {
+				origText = origText.split(" ")[0];
+				return origText + " \u25BC";
+			});
 	}
 }
 
@@ -819,10 +935,10 @@ function createGeneModal()
 function changeTableView()
 {
 	var precomp = document.getElementById("precomputed_button").innerHTML;
-	if (precomp == "Precomputed") {
-		document.getElementById("precomputed_button").innerHTML = "Computed";
+	if (precomp == "Show Precomputed") {
+		document.getElementById("precomputed_button").innerHTML = "Show Computed";
 	} else {
-		document.getElementById("precomputed_button").innerHTML = "Precomputed";
+		document.getElementById("precomputed_button").innerHTML = "Show Precomputed";
 	}
 	global_status.precomputed = !(global_status.precomputed);
 	return createTableFromData(); 

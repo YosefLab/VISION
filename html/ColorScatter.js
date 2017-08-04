@@ -59,16 +59,70 @@ function ColorScatter(parent, colorbar, legend)
         .offset([-10, 0])
         .html(function(d){ return d[3]+": "+d[2]; });
 
+	var self = this;
+
     this.svg = d3.select(parent).append("svg")
         .attr("height", self.height + self.margin.top + self.margin.bottom)
         .attr("width", self.width)
         .append("g")
-        .call(self.zoom)
+        //.call(self.zoom)
         .call(self.tip);
 
     this.svg.append("rect")
         .attr("width", self.width)
-        .attr("height", self.height);
+        .attr("height", self.height)
+		.on("mousedown", function() {
+			var p = d3.mouse(this);
+
+			self.svg.append("rect")
+				.attr({
+					rx: 6,
+					ry: 6,
+					class: "selection",
+					x: p[0],
+					y: p[1],
+					width: 0,
+					height: 0
+				})
+		})
+		.on("mousemove", function() {
+			var s = self.svg.select("rect.selection");
+
+			if (!s.empty()) {
+				var p = d3.mouse(this),
+					d = {
+						x: parseInt(s.attr("x"), 10),
+						y: parseInt(s.attr("y"),10),
+						width: parseInt(s.attr("width"), 10),
+						height: parseInt(s.attr("height"), 10)
+					}, 
+					move = {
+						x: p[0] - d.x,
+						y: p[1] - d.y
+					};
+
+				if (move.x < 1 || (move.x*2<d.width)) {
+					d.x = p[0];
+					d.width -= move.x;
+				} else {
+					d.width = move.x;
+				}
+
+				if (move.y < 1 || (move.y*2<d.height)) {
+					d.y = p[1];
+					d.height -= move.y;
+				} else {
+					d.height = move.y
+				}	
+				s.attr(d);
+
+			}
+		})
+		.on("mouseup", function() { 
+			self.svg.select(".selection").remove();
+		});
+
+
 
     this.svg.append("g")
         .attr("class", "x axis")
@@ -106,6 +160,7 @@ function ColorScatter(parent, colorbar, legend)
     this.points = [];
 
     this.selected = -1;
+    this.selectedPoints = [];
     this.selected_links = [];
 
     this.hovered = -1;
@@ -165,11 +220,13 @@ ColorScatter.prototype.setLegend = function(colors, values) {
 
 	var self = this;
 
+	this.legend.style("display", "block");
 	this.legend_svg.selectAll("text").remove();
-	this.legend_svg.select("defs").remove();
+	//this.legend_svg.selectAll("defs").remove();
 
 
 	if (colors == undefined) {
+		this.legend.style("display", "none");
 		this.legend
 			.style("fill", "rgba(0,0,0,0)")
 			.style("stroke", "none");
@@ -265,6 +322,8 @@ ColorScatter.prototype.setColorBar = function(colors, label_low, label_high)
 
 ColorScatter.prototype.setSelected = function(selected_index, event_id)
 {
+
+	var self = this;
     if(event_id === undefined){
         event_id = Math.random();
     }
@@ -277,7 +336,18 @@ ColorScatter.prototype.setSelected = function(selected_index, event_id)
         this.selected_links.forEach(function (e) {
             e.setSelected(selected_index, event_id);
         });
-    }
+	}
+
+	if (this.selectedPoints.indexOf(selected_index) == -1) {
+		this.selectedPoints.push(selected_index);
+	} else {
+		this.selectedPoints.splice(this.selectedPoints.indexOf(selected_index), 1);
+	}
+
+    var circles = this.svg.selectAll("circle")
+        .data(this.points);
+    circles
+		.classed("point-selected", function(d, i){return self.selectedPoints.indexOf(i) != -1;});
 };
 
 ColorScatter.prototype.setHovered_TreeNode = function(node, clusters, event_id) {
@@ -355,7 +425,6 @@ ColorScatter.prototype.redraw = function(performTransition) {
         .on("click", function(d,i){self.setSelected(i);})
         .on("mouseover", function(d,i){self.tip.show(d,i); self.setHovered(i);})
         .on("mouseout", function(d,i){self.tip.hide(d,i); self.setHovered(-1);})
-        .classed("point-selected", function(d, i){return i === self.selected;});
 
     if(performTransition !== undefined && performTransition === true)
     {

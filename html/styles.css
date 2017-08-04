@@ -63,7 +63,7 @@ input[type=radio]:checked + label {
 }
 
 .tab-content {
-	display: none;
+	visibility: hidden;
 	overflow: hidden;
 }
 
@@ -89,7 +89,7 @@ hr {
 #proj_tab:checked ~ #sigvp-scatter-wrapper,
 #pc_tab:checked ~ #pc-viewer-wrapper,
 #tree_tab:checked ~ #ppt-wrapper {
-	display: block;
+	visibility: visible;
 }
 
 
@@ -237,12 +237,15 @@ div.panel {
 }
 
 #table_div_container {
+	overflow: scroll;
 	margin: auto;
 	width: 95%;
+	height: 100% !important;
 }
 
 .summary-row td:first-child{
 	text-decoration: underline;
+	width: 250px !important;
 }
 
 .table_div table{
@@ -261,24 +264,25 @@ div.panel {
 .table_div table th:not(:first-child) div {
     transform-origin: left center 0;
     transform: translate(15px,0.2em) rotate(-50deg);
-    width: 100px;
+    width: 35px !important;
     text-align: left;
 }
 
 .table_div table td:first-child{
-	width: 40%;
-	max-width: 50%;
+	width: auto !important;
     font-size: 0.8em;
     font-weight: bold;
     -ms-word-wrap: break-word;
     word-wrap: break-word;
     cursor: pointer;
     padding-left: 5px;
+    position: relative;
 }
 
 .table_div table td:not(:first-child), .table_div table th:not(:first-child){
     text-align: center;
-    width: 35px;
+    width: 35px !important; 
+    max-width: 35px !important;
     cursor: pointer;
     font-size: 0.8em;
 }
@@ -298,7 +302,7 @@ div.panel {
 }
 
 .table_div{
-    overflow: scroll;
+    overflow: auto;
 }
 
 #tree_div svg {
@@ -396,6 +400,14 @@ div.panel {
 .point-selected{
     stroke: yellow !important;
     stroke-width: 2px !important;
+}
+
+.selection {
+	stroke: gray;
+	stroke-width: 1px;
+	stroke-dasharray: 4px;
+	stroke-opacity: 0.5;
+	fill: none;
 }
 
 /* Style for hovered heatmap rows */
