@@ -187,31 +187,28 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   for (proj in projections) {
     dataLoc <- proj@pData
 
-	#distanceMatrix <- Matrix(0L, nrow=N_SAMPLES, ncol=N_SAMPLES, sparse=T)
-	#k <- ball_tree_knn(t(dataLoc), round(sqrt(N_SAMPLES)), numCores)
-	#nn <- k[[1]]
-	#d <- k[[2]]
+	distanceMatrix <- Matrix(0L, nrow=N_SAMPLES, ncol=N_SAMPLES, sparse=T)
+	k <- ball_tree_knn(t(dataLoc), round(sqrt(N_SAMPLES)), numCores)
+	nn <- k[[1]]
+	d <- k[[2]]
 
 
-    distanceMatrix <- dist.matrix(t(dataLoc), method="euclidean")
+    #distanceMatrix <- dist.matrix(t(dataLoc), method="euclidean")
 
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, paste0(proj@name, "distanceMatrix"))
-    weights <- exp(-1 * (distanceMatrix * distanceMatrix) / NEIGHBORHOOD_SIZE^2)
     
     #point_mult(distanceMatrix, distanceMatrix) 
-	#sparse_weights <- exp(-1 * (d * d) / NEIGHBORHOOD_SIZE^2)
-	#weights <- Matrix(0L, nrow=N_SAMPLES, ncol=N_SAMPLES, sparse=T)
-	#m <- 1
-	#weights <- Matrix(t(as.matrix(apply(weights, 1, function(x) { 
-	#							x[nn[m,]] <- sparse_weights[m,]
-	#							m <<- m+1
-	#							return(x) 
-	#				}))), sparse=T)
+	sparse_weights <- exp(-1 * (d * d) / NEIGHBORHOOD_SIZE^2)
+	weights <- Matrix(0L, nrow=N_SAMPLES, ncol=N_SAMPLES, sparse=T)
+	m <- 1
+	weights <- Matrix(t(as.matrix(apply(weights, 1, function(x) { 
+								x[nn[m,]] <- sparse_weights[m,]
+								m <<- m+1
+								return(x) 
+					}))), sparse=T)
 
-	diag(weights) <- 0
-
-    weightsNormFactor <- Matrix::rowSums(weights)
+    weightsNormFactor <- Matrix::rowSums(weights, sparse=T)
     weightsNormFactor[weightsNormFactor == 0] <- 1.0
     weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
     weights <- weights / weightsNormFactor
@@ -402,7 +399,6 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
  # 								  ncol=N_PROJECTIONS, byrow=T)
   #}
   
-
 
   # Concatenate Factor Sig-proj entries back in 
   sigProjMatrix <- rbind(sigProjMatrix, factorSigProjMatrix, pnumSigProjMatrix)

@@ -115,7 +115,8 @@ function ColorScatter(parent, colorbar, legend)
 					d.height = move.y
 				}	
 				s.attr(d);
-
+					
+				//TODO: ADD FUNCTIONALITY TO SELECT CIRCLES WITHIN A SELECTION RECTANGLE
 			}
 		})
 		.on("mouseup", function() { 

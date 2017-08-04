@@ -4,9 +4,20 @@ readExprToMatrix <- function(filename, delimiter="\t") {
   
   message("Loading data from ", filename, " ...")
   
-  data <- as.matrix(read.table(filename, sep= delimiter, header=TRUE, row.names=1))
-  data2 <- unique(data)
-  return(data2)
+  #data <- as.matrix(read.table(filename, sep= delimiter, header=TRUE, row.names=1))
+  data <- as.matrix(data.table::fread(filename, sep=delimiter, skip=1, drop=1))
+  rnames <- data.table::fread(filename, sep=delimiter, skip=1, select=1)
+  cnames <- read.table(filename, sep=delimiter, header=T, row.names=1,nrows=1)
+  rownames(data) <- as.vector(t(rnames))
+  colnames(data) <- colnames(cnames)
+
+  # check if there are any repeats in samples or genes
+  uniqrows <- unique(rownames(data))
+  #uniqcols <- unique(colnames(data))
+
+  data <- data[uniqrows,]
+  #data <- data[, uniqcols]
+  return(data)
 }
 
 readHKGToMatrix <- function(filename, delimiter="\t") {
@@ -49,7 +60,6 @@ readSignaturesInput <- function(filenames) {
         }
         
         if (sig %in% sig_names) {
-          print('here');
           next; 
         }
 
@@ -65,7 +75,7 @@ readSignaturesInput <- function(filenames) {
         }
     
         names(values) <- genes
-        newSig <- Signature(values, sig, f, "", isPrecomputed=FALSE, isFactor=F, cluster=0)
+        newSig <- Signature(values, sig, f, "", cluster=0)
         sig_data <- c(sig_data, newSig)
         sig_names <- c(sig_names, sig)
       }

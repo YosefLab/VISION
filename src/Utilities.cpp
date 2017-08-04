@@ -2,10 +2,24 @@
 
 #include <Rcpp.h> 
 #include "vptree.h"
+#include "balltree.h"
 #include <iostream>
-// #include <omp.h>
+#include <omp.h>
+#include <string>
+#include <sstream>
 //[[Rcpp::plugins(openmp)]]
 using namespace Rcpp;
+
+
+struct PublicDistanceComparator
+{
+    const DataPoint& item;
+    PublicDistanceComparator(const DataPoint& item) : item(item) {}
+    bool operator()(const DataPoint& a, const DataPoint& b) {
+        return euclidean_distance(item, a) < euclidean_distance(item, b);
+    }
+};
+
 
 // [[Rcpp::export]]
 void point_mult(NumericMatrix & X, NumericVector & Y) {
@@ -53,7 +67,7 @@ List ball_tree_knn(NumericMatrix X ,int K, int n_threads) {
 	for (int n = 0; n < N; n++) {
 		obj_X[n] = DataPoint(D, n, data + n * D);
 	}
-	tree -> create(obj_X);
+	tree -> create(obj_X, 0);
 
 
 	// Find Nearest Neighbors
@@ -63,7 +77,7 @@ List ball_tree_knn(NumericMatrix X ,int K, int n_threads) {
 	std::vector< std::vector<int> > ind_arr(N, std::vector<int>(K+1));
 	std::vector< std::vector<double> > dist_arr(N, std::vector<double>(K+1));
 			
-	//omp_set_num_threads(n_threads);
+	omp_set_num_threads(n_threads);
 	
 	#pragma omp parallel
 	{
@@ -93,3 +107,116 @@ List ball_tree_knn(NumericMatrix X ,int K, int n_threads) {
 	return ret;	
 }
 
+// [[Rcpp::export]]
+List ball_tree_cluster(NumericMatrix X, int L, int n_threads) {
+	// Algorithm to cluster data based on threshold data points per cluster.
+	// Constructs a ball tree from X and traverses until all clusters have at most L points in them
+	// Option to use N_THREADS during traversal
+	
+	int N = X.nrow();
+	int D = X.ncol();
+
+	double* data;
+
+	data = (double*) calloc(D*N, sizeof(double));
+	if (data == NULL) { Rcpp::stop("Memory allocation failed!\n"); }
+	for (int i = 0; i < N; i++) {
+		for (int j = 0; j < D; j++) {
+			data[i*D+j] = X(i,j);
+		}
+	}
+
+	// Build ball tree on set
+	BallTree<DataPoint, euclidean_distance>* tree = new BallTree<DataPoint, euclidean_distance>();
+	std::vector<DataPoint> obj_X(N, DataPoint(D, -1, data));
+	for (int n = 0; n < N; n++) {
+		obj_X[n] = DataPoint(D, n, data + n * D);
+	}
+	tree -> create(obj_X);
+
+	// Define list of vectors to store the indices of data points for each cluster/partition
+	std::vector< std::vector<int> > clusters;
+	std::vector<double> cluster_radii; 
+	tree -> find_partitions(&clusters, &cluster_radii,  L);
+
+	List clust;
+	int total = 0;
+	for (int i = 0; i < clusters.size(); i++) {
+		NumericVector ind(clusters.at(i).begin(), clusters.at(i).end());
+		total += clusters.at(i).size();
+		std::ostringstream stm;
+		stm << (i+1);
+		clust[stm.str()] = ind;
+	}
+	PRINT("%d\n", total);
+
+	NumericVector cr(cluster_radii.begin(), cluster_radii.end());
+	List ret;
+	ret["clusters"] = clust;
+	ret["radii"] = cr;
+
+	return ret;
+}
+
+// [[Rcpp::export]]
+NumericMatrix load_in_knn(NumericMatrix nn, NumericMatrix d) {
+	/* An algorithm to load in the results from calling KNN into an R matrix.
+	 * Takes the distances of each knn stored in D and places them in the indices specified by NN
+	 *
+	 * Returns: NumericMatrix (N x N) where N is the number of cells/samples of nn and d
+	 */
+
+	int K = nn.ncol();
+	int N = nn.nrow();
+
+	NumericMatrix result(N, N);
+
+	for (int i = 0; i < N; i++) {
+		for (int j = 0; j < K; j++) {
+			result(i, nn(i,j)) = d(i, j);
+		}
+	}
+
+	return result;
+}
+
+// [[Rcpp::export]]
+List identify_large_clusters(List clusters, NumericMatrix X) {
+	// Algorithm that identifies oversized clusters in CLUSTERS to be reclustered
+	// given the data in X (N_SAMPLES x N_GENES)
+	
+	int N = X.nrow();
+	int D = X.ncol();
+
+	double* data;
+	
+	data = (double*) calloc(D*N, sizeof(double));
+
+	if (data == NULL) { Rcpp::stop("Memory allocation failed!\n"); }
+	for (int i = 0; i < N; i++) {
+		for (int j = 0; j < D; j++) {
+			data[i*D+j] = X(i,j);
+		}
+	}
+	
+	// Convert clusters input to vects of datapoints
+	std::vector< std::vector<DataPoint> > _clusters;
+	for (int c = 0; c < clusters.size(); c++) {
+		std::vector<DataPoint> _clust;
+		NumericVector clust = as<NumericVector>(clusters[c]);
+		for (int i = 0; i < clust.size(); i++) {
+			_clust.push_back(DataPoint(D, (double) clust[i], data + (int) clust[i] * D));
+		}
+		_clusters.push_back(_clust);
+	}
+	
+
+	List ret;
+	/*for (int i = 0; i < clust_extent.size(); i++) {
+		std::ostringstream stm;
+		stm << (i+1);
+	}*/
+
+	return ret;
+
+}

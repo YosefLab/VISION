@@ -41,11 +41,51 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// ball_tree_cluster
+List ball_tree_cluster(NumericMatrix X, int L, int n_threads);
+RcppExport SEXP FastProjectR_ball_tree_cluster(SEXP XSEXP, SEXP LSEXP, SEXP n_threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
+    Rcpp::traits::input_parameter< int >::type L(LSEXP);
+    Rcpp::traits::input_parameter< int >::type n_threads(n_threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(ball_tree_cluster(X, L, n_threads));
+    return rcpp_result_gen;
+END_RCPP
+}
+// load_in_knn
+NumericMatrix load_in_knn(NumericMatrix nn, NumericMatrix d);
+RcppExport SEXP FastProjectR_load_in_knn(SEXP nnSEXP, SEXP dSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type nn(nnSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type d(dSEXP);
+    rcpp_result_gen = Rcpp::wrap(load_in_knn(nn, d));
+    return rcpp_result_gen;
+END_RCPP
+}
+// identify_large_clusters
+List identify_large_clusters(List clusters, NumericMatrix X);
+RcppExport SEXP FastProjectR_identify_large_clusters(SEXP clustersSEXP, SEXP XSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type clusters(clustersSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
+    rcpp_result_gen = Rcpp::wrap(identify_large_clusters(clusters, X));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"FastProjectR_point_mult", (DL_FUNC) &FastProjectR_point_mult, 2},
     {"FastProjectR_multMat", (DL_FUNC) &FastProjectR_multMat, 2},
     {"FastProjectR_ball_tree_knn", (DL_FUNC) &FastProjectR_ball_tree_knn, 3},
+    {"FastProjectR_ball_tree_cluster", (DL_FUNC) &FastProjectR_ball_tree_cluster, 3},
+    {"FastProjectR_load_in_knn", (DL_FUNC) &FastProjectR_load_in_knn, 2},
+    {"FastProjectR_identify_large_clusters", (DL_FUNC) &FastProjectR_identify_large_clusters, 2},
     {NULL, NULL, 0}
 };
 

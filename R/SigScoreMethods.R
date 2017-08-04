@@ -1,10 +1,10 @@
 #' Different ways to evalutate the signature score
 #' 
-#' Each method should have the same signature so they can be swapped
+#' EAch method should have the same signature so they can be swapped
 #' 
 #' Right now, each takes in a wrapped data object and signature object
 #' 
-#' Specified by FastProject argument (sig_score_method), default = weightedEvalSignature
+#' Specified by FastProject argument (sig_score_method), default = naiveEvalSignature
 
 
 naiveEvalSignature <- function(expr, sig, weights, min_signature_genes) {
@@ -74,14 +74,12 @@ weightedEvalSignature <- function(expr, sig, weights, min_signature_genes) {
   sigGenes <- exprData[names(sigVector),]
   weights <- weights[names(sigVector),]
 
-  ## UNCOMMENT OUT THIS LINE TO ENABLE C++ SIG SCORE CALCULATION
-  #pdata <- calcSigScore(sigGenes, sigVector, weights)
   pdata <- sigGenes * sigVector * weights
 
   sigScores <- colSums(pdata)
   sigScores <- sigScores / colSums(abs(sigVector) * weights)
   
-  sigObj <- SignatureScores(sigScores, sig@name, colnames(weights), 
+  sigObj <- SignatureScores(sigScores, sig@name, colnames(pdata), 
                             isFactor=FALSE, isPrecomputed=FALSE, numGenes=length(sigVector))
   
   return(sigObj)

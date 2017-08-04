@@ -5,7 +5,7 @@
 
 require("fastICA")
 require('Rtsne')
-#require("Rtsne.multicore")
+require("Rtsne.multicore")
 require('igraph')
 require("rsvd")
 require("RDRToolbox")
@@ -73,12 +73,12 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
     } else {
       pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30)[[1]]
       #m <- profmem(pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30)[[1]])
-	}
+   # }
     proj <- Projection("PCA: 1,2", t(pca_res[c(1,2),]))
     inputProjections <- c(inputProjections, proj)
     inputProjections <- c(inputProjections, Projection("PCA: 1,3", t(pca_res[c(1,3),])))
     inputProjections <- c(inputProjections, Projection("PCA: 2,3", t(pca_res[c(2,3),])))
-  #}
+  }
   timingList <- rbind(timingList, c(difftime(Sys.time(), t, units="sec")))
   timingNames <- c(timingNames, "wPCA")
   #memProf <- c(total(m)/1e6)
@@ -309,10 +309,7 @@ applyICA <- function(exprData, numCores, projWeights=NULL) {
   res <- fastICA(ndataT, n.comp=2, maxit=100, tol=.00001, alg.typ="parallel", fun="logcosh", alpha=1,
                  method = "C", row.norm=FALSE, verbose=TRUE)
   
-  res <- res$S
-  rownames(res) <- colnames(exprData)
-
-  return(res)
+  return(res$S)
 }
 
 applySpectralEmbedding <- function(exprData, numCores, projWeights=NULL) {
@@ -335,7 +332,7 @@ applytSNE10 <- function(exprData, numCores, projWeights=NULL) {
   
   ndata <- colNormalization(exprData)
   ndataT <- t(ndata)
-  res <- Rtsne(ndataT, dims=2, max_iter=600, perplexity=10.0, check_duplicates=F, pca=F)
+  res <- Rtsne.multicore(ndataT, dims=2, max_iter=600, perplexity=10.0, check_duplicates=F, pca=F, num_threads=numCores)
   res <- res$Y
   rownames(res) <- colnames(exprData)
   return(res)
@@ -347,7 +344,7 @@ applytSNE30 <- function(exprData, numCores, projWeights=NULL) {
   
   ndata <- colNormalization(exprData)
   ndataT <- t(ndata)
-  res <- Rtsne(ndataT, dims=2, max_iter=600,  perplexity=30.0, check_duplicates=F, pca=F)
+  res <- Rtsne.multicore(ndataT, dims=2, max_iter=600,  perplexity=30.0, check_duplicates=F, pca=F, num_threads=numCores)
   res <- res$Y
   
   rownames(res) <- colnames(exprData)

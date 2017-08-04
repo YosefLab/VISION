@@ -54,7 +54,7 @@ readjust_clusters <- function(clusters, data) {
 			# Apply kmeans clustering to existing cluster
 			currCl = clusters[[i]]
 			subData <- data[currCl,]
-			nCl <- kmeans(subData, centers=round(sqrt(length(currCl))), iter.max=100)
+			nCl <- kmeans(subData, centers=min(nrow(subData), round(sqrt(length(currCl)))), iter.max=100)
 			
 			# Gather cluster vector to list of clusters
 			for (i in 1:length(nCl$cluster)) {
