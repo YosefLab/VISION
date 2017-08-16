@@ -8,7 +8,6 @@ splitSamples <- function(data, sampleSize) {
   data <- sample(data)
   sub <- data[1:sampleSize,]
   holdout <- data[sampleSize:nrow(data),]
-  #print(dim(holdout))
   
   return(list(holdout, sub))
   

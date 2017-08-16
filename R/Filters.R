@@ -4,15 +4,17 @@
 ## of genes to a more manageable size - ideally extracting the
 ## genes that are more biologically informative.
 
+#' Applies filters to the inputted expression data (may remove rows)
+#'
+#'  @param data ExpressionData object
+#'  @param threshold minimum number of samples gene must be detected in to pass
+#'  @param filterInput list of filters to compute
+#'  @return List of the updated ExpressionData object, and the list of filters applied.
+#'  @examples
+#'  expr <- readExprToMatrix("data/expression.txt")
+#'  edata <- ExpressionData(expr)
+#'  filteredData <- applyFilters(eData, 10, c("threshold", "fano"))
 applyFilters <- function(data, threshold, filterInput) {
-  #'Applies filters to the inputted expression data (may remove rows)
-  #'
-  #'Parameters:
-  #'  data: (ExpressionData) expression matrix
-  #'  threshold: (int) minimum number of samples gene must be detected in to pass
-  #'  nofilter: (logical) if true, only filter rows that have all identical values
-  #'  lean: (logical) if true, skip extra filtering methods (Fano)
-  #'Returns: (data.frame) filtered expression matrix
   
   filterList <- c()
   expr <- getExprData(data)
@@ -41,44 +43,39 @@ applyFilters <- function(data, threshold, filterInput) {
   
 }
 
-
+#' Eliminate genes whose sample variance is equal to 0 (may remove rows); run when --nofilter option 
+#' is selected
+#' 
+#' @param data expression matrix
+#' @return filtered expression matrix
 filterGenesNovar <- function(data) {
-  #' Eliminate genes whose sample variance is equal to 0 (may remove rows); run when --nofilter option 
-  #' is selected
-  #' 
-  #' Parameters:
-  #'  data: (data.frame) expression matrix
-  #' Returns: (data.frame) filtered expression matrix
+
   message("Applying no variance filter...")
   
 
   return (subset(data, apply(data, 1, var) != 0))
   
 }
-
+#' Filter genes whose values sum to less than some threshold value (may remove rows)
+#' 
+#' @param data: (data.frame) expression matrix
+#' @param threshold: (int) threshold value to filter by 
+#' @return filtered expression matrix
 filterGenesThreshold <- function(data, threshold) {
-  #' Filter genes whose values sum to less than some threshold value (may remove rows)
-  #' 
-  #' Parameters:
-  #'  data: (data.frame) expression matrix
-  #'  threshold: (int) threshold value to filter by 
-  #' Returns: (data.frame) filtered expression matrix
-  #' 
-  #' 
+
   message("Applying threshold filter...")
   
   return(subset(data, apply(data, 1, function(r) sum(r)) >= threshold))
   
   
 }
-
+# ' Applies the Fano filter to the input data (may remove rows)
+#' 
+#'	@param data NUM_GENES x NUM_SAMPLES expression matrix
+#'	@param num_mad number of median absolute deviations 
+#'  @return NUM_GENES_PASSED_FANO_FILTER x NUM_SAMPLES filtered expression matrix
 filterGenesFano <- function(data, num_mad=2) {
-  #' Applies the Fano filter to the input data (may remove rows)
-  #' 
-  #' Paramaters:
-  #'  data: (matrix) NUM_GENES x NUM_SAMPLES expression matrix
-  #'  num_mad: (float) number of median absolute deviations 
-  #' Returns: (matrix) NUM_GENES_PASSED_FANO_FILTER x NUM_SAMPLES filtered expression matrix
+
   message("Applying fano filter...")
   sub_data <- data
   # if too many samples, subsample for fano filter

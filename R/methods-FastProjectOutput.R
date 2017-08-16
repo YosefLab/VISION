@@ -4,19 +4,36 @@
 library(jug)
 library(jsonlite)
 
+#' Initialize a new FastProjectOuptput object
+#' 
+#' @param eData ExpressionData matrix
+#' @param projDataList List of ProjectionData objects
+#' @param sigMatirx Matrix of signature scores (NUM_SIGS x NUM_CELLS)
+#' @param sigList List of Signatures
+#' @param sigClusters List of clusters of signatures
+#' @param fpParams List of the FastProject parameters that were used to generate this object
+#' @return FastProjectOutput object.
 setMethod("initialize", signature(.Object="FastProjectOutput"), 
-          function(.Object, eData, projDataList, sigMatrix, sigList, sigClusters) {
+          function(.Object, eData, projDataList, sigMatrix, sigList, sigClusters, fpParams) {
             
             .Object@exprData <- eData
             .Object@projData <- projDataList
             .Object@sigMatrix <- sigMatrix
             .Object@sigList <- sigList
             .Object@sigClusters <- sigClusters
+            .Object@fpParams <- fpParams
             
             return(.Object)
           }
 )
 
+#' Save the FastProjectOutput object as an .RDS file and view the results on a localhost
+#' 
+#' @param fpout FastProjectOutput object
+#' @return None
+#' @examples 
+#' fpout <- Analyze(fp)
+#' saveFPOutAndViewResults(fpout)
 setMethod("saveFPOutAndViewResults", signature(fpout="FastProjectOutput"),
           function(fpout) {
             #' Generate an HTML Output Report from a FastProjectOutput Object by first saving the object
@@ -43,6 +60,13 @@ setMethod("saveFPOutAndViewResults", signature(fpout="FastProjectOutput"),
             source("FastProject_Output/server_script.R")
 })
 
+#' View results of analysis without saving output object
+#' 
+#' @param fpout FastProjectOutput object
+#' @return None.
+#' @examples
+#' fpout <- Analyze(fp)
+#' viewResults(fpout)
 setMethod("viewResults", signature(fpout="FastProjectOutput"), 
           function(fpout) {
             

@@ -1,2 +1,2 @@
-PKG_CPPFLAGS = -DROUT -fopenmp -lgopm
+PKG_CPPFLAGS = -DROUT -lgopm
 

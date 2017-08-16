@@ -1,7 +1,14 @@
 require(cogena)
 
+#' Reads in an expression matrix from a file path to a matrix
+#'	@param filename: path to the file to be read in
+#'	@param delimiter: delimiter to use while reading in the file. Default is "\t"
+#'
+#'  @returns: Matrix read in from filename.
+#'  @examples
+#'  expr <- readExprToMatrix("data/expression_matrix.txt")
 readExprToMatrix <- function(filename, delimiter="\t") {
-  
+
   message("Loading data from ", filename, " ...")
   
   #data <- as.matrix(read.table(filename, sep= delimiter, header=TRUE, row.names=1))
@@ -20,12 +27,25 @@ readExprToMatrix <- function(filename, delimiter="\t") {
   return(data)
 }
 
+#' Reads in a .txt file containing Housekeeping Gene names
+#' 
+#' @param filename path to the file to be read in 
+#' @param delimiter delimiter to use while reading in the file. Default is tab.
+#' @returns Table containing the houseekeeping gene names
+#' @examples 
+#' hkg <- readHKGToMatrix("data/housekeeping_genes.txt")
 readHKGToMatrix <- function(filename, delimiter="\t") {
+
   message("Loading data from ", filename, "...")
   return(read.table(filename, sep=delimiter))
 }
 
-
+#' Reads in a list of signature input files.
+#' 
+#' @param filenames a list of paths to signature input files
+#' @returns List of Signature Objects
+#' @examples 
+#' sigs <- readSignaturesInput(c("sigs1.txt", "sigs2.gmt"))
 readSignaturesInput <- function(filenames) {
 
   # Create a dictionary to easily compute signature sign
@@ -121,25 +141,24 @@ readSignaturesInput <- function(filenames) {
   
   return (sig_data)
 }
-
+#'  Reads precomputed signature values form a tab-delimited text file
+#'  
+#'  First row of the file contains sample labels that the signatures correspond with
+#'  
+#'  Each subsequent row contains a signature name in the first column,
+#'  followed by the signature type (either 'numerical' or 'factor')
+#'  followed by the signature values, one for each sample label in the file
+#'  
+#'  @param  filename Filename to read the precomputed signatures from
+#'  @param sampleLables List of labels for which we want the signature scores
+#'  @param delimiter Delimiter to use when reading in file. Default is tab.
+#'  @returns List of Signature data types
+#'  @examples 
+#'  expr <- readExprToMatrix("expression.txt")
+#'  samples <- colnames(expr)
+#'  precomputed <- readPrecomputed("precomputed_sigs.txt", samples)
 readPrecomputed <- function(filename, sampleLabels, delimiter="\t") {
-  #'  Reads precomputed signature values form a tab-delimited text file
-  #'  
-  #'  First row of the file contains sample labels that the signatures correspond with
-  #'  
-  #'  Each subsequent row contains a signature name in the first column,
-  #'  followed by the signature type (either 'numerical' or 'factor')
-  #'  followed by the signature values, one for each sample label in the file
-  #'  
-  #'  Parameters:
-  #'    filename: (character)
-  #'      Filename to read the precomputed signatures from
-  #'    sampleLables: (list)
-  #'      List of labels for which we want the signature scores
-  #'  
-  #'  Returns:
-  #'    Sigs: (list)
-  #'      List of Signature data types
+  
   
   message("Loading data from ", filename)
   

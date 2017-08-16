@@ -1,6 +1,11 @@
 ## Functions to transform the data and calculate weights
 require(loe)
 
+#' Applies the Louvain algorithm to generate micro-clustered data
+#' 
+#' @param kn List of nearest neighbor indices and euclidean distances to these nearest neighbors
+#' @param data Data matrix
+#' @return List of clusters, each entry being a vector of indices representing samples in the cluster.
 louvainCluster <- function(kn, data) {
 	
 	nn <- kn[[1]]
@@ -34,11 +39,20 @@ louvainCluster <- function(kn, data) {
 
 }
 
+#' Repartitions existing clusters to achieve desired granularity. By default, minimum number of clusters
+#' to be generated is the squareroot of the number of cells.
+#' 
+#' @param clusters List of clusters, each entry being a vector of cells in a cluster.
+#' @param data NUM_SAMPLES x NUM_FEATURES data matrix that was used to generate clusters
+#' @return Repartitioned clusters, such that a desireable number of microclusters is acheived. 
 readjust_clusters <- function(clusters, data) {
 	#' Repartitions existing clusters to achieve desired granularity
-	#' Paramters:
+	#' Args:
 	#'	clusters: (List) list of clusters, each entry begin a vector of cells in a cluster
 	#'	data: (matrix) NUM_SAMPLES x NUM_FEATURES data matrix that was used to generate clusters
+	#
+	#	 Returns:
+	#		Repartitioned clusters, such that a desireable number of microclusters is achieved. 
 
 	NUM_PARTITIONS = sqrt(nrow(data))
 	EPSILON = .15
@@ -81,14 +95,16 @@ readjust_clusters <- function(clusters, data) {
 }
 
 
+#' Uses gene names in the housekeeping genes file to create a mapping of false negatives.
+#' Creates a functional fit for each sample based on that sample's HK genes
+#' 
+#' @param data Data matix
+#' @param houskeeping_genes Housekeeping gene table
+#' @param debug If 0, don't enable debugging; if 1, plot FNR. Default is 0.
+#' @return Fit function used to fit expression values to FN rate
+#' @return Sample specific parameters to use with the fit function
 createFalseNegativeMap <- function(data, housekeeping_genes, debug=0) {
-  #' Uses gene names in `housekeeping_genes` to create a mapping of false negatives.
-  #' Creates a functional fit for each sample based on that samples HK genes
-  #'
-  #' Returns: fit_func: (function) Used to fit expression values to FN rate
-  #'          params: (data.frame - Num_Params x Num_Samples) 
-  #'                  Sample-specific parameters to use with fit_func
- 
+
   message("Creating False Negative Map...")
   
   # get subset of genes to be used, ie those included in the housekeeping genes set
@@ -152,6 +168,7 @@ createFalseNegativeMap <- function(data, housekeeping_genes, debug=0) {
   
   # Store the mean expression of genes per quantile
   x_quant <- rep(0, length(q_indices)-1);
+  
   # Store the mean expression of genes in a sample per quantile
   y_quant <- matrix(0L, nrow=length(q_indices)-1, ncol=ncol(y))
   
@@ -202,11 +219,20 @@ createFalseNegativeMap <- function(data, housekeeping_genes, debug=0) {
   
 }
 
+#' Calculates weights for the data from the FNR curves
+#' Weights represent p(not expressed | not detectd) for zero values and are equal to 1.0 for detected values
+#' 
+#' @param fit_func Function parameterized by params that maps each mu_h to a false negative estimate
+#' @param params (4 x NUM_SAMPLES) Matrix containing parameters for the false negative fit function
+#' @param exprData Data from which probability derives
+#' @return Weight matrix (NUM_GENES x NUM_SAMPLES) which includes the estimated weight for each data point in
+#' input matrix. Ranges form 0 to 1.
 computeWeights <- function(fit_func, params, exprData) {
   #' Calculates weights for the data from the FNR curves
   #' Weights represent p(not expressed | not detected) for zero values
   #' and are equal to 1.0 for detected values.
-  #' Parameters: fit_func (function) (mu_h, params) 
+	#'
+  #' Args:			fit_func (function) (mu_h, params) 
   #'             Function parametrized by params that maps each mu_h to a false negative estimate
   #'             
   #'             params (4 x Num_Samples Matrix) 

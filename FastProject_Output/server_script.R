@@ -1,5 +1,5 @@
-library(jug)
-library(jsonlite)
+require(jug)
+require(jsonlite)
 
 # Can use res$text(body) to set body of response
 # Can use res$json(obj) to convert object to json
@@ -79,7 +79,7 @@ jug() %>%
   get("/SigClusters/Normal", function(req, res, err) {
     cls <- fpout@sigClusters
 	cls <- cls$Computed
-	  
+
     out <- toJSON(cls, auto_unbox=TRUE)
     return(out)
   }) %>%

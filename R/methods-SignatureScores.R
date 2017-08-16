@@ -1,3 +1,13 @@
+
+#' Initializes a new SignatureScores object
+#' 
+#' @param scores Signature scores 
+#' @param name Name of signature
+#' @param sample_lables Sample names of expression matrix
+#' @param isFactor Indicates whether or not this is a factor signature
+#' @param isPrecomputed Indicates whether or not this score was precomputed
+#' @param numGenes The number of genes used to calculate the score
+#' @return New SignatureScores object 
 setMethod("initialize", signature(.Object="SignatureScores"),
           function(.Object, scores, name, sample_labels, 
                    isFactor, isPrecomputed, numGenes) {

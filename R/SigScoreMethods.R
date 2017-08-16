@@ -6,17 +6,14 @@
 #' 
 #' Specified by FastProject argument (sig_score_method), default = naiveEvalSignature
 
-
+#' Naive eval Siganture, just sums the columns * sign, equivalent to all weights = 1
+#' 
+#' @param expr ExpressionData object
+#' @param sig Signature to be evalauting 
+#' @param weights Weight matrix computed through FNR curve
+#' @param min_signature_genes Minimum number of genes to evaluate
+#' @return SignatureScore object
 naiveEvalSignature <- function(expr, sig, weights, min_signature_genes) {
-  #' Naive eval signature, just sums the columns * sign
-  #' Equivalent to all weights = 0
-  #' 
-  #' Paramters: exprData (ExpressionData) ExpressionData wrapper
-  #'            sig (Signature) Sig to be evaluating
-  #'            zeros (matrix) Locations of zeros in exprData
-  #'            min_signature_genes (numeric) parameter set in FastProject, minimum number of genes to evaluate
-  #'            
-  #' Returns: sigObj (SignatureScore) Evaluation of signature
   
   exprData <- getExprData(expr)
   
@@ -48,16 +45,15 @@ naiveEvalSignature <- function(expr, sig, weights, min_signature_genes) {
   return(sigObj)
 }
 
+#' Evaluate signature with weights computed from FNR curve.
+#' 
+#' @param expr ExpressionData object
+#' @param sig Signature to be evalauting 
+#' @param weights Weight matrix computed through FNR curve
+#' @param min_signature_genes Minimum number of genes to evaluate
+#' @return SignatureScore object
 weightedEvalSignature <- function(expr, sig, weights, min_signature_genes) {
-  #' Eval signature with weights stored in FastProject@weights
-  #' 
-  #' Paramters: exprData (ExpressionData) ExpressionData wrapper
-  #'            sig (Signature) Sig to be evaluating
-  #'            zeros (matrix) Locations of zeros in exprData
-  #'            min_signature_genes (numeric) parameter set in FastProject, minimum number of genes to evaluate
-  #'            
-  #' Returns: sigObj (SignatureScore) Evaluation of signature
-  
+
   exprData <- getExprData(expr)
   
   # Select genes in signature that are in the expression matrix

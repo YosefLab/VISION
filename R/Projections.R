@@ -13,6 +13,10 @@ require("wordspace")
 #require("profmem")
 
 
+#' Registers the projection methods to be used
+#' 
+#' @param lean If FALSE, all projections applied; else a subset of essential ones are applied. Default is FALSE.
+#' @return List of projection methods to be applied.
 registerMethods <- function(lean=FALSE) {
   
   projMethods <- c()
@@ -29,19 +33,19 @@ registerMethods <- function(lean=FALSE) {
   return(projMethods)
 }
 
-generateProjections <- function(expr, weights, filterName="", inputProjections=c(), numCores = 1, lean=FALSE, perm_wPCA=FALSE, optClust=0, approximate=F) {
-  #' Projects data into 2 dimensions using a variety of linear and non-linear methods
-  #' 
-  #' Parameters:
-  #'  expr: (ExpressionData) expression matrix to project into 2D
-  #'  filterName: (character) name of filter to apply to signatures, should match a filter that was
-  #'              applied to the exprData before
-  #'  inputProjections: (list of ProjectionData) collection of projection data types; names are of type
-  #'              character, mapping to a projection             
-  #' 
-  #' Returns:
-  #'  projections: (list of Projection) collection mapping projection type to the actual projection
-  #'  PC_data: (matrix) weighted PCA of original data type
+#' Projects data into 2 dimensions using a variety of linear and non-linear methods.
+#' 
+#' @param expr ExpressionData object
+#' @param weights weights estimated from FNR curve
+#' @param filterName name of filter, to extract correct data for projections
+#' @param inputProjections Precomputed projections
+#' @param numCores Number of cores to use during dimensionality reductoin
+#' @param lean If T, diminished number of algorithms applied, if FALSE all algorithms applied. Default is FALSE
+#' @param perm_wPCA If TRUE, apply permutation wPCA to determine significant number of components. Default is FALSE.
+#' @return List of Projection objects mapping projection type to projection data
+#' @return List of gene names used during the dimensionality reduction phase
+#' @return List of relevant PPT parameters. 
+generateProjections <- function(expr, weights, filterName="", inputProjections=c(), numCores = 1, lean=FALSE, perm_wPCA=FALSE) {
   
   if (filterName == "novar") {
     exprData <- expr@noVarFilter
@@ -139,21 +143,16 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
   return(list(output, rownames(exprData), PPT))
 }
 
+#' Performs weighted PCA on data
+#' 
+#' @param exprData Expression matrix
+#' @param weights Weights to use for each coordinate in data
+#' @param maxComponents Maximum number of components to calculate
+#' @return Weighted PCA data
+#' @return Variance of each component
+#' @return Eigenvectors of weighted covariance matrix
 applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
-  #' Performs Weighted PCA on the data
-  #' 
-  #' Parameters:
-  #'  data: (Num_Features x Num_Samples) matrix
-  #'    Matrix containing data to project 
-  #'  weights: (Num_Features x Num_Samples) matrix
-  #'    Matrix containing weights to use for each coordinate in data
-  #'  max_components: numeric
-  #'    Maximum number of components to calculate
-  #'    
-  #' Returns:
-  #'  pca_data: (Num_Components x Num_Samples) matrix
-  #'    Data transformed using PCA.  Num_Components = Num_Samples
-  
+
   message("Weighted PCA")
   set.seed(RANDOM_SEED)
   
@@ -164,7 +163,6 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
   
   # Center data
   wmean <- as.matrix(rowSums(multMat(projData, weights)) / rowSums(weights))
-  #wmean <- as.matrix(rowSums(projData * weights) / rowSums(weights))
   dataCentered <- as.matrix(apply(projData, 2, function(x) x - wmean))
 
   # Compute weighted data
@@ -181,8 +179,6 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
   
   # SVD of wieghted correlation matrix
   ncomp <- min(ncol(projData), nrow(projData), maxComponents)
-  # NOTE: Weighted Covariance works better than Weighted Correlation for computing the eigenvectors
-  # NOTE: rsvd() method is 5x more memory efficent than eigs(); eigs() is slightly faster  
   decomp <- rsvd::rsvd(wcov, k=ncomp)
   evec <- t(decomp$u)
   
@@ -198,13 +194,23 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
     
 }
 
-applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, verbose=FALSE, debug=FALSE) {
+#' Applies pemutation method to return the most significant components of weighted PCA data
+#' 
+#' @param expr Expression data
+#' @param weights Weights to apply to each coordinate in data
+#' @param components Maximum components to calculate. Default is 50.
+#' @param p_threshold P Value to cutoff components at. Default is .05.
+#' @param verbose Logical value indicating whether or not a verbose session is being run.
+#' @return Weighted PCA data
+#' @return Variance of each component.
+#' @return Eigenvectors of the weighted covariance matrix
+applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, verbose=FALSE) {
   #' Computes weighted PCA on data. Returns only significant components.
   #' 
   #' After performing PCA on the data matrix, this method then uses a permutation
   #' procedure based on Buja A and Eyuboglu N (1992) to asses components for significance.
   #' 
-  #' Paramaters:
+  #' Parameters:
   #'  data: (Num_Features x Num_Samples) matrix
   #'    Matrix containing data to project 
   #'  weights: (Num_Features x Num_Samples) matrix
@@ -216,7 +222,9 @@ applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, 
   #'  verbose: logical
   #'  
   #'  Return:
-  #'    reducedData: (Num_Components X Num_Samples)
+  #		Weighed PCA data
+  #		Variance of each component
+  #		Eigenvectors of weighted covariance matrix.
   
   message("Permutation WPCA")
   comp <- min(components, nrow(expr), ncol(data))
@@ -270,10 +278,17 @@ applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, 
   
   return(list(wPCA, eval, evec))
 }
+
+#' Performs PCA on data
+#' 
+#' @param exprData Expression data
+#' @param N Number of components to retain. Default is 0
+#' @param variance_proportion Retain top X PC's such that this much variance is retained; if N=0, then apply this method
+#' @return Matrix containing N components for each sample.
 applyPCA <- function(exprData, N=0, variance_proportion=1.0) {
   #' Performs PCA on data
   #' 
-  #' Parameters:
+  #' Args:
   #'  data: (Num_Features x Num_Samples) matrix
   #'    Matrix containing data to project into 2D
   #'  N: int
@@ -300,7 +315,15 @@ applyPCA <- function(exprData, N=0, variance_proportion=1.0) {
   return(t(res$x[,1:N])*-1)
 }
 
-applyICA <- function(exprData, numCores, projWeights=NULL) {
+#' Performs ICA on data
+#' 
+#' @param exprData Expression data, NUM_GENES x NUM_SAMPLES
+#' @param numCores Number of cores to use 
+#' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
+applyICA <- function(exprData, numCores) {
+
+
+
   set.seed(RANDOM_SEED)
   
   
@@ -308,11 +331,20 @@ applyICA <- function(exprData, numCores, projWeights=NULL) {
   ndataT <- t(ndata)
   res <- fastICA(ndataT, n.comp=2, maxit=100, tol=.00001, alg.typ="parallel", fun="logcosh", alpha=1,
                  method = "C", row.norm=FALSE, verbose=TRUE)
+
+  res <- res$S
+  rownames(res) <- colnames(exprData)
   
-  return(res$S)
+  return(res)
 }
 
-applySpectralEmbedding <- function(exprData, numCores, projWeights=NULL) {
+#' Performs Spectral Embedding  on data
+#' 
+#' @param exprData Expression data, NUM_GENES x NUM_SAMPLES
+#' @param numCores Number of cores to use 
+#' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
+applySpectralEmbedding <- function(exprData, numCores) {
+
   set.seed(RANDOM_SEED)
   
   ndata <- colNormalization(exprData)
@@ -327,7 +359,13 @@ applySpectralEmbedding <- function(exprData, numCores, projWeights=NULL) {
   
 }
 
-applytSNE10 <- function(exprData, numCores, projWeights=NULL) {
+#' Performs tSNE with perplexity 10 on data
+#' 
+#' @param exprData Expression data, NUM_GENES x NUM_SAMPLES
+#' @param numCores Number of cores to use 
+#' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
+applytSNE10 <- function(exprData, numCores) {
+
   set.seed(RANDOM_SEED)
   
   ndata <- colNormalization(exprData)
@@ -339,7 +377,13 @@ applytSNE10 <- function(exprData, numCores, projWeights=NULL) {
   
 }
 
-applytSNE30 <- function(exprData, numCores, projWeights=NULL) {
+#' Performs tSNE with perplexity 30 on data
+#' 
+#' @param exprData Expression data, NUM_GENES x NUM_SAMPLES
+#' @param numCores Number of cores to use 
+#' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
+applytSNE30 <- function(exprData, numCores) {
+
   set.seed(RANDOM_SEED)
   
   ndata <- colNormalization(exprData)
@@ -352,7 +396,13 @@ applytSNE30 <- function(exprData, numCores, projWeights=NULL) {
   return(res)
 }
 
-applyISOMap <- function(exprData, numCores, projWeights=NULL) {
+#' Performs ISOMap on data
+#' 
+#' @param exprData Expression data, NUM_GENES x NUM_SAMPLES
+#' @param numCores Number of cores to use 
+#' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
+applyISOMap <- function(exprData, numCores) {
+
   set.seed(RANDOM_SEED)
   
   res <- Isomap(t(exprData), dims=2)
@@ -364,7 +414,13 @@ applyISOMap <- function(exprData, numCores, projWeights=NULL) {
   
 }
 
-applyRBFPCA <- function(exprData, numCores, projWeights=NULL) {
+#' Performs PCA on data that has been transformed with the Radial Basis Function.
+#' 
+#' @param exprData Expression data, NUM_GENES x NUM_SAMPLES
+#' @param numCores Number of cores to use 
+#' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
+applyRBFPCA <- function(exprData, numCores) {
+
   set.seed(RANDOM_SEED)
   
   ndata <- colNormalization(exprData)
@@ -393,20 +449,21 @@ applyRBFPCA <- function(exprData, numCores, projWeights=NULL) {
 
 }
 
+#' Applies the Simple PPT algorithm onto the expression data.
+#' 
+#' @param exprData Expression data
+#' @param numCores Number of cores to use during this analysis
+#' @param nNodes Number of nodes to find. Default is 0
+#' @param sigma regularization parameter for soft-assignment of data points to nodes, used as the variance 
+#'        of a guassian kernel. If 0, this is estimated automatically
+#' @param gamma graph-level regularization parameter, controlling the tradeoff between the noise-levels
+#'        in the data and the graph smoothness. If 0, this is estimated automatically.
+#' @return Positions of the nodes in NUM_FEATURES dimensional space
+#' @return Binary adjacency matrix of fitted tree
+#' @return Distance matrix between fitted tree nodes and data points
+#' @return Score indicating how strucutred the data is, as the z-score of the data MSE from shuffled MSE
 
-applySimplePPT <- function(exprData, numCores, projWeights=NULL, nNodes_ = 0, sigma=0, gamma=0) {
-  #' Principle Tree Analysis
-  #' 
-  #' After begin initialized by either the fit or autoFit functions, the resulting tree structure
-  #' is contained within these fields:
-  #'  C: (NUM_FEATURES x NUM_NODES) matrix
-  #'    positions of the nodes in NUM_FEATURES dimensional space
-  #'  W: (NUM_NODES X NUM_NODES) matrix
-  #'    binary adjacency matrix of the fitted tree
-  #'  Distmat: (NUM_NODES X NUM_SAMPLES) matrix
-  #'    distance matrix between fitted tree nodes and the data points
-  #'  structScore: (numeric)
-  #'    score indicating how structured the data is, as the z-score of the data MSE from shuffled MSE
+applySimplePPT <- function(exprData, numCores, nNodes_ = 0, sigma=0, gamma=0) {
   
   exprData <- t(exprData)
   
@@ -524,6 +581,20 @@ applySimplePPT <- function(exprData, numCores, projWeights=NULL, nNodes_ = 0, si
   return(list(C, Wt, sqdist(t(exprData), t(C)), mse))
 }
 
+#' Fit tree using input parameters
+#' 
+#' @param expr Data to fit (NUM_GENES x NUM_SAMPLES)
+#' @param nNodes Number of nodes in the fitted tree, default is square-root of number of data points
+#' @param sigma Regularization parameter for soft-assignment of data points to nodes, used as the
+#'              variance of a gaussian kernel. If 0, this is estimated automatically.
+#' @param gamma Graph-level regularization parameter, controlling the tradeoff between the noise-levels
+#'              in the data and the graph smoothness. If 0, this is estimated automatically
+#' @param tol Tolerance to use when fitting the tree
+#' @param maxIter Maximum number of Iterations ot run the algorithm for
+#' @return Positions of the nodes in NUM_FEATURES dimensional space
+#' @return Binary adjacency matrix of fitted tree
+#' @return MSE between Fitted nodes and original data points
+
 fitTree <- function(expr, nNodes, sigma, gamma, tol, maxIter) {
   #' Fit tree using input parameters
   #' 
@@ -533,11 +604,11 @@ fitTree <- function(expr, nNodes, sigma, gamma, tol, maxIter) {
   #'  nNodes: numeric
   #'    number of nodes in the fitted tree, default is the square-root of number of data points
   #'  sigma: numeric
-  #'    regularization paramter for soft-assignment of data points to nodes, used as the
+  #'    regularization parameter for soft-assignment of data points to nodes, used as the
   #'    variance of a guassian kernel. If 0, this is estimated automatically
   #'  gamma: numeric
   #'    graph-level regularization parameter, controlling the tradeoff between the noise-levels
-  #'    in the data and the graph smoothness. If 0, the is estimated automatically.
+  #'    in the data and the graph smoothness. If 0, this is estimated automatically.
   
   
   km <- kmeans(t(expr), centers=nNodes, nstart=10, iter.max=100)$centers
@@ -575,7 +646,13 @@ fitTree <- function(expr, nNodes, sigma, gamma, tol, maxIter) {
   
 }
 
+#' Calculates the MSE between C and X
+#' 
+#' @param C d x m matrix
+#' @param X d x n matrix
+#' @return Mean Squared Error between C and X.
 getMSE <- function(C, X) {
+
   if (is.na(C) || is.na(X)) {
     return(NULL)
   }
@@ -584,11 +661,12 @@ getMSE <- function(C, X) {
   
 }
 
+#' Alternative computation of distance matrix, based on matrix multiplication.
+#' 
+#' @param X n x d matrix
+#' @param Y m x d matrix
+#' @return n x m distance matrix
 sqdist <- function(X, Y) {
-  #' Alternative computation of distance matrix, based on matrix multiplication.
-  #' X is n x d matrix
-  #' Y is m x d matrix
-  #' Returns n x m distance matrix
 
 	aa = rowSums(X**2)
 	bb = rowSums(Y**2)
@@ -600,7 +678,20 @@ sqdist <- function(X, Y) {
 
 }
 
+#' Sets all values below a certain level in the data equal to 0
+#' 
+#' @param x Data matrix
+#' @param mi Minimum value 
+#' @return Data matrix with all values less than MI set to 0
 clipBottom <- function(x, mi) {
+  # Sets all values below MI to 0.
+  #
+  # Args:
+  #		x: data matrix
+  #		mi: mininum value
+  #
+  # Returns:
+  #		Data matrix with all values less than MI set to 0
   x[x < mi] <- mi
   return(x)
 }

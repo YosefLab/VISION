@@ -2,6 +2,16 @@ require(geometry)
 require(FNN)
 require(pROC)
 
+#' Initialize a new Signature object.
+#' 
+#' @param sigDict Named list of signs for each gene in the signature 
+#' @param name Name of the signature
+#' @param source File from which this signature was read from 
+#' @param metaData Metadata pertinent to signature
+#' @param isPreocomputed If TRUE indicates that this signature was precomputed. Else not precomputed. Default is F.
+#' @param isFactor If TRUE indicates that htis signature is a Factor, else not a factor. Default is F.
+#' @param cluster Number representing which cluster this signature is a part of. Default is 0.
+#' @return Signature object
 setMethod("initialize", signature(.Object="Signature"),
           function(.Object, sigDict, name, source, metaData="", isPrecomputed=F, isFactor=F, cluster=0) {
             if (missing(sigDict)) {
@@ -26,6 +36,11 @@ setMethod("initialize", signature(.Object="Signature"),
           }
 )
 
+#' Method for testing whether or not signatures are equal to one another (if all signs, genes and name are the same.)
+#' 
+#' @param object Siganature object
+#' @param compareSig Other signature to compare against 
+#' @return TRUE if sigs are equal, else FALSE
 setMethod("sigEqual", signature(object="Signature"),
           function(object, compareSig) {
             if (class(compareSig) != "Signature") {
@@ -41,6 +56,11 @@ setMethod("sigEqual", signature(object="Signature"),
           }
 )
 
+#' Add signature data to the sigDict of this Signature Object
+#' 
+#' @param object Signature object
+#' @param data Additional signature data, in the form of a named list 
+#' @return Updated Signature object.
 setMethod("addSigData", signature(object="Signature"),
           function(object, data) {
             object@sigDict <- list(object@sigDict, data)
@@ -50,6 +70,13 @@ setMethod("addSigData", signature(object="Signature"),
 
 BG_DIST <- matrix(0L, nrow=0, ncol=0)
 
+#' Generates, or if already generated retrieves, a random Background Distribution
+#' 
+#' @param N_SAMPLES Number of samples to generate the distribution for
+#' @param NUM_REPLICATES Number of replicates to generate for the background distribution 
+#' @return Random matrix with dimensions N_SAMPLES x NUM_REPLICATES with row ordered in ascending order
+#' @examples
+#' bgdist <- getBGDist(430, 1000)
 getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
   
   if (nrow(BG_DIST) != N_SAMPLES || ncol(BG_DIST) != NUM_REPLICATES) {
@@ -62,25 +89,17 @@ getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
   
 }
 
+#' Evaluates the significance of each signature vs. each projection. 
+#' 
+#'  @param projections Maps projections to their spatial coordinates for each sample
+#'  @param sigScoresData: List of SignatureScores Object, mapping signature names to their value at each coordinate
+#'  @param randomSigData: List of SignatureScores Object, mapping randomly generated signatures to scores to be compared with the real signature scores.
+#'  @return: Labels for rows of the output matrices
+#'  @return Labels for columns of the output matrices
+#'  @return Matrix (Num_Signatures x Num_Projections) sigProj dissimilarity score
+#'  @return SigProjMatrix_P matrix (Num_Signatures x Num_Projections) sigProj p values
 sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBORHOOD_SIZE = 0.33, numCores=1) {
-  #' Evaluates the significance of each signature vs. each projection. 
-  #' 
-  #' Paramters:
-  #'  projections: ProjectionData
-  #'    Maps projections to their spatial coordinates for each sample
-  #'  sigScoresData: List of SignatureScores Object
-  #'    Maps signature names to their value at each coordinate
-  #'  randomSigData: List of SignatureScores Object
-  #'    Maps randomly generated signatures to scores to be compared with the real signature scores.
-  #'  
-  #' Returns:
-  #'  spRowLabels: List of Strings
-  #'    Labels for rows of the output matrices
-  #'  spColLabels: List of Strings
-  #'    Labels for columns of the output matrices
-  #'  sigProjMatrix: matrix (Num_Signatures x Num_Projections)
-  #'    sigProj dissimilarity score
-  #'  SigProjMatrix_P: matrix (Num_Signatures x Num_Projections)
+  
 
   ptm <- Sys.time()
   tRows <- c()
@@ -187,28 +206,19 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   for (proj in projections) {
     dataLoc <- proj@pData
 
-	distanceMatrix <- Matrix(0L, nrow=N_SAMPLES, ncol=N_SAMPLES, sparse=T)
 	k <- ball_tree_knn(t(dataLoc), round(sqrt(N_SAMPLES)), numCores)
 	nn <- k[[1]]
 	d <- k[[2]]
 
 
-    #distanceMatrix <- dist.matrix(t(dataLoc), method="euclidean")
 
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, paste0(proj@name, "distanceMatrix"))
     
-    #point_mult(distanceMatrix, distanceMatrix) 
-	sparse_weights <- exp(-1 * (d * d) / NEIGHBORHOOD_SIZE^2)
-	weights <- Matrix(0L, nrow=N_SAMPLES, ncol=N_SAMPLES, sparse=T)
-	m <- 1
-	weights <- Matrix(t(as.matrix(apply(weights, 1, function(x) { 
-								x[nn[m,]] <- sparse_weights[m,]
-								m <<- m+1
-								return(x) 
-					}))), sparse=T)
+    sparse_weights <- exp(-1 * (d * d) / NEIGHBORHOOD_SIZE^2)
+    weights <- load_in_knn(nn, sparse_weights)
 
-    weightsNormFactor <- Matrix::rowSums(weights, sparse=T)
+    weightsNormFactor <- Matrix::rowSums(weights)
     weightsNormFactor[weightsNormFactor == 0] <- 1.0
     weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
     weights <- weights / weightsNormFactor
@@ -425,6 +435,13 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   return(list(spRowLabels, spColLabels, sigProjMatrix, sigProjMatrix_P))
 }
 
+#' Clusters signatures according to the rank sum
+#' 
+#' @param sigList List of signatures
+#' @param sigMatrix Matrix of signatures scores, NUM_SIGNATURES x NUM_SAMPLES
+#' @param k Number of clusters to generate
+#' @return List of clusters involving computed signatures
+#' @return List of clusters involving precomptued signatures
 clusterSignatures <- function(sigList, sigMatrix, k=10) {
   
   precomputed = lapply(sigList, function(x) x@isPrecomputed)

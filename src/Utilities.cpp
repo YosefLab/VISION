@@ -4,7 +4,7 @@
 #include "vptree.h"
 #include "balltree.h"
 #include <iostream>
-#include <omp.h>
+//#include <omp.h>
 #include <string>
 #include <sstream>
 //[[Rcpp::plugins(openmp)]]
@@ -77,15 +77,15 @@ List ball_tree_knn(NumericMatrix X ,int K, int n_threads) {
 	std::vector< std::vector<int> > ind_arr(N, std::vector<int>(K+1));
 	std::vector< std::vector<double> > dist_arr(N, std::vector<double>(K+1));
 			
-	omp_set_num_threads(n_threads);
+	//omp_set_num_threads(n_threads);
 	
-	#pragma omp parallel
-	{
-	#pragma omp for 
+	//#pragma omp parallel
+	//{
+	//#pragma omp for 
 	for (int n = 0; n < N; n++) {
 		tree -> search(obj_X[n], K+1, &ind_arr[n], &dist_arr[n]);
 	}
-	}
+	//}
 
 	for (int i = 0; i < N; i++) {
 		NumericVector ind(ind_arr[i].begin(), ind_arr[i].end());
@@ -173,50 +173,10 @@ NumericMatrix load_in_knn(NumericMatrix nn, NumericMatrix d) {
 
 	for (int i = 0; i < N; i++) {
 		for (int j = 0; j < K; j++) {
-			result(i, nn(i,j)) = d(i, j);
+			result(i, nn(i,j)-1) = d(i, j);
 		}
 	}
 
 	return result;
 }
 
-// [[Rcpp::export]]
-List identify_large_clusters(List clusters, NumericMatrix X) {
-	// Algorithm that identifies oversized clusters in CLUSTERS to be reclustered
-	// given the data in X (N_SAMPLES x N_GENES)
-	
-	int N = X.nrow();
-	int D = X.ncol();
-
-	double* data;
-	
-	data = (double*) calloc(D*N, sizeof(double));
-
-	if (data == NULL) { Rcpp::stop("Memory allocation failed!\n"); }
-	for (int i = 0; i < N; i++) {
-		for (int j = 0; j < D; j++) {
-			data[i*D+j] = X(i,j);
-		}
-	}
-	
-	// Convert clusters input to vects of datapoints
-	std::vector< std::vector<DataPoint> > _clusters;
-	for (int c = 0; c < clusters.size(); c++) {
-		std::vector<DataPoint> _clust;
-		NumericVector clust = as<NumericVector>(clusters[c]);
-		for (int i = 0; i < clust.size(); i++) {
-			_clust.push_back(DataPoint(D, (double) clust[i], data + (int) clust[i] * D));
-		}
-		_clusters.push_back(_clust);
-	}
-	
-
-	List ret;
-	/*for (int i = 0; i < clust_extent.size(); i++) {
-		std::ostringstream stm;
-		stm << (i+1);
-	}*/
-
-	return ret;
-
-}

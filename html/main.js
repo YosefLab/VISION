@@ -102,15 +102,6 @@ function doneTyping()
 window.onload = function()
 {
 
-	tooltip = new Tooltip("main-tooltip", 230);
-
-	$(".sigclust").on("mouseover", function(d) {
-		tooltip.showTooltip("Click To Toggle Cluster Display", d);
-	})
-	.on("mouseout", function(d) {
-		tooltip.hideTooltip();
-	});
-
 
     //Define some globals
     global_scatter = new ColorScatter("#scatter_div", true, true);
@@ -150,10 +141,6 @@ window.onload = function()
 				tr.setAttribute("id", "proj_row"+curr_cl);
 				thead.appendChild(tr);
 			}
-			/*var tr2 = document.createElement("tr");
-			tr2.setAttribute("id", "summary_row"+curr_cl);
-			tr2.setAttribute("class", "summary-row");
-			thead.appendChild(tr2);*/
 
 			var tbody = document.createElement("tbody");
 			

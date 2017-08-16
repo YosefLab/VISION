@@ -7,7 +7,7 @@ using namespace Rcpp;
 
 // point_mult
 void point_mult(NumericMatrix& X, NumericVector& Y);
-RcppExport SEXP FastProjectR_point_mult(SEXP XSEXP, SEXP YSEXP) {
+RcppExport SEXP _FastProjectR_point_mult(SEXP XSEXP, SEXP YSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericMatrix& >::type X(XSEXP);
@@ -18,7 +18,7 @@ END_RCPP
 }
 // multMat
 NumericVector multMat(NumericMatrix X, NumericMatrix Y);
-RcppExport SEXP FastProjectR_multMat(SEXP XSEXP, SEXP YSEXP) {
+RcppExport SEXP _FastProjectR_multMat(SEXP XSEXP, SEXP YSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -30,7 +30,7 @@ END_RCPP
 }
 // ball_tree_knn
 List ball_tree_knn(NumericMatrix X, int K, int n_threads);
-RcppExport SEXP FastProjectR_ball_tree_knn(SEXP XSEXP, SEXP KSEXP, SEXP n_threadsSEXP) {
+RcppExport SEXP _FastProjectR_ball_tree_knn(SEXP XSEXP, SEXP KSEXP, SEXP n_threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -43,7 +43,7 @@ END_RCPP
 }
 // ball_tree_cluster
 List ball_tree_cluster(NumericMatrix X, int L, int n_threads);
-RcppExport SEXP FastProjectR_ball_tree_cluster(SEXP XSEXP, SEXP LSEXP, SEXP n_threadsSEXP) {
+RcppExport SEXP _FastProjectR_ball_tree_cluster(SEXP XSEXP, SEXP LSEXP, SEXP n_threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -56,7 +56,7 @@ END_RCPP
 }
 // load_in_knn
 NumericMatrix load_in_knn(NumericMatrix nn, NumericMatrix d);
-RcppExport SEXP FastProjectR_load_in_knn(SEXP nnSEXP, SEXP dSEXP) {
+RcppExport SEXP _FastProjectR_load_in_knn(SEXP nnSEXP, SEXP dSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -66,26 +66,13 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// identify_large_clusters
-List identify_large_clusters(List clusters, NumericMatrix X);
-RcppExport SEXP FastProjectR_identify_large_clusters(SEXP clustersSEXP, SEXP XSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< List >::type clusters(clustersSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
-    rcpp_result_gen = Rcpp::wrap(identify_large_clusters(clusters, X));
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
-    {"FastProjectR_point_mult", (DL_FUNC) &FastProjectR_point_mult, 2},
-    {"FastProjectR_multMat", (DL_FUNC) &FastProjectR_multMat, 2},
-    {"FastProjectR_ball_tree_knn", (DL_FUNC) &FastProjectR_ball_tree_knn, 3},
-    {"FastProjectR_ball_tree_cluster", (DL_FUNC) &FastProjectR_ball_tree_cluster, 3},
-    {"FastProjectR_load_in_knn", (DL_FUNC) &FastProjectR_load_in_knn, 2},
-    {"FastProjectR_identify_large_clusters", (DL_FUNC) &FastProjectR_identify_large_clusters, 2},
+    {"_FastProjectR_point_mult", (DL_FUNC) &_FastProjectR_point_mult, 2},
+    {"_FastProjectR_multMat", (DL_FUNC) &_FastProjectR_multMat, 2},
+    {"_FastProjectR_ball_tree_knn", (DL_FUNC) &_FastProjectR_ball_tree_knn, 3},
+    {"_FastProjectR_ball_tree_cluster", (DL_FUNC) &_FastProjectR_ball_tree_cluster, 3},
+    {"_FastProjectR_load_in_knn", (DL_FUNC) &_FastProjectR_load_in_knn, 2},
     {NULL, NULL, 0}
 };
 
