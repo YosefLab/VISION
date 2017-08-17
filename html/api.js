@@ -147,7 +147,7 @@ var api = (function(){
 			type: "POST",
 			url: query,
 			data: JSON.stringify(subset),
-		}).done(alert("Finished Running Analysis"));	
+		}).done(alert("Running Subset Analysis"));	
 	}
 
     return output;

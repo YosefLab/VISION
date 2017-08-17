@@ -57,7 +57,6 @@ jug() %>%
     return(out)
   }) %>%
   get("/Signature/Ranks/(?<sig_name3>.*)", function(req, res, err) {
-  	print(dim(fpout@exprData@data))
     sigMatrix <- fpout@sigMatrix
     name <- URLdecode(req$params$sig_name3)
     out <- "Signature does not exist!"
@@ -173,7 +172,6 @@ jug() %>%
   get("/FilterGroup/(?<filter_name7>.*)/genes", function(req, res, err) {
     projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name7)
-    print(filter)
 
     out <- toJSON(projData[[filter]]@genes)
 
@@ -202,8 +200,9 @@ jug() %>%
 	subset <- fromJSON(req$body)
 	nexpr <- fpout@exprData@data[,subset]
 	nfp <- createNewFP(fpout@fpParams, nexpr)
-	fpo2 <- Analyze(nfp)
-	saveFPOutAndViewResults(fpo2)
+	newAnalysis(nfp)
+	#fpo2 <- Analyze(nfp)
+	#saveFPOutAndViewResults(fpo2)
 	return()
   }) %>%
   get("/path2", function(req, res, err){
