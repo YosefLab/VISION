@@ -3,12 +3,13 @@
 
 
 html {
-
     height: 100%;
+    width: 100%;
 }
 
 body {
     height: 100%;
+    width: 100%;
     padding-top: 10px;
     padding-left: 20px;
     padding-right: 20px;
@@ -85,7 +86,7 @@ hr {
 	
 #info_tab:checked ~ #projection-content-wrapper,
 #cluster_tab:checked ~ #cluster-wrapper,
-#cell-select-tab:checked ~ #cell-selection-wrapper,
+#cell_select_tab:checked ~ #cell-selection-wrapper,
 #proj_tab:checked ~ #sigvp-scatter-wrapper,
 #pc_tab:checked ~ #pc-viewer-wrapper,
 #tree_tab:checked ~ #ppt-wrapper {
@@ -135,6 +136,110 @@ hr {
 	overflow: scroll:
 	height: 100%;
  }
+
+#cell-range-div {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;	
+}
+
+.group {
+	margin-top: 20px;
+	min-width: 30px;
+	position: relative;
+	display: inline-block;
+	flex: 1 1 auto;
+}
+
+.range-input {
+	width: 100%;
+	padding: 5px 5px 5px 5px;
+	display: block;
+	border: none;
+	border-bottom: 1px solid #757575;
+}
+
+.range-input:focus { outline: none; }
+
+.range-input-label {
+	color: #999;
+	font-weight: normal;
+	position: absolute;
+	pointer-events: none;
+	left: 5px;
+	top: 10px;
+	transition: 0.2s ease all;
+	-moz-transition: 0.2s ease all;
+	-webkit-transition: 0.2s ease all;
+}
+
+.range-input:focus ~ .range-input-label, .range-input:valid ~ .range-input-label {
+	top: -20px;
+	font-size: 14px;
+	color: #5264AE;
+}
+
+.bar {
+	position: relative;
+	width: 100%;
+	display: block;
+}
+
+.bar:before, .bar:after {
+	content: '';
+	height: 2px;
+	width: 0;
+	bottom: 1px;
+	position: absolute;
+	background: #5264AE;
+	transition: 0.2s ease all;
+	-moz-transition: 0.2s ease all;
+	-webkit-transition: 0.2s ease all;
+}
+
+.bar:before {
+	left: 50%;
+}
+
+.bar:after {
+	right: 50%;
+}
+
+.range-input:focus ~ .bar:before, .range-input:focus ~ .bar:after {
+	width: 50%;
+}
+	
+.highlight {
+	position: absolute;
+	height: 60%;
+	width: 100%;
+	top: 25%;
+	left: 0;
+	pointer-events: none;
+	opacity: 0.5;
+}
+
+.range-input:focus ~ .highlight {
+	-webkit-animation:inputHighlighter 0.3s ease;
+	-moz-animation:inputHighlighter 0.3s ease;
+	animation:inputHighlighter 0.3s ease;
+}
+
+@-webkit-keyframes inputHighlighter {
+	from { background: #5264AE; }
+	to { width: 0; background: transparent; }
+}
+
+@-moz-keyframes inputHighlighter {
+	from { background: #5264AE; }
+	to { width: 0; background: transparent; }
+}
+
+@keyframes inputHighlighter {
+	from { background: #5264AE; }
+	to { width: 0; background: transparent; }
+}
 
  #sigvp-scatter-div {
 	display: flex;

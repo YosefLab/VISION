@@ -144,6 +144,7 @@ setMethod("createOutputDirectory", "FastProject", function(object) {
 #' fp <- FastProject("expression_matrix.txt", "data/Gene Name Housekeeping.txt", c("sigfile_1.gmt", "sigfile_2.txt"), precomputed="pre_sigs.txt")
 #' fpout <- Analysis(fp)
 setMethod("Analyze", signature(object="FastProject"), function(object) {
+  message("Beginning Analysis")
   
   ptm <- Sys.time()
   timingList <- (ptm - ptm)
@@ -354,12 +355,11 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "ClusterSignatures")
 
-  slots <- slotNames(object)
+  slots <- slotNames("FastProject")
   fpParams <- list()
   for (s in slots) {
-	  fpParams <- c(fpParams, slot(object, s))
+	fpParams[[s]] <- slot(object, s)
   }
-  names(fpParams) <- slots
 
   fpOut <- FastProjectOutput(eData, projDataList, sigMatrix, sigList, sigClusters, fpParams)
 
@@ -369,8 +369,8 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   timingList <- as.matrix(timingList)
   rownames(timingList) <- tRows
 
-  return(list(fpOut, timingList))
-  #return(fpOut)
+  #return(list(fpOut, timingList))
+  return(fpOut)
 }
 )
 
@@ -391,15 +391,16 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
 #'   names(fpParams) <- slots
 #'   nfp <- extraAnalysisFastProject(fpParams, nexpr)
 
-extraAnalysisFastProject <- function(fpParams, nexpr) {
-	fp <- FastProject("", "", c())
-	slots <- slotNames("FastProject")
-	
-	for (s in slots) {
-		slot(fp, s) <- fpParams[[s]]
-	}
+createNewFP <- function(fpParams, nexpr) {
+	fp <- FastProject(exprData=fpParams[["exprData"]], sigData=fpParams[["sigData"]],
+						housekeepingData=fpParams[["housekeepingData"]])
 
-	fp@exprData <- nexpr
+	slots <- names(fpParams)	
+	for (s in slots) {
+		if (s != "exprData" && s != "sigData" && s != "housekeepingData") {
+			slot(fp, s) <- fpParams[[s]]
+		}
+	}
 
 	return(fp)
 }

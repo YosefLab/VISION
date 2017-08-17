@@ -6,6 +6,9 @@ global_status.signature_filter = "";
 global_status.scatterColorOption = "rank";
 global_status.filter_group = "";
 global_status.filter_group_genes = []
+global_status.upper_range = "";
+global_status.lower_range = "";
+global_status.subset = [];
 
 var global_data = {};
 global_data.sigIsPrecomputed = {};
@@ -159,6 +162,7 @@ window.onload = function()
     $("#filter_dropdown").change(function(){
         global_status.filter_group = $(this).val();
 
+		console.log(global_status.filter_group);
         api.filterGroup.genes(global_status.filter_group)
             .then(function(genes){
                 global_status.filter_group_genes = genes;
@@ -185,6 +189,17 @@ window.onload = function()
         clearTimeout(filterSigTimer);
         filterSigTimer = setTimeout(doneTyping, filterSigTimer_Timeout);
     });
+
+    var upperRange = $("#upper-input");
+    var lowerRange = $("#lower-input");
+
+    upperRange.on("input", function() {
+		global_status.upper_range = this.value; 
+	});
+
+	lowerRange.on("input", function() {
+		global_status.lower_range = this.value;
+	});
 
     // Define cluster dropdown 
     var clust_dropdown = $('#cluster_select_method');
@@ -237,6 +252,7 @@ window.onload = function()
     var filterGroupPromise = api.filterGroup.list()
         .then(function(filters){
 
+		console.log(filters);
         for(var i = 0; i < filters.length; i++){
             filter = filters[i]
             var option = $(document.createElement("option"));
@@ -886,6 +902,7 @@ function createSigModal(sig_key){
 
 function createGeneModal()
 {
+	console.log(global_status.filter_group);
     return api.filterGroup.genes(global_status.filter_group)
         .then(function(genes){
 
@@ -988,6 +1005,26 @@ function exportSigProj() {
 
         });
 
+}
+
+function selectRange() {
+	var cells = global_scatter.selectCellRange(global_status.lower_range, global_status.upper_range);
+
+	global_status.subset = cells; 
+}
+
+function unselectRange() {
+	global_scatter.unselect();
+	
+	global_status.subset = [];
+}
+
+
+function runSubsetAnalysis() {
+	console.log("Running Subset Analysis");
+	if (global_status.subset.length > 0) {
+		api.analysis.run(global_status.subset);
+	}
 }
 
 function destroyClickedElement(event) {

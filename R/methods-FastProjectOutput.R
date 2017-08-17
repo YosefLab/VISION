@@ -67,10 +67,10 @@ setMethod("saveFPOutAndViewResults", signature(fpout="FastProjectOutput"),
 #' @examples
 #' fpout <- Analyze(fp)
 #' viewResults(fpout)
-setMethod("viewResults", signature(fpout="FastProjectOutput"), 
-          function(fpout) {
+setMethod("viewResults", signature(object="FastProjectOutput"), 
+          function(object) {
             
-            arg1 <<- fpout
+            arg1 <<- object
             message("Launching the server...")
             message("Press exit or ctrl c to exit")
             source("FastProject_Output/server_script.R")

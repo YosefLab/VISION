@@ -119,11 +119,39 @@
 					</div>
 				</div>
 				<div class="tab-content" id="cell-selection-wrapper" style="position: absolute; height=90%; width: 100%">
-					<div id="cell-selection-div">
+					<div id="cell-selection-div" style="width: 80%; margin-right: 10%; margin-left: 10%;">
 						<h4 style="text-align: center">Select Cells for Further Analysis</h4>
+						<div>
+							<form id="cell-range-container">
+								<div class="group" style="margin-left: 10px">
+									<input class="range-input" id="lower-input" type="text" required>
+									<span class="highlight"></span>
+									<span class="bar"></span>
+									<label class="range-input-label">Lower</label>
+								</div>
+								<div class="group" style="float: right; margin-right: 10px;">
+									<input class="range-input" id="upper-input" type="text" required>
+									<span class="highlight"></span>
+									<span class="bar"></span>
+									<label class="range-input-label">Upper</label>
+								</div>
+							</form>
+						</div>
+						<div style="margin-top: 15px; margin-right:10px; width: 100%; min-height:20px;">
+							<span style="float: right; margin-right: 10px;">
+								<button id="unselct-button" type="button" class="btn btn-default" onclick=unselectRange()>Unselect Cells</button>
+							</span>
+							<span style="float:right; margin-right: 10px">
+								<button id="select-button" type="button" class="btn btn-default" onclick=selectRange()>Select Cells</button>
+							</span>
+						</div>
+						<div style="margin-top: 30px; width: 100%;">		
+							<span>
+								<button style="align-items: center; width: 60%; margin-left:20%; margin-right:20%" id="analysis-button" type="button" class="btn btn-default" onclick=runSubsetAnalysis()>Run Analysis</button>
+							</span>
+						</div>
 					</div>
 				</div>
-
 			</div>
 		</div>
     </div>

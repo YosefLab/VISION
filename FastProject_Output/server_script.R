@@ -16,13 +16,17 @@ require(jsonlite)
 # Sample API BELOW
 # ----------------
 
+
 if (class(arg1) == "FastProjectOutput") {
   fpout <- arg1
 } else {
   fpout <- readRDS(arg1)
 }
 
-browseURL("http://127.0.0.1:8080/html/Results.html")
+port <- sample(8000:9999, 1)
+url <- paste0("http://127.0.0.1:", port, "/html/Results.html")
+browseURL(url)
+
 # Launch the server
 jug() %>%
   get("/Signature/Scores/(?<sig_name1>.*)", function(req, res, err) {
@@ -53,6 +57,7 @@ jug() %>%
     return(out)
   }) %>%
   get("/Signature/Ranks/(?<sig_name3>.*)", function(req, res, err) {
+  	print(dim(fpout@exprData@data))
     sigMatrix <- fpout@sigMatrix
     name <- URLdecode(req$params$sig_name3)
     out <- "Signature does not exist!"
@@ -168,6 +173,7 @@ jug() %>%
   get("/FilterGroup/(?<filter_name7>.*)/genes", function(req, res, err) {
     projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name7)
+    print(filter)
 
     out <- toJSON(projData[[filter]]@genes)
 
@@ -191,6 +197,14 @@ jug() %>%
   }) %>%
   get("/Expression", function(req, res, err) {
     return(expressionToJSON(fpout@exprData@data, matrix(NA)))
+  }) %>%
+  post("/Analysis/Run/", function(req, res, err) {
+	subset <- fromJSON(req$body)
+	nexpr <- fpout@exprData@data[,subset]
+	nfp <- createNewFP(fpout@fpParams, nexpr)
+	fpo2 <- Analyze(nfp)
+	saveFPOutAndViewResults(fpo2)
+	return()
   }) %>%
   get("/path2", function(req, res, err){
     return("Hello Mars!")
@@ -243,7 +257,7 @@ jug() %>%
       out = "ERROR!"
     }
     return(out)
-  }) %>%
+  }) %>% 
   serve_static_files("../html") %>%
   simple_error_handler_json() %>%
-  serve_it()
+  serve_it(port=port)

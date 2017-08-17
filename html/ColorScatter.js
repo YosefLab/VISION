@@ -348,7 +348,12 @@ ColorScatter.prototype.setSelected = function(selected_index, event_id)
     var circles = this.svg.selectAll("circle")
         .data(this.points);
     circles
-		.classed("point-selected", function(d, i){return self.selectedPoints.indexOf(i) != -1;});
+		.classed("point-selected", function(d, i){return self.selectedPoints.indexOf(i) != -1;})
+		.attr("opacity", function(d,i) {
+			if (self.selectedPoints.indexOf(i) == -1) {
+				return .4
+			}
+		});
 };
 
 ColorScatter.prototype.setHovered_TreeNode = function(node, clusters, event_id) {
@@ -445,3 +450,42 @@ ColorScatter.prototype.redraw = function(performTransition) {
     circles.exit().remove();
     };
 };
+
+ColorScatter.prototype.selectCellRange = function(lower, upper) {
+	
+	var self = this;
+	var allCellNames = this.points.map(function(e) { return e[3]; });
+    var mappedData = this.points.map(function(e){return [e[2], e[3]];}); //extract 2nd and 3rd columns
+
+	var filteredData = mappedData.filter(function(e) {
+		return e[0] >= lower && e[0] <= upper
+	});
+
+	var cellNames = filteredData.map(function(e){return e[1];});
+	
+	cellNames.forEach(function(e) {
+		self.selectedPoints.push(allCellNames.indexOf(e));
+	});
+
+	
+    var circles = this.svg.selectAll("circle")
+        .data(this.points);
+    circles
+		.classed("point-selected", function(d, i){return self.selectedPoints.indexOf(i) != -1;})
+		.attr("opacity", function(d,i) {
+			if (self.selectedPoints.indexOf(i) == -1) {
+				return .4
+			}
+		});
+	return cellNames
+}
+
+ColorScatter.prototype.unselect = function() {
+	var self = this;
+	this.selectedPoints.length = 0;	
+    var circles = this.svg.selectAll("circle")
+        .data(this.points);
+    circles
+		.classed("point-selected", function(d, i){return self.selectedPoints.indexOf(i) != -1;})
+		.attr("opacity", 1.0);
+}
