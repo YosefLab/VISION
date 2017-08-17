@@ -175,3 +175,8 @@ clusterToJSON <- function(cluster) {
   return(json)
 }
 
+newAnalysis <- function(nfp) {
+	fpo1 <- Analyze(nfp)
+	saveFPOutAndViewResults(fpo1)
+
+}

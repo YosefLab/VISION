@@ -206,7 +206,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     rownames(object@weights) <- rownames(originalData)
     colnames(object@weights) <- colnames(originalData)
   }
-  else if (all(is.na(object@weights))) {
+  else if (all(is.na(object@weights)) || ncol(object@weights) != ncol(object@exprData)) {
     message("Computing weights from False Negative Function...")
     object@weights <- computeWeights(func, params, eData)
   }
@@ -316,7 +316,6 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     tRows <- c(tRows, paste0("Pr. ", filter))
 
     message("Computing significance of signatures...")
-    #return(list(projs, sigScores, randomSigScores))
     sigVProj <- sigsVsProjections(projs, sigScores, randomSigScores)
     
     sigKeys <- sigVProj[[1]]
@@ -392,16 +391,16 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
 #'   nfp <- extraAnalysisFastProject(fpParams, nexpr)
 
 createNewFP <- function(fpParams, nexpr) {
-	fp <- FastProject(exprData=fpParams[["exprData"]], sigData=fpParams[["sigData"]],
+	nfp <- FastProject(exprData=nexpr, sigData=fpParams[["sigData"]],
 						housekeepingData=fpParams[["housekeepingData"]])
 
 	slots <- names(fpParams)	
 	for (s in slots) {
 		if (s != "exprData" && s != "sigData" && s != "housekeepingData") {
-			slot(fp, s) <- fpParams[[s]]
+			slot(nfp, s) <- fpParams[[s]]
 		}
 	}
 
-	return(fp)
+	return(nfp)
 }
   
