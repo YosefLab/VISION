@@ -11,6 +11,7 @@
     <script type="text/javascript" src="d3tip.js"></script>
     <script type="text/javascript" src="Utilities.js"></script>
     <script type="text/javascript" src="jszip.min.js"></script>
+	<script type="text/javascript" src="D3-Lasso-Plugin/lasso.js"></script>
     <script type="text/javascript" src="main.js"></script>
     <script type="text/javascript" src="api.js"></script>
 
@@ -122,6 +123,12 @@
 					<div id="cell-selection-div" style="width: 80%; margin-right: 10%; margin-left: 10%;">
 						<h4 style="text-align: center">Select Cells for Further Analysis</h4>
 						<div>
+							<span>
+								<label for="subset-criteria">Criteria</label>
+								<select id="subset-criteria">
+								</select>
+							</span>
+							<br>
 							<form id="cell-range-container">
 								<div class="group" style="margin-left: 10px">
 									<input class="range-input" id="lower-input" type="text" required>
@@ -178,11 +185,14 @@
 						<span>Signature Score Colors:</span>
 						<div class="btn-group" data-toggle="buttons">
 							<label class="btn btn-default">
-							<input type="radio" name="scatterColorButtons" id="valueoption" value="value" autocomplete="off"> Value
+							<input type="radio" name="scatterColorButtons" id="valueoption" value="value" autocomplete="off"> Consistency
 							</label>
 							<label class="btn btn-default active">
 							<input type="radio" name="scatterColorButtons" id="rankoption" value="rank" autocomplete="off" checked> Rank
 							</label>
+						<span>
+							<button id="lasso-select" type="button" class="btn btn-default" style="margin-left: 40px;">Enable Lasso Select</button>
+						</span>
 						</div>
 					</div>
 				</div>

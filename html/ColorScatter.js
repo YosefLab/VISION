@@ -59,7 +59,6 @@ function ColorScatter(parent, colorbar, legend)
         .offset([-10, 0])
         .html(function(d){ return d[3]+": "+d[2]; });
 
-	var self = this;
 
     this.svg = d3.select(parent).append("svg")
         .attr("height", self.height + self.margin.top + self.margin.bottom)
@@ -70,59 +69,7 @@ function ColorScatter(parent, colorbar, legend)
 
     this.svg.append("rect")
         .attr("width", self.width)
-        .attr("height", self.height)
-		.on("mousedown", function() {
-			var p = d3.mouse(this);
-
-			self.svg.append("rect")
-				.attr({
-					rx: 6,
-					ry: 6,
-					class: "selection",
-					x: p[0],
-					y: p[1],
-					width: 0,
-					height: 0
-				})
-		})
-		.on("mousemove", function() {
-			var s = self.svg.select("rect.selection");
-
-			if (!s.empty()) {
-				var p = d3.mouse(this),
-					d = {
-						x: parseInt(s.attr("x"), 10),
-						y: parseInt(s.attr("y"),10),
-						width: parseInt(s.attr("width"), 10),
-						height: parseInt(s.attr("height"), 10)
-					}, 
-					move = {
-						x: p[0] - d.x,
-						y: p[1] - d.y
-					};
-
-				if (move.x < 1 || (move.x*2<d.width)) {
-					d.x = p[0];
-					d.width -= move.x;
-				} else {
-					d.width = move.x;
-				}
-
-				if (move.y < 1 || (move.y*2<d.height)) {
-					d.y = p[1];
-					d.height -= move.y;
-				} else {
-					d.height = move.y
-				}	
-				s.attr(d);
-					
-				//TODO: ADD FUNCTIONALITY TO SELECT CIRCLES WITHIN A SELECTION RECTANGLE
-			}
-		})
-		.on("mouseup", function() { 
-			self.svg.select(".selection").remove();
-		});
-
+        .attr("height", self.height);
 
 
     this.svg.append("g")
@@ -132,6 +79,7 @@ function ColorScatter(parent, colorbar, legend)
     this.svg.append("g")
         .attr("class", "y axis")
         .call(self.yAxis);
+    
 
     if(this.colorbar_enabled){
         this.colorbar_svg = this.svg
@@ -157,6 +105,7 @@ function ColorScatter(parent, colorbar, legend)
 			.attr("width", this.legend_width)
 			.attr("height", this.legend_height);
 	}
+
 
     this.points = [];
 
@@ -418,11 +367,83 @@ ColorScatter.prototype.setHovered = function(hovered_indices, event_id)
     }
 };
 
+ColorScatter.prototype.toggleLasso = function(enable) {
+
+	var self = this;
+	if (enable) { 
+		self.lasso_start = function() {
+			self.lasso.items()
+				.classed({"not_possible": true, "selected": false});
+		};
+
+		self.lasso_draw = function() {
+			// Style possible dots
+		
+	
+			self.lasso.items().filter(function(d) { return d.possible===true})
+				.classed({"not_possible":false, "possible":true});
+
+			// Style not possible dots
+			self.lasso.items().filter(function(d) { return d.possible===false})
+				.classed({"not_possible": true, "possible": false});
+		};
+	
+		self.lasso_end = function() {
+
+			self.lasso.items().filter(function(d) { return d.selected===true})
+				.classed({"not_possible":false, "possible":false})
+				.classed("point-selected", true);
+
+			self.lasso.items().filter(function(d) { return d.selected===false })
+				.classed({"not_possible": false, "possible": false});
+
+			var cellNames = self.points.map(function(e){return e[3];}); //extract 2nd and 3rd columns
+
+			var selected = self.lasso.items().filter(function(d) { return d.selected === true });
+			selected[0].forEach(function(d) {
+				self.selectedPoints.push(cellNames.indexOf(d.__data__[3]));
+			});	
+
+			self.lasso.items()
+				.attr("opacity", function(d,i) {
+					if (self.selectedPoints.indexOf(i) == -1) {
+						return .4
+					}
+				});
+
+		};
+
+		self.lasso_area = self.svg.append("rect")
+				.attr("width", self.width)
+				.attr("height", self.height)
+				.style("opacity", 0);
+
+		self.lasso = d3.lasso()
+			.closePathDistance(75)
+			.closePathSelect(true)
+			.hoverSelect(true)
+			.area(self.lasso_area)
+			.on("start", self.lasso_start)
+			.on("draw", self.lasso_draw)
+			.on("end", self.lasso_end);
+
+		self.svg.call(self.lasso);
+
+		self.lasso.items(self.svg.selectAll("circle"));
+	} else {
+		self.lasso_area.remove();
+	}
+
+}
+
 ColorScatter.prototype.redraw = function(performTransition) {
     var self = this;
     return function(){
     self.svg.select(".x.axis").call(self.xAxis);
     self.svg.select(".y.axis").call(self.yAxis);
+
+	self.svg.call(self.tip);
+
     var circles = self.svg.selectAll("circle")
         .data(self.points);
 
@@ -431,6 +452,8 @@ ColorScatter.prototype.redraw = function(performTransition) {
         .on("click", function(d,i){self.setSelected(i);})
         .on("mouseover", function(d,i){self.tip.show(d,i); self.setHovered(i);})
         .on("mouseout", function(d,i){self.tip.hide(d,i); self.setHovered(-1);})
+
+
 
     if(performTransition !== undefined && performTransition === true)
     {
@@ -451,11 +474,11 @@ ColorScatter.prototype.redraw = function(performTransition) {
     };
 };
 
-ColorScatter.prototype.selectCellRange = function(lower, upper) {
+ColorScatter.prototype.selectCellRange = function(points, lower, upper) {
 	
 	var self = this;
-	var allCellNames = this.points.map(function(e) { return e[3]; });
-    var mappedData = this.points.map(function(e){return [e[2], e[3]];}); //extract 2nd and 3rd columns
+	var allCellNames = points.map(function(e) { return e[3]; });
+    var mappedData = points.map(function(e){return [e[2], e[3]];}); //extract 2nd and 3rd columns
 
 	var filteredData = mappedData.filter(function(e) {
 		return e[0] >= lower && e[0] <= upper
@@ -469,7 +492,7 @@ ColorScatter.prototype.selectCellRange = function(lower, upper) {
 
 	
     var circles = this.svg.selectAll("circle")
-        .data(this.points);
+        .data(points);
     circles
 		.classed("point-selected", function(d, i){return self.selectedPoints.indexOf(i) != -1;})
 		.attr("opacity", function(d,i) {
@@ -478,6 +501,20 @@ ColorScatter.prototype.selectCellRange = function(lower, upper) {
 			}
 		});
 	return cellNames
+}
+
+ColorScatter.prototype.getSelected = function() {
+	var self = this;
+
+	var allCellNames = this.points.map(function(e) { return e[3]; });
+	
+	var selectedCellNames = [];
+	this.selectedPoints.forEach(function(d) {
+		selectedCellNames.push(allCellNames[d]);
+	});
+
+	return selectedCellNames;
+
 }
 
 ColorScatter.prototype.unselect = function() {

@@ -83,6 +83,33 @@ hr {
 	font: 10px/1 'Open Sans', sans-serif;
 
 }
+
+.lasso path {
+	stroke: rgb(80, 80, 80);
+	stroke-width: 2px;
+}
+
+.lasso .drawn  {
+	fill-opacity: 0.5;
+}	
+
+.lasso .loop_close {
+	fill: none;
+	stroke-dasharray: 4,4;
+}
+
+.lasso .origin {
+	fill: #3399FF;
+	fill-opacity: .5;
+}
+
+.not_possible {
+	fill: rgb(200,200,200);
+}
+
+.possible {
+	fill: #EC888C;
+}
 	
 #info_tab:checked ~ #projection-content-wrapper,
 #cluster_tab:checked ~ #cluster-wrapper,

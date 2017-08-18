@@ -9,6 +9,7 @@ global_status.filter_group_genes = []
 global_status.upper_range = "";
 global_status.lower_range = "";
 global_status.subset = [];
+global_status.subset_criteria = "Rank";
 
 var global_data = {};
 global_data.sigIsPrecomputed = {};
@@ -162,7 +163,6 @@ window.onload = function()
     $("#filter_dropdown").change(function(){
         global_status.filter_group = $(this).val();
 
-		console.log(global_status.filter_group);
         api.filterGroup.genes(global_status.filter_group)
             .then(function(genes){
                 global_status.filter_group_genes = genes;
@@ -179,6 +179,10 @@ window.onload = function()
             drawTree();
         });
     });
+
+	$("#subset-criteria").change(function() {
+		global_status.subset_criteria = $(this).val();
+	});
 
     var filterSig = $('#sig_filt_input');
     var filterSigTimer;
@@ -247,12 +251,23 @@ window.onload = function()
         drawChart();
     });
 
+    //Enable Toggling of Lasso Select
+    $("#lasso-select").on("click", function() {
+		var tog = document.getElementById("lasso-select").innerHTML;
+		if (tog == "Enable Lasso Select") {
+			global_scatter.toggleLasso(true);
+			document.getElementById("lasso-select").innerHTML = "Disable Lasso Select";
+		} else {
+			global_scatter.toggleLasso(false);
+			document.getElementById("lasso-select").innerHTML = "Enable Lasso Select";
+		}
+	});
+
     // Make some service calls here
     // Get the list of filter groups
     var filterGroupPromise = api.filterGroup.list()
         .then(function(filters){
 
-		console.log(filters);
         for(var i = 0; i < filters.length; i++){
             filter = filters[i]
             var option = $(document.createElement("option"));
@@ -261,6 +276,14 @@ window.onload = function()
         }
 
     });
+
+	criteriaList = ["Rank", "Consistency"];
+	for (var i = 0; i < criteriaList.length; i++) {
+		criteria = criteriaList[i];
+		var option = $(document.createElement("option"));
+		option.text(criteria).val(criteria);
+		$("#subset-criteria").append(option);
+	}
 
     // Get the 'isPrecomputed' vector for signatures
     var sigIsPrecomputedPromise = api.signature.listPrecomputed()
@@ -1008,9 +1031,35 @@ function exportSigProj() {
 }
 
 function selectRange() {
-	var cells = global_scatter.selectCellRange(global_status.lower_range, global_status.upper_range);
 
-	global_status.subset = cells; 
+	var sig_key = global_status.plotted_signature;
+    var proj_key = global_status.plotted_projection;
+    var filter_group = global_status.filter_group;
+
+	var proj_promise = api.projection.coordinates(filter_group, proj_key);
+
+	console.log(global_status.subset_criteria);
+	if (global_status.subset_criteria == "Rank") {
+		sig_promise = api.signature.ranks(sig_key);
+	} else {
+		sig_promise = api.signature.scores(sig_key);  
+	}
+
+	return $.when(sig_promise, proj_promise)
+		.then(function(signature, projection) {
+
+            var points = [];
+            for(sample_label in signature){
+                var x = projection[sample_label][0]
+                var y = projection[sample_label][1]
+                var sig_score = signature[sample_label]
+                points.push([x, y, sig_score, sample_label]);
+            }
+
+			var cells = global_scatter.selectCellRange(points, global_status.lower_range, global_status.upper_range);
+			global_status.subset = cells; 
+
+		});
 }
 
 function unselectRange() {
@@ -1021,7 +1070,7 @@ function unselectRange() {
 
 
 function runSubsetAnalysis() {
-	console.log("Running Subset Analysis");
+	global_status.subset = global_scatter.getSelected();
 	if (global_status.subset.length > 0) {
 		api.analysis.run(global_status.subset);
 	}
