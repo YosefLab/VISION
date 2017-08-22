@@ -45,7 +45,7 @@ louvainCluster <- function(kn, data) {
 #' @param clusters List of clusters, each entry being a vector of cells in a cluster.
 #' @param data NUM_SAMPLES x NUM_FEATURES data matrix that was used to generate clusters
 #' @return Repartitioned clusters, such that a desireable number of microclusters is acheived. 
-readjust_clusters <- function(clusters, data) {
+readjust_clusters <- function(clusters, data, numPartitions = 0) {
 	#' Repartitions existing clusters to achieve desired granularity
 	#' Args:
 	#'	clusters: (List) list of clusters, each entry begin a vector of cells in a cluster
@@ -54,7 +54,11 @@ readjust_clusters <- function(clusters, data) {
 	#	 Returns:
 	#		Repartitioned clusters, such that a desireable number of microclusters is achieved. 
 
-	NUM_PARTITIONS = sqrt(nrow(data))
+	if (numPartititons == 0) {
+		NUM_PARTITIONS = ncol(data) / 100
+	} else {
+		NUM_PARTITIONS = numPartitions
+	}
 	EPSILON = .15
 
 	currPart = length(clusters)

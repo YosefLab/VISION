@@ -93,6 +93,22 @@ var api = (function(){
       return $.ajax(query).then(x => JSON.parse(x))
     }
 
+    output.filterGroup.mI = function(filter_group, precomputed) {
+		var query = "/FilterGroup/";
+		if (precomputed) {
+			query = query.concat(encodeURI(filter_group), "/Precomputed/MutualInformation");
+		} else {
+			query = query.concat(encodeURI(filter_group), "/Normal/MutualInformation");
+		}
+		return $.ajax(query).then(x => JSON.parse(x))
+	}
+
+	output.filterGroup.loadings = function(filter_group, pcnum) {
+		var query = "/FilterGroup/";
+		query = query.concat(encodeURI(filter_group), "/", encodeURI(pcnum), "/Loadings");
+		return $.ajax(query).then(x => JSON.parse(x))
+	}
+
     // Projection API
 
     output.projection = {}
@@ -125,6 +141,16 @@ var api = (function(){
 		return $.ajax(query).then(x => JSON.parse(x));
 	}
 
+
+	// PC API
+	
+	output.pc = {}
+	
+	output.pc.coordinates = function(filter_group, sig_name, pcnum) {
+		var query = "/FilterGroup/";
+		query = query.concat(encodeURI(filter_group), "/", encodeURI(sig_name), "/", encodeURI(pcnum), "/Coordinates");
+		return $.ajax(query).then(x => JSON.parse(x));
+	}	
 
     // Expression API
 

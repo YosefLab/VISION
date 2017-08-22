@@ -78,7 +78,7 @@ FastProjectOutput <- setClass("FastProjectOutput",
       sigMatrix = "matrix",
       sigList = "list",
       sigClusters = "list",
-      fpParams = "list"
+      fpParams = "list" 
     )
 )
 
@@ -97,7 +97,10 @@ ProjectionData <- setClass("ProjectionData",
       keys = "character",
       sigProjMatrix = "matrix",
       pMatrix="matrix",
-      PPT = "list"
+      PPT = "list",
+      fullPCA = "matrix",
+      mutualInformation = "matrix",
+      loadings = "matrix"
     )
 )
 
@@ -107,6 +110,14 @@ ServerExpression <- setClass("ServerExpression",
       sample_labels = "character",
       gene_labels = "character"
     )
+)
+
+ServerMI <- setClass("ServerMI",
+	slots = c(
+		data = "matrix",
+		proj_labels = "character",
+		"sig_labels" = "character"
+	)
 )
 
 ServerSigProjMatrix <- setClass("ServerSigProjMatrix",

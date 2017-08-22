@@ -5,7 +5,7 @@
 
 require("fastICA")
 require('Rtsne')
-#require("Rtsne.multicore")
+require("Rtsne.multicore")
 require('igraph')
 require("rsvd")
 require("RDRToolbox")
@@ -73,15 +73,30 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
   #  inputProjections <- c(inputProjections, Projection("PCA: 2,3", t(pca_res[c(2,3),])))
   #} else {
     if (perm_wPCA) {
-      pca_res <- applyPermutationWPCA(exprData, weights, components=30)[[1]]
+      res <- applyPermutationWPCA(exprData, weights, components=30)
+      pca_res <- res[[1]]
+      loadings <- res[[3]]
     } else {
-      pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30)[[1]]
+      res <- applyWeightedPCA(exprData, weights, maxComponents = 30)
+      pca_res <- res[[1]]
+      loadings <- res[[3]]
       #m <- profmem(pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30)[[1]])
    # }
     proj <- Projection("PCA: 1,2", t(pca_res[c(1,2),]))
     inputProjections <- c(inputProjections, proj)
     inputProjections <- c(inputProjections, Projection("PCA: 1,3", t(pca_res[c(1,3),])))
     inputProjections <- c(inputProjections, Projection("PCA: 2,3", t(pca_res[c(2,3),])))
+    fullPCA <- t(pca_res[1:15,])
+      
+    fullPCA <- as.matrix(apply(fullPCA, 2, function(x) return( x - mean(x) ))) 
+      
+    r <- apply(fullPCA, 1, function(x) sum(x^2))^(0.5)
+    r70 <- quantile(r, c(.7))[[1]]
+  
+    if (r70 > 0) {
+      fullPCA <- fullPCA / r70
+    }
+    fullPCA <- t(fullPCA)
   }
   timingList <- rbind(timingList, c(difftime(Sys.time(), t, units="sec")))
   timingNames <- c(timingNames, "wPCA")
@@ -140,7 +155,7 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
 
 }
   
-  return(list(output, rownames(exprData), PPT))
+  return(list(output, rownames(exprData), PPT, fullPCA, loadings))
 }
 
 #' Performs weighted PCA on data
@@ -150,7 +165,7 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
 #' @param maxComponents Maximum number of components to calculate
 #' @return Weighted PCA data
 #' @return Variance of each component
-#' @return Eigenvectors of weighted covariance matrix
+#' @return Eigenvectors of weighted covariance matrix, aka the variable loadings
 applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
 
   message("Weighted PCA")
@@ -188,6 +203,8 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
   eval <- as.matrix(apply(wpcaData, 1, var))
   totalVar <- sum(apply(projData, 1, var))
   eval <- eval / totalVar
+
+  colnames(evec) <- rownames(exprData)
 
   
   return(list(wpcaData, eval, t(evec)))
@@ -312,7 +329,7 @@ applyPCA <- function(exprData, N=0, variance_proportion=1.0) {
     last_i <- tail(which(total_var <= variance_proportion), n=1)
     N <- last_i
   }
-  return(t(res$x[,1:N])*-1)
+  return(list(t(res$x[,1:N])*-1, t(res$rotation)))
 }
 
 #' Performs ICA on data
@@ -370,8 +387,8 @@ applytSNE10 <- function(exprData, numCores) {
   
   ndata <- colNormalization(exprData)
   ndataT <- t(ndata)
-  #res <- Rtsne.multicore(ndataT, dims=2, max_iter=600, perplexity=10.0, check_duplicates=F, pca=F, num_threads=numCores)
-  res <- Rtsne(ndataT, dims=2, max_iter=600, perplexity=10.0, check_duplicates=F, pca=F)
+  res <- Rtsne.multicore(ndataT, dims=2, max_iter=600, perplexity=10.0, check_duplicates=F, pca=F, num_threads=numCores)
+  #res <- Rtsne(ndataT, dims=2, max_iter=600, perplexity=10.0, check_duplicates=F, pca=F)
   res <- res$Y
   rownames(res) <- colnames(exprData)
   return(res)
@@ -389,8 +406,8 @@ applytSNE30 <- function(exprData, numCores) {
   
   ndata <- colNormalization(exprData)
   ndataT <- t(ndata)
-  #res <- Rtsne.multicore(ndataT, dims=2, max_iter=600,  perplexity=30.0, check_duplicates=F, pca=F, num_threads=numCores)
-  res <- Rtsne(ndataT, dims=2, max_iter=600, perplexity=30.0, check_duplicates=F, pca=F)
+  res <- Rtsne.multicore(ndataT, dims=2, max_iter=600,  perplexity=30.0, check_duplicates=F, pca=F, num_threads=numCores)
+  #res <- Rtsne(ndataT, dims=2, max_iter=600, perplexity=30.0, check_duplicates=F, pca=F)
   res <- res$Y
   
   rownames(res) <- colnames(exprData)

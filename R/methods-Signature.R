@@ -1,6 +1,6 @@
 require(geometry)
-require(FNN)
 require(pROC)
+require(entropy)
 
 #' Initialize a new Signature object.
 #' 
@@ -484,3 +484,20 @@ clusterSignatures <- function(sigList, sigMatrix, k=10) {
   return(output)
 }
 
+calcMutualInformation <- function(ss, pc) {
+	
+	minVal <- min(min(ss), min(pc))
+	maxVal <- max(max(ss), max(pc))
+
+	f1 <- hist(ss, seq(minVal-0.1, maxVal+0.1, by=0.1), plot=F)$counts
+	f2 <- hist(pc, seq(minVal-0.1, maxVal+0.1, by=0.1), plot=F)$counts
+
+	jdist <- cbind(f1, f2)
+
+	h1 <- entropy.plugin(rowSums(jdist))
+	h2 <- entropy.plugin(colSums(jdist))
+	h12 <- entropy.plugin(jdist)
+	mi <- h1 + h2 - h12
+
+	return(mi)
+}

@@ -87,6 +87,7 @@
 			</div>
 			<br>
 			<div id="table_div_container"></div>
+			<br>
 
 			<!-- <div class="command-panel-content">
 				<div id="tree-controls" class="form-inline panel">
@@ -200,9 +201,30 @@
 			</div>
 		</div>
 
+
 		<div class="tab-content" id="pc-viewer-wrapper">
 			<div id="pc-viewer-div">
-				<h1>PC Annotator</h1>
+				<div id="plot_title_div" class="color_panel" style="display: flex; justify-content: space-between; flex-direction: row; flex: 1 1 5%">
+					<div style="flex: 1 1 auto; padding-top: 10px;">
+						<div class="title" id="plot-title" style=""></div>
+						<div class="subtitle" id="plot-subtitle" style=""></div>
+					</div>
+					<div class="colorOptions" style="flex: 1 1 20%; align-self: flex-end; padding-bottom: 10px;">
+						<span>Signature Score Colors:</span>
+						<div class="btn-group" data-toggle="buttons">
+							<label class="btn btn-default">
+							<input type="radio" name="scatterColorButtons" id="valueoption" value="value" autocomplete="off"> Consistency
+							</label>
+							<label class="btn btn-default active">
+							<input type="radio" name="scatterColorButtons" id="rankoption" value="rank" autocomplete="off" checked> Rank
+							</label>
+						<span>
+							<button id="lasso-select" type="button" class="btn btn-default" style="margin-left: 40px;">Enable Lasso Select</button>
+						</span>
+						</div>
+					</div>
+				</div>
+				<div id="scatter_div" class="color_panel" style="flex: 4 0 70%; margin-right: 10px; overflow: hidden;"></div>
 			</div>
 		</div>
 

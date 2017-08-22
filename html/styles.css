@@ -115,7 +115,7 @@ hr {
 #cluster_tab:checked ~ #cluster-wrapper,
 #cell_select_tab:checked ~ #cell-selection-wrapper,
 #proj_tab:checked ~ #sigvp-scatter-wrapper,
-#pc_tab:checked ~ #pc-viewer-wrapper,
+#pc_tab:checked ~ #sigvp-scatter-wrapper,
 #tree_tab:checked ~ #ppt-wrapper {
 	visibility: visible;
 }
@@ -396,12 +396,13 @@ div.panel {
 .table_div table th:not(:first-child) div {
     transform-origin: left center 0;
     transform: translate(15px,0.2em) rotate(-50deg);
-    width: 35px !important;
+    max-width: 35px !important;
     text-align: left;
 }
 
 .table_div table td:first-child{
 	width: auto !important;
+	min-width: 300px !important;
     font-size: 0.8em;
     font-weight: bold;
     -ms-word-wrap: break-word;
@@ -466,6 +467,27 @@ div.panel {
     fill: none;
     /*stroke: #fff;*/
 }
+
+#pc_annotator_div svg {
+    font: 10px sans-serif;
+    shape-rendering: crispEdges;
+    background-color: rgba(255,255,255,0);
+}
+
+#pc_annotator_div rect {
+    fill: #292928;
+}
+
+#pc_annotator_div svg circle{
+    fill-opacity: 0.8;
+}
+
+#pc_annotator_div .axis path,
+#pc_annotator_div .axis line {
+    fill: none;
+    /*stroke: #fff;*/
+}
+
 
 #sig_filt_input {
 }

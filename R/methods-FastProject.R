@@ -260,6 +260,18 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   # Remove any signatures that didn't compute correctly
   toRemove <- lapply(sigScores, function(x) all(x@scores == c(-Inf)))
   sigScores <- sigScores[names(which(toRemove==F))]
+
+  ## Convert Sig Scores to matrix
+  names <- c()
+  sigMatrix <- matrix(0L, nrow=length(sigScores), ncol=length(sigScores[[1]]@scores))
+  for (sig in 1:length(sigScores)) {
+    names <- c(names, sigScores[[sig]]@name)
+    scores <- t(as.matrix(sigScores[[sig]]@scores))
+    sigMatrix[sig,] <- scores
+  }
+
+  rownames(sigMatrix) <- names
+  colnames(sigMatrix) <- colnames(object@exprData)
   
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "Sig Scores")
@@ -311,6 +323,8 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     projs <- projectData[[1]]
     g <- projectData[[2]]
     PPT <- projectData[[3]]
+    pca_res <- projectData[[4]]
+    loadings <- projectData[[5]]
     
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, paste0("Pr. ", filter))
@@ -326,24 +340,29 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, paste0("SigVPr ", filter))
 
+	mutualInformation <- lapply(1:nrow(sigMatrix), function(i) {
+		lapply(1:nrow(pca_res), function(j) {
+			return(calcMutualInformation(sigMatrix[i,], pca_res[j,]))
+		})
+	})
+
+	mutualInformation <- lapply(mutualInformation, unlist)
+	mutualInformation <- matrix(unlist(mutualInformation), nrow=nrow(sigMatrix), ncol=nrow(pca_res), byrow=T)
+
+	rownames(mutualInformation) <- rownames(sigMatrix)
+	colnames(mutualInformation) <- rownames(pca_res)
+
+	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
+	tRows <- c(tRows, paste("Mutual Information", filter))
+
     projData <- ProjectionData(filter=filter, projections=projs, genes=g, keys=projKeys, 
-                                          sigProjMatrix=sigProjMatrix, pMatrix=pVals, PPT=PPT)
+                                          sigProjMatrix=sigProjMatrix, pMatrix=pVals, PPT=PPT, fullPCA=pca_res,
+                                          mutualInformation=mutualInformation, loadings=loadings)
 
     projDataList[[filter]] <- projData
       
   }
     
-  ## Convert Sig Scores to matrix
-  names <- c()
-  sigMatrix <- matrix(0L, nrow=length(sigScores), ncol=length(sigScores[[1]]@scores))
-  for (sig in 1:length(sigScores)) {
-    names <- c(names, sigScores[[sig]]@name)
-    scores <- t(as.matrix(sigScores[[sig]]@scores))
-    sigMatrix[sig,] <- scores
-  }
-
-  rownames(sigMatrix) <- names
-  colnames(sigMatrix) <- colnames(object@exprData)
 
   sigList <- sigList[rownames(sigMatrix)]
   
@@ -353,6 +372,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
 
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "ClusterSignatures")
+
 
   slots <- slotNames("FastProject")
   fpParams <- list()

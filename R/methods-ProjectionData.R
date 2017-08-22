@@ -15,7 +15,8 @@
 #' @param PPT List of Simple PPT parameters
 #' @return ProjectionData object
 setMethod("initialize", signature(.Object="ProjectionData"),
-          function(.Object, filter = "", projections=NULL, genes, keys, sigProjMatrix, pMatrix, PPT) {
+          function(.Object, filter = "", projections=NULL, genes, keys, sigProjMatrix, 
+					pMatrix, PPT, fullPCA, mutualInformation, loadings) {
             
             .Object@filter <- filter
             .Object@projections <- projections
@@ -24,6 +25,9 @@ setMethod("initialize", signature(.Object="ProjectionData"),
             .Object@sigProjMatrix <- sigProjMatrix
             .Object@pMatrix <- pMatrix
             .Object@PPT <- PPT
+            .Object@fullPCA <- fullPCA
+            .Object@mutualInformation <- mutualInformation
+            .Object@loadings <- loadings
             
             return(.Object)
             

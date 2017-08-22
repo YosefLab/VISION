@@ -64,7 +64,11 @@ function ColorScatter(parent, colorbar, legend)
         .attr("height", self.height + self.margin.top + self.margin.bottom)
         .attr("width", self.width)
         .append("g")
-        //.call(self.zoom)
+        .call(self.zoom)
+        .on("mousedown.zoom", null)
+        .on("touchstart.zoom", null)
+        .on("touchmove.zoom", null)
+        .on("touchend.zoom", null)
         .call(self.tip);
 
     this.svg.append("rect")
@@ -446,6 +450,8 @@ ColorScatter.prototype.redraw = function(performTransition) {
 
     var circles = self.svg.selectAll("circle")
         .data(self.points);
+
+	console.log(self.points);
 
     circles.enter().append("circle").attr("r",4.0);
     circles.style("fill", function(d){return self.colorScale(d[2]);})

@@ -54,6 +54,18 @@ setMethod("initialize", signature(.Object="ServerPMatrix"),
           })
 
 
+setMethod("initialize", signature(.Object="ServerMI"),
+		function(.Object, data, proj_labels, sig_labels) {
+		
+		.Object@data <- data
+		.Object@proj_labels <- proj_labels
+		.Object@sig_labels <- sig_labels
+
+		return(.Object)
+
+		})
+
+
 #' Converts Signature object to JSON
 #' 
 #' @param sig Signature object
@@ -141,6 +153,19 @@ sigProjMatrixToJSON <- function(sigpm, sigs) {
   json <- toJSON(sSPM, force=T, pretty=T, auto_unbox=T)
   
   return(json)
+}
+
+mutualInfoToJSON <- function(mI, sigs) {
+	
+	mI <- mI[sigs,,drop=F]
+	cn <- c()
+	for (i in 1:ncol(mI)) { cn <- c(cn, paste("PC", i)) } 
+	sMI <- ServerMI(unname(mI), cn, sigs)
+
+	json <- toJSON(sMI, force=T, pretty=T, auto_unbox=T)
+
+	return(json)
+
 }
 
 #' Converts the -log10(pvalues) of the consistency scores into a JSON object

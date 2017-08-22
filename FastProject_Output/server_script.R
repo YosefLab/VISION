@@ -164,8 +164,8 @@ jug() %>%
     proj <- URLdecode(req$params$proj_name2)
     method <- URLdecode(req$params$cluster_procedure)
     param <- as.numeric(URLdecode(req$params$param))
-    
-    clust = cluster(projData[[filter]]@projections[[proj]], method, param)
+
+	clust = cluster(projData[[filter]]@projections[[proj]], method, param)
     out <- clusterToJSON(clust)
     return(out)
   }) %>%
@@ -193,6 +193,62 @@ jug() %>%
                       });
     return(toJSON(filters))
   }) %>%
+  get("/FilterGroup/(?<filter_name9>.*)/Precomputed/MutualInformation", function(req, res, err) {
+    projData <- fpout@projData
+	filter <- URLdecode(req$params$filter_name9)
+
+    signatures <- fpout@sigList
+    keys <- lapply(signatures, function(x) x@name)
+    vals <- lapply(signatures, function(x) x@isPrecomputed)
+    names(vals) <- keys
+	sigvals <- vals[which(vals == TRUE)]
+	sigs <- names(sigvals)
+	
+	mI <- projData[[filter]]@mutualInformation
+
+    return(mutualInfoToJSON(mI, sigs))
+  }) %>%
+  get("/FilterGroup/(?<filter_name11>.*)/Normal/MutualInformation", function(req, res, err) {
+    projData <- fpout@projData
+	filter <- URLdecode(req$params$filter_name11)
+
+    signatures <- fpout@sigList
+    keys <- lapply(signatures, function(x) x@name)
+    vals <- lapply(signatures, function(x) x@isPrecomputed)
+    names(vals) <- keys
+	sigvals <- vals[which(vals == FALSE)]
+	sigs <- names(sigvals)
+	
+	mI <- projData[[filter]]@mutualInformation
+
+    return(mutualInfoToJSON(mI, sigs))
+  }) %>%
+  get("/FilterGroup/(?<filter_name10>.*)/(?<pc_num1>.*)/Loadings", function(req, res, err) {
+    projData <- fpout@projData
+	filter <- URLdecode(req$params$filter_name10)
+	pcnum <- as.numeric(URLdecode(req$params$pc_num1))
+	
+	l <- projData[[filter]]@loadings[,pcnum]
+
+    return(toJSON(l))
+  }) %>%
+  get("/FilterGroup/(?<filter_group11>.*)/(?<sig_name5>.*)/(?<pc_num2>.*)/Coordinates", function(req, res, err) {
+    projData <- fpout@projData
+    filter <- URLdecode(req$params$filter_group11)
+	pcnum <- as.numeric(URLdecode(req$params$pc_num2))
+	signame <- URLdecode(req$params$sig_name5)
+	
+	pc <- projData[[filter]]@fullPCA[pcnum,]
+	ss <- fpout@sigMatrix[signame,]
+
+	print(all.equal(colnames(pc), colnames(ss)))
+
+	ret <- cbind(pc, ss)
+	coord <- apply(unname(ret), 1, as.list)
+	names(coord) <- rownames(ret)
+
+    return(toJSON(coord, force=T, auto_unbox=T))
+  }) %>%
   get("/Expression", function(req, res, err) {
     return(expressionToJSON(fpout@exprData@data, matrix(NA)))
   }) %>%
@@ -201,8 +257,6 @@ jug() %>%
 	nexpr <- fpout@exprData@data[,subset]
 	nfp <- createNewFP(fpout@fpParams, nexpr)
 	newAnalysis(nfp)
-	#fpo2 <- Analyze(nfp)
-	#saveFPOutAndViewResults(fpo2)
 	return()
   }) %>%
   get("/path2", function(req, res, err){
