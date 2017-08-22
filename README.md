@@ -12,50 +12,51 @@ FastProjectR is currently not hosted on CRAN nor Bioconductor because it is stil
 To simplify the install process, first run the following command from within an R session whose working direcory is that where the pacakge is located:
 ``` r
   devtools::install(dependencies=T)
-  ```
+```
 
-  This command will automatically try to install all dependencies required by the packages and will in addition attempt to load the package into your R session's namespace. Most likely, however, there will be errors accompanying the installation - these packages that cannot be installed will need to be installed from github and bioconductor. To install the Rtsne.multicore package, use:
-  ``` r
-  devtools::install_github("RGLab/Rtsne.multicore") 
-  ```
-  The rest of the packages will most likely need to be installed from Bioconductor using biocLite - use these commands in an R session to install a package from Bioconductor:
-  ```r
-  source("http://bioconductor.org/biocLite.R")
-  biocLite(<name of the package>)
-  ```
-  How to Run FastProjectR
-  -----------------------
+This command will automatically try to install all dependencies required by the packages and will in addition attempt to load the package into your R session's namespace. Most likely, however, there will be errors accompanying the installation - these packages that cannot be installed will need to be installed from github and bioconductor. To install the Rtsne.multicore package, use:
+``` r
+devtools::install_github("RGLab/Rtsne.multicore") 
+```
+The rest of the packages will most likely need to be installed from Bioconductor using biocLite - use these commands in an R session to install a package from Bioconductor:
+```r
+source("http://bioconductor.org/biocLite.R")
+biocLite(<name of the package>)
+```
+How to Run FastProjectR
+-----------------------
 
-  Once all necessary package dependencies are installed, to load FastProjectR into an R session, you can use
-  ```r
-  devtools::load_all()
-  ```
-  Note that if you are not running R from within the package directory, you must provide the path link as an argument to this function. This function will simulate loading in a package, as would happen if a package were being loaded in which was already installed on your computer. To run FastProjectR, a minimum of three files must be provided: an expression matrix (.txt), a list of housekeeping genes (.txt) , and list of signatures (.gmt or .txt). Refer to the packages wiki for more details on the input files. With these three files, a FastProjectR object can be created:
-  ```r 
-  fp <- FastProject(<expression file>, <housekeeping genes>, <list of signatures>)
-  ```
-  Note that the signature files must be provided in a list structure (even if you are only inputting one file) -- this is to enable the user to provide multiple signature files without having to collate them all first. There are many other arguments that can be provided to the FastProjectR object upon initialization, all of which can be found in the wiki or documentation. With the FastProject object created, the analysis can be run with 
-  ``` r
-  fpo <- Analyze(fp)
-  ```
+Once all necessary package dependencies are installed, to load FastProjectR into an R session, you can use
+```r
+devtools::load_all()
+```
+Note that if you are not running R from within the package directory, you must provide the path link as an argument to this function. This function will simulate loading in a package, as would happen if a package were being loaded in which was already installed on your computer. To run FastProjectR, a minimum of three files must be provided: an expression matrix (.txt), a list of housekeeping genes (.txt) , and list of signatures (.gmt or .txt). Refer to the packages wiki for more details on the input files. With these three files, a FastProjectR object can be created:
+```r 
+fp <- FastProject(<expression file>, <housekeeping genes>, <list of signatures>)
+```
+Note that the signature files must be provided in a list structure (even if you are only inputting one file) -- this is to enable the user to provide multiple signature files without having to collate them all first. There are many other arguments that can be provided to the FastProjectR object upon initialization, all of which can be found in the wiki or documentation. With the FastProject object created, the analysis can be run with 
+``` r
+fpo <- Analyze(fp)
+```
 
-  This anlaysis will return a FastProjectOutput object which stores all relevant information for the visualization of the single cell data; this object can also be saved in an RDS file for future analysis. 
+This anlaysis will return a FastProjectOutput object which stores all relevant information for the visualization of the single cell data; this object can also be saved in an RDS file for future analysis. 
 
-  Analyzing FastProjectR Results
-  ------------------------------
-  With the returned FastProjectOutput object, a dynamic report can be generated with the following command:
-  ```r 
-  viewResults(fpo)
-  ```
-  Where **fpo** is the FastProjectOutput object generated from analysis. This will launch a local server on which the report will be shown; for best results, use Google Chrome. Alternatively, the FastProjectOutput object can be saved first as an RDS object and then analyzed via the online report:
-  ```r 
-  saveFPOutAndViewResults(fpo)
-  ```
+Analyzing FastProjectR Results
+------------------------------
+With the returned FastProjectOutput object, a dynamic report can be generated with the following command:
+```r 
+viewResults(fpo)
+```
+Where **fpo** is the FastProjectOutput object generated from analysis. This will launch a local server on which the report will be shown; for best results, use Google Chrome. Alternatively, the FastProjectOutput object can be saved first as an RDS object and then analyzed via the online report:
+```r 
+saveFPOutAndViewResults(fpo)
+```
 
-  Sample Output
-  -------------
-  ![FastProjectR Output Sample Image](/SampleOutput.png?raw=true)
+Sample Output
+-------------
+![FastProjectR Output Sample Image](/SampleOutput.png?raw=true)
 
-  Additional Info
-  ---------------
-  All additional documentation is in the [FastProjectR Wiki](https://github.com/YosefLab/FastProjectR/wiki)
+Additional Info
+---------------
+All additional documentation is in the [FastProjectR Wiki](https://github.com/YosefLab/FastProjectR/wiki)
+>>>>>>> 1b98cc3b9a147dd89f26ccaae8432f9027eac267
