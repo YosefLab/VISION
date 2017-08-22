@@ -59,4 +59,4 @@ Sample Output
 Additional Info
 ---------------
 All additional documentation is in the [FastProjectR Wiki](https://github.com/YosefLab/FastProjectR/wiki)
->>>>>>> 1b98cc3b9a147dd89f26ccaae8432f9027eac267
+
