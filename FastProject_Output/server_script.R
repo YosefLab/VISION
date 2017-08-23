@@ -230,22 +230,40 @@ jug() %>%
 	
 	l <- projData[[filter]]@loadings[,pcnum]
 
-    return(toJSON(l))
+	nl <- sapply(abs(l), function(x) x / sum(abs(l)))
+	nl <- sort(nl, decreasing=T) 
+
+    return(toJSON(with(stack(nl), tapply(values, ind, c, simplify=F))))
   }) %>%
-  get("/FilterGroup/(?<filter_group11>.*)/(?<sig_name5>.*)/(?<pc_num2>.*)/Coordinates", function(req, res, err) {
+  get("/FilterGroup/(?<filter_name12>.*)/(?<sig_name5>.*)/(?<pc_num2>.*)/Coordinates", function(req, res, err) {
     projData <- fpout@projData
-    filter <- URLdecode(req$params$filter_group11)
+    filter <- URLdecode(req$params$filter_name12)
 	pcnum <- as.numeric(URLdecode(req$params$pc_num2))
 	signame <- URLdecode(req$params$sig_name5)
 	
 	pc <- projData[[filter]]@fullPCA[pcnum,]
 	ss <- fpout@sigMatrix[signame,]
 
-	print(all.equal(colnames(pc), colnames(ss)))
-
 	ret <- cbind(pc, ss)
 	coord <- apply(unname(ret), 1, as.list)
 	names(coord) <- rownames(ret)
+
+    return(toJSON(coord, force=T, auto_unbox=T))
+  }) %>%
+  get("/FilterGroup/(?<filter_name13>.*)/(?<pc_num3>.*)/(?<pc_num4>.*)", function(req, res, err) {
+    projData <- fpout@projData
+    filter <- URLdecode(req$params$filter_name13)
+	pc1 <- as.numeric(URLdecode(req$params$pc_num3))
+	pc2 <- as.numeric(URLdecode(req$params$pc_num4))
+
+	pcdata1 <- projData[[filter]]@fullPCA[pc1,]
+	pcdata2 <- projData[[filter]]@fullPCA[pc2,]
+
+
+	ret <- cbind(pcdata1, pcdata2)
+	coord <- apply(unname(ret), 1, as.list)
+	names(coord) <- rownames(ret)
+
 
     return(toJSON(coord, force=T, auto_unbox=T))
   }) %>%

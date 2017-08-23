@@ -105,6 +105,9 @@
 
 				<input id="cell_select_tab" type="radio" class="data-vis-tab" name="data_tabs">
 				<label for="cell_select_tab" class="data-labels">Subset Analysis</label>
+
+				<input id="pc_data_tab" type="radio" class="data-vis-tab" name="data_tabs">
+				<label for="pc_data_tab" class='data-labels'>Pr. Comp. Analysis</label>
 				<hr/>
 
 				<div class="tab-content" id="cluster-wrapper" style="position: absolute; height: 90%; width: 100%">
@@ -118,6 +121,35 @@
 					<div id="projection-div">
 						<h4 id="data-analysis-title" style="font-size: 16px; text-align: center"></h4>
 						<p id="data-analysis-content" style="margin-left: 10px;"></p>
+					</div>
+				</div>
+				<div class="tab-content" id="pc-content-wrapper" style="position: absolute; height: 90%; width: 100%">
+					<div id="pc-div" style="width: 80%; margin-right: 10%; margin-left:10%;">
+						<h4 id="pc-analysis-title" style="font-size: 16px; text-align: center"></h4>
+						<div>
+							<form id="pc-range-container">
+								<div class="group" style="margin-left: 10px">
+									<input class="range-input" id="pc1-input" type="text" required>
+									<span class="highlight"></span>
+									<span class="bar"></span>
+									<label class="range-input-label">PC 1</label>
+								</div>
+								<div class="group" style="float: right; margin-right: 10px;">
+									<input class="range-input" id="pc2-input" type="text" required>
+									<span class="highlight"></span>
+									<span class="bar"></span>
+									<label class="range-input-label">PC 2</label>
+								</div>
+							</form>
+						</div>
+						<div style="margin-top: 30px; width: 100%;">		
+							<span>
+								<button style="align-items: center; width: 60%; margin-left:20%; margin-right:20%" id="analysis-button" type="button" class="btn btn-default" onclick=runPCAnalysis()>Run Analysis</button>
+							</span>
+						</div>
+						<br>
+						<h4 style="font-size:16px; font-weight:bold">Top 10 Informative Genes</h4>
+						<p id="pc-analysis-content"></p>
 					</div>
 				</div>
 				<div class="tab-content" id="cell-selection-wrapper" style="position: absolute; height=90%; width: 100%">

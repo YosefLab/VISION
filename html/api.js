@@ -152,6 +152,12 @@ var api = (function(){
 		return $.ajax(query).then(x => JSON.parse(x));
 	}	
 
+	output.pc.versus = function(filter_group, pc1, pc2) {
+		var query = "/FilterGroup/";
+		query = query.concat(encodeURI(filter_group), "/", encodeURI(pc1), "/", encodeURI(pc2));
+		return $.ajax(query).then(x => JSON.parse(x));
+	}
+
     // Expression API
 
 

@@ -60,7 +60,7 @@ input[type=radio]:checked + label {
 }
 
 .data-labels {
-	width: 30%;	
+	width: 24%;	
 }
 
 .tab-content {
@@ -116,6 +116,7 @@ hr {
 #cell_select_tab:checked ~ #cell-selection-wrapper,
 #proj_tab:checked ~ #sigvp-scatter-wrapper,
 #pc_tab:checked ~ #sigvp-scatter-wrapper,
+#pc_data_tab:checked ~ #pc-content-wrapper,
 #tree_tab:checked ~ #ppt-wrapper {
 	visibility: visible;
 }
@@ -400,6 +401,11 @@ div.panel {
     text-align: left;
 }
 
+.table_div table tbody {
+	overflow-x: scroll;
+	width: 600px;
+}
+
 .table_div table td:first-child{
 	width: auto !important;
 	min-width: 300px !important;
@@ -414,7 +420,7 @@ div.panel {
 
 .table_div table td:not(:first-child), .table_div table th:not(:first-child){
     text-align: center;
-    width: 35px !important; 
+    width: calc(450px / 15) !important; 
     max-width: 35px !important;
     cursor: pointer;
     font-size: 0.8em;
