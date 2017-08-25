@@ -1,3 +1,5 @@
+var global_stack = [];
+
 var global_status = {};
 global_status.plotted_projection = "";
 global_status.plotted_signature = "";
@@ -7,6 +9,7 @@ global_status.signature_filter = "";
 global_status.scatterColorOption = "rank";
 global_status.filter_group = "";
 global_status.filter_group_genes = []
+global_status.selected_gene = "";
 global_status.upper_range = "";
 global_status.lower_range = "";
 global_status.pc1 = "";
@@ -21,6 +24,7 @@ global_data.sigIsPrecomputed = {};
 var global_options = {};
 var global_scatter = {};
 var global_heatmap = {};
+var global_gene_scatter = {};
 
 // Keys are cluster methods
 // Values are list of allowed method parameter
@@ -65,7 +69,7 @@ function doneTyping()
     vals = vals.map(function(str){return str.trim();})
         .filter(function(str){ return str.length > 0;});
 
-    var tablerows = $('#table_div table').find('tr');
+    var tablerows = $('#table_div_container table').find('tr');
     tablerows.removeClass('hidden');
 
     var posvals = vals.filter(function(str){ return str[0] != '!';});
@@ -103,8 +107,60 @@ function doneTyping()
             }).addClass('hidden');
     }
 
-    tablerows.removeClass('altRow')
+    /*tablerows.removeClass('altRow')
             .not('.hidden').filter(':odd').addClass('altRow');
+            */
+}
+
+function doneTyping_Gene()
+{
+    var val = global_status.gene_filter.toLowerCase();
+    var vals = val.split(",");
+    vals = vals.map(function(str){return str.trim();})
+        .filter(function(str){ return str.length > 0;});
+
+    var tablerows = $('#gene-table').find('tr');
+    tablerows.removeClass('hidden');
+
+
+    var posvals = vals.filter(function(str){ return str[0] != '!';});
+    var negvals = vals.filter(function(str){ return str[0] == '!';})
+        .map(function(str){ return str.slice(1);})
+        .filter( function(str){return str.length > 0;});
+
+    if(posvals.length > 0){
+        tablerows.filter(function(i, element){
+                if(i == 0){return false;} // Don't filter out the header row
+                var gene_text = $(element).children('td').first().html().toLowerCase();
+                for(var j = 0; j < posvals.length; j++)
+                {
+                    if(gene_text.indexOf(posvals[j]) > -1)
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }).addClass('hidden');
+    }
+
+    if(negvals.length > 0){
+        tablerows.filter(function(i, element){
+                if(i == 0){return false;} // Don't filter out the header row
+                var gene_text = $(element).children('td').first().html().toLowerCase();
+                for(var j = 0; j < negvals.length; j++)
+                {
+                    if(gene_text.indexOf(negvals[j]) > -1)
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }).addClass('hidden');
+    }
+
+    /*tablerows.removeClass('altRow')
+            .not('.hidden').filter(':odd').addClass('altRow');
+            */
 }
 
 window.onload = function()
@@ -115,6 +171,7 @@ window.onload = function()
     global_scatter = new ColorScatter("#scatter_div", true, true);
     global_heatmap = new HeatMap("#heatmap_div");
     global_tree = new TreeMap("#tree_div");
+    global_gene_scatter = new ColorScatter("#gene_dist_div", false, false);
     
     //Link the scatter/heatmap
     global_scatter.hovered_links.push(global_heatmap);
@@ -199,6 +256,16 @@ window.onload = function()
         clearTimeout(filterSigTimer);
         filterSigTimer = setTimeout(doneTyping, filterSigTimer_Timeout);
     });
+
+    var filterGene = $("#gene_filt_input");
+    var filterGeneTimer;
+    var filterGeneTimer_Timeout = 500;
+
+    filterGene.on("input", function() {
+		global_status.gene_filter = this.value;
+		clearTimeout(filterGeneTimer);
+		filterGeneTimer = setTimeout(doneTyping_Gene, filterGeneTimer_Timeout);
+	})
 
 	// Set Listeners for Cell Subset Analysis
     var upperRange = $("#upper-input");
@@ -296,6 +363,21 @@ window.onload = function()
 		createTableFromData();
 		drawChart();
 		
+	
+	});
+
+	$("#gene_tab").on("click", function() {
+		$('#gene-analysis-title').text("Gene Analysis");
+		addToGeneBox();
+
+        var filterGene = $('#gene_filt_input');
+        filterGene.detach();
+
+		// (Re)Create filter signature box
+		var th = $('#filter_genes_container');
+		$(th).append(filterGene);
+		filterGene.show();
+		filterGene.trigger('input'); 
 	
 	});
 
@@ -487,27 +569,87 @@ function addToPCAnalysisBox(sig_info) {
 	}
 
 	var pcnum = global_status.plotted_pc.split(" ")[1];
-	var loading_promise = api.filterGroup.loadings(global_status.filter_group, pcnum);
-	console.log(sig_info);
+	var loading_promise_pos = api.filterGroup.loadings_pos(global_status.filter_group, pcnum);
+	var loading_promise_neg = api.filterGroup.loadings_neg(global_status.filter_group, pcnum);
 
-	return $.when(loading_promise
-		.then(function(loadings) {
-			content = "<table style='width:100%'>";
+	return $.when(loading_promise_pos, loading_promise_neg)
+		.then(function(pos_loadings, neg_loadings) {
+
+			
+			content = '<h4 style="font-size:16px; font-weight:bold">Top 5 Informative Postive Loading Vectors</h4>';
+			content += "<table style='width:100%'>";
 			content += "<tr><th>Gene Name</th><th>Normalized Loading</th></tr>";
 
-			toShow = Object.keys(loadings).slice(0, 11);
+			toShow = Object.keys(pos_loadings).slice(0, 6);
 
 			toShow.forEach(function(l) {
 				urllink = "http://www.genecards.org/cgi-bin/carddisp.pl?gene=" + l;
 				content += "<tr><td>";
 				content += "<a href=" + urllink + " target='_blank'>" + l + "</a></td>";
-				content += "<td>" + ((loadings[l]*100).toPrecision(3)) + "%</td></tr>";
+				content += "<td>" + ((pos_loadings[l]*100).toPrecision(3)) + "%</td></tr>";
+			});
+	
+			content += "</table><br>";
+
+			content += '<h4 style="font-size:16px; font-weight:bold">Top 5 Informative Negative Loading Vectors</h4>';
+			content += "<table style='width:100%'>";
+			content += "<tr><th>Gene Name</th><th>Normalized Loading</th></tr>";
+
+
+			toShow = Object.keys(neg_loadings).slice(0, 6);
+
+			toShow.forEach(function(l) {
+				urllink = "http://www.genecards.org/cgi-bin/carddisp.pl?gene=" + l;
+				content += "<tr><td>";
+				content += "<a href=" + urllink + " target='_blank'>" + l + "</a></td>";
+				content += "<td>" + ((neg_loadings[l]*100).toPrecision(3)) + "%</td></tr>";
 			});
 	
 			content += "</table>";
-
 			$(dbid).html(content);
-		}));
+		});
+	
+}
+
+function addToGeneBox() {
+
+	dbid = "#gene-analysis-content";
+
+	var gene_promise = api.expression.filtered_expression(global_status.filter_group);
+
+	return $.when(gene_promise
+			.then(function(genes) {
+
+
+				var gene_title = document.getElementById("selected-gene-title");
+				gene_title.innerHTML = "Selected Gene: " + global_status.selected_gene;
+
+				var gene_card = document.getElementById("view-gene-card");
+				urllink = "http://www.genecards.org/cgi-bin/carddisp.pl?gene=" + global_status.selected_gene;
+				gene_card.innerHTML = "<a href=" + urllink + " target='_blank'>" + "\tView GeneCard" + "</a></td>";
+
+
+				content = "<table id='gene-table' style='width:75%; margin-left: 5%;'>";
+				content += "<tr><th>Gene Name</th</tr>";
+
+				for (i = 0; i < genes.data.length; i++) {
+					content += "<tr><td class='gene-cell'>" + genes.gene_labels[i] + "</td></tr>";
+				}
+
+				content += "</table>";
+
+				$(dbid).html(content);
+
+				$(".gene-cell").on("click", function(d) {
+					global_status.selected_gene = d.target.innerHTML;
+					global_status.scatterColorOption = "gene";
+					addToGeneBox();
+					drawChart();
+					drawDistChart();
+				});
+
+	}));
+
 	
 }
 
@@ -517,12 +659,17 @@ function addToDataAnalysisBox(sig_info) {
 		$(dbid).html("");
 		return;
 	}
+
+
 	content = '<p> Source: ' + sig_info.source + '<br>';
 	content += "<table style='width:100%'>";
 	content += "<tr><th>Gene Name</th><th>Sign</th></tr>";
 
 
 	Object.keys(sig_info.sigDict).forEach(function(key) {
+		if (global_status.selected_gene == "") {
+			global_status.selected_gene = key;
+		}
 		urllink = "http://www.genecards.org/cgi-bin/carddisp.pl?gene=" + key;
 		content += "<tr><td>";
 		content += "<a href=" + urllink + " target='_blank'>" + key + "</a></td>";
@@ -567,22 +714,85 @@ function tableClickFunction(row_key, col_key)
     drawTree();
 }
 
+//Draw Dist Scatter
+function drawDistChart() {
+
+	var filter_group = global_status.filter_group;
+
+	var val_promise = api.expression.filtered_expression("None");
+
+	return $.when(val_promise
+			.then(function(values) {
+
+			var selected_gene = global_status.selected_gene;
+			var gene_ind = values.gene_labels.indexOf(selected_gene);
+			var expr_data = values.data[gene_ind];
+			var x_vals = Array.apply(null, Array(expr_data.length)).map(function (_, i) {return i;});
+
+			expr_data = convert_to_range(expr_data, -1.75, 1.75);
+			x_vals = convert_to_range(x_vals, -1.75, 1.75);
+
+			var points = [];
+			for (i = 0; i < expr_data.length; i++) {
+				var sample_label = values.sample_labels[i];
+				var x = x_vals[i];
+				var y = expr_data[i];
+				var score = .01;
+				var sample_label = values.sample_labels[i];
+				points.push([x, y, score, sample_label]);
+			}
+
+			global_gene_scatter.setData(points, false);
+		}));
+}
+
+function convert_to_range(data, x, y) {
+	var min = Math.min.apply(Math, data);
+	var range = Math.max.apply(Math, data) - min;
+	var range2 = y - x
+
+	var cData = [];
+	console.log(data);
+	console.log(min);
+	console.log(range);
+
+	data.forEach(function(d) {
+		cData.push( (d-min) / range );
+	});
+
+	var newData = [];
+	cData.forEach(function(d) {
+		newData.push( (d * range2) + x);
+	});
+
+	console.log(newData);
+
+	return newData
+}
+
 // Draw the scatter plot
 function drawChart() {
 
+	var status_copy = jQuery.extend({}, global_status);
+	global_stack.push(status_copy);
 
     var sig_key = global_status.plotted_signature;
     var proj_key = global_status.plotted_projection;
     var pc_key = global_status.plotted_pc;
     var filter_group = global_status.filter_group;
 
-	var sig_promise;
+
+	var val_promise;
 	if(global_status.scatterColorOption == "value" || 
 		global_data.sigIsPrecomputed[sig_key])
-		{sig_promise = api.signature.scores(sig_key)}
+		{val_promise = api.signature.scores(sig_key)}
 
 	if(global_status.scatterColorOption == "rank") 
-		{sig_promise = api.signature.ranks(sig_key)}
+		{val_promise = api.signature.ranks(sig_key)}
+
+	if (global_status.scatterColorOption == "gene") {
+		val_promise = api.expression.filtered_expression("None");
+	}
 
 	if (global_status.main_vis == "sigvp") {
 
@@ -598,18 +808,31 @@ function drawChart() {
 
 		var sig_info_promise = api.signature.info(sig_key)
 
-		return $.when(proj_promise, sig_promise, sig_info_promise) // Runs when both are completed
-			.then(function(projection, signature, sig_info){
+		return $.when(proj_promise, val_promise, sig_info_promise) // Runs when both are completed
+			.then(function(projection, values, sig_info){
             
 				$('#plot-title').text(proj_key);
 				$('#plot-subtitle').text(sig_key);
 
 				var points = [];
-				for(sample_label in signature){
-					var x = projection[sample_label][0]
-					var y = projection[sample_label][1]
-					var sig_score = signature[sample_label]
-					points.push([x, y, sig_score, sample_label]);
+				
+				if (global_status.scatterColorOption != "gene") {
+					for(sample_label in values){
+						var x = projection[sample_label][0]
+						var y = projection[sample_label][1]
+						var sig_score = values[sample_label]
+						points.push([x, y, sig_score, sample_label]);
+					}
+				} else {
+					var gene_ind = values.gene_labels.indexOf(global_status.selected_gene);
+					var gene_data = values.data[gene_ind];
+					for (i = 0; i < gene_data.length; i++) {
+						sample_label = values.sample_labels[i]
+						var x = projection[sample_label][0];
+						var y = projection[sample_label][1];
+						var score = gene_data[i];
+						points.push([x, y, score, sample_label]);
+					}
 				}
 
 				global_scatter.setData(points, sig_info.isFactor);
@@ -634,19 +857,31 @@ function drawChart() {
 		var pc_promise = api.pc.coordinates(filter_group, sig_key, pc_key);
 		var sig_info_promise = api.signature.info(sig_key);
 
-		return $.when(pc_promise, sig_promise, sig_info_promise)
-			.then(function(projection, signature, sig_info) {
+		return $.when(pc_promise, val_promise, sig_info_promise)
+			.then(function(projection, values, sig_info) {
 
 				
 				$("#plot-title").text("Principal Component ".concat(pc_key));
 				$("#plot-subtitle").text(sig_key);
 
 				var points = []
-				for (sample_label in signature) {
-					var x = projection[sample_label][0];
-					var y = projection[sample_label][1];
-					var sig_score = signature[sample_label];
-					points.push([x, y, sig_score, sample_label]);
+				if (global_status.scatterColorOption != "gene") {
+					for(sample_label in values){
+						var x = projection[sample_label][0]
+						var y = projection[sample_label][1]
+						var sig_score = values[sample_label]
+						points.push([x, y, sig_score, sample_label]);
+					}
+				} else {
+					var gene_ind = values.gene_labels.indexOf(global_status.selected_gene);
+					var gene_data = values.data[gene_ind];
+					for (i = 0; i < gene_data.length; i++) {
+						sample_label = values.sample_labels[i]
+						var x = projection[sample_label][0];
+						var y = projection[sample_label][1];
+						var score = gene_data[i];
+						points.push([x, y, score, sample_label]);
+					}
 				}
 
 				global_scatter.setData(points, sig_info.isFactor);
@@ -777,7 +1012,7 @@ function createTableFromData()
 	if (global_status.main_vis == "sigvp") {
 		matrix_promise = api.filterGroup.sigProjMatrixP(global_status.filter_group, global_status.precomputed);
 	} else {
-		matrix_promise = api.filterGroup.mI(global_status.filter_group, global_status.precomputed);
+		matrix_promise = api.filterGroup.pCorr(global_status.filter_group, global_status.precomputed);
 	}
 
 
@@ -906,6 +1141,12 @@ function createTableFromData()
         var filterSig = $('#sig_filt_input');
         filterSig.detach();
 
+		// (Re)Create filter signature box
+		var th = $('#filter_sigs_container');
+		$(th).append(filterSig);
+		filterSig.show();
+		filterSig.trigger('input'); 
+
 
 		for (curr_cl = 1; curr_cl <= clusmax; curr_cl++) {
 			
@@ -968,7 +1209,7 @@ function createTableFromData()
 
 			if (global_status.main_vis == "pcannotator") {
 				var colorScale = d3.scale.linear()
-					.domain([0,0.2,0.5])
+					.domain([0,0.4,.8])
 					.range(["steelblue", "white", "lightcoral"])
 					.clamp(true);
 			} else {
@@ -993,8 +1234,8 @@ function createTableFromData()
 				content_row
 					.filter(function(d,i) { return i > 0;})
 					.text(function(d){
-						if(d.val > .5) { return "> .5";}
-						else if(d.val < .5) { return d.val.toFixed(2);}
+						if(d.val > .8) { return "> .8";}
+						else if(d.val < .8) { return d.val.toFixed(2);}
 						else {return d.val.toPrecision(2);}
 							})
 					.style('background-color', function(d){return colorScale(d.val);})
@@ -1029,11 +1270,6 @@ function createTableFromData()
             
 		}
 
-		// (Re)Create filter signature box
-		/*var th = $('.table_div').children('table').children('thead').children('tr').children('th:first-child');
-		$(th).append(filterSig);
-		filterSig.show();
-		filterSig.trigger('input'); */
 
 		$(".sigclust").on("mouseover", function(d) {
 			tooltip.showTooltip("Click To Toggle Cluster Display", d);
@@ -1136,8 +1372,9 @@ function createGeneModal()
             
             var maxWidth = d3.max(widths);
             
-            var geneDivs = d3.select('#geneModal').select('.modal-body').selectAll('div')
+           /* var geneDivs = d3.select('#geneModal').select('.modal-body').selectAll('di
                 .data(genes.sort());
+                */
                 
             geneDivs.enter().append('div');
             geneDivs.exit().remove();
@@ -1150,65 +1387,72 @@ function createGeneModal()
         });
 }
 
+function goBack(d) {
 
-function changeTableView()
-{
-	var precomp = document.getElementById("precomputed_button").innerHTML;
-	if (precomp == "Show Precomputed") {
-		document.getElementById("precomputed_button").innerHTML = "Show Computed";
-	} else {
-		document.getElementById("precomputed_button").innerHTML = "Show Precomputed";
+	if (global_stack.length == 1) {
+		return;
 	}
-	global_status.precomputed = !(global_status.precomputed);
-	return createTableFromData(); 
+
+	curr_status = global_stack.pop();
+	global_status = global_stack.pop();
+	createTableFromData();
+	drawChart();
+	drawHeat();
 }
 
-function exportSigProj() {
-	
-    var sig_key = global_status.plotted_signature;
-    var proj_key = global_status.plotted_projection;
-    var filter_group = global_status.filter_group;
+function changeTableView() {
+	var precomp = document.getElementById("precomputed_button").innerHTML;
+	if (precomp == "Precomputed") {
+		document.getElementById("precomputed_button").innerHTML = "Computed";
+	} else {
+		document.getElementById("precomputed_button").innerHTML = "Precomputed";
+	}
 
-    if(sig_key.length == 0 && proj_key.length == 0){
-        $('#plot_title_div').children().eq(0).text("");
-        $('#plot_title_div').children().eq(1).text("");
-        global_scatter.setData([], false);
-        return $().promise()
-    }
+	global_status.precomputed = !(global_status.precomputed);
+	return createTableFromData();
+}
 
-    var proj_promise = api.projection.coordinates(filter_group, proj_key);
+function exprotSigProj() {
 	
+	var sig_key = global_status.plotted_signature;
+	var proj_key = global_status.plotted_projection;
+	var filter_group = global_status.filter_group;
+
+	if (sig_key.length == 0 && proj_key.length == 0) {
+		$("#plot_title_div").children().eq(0).text("");
+		$("#plot_title_div").children().eq(1).text("");
+		global_scatter.setData([], false);
+		return $().promise();
+	}
+
+	var proj_promise = api.projection.coordinates(filter_group, proj_key);
+
 	var sig_promise;
-    if(global_status.scatterColorOption == "value" || 
-        global_data.sigIsPrecomputed[sig_key])
-        {sig_promise = api.signature.scores(sig_key)}
+	if (global_status.scatterColorOption == "value" || global_data.sigIsPrecomputed[sig_key]) {
+		sig_promise = api.signature.scores(sig_key)
+	} else if (global_status.scatterColorOption == "rank") {
+		sig_promise = api.signature.ranks(sig_key)
+	}
 
-    if(global_status.scatterColorOption == "rank") 
-        {sig_promise = api.signature.ranks(sig_key)}
+	return $.when(proj_promise, sig_promise)
+		.then(function(projection, signature, sig_info) {
+		
+			var points = [];
+			for (sample_label in signature) {
+				var x = projection[sample_label][0];
+				var y = projection[sample_label][1];
+				var sig_score = signature[sample_label];
+				points.push([x, y, sig_score, sample_label]);
+			} 
 
-
-    return $.when(proj_promise, sig_promise) // Runs when both are completed
-        .then(function(projection, signature, sig_info){
-            
-            $('#plot_title_div').children().eq(0).text(proj_key);
-            $('#plot_title_div').children().eq(1).text(sig_key);
-
-            var points = [];
-            for(sample_label in signature){
-                var x = projection[sample_label][0]
-                var y = projection[sample_label][1]
-                var sig_score = signature[sample_label]
-                points.push([x, y, sig_score, sample_label]);
-            }
-			
 			var lineArray = [];
 			points.forEach(function(infoArray, index) {
-				var line = infoArray.join(",");
+				var line = inforArray.join(",");
 				lineArray.push(index == 0 ? "data:text/csv;charset=utf-8," + line : line);
 			});
 			var csvContent = lineArray.join("\n");
 
-			var encodedURI = encodeURI(csvContent);
+			var encodeURI = encodeURI(csvContent);
 			var downloadLink = document.createElement("a");
 			downloadLink.setAttribute("href", encodedURI);
 			downloadLink.setAttribute("download", proj_key + ".csv");
@@ -1217,58 +1461,62 @@ function exportSigProj() {
 			document.body.appendChild(downloadLink);
 
 			downloadLink.click();
+		});
+		
+}
 
-        });
-
+function destroyClickedElement(event) {
+	document.body.removeChild(event.target);
 }
 
 function selectRange() {
-
 	var sig_key = global_status.plotted_signature;
-    var proj_key = global_status.plotted_projection;
-    var filter_group = global_status.filter_group;
+	var proj_key = global_status.plotted_projection;
+	var filter_group = global_status.filter_group;
 
 	var proj_promise = api.projection.coordinates(filter_group, proj_key);
 
 	if (global_status.subset_criteria == "Rank") {
 		sig_promise = api.signature.ranks(sig_key);
 	} else {
-		sig_promise = api.signature.scores(sig_key);  
+		sig_promise = api.signature.scores(sig_key);
 	}
 
 	return $.when(sig_promise, proj_promise)
 		.then(function(signature, projection) {
 
-            var points = [];
-            for(sample_label in signature){
-                var x = projection[sample_label][0]
-                var y = projection[sample_label][1]
-                var sig_score = signature[sample_label]
-                points.push([x, y, sig_score, sample_label]);
-            }
+			var points = [];
+			for (sample_label in signature) {
+				var x = projection[sample_label][0];
+				var y = projection[sample_label][1];
+				var sig_score = signature[sample_label];
+				points.push([x, y, sig_score, sample_label]);
+			}
 
 			var cells = global_scatter.selectCellRange(points, global_status.lower_range, global_status.upper_range);
-			global_status.subset = cells; 
+			global_status.subset = cells;
 
 		});
+
 }
 
 function unselectRange() {
 	global_scatter.unselect();
-	
+
 	global_status.subset = [];
 }
 
-
 function runSubsetAnalysis() {
+
 	global_status.subset = global_scatter.getSelected();
 	if (global_status.subset.length > 0) {
-		api.analysis.run(global_status.subset);
+		api.analysis.run(global_status.subset)
 	}
+
 }
 
 function runPCAnalysis() {
-
+	
 	var sig_key = global_status.plotted_signature;
 	var filter_group = global_status.filter_group;
 	var pc1 = global_status.pc1;
@@ -1277,31 +1525,27 @@ function runPCAnalysis() {
 	if (global_status.subset_criteria == "Rank") {
 		sig_promise = api.signature.ranks(sig_key);
 	} else {
-		sig_promise = api.signature.scores(sig_key);  
+		sig_promise = api.signature.scores(sig_key);
 	}
 
 	var sig_info_promise = api.signature.info(sig_key);
-	var proj_promise = api.pc.versus(filter_group, pc1, pc2)
+	var proj_promise = api.pc.versus(filter_group, pc1, pc2);
 
-	return $.when(proj_promise, sig_promise, sig_info_promise) // Runs when both are completed
-		.then(function(projection, signature, sig_info){
-           
-			$('#plot-title').text("PC " + pc1 + " vs. PC " + pc2);
-			$('#plot-subtitle').text(sig_key);
+	return $.when(proj_promise, sig_promise, sig_info_promise)
+		.then(function(projection, signature, sig_info) {
+			
+			$("#plot-title").text("PC " + pc1 + "vs. PC " + pc2);
+			$("#plot-subtitle").text(sig_key);
 
 			var points = [];
-			for(sample_label in signature){
-				var x = projection[sample_label][0]
-				var y = projection[sample_label][1]
-				var sig_score = signature[sample_label]
+			for (sample_label in signature) {
+				var x = projection[sample_label][0];
+				var y = projection[sample_label][1];
+				var sig_score = signature[sample_label];
 				points.push([x, y, sig_score, sample_label]);
 			}
 
 			global_scatter.setData(points, sig_info.isFactor);
-
-	});
+		});
 }
 
-function destroyClickedElement(event) {
-	document.body.removeChild(event.target);
-}

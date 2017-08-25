@@ -16,7 +16,7 @@
 #' @return ProjectionData object
 setMethod("initialize", signature(.Object="ProjectionData"),
           function(.Object, filter = "", projections=NULL, genes, keys, sigProjMatrix, 
-					pMatrix, PPT, fullPCA, mutualInformation, loadings) {
+					pMatrix, PPT, fullPCA, pearsonCorr, loadings) {
             
             .Object@filter <- filter
             .Object@projections <- projections
@@ -26,7 +26,7 @@ setMethod("initialize", signature(.Object="ProjectionData"),
             .Object@pMatrix <- pMatrix
             .Object@PPT <- PPT
             .Object@fullPCA <- fullPCA
-            .Object@mutualInformation <- mutualInformation
+            .Object@pearsonCorr <- pearsonCorr
             .Object@loadings <- loadings
             
             return(.Object)

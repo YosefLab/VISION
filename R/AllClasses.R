@@ -99,7 +99,7 @@ ProjectionData <- setClass("ProjectionData",
       pMatrix="matrix",
       PPT = "list",
       fullPCA = "matrix",
-      mutualInformation = "matrix",
+      pearsonCorr = "matrix",
       loadings = "matrix"
     )
 )
@@ -113,6 +113,14 @@ ServerExpression <- setClass("ServerExpression",
 )
 
 ServerMI <- setClass("ServerMI",
+	slots = c(
+		data = "matrix",
+		proj_labels = "character",
+		"sig_labels" = "character"
+	)
+)
+
+ServerPCorr <- setClass("ServerPCorr",
 	slots = c(
 		data = "matrix",
 		proj_labels = "character",

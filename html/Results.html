@@ -22,31 +22,6 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<div class="modal fade" id="signatureModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title" id="myModalLabel">Signature Info</h4>
-            </div>
-            <div class="modal-body">
-                <table>
-                    <thead>
-                    <tr>
-                        <th>Gene</th>
-                        <th>Sign</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
 <div class="modal fade" id="geneModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -65,11 +40,12 @@
 <div id="content_wrapper" style="display: flex; height: 100%; flex-direction: row; justify-content: center;">
     <div id="side-wrapper">
 		<div id="command-panel" class="color_panel" style="overflow: hidden; flex: 1 0 50%; max-height: 50%">
-			<h4 class="command-title">FastProject Controls</h4> 
-            <div style="margin: 10px; display:flex; flex-direction: row; width: 100%;flex: 1 0 auto">
-                <button type="button" style="flex: 1 0 auto" class="btn btn-default" id="export-button" onclick=exportSigProj()>&#x21e9; Export Projection CSV</button>
-                <button type="button" style="flex: 1 0 auto;" class="btn btn-default" id="export-button" onclick=exportSigProjPNG()>&#x21e9; Export Projection PNG</button>
-            </div>
+			<div style="display: flex; flex-direction: row; justify-content: space-evenly">
+				<span style="margin-top:3px;">
+					<button id="back_button" type="button" class="btn btn-default" onclick=goBack()>Back</button>
+				</span>
+				<h4 class="command-title">FastProject Controls</h4> 
+			</div>
 			<div id="data_options_div" class="color_panel" style="">
 				<span>
 					<label for="filter_dropdown">Filter Level</label>
@@ -86,7 +62,10 @@
 				</span>
 			</div>
 			<br>
-			<div id="table_div_container"></div>
+			<br>
+			<div id="table_div_container">
+				<div id="filter_sigs_container"></div>
+			</div>
 			<br>
 
 			<!-- <div class="command-panel-content">
@@ -108,6 +87,9 @@
 
 				<input id="pc_data_tab" type="radio" class="data-vis-tab" name="data_tabs">
 				<label for="pc_data_tab" class='data-labels'>Pr. Comp. Analysis</label>
+
+				<input id="gene_tab" type="radio" class="data-vis-tab" name="data_tabs">
+				<label for="gene_tab" class="data-labels">Genes</label>
 				<hr/>
 
 				<div class="tab-content" id="cluster-wrapper" style="position: absolute; height: 90%; width: 100%">
@@ -121,6 +103,19 @@
 					<div id="projection-div">
 						<h4 id="data-analysis-title" style="font-size: 16px; text-align: center"></h4>
 						<p id="data-analysis-content" style="margin-left: 10px;"></p>
+					</div>
+				</div>
+				<div class="tab-content" id="gene-content-wrapper" style="position: absolute; height: 90%; width: 100%">
+					<div id="gene-div">
+						<h4 id="gene-analysis-title" style="font-size: 16px; text-align: center"></h4>
+						<h4 style="font-size: 14px; margin-left:5%;" id="selected-gene-title"></h4>
+						<h4 style="font-size: 14px; margin-left: 5%;" id="view-gene-card"></h4>
+						<div id="filter_genes_container" style="margin-left: 5%";></div>
+						<br>
+						<div id="gene-analysis-content-div" style="display: flex; flex-direction: row; justify-content: center; height: 100%; overflow:hidden">
+							<p id="gene-analysis-content" style="margin-left: 5%; flex: 1 1 50%; overflow:scroll"></p>
+							<div id="gene_dist_div" class="color_panel" style="flex: 1 1 50%; height:50%; "></div>
+						</div>
 					</div>
 				</div>
 				<div class="tab-content" id="pc-content-wrapper" style="position: absolute; height: 90%; width: 100%">
@@ -148,7 +143,6 @@
 							</span>
 						</div>
 						<br>
-						<h4 style="font-size:16px; font-weight:bold">Top 10 Informative Genes</h4>
 						<p id="pc-analysis-content"></p>
 					</div>
 				</div>
@@ -214,7 +208,7 @@
 						<div class="title" id="plot-title" style=""></div>
 						<div class="subtitle" id="plot-subtitle" style=""></div>
 					</div>
-					<div class="colorOptions" style="flex: 1 1 20%; align-self: flex-end; padding-bottom: 10px;">
+					<div class="colorOptions" style="flex: 1 1 50%; align-self: flex-end; padding-bottom: 10px;">
 						<span>Signature Score Colors:</span>
 						<div class="btn-group" data-toggle="buttons">
 							<label class="btn btn-default">
@@ -224,7 +218,12 @@
 							<input type="radio" name="scatterColorButtons" id="rankoption" value="rank" autocomplete="off" checked> Rank
 							</label>
 						<span>
-							<button id="lasso-select" type="button" class="btn btn-default" style="margin-left: 40px;">Enable Lasso Select</button>
+							<button id="lasso-select" type="button" class="btn btn-default" style="margin-left: 40px; margin-right:40px;">Enable Lasso Select</button>
+						</span>
+							<!--<button type="button" style="flex: 1 0 auto" class="btn btn-default" id="export-button" onclick=exportSigProj()>&#x21e9; Export Projection CSV</button>
+							<button type="button" style="flex: 1 0 auto;" class="btn btn-default" id="export-button" onclick=exportSigProjPNG()>&#x21e9; Export Projection PNG</button> -->
+						<span>
+							<button type="button" style="flex: 1 0 auto" class="btn btn-default" id-"export-button">Export</button>
 						</span>
 						</div>
 					</div>
@@ -269,5 +268,6 @@
 	</div>
 </div>
 <input id="sig_filt_input" type="text" placeholder="Filter Signatures..." style="display: none;">
+<input id="gene_filt_input" type="text" placeholder="Filter Genes..." style="display: none;">
 </body>
 </html>

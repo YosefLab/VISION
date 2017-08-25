@@ -193,7 +193,7 @@ jug() %>%
                       });
     return(toJSON(filters))
   }) %>%
-  get("/FilterGroup/(?<filter_name9>.*)/Precomputed/MutualInformation", function(req, res, err) {
+  get("/FilterGroup/(?<filter_name9>.*)/MutualInformation/Precomputed", function(req, res, err) {
     projData <- fpout@projData
 	filter <- URLdecode(req$params$filter_name9)
 
@@ -208,7 +208,7 @@ jug() %>%
 
     return(mutualInfoToJSON(mI, sigs))
   }) %>%
-  get("/FilterGroup/(?<filter_name11>.*)/Normal/MutualInformation", function(req, res, err) {
+  get("/FilterGroup/(?<filter_name11>.*)/MutualInformation/Normal", function(req, res, err) {
     projData <- fpout@projData
 	filter <- URLdecode(req$params$filter_name11)
 
@@ -223,17 +223,41 @@ jug() %>%
 
     return(mutualInfoToJSON(mI, sigs))
   }) %>%
-  get("/FilterGroup/(?<filter_name10>.*)/(?<pc_num1>.*)/Loadings", function(req, res, err) {
+  get("/FilterGroup/(?<filter_name10>.*)/(?<pc_num1>.*)/Loadings/Positive", function(req, res, err) {
     projData <- fpout@projData
 	filter <- URLdecode(req$params$filter_name10)
 	pcnum <- as.numeric(URLdecode(req$params$pc_num1))
 	
 	l <- projData[[filter]]@loadings[,pcnum]
 
-	nl <- sapply(abs(l), function(x) x / sum(abs(l)))
-	nl <- sort(nl, decreasing=T) 
+	posl <- l[which(l >= 0)]
 
-    return(toJSON(with(stack(nl), tapply(values, ind, c, simplify=F))))
+	nposl <- sapply(posl, function(x) x / sum(posl))
+
+	nposl <- sort(nposl, decreasing=T)
+
+	js1 <- toJSON(with(stack(nposl), tapply(values, ind, c, simplify=F)))
+
+	return(js1)
+    
+  }) %>%
+  get("/FilterGroup/(?<filter_name16>.*)/(?<pc_num6>.*)/Loadings/Negative", function(req, res, err) {
+    projData <- fpout@projData
+	filter <- URLdecode(req$params$filter_name16)
+	pcnum <- as.numeric(URLdecode(req$params$pc_num6))
+	
+	l <- projData[[filter]]@loadings[,pcnum]
+
+	negl <- l[which(l < 0)]
+
+	nnegl <- sapply(negl, function(x) x / sum(negl))
+
+	nnegl <- sort(nnegl, decreasing=T)
+
+	js2 <- toJSON(with(stack(nnegl), tapply(values, ind, c, simplify=F)))
+
+	return(js2)
+    
   }) %>%
   get("/FilterGroup/(?<filter_name12>.*)/(?<sig_name5>.*)/(?<pc_num2>.*)/Coordinates", function(req, res, err) {
     projData <- fpout@projData
@@ -250,7 +274,7 @@ jug() %>%
 
     return(toJSON(coord, force=T, auto_unbox=T))
   }) %>%
-  get("/FilterGroup/(?<filter_name13>.*)/(?<pc_num3>.*)/(?<pc_num4>.*)", function(req, res, err) {
+  get("/FilterGroup/(?<filter_name13>.*)/PCVersus/(?<pc_num3>.*)/(?<pc_num4>.*)", function(req, res, err) {
     projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name13)
 	pc1 <- as.numeric(URLdecode(req$params$pc_num3))
@@ -267,11 +291,59 @@ jug() %>%
 
     return(toJSON(coord, force=T, auto_unbox=T))
   }) %>%
+  get("/FilterGroup/(?<filter_name14>.*)/PearsonCorr/Normal", function(req, res, err) {
+    projData <- fpout@projData
+	filter <- URLdecode(req$params$filter_name14)
+
+    signatures <- fpout@sigList
+    keys <- lapply(signatures, function(x) x@name)
+    vals <- lapply(signatures, function(x) x@isPrecomputed)
+    names(vals) <- keys
+	sigvals <- vals[which(vals == FALSE)]
+	sigs <- names(sigvals)
+	
+	pc <- projData[[filter]]@pearsonCorr
+
+    return(pearsonCorrToJSON(pc, sigs))
+  }) %>%
+  get("/FilterGroup/(?<filter_name15>.*)/PearsonCorr/Precomputed", function(req, res, err) {
+    projData <- fpout@projData
+	filter <- URLdecode(req$params$filter_name15)
+
+    signatures <- fpout@sigList
+    keys <- lapply(signatures, function(x) x@name)
+    vals <- lapply(signatures, function(x) x@isPrecomputed)
+    names(vals) <- keys
+	sigvals <- vals[which(vals == TRUE)]
+	sigs <- names(sigvals)
+	
+	pc <- projData[[filter]]@pearsonCorr
+
+	return(pearsonCorrToJSON(pc, sigs))
+  }) %>%
   get("/Expression", function(req, res, err) {
     return(expressionToJSON(fpout@exprData@data, matrix(NA)))
   }) %>%
+  get("/FilterGroup/(?<filter_name17>.*)/Expression", function(req, res, err) {
+  	  filter <- URLdecode(req$params$filter_name17);
+  	  if (filter == "fano") {
+  	  	  data <- fpout@exprData@fanoFilter
+	  } else if (filter == "threshold") {
+	  	  data <- fpout@exprData@thresholdFilter
+	  } else if (filter == "novar") {
+	  	  data <- fpout@exprData@noVar
+	  } else {
+			data <- fpout@exprData@data
+	  }
+
+	  genes <- rownames(data)
+
+	  return(expressionToJSON(data, genes))
+
+  }) %>%
   post("/Analysis/Run/", function(req, res, err) {
 	subset <- fromJSON(req$body)
+	subset <- subset[!is.na(subset)]
 	nexpr <- fpout@exprData@data[,subset]
 	nfp <- createNewFP(fpout@fpParams, nexpr)
 	newAnalysis(nfp)

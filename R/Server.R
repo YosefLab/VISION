@@ -65,6 +65,17 @@ setMethod("initialize", signature(.Object="ServerMI"),
 
 		})
 
+setMethod("initialize", signature(.Object="ServerPCorr"),
+		function(.Object, data, proj_labels, sig_labels) {
+		
+		.Object@data <- data
+		.Object@proj_labels <- proj_labels
+		.Object@sig_labels <- sig_labels
+
+		return(.Object)
+
+		})
+
 
 #' Converts Signature object to JSON
 #' 
@@ -163,6 +174,20 @@ mutualInfoToJSON <- function(mI, sigs) {
 	sMI <- ServerMI(unname(mI), cn, sigs)
 
 	json <- toJSON(sMI, force=T, pretty=T, auto_unbox=T)
+
+	return(json)
+
+}
+
+pearsonCorrToJSON <- function(pc, sigs) {
+	
+	print("here")
+	pc <- pc[sigs,,drop=F]
+	cn <- c()
+	for (i in 1:ncol(pc)) { cn <- c(cn, paste("PC", i)) } 
+	sPC <- ServerPCorr(unname(pc), cn, sigs)
+
+	json <- toJSON(sPC, force=T, pretty=T, auto_unbox=T)
 
 	return(json)
 

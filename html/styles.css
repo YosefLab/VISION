@@ -60,7 +60,8 @@ input[type=radio]:checked + label {
 }
 
 .data-labels {
-	width: 24%;	
+	width: 19%;	
+	font-size: 12px;
 }
 
 .tab-content {
@@ -117,6 +118,7 @@ hr {
 #proj_tab:checked ~ #sigvp-scatter-wrapper,
 #pc_tab:checked ~ #sigvp-scatter-wrapper,
 #pc_data_tab:checked ~ #pc-content-wrapper,
+#gene_tab:checked ~ #gene-content-wrapper,
 #tree_tab:checked ~ #ppt-wrapper {
 	visibility: visible;
 }
@@ -153,6 +155,15 @@ hr {
  #projection-div {
 	overflow: scroll;
 	height: 100%;
+ }
+
+ #gene-div {
+	overflow: scroll;
+	height: 100%;
+ }
+
+ .gene-cell {
+	cursor: pointer;
  }
 
  #cell-selection-wrapper {
@@ -278,9 +289,10 @@ hr {
  }
 
 .command-title {
-	margin-left: 5px;
+	margin-left: 10px;
 	font-size: 20px;
 	text-align: center;
+	width: 80%
 }
 
 .link {

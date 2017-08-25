@@ -93,19 +93,28 @@ var api = (function(){
       return $.ajax(query).then(x => JSON.parse(x))
     }
 
-    output.filterGroup.mI = function(filter_group, precomputed) {
+    output.filterGroup.pCorr = function(filter_group, precomputed) {
 		var query = "/FilterGroup/";
 		if (precomputed) {
-			query = query.concat(encodeURI(filter_group), "/Precomputed/MutualInformation");
+			query = query.concat(encodeURI(filter_group), "/PearsonCorr/Precomputed");
 		} else {
-			query = query.concat(encodeURI(filter_group), "/Normal/MutualInformation");
+			query = query.concat(encodeURI(filter_group), "/PearsonCorr/Normal");
 		}
+		console.log(query)
 		return $.ajax(query).then(x => JSON.parse(x))
 	}
 
-	output.filterGroup.loadings = function(filter_group, pcnum) {
+	output.filterGroup.loadings_pos = function(filter_group, pcnum) {
 		var query = "/FilterGroup/";
 		query = query.concat(encodeURI(filter_group), "/", encodeURI(pcnum), "/Loadings");
+		query = query.concat("/Positive");
+		return $.ajax(query).then(x => JSON.parse(x))
+	}
+
+	output.filterGroup.loadings_neg= function(filter_group, pcnum) {
+		var query = "/FilterGroup/";
+		query = query.concat(encodeURI(filter_group), "/", encodeURI(pcnum), "/Loadings");
+		query = query.concat("/Negative");
 		return $.ajax(query).then(x => JSON.parse(x))
 	}
 
@@ -154,7 +163,7 @@ var api = (function(){
 
 	output.pc.versus = function(filter_group, pc1, pc2) {
 		var query = "/FilterGroup/";
-		query = query.concat(encodeURI(filter_group), "/", encodeURI(pc1), "/", encodeURI(pc2));
+		query = query.concat(encodeURI(filter_group), "/PCVersus/", encodeURI(pc1), "/", encodeURI(pc2));
 		return $.ajax(query).then(x => JSON.parse(x));
 	}
 
@@ -163,8 +172,14 @@ var api = (function(){
 
     output.expression = {}
 
+    output.expression.filtered_expression = function(filter_group) {
+		query = "/FilterGroup/";
+		query = query.concat(encodeURI(filter_group), "/Expression");
+		return $.ajax(query).then(x => JSON.parse(x));
+	}
+
     output.expression.all = function() {
-      //return $.ajax(query).then(x => x);
+
       return $.ajax(query).then(x => JSON.parse(x))
     }
 

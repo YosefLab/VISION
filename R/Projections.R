@@ -5,7 +5,7 @@
 
 require("fastICA")
 require('Rtsne')
-require("Rtsne.multicore")
+#require("Rtsne.multicore")
 require('igraph')
 require("rsvd")
 require("RDRToolbox")
@@ -387,8 +387,8 @@ applytSNE10 <- function(exprData, numCores) {
   
   ndata <- colNormalization(exprData)
   ndataT <- t(ndata)
-  res <- Rtsne.multicore(ndataT, dims=2, max_iter=600, perplexity=10.0, check_duplicates=F, pca=F, num_threads=numCores)
-  #res <- Rtsne(ndataT, dims=2, max_iter=600, perplexity=10.0, check_duplicates=F, pca=F)
+  #res <- Rtsne.multicore(ndataT, dims=2, max_iter=600, perplexity=10.0, check_duplicates=F, pca=F, num_threads=numCores)
+  res <- Rtsne(ndataT, dims=2, max_iter=600, perplexity=10.0, check_duplicates=F, pca=F)
   res <- res$Y
   rownames(res) <- colnames(exprData)
   return(res)
@@ -406,8 +406,8 @@ applytSNE30 <- function(exprData, numCores) {
   
   ndata <- colNormalization(exprData)
   ndataT <- t(ndata)
-  res <- Rtsne.multicore(ndataT, dims=2, max_iter=600,  perplexity=30.0, check_duplicates=F, pca=F, num_threads=numCores)
-  #res <- Rtsne(ndataT, dims=2, max_iter=600, perplexity=30.0, check_duplicates=F, pca=F)
+  #res <- Rtsne.multicore(ndataT, dims=2, max_iter=600,  perplexity=30.0, check_duplicates=F, pca=F, num_threads=numCores)
+  res <- Rtsne(ndataT, dims=2, max_iter=600, perplexity=30.0, check_duplicates=F, pca=F)
   res <- res$Y
   
   rownames(res) <- colnames(exprData)

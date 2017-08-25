@@ -168,6 +168,39 @@ ColorScatter.prototype.setData = function(points, isFactor)
     this.redraw(true)();
 };
 
+ColorScatter.prototype.overlayGeneExpr = function(vals) {
+	
+	var cvals = [];
+	Object.keys(vals).forEach(function(k) {
+		cvals.push(vals[k])
+	});
+	
+	cvals.sort(d3.ascending);
+
+	var low = d3.quantile(cvals, 0.1);
+	var high = d3.quantile(cvals, 0.9);
+	var mid = d3.mean(cvals);
+	
+	this.colorScale = d3.scale.linear()
+		.domain([low, mid, high])
+        .range(["#48D1CC", "#7CFC00", "red"]);
+
+	var label_low = parseFloat(low.toFixed(2)).toString();
+	var label_high = parseFloat(high.toFixed(2)).toString();
+
+	this.setColorBar(this.colorScale.range(),
+			label_low,
+			label_high);
+	
+	var newpoints = []
+	this.points.forEach(function(p) {
+		newpoints.push([p[0], p[1], vals[p[3]], p[3]]);
+	});
+	this.points = newpoints;
+
+	this.redraw(true)();
+}
+
 ColorScatter.prototype.setLegend = function(colors, values) {
 	
 	if (!this.legend_enabled) { return; } 
@@ -451,7 +484,6 @@ ColorScatter.prototype.redraw = function(performTransition) {
     var circles = self.svg.selectAll("circle")
         .data(self.points);
 
-	console.log(self.points);
 
     circles.enter().append("circle").attr("r",4.0);
     circles.style("fill", function(d){return self.colorScale(d[2]);})
@@ -532,3 +564,4 @@ ColorScatter.prototype.unselect = function() {
 		.classed("point-selected", function(d, i){return self.selectedPoints.indexOf(i) != -1;})
 		.attr("opacity", 1.0);
 }
+

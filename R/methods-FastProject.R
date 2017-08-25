@@ -250,6 +250,10 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   sigList <- object@sigData
   sigNames <- names(object@sigData)
   for (s in object@precomputedData) {
+  	if (length(s) != ncol(object@exprData)) {
+		s@scores <- s@scores[colnames(object@exprData)]
+		s@sample_labels <- colnames(object@exprData)
+	}
     sigScores <- c(sigScores, s)
     sigList<- c(sigList, Signature(list(), s@name, "", "", isPrecomputed=TRUE, isFactor=s@isFactor, cluster=0))
     sigNames <- c(sigNames, s@name)
@@ -340,24 +344,24 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, paste0("SigVPr ", filter))
 
-	mutualInformation <- lapply(1:nrow(sigMatrix), function(i) {
+	pearsonCorr <- lapply(1:nrow(sigMatrix), function(i) {
 		lapply(1:nrow(pca_res), function(j) {
-			return(calcMutualInformation(sigMatrix[i,], pca_res[j,]))
+			return(calcPearsonCorrelation(sigMatrix[i,], pca_res[j,]))
 		})
 	})
 
-	mutualInformation <- lapply(mutualInformation, unlist)
-	mutualInformation <- matrix(unlist(mutualInformation), nrow=nrow(sigMatrix), ncol=nrow(pca_res), byrow=T)
+	pearsonCorr <- lapply(pearsonCorr, unlist)
+	pearsonCorr <- matrix(unlist(pearsonCorr), nrow=nrow(sigMatrix), ncol=nrow(pca_res), byrow=T)
 
-	rownames(mutualInformation) <- rownames(sigMatrix)
-	colnames(mutualInformation) <- rownames(pca_res)
+	rownames(pearsonCorr) <- rownames(sigMatrix)
+	colnames(pearsonCorr) <- rownames(pca_res)
 
 	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-	tRows <- c(tRows, paste("Mutual Information", filter))
+	tRows <- c(tRows, paste("Pearson Correlation", filter))
 
     projData <- ProjectionData(filter=filter, projections=projs, genes=g, keys=projKeys, 
                                           sigProjMatrix=sigProjMatrix, pMatrix=pVals, PPT=PPT, fullPCA=pca_res,
-                                          mutualInformation=mutualInformation, loadings=loadings)
+                                          pearsonCorr=pearsonCorr, loadings=loadings)
 
     projDataList[[filter]] <- projData
       

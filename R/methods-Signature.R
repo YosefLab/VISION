@@ -1,6 +1,7 @@
 require(geometry)
 require(pROC)
 require(entropy)
+require(Hmisc)
 
 #' Initialize a new Signature object.
 #' 
@@ -501,3 +502,12 @@ calcMutualInformation <- function(ss, pc) {
 
 	return(mi)
 }
+
+calcPearsonCorrelation <- function(ss, pc) {
+
+	pc <- rcorr(ss, pc, type="pearson")
+
+	return(pc[[1]][1,2])
+
+}
+
