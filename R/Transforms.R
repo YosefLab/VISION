@@ -54,8 +54,8 @@ readjust_clusters <- function(clusters, data, numPartitions = 0) {
 	#	 Returns:
 	#		Repartitioned clusters, such that a desireable number of microclusters is achieved. 
 
-	if (numPartititons == 0) {
-		NUM_PARTITIONS = ncol(data) / 100
+	if (numPartitions == 0) {
+		NUM_PARTITIONS = nrow(data) / 100
 	} else {
 		NUM_PARTITIONS = numPartitions
 	}
@@ -72,12 +72,16 @@ readjust_clusters <- function(clusters, data, numPartitions = 0) {
 			# Apply kmeans clustering to existing cluster
 			currCl = clusters[[i]]
 			subData <- data[currCl,]
-			nCl <- kmeans(subData, centers=min(nrow(subData), round(sqrt(length(currCl)))), iter.max=100)
-			
+			if (length(currCl) > 100) {
+				nCl <- kmeans(subData, centers=round(nrow(subData) / 100), iter.max=100)
+			} else {
+				nCl <- kmeans(subData, centers=1, iter.max=100)
+			}
+			newClust <- nCl$cluster
 			# Gather cluster vector to list of clusters
-			for (i in 1:length(nCl$cluster)) {
-				n <- as.character(nCl$cluster[[i]] + cluster_offset)
-				sample_n <- names(nCl$cluster)[[i]]
+			for (i in 1:length(newClust)) {
+				n <- as.character(newClust[[i]] + cluster_offset)
+				sample_n <- names(newClust)[[i]]
 				if (n %in% names(clusterList)) {
 					clusterList[[n]] <- c(clusterList[[n]], sample_n)
 				} else {
@@ -87,7 +91,7 @@ readjust_clusters <- function(clusters, data, numPartitions = 0) {
 			}
 
 			# Now add to cluster offset for next re-clustering
-			cluster_offset <- cluster_offset + max(nCl$cluster)
+			cluster_offset <- cluster_offset + max(newClust)
 		}
 
 		currPart <- length(clusterList)
@@ -134,18 +138,18 @@ createFalseNegativeMap <- function(data, housekeeping_genes, debug=0) {
   
   
   efun <- function(x, y, args) {
-    if (args[1] < 0) {
-      args[1] = 0
-    } else if (args[1] > Inf) {
-      args[1] = Inf
+    if (args[[1]] < 0) {
+      args[[1]] = 0
+    } else if (args[[1]] > Inf) {
+      args[[1]] = Inf
     }
     
-    if (args[2] < 0) {
-      args[2] = 0
-    } else if (args[2] > 2) {
-      args[2] = 2
+    if (args[[2]] < 0) {
+      args[[2]] = 0
+    } else if (args[[2]] > 2) {
+      args[[2]] = 2
     }
-    out <- func(x, args[1], args[2])
+    out <- func(x, args[[1]], args[[2]])
     return(sum((out-y)**2))
   }
 

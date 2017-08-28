@@ -152,19 +152,30 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
 
   object@allData <- object@exprData
 
+  clustered <- FALSE
   if (ncol(object@exprData) > 35000) {	
 
   	  fexpr <- filterGenesFano(object@exprData)
-  	  res <- applyPCA(fexpr, N=30)
+  	  res <- applyPCA(fexpr, N=30)[[1]]
   	  kn <- ball_tree_knn(t(res), 30, object@numCores)
   	  cl <- louvainCluster(kn, t(res))
   	  cl <- readjust_clusters(cl, t(res)) 
 
-	  # Randomly select a representative cell from each cluster
-  	  cell_subset <- sapply(cl, function(i) sample(i, 1))
-  	  
-  	  object@exprData <- object@exprData[,cell_subset]
+	  pooled_cells <- matrix(unlist(lapply(cl, function(clust) {
 
+			clust_data <- object@exprData[,clust]
+			p_cell <- as.matrix(apply(clust_data, 1, mean))
+
+			return(p_cell)
+	  })), nrow=nrow(object@exprData), ncol=lenthc(cl))
+
+	  cn <- lapply(1:ncol(pooled_cells), function(i) return(paste0("Cluster ", i)))
+	  colnames(pooled_cells) <- cn
+	  rownames(pooled_cells) <- rownames(object@exprData)
+
+	  object@exprData <- pooled_cells
+	  clustered <- TRUE
+		
   }
 
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
@@ -182,8 +193,6 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "Threshold")
 
-  object@allData <- object@exprData
-
   filtered <- applyFilters(eData, object@threshold, object@filters)
   eData <- filtered[[1]]
   filterList <- filtered[[2]]
@@ -194,14 +203,16 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "Filter") 
 
-  falseneg_out <- createFalseNegativeMap(originalData, object@housekeepingData, object@debug)
-  func <- falseneg_out[[1]]
-  params <- falseneg_out[[2]]
+  if (!clustered) {
+	falseneg_out <- createFalseNegativeMap(originalData, object@housekeepingData, object@debug)
+	func <- falseneg_out[[1]]
+	params <- falseneg_out[[2]]
+  }
   
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "FN Function")
 
-  if (object@nomodel) {
+  if (object@nomodel || clustered) {
     object@weights <- matrix(1L, nrow=nrow(originalData), ncol=ncol(originalData))
     rownames(object@weights) <- rownames(originalData)
     colnames(object@weights) <- colnames(originalData)

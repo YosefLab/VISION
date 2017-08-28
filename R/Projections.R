@@ -472,7 +472,7 @@ applyRBFPCA <- function(exprData, numCores) {
 
 #' Applies the Simple PPT algorithm onto the expression data.
 #' 
-#' @param exprData Expression data
+#' @param exprData Expression data -- Num_Genes x Num_Samples
 #' @param numCores Number of cores to use during this analysis
 #' @param nNodes Number of nodes to find. Default is 0
 #' @param sigma regularization parameter for soft-assignment of data points to nodes, used as the variance 
@@ -486,16 +486,17 @@ applyRBFPCA <- function(exprData, numCores) {
 
 applySimplePPT <- function(exprData, numCores, nNodes_ = 0, sigma=0, gamma=0) {
   
-  exprData <- t(exprData)
+  #exprData <- t(exprData)
   
   MIN_GAMMA <- 1e-5
   MAX_GAMMA <- 1e5
-  DEF_TOL <- 1e-3
+  DEF_TOL <- 1e-2
   DEF_MAX_ITER <- 50
   
   C <- NULL
   Wt <- NULL
   
+  # Set number of nodes equal to the sqrt(N)
   if (nNodes_ == 0) {
     nNodes_ <- round(sqrt(ncol(exprData)))
   }
@@ -531,7 +532,7 @@ applySimplePPT <- function(exprData, numCores, nNodes_ = 0, sigma=0, gamma=0) {
         minMSEGamma <- currGamma
       }
     }
-    minGamma <- MIN_GAMMA
+
     if (currGamma == MAX_GAMMA) {
       currGamma <- minGamma
       tr <- fitTree(exprData, nNodes, sigma, currGamma, DEF_TOL, DEF_MAX_ITER)
@@ -581,6 +582,7 @@ applySimplePPT <- function(exprData, numCores, nNodes_ = 0, sigma=0, gamma=0) {
         deg <- colSums(Wt)
         br <- seq(0, max(1, max(deg)))
         degDist <- hist(deg, br, plot=F)$counts
+        deg_g2c <- 0
         if (length(degDist) > 2) {
           deg_g2c <- sum(degDist[seq(3, length(degDist))])
         }
@@ -599,6 +601,9 @@ applySimplePPT <- function(exprData, numCores, nNodes_ = 0, sigma=0, gamma=0) {
   Wt <- tr[[2]]
   mse <- tr[[3]]
   
+  print(gamma)
+  print(sigma)
+
   return(list(C, Wt, sqdist(t(exprData), t(C)), mse))
 }
 
@@ -632,34 +637,36 @@ fitTree <- function(expr, nNodes, sigma, gamma, tol, maxIter) {
   #'    in the data and the graph smoothness. If 0, this is estimated automatically.
   
   
+  print('here')
   km <- kmeans(t(expr), centers=nNodes, nstart=10, iter.max=100)$centers
-  cc_dist <- as.matrix(dist.matrix(km))
+  cc_dist <- as.matrix(sqdist(km, km))
   cx_dist <- as.matrix(sqdist(t(expr), km))
   prevScore = Inf
-  currScore = 0
+  currScore = -Inf
   currIter = 0
   
-  while (!( (prevScore - currScore < tol) || (currIter > maxIter) )){
+  while (!(prevScore - currScore < tol) && !(currIter > maxIter)) { 
     currIter <- currIter + 1
     prevScore <- currScore
-    W <- mst(graph_from_adjacency_matrix(cc_dist, weighted=T, mode="undirected"))
+    W <- mst(graph_from_adjacency_matrix(cc_dist, weighted= T, mode="undirected"))
     Wt <- get.adjacency(W, sparse=FALSE)
     
     Ptmp <- -(cx_dist / sigma)
-    Psums <- matrix(rep(apply(Ptmp, 1, logSumExp), each=ncol(Ptmp)), ncol=ncol(Ptmp), byrow=T)
+    Psums <- matrix(rep(apply(Ptmp, 1, logSumExp), each=ncol(Ptmp)), nrow=nrow(Ptmp), ncol=ncol(Ptmp), byrow=T)
     P <- exp(Ptmp - Psums)
     
     delta <- diag(colSums(P))
     L <- laplacian_matrix(W)
     xp <- crossprod(t(expr), P)
     invg <- as.matrix(solve( ((2 / gamma) * L) + delta))
-    C <- crossprod(t(xp), invg)
+    C <- tcrossprod(xp, invg)
     
     cc_dist <- as.matrix(dist.matrix(t(C)))
     cx_dist <- as.matrix(sqdist(t(expr), t(C)))
     
     P <- clipBottom(P, mi=min(P[P>0]))
     currScore <- sum(Wt * cc_dist) + (gamma * sum(P * ((cx_dist) + (sigma * log(P)))))
+    print(currScore)
     
   }
   
@@ -695,7 +702,7 @@ sqdist <- function(X, Y) {
 	x = x + aa
 	x = t(t(x) + bb)
 	x[which(x<0)] <- 0
-	return(sqrt(x))
+	return(x)
 
 }
 
