@@ -80,15 +80,25 @@ jug() %>%
     }
     return(out)
   }) %>%
-  get("/SigClusters/Normal", function(req, res, err) {
-    cls <- fpout@sigClusters
+  get("/FilterGroup/(?<filter_group1>.*)/SigClusters/Normal", function(req, res, err) {
+  	filter <- URLdecode(req$params$filter_group1)
+  	if (filter == "1") {
+		filter = 1
+	}
+    cls <- fpout@sigClusters[[filter]]
 	cls <- cls$Computed
+
+	print(cls)
 
     out <- toJSON(cls, auto_unbox=TRUE)
     return(out)
   }) %>%
-  get("/SigClusters/Precomputed", function(req, res, err) {
-    cls <- fpout@sigClusters
+  get("/FilterGroup/(?<filter_group2>.*)/SigClusters/Precomputed", function(req, res, err) {
+  	filter <- URLdecode(req$params$filter_group2)
+  	if (filter == "1") {
+		filter = 1
+	}
+    cls <- fpout@sigClusters[[filter]]
 	cls <- cls$Precomputed
 	
     out <- toJSON(cls, auto_unbox=TRUE) 

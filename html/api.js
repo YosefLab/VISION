@@ -40,14 +40,16 @@ var api = (function(){
         return $.ajax(query).then(x => JSON.parse(x))
     }
 
-    output.signature.clusters = function(precomputed) {
+    output.signature.clusters = function(precomputed, filter) {
 		var query = ""
 		if (precomputed) {
-			query = "/SigClusters/Precomputed"
+			query = query.concat("/FilterGroup/", filter, "/SigClusters/Precomputed");
+
 		} else {
-			query = "/SigClusters/Normal"
+			query = query.concat("/FilterGroup/", filter, "/SigClusters/Normal");
 		}
 		//return $.ajax(query).then(x => x);
+		console.log(query)
 		return $.ajax(query).then(x => JSON.parse(x))
 	}
 

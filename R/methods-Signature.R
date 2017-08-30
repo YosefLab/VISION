@@ -2,6 +2,7 @@ require(geometry)
 require(pROC)
 require(entropy)
 require(Hmisc)
+require(mclust)
 
 #' Initialize a new Signature object.
 #' 
@@ -204,28 +205,38 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   message("Evaluating signatures against projections...")
   
   i <- 1
+  projnames <- c()
   for (proj in projections) {
     dataLoc <- proj@pData
 
-	k <- ball_tree_knn(t(dataLoc), round(sqrt(N_SAMPLES)), numCores)
-	nn <- k[[1]]
-	d <- k[[2]]
+    projnames <- c(projnames, proj@name)
 
+	weights <- matrix(0L, nrow=N_SAMPLES, ncol=N_SAMPLES)
+	if (proj@name != "KNN") {
+		print(proj@name)
+		k <- ball_tree_knn(t(dataLoc), round(sqrt(N_SAMPLES)), numCores)
+		nn <- k[[1]]
+		d <- k[[2]]
 
+		sigma <- apply(d, 1, max)
 
-    timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-    tRows <- c(tRows, paste0(proj@name, "distanceMatrix"))
+		timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
+		tRows <- c(tRows, paste0(proj@name, "distanceMatrix"))
     
-    sparse_weights <- exp(-1 * (d * d) / NEIGHBORHOOD_SIZE^2)
-    weights <- load_in_knn(nn, sparse_weights)
+		sparse_weights <- exp(-1 * (d * d) / sigma^2)
+		weights <- load_in_knn(nn, sparse_weights)
 
-    weightsNormFactor <- Matrix::rowSums(weights)
-    weightsNormFactor[weightsNormFactor == 0] <- 1.0
-    weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
-    weights <- weights / weightsNormFactor
+		weightsNormFactor <- Matrix::rowSums(weights)
+		weightsNormFactor[weightsNormFactor == 0] <- 1.0
+		weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
+		weights <- weights / weightsNormFactor
 	
-	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-	tRows <- c(tRows, paste0(proj@name, "Gaussian"))
+		timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
+		tRows <- c(tRows, paste0(proj@name, "Gaussian"))
+
+	} else {
+		weights <- dataLoc
+	}
 
 
     neighborhoodPrediction <- Matrix::crossprod(weights, sigScoreMatrix)
@@ -417,16 +428,16 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   spRowLabels <- c(spRowLabels, spRowLabelsFactors, spRowLabelsPNum)
   
   original_shape <- dim(sigProjMatrix_P)
-  sigProjMatrix_P <- p.adjust(sigProjMatrix_P, method="BH")
+  sigProjMatrix_P <- p.adjust(t(sigProjMatrix_P), method="BH")
   dim(sigProjMatrix_P) <- original_shape
   sigProjMatrix_P[sigProjMatrix_P == 0] <- 10^(-300)
   
   sigProjMatrix_P <- as.matrix(log10(sigProjMatrix_P))
   
-  colnames(sigProjMatrix_P) <- spColLabels
+  colnames(sigProjMatrix_P) <- projnames
   rownames(sigProjMatrix_P) <- spRowLabels
   
-  colnames(sigProjMatrix) <- spColLabels
+  colnames(sigProjMatrix) <- projnames
   rownames(sigProjMatrix) <- spRowLabels
 
   timingList <- as.matrix(timingList)
@@ -443,39 +454,33 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
 #' @param k Number of clusters to generate
 #' @return List of clusters involving computed signatures
 #' @return List of clusters involving precomptued signatures
-clusterSignatures <- function(sigList, sigMatrix, k=10) {
+clusterSignatures <- function(sigList, sigMatrix, pvals, k=10) {
   
-  precomputed = lapply(sigList, function(x) x@isPrecomputed)
+  precomputed <- lapply(sigList, function(x) x@isPrecomputed)
+  insignificant <- apply(pvals, 1, function(x) mean(x) < -1.3)
+
+  keep = names(which(insignificant == T))
 
   # Cluster computed signatures and precomputed signatures separately
   computedSigsToCluster <- names(precomputed[which(precomputed==F)])
   computedSigMatrix <- sigMatrix[computedSigsToCluster,]
 
-  r <- matrix(rank(computedSigMatrix, ties="min"), ncol=ncol(sigMatrix))
-  r_rs <- as.matrix(rowSums(r))
-  rownames(r_rs) <- rownames(computedSigMatrix)
+  computedSigMatrix <- computedSigMatrix[keep,]
 
-  compkm <- kmeans(r_rs, centers=k, nstart=1, iter.max=100)
-  compcls <- as.list(compkm$cluster)
+  r <- rcorr(t(computedSigMatrix), type="spearman")[[1]]
+
+  compkm <- densityMclust(r)
+  compcls <- as.list(compkm$classification)
   compcls <- compcls[order(unlist(compcls), decreasing=F)]
+  
+  maxcls <- max(unlist(compcls))
+  compcls[names(which(insignificant == F))] <- maxcls + 1
 
+  # Don't actually cluster Precomputed Signatures -- just return in a list.
   precompcls <- list()
   if (length(which(precomputed==T)) > 0) {
   	  precomputedSigsToCluster <- names(precomputed[which(precomputed==T)])
-  	  precomputedSigMatrix <- sigMatrix[precomputedSigsToCluster,]
-
-  	  rp <- matrix(rank(precomputedSigMatrix, ties="min"), ncol=ncol(sigMatrix))
-  	  rp_rs <- as.matrix(rowSums(rp))
-  	  rownames(rp_rs) <- rownames(precomputedSigMatrix)
-
-  	  if (length(precomputedSigsToCluster) == 1) {
-  	  	  precompcls <- list()
-  	  	  precompcls[precomputedSigsToCluster[[1]]] <- 1
-	  } else {
-		precompkm <- kmeans(rp_rs, centers=min(k, length(precomputedSigsToCluster)), nstart=1, iter.max=100)
-	    precompcls <- as.list(precompkm$cluster)
-	    precompcls <- precompcls[order(unlist(precompcls), decreasing=F)]
-	  }
+  	  precompcls[precomputedSigsToCluster] <- 1
   }
 	
   

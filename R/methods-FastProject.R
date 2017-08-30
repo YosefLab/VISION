@@ -153,7 +153,8 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   object@allData <- object@exprData
 
   clustered <- FALSE
-  if (ncol(object@exprData) > 35000) {	
+  pools <- list()
+  if (ncol(object@exprData) > 25000) {	
 
   	  fexpr <- filterGenesFano(object@exprData)
   	  res <- applyPCA(fexpr, N=30)[[1]]
@@ -167,11 +168,18 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
 			p_cell <- as.matrix(apply(clust_data, 1, mean))
 
 			return(p_cell)
-	  })), nrow=nrow(object@exprData), ncol=lenthc(cl))
+	  })), nrow=nrow(object@exprData), ncol=length(cl))
 
 	  cn <- lapply(1:ncol(pooled_cells), function(i) return(paste0("Cluster ", i)))
 	  colnames(pooled_cells) <- cn
 	  rownames(pooled_cells) <- rownames(object@exprData)
+
+	  lapply(1:length(cl), function(i) {
+			clust_data <- object@exprData[,cl[[i]]]
+			cells <- colnames(clust_data)
+
+			pools[[paste0("Cluster, ", i)]] <- cells
+	  })
 
 	  object@exprData <- pooled_cells
 	  clustered <- TRUE
@@ -261,7 +269,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   sigList <- object@sigData
   sigNames <- names(object@sigData)
   for (s in object@precomputedData) {
-  	if (length(s) != ncol(object@exprData)) {
+  	if (length(s@sample_labels) != ncol(object@exprData)) {
 		s@scores <- s@scores[colnames(object@exprData)]
 		s@sample_labels <- colnames(object@exprData)
 	}
@@ -328,6 +336,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   tRows <- c(tRows, "Rand Sig Scores")
 
   # Apply projections to filtered gene sets, create new projectionData object
+  sigClusterList <- list()
   projDataList <- list()
   for (filter in filterList) {
     message("Filter level: ", filter)
@@ -370,24 +379,26 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
 	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
 	tRows <- c(tRows, paste("Pearson Correlation", filter))
 
+	projs[["KNN"]]@pData <- projs[["tSNE30"]]@pData
+
     projData <- ProjectionData(filter=filter, projections=projs, genes=g, keys=projKeys, 
                                           sigProjMatrix=sigProjMatrix, pMatrix=pVals, PPT=PPT, fullPCA=pca_res,
                                           pearsonCorr=pearsonCorr, loadings=loadings)
 
     projDataList[[filter]] <- projData
+
+	sigList <- sigList[rownames(sigMatrix)]
+  
+	message("Clustering Signatures...")
+	sigClusters <- clusterSignatures(sigList, sigMatrix, pVals, k=10)
+	sigClusterList[[filter]] <- sigClusters
+    
+
+	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
+	tRows <- c(tRows, paste0("ClusterSignatures ", filter))
       
   }
     
-
-  sigList <- sigList[rownames(sigMatrix)]
-  
-  message("Clustering Signatures...")
-  sigClusters <- clusterSignatures(sigList, sigMatrix, k=10)
-    
-
-  timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-  tRows <- c(tRows, "ClusterSignatures")
-
 
   slots <- slotNames("FastProject")
   fpParams <- list()
@@ -395,7 +406,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
 	fpParams[[s]] <- slot(object, s)
   }
 
-  fpOut <- FastProjectOutput(eData, projDataList, sigMatrix, sigList, sigClusters, fpParams)
+  fpOut <- FastProjectOutput(eData, projDataList, sigMatrix, sigList, sigClusterList, fpParams, pools)
 
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "Final")

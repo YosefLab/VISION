@@ -181,7 +181,7 @@ window.onload = function()
    	global_status.precomputed = false;
 
 
-	var clusters_promise = api.signature.clusters(global_status.precomputed)
+	var clusters_promise = api.signature.clusters(global_status.precomputed, "1")
 		.then(function(cls) {
 
 		var clusarr = Object.keys( cls ).map(function ( key ) {return cls[key];});
@@ -219,29 +219,28 @@ window.onload = function()
 
 	});
 
+	$("#filter_dropdown").change(function() {
+		global_status.filter_group = $(this).val();
 
-    //Make the options update the table
-    $("#filter_dropdown").change(function(){
-        global_status.filter_group = $(this).val();
+		api.filterGroup.genes(global_status.filter_group)
+			.then(function(genes) {
+				global_status.filter_group_genes = genes;
+				updateMenuBar();
+			});
 
-        api.filterGroup.genes(global_status.filter_group)
-            .then(function(genes){
-                global_status.filter_group_genes = genes;
-                updateMenuBar();
-            })
-
-        // When this dropdown changes, everything should update
-        createTableFromData().then(function(){
-            // Needs to happen after createTableFromData because that function
-            //   updates selected sig/proj
-            var pcnum = global_status.plotted_pc.split(" ")[1];
-            $("#data-analysis-title").text(global_status.plotted_signature);
+		createTableFromData().then(function() {
+			var pcnum = global_status.plotted_pc.split(" ")[1];
+			$("#data-analysis-title").text(global_status.plotted_signature);
 			$("#pc-analysis-title").text("Principal Component " + pcnum);
-            drawChart();
-            drawHeat();
-            drawTree();
-        });
-    });
+
+			drawChart();
+			drawHeat();
+			drawTree();
+		});
+
+	});	
+
+
 
 	$("#subset-criteria").change(function() {
 		global_status.subset_criteria = $(this).val();
@@ -456,7 +455,7 @@ function addSigClusterDivs() {
 		return;
 	} 
 
-	var num_clusters_promise = api.signature.clusters(global_status.precomputed)
+	var num_clusters_promise = api.signature.clusters(global_status.precomputed, global_status.filter_group)
 		.then(function(cls) {
 
 		var clusarr = Object.keys( cls ).map(function ( key ) {return cls[key];});
@@ -727,7 +726,10 @@ function drawDistChart() {
 			var selected_gene = global_status.selected_gene;
 			var gene_ind = values.gene_labels.indexOf(selected_gene);
 			var expr_data = values.data[gene_ind];
-			var x_vals = Array.apply(null, Array(expr_data.length)).map(function (_, i) {return i;});
+
+			expr_data = create_dist(expr_data);
+			var x_vals = Array.apply(null, Array(expr_data.length)).map(function (_, i) {return i * 0.05;});
+			console.log(x_vals);
 
 			expr_data = convert_to_range(expr_data, -1.75, 1.75);
 			x_vals = convert_to_range(x_vals, -1.75, 1.75);
@@ -826,6 +828,7 @@ function drawChart() {
 				} else {
 					var gene_ind = values.gene_labels.indexOf(global_status.selected_gene);
 					var gene_data = values.data[gene_ind];
+
 					for (i = 0; i < gene_data.length; i++) {
 						sample_label = values.sample_labels[i]
 						var x = projection[sample_label][0];
@@ -875,6 +878,7 @@ function drawChart() {
 				} else {
 					var gene_ind = values.gene_labels.indexOf(global_status.selected_gene);
 					var gene_data = values.data[gene_ind];
+
 					for (i = 0; i < gene_data.length; i++) {
 						sample_label = values.sample_labels[i]
 						var x = projection[sample_label][0];
@@ -896,6 +900,33 @@ function drawChart() {
 	} else {
 		return;
 	}
+
+}
+
+function create_dist(data) {
+
+	var num_values = Math.round((Math.max.apply(null, data) - Math.min.apply(null, data))/0.1);
+	var windows = Array.apply(Math, Array(num_values)).map(function(x,y) { return y*0.1 });
+	var intervals = Array.apply(Math, Array(num_values)).map(function(x, y) { return 0 });
+	
+	for (i=0; i < windows.length-1; i++) {
+		low = windows[i];
+		high = windows[i+1];
+
+		data.forEach(function(d) {
+			if (d >= low && d < high) {
+				intervals[i] += 1;
+			}
+		});
+	}
+
+	data.forEach(function(d) {
+		if (d >= windows[num_values-1]) {
+			intervals[num_values-1] += 1;
+		}
+	});
+
+	return intervals;
 
 }
 
@@ -1130,7 +1161,7 @@ function createTableFromData()
 	}
 
     return $.when(matrix_promise,
-					api.signature.clusters(global_status.precomputed))
+					api.signature.clusters(global_status.precomputed, global_status.filter_group))
         .then(function(matrix, cls){
         	
         var clusarr = Object.keys( cls ).map(function(key) { return cls[key]; });
@@ -1402,10 +1433,10 @@ function goBack(d) {
 
 function changeTableView() {
 	var precomp = document.getElementById("precomputed_button").innerHTML;
-	if (precomp == "Precomputed") {
-		document.getElementById("precomputed_button").innerHTML = "Computed";
+	if (precomp == "Show Precomputed") {
+		document.getElementById("precomputed_button").innerHTML = "Show Computed";
 	} else {
-		document.getElementById("precomputed_button").innerHTML = "Precomputed";
+		document.getElementById("precomputed_button").innerHTML = "Show Precomputed";
 	}
 
 	global_status.precomputed = !(global_status.precomputed);

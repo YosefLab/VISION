@@ -14,7 +14,7 @@ library(jsonlite)
 #' @param fpParams List of the FastProject parameters that were used to generate this object
 #' @return FastProjectOutput object.
 setMethod("initialize", signature(.Object="FastProjectOutput"), 
-          function(.Object, eData, projDataList, sigMatrix, sigList, sigClusters, fpParams) {
+          function(.Object, eData, projDataList, sigMatrix, sigList, sigClusters, fpParams, pools) {
             
             .Object@exprData <- eData
             .Object@projData <- projDataList
@@ -22,6 +22,7 @@ setMethod("initialize", signature(.Object="FastProjectOutput"),
             .Object@sigList <- sigList
             .Object@sigClusters <- sigClusters
             .Object@fpParams <- fpParams
+            .Object@pools <- pools
             
             return(.Object)
           }

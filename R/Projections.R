@@ -28,7 +28,8 @@ registerMethods <- function(lean=FALSE) {
   
   projMethods <- c(projMethods, "tSNE30" = applytSNE30)
   projMethods <- c(projMethods, "tSNE10" = applytSNE10)
-  #projMethods <- c(projMethods, "PPT" = applySimplePPT)
+  projMethods <- c(projMethods, "PPT" = applySimplePPT)
+  projMethods <- c(projMethods, "KNN" = applyKNN)
   
   return(projMethods)
 }
@@ -66,7 +67,7 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
   
   #if (lean) {
   #  print("PCA")
-  #  pca_res <- applyPCA(exprData, N=30)
+  #  pca_res <- applyPCA(exprData, N=30)[[1]]
   #  proj <- Projection("PCA: 1,2", t(pca_res[c(1,2),]))
   #  inputProjections <- c(inputProjections, proj)
   #  inputProjections <- c(inputProjections, Projection("PCA: 1,3", t(pca_res[c(1,3),])))
@@ -91,10 +92,10 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
     fullPCA <- as.matrix(apply(fullPCA, 2, function(x) return( x - mean(x) ))) 
       
     r <- apply(fullPCA, 1, function(x) sum(x^2))^(0.5)
-    r70 <- quantile(r, c(.7))[[1]]
+    r90 <- quantile(r, c(.9))[[1]]
   
-    if (r70 > 0) {
-      fullPCA <- fullPCA / r70
+    if (r90 > 0) {
+      fullPCA <- fullPCA / r90
     }
     fullPCA <- t(fullPCA)
   }
@@ -116,6 +117,7 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
     } else {
       res <- methodList[[method]](pca_res, numCores)
       if (method == "PPT") {
+      	c <- res[[1]]
       	ncls <- apply(res[[3]], 1, which.min)
         PPT <- list(res[[1]], res[[2]], res[[3]], ncls)
       } else {
@@ -153,7 +155,18 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
     p <- updateProjection(p, data=coordinates)
     output[[p@name]] = p
 
-}
+  }
+
+  # Readjust coordinates of PPT
+  c <- t(applyPCA(PPT[[1]], N=2)[[1]])
+  coord <- as.matrix(apply(c, 2, function(x) return(x - mean(x))))
+  r <- apply(coord, 1, function(x) sum(x^2))^(0.5)
+  r90 <- quantile(r, c(0.9))[[1]]
+  if (r90 > 0) {
+  	  coord <- coord / r90
+  }
+  coord <- t(coord)
+  PPT[[1]] <- coord
   
   return(list(output, rownames(exprData), PPT, fullPCA, loadings))
 }
@@ -415,6 +428,29 @@ applytSNE30 <- function(exprData, numCores) {
   return(res)
 }
 
+
+applyKNN <- function(exprData, numCores) {
+
+	set.seed(RANDOM_SEED)
+
+	k <- ball_tree_knn(t(exprData), 30, numCores)
+	nn <- k[[1]]
+	d <- k[[2]]
+
+	sigma <- apply(d, 1, max)
+
+    sparse_weights <- exp(-1 * (d * d) / sigma^2)
+    weights <- load_in_knn(nn, sparse_weights)
+
+    weightsNormFactor <- Matrix::rowSums(weights)
+    weightsNormFactor[weightsNormFactor == 0] <- 1.0
+    weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
+    weights <- weights / weightsNormFactor
+
+    return(weights)
+
+}
+
 #' Performs ISOMap on data
 #' 
 #' @param exprData Expression data, NUM_GENES x NUM_SAMPLES
@@ -423,12 +459,10 @@ applytSNE30 <- function(exprData, numCores) {
 applyISOMap <- function(exprData, numCores) {
 
   set.seed(RANDOM_SEED)
-  print(dim(exprData))
 
   res <- Isomap(t(exprData), dims=2)
   res <- res$dim2
   
-  print(dim(res))
   rownames(res) <- colnames(exprData)
   
   return(res)
@@ -601,8 +635,6 @@ applySimplePPT <- function(exprData, numCores, nNodes_ = 0, sigma=0, gamma=0) {
   Wt <- tr[[2]]
   mse <- tr[[3]]
   
-  print(gamma)
-  print(sigma)
 
   return(list(C, Wt, sqdist(t(exprData), t(C)), mse))
 }
@@ -637,7 +669,6 @@ fitTree <- function(expr, nNodes, sigma, gamma, tol, maxIter) {
   #'    in the data and the graph smoothness. If 0, this is estimated automatically.
   
   
-  print('here')
   km <- kmeans(t(expr), centers=nNodes, nstart=10, iter.max=100)$centers
   cc_dist <- as.matrix(sqdist(km, km))
   cx_dist <- as.matrix(sqdist(t(expr), km))
@@ -666,7 +697,6 @@ fitTree <- function(expr, nNodes, sigma, gamma, tol, maxIter) {
     
     P <- clipBottom(P, mi=min(P[P>0]))
     currScore <- sum(Wt * cc_dist) + (gamma * sum(P * ((cx_dist) + (sigma * log(P)))))
-    print(currScore)
     
   }
   

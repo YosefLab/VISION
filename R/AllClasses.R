@@ -78,7 +78,8 @@ FastProjectOutput <- setClass("FastProjectOutput",
       sigMatrix = "matrix",
       sigList = "list",
       sigClusters = "list",
-      fpParams = "list" 
+      fpParams = "list",
+      pools = "list"
     )
 )
 
