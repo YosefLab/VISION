@@ -27,9 +27,9 @@ registerMethods <- function(lean=FALSE) {
   }
   
   projMethods <- c(projMethods, "tSNE30" = applytSNE30)
+  projMethods <- c(projMethods, "KNN" = applyKNN)
   projMethods <- c(projMethods, "tSNE10" = applytSNE10)
   projMethods <- c(projMethods, "PPT" = applySimplePPT)
-  projMethods <- c(projMethods, "KNN" = applyKNN)
   
   return(projMethods)
 }

@@ -467,13 +467,18 @@ clusterSignatures <- function(sigList, sigMatrix, pvals, k=10) {
 
   computedSigMatrix <- computedSigMatrix[keep,]
 
-  r <- rcorr(t(computedSigMatrix), type="spearman")[[1]]
+  compcls <- list()
+  maxcls <- 1
+  if (nrow(computedSigMatrix) > 1) {
+  	r <- as.matrix(t(apply(computedSigMatrix, 1, function(x) rank(x, ties.method="average"))))
 
-  compkm <- densityMclust(r)
-  compcls <- as.list(compkm$classification)
-  compcls <- compcls[order(unlist(compcls), decreasing=F)]
+	compkm <- densityMclust(r)
+	compcls <- as.list(compkm$classification)
+	compcls <- compcls[order(unlist(compcls), decreasing=F)]
   
-  maxcls <- max(unlist(compcls))
+	maxcls <- max(unlist(compcls))
+  }
+
   compcls[names(which(insignificant == F))] <- maxcls + 1
 
   # Don't actually cluster Precomputed Signatures -- just return in a list.

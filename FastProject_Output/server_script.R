@@ -88,7 +88,6 @@ jug() %>%
     cls <- fpout@sigClusters[[filter]]
 	cls <- cls$Computed
 
-	print(cls)
 
     out <- toJSON(cls, auto_unbox=TRUE)
     return(out)
@@ -354,8 +353,19 @@ jug() %>%
   post("/Analysis/Run/", function(req, res, err) {
 	subset <- fromJSON(req$body)
 	subset <- subset[!is.na(subset)]
-	nexpr <- fpout@exprData@data[,subset]
-	nfp <- createNewFP(fpout@fpParams, nexpr)
+	fpParams <- fpout@fpParams
+	allData <- fpParams[["allData"]]
+
+	if (length(fpout@pools) > 0) {
+		print(class(subset))
+		clust <- fpout@pools[subset]
+		print('here')
+		subset <- unlist(clust)
+	}
+	print(subset)
+	nexpr <- allData[,subset]
+
+	nfp <- createNewFP(fpout@fpParams, nexpr, 1)
 	newAnalysis(nfp)
 	return()
   }) %>%

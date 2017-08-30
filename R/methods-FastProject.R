@@ -150,7 +150,6 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   timingList <- (ptm - ptm)
   tRows <- c("Start")
 
-  object@allData <- object@exprData
 
   clustered <- FALSE
   pools <- list()
@@ -174,17 +173,19 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
 	  colnames(pooled_cells) <- cn
 	  rownames(pooled_cells) <- rownames(object@exprData)
 
-	  lapply(1:length(cl), function(i) {
+	  pools <- lapply(1:length(cl), function(i) {
 			clust_data <- object@exprData[,cl[[i]]]
 			cells <- colnames(clust_data)
-
-			pools[[paste0("Cluster, ", i)]] <- cells
+			return(cells)
 	  })
 
+	  names(pools) <- cn
 	  object@exprData <- pooled_cells
 	  clustered <- TRUE
 		
   }
+
+  print(length(pools))
 
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "Partition & Sample")
@@ -265,6 +266,8 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   }
 
   sigScores <- bplapply(object@sigData, singleSigEval, BPPARAM=MulticoreParam(workers=object@numCores))
+
+  sigSizes <- lapply(object@sigData, function(s) length(s@sigDict))
   
   sigList <- object@sigData
   sigNames <- names(object@sigData)
@@ -301,7 +304,8 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
 
   # Construct random signatures for background distribution
   randomSigs <- c()
-  randomSizes <- c(5, 10, 20, 50, 100, 200)
+  randomSizes <- unlist(findRepSubset(sigSizes))
+  print(randomSizes)
   for (size in randomSizes) {
     message("Creating random signature of size ", size, "...")
     for (j in 1:2000) {
@@ -436,7 +440,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
 #'   names(fpParams) <- slots
 #'   nfp <- extraAnalysisFastProject(fpParams, nexpr)
 
-createNewFP <- function(fpParams, nexpr) {
+createNewFP <- function(fpParams, nexpr, numCores) {
 	nfp <- FastProject(exprData=nexpr, sigData=fpParams[["sigData"]],
 						housekeepingData=fpParams[["housekeepingData"]])
 
@@ -446,6 +450,8 @@ createNewFP <- function(fpParams, nexpr) {
 			slot(nfp, s) <- fpParams[[s]]
 		}
 	}
+
+	nfp@numCores = numCores
 
 	return(nfp)
 }

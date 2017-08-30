@@ -102,6 +102,38 @@ readjust_clusters <- function(clusters, data, numPartitions = 0) {
 	return(clusters)
 }
 
+findRepSubset <- function(ls) {
+	
+	ls <- unique(sort(unlist(ls)))
+
+	intervals <- lapply(as.list(as.numeric(ls)), function(x) return(list(x - x/5, x + x/5)))
+	n_intervals <- merge_intervals(intervals)
+
+	reprsub <- lapply(n_intervals, function(i) round((i[[1]] + i[[2]]) / 2))
+	
+	return(reprsub)
+
+}
+
+merge_intervals <- function(intervals) {
+	
+	for (i in 1:length(intervals)) {
+		interval <- intervals[[i]]
+		if (i < length(intervals) - 1) {
+			nxt <- intervals[[i+1]]
+			if (interval[[2]] >= nxt[[1]]) {
+				n_int = list(nxt[[1]], interval[[2]])
+				intervals[[i+1]] <- n_int
+				intervals[[i]] <- NULL
+				return(merge_intervals(intervals))		
+			}
+		}
+	}
+
+	return(intervals)
+	
+}
+
 
 #' Uses gene names in the housekeeping genes file to create a mapping of false negatives.
 #' Creates a functional fit for each sample based on that sample's HK genes
