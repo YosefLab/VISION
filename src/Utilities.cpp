@@ -43,25 +43,32 @@ NumericVector multMat(NumericMatrix X, NumericMatrix Y) {
 }
 
 // [[Rcpp::export]]
-List ball_tree_knn(NumericMatrix X ,int K, int n_threads) {
-
+List ball_tree_vector_knn(NumericMatrix X, NumericVector Y, int K, int n_threads) {
+	
 	int N = X.nrow();
 	int D = X.ncol();
 
 	double* data;
 
-
-
 	data = (double*) calloc(D*N, sizeof(double));
-	if (data == NULL) { Rcpp::stop("Memory allocation failed!\n"); }
+	if (data == NULL) { Rcpp::stop("memory allocation failed!\n"); }
 	for (int i = 0; i < N; i++) {
 		for (int j=0; j < D; j++) {
 			data[i*D+j] = X(i,j);
 		}
 	}
 
+	double* data2;
+	
+	data2 = (double*) calloc(D, sizeof(double));
+	for (int i = 0; i < D; i++) {
+		data2[i] = Y[i];
+	}
 
-	// Build ball tree on set
+	DataPoint obj_Y = DataPoint(D, -1, data2);
+
+
+	// build ball tree on set
 	VpTree<DataPoint, euclidean_distance>* tree = new VpTree<DataPoint, euclidean_distance>();
 	std::vector<DataPoint> obj_X(N, DataPoint(D, -1, data));
 	for (int n = 0; n < N; n++) {
@@ -70,7 +77,61 @@ List ball_tree_knn(NumericMatrix X ,int K, int n_threads) {
 	tree -> create(obj_X, 0);
 
 
-	// Find Nearest Neighbors
+	// find nearest neighbors
+	Rcpp::NumericMatrix Ind(1, K);
+	Rcpp::NumericMatrix Dist(1, K);
+
+	std::vector<int> ind_arr(K+1, 0);
+	std::vector<double> dist_arr(K+1, 0.0);
+			
+	tree -> search(obj_Y, K+1, &ind_arr, &dist_arr);
+
+	NumericVector ind(ind_arr.begin(), ind_arr.end());
+	NumericVector dist(dist_arr.begin(), dist_arr.end());
+	ind.erase(0); dist.erase(0);
+	Ind(0,_) = ind;
+	Dist(0,_) = dist;
+
+
+	obj_X.clear();
+	delete tree;
+
+
+	List ret;
+	ret["index"] = Ind;
+	ret["dist"] = Dist;
+
+	return ret;	
+}
+
+// [[Rcpp::export]]
+List ball_tree_knn(NumericMatrix X ,int K, int n_threads) {
+
+	int N = X.nrow();
+	int D = X.ncol();
+
+	double* data;
+
+
+	data = (double*) calloc(D*N, sizeof(double));
+	if (data == NULL) { Rcpp::stop("memory allocation failed!\n"); }
+	for (int i = 0; i < N; i++) {
+		for (int j=0; j < D; j++) {
+			data[i*D+j] = X(i,j);
+		}
+	}
+
+
+	// build ball tree on set
+	VpTree<DataPoint, euclidean_distance>* tree = new VpTree<DataPoint, euclidean_distance>();
+	std::vector<DataPoint> obj_X(N, DataPoint(D, -1, data));
+	for (int n = 0; n < N; n++) {
+		obj_X[n] = DataPoint(D, n, data + n * D);
+	}
+	tree -> create(obj_X, 0);
+
+
+	// find nearest neighbors
 	Rcpp::NumericMatrix Ind(N, K);
 	Rcpp::NumericMatrix Dist(N, K);
 
@@ -105,57 +166,6 @@ List ball_tree_knn(NumericMatrix X ,int K, int n_threads) {
 	ret["dist"] = Dist;
 
 	return ret;	
-}
-
-// [[Rcpp::export]]
-List ball_tree_cluster(NumericMatrix X, int L, int n_threads) {
-	// Algorithm to cluster data based on threshold data points per cluster.
-	// Constructs a ball tree from X and traverses until all clusters have at most L points in them
-	// Option to use N_THREADS during traversal
-	
-	int N = X.nrow();
-	int D = X.ncol();
-
-	double* data;
-
-	data = (double*) calloc(D*N, sizeof(double));
-	if (data == NULL) { Rcpp::stop("Memory allocation failed!\n"); }
-	for (int i = 0; i < N; i++) {
-		for (int j = 0; j < D; j++) {
-			data[i*D+j] = X(i,j);
-		}
-	}
-
-	// Build ball tree on set
-	BallTree<DataPoint, euclidean_distance>* tree = new BallTree<DataPoint, euclidean_distance>();
-	std::vector<DataPoint> obj_X(N, DataPoint(D, -1, data));
-	for (int n = 0; n < N; n++) {
-		obj_X[n] = DataPoint(D, n, data + n * D);
-	}
-	tree -> create(obj_X);
-
-	// Define list of vectors to store the indices of data points for each cluster/partition
-	std::vector< std::vector<int> > clusters;
-	std::vector<double> cluster_radii; 
-	tree -> find_partitions(&clusters, &cluster_radii,  L);
-
-	List clust;
-	int total = 0;
-	for (int i = 0; i < clusters.size(); i++) {
-		NumericVector ind(clusters.at(i).begin(), clusters.at(i).end());
-		total += clusters.at(i).size();
-		std::ostringstream stm;
-		stm << (i+1);
-		clust[stm.str()] = ind;
-	}
-	PRINT("%d\n", total);
-
-	NumericVector cr(cluster_radii.begin(), cluster_radii.end());
-	List ret;
-	ret["clusters"] = clust;
-	ret["radii"] = cr;
-
-	return ret;
 }
 
 // [[Rcpp::export]]

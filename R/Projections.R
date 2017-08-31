@@ -120,6 +120,7 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
       	c <- res[[1]]
       	ncls <- apply(res[[3]], 1, which.min)
         PPT <- list(res[[1]], res[[2]], res[[3]], ncls)
+		PPT_neighborhood <- findNeighbors(pca_res, PPT[[1]], ncol(pca_res) / ncol(PPT[[1]]),  numCores)
       } else {
         proj <- Projection(method, res)
         inputProjections <- c(inputProjections, proj)
@@ -158,7 +159,7 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
   }
 
   # Readjust coordinates of PPT
-  c <- t(applyPCA(PPT[[1]], N=2)[[1]])
+  c <- t(PPT[[1]][c(1,2),])
   coord <- as.matrix(apply(c, 2, function(x) return(x - mean(x))))
   r <- apply(coord, 1, function(x) sum(x^2))^(0.5)
   r90 <- quantile(r, c(0.9))[[1]]
@@ -167,8 +168,25 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
   }
   coord <- t(coord)
   PPT[[1]] <- coord
+
+  output2 <- list()
+  # Reposition tree node coordinatates in nondimensional space
+  for (p in output) {
+	if (p@name == "tSNE30" || p@name == "tSNE10") {
+		new_coords <- matrix(sapply(neighborhood, function(n)  {
+			n_vals <- p@pData[,n]
+			centroid <- apply(n_vals, 1, mean)
+			return(centroid)
+		}), nrow=2, ncol=length(neighborhood))
+		p@PPT_C <- new_coords
+	} else {
+		p@PPT_C <- PPT[[1]]
+	}
+
+	output2[[p@name]] = p
+  }
   
-  return(list(output, rownames(exprData), PPT, fullPCA, loadings))
+  return(list(output2, rownames(exprData), PPT[[2]], fullPCA, loadings))
 }
 
 #' Performs weighted PCA on data
@@ -752,5 +770,15 @@ clipBottom <- function(x, mi) {
   #		Data matrix with all values less than MI set to 0
   x[x < mi] <- mi
   return(x)
+}
+
+findNeighbors <- function(data, query, k, numCores) {
+
+	neighborhood <- lapply(1:ncol(query), function(x) {
+		vkn <- ball_tree_vector_knn(t(data), query[,x], k, numCores)
+		return(vkn[[1]])
+	})
+
+	return(neighborhood)
 }
 

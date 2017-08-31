@@ -488,6 +488,7 @@ ColorScatter.prototype.redraw = function(performTransition) {
     circles.enter().append("circle").attr("r",4.0);
     circles.style("fill", function(d){return self.colorScale(d[2]);})
         .on("click", function(d,i){self.setSelected(i);})
+        .attr("opacity", 1.0)
         .on("mouseover", function(d,i){self.tip.show(d,i); self.setHovered(i);})
         .on("mouseout", function(d,i){self.tip.hide(d,i); self.setHovered(-1);})
 
@@ -498,6 +499,7 @@ ColorScatter.prototype.redraw = function(performTransition) {
         circles
             .transition()
             .duration(1000)
+            .attr("opacity", 1.0)
             .attr("cx", function(d){return self.x(d[0]);})
             .attr("cy", function(d){return self.y(d[1]);});
     }
@@ -506,11 +508,74 @@ ColorScatter.prototype.redraw = function(performTransition) {
         circles
             .attr("cx", function(d){return self.x(d[0]);})
             .attr("cy", function(d){return self.y(d[1]);});
+
     }
 
+	self.svg.selectAll("line").remove();
     circles.exit().remove();
     };
 };
+
+ColorScatter.prototype.addTree = function(tpoints, tlist) {
+	
+	var self = this;
+
+	self.svg.selectAll("line").remove();
+
+	var circles = self.svg.selectAll("circle")
+		.data(tpoints);
+
+	circles.enter().append("circle").attr("r", 4.0);
+	circles.style("fill", function(d, i) {
+		if (d[4] == "Tree") {
+			return "white"
+		}
+		return self.colorScale(d[2]);
+		})
+		.attr("opacity", function(d) {
+			if (d[4] == "Tree") {
+				return 1.0
+			}
+			return 0.4
+		})
+		.classed("tree-node", function(d, i) {
+			return d[4] == "Tree"
+		});
+
+	circles
+		.transition()
+		.duration(1000)
+		.attr("cx", function(d) { return self.x(d[0]);})
+		.attr("cy", function(d) { return self.y(d[1]);});
+
+	var valueline = d3.svg.line()
+		.x(function(d) { return self.x(d[0]); })
+		.y(function(d) { return self.y(d[1]); });
+
+	var treedata = tpoints.filter(function(d) { return d[4] == "Tree"; });
+	var tree_lines = [];
+
+	for (i = 0; i < tlist.length; i++) {
+		for (j = 0; j < tlist[i].length; j++) {
+			if (tlist[i][j] == 1) {
+				self.svg.append("line")
+					.transition()
+					.duration(1000)
+					.attr("stroke", "white")
+					.attr("stroke-width", 2)
+					.attr("fill", 'none')
+					.attr("x1", self.x(treedata[i][0]))
+					.attr("y1", self.y(treedata[i][1]))
+					.attr("x2", self.x(treedata[j][0]))
+					.attr("y2", self.y(treedata[j][1]));
+			}
+		}
+	}
+
+	circles.exit().remove();
+	
+
+}
 
 ColorScatter.prototype.selectCellRange = function(points, lower, upper) {
 	

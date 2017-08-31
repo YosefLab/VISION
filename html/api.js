@@ -144,12 +144,18 @@ var api = (function(){
 
     }
 
-    output.projection.tree = function(filter_group, projection_name) 
+    output.projection.tree = function(filter_group) 
 	{
 		var query = "/FilterGroup/";
-		query = query.concat(encodeURI(filter_group), "/Tree");
+		query = query.concat(encodeURI(filter_group), "/Tree/List");
 		//return $.ajax(query).then(x => x);
 		return $.ajax(query).then(x => JSON.parse(x));
+	}
+
+	output.projection.tree_points = function(filter_group, projection) {
+		var query = "/FilterGroup/";
+		query = query.concat(encodeURI(filter_group), "/", encodeURI(projection), "/Tree/Points");
+		return $.ajax(query).then(x => JSON.parse(x))
 	}
 
 

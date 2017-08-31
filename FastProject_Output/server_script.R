@@ -186,14 +186,22 @@ jug() %>%
 
     return(out)
   }) %>%
-  get("/FilterGroup/(?<filter_name8>.*)/Tree", function(req, res, err) {
+  get("/FilterGroup/(?<filter_name8>.*)/Tree/List", function(req, res, err) {
     projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name8)
 
-    treeData <- projData[[filter]]@PPT
-    treeData[[4]] <- as.list(treeData[[4]])
+    W <- projData[[filter]]@PPT
 
-    return(toJSON(treeData))
+    return(toJSON(W))
+  }) %>%
+  get("/FilterGroup/(?<filter_name18>.*)/(?<proj_name3>.*)/Tree/Points", function(req, res, err) {
+    projData <- fpout@projData
+    proj <- URLdecode(req$params$proj_name3)
+    filter <- URLdecode(req$params$filter_name18)
+
+    C <- projData[[filter]]@projections[[proj]]@PPT_C
+
+    return(toJSON(C))
   }) %>%
   get("/FilterGroup/list", function(req, res, err) {
     projData <- fpout@projData

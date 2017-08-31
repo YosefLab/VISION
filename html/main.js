@@ -365,6 +365,11 @@ window.onload = function()
 	
 	});
 
+	$("#tree_tab").on("click", function() {
+		global_status.main_vis = "tree";
+		drawChart();
+	});
+
 	$("#gene_tab").on("click", function() {
 		$('#gene-analysis-title').text("Gene Analysis");
 		addToGeneBox();
@@ -582,9 +587,9 @@ function addToPCAnalysisBox(sig_info) {
 			toShow = Object.keys(pos_loadings).slice(0, 6);
 
 			toShow.forEach(function(l) {
-				urllink = "http://www.genecards.org/cgi-bin/carddisp.pl?gene=" + l;
-				content += "<tr><td>";
-				content += "<a href=" + urllink + " target='_blank'>" + l + "</a></td>";
+		//		urllink = "http://www.genecards.org/cgi-bin/carddisp.pl?gene=" + l;
+				content += "<tr><td class='gene-cell'>" + l + "</td>";
+		//		content += "<a href=" + urllink + " target='_blank'>" + l + "</a></td>";
 				content += "<td>" + ((pos_loadings[l]*100).toPrecision(3)) + "%</td></tr>";
 			});
 	
@@ -599,8 +604,8 @@ function addToPCAnalysisBox(sig_info) {
 
 			toShow.forEach(function(l) {
 				urllink = "http://www.genecards.org/cgi-bin/carddisp.pl?gene=" + l;
-				content += "<tr><td>";
-				content += "<a href=" + urllink + " target='_blank'>" + l + "</a></td>";
+				content += "<tr><td class='gene-cell'>" + l + "</td>";
+				//content += "<a href=" + urllink + " target='_blank'>" + l + "</a></td>";
 				content += "<td>" + ((neg_loadings[l]*100).toPrecision(3)) + "%</td></tr>";
 			});
 	
@@ -839,6 +844,70 @@ function drawChart() {
 				}
 
 				global_scatter.setData(points, sig_info.isFactor);
+
+				addToDataAnalysisBox(sig_info);
+
+				addToPCAnalysisBox(sig_info);
+
+			});
+	} else if (global_status.main_vis == "tree") {
+
+		if(sig_key.length == 0 && proj_key.length == 0){
+		    $('#plot-title').text("");
+			$('#plot-subtitle').text("");
+			global_scatter.setData([], false);
+			return $().promise()
+		}	
+
+		var proj_promise = api.projection.coordinates(filter_group, proj_key);
+
+		var sig_info_promise = api.signature.info(sig_key);
+
+		var tree_points = api.projection.tree_points(filter_group, proj_key);
+		var tree_adjlist = api.projection.tree(filter_group)
+
+		return $.when(proj_promise, val_promise, sig_info_promise, tree_points, tree_adjlist) // Runs when both are completed
+			.then(function(projection, values, sig_info, treep, treel){
+
+				// Massage treep for easier D3 binding
+				
+				tree_points = []
+
+				$('#plot-title').text(proj_key);
+				$('#plot-subtitle').text(sig_key);
+
+				var points = [];
+				
+				if (global_status.scatterColorOption != "gene") {
+					for(sample_label in values){
+						var x = projection[sample_label][0]
+						var y = projection[sample_label][1]
+						var sig_score = values[sample_label]
+						points.push([x, y, sig_score, sample_label]);
+					}
+				} else {
+					var gene_ind = values.gene_labels.indexOf(global_status.selected_gene);
+					var gene_data = values.data[gene_ind];
+
+					for (i = 0; i < gene_data.length; i++) {
+						sample_label = values.sample_labels[i]
+						var x = projection[sample_label][0];
+						var y = projection[sample_label][1];
+						var score = gene_data[i];
+						points.push([x, y, score, sample_label, "Sample"]);
+					}
+				}
+
+				for (i = 0; i < treep[0].length; i++) {
+					var x = treep[0][i];
+					var y = treep[1][i];
+					score = 0
+					points.push([x, y, score, "Node " + i, "Tree"]);
+				}
+
+				//global_scatter.setData(points, sig_info.isFactor);
+
+				global_scatter.addTree(points, treel);
 
 				addToDataAnalysisBox(sig_info);
 

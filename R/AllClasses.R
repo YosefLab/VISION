@@ -86,7 +86,8 @@ FastProjectOutput <- setClass("FastProjectOutput",
 Projection <- setClass("Projection", 
     slots = c(
       name = "character",
-      pData = "matrix"
+      pData = "matrix",
+      PPT_C = "matrix"
     )
 )
 
@@ -98,7 +99,7 @@ ProjectionData <- setClass("ProjectionData",
       keys = "character",
       sigProjMatrix = "matrix",
       pMatrix="matrix",
-      PPT = "list",
+      PPT = "matrix",
       fullPCA = "matrix",
       pearsonCorr = "matrix",
       loadings = "matrix"

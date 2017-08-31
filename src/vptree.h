@@ -11,6 +11,7 @@
 
 #include <stdlib.h>
 #include <algorithm>
+#include <math.h>
 #include <vector>
 #include <stdio.h>
 #include <queue>
@@ -72,12 +73,12 @@ double euclidean_distance(const DataPoint &t1, const DataPoint &t2) {
     for (int d = 0; d < t1.dimensionality(); d++) {
         dd += (t1.x(d) - t2.x(d)) * (t1.x(d) - t2.x(d));
     }
-    return dd;
+    return sqrt(dd);
 }
 
 double single_euclidean_distance(int d, const DataPoint &t1, const DataPoint &t2) {
 	double dd = (t1.x(d) - t2.x(d)) * (t1.x(d) - t2.x(d));
-	return dd;
+	return sqrt(dd);
 }
 
 
