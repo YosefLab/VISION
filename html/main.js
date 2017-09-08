@@ -47,13 +47,12 @@ $(window).resize(function()
     if ($('#tree_div').is(":visible"))
 	{ 
 		$('#tree_div').find('svg').remove();
-		global_tree = new TreeMap("#tree_div");
 	}
 
     //Link the scatter/heatmap
     global_scatter.hovered_links.push(global_heatmap);
     global_heatmap.hovered_links.push(global_scatter);
-    global_tree.hovered_links.push(global_tree);
+    //global_tree.hovered_links.push(global_tree);
 
     //Render
     drawChart();
@@ -170,13 +169,12 @@ window.onload = function()
     //Define some globals
     global_scatter = new ColorScatter("#scatter_div", true, true);
     global_heatmap = new HeatMap("#heatmap_div");
-    global_tree = new TreeMap("#tree_div");
     global_gene_scatter = new ColorScatter("#gene_dist_div", false, false);
     
     //Link the scatter/heatmap
     global_scatter.hovered_links.push(global_heatmap);
     global_heatmap.hovered_links.push(global_scatter);
-	global_tree.hovered_links.push(global_scatter);
+	//global_tree.hovered_links.push(global_scatter);
    
    	global_status.precomputed = false;
 
@@ -1029,13 +1027,12 @@ function drawTree() {
 			{
 				$("#tree_div").find("svg").remove();
 				$("#tree_div").show();
-				global_tree = new TreeMap("#tree_div", document);
-				global_tree.hovered_links.push(global_scatter);
+				//global_tree.hovered_links.push(global_scatter);
 			}
 
 			sample_labels = sig_expression.sample_labels;
 			
-			return global_tree.setData(tree_data[1], tree_data[3], sample_labels);
+			//return global_tree.setData(tree_data[1], tree_data[3], sample_labels);
 	});
 }
 

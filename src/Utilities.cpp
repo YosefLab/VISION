@@ -2,7 +2,6 @@
 
 #include <Rcpp.h> 
 #include "vptree.h"
-#include "balltree.h"
 #include <iostream>
 //#include <omp.h>
 #include <string>

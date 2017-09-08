@@ -88,6 +88,7 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
     inputProjections <- c(inputProjections, Projection("PCA: 1,3", t(pca_res[c(1,3),])))
     inputProjections <- c(inputProjections, Projection("PCA: 2,3", t(pca_res[c(2,3),])))
     fullPCA <- t(pca_res[1:15,])
+    pca_res <- pca_res[1:5,]
       
     fullPCA <- as.matrix(apply(fullPCA, 2, function(x) return( x - mean(x) ))) 
       
@@ -173,11 +174,11 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
   # Reposition tree node coordinatates in nondimensional space
   for (p in output) {
 	if (p@name == "tSNE30" || p@name == "tSNE10") {
-		new_coords <- matrix(sapply(neighborhood, function(n)  {
+		new_coords <- matrix(sapply(PPT_neighborhood, function(n)  {
 			n_vals <- p@pData[,n]
 			centroid <- apply(n_vals, 1, mean)
 			return(centroid)
-		}), nrow=2, ncol=length(neighborhood))
+		}), nrow=2, ncol=length(PPT_neighborhood))
 		p@PPT_C <- new_coords
 	} else {
 		p@PPT_C <- PPT[[1]]
@@ -297,7 +298,6 @@ applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, 
       bg_weights[j,] <- weights[j,random_i]
     }
     
-    print(i)
     bg = applyWeightedPCA(bg_data, bg_weights, comp)
     bg_vals[i,] = bg[[2]]
   }
