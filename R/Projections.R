@@ -76,18 +76,19 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
     if (perm_wPCA) {
       res <- applyPermutationWPCA(exprData, weights, components=30)
       pca_res <- res[[1]]
+      print(dim(pca_res))
       loadings <- res[[3]]
     } else {
       res <- applyWeightedPCA(exprData, weights, maxComponents = 30)
       pca_res <- res[[1]]
       loadings <- res[[3]]
       #m <- profmem(pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30)[[1]])
-   # }
+    }
     proj <- Projection("PCA: 1,2", t(pca_res[c(1,2),]))
     inputProjections <- c(inputProjections, proj)
     inputProjections <- c(inputProjections, Projection("PCA: 1,3", t(pca_res[c(1,3),])))
     inputProjections <- c(inputProjections, Projection("PCA: 2,3", t(pca_res[c(2,3),])))
-    fullPCA <- t(pca_res[1:15,])
+    fullPCA <- t(pca_res[1:min(15,nrow(pca_res)),])
     pca_res <- pca_res[1:5,]
       
     fullPCA <- as.matrix(apply(fullPCA, 2, function(x) return( x - mean(x) ))) 
@@ -99,7 +100,7 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
       fullPCA <- fullPCA / r90
     }
     fullPCA <- t(fullPCA)
-  }
+  
   timingList <- rbind(timingList, c(difftime(Sys.time(), t, units="sec")))
   timingNames <- c(timingNames, "wPCA")
   #memProf <- c(total(m)/1e6)
@@ -173,7 +174,7 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
   output2 <- list()
   # Reposition tree node coordinatates in nondimensional space
   for (p in output) {
-	if (p@name == "tSNE30" || p@name == "tSNE10") {
+	if (p@name == "tSNE30" || p@name == "tSNE10" || p@name == "ISOMap") {
 		new_coords <- matrix(sapply(PPT_neighborhood, function(n)  {
 			n_vals <- p@pData[,n]
 			centroid <- apply(n_vals, 1, mean)
@@ -186,6 +187,8 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
 
 	output2[[p@name]] = p
   }
+
+  output2[["KNN"]]@PPT_C <- output2[["tSNE30"]]@PPT_C
   
   return(list(output2, rownames(exprData), PPT[[2]], fullPCA, loadings))
 }
@@ -232,6 +235,7 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
   # Project down using computed eigenvectors
   dataCentered <- dataCentered / sqrt(var)
   wpcaData <- crossprod(t(evec), dataCentered)
+  wpcaData <- wpcaData * (decomp$d*decomp$d)
   eval <- as.matrix(apply(wpcaData, 1, var))
   totalVar <- sum(apply(projData, 1, var))
   eval <- eval / totalVar
@@ -278,7 +282,7 @@ applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, 
   message("Permutation WPCA")
   comp <- min(components, nrow(expr), ncol(data))
   
-  NUM_REPEATS <- 1;
+  NUM_REPEATS <- 20;
   
   w <- applyWeightedPCA(expr, weights, comp)
   wPCA <- w[[1]]
@@ -419,7 +423,7 @@ applytSNE10 <- function(exprData, numCores) {
   ndata <- colNormalization(exprData)
   ndataT <- t(ndata)
   #res <- Rtsne.multicore(ndataT, dims=2, max_iter=600, perplexity=10.0, check_duplicates=F, pca=F, num_threads=numCores)
-  res <- Rtsne(ndataT, dims=2, max_iter=600, perplexity=10.0, check_duplicates=F, pca=F)
+  res <- Rtsne(ndataT, dims=2, max_iter=800, perplexity=10.0, check_duplicates=F, pca=F)
   res <- res$Y
   rownames(res) <- colnames(exprData)
   return(res)
@@ -438,7 +442,7 @@ applytSNE30 <- function(exprData, numCores) {
   ndata <- colNormalization(exprData)
   ndataT <- t(ndata)
   #res <- Rtsne.multicore(ndataT, dims=2, max_iter=600,  perplexity=30.0, check_duplicates=F, pca=F, num_threads=numCores)
-  res <- Rtsne(ndataT, dims=2, max_iter=600, perplexity=30.0, check_duplicates=F, pca=F)
+  res <- Rtsne(ndataT, dims=2, max_iter=800, perplexity=30.0, check_duplicates=F, pca=F)
   res <- res$Y
   
   rownames(res) <- colnames(exprData)
