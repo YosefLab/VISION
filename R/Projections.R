@@ -655,7 +655,7 @@ applySimplePPT <- function(exprData, numCores, nNodes_ = round(sqrt(ncol(exprDat
   mse <- tr[[3]]
 
 
-  return(list(C, Wt, sqdist(t(exprData), t(C)), mse))
+  return(list(princ.pnts = C, adj.mat = Wt, dist.mat = sqdist(t(exprData), t(C)), mse = mse))
 }
 
 #' Fit tree using input parameters

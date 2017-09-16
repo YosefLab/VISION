@@ -1,3 +1,6 @@
+require("igraph")
+
+
 #' Project the given dataoints onto the tree defined by the vertices (V.pos) and binary adjacency matrix (adj.mat)
 #'
 #' @param data.pnts the data points to project (D x N)
@@ -32,30 +35,65 @@ projectOnTree <- function(data.pnts, V.pos, adj.mat) {
   distmat[major.bool] <- NA # replace closest with NA
   neigh <- adj.mat[major.ind,] # get neighbors of nearest pp
   distmat[neigh == 0] <- NA # remove non-neighbors
+  projections <- sapply(1:NCOL(data.pnts), function(i) {
+    edges <- t(apply(cbind(major.ind[i], which(!is.na(distmat[i,]))), 1, sort))
 
-  # minors <- row.argmin(distmat)
-  minor <- apply(distmat, 1, which.min)
+    if(NROW(edges) > 1) { # find the best edge to project on, based
+      edge.p1 <- V.pos[,edges[,1]]
+      edge.p2 <- V.pos[,edges[,2]]
 
-  edges <- t(apply(cbind(major.ind, minor), 1, sort))
+      line <- edge.p2 - edge.p1
 
-  # get spatial positions of the edges
-  edge.p1 <- V.pos[,edges[,1]]
-  edge.p2 <- V.pos[,edges[,2]]
+      pos <- colSums((data.pnts[,i] - edge.p1) * line) / colSums(line ^ 2)
+      rpos <- pmax(0, pmin(1, pos))
+      spos <- edge.p1 + t(rpos * t(line))
 
-  line <- edge.p2 - edge.p1
+      # the best edge is the one with the shortest projection
+      best <- which.min(sqrt(colSums((data.pnts[,i] - spos) ^ 2)))
 
-  # relative position on the edge
-  score <- pmax(0, pmin(1, colSums((data.pnts - edge.p1) * line) / colSums(line ^ 2)))
+      return(c(edges[best,], rpos[best], spos[,best]))
+    } else { # closest node is a leaf, only one appropriate edge
 
-  #spatial position of the projected point
-  pos <- edge.p1 + t(score * t(line))
+      edge.p1 <- V.pos[,edges[1]]
+      edge.p2 <- V.pos[,edges[2]]
 
-  return(list("spatial" = pos, "edge" = edges, "edge.pos" = score))
+      line <- edge.p2 - edge.p1
+
+      pos <- sum((data.pnts[,i] - edge.p1) * line) / sum(line ^ 2)
+      rpos <- pmax(0, pmin(1, pos))
+      spos <- edge.p1 + t(rpos * t(line))
+
+      return(c(edges, rpos, spos))
+    }
+  })
+
+  return(list(edges = projections[1:2,],
+              edges.pos = projections[3,],
+              spatial = projections[-c(1:3),]))
 }
-
-#' Get pseudotime alignment of cells on the path from v.s to v.t
-#'
-#' @param adj.mat
-getPseudoTime <- function(adj.mat, edges, edges.pos, v.s, v.t) {
-
-}
+#
+# projectOnLine <- function(dp, ep1, ep2) {
+#   line <- ep2 - ep1
+#
+#   # relative position on the edge
+#   pos <- 1, sum((dp - ep1) * line) / sum(line ^ 2)
+#
+#   rpos <- pmax(0, pmin(pos))
+#
+#   #spatial position of the projected point
+#   spos <- ep1 + t(rpos * t(line))
+# }
+#
+#
+# getPseudoTime <- function(adj.mat, edges, edges.pos, v.s, v.t) {
+#
+# }
+#
+# edge.orders <- function(princ.pnts, edges, edges.pos) {
+#
+# }
+#
+# edge.order <- function(edges, edges.pos, from, to, len.factor = 1) {
+#   key <- sort(c(from, to))
+#
+# }
