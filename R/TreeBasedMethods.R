@@ -3,14 +3,13 @@ require("igraph")
 
 #' Project the given dataoints onto the tree defined by the vertices (V.pos) and binary adjacency matrix (adj.mat)
 #'
-#' @param data.pnts the data points to project (D x N)
-#' @param V.pos the positions of the tree vertices (D x K)
-#' @param adj.mat a binary, symmetric adjacency matrix (K x K)
+#' @param data.pnts (D x N numeric) the spatial coordinates of data points to project
+#' @param V.pos (D x K numeric) the spatial coordinates of the tree vertices
+#' @param adj.mat (K x K logical) a symmetric binary adjacency matrix (K x K)
 #'
-#' @details the points are projected in two stages. First, the closest edge is found, by finding the closest vertex,
-#' and then finding the neighbor of that vertex that is closest to the datapoint. The edge connecting the two vertices
-#' is considered the closest edge. Second, the datapoint is linearly projected onto the line of the edge, in a truncated manner,
-#' so points that lie beyond to bounds of the edge itself are projected onto the vertex.
+#' @details data points are projected on their nearest edge, defined to be the edge that is connected to the nearest node
+#' and has minimal length of orthogonal projection. Data points are projected with truncated orthogonal projection:
+#' point that fall beyond the edge are projected to the closer node.
 #'
 #' @return a list of the following:
 #' {
@@ -31,22 +30,23 @@ projectOnTree <- function(data.pnts, V.pos, adj.mat) {
   major.bool <- t(apply(distmat, 1, function(x) {x == min(x)}))
   major.ind <- apply(major.bool, 1, which)
 
-  # find closest neighbor of the closest principle point
+  # find all edges connected to closest principle point
   distmat[major.bool] <- NA # replace closest with NA
   neigh <- adj.mat[major.ind,] # get neighbors of nearest pp
   distmat[neigh == 0] <- NA # remove non-neighbors
   projections <- sapply(1:NCOL(data.pnts), function(i) {
+    # for each datapoint, find edge with smallest orthogonal projection
     edges <- t(apply(cbind(major.ind[i], which(!is.na(distmat[i,]))), 1, sort))
 
-    if(NROW(edges) > 1) { # find the best edge to project on, based
+    if(NROW(edges) > 1) { ## Not a leaf
       edge.p1 <- V.pos[,edges[,1]]
       edge.p2 <- V.pos[,edges[,2]]
 
       line <- edge.p2 - edge.p1
 
       pos <- colSums((data.pnts[,i] - edge.p1) * line) / colSums(line ^ 2)
-      rpos <- pmax(0, pmin(1, pos))
-      spos <- edge.p1 + t(rpos * t(line))
+      rpos <- pmax(0, pmin(1, pos)) ## relative positin on the edge
+      spos <- edge.p1 + t(rpos * t(line)) ## spatial position of projected points
 
       # the best edge is the one with the shortest projection
       best <- which.min(sqrt(colSums((data.pnts[,i] - spos) ^ 2)))
@@ -71,29 +71,10 @@ projectOnTree <- function(data.pnts, V.pos, adj.mat) {
               edges.pos = projections[3,],
               spatial = projections[-c(1:3),]))
 }
-#
-# projectOnLine <- function(dp, ep1, ep2) {
-#   line <- ep2 - ep1
-#
-#   # relative position on the edge
-#   pos <- 1, sum((dp - ep1) * line) / sum(line ^ 2)
-#
-#   rpos <- pmax(0, pmin(pos))
-#
-#   #spatial position of the projected point
-#   spos <- ep1 + t(rpos * t(line))
-# }
-#
-#
-# getPseudoTime <- function(adj.mat, edges, edges.pos, v.s, v.t) {
-#
-# }
-#
-# edge.orders <- function(princ.pnts, edges, edges.pos) {
-#
-# }
-#
-# edge.order <- function(edges, edges.pos, from, to, len.factor = 1) {
-#   key <- sort(c(from, to))
-#
-# }
+
+calculateTreeKNN <- function(princ.pnts, adj.mat, proj.edges, proj.edge.pos, K) {
+  # create principle graph
+  # create full graph (with projected data points)
+  # Traverse with BFS on the graph and compute distances from each node to next node
+
+}
