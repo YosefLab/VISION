@@ -1,11 +1,11 @@
 require("igraph")
 
 
-#' Project the given dataoints onto the tree defined by the vertices (V.pos) and binary adjacency matrix (adj.mat)
+#' Project the given dataoints onto the tree defined by the vertices (V.pos) and binary adjacency matrix (princAdj)
 #'
 #' @param data.pnts (D x N numeric) the spatial coordinates of data points to project
 #' @param V.pos (D x K numeric) the spatial coordinates of the tree vertices
-#' @param adj.mat (K x K logical) a symmetric binary adjacency matrix (K x K)
+#' @param princAdj (K x K logical) a symmetric binary adjacency matrix (K x K)
 #'
 #' @details data points are projected on their nearest edge, defined to be the edge that is connected to the nearest node
 #' and has minimal length of orthogonal projection. Data points are projected with truncated orthogonal projection:
@@ -24,7 +24,7 @@ require("igraph")
 #' X <- matrix(rnorm(200), nrow = 2)
 #' tree <- applySimplePPT(X)
 #' proj <- projectOnTree(X, tree[[1]], tree[[2]])
-projectOnTree <- function(data.pnts, V.pos, adj.mat) {
+projectOnTree <- function(data.pnts, V.pos, princAdj) {
   # find closest principle point
   distmat <- sqdist(t(data.pnts), t(V.pos))
   major.bool <- t(apply(distmat, 1, function(x) {x == min(x)}))
@@ -32,7 +32,7 @@ projectOnTree <- function(data.pnts, V.pos, adj.mat) {
 
   # find all edges connected to closest principle point
   distmat[major.bool] <- NA # replace closest with NA
-  neigh <- adj.mat[major.ind,] # get neighbors of nearest pp
+  neigh <- princAdj[major.ind,] # get neighbors of nearest pp
   distmat[neigh == 0] <- NA # remove non-neighbors
   projections <- sapply(1:NCOL(data.pnts), function(i) {
     # for each datapoint, find edge with smallest orthogonal projection
@@ -72,9 +72,63 @@ projectOnTree <- function(data.pnts, V.pos, adj.mat) {
               spatial = projections[-c(1:3),]))
 }
 
-calculateTreeKNN <- function(princ.pnts, adj.mat, proj.edges, proj.edge.pos, K) {
-  # create principle graph
-  # create full graph (with projected data points)
-  # Traverse with BFS on the graph and compute distances from each node to next node
+calculateTreeDistances <- function(princPnts, princAdj, edgeAssoc, edgePos) {
+  # get all distances in principle tree
+  princAdjW <- sqdist(t(princPnts), t(princPnts)) * princAdj
 
+  princGraph <- graph_from_adjacency_matrix(princAdjW, weighted = T, mode = "undirected")
+  nodeDistmat <- distances(princGraph)
+
+  princEdges <- apply(get.edgelist(princGraph), 1, as.numeric)
+  edgeToPnts <- apply(princEdges, 2, function(x) { apply(edgeAssoc==x, 2, all) })
+
+  distmat <- matrix(rep(NA, NROW(edgeToPnts) ^ 2), NROW(edgeToPnts))
+
+  # compute intra-edge distances. Store in list for later calclations and set values in result matrix
+  intraDist <- list()
+  for (i in 1:NCOL(princEdges)) {
+    inEdgeDist <- calcIntraEdgeDistMat(edge.len = nodeDistmat[princEdges[1,i],
+                                                              princEdges[2,i]],
+                                       edge.pos = edgePos[edgeToPnts[,i]])
+    intraDist[[i]] <- inEdgeDist[,c(1,NCOL(inEdgeDist))]
+    distmat[edgeToPnts[,i], edgeToPnts[,i]] <- inEdgeDist[-c(1,NROW(inEdgeDist)), -c(1,NROW(inEdgeDist))]
+  }
+
+  # for each pair of edges, calculate inter-edge distances and set them in the empty matrix
+  for (i in 1:(NCOL(princEdges)-1)) {
+    for (j in (i+1):NCOL(princEdges)) {
+      ## figure out which pair is the right one (one with shortest distance)
+      edge1NodeInd <- which.min(nodeDistmat[princEdges[,i],princEdges[2,j]])
+      edge2NodeInd <- which.min(nodeDistmat[princEdges[edge1NodeInd, i], princEdges[,j]])
+      pathLength <- nodeDistmat[princEdges[edge1NodeInd,i], princEdges[edge2NodeInd,j]]
+
+      ## get corresponding distance vectors from intraList
+      edge1DistMat <- intraDist[[i]]
+      edge1DistVec <- edge1DistMat[-c(1,NROW(edge1DistMat)), edge1NodeInd]
+      edge2DistMat <- intraDist[[j]]
+      edge2DistVec <- edge2DistMat[-c(1,NROW(edge2DistMat)), edge2NodeInd]
+
+      ## set interedge distances in matrix
+      interDistmat <- calcInterEdgeDistMat(v1.dist = edge1DistVec,
+                                           v2.dist = edge2DistVec,
+                                           path.length = pathLength)
+      distmat[edgeToPnts[,i], edgeToPnts[,j]] <- interDistmat
+    }
+  }
+
+  # since we don't set all coordinates, but the matrix is symmetric
+  return(pmax(distmat, t(distmat), na.rm = T))
+}
+
+calcIntraEdgeDistMat <- function(edge.len, edge.pos) {
+  edge.pos <- c(0, edge.pos, 1) * edge.len
+  pos.mat <- replicate(length(edge.pos), edge.pos)
+  return(abs(pos.mat - t(pos.mat)))
+}
+
+calcInterEdgeDistMat <- function(v1.dist, v2.dist, path.length) {
+  # note that input vector must not contain distance to self!
+  v1.mat <- replicate(length(v2.dist), v1.dist)
+  v2.mat <- t(replicate(length(v1.dist), v2.dist))
+  return((v1.mat + v2.mat) + path.length)
 }
