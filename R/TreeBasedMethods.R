@@ -287,7 +287,14 @@ projectOnTree <- function(data.pnts, V.pos, princAdj) {
 #' @param edgeAssoc (2 x N) for each point, the edge it is projected to (represented as (V1,V2), where V1<V2)
 #' @param edgePos (length N, numeric) relative postion on the edge for each point, in range [0,1]
 #'
+#' @import igraph
 #' @return non-negative symmetric matrix in which [i,j] is the tree-based distance between points i, j.
+#'
+#' @examples
+#' X <- matrix(rnorm(200), nrow = 2)
+#' tree <- applySimplePPT(X)
+#' proj <- projectOnTree(X, tree[[1]], tree[[2]])
+#' distmat <- calculateTreeDistances(tree[[1]], tree[[2]], proj$edges, proj$edges.pos)
 calculateTreeDistances <- function(princPnts, princAdj, edgeAssoc, edgePos) {
   # get all distances in principle tree
   princAdjW <- sqdist(t(princPnts), t(princPnts)) * princAdj
@@ -350,8 +357,8 @@ calcIntraEdgeDistMat <- function(edge.len, edge.pos) {
 #' Calculate all distances between points on two different edges
 #' @param v1.dist a vectors of all distances between all points on the first edge,
 #' and the vertex of the first edge that is closer to the second edge
-#' @param v1.dist a vectors of all distances between all points on the first edge,
-#' and the vertex of the first edge that is closer to the second edge
+#' @param v2.dist a vectors of all distances between all points on the second edge,
+#' and the vertex of the second edge that is closer to the first edge
 calcInterEdgeDistMat <- function(v1.dist, v2.dist, path.length) {
   # note that input vector must not contain distance to self!
   v1.mat <- replicate(length(v2.dist), v1.dist)
