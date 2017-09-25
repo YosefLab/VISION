@@ -10,6 +10,9 @@ louvainCluster <- function(kn, data) {
 	
 	nn <- kn[[1]]
 	d <- kn[[2]]
+
+    d <- exp(-1 * (d*d) / .05)
+
 	nnl <- lapply(1:nrow(nn), function(i) nn[i,])
 
 	# Create an undirected knn graph
@@ -45,7 +48,7 @@ louvainCluster <- function(kn, data) {
 #' @param clusters List of clusters, each entry being a vector of cells in a cluster.
 #' @param data NUM_SAMPLES x NUM_FEATURES data matrix that was used to generate clusters
 #' @return Repartitioned clusters, such that a desireable number of microclusters is acheived. 
-readjust_clusters <- function(clusters, data, numPartitions = 0) {
+readjust_clusters <- function(clusters, data, cellsPerPartition=100) {
 	#' Repartitions existing clusters to achieve desired granularity
 	#' Args:
 	#'	clusters: (List) list of clusters, each entry begin a vector of cells in a cluster
@@ -54,11 +57,7 @@ readjust_clusters <- function(clusters, data, numPartitions = 0) {
 	#	 Returns:
 	#		Repartitioned clusters, such that a desireable number of microclusters is achieved. 
 
-	if (numPartitions == 0) {
-		NUM_PARTITIONS = nrow(data) / 100
-	} else {
-		NUM_PARTITIONS = numPartitions
-	}
+	NUM_PARTITIONS = round(nrow(data) / cellsPerPartition)
 	EPSILON = .15
 
 	currPart = length(clusters)
@@ -72,8 +71,8 @@ readjust_clusters <- function(clusters, data, numPartitions = 0) {
 			# Apply kmeans clustering to existing cluster
 			currCl = clusters[[i]]
 			subData <- data[currCl,]
-			if (length(currCl) > 100) {
-				nCl <- kmeans(subData, centers=round(nrow(subData) / 100), iter.max=100)
+			if (length(currCl) > cellsPerPartition) {
+				nCl <- kmeans(subData, centers=round(nrow(subData) / cellsPerPartition), iter.max=100)
 			} else {
 				nCl <- kmeans(subData, centers=1, iter.max=100)
 			}
@@ -134,6 +133,25 @@ merge_intervals <- function(intervals) {
 	
 }
 
+createPools <- function(cl, expr, hkg) {
+
+	pooled_cells <- matrix(unlist(lapply(cl, function(clust) {
+
+			clust_data <- expr[,clust]
+            if (is.null(dim(clust_data))) {
+                return(clust_data)
+            }   
+	        fnr <- createFalseNegativeMap(clust_data, hkg)
+            clust_weights <- computeWeights(fnr[[1]], fnr[[2]], ExpressionData(clust_data))
+			p_cell <- as.matrix(apply(clust_data, 1, sum))
+            cell_norm <- as.matrix(apply(clust_weights, 1, sum))
+
+			return(p_cell / cell_norm)
+	  })), nrow=nrow(expr), ncol=length(cl))
+
+    return(pooled_cells)
+
+}
 
 #' Uses gene names in the housekeeping genes file to create a mapping of false negatives.
 #' Creates a functional fit for each sample based on that sample's HK genes

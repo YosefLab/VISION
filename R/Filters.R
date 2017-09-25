@@ -32,7 +32,8 @@ applyFilters <- function(data, threshold, filterInput) {
       data@thresholdFilter <- expr
     } else if (filter == "fano") {
       filterList <- c(filterList, "fano")
-      expr <- filterGenesFano(expr)
+      texpr <- filterGenesThreshold(expr, threshold)
+      expr <- filterGenesFano(texpr)
       data@fanoFilter <- expr
     } else {
       stop("Filter not recognized")
@@ -65,7 +66,9 @@ filterGenesThreshold <- function(data, threshold) {
 
   message("Applying threshold filter...")
   
-  return(subset(data, apply(data, 1, function(r) sum(r)) >= threshold))
+  keep_ii <- which(as.matrix(apply( (data > 0), 1, sum)) > threshold)
+  return(data[keep_ii,])
+    
   
   
 }
@@ -94,18 +97,18 @@ filterGenesFano <- function(data, num_mad=2) {
   
   N_QUANTS <- 30
   m <- floor(length(mu_sort) / N_QUANTS)
-  
+
   gene_passes <- rep(0, nrow(sub_data)) == 1
 
-  genePassList <- lapply(seq(0, N_QUANTS), function(i) {
-		if (i == N_QUANTS - 1) {
-			rr <- seq(i*m, length(mu_sort))
+  genePassList <- lapply(0:N_QUANTS, function(i) {
+		if (i == N_QUANTS-1) {
+			rr <- seq(i*m+1, length(mu_sort))
 		} else {
-			rr <- seq(i*m, (i+1)*m)
+			rr <- seq(i*m+1, (i+1)*m)
 		}
 
 		mu_quant <- mu_sort[rr]
-		mu_quant[mu_quant==0] = 1
+		mu_quant[which(mu_quant == 0)] <- 1
 		sigma_quant <- sigma_sort[rr]
 		fano_quant <- (sigma_quant ** 2) / (mu_quant)
 		mad_quant <- median(abs(fano_quant - median(fano_quant)))
