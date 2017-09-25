@@ -87,7 +87,8 @@ Projection <- setClass("Projection",
     slots = c(
       name = "character",
       pData = "matrix",
-      PPT_C = "matrix"
+      PPT_C = "matrix",
+      simFunction = "function"
     )
 )
 

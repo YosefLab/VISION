@@ -65,14 +65,6 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
   timingList <- (t - t)
   timingNames <- c("Start")
   
-  #if (lean) {
-  #  print("PCA")
-  #  pca_res <- applyPCA(exprData, N=30)[[1]]
-  #  proj <- Projection("PCA: 1,2", t(pca_res[c(1,2),]))
-  #  inputProjections <- c(inputProjections, proj)
-  #  inputProjections <- c(inputProjections, Projection("PCA: 1,3", t(pca_res[c(1,3),])))
-  #  inputProjections <- c(inputProjections, Projection("PCA: 2,3", t(pca_res[c(2,3),])))
-  #} else {
     if (perm_wPCA) {
       res <- applyPermutationWPCA(exprData, weights, components=30)
       pca_res <- res[[1]]
@@ -84,12 +76,11 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
       loadings <- res[[3]]
       #m <- profmem(pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30)[[1]])
     }
-    proj <- Projection("PCA: 1,2", t(pca_res[c(1,2),]))
-    inputProjections <- c(inputProjections, proj)
+    inputProjections <- c(inputProjections, Projection("PCA: 1,2", t(pca_res[c(1,2),])))
     inputProjections <- c(inputProjections, Projection("PCA: 1,3", t(pca_res[c(1,3),])))
     inputProjections <- c(inputProjections, Projection("PCA: 2,3", t(pca_res[c(2,3),])))
     fullPCA <- t(pca_res[1:min(15,nrow(pca_res)),])
-    pca_res <- pca_res[1:5,]
+    #pca_res <- pca_res[1:5,]
       
     fullPCA <- as.matrix(apply(fullPCA, 2, function(x) return( x - mean(x) ))) 
       
@@ -114,7 +105,7 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
     #m <- profmem({
     if (method == "ICA" || method == "RBF Kernel PCA") {
       res <- methodList[[method]](exprData)
-      proj <- Projection(method, res)
+      proj <- Projection(method, res, simFunction=euclideanWeights)
       inputProjections <- c(inputProjections, proj)
     } else {
       res <- methodList[[method]](pca_res, numCores)
@@ -124,7 +115,7 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
         PPT <- list(res[[1]], res[[2]], res[[3]], ncls)
 		PPT_neighborhood <- findNeighbors(pca_res, PPT[[1]], ncol(pca_res) / ncol(PPT[[1]]),  numCores)
       } else {
-        proj <- Projection(method, res)
+        proj <- Projection(method, res, simFunction=euclideanWeights)
         inputProjections <- c(inputProjections, proj)
       }
     }
@@ -153,7 +144,7 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
     if (r90 > 0) {
       coordinates <- coordinates / r90
     }
-  
+
     coordinates <- t(coordinates)
     p <- updateProjection(p, data=coordinates)
     output[[p@name]] = p
@@ -174,21 +165,15 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
   output2 <- list()
   # Reposition tree node coordinatates in nondimensional space
   for (p in output) {
-	if (p@name == "tSNE30" || p@name == "tSNE10" || p@name == "ISOMap") {
-		new_coords <- matrix(sapply(PPT_neighborhood, function(n)  {
-			n_vals <- p@pData[,n]
-			centroid <- apply(n_vals, 1, mean)
-			return(centroid)
-		}), nrow=2, ncol=length(PPT_neighborhood))
-		p@PPT_C <- new_coords
-	} else {
-		p@PPT_C <- PPT[[1]]
-	}
+  		new_coords <- matrix(sapply(PPT_neighborhood, function(n)  {
+  			n_vals <- p@pData[,n]
+  			centroid <- apply(n_vals, 1, mean)
+  			return(centroid)
+    	}), nrow=2, ncol=length(PPT_neighborhood))
+  		p@PPT_C <- new_coords
 
-	output2[[p@name]] = p
-  }
-
-  output2[["KNN"]]@PPT_C <- output2[["tSNE30"]]@PPT_C
+  	output2[[p@name]] = p
+    }
   
   return(list(output2, rownames(exprData), PPT[[2]], fullPCA, loadings))
 }
@@ -216,8 +201,8 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
   dataCentered <- as.matrix(apply(projData, 2, function(x) x - wmean))
 
   # Compute weighted data
-  wDataCentered <- multMat(dataCentered, weights)
-  #wDataCentered <- dataCentered * weights
+  #wDataCentered <- multMat(dataCentered, weights)
+  wDataCentered <- dataCentered * weights
 
   # Weighted covariance / correlation matrices
   W <- tcrossprod(wDataCentered)
@@ -235,7 +220,7 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
   # Project down using computed eigenvectors
   dataCentered <- dataCentered / sqrt(var)
   wpcaData <- crossprod(t(evec), dataCentered)
-  wpcaData <- wpcaData * (decomp$d*decomp$d)
+  #wpcaData <- wpcaData * (decomp$d*decomp$d)
   eval <- as.matrix(apply(wpcaData, 1, var))
   totalVar <- sum(apply(projData, 1, var))
   eval <- eval / totalVar
@@ -275,7 +260,7 @@ applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, 
   #'  verbose: logical
   #'  
   #'  Return:
-  #		Weighed PCA data
+  #		Weighted PCA data
   #		Variance of each component
   #		Eigenvectors of weighted covariance matrix.
   
@@ -374,10 +359,7 @@ applyPCA <- function(exprData, N=0, variance_proportion=1.0) {
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
 applyICA <- function(exprData, numCores) {
 
-
-
   set.seed(RANDOM_SEED)
-  
   
   ndata <- colNormalization(exprData)
   ndataT <- t(ndata)
@@ -469,7 +451,12 @@ applyKNN <- function(exprData, numCores) {
     weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
     weights <- weights / weightsNormFactor
 
-    return(weights)
+    knnmat <- Matrix(weights, sparse=T)
+    knproj <- projectKNNs(knnmat)
+
+    colnames(knproj) <- colnames(exprData)
+
+    return(t(knproj))
 
 }
 

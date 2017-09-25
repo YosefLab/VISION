@@ -40,7 +40,7 @@ setMethod("initialize", signature(.Object="Signature"),
 
 #' Method for testing whether or not signatures are equal to one another (if all signs, genes and name are the same.)
 #' 
-#' @param object Siganature object
+#' @param object Signature object
 #' @param compareSig Other signature to compare against 
 #' @return TRUE if sigs are equal, else FALSE
 setMethod("sigEqual", signature(object="Signature"),
@@ -89,6 +89,28 @@ getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
   
   return(BG_DIST)
   
+}
+
+euclideanWeights <- function(proj, N_SAMPLES, K=30, numCores=1) {
+
+	weights <- matrix(0L, nrow=N_SAMPLES, ncol=N_SAMPLES)
+	k <- ball_tree_knn(t(proj@pData), K, numCores)
+	nn <- k[[1]]
+	d <- k[[2]]
+
+	sigma <- apply(d, 1, max)
+	sparse_weights <- exp(-1 * (d * d) / sigma^2)
+
+	weights <- load_in_knn(nn, sparse_weights)
+    #d <- dist.matrix(t(proj@pData), method="euclidean")
+    #weights <- exp( (-1 * (d * d)) / (NEIGHBORHOOD_SIZE)^2)
+
+	weightsNormFactor <- Matrix::rowSums(weights)
+	weightsNormFactor[weightsNormFactor == 0] <- 1.0
+	weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
+	weights <- weights / weightsNormFactor
+
+    return(weights)
 }
 
 #' Evaluates the significance of each signature vs. each projection. 
@@ -205,40 +227,14 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   message("Evaluating signatures against projections...")
   
   i <- 1
-  projnames <- c()
+  projnames <- names(projections)
   for (proj in projections) {
-    dataLoc <- proj@pData
-
-    projnames <- c(projnames, proj@name)
 
 	weights <- matrix(0L, nrow=N_SAMPLES, ncol=N_SAMPLES)
-	if (proj@name != "KNN") {
-		print(proj@name)
-		k <- ball_tree_knn(t(dataLoc), round(sqrt(N_SAMPLES)), numCores)
-		nn <- k[[1]]
-		d <- k[[2]]
+	print(proj@name)
+    print(dim(proj@pData))
 
-		sigma <- apply(d, 1, max)
-
-		timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-		tRows <- c(tRows, paste0(proj@name, "distanceMatrix"))
-    
-		sparse_weights <- exp(-1 * (d * d) / sigma^2)
-		weights <- load_in_knn(nn, sparse_weights)
-
-		weightsNormFactor <- Matrix::rowSums(weights)
-		weightsNormFactor[weightsNormFactor == 0] <- 1.0
-		weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
-		weights <- weights / weightsNormFactor
-	
-		timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-		tRows <- c(tRows, paste0(proj@name, "Gaussian"))
-
-	} else {
-		weights <- dataLoc
-	}
-
-
+    weights <- p@simFunction(proj, N_SAMPLES, K=round(sqrt(N_SAMPLES)), numCores)
     neighborhoodPrediction <- Matrix::crossprod(weights, sigScoreMatrix)
 
     ## Neighborhood dissimilatory score = |actual - predicted|
@@ -428,8 +424,7 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   spRowLabels <- c(spRowLabels, spRowLabelsFactors, spRowLabelsPNum)
   
   original_shape <- dim(sigProjMatrix_P)
-  sigProjMatrix_P <- p.adjust(t(sigProjMatrix_P), method="BH")
-  dim(sigProjMatrix_P) <- original_shape
+  sigProjMatrix_P <- matrix(p.adjust(sigProjMatrix_P, method="BH"), nrow=nrow(sigProjMatrix_P), ncol=ncol(sigProjMatrix_P))
   sigProjMatrix_P[sigProjMatrix_P == 0] <- 10^(-300)
   
   sigProjMatrix_P <- as.matrix(log10(sigProjMatrix_P))
@@ -457,15 +452,15 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
 clusterSignatures <- function(sigList, sigMatrix, pvals, k=10) {
   
   precomputed <- lapply(sigList, function(x) x@isPrecomputed)
-  insignificant <- apply(pvals, 1, function(x) mean(x) < -1.3)
+  insignificant <- apply(pvals, 1, function(x) min(x) < -1.3)
 
   keep = names(which(insignificant == T))
 
   # Cluster computed signatures and precomputed signatures separately
   computedSigsToCluster <- names(precomputed[which(precomputed==F)])
-  computedSigMatrix <- sigMatrix[computedSigsToCluster,]
+  computedSigMatrix <- sigMatrix[computedSigsToCluster,,drop=F]
 
-  computedSigMatrix <- computedSigMatrix[keep,]
+  computedSigMatrix <- computedSigMatrix[keep,,drop=F]
 
   compcls <- list()
   maxcls <- 1

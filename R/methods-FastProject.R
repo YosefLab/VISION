@@ -161,13 +161,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   	  cl <- louvainCluster(kn, t(res))
   	  cl <- readjust_clusters(cl, t(res)) 
 
-	  pooled_cells <- matrix(unlist(lapply(cl, function(clust) {
-
-			clust_data <- object@exprData[,clust]
-			p_cell <- as.matrix(apply(clust_data, 1, mean))
-
-			return(p_cell)
-	  })), nrow=nrow(object@exprData), ncol=length(cl))
+      pooled_cells <- createPools(cl, object@exprData, object@housekeepingData)
 
 	  cn <- lapply(1:ncol(pooled_cells), function(i) return(paste0("Cluster ", i)))
 	  colnames(pooled_cells) <- cn
@@ -195,9 +189,10 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   
   # If no filter threshold was specified, set it to 20% of samples
   if (object@threshold == 0) {
-    num_samples <- ncol(getExprData(eData)) - 1
-    object@threshold <- (0.2 * num_samples)
+    num_samples <- ncol(getExprData(eData))
+    object@threshold <- round(0.2 * num_samples)
   }
+  print(object@threshold)
   
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "Threshold")
@@ -304,11 +299,11 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
 
   # Construct random signatures for background distribution
   randomSigs <- c()
-  randomSizes <- unlist(findRepSubset(sigSizes))
-  print(randomSizes)
+  #randomSizes <- unlist(findRepSubset(sigSizes))
+  randomSizes <- c(5, 10, 20, 50, 100, 200)
   for (size in randomSizes) {
     message("Creating random signature of size ", size, "...")
-    for (j in 1:2000) {
+    for (j in 1:3000) {
       newSigGenes <- sample(rownames(getExprData(eData)), size)
       newSigSigns <- rep(1, size)
       names(newSigSigns) <- newSigGenes
@@ -382,8 +377,6 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
 
 	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
 	tRows <- c(tRows, paste("Pearson Correlation", filter))
-
-	projs[["KNN"]]@pData <- projs[["tSNE30"]]@pData
 
     projData <- ProjectionData(filter=filter, projections=projs, genes=g, keys=projKeys, 
                                           sigProjMatrix=sigProjMatrix, pMatrix=pVals, PPT=PPT, fullPCA=pca_res,
