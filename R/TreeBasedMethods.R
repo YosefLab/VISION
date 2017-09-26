@@ -224,7 +224,7 @@ getMSE <- function(C, X) {
 #'     \item{"spatial"}{The D-dimensional position of the projected data points}
 #'     \itam{"edge"}{a Nx2 matrix, were line i has the indices identifying the edge that datapoint i was projected on,
 #'     represented as (node a, node b). For consistency and convenience, it is maintained that a < b}
-#'     \item{"edge.pos"}{an N-length numeric with values in [0,1], the relative position on the edge of the datapoint.
+#'     \item{"edgePos"}{an N-length numeric with values in [0,1], the relative position on the edge of the datapoint.
 #'     0 is node a, 1 is node b, .5 is the exact middle of the edge, etc.}
 #'  }
 #'
@@ -276,9 +276,11 @@ projectOnTree <- function(data.pnts, V.pos, princAdj) {
   })
 
   return(list(edges = projections[1:2,],
-              edges.pos = projections[3,],
+              edgePos = projections[3,],
               spatial = projections[-c(1:3),]))
 }
+
+
 
 #' Calculate distance matrix between all pairs of ponts based on their projection onto the tree
 #'
@@ -294,7 +296,7 @@ projectOnTree <- function(data.pnts, V.pos, princAdj) {
 #' X <- matrix(rnorm(200), nrow = 2)
 #' tree <- applySimplePPT(X)
 #' proj <- projectOnTree(X, tree[[1]], tree[[2]])
-#' distmat <- calculateTreeDistances(tree[[1]], tree[[2]], proj$edges, proj$edges.pos)
+#' distmat <- calculateTreeDistances(tree[[1]], tree[[2]], proj$edges, proj$edgePos)
 calculateTreeDistances <- function(princPnts, princAdj, edgeAssoc, edgePos) {
   # get all distances in principle tree
   princAdjW <- sqdist(t(princPnts), t(princPnts)) * princAdj
@@ -313,7 +315,7 @@ calculateTreeDistances <- function(princPnts, princAdj, edgeAssoc, edgePos) {
   for (i in 1:NCOL(princEdges)) {
     inEdgeDist <- calcIntraEdgeDistMat(edge.len = nodeDistmat[princEdges[1,i],
                                                               princEdges[2,i]],
-                                       edge.pos = edgePos[edgeToPnts[,i]])
+                                       edgePos = edgePos[edgeToPnts[,i]])
     intraDist[[i]] <- inEdgeDist[,c(1,NCOL(inEdgeDist))]
     distmat[edgeToPnts[,i], edgeToPnts[,i]] <- inEdgeDist[-c(1,NROW(inEdgeDist)), -c(1,NROW(inEdgeDist))]
   }
@@ -346,11 +348,11 @@ calculateTreeDistances <- function(princPnts, princAdj, edgeAssoc, edgePos) {
 
 #' Calculate distances between all points on a given edge, including edge vertices
 #' @param edge.len the length of the node
-#' @param edge.pos the relative positions of the points on the edge (in range [0,1]).
+#' @param edgePos the relative positions of the points on the edge (in range [0,1]).
 #' @return a distance matrix, where the first and last points are the edge vertices
-calcIntraEdgeDistMat <- function(edge.len, edge.pos) {
-  edge.pos <- c(0, edge.pos, 1) * edge.len
-  pos.mat <- replicate(length(edge.pos), edge.pos)
+calcIntraEdgeDistMat <- function(edge.len, edgePos) {
+  edgePos <- c(0, edgePos, 1) * edge.len
+  pos.mat <- replicate(length(edgePos), edgePos)
   return(abs(pos.mat - t(pos.mat)))
 }
 

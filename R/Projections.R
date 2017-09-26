@@ -30,7 +30,7 @@ registerMethods <- function(lean=FALSE) {
   projMethods <- c(projMethods, "tSNE30" = applytSNE30)
   projMethods <- c(projMethods, "KNN" = applyKNN)
   projMethods <- c(projMethods, "tSNE10" = applytSNE10)
-  projMethods <- c(projMethods, "PPT" = applySimplePPT)
+  # projMethods <- c(projMethods, "PPT" = applySimplePPT)
 
   return(projMethods)
 }
@@ -47,7 +47,7 @@ registerMethods <- function(lean=FALSE) {
 #' @return List of Projection objects mapping projection type to projection data
 #' @return List of gene names used during the dimensionality reduction phase
 #' @return List of relevant PPT parameters.
-generateProjections <- function(expr, weights, filterName="", inputProjections=c(), numCores = 1, lean=FALSE, perm_wPCA=FALSE) {
+generateProjections.old <- function(expr, weights, filterName="", inputProjections=c(), numCores = 1, lean=FALSE, perm_wPCA=FALSE) {
 
   if (filterName == "novar") {
     exprData <- expr@noVarFilter
@@ -83,9 +83,9 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
     fullPCA <- t(pca_res[1:min(15,nrow(pca_res)),])
 
     #pca_res <- pca_res[1:5,]
-      
-    fullPCA <- as.matrix(apply(fullPCA, 2, function(x) return( x - mean(x) ))) 
-      
+
+    fullPCA <- as.matrix(apply(fullPCA, 2, function(x) return( x - mean(x) )))
+
     r <- apply(fullPCA, 1, function(x) sum(x^2))^(0.5)
     r90 <- quantile(r, c(.9))[[1]]
 
@@ -107,7 +107,7 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
     #m <- profmem({
     if (method == "ICA" || method == "RBF Kernel PCA") {
       res <- methodList[[method]](exprData)
-      proj <- Projection(method, res, simFunction=euclideanWeights)
+      proj <- Projection(method, res)
       inputProjections <- c(inputProjections, proj)
     } else {
       res <- methodList[[method]](pca_res, numCores)
@@ -115,9 +115,9 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
       	c <- res[[1]]
       	ncls <- apply(res[[3]], 1, which.min)
         PPT <- list(res[[1]], res[[2]], res[[3]], ncls)
-		PPT_neighborhood <- findNeighbors(pca_res, PPT[[1]], ncol(pca_res) / ncol(PPT[[1]]),  numCores)
+		    PPT_neighborhood <- findNeighbors(pca_res, PPT[[1]], ncol(pca_res) / ncol(PPT[[1]]),  numCores)
       } else {
-        proj <- Projection(method, res, simFunction=euclideanWeights)
+        proj <- Projection(method, res)
         inputProjections <- c(inputProjections, proj)
       }
     }
@@ -177,8 +177,174 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
 
   	output2[[p@name]] = p
     }
-  
+
   return(list(output2, rownames(exprData), PPT[[2]], fullPCA, loadings))
+}
+
+generateProjections <- function(expr, weights, filterName="",
+                                 inputProjections=c(), numCores = 1,
+                                 lean=FALSE, perm_wPCA=FALSE) {
+
+  if (filterName == "novar") {
+    exprData <- expr@noVarFilter
+  } else if (filterName == "threshold") {
+    exprData <- expr@thresholdFilter
+  } else if (filterName == "fano") {
+    exprData <- expr@fanoFilter
+  } else if (filterName == "") {
+    exprData <- expr@data
+  } else {
+    stop("FilterName not recognized: ", filterName)
+  }
+
+  methodList = registerMethods(lean)
+  t <- Sys.time()
+  timingList <- (t - t)
+  timingNames <- c("Start")
+
+  if (perm_wPCA) {
+    res <- applyPermutationWPCA(exprData, weights, components=30)
+    pca_res <- res[[1]]
+    print(dim(pca_res))
+    loadings <- res[[3]]
+  } else {
+    res <- applyWeightedPCA(exprData, weights, maxComponents = 30)
+    pca_res <- res[[1]]
+    loadings <- res[[3]]
+    #m <- profmem(pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30)[[1]])
+  }
+
+  inputProjections <- c(inputProjections, Projection("PCA: 1,2", t(pca_res[c(1,2),])))
+  inputProjections <- c(inputProjections, Projection("PCA: 1,3", t(pca_res[c(1,3),])))
+  inputProjections <- c(inputProjections, Projection("PCA: 2,3", t(pca_res[c(2,3),])))
+
+  fullPCA <- t(pca_res[1:min(15,nrow(pca_res)),])
+  fullPCA <- as.matrix(apply(fullPCA, 2, function(x) return( x - mean(x) )))
+
+  r <- apply(fullPCA, 1, function(x) sum(x^2))^(0.5)
+  r90 <- quantile(r, c(.9))[[1]]
+
+  if (r90 > 0) {
+    fullPCA <- fullPCA / r90
+  }
+  fullPCA <- t(fullPCA)
+
+  timingList <- rbind(timingList, c(difftime(Sys.time(), t, units="sec")))
+  timingNames <- c(timingNames, "wPCA")
+  #memProf <- c(total(m)/1e6)
+  #memNames <- c("wPCA")
+
+  for (method in names(methodList)){
+    gc()
+    message(method)
+    ## run on raw data
+    if (method == "ICA" || method == "RBF Kernel PCA") {
+      res <- methodList[[method]](exprData)
+      proj <- Projection(method, res)
+      inputProjections <- c(inputProjections, proj)
+    } else { ## run on reduced data
+      res <- methodList[[method]](pca_res, numCores)
+      proj <- Projection(method, res)
+      inputProjections <- c(inputProjections, proj)
+      }
+    }
+    #})
+    #memProf <- rbind(memProf, total(m)/1e6)
+    #memNames <- c(memNames, method)
+
+    timingList <- rbind(timingList, c(difftime(Sys.time(), t, units="sec")))
+    timingNames <- c(timingNames, method)
+    rownames(timingList) <- timingNames
+    #return(timingList)
+    #rownames(memProf) <- memNames
+    #return(memProf)
+
+    output <- list()
+
+    for (p in inputProjections) {
+      coordinates <- p@pData
+
+      coordinates <- as.matrix(apply(coordinates, 2, function(x) return( x - mean(x) )))
+
+      r <- apply(coordinates, 1, function(x) sum(x^2))^(0.5)
+      r90 <- quantile(r, c(.9))[[1]]
+
+      if (r90 > 0) {
+        coordinates <- coordinates / r90
+      }
+
+      coordinates <- t(coordinates)
+      p <- updateProjection(p, data=coordinates)
+      output[[p@name]] = p
+
+      }
+
+  return(list(projections = output, geneNames = rownames(exprData),
+              fullPCA = fullPCA, loadings = loadings))
+}
+
+generateTreeProjections <- function(expr, filterName="",
+                                    inputProjections=c(), numCores = 1) {
+
+
+  if (filterName == "novar") {
+    exprData <- expr@noVarFilter
+  } else if (filterName == "threshold") {
+    exprData <- expr@thresholdFilter
+  } else if (filterName == "fano") {
+    exprData <- expr@fanoFilter
+  } else if (filterName == "") {
+    exprData <- expr@data
+  } else {
+    stop("FilterName not recognized: ", filterName)
+  }
+
+  t <- Sys.time()
+  timingList <- (t - t)
+  timingNames <- c("Start")
+
+  hdTree <- applySimplePPT(exprData)
+  hdProj <- TreeProjection(name = "PPT", pData = exprData,
+                             vData = hdTree$princPnts, adjMat = hdTree$adjMat)
+
+  ncls <- apply(hdTree$distMat, 1, which.min)
+  pptNeighborhood <- findNeighbors(exprData, ## TODO: Originally pca_res - WHY?
+                                   hdTree$princPnts,
+                                   NCOL(exprData) / NCOL(hdTree$princPnts),
+                                   numCores)
+
+  timingList <- rbind(timingList, c(difftime(Sys.time(), t, units="sec")))
+  timingNames <- c(timingNames, "PPT")
+  rownames(timingList) <- timingNames
+
+  # Readjust coordinates of PPT
+  c <- t(hdTree$princPnts[c(1,2),])
+  coord <- as.matrix(apply(c, 2, function(x) return(x - mean(x))))
+  r <- apply(coord, 1, function(x) sum(x^2))^(0.5)
+  r90 <- quantile(r, c(0.9))[[1]]
+  if (r90 > 0) {
+    coord <- coord / r90
+  }
+  coord <- t(coord)
+  hdTree$princPnts <- coord
+
+  output <- list(hdProj@name = hdProj)
+
+  # Reposition tree node coordinates in nondimensional space
+  for (proj in inputProjections) {
+
+    new_coords <- matrix(sapply(pptNeighborhood, function(n)  {
+      n_vals <- proj@pData[,n]
+      centroid <- apply(n_vals, 1, mean)
+      return(centroid)
+    }), nrow=2, ncol=length(pptNeighborhood))
+
+    treeProj = TreeProjection(name = proj@name, pData = proj@pData,
+                              vData = new_coords, adjMat = hdTree$adjMat)
+    output[[treeProj@name]] = treeProj
+  }
+
+  return(output)
 }
 
 #' Performs weighted PCA on data

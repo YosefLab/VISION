@@ -16,7 +16,7 @@ Cluster <- setClass("Cluster",
   )
 )
 
-ExpressionData <- setClass("ExpressionData", 
+ExpressionData <- setClass("ExpressionData",
     slots = c(
       data = "matrix",
       fanoFilter = "matrix",
@@ -74,42 +74,64 @@ FastProject <- setClass("FastProject",
 FastProjectOutput <- setClass("FastProjectOutput",
     slots = c(
       exprData = "ExpressionData",
-      projData = "list", 
+      projData = "list",
       sigMatrix = "matrix",
       sigList = "list",
-      sigClusters = "list",
       fpParams = "list",
       pools = "list"
     )
 )
 
-Projection <- setClass("Projection", 
+Projection <- setClass("Projection",
     slots = c(
       name = "character",
       pData = "matrix",
-      PPT_C = "matrix",
       simFunction = "function"
     )
 )
 
-ProjectionData <- setClass("ProjectionData", 
+TreeProjection <- setClass("TreeProjection",
+                          contains = "Projection",
+                          slots = c(
+                            vData = "matrix",
+                            adjMat = "matrix",
+                            edgeAssoc = "matrix",
+                            edgePos = "numeric"
+                            )
+                          )
+
+ProjectionData <- setClass("ProjectionData",
     slots = c(
-      filter = 'character', 
       projections = "list",
-      genes = "character",
-      keys = "character",
+      keys = "character", # names of projections
       sigProjMatrix = "matrix",
       pMatrix="matrix",
-      PPT = "matrix",
-      fullPCA = "matrix",
-      pearsonCorr = "matrix",
-      loadings = "matrix"
+      sigClusters = "list"
     )
 )
 
-ServerExpression <- setClass("ServerExpression", 
+PCAnnotatorData <- setClass("PCAnnotatorData",
+                            slots = c(
+                              fullPCA = "matrix",
+                              pearsonCorr = "matrix",
+                              loadings = "matrix"
+                              )
+                            )
+
+FilterModuleData <- setClass("FilterModuleData",
+                             slots = c(
+                               filter = "character",
+                               genes = "character",
+                               ProjectionData = "ProjectionData",
+                               TreeProjectionData = "TreeProjectionData",
+                               PCAnnotatorData = "PCAnnotatorData",
+                               )
+                             )
+
+
+ServerExpression <- setClass("ServerExpression",
     slots = c(
-      data = "matrix", 
+      data = "matrix",
       sample_labels = "character",
       gene_labels = "character"
     )

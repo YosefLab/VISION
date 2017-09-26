@@ -50,3 +50,6 @@ setGeneric("viewResults", function(object) {
   standardGeneric("viewResults")
 })
 
+setGeneric("computeKNNWeights", function(object, K, numCores) {
+  standardGeneric("computeKNNWeights")
+})
