@@ -72,42 +72,34 @@ FastProject <- setClass("FastProject",
 ))
 
 FastProjectOutput <- setClass("FastProjectOutput",
-    slots = c(
-      exprData = "ExpressionData",
-      projData = "list",
-      sigMatrix = "matrix",
-      sigList = "list",
-      fpParams = "list",
-      pools = "list"
-    )
-)
+                              slots = c(
+                                exprData = "ExpressionData",
+                                filterModuleList = "list",
+                                sigMatrix = "matrix",
+                                sigList = "list",
+                                fpParams = "list",
+                                pools = "list"
+                                )
+                              )
 
-Projection <- setClass("Projection",
-    slots = c(
-      name = "character",
-      pData = "matrix",
-      simFunction = "function"
-    )
-)
-
-TreeProjection <- setClass("TreeProjection",
-                          contains = "Projection",
-                          slots = c(
-                            vData = "matrix",
-                            adjMat = "matrix",
-                            edgeAssoc = "matrix",
-                            edgePos = "numeric"
-                            )
-                          )
+FilterModuleData <- setClass("FilterModuleData",
+                             slots = c(
+                               filter = "character",
+                               genes = "character",
+                               ProjectionData = "ProjectionData",
+                               TreeProjectionData = "TreeProjectionData",
+                               PCAnnotatorData = "PCAnnotatorData"
+                               )
+                             )
 
 ProjectionData <- setClass("ProjectionData",
-    slots = c(
-      projections = "list",
-      keys = "character", # names of projections
-      sigProjMatrix = "matrix",
-      pMatrix="matrix",
-      sigClusters = "list"
-    )
+                           slots = c(
+                             projections = "list",
+                             keys = "character", # names of projections
+                             sigProjMatrix = "matrix",
+                             pMatrix="matrix",
+                             sigClusters = "list"
+                             )
 )
 
 PCAnnotatorData <- setClass("PCAnnotatorData",
@@ -118,16 +110,22 @@ PCAnnotatorData <- setClass("PCAnnotatorData",
                               )
                             )
 
-FilterModuleData <- setClass("FilterModuleData",
-                             slots = c(
-                               filter = "character",
-                               genes = "character",
-                               ProjectionData = "ProjectionData",
-                               TreeProjectionData = "TreeProjectionData",
-                               PCAnnotatorData = "PCAnnotatorData",
-                               )
-                             )
+Projection <- setClass("Projection",
+                       slots = c(
+                         name = "character",
+                         pData = "matrix"
+                         )
+                       )
 
+TreeProjection <- setClass("TreeProjection",
+                          contains = "Projection",
+                          slots = c(
+                            vData = "matrix",
+                            adjMat = "matrix",
+                            edgeAssoc = "matrix",
+                            edgePos = "numeric"
+                            )
+                          )
 
 ServerExpression <- setClass("ServerExpression",
     slots = c(

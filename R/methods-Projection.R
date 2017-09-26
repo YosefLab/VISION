@@ -7,11 +7,10 @@ require("cluster")
 #' @param pData Coordinates of each sample in the projection (NUM_SAMPLES x NUM_COMPONENTS)
 #' @return Projection object
 setMethod("initialize", signature(.Object = "Projection"),
-          function(.Object, name, pData=NULL, ppt_c=matrix(NA, 1, 1)) {
+          function(.Object, name, pData=NULL) {
 
             .Object@name = name
             .Object@pData = pData
-            .Object@PPT_C = ppt_c
 
             return(.Object)
           }
