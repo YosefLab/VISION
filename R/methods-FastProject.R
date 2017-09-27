@@ -384,11 +384,11 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, paste0("ClusterSignaturesProjections ", filter))
 
-    treeProjData <- TreeProjectionData(projections = treeProjs,
-                                       keys = sigVTreeProj$projNames,
-                                       sigProjMatrix = sigVTreeProj$sigProjMatrix,
-                                       pMatrix = sigVTreeProj$pVals,
-                                       sigClusters = sigTreeClusters)
+    treeProjData <- ProjectionData(projections = treeProjs,
+                                   keys = sigVTreeProj$projNames,
+                                   sigProjMatrix = sigVTreeProj$sigProjMatrix,
+                                   pMatrix = sigVTreeProj$pVals,
+                                   sigClusters = sigTreeClusters)
 
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, paste0("SigVTreePr ", filter))

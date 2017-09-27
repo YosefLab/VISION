@@ -72,125 +72,113 @@ FastProject <- setClass("FastProject",
 ))
 
 FastProjectOutput <- setClass("FastProjectOutput",
-                              slots = c(
-                                exprData = "ExpressionData",
-                                filterModuleList = "list",
-                                sigMatrix = "matrix",
-                                sigList = "list",
-                                fpParams = "list",
-                                pools = "list"
-                                )
-                              )
+  slots = c(
+    exprData = "ExpressionData",
+    filterModuleList = "list",
+    sigMatrix = "matrix",
+    sigList = "list",
+    fpParams = "list",
+    pools = "list"
+))
 
 FilterModuleData <- setClass("FilterModuleData",
-                             slots = c(
-                               filter = "character",
-                               genes = "character",
-                               ProjectionData = "ProjectionData",
-                               TreeProjectionData = "TreeProjectionData",
-                               PCAnnotatorData = "PCAnnotatorData"
-                               )
-                             )
+  slots = c(
+    filter = "character",
+    genes = "character",
+    ProjectionData = "ProjectionData",
+    TreeProjectionData = "ProjectionData",
+    PCAnnotatorData = "PCAnnotatorData"
+))
 
 ProjectionData <- setClass("ProjectionData",
-                           slots = c(
-                             projections = "list",
-                             keys = "character", # names of projections
-                             sigProjMatrix = "matrix",
-                             pMatrix="matrix",
-                             sigClusters = "list"
-                             )
-)
+  slots = c(
+    projections = "list",
+    keys = "character", # names of projections
+    sigProjMatrix = "matrix",
+    pMatrix="matrix",
+    sigClusters = "list"
+))
 
 PCAnnotatorData <- setClass("PCAnnotatorData",
-                            slots = c(
-                              fullPCA = "matrix",
-                              pearsonCorr = "matrix",
-                              loadings = "matrix"
-                              )
-                            )
+  slots = c(
+    fullPCA = "matrix",
+    pearsonCorr = "matrix",
+    loadings = "matrix"
+))
 
 Projection <- setClass("Projection",
-                       slots = c(
-                         name = "character",
-                         pData = "matrix"
-                         )
-                       )
+  slots = c(
+    name = "character",
+    pData = "matrix"
+))
 
 TreeProjection <- setClass("TreeProjection",
-                          contains = "Projection",
-                          slots = c(
-                            vData = "matrix",
-                            adjMat = "matrix",
-                            edgeAssoc = "matrix",
-                            edgePos = "numeric"
-                            )
-                          )
+  contains = "Projection",
+  slots = c(
+    vData = "matrix",
+    adjMat = "matrix",
+    edgeAssoc = "matrix",
+    edgePos = "numeric"
+))
 
 ServerExpression <- setClass("ServerExpression",
-    slots = c(
-      data = "matrix",
-      sample_labels = "character",
-      gene_labels = "character"
-    )
-)
+  slots = c(
+    data = "matrix",
+    sample_labels = "character",
+    gene_labels = "character"
+))
 
 ServerMI <- setClass("ServerMI",
-	slots = c(
-		data = "matrix",
-		proj_labels = "character",
-		"sig_labels" = "character"
-	)
-)
+  slots = c(
+    data = "matrix",
+    proj_labels = "character",
+    sig_labels = "character"
+))
 
 ServerPCorr <- setClass("ServerPCorr",
-	slots = c(
-		data = "matrix",
-		proj_labels = "character",
-		"sig_labels" = "character"
-	)
-)
+  slots = c(
+    data = "matrix",
+    proj_labels = "character",
+    sig_labels = "character"
+))
 
 ServerSigProjMatrix <- setClass("ServerSigProjMatrix",
-    slots = c(
-      data = "matrix",
-      proj_labels = "character",
-      sig_labels = "character"
-    )
-)
+  slots = c(
+    data = "matrix",
+    proj_labels = "character",
+    sig_labels = "character"
+))
 
 ServerPMatrix <- setClass("ServerPMatrix",
-    slots = c(
-      data = "matrix",
-      proj_labels = "character",
-      sig_labels = "character"
-    )
-)
+  slots = c(
+    data = "matrix",
+    proj_labels = "character",
+    sig_labels = "character"
+))
 
 Signature <- setClass("Signature",
-    slots = c(
-      sigDict = "vector",
-      name = "character",
-      source = "character",
-      metaData = "character",
-      isPrecomputed = "logical",
-      isFactor = "logical",
-      cluster = "numeric"
-    ),
-    prototype = list(
-      metaData = "",
-      isPrecomputed=FALSE,
-      isFactor=FALSE,
-      cluster=0
-    )
-)
+  slots = c(
+    sigDict = "vector",
+    name = "character",
+    source = "character",
+    metaData = "character",
+    isPrecomputed = "logical",
+    isFactor = "logical",
+    cluster = "numeric"
+  ),
+  prototype = list(
+    metaData = "",
+    isPrecomputed=FALSE,
+    isFactor=FALSE,
+    cluster=0
+))
 
 SignatureScores <- setClass("SignatureScores",
-    slots = c(
-      scores = "vector",
-      name = "character",
-      sample_labels = "character",
-      isFactor = "logical",
-      isPrecomputed = "logical",
-      numGenes = "numeric"
+  slots = c(
+    scores = "vector",
+    name = "character",
+    sample_labels = "character",
+    isFactor = "logical",
+    isPrecomputed = "logical",
+    numGenes = "numeric"
 ))
