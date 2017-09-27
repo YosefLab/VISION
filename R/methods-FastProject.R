@@ -20,7 +20,6 @@ require(parallel)
 #' @param debug if 1 enable debugging features, if not not. Default is 0.
 #' @param lean if TRUE run a lean simulation. Else more robust pipeline initiated. Default is FALSE
 #' @param qc if TRUE calculate QC; else not. Default is FALSE
-#' @param num_cores Number of cores to use during analysis.
 #' @param min_signature_genes Minimum number of genes required to compute a signature
 #' @param projections File containing precomputed projections for analysis
 #' @param weights Precomputed weights for each coordinate. Normally computed from the FNR curve.
@@ -32,6 +31,9 @@ require(parallel)
 #' @param housekeepingData housekeeping data table, as opposed to specifying a housekeeping_data file
 #' @param sigData List of signatures, as opposed to specifying a list of signature files
 #' @param precomputedData List of precomputed signature scores, as opposed to specifying a precomputed file
+#' @param BPPARAM the parallelized back-end to use for parallelization. By default, the back end used is the one returned by
+#'     bpparam(). To change this, use BiocParallel to register and create an appropriate back-end.
+#'     [TODO: link to biocParallel vignette]
 #' @return A FastProject object.
 #' @examples
 #' fp <- FastProject("expression_matrix.txt",
@@ -41,10 +43,10 @@ require(parallel)
 setMethod("initialize", signature(.Object="FastProject"),
           function(.Object, data_file, housekeeping, signatures, scone = NULL, norm_methods = NULL,
                    precomputed=NULL, nofilter=FALSE, nomodel=FALSE, filters=c("fano"),
-                   debug=0, lean=FALSE, qc=FALSE, num_cores=1, min_signature_genes=5, projections="",
+                   debug=0, lean=FALSE, qc=FALSE, min_signature_genes=5, projections="",
                    weights=NULL, threshold=0, perm_wPCA=FALSE, sig_norm_method="znorm_rows",
                    sig_score_method="weighted_avg", exprData=NULL, housekeepingData=NULL,
-                   sigData=NULL, precomputedData=NULL) {
+                   sigData=NULL, precomputedData=NULL, BPPARAM=bpparam()) {
 
 
 
@@ -100,7 +102,7 @@ setMethod("initialize", signature(.Object="FastProject"),
             .Object@debug = debug
             .Object@lean = lean
             .Object@perm_wPCA = perm_wPCA
-            .Object@numCores = num_cores
+            .Object@BPPARAM = BPPARAM
             .Object@allData = .Object@exprData
 
             #createOutputDirectory(.Object)
@@ -163,7 +165,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
 
   	  fexpr <- filterGenesFano(object@exprData)
   	  res <- applyPCA(fexpr, N=30)[[1]]
-  	  kn <- ball_tree_knn(t(res), 30, object@numCores)
+  	  kn <- ball_tree_knn(t(res), 30, object@BPPARAM$workers)
   	  cl <- louvainCluster(kn, t(res))
   	  cl <- readjust_clusters(cl, t(res))
 
@@ -266,7 +268,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     message("Applying weighted signature scoring method...")
   }
 
-  sigScores <- bplapply(object@sigData, singleSigEval, BPPARAM=MulticoreParam(workers=object@numCores))
+  sigScores <- bplapply(object@sigData, singleSigEval, BPPARAM=object@BPPARAM)
 
   sigSizes <- lapply(object@sigData, function(s) length(s@sigDict))
 
@@ -329,7 +331,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     message("Applying weighted signature scoring method...")
   }
 
-  randomSigScores <- bplapply(randomSigs, singleSigEval,BPPARAM=MulticoreParam(workers=object@numCores))
+  randomSigScores <- bplapply(randomSigs, singleSigEval,BPPARAM=object@BPPARAM)
   names(randomSigScores) <- names(randomSigs)
 
 
@@ -352,7 +354,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
 
     projectData <- generateProjections(eData, object@weights, filter, inputProjections <- c(),
                                        lean=object@lean, perm_wPCA = object@perm_wPCA,
-                                       numCores = object@numCores)
+                                       BPPARAM = object@BPPARAM)
     projs <- projectData$projections
     g <- projectData$geneNames
     pca_res <- projectData$fullPCA
@@ -452,9 +454,11 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
 #'
 #' @param fpParams List of FastProject parameters
 #' @param nexpr New expression matrix for the new FastProject object
+#' @param BPPARAM the parallelization back-end to use
 #' @return a new FastProject object
 #' @examples
-#'   fp <- FastProject("expression_matrix.txt", "data/Gene Name Housekeeping.txt", c("sigfile_1.gmt", "sigfile_2.txt"), precomputed="pre_sigs.txt")
+#'   fp <- FastProject("expression_matrix.txt", "data/Gene Name Housekeeping.txt",
+#'                     c("sigfile_1.gmt", "sigfile_2.txt"), precomputed="pre_sigs.txt")
 #'   slots <- slotNames(object)
 #'   fpParams <- list()
 #'   for (s in slots) {
@@ -465,7 +469,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
 #'   names(fpParams) <- slots
 #'   nfp <- extraAnalysisFastProject(fpParams, nexpr)
 
-createNewFP <- function(fpParams, nexpr, numCores) {
+createNewFP <- function(fpParams, nexpr, BPPARAM) {
 	nfp <- FastProject(exprData=nexpr, sigData=fpParams[["sigData"]],
 						housekeepingData=fpParams[["housekeepingData"]])
 
@@ -476,7 +480,7 @@ createNewFP <- function(fpParams, nexpr, numCores) {
 		}
 	}
 
-	nfp@numCores = numCores
+	nfp@BPPARAM = BPPARAM
 
 	return(nfp)
 }

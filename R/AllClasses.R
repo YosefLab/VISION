@@ -24,6 +24,8 @@ ExpressionData <- setClass("ExpressionData",
       thresholdFilter = "matrix"
 ))
 
+#' The FaStProject main object
+#' @export
 FastProject <- setClass("FastProject",
     slots = c(
       data_file = "character",
@@ -71,6 +73,8 @@ FastProject <- setClass("FastProject",
       numCores = 0
 ))
 
+#' a container for FastProject output data
+#' @export
 FastProjectOutput <- setClass("FastProjectOutput",
   slots = c(
     exprData = "ExpressionData",
@@ -81,14 +85,6 @@ FastProjectOutput <- setClass("FastProjectOutput",
     pools = "list"
 ))
 
-FilterModuleData <- setClass("FilterModuleData",
-  slots = c(
-    filter = "character",
-    genes = "character",
-    ProjectionData = "ProjectionData",
-    TreeProjectionData = "ProjectionData",
-    PCAnnotatorData = "PCAnnotatorData"
-))
 
 ProjectionData <- setClass("ProjectionData",
   slots = c(
@@ -119,6 +115,15 @@ TreeProjection <- setClass("TreeProjection",
     adjMat = "matrix",
     edgeAssoc = "matrix",
     edgePos = "numeric"
+))
+
+FilterModuleData <- setClass("FilterModuleData",
+  slots = c(
+    filter = "character",
+    genes = "character",
+    ProjectionData = "ProjectionData",
+    TreeProjectionData = "ProjectionData",
+    PCAnnotatorData = "PCAnnotatorData"
 ))
 
 ServerExpression <- setClass("ServerExpression",

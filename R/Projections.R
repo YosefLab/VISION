@@ -41,149 +41,15 @@ registerMethods <- function(lean=FALSE) {
 #' @param weights weights estimated from FNR curve
 #' @param filterName name of filter, to extract correct data for projections
 #' @param inputProjections Precomputed projections
-#' @param numCores Number of cores to use during dimensionality reductoin
 #' @param lean If T, diminished number of algorithms applied, if FALSE all algorithms applied. Default is FALSE
 #' @param perm_wPCA If TRUE, apply permutation wPCA to determine significant number of components. Default is FALSE.
+#' @param BPPARAM the backend to use for parallelization
 #' @return List of Projection objects mapping projection type to projection data
 #' @return List of gene names used during the dimensionality reduction phase
 #' @return List of relevant PPT parameters.
-generateProjections.old <- function(expr, weights, filterName="", inputProjections=c(), numCores = 1, lean=FALSE, perm_wPCA=FALSE) {
-
-  if (filterName == "novar") {
-    exprData <- expr@noVarFilter
-  } else if (filterName == "threshold") {
-    exprData <- expr@thresholdFilter
-  } else if (filterName == "fano") {
-    exprData <- expr@fanoFilter
-  } else if (filterName == "") {
-    exprData <- expr@data
-  } else {
-    stop("FilterName not recognized: ", filterName)
-  }
-
-  methodList = registerMethods(lean)
-  t <- Sys.time()
-  timingList <- (t - t)
-  timingNames <- c("Start")
-
-    if (perm_wPCA) {
-      res <- applyPermutationWPCA(exprData, weights, components=30)
-      pca_res <- res[[1]]
-      print(dim(pca_res))
-      loadings <- res[[3]]
-    } else {
-      res <- applyWeightedPCA(exprData, weights, maxComponents = 30)
-      pca_res <- res[[1]]
-      loadings <- res[[3]]
-      #m <- profmem(pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30)[[1]])
-    }
-    inputProjections <- c(inputProjections, Projection("PCA: 1,2", t(pca_res[c(1,2),])))
-    inputProjections <- c(inputProjections, Projection("PCA: 1,3", t(pca_res[c(1,3),])))
-    inputProjections <- c(inputProjections, Projection("PCA: 2,3", t(pca_res[c(2,3),])))
-    fullPCA <- t(pca_res[1:min(15,nrow(pca_res)),])
-
-    #pca_res <- pca_res[1:5,]
-
-    fullPCA <- as.matrix(apply(fullPCA, 2, function(x) return( x - mean(x) )))
-
-    r <- apply(fullPCA, 1, function(x) sum(x^2))^(0.5)
-    r90 <- quantile(r, c(.9))[[1]]
-
-    if (r90 > 0) {
-      fullPCA <- fullPCA / r90
-    }
-    fullPCA <- t(fullPCA)
-
-  timingList <- rbind(timingList, c(difftime(Sys.time(), t, units="sec")))
-  timingNames <- c(timingNames, "wPCA")
-  #memProf <- c(total(m)/1e6)
-  #memNames <- c("wPCA")
-
-  PPT <- list()
-
-  for (method in names(methodList)){
-  	gc()
-    message(method)
-    #m <- profmem({
-    if (method == "ICA" || method == "RBF Kernel PCA") {
-      res <- methodList[[method]](exprData)
-      proj <- Projection(method, res)
-      inputProjections <- c(inputProjections, proj)
-    } else {
-      res <- methodList[[method]](pca_res, numCores)
-      if (method == "PPT") {
-      	c <- res[[1]]
-      	ncls <- apply(res[[3]], 1, which.min)
-        PPT <- list(res[[1]], res[[2]], res[[3]], ncls)
-		    PPT_neighborhood <- findNeighbors(pca_res, PPT[[1]], ncol(pca_res) / ncol(PPT[[1]]),  numCores)
-      } else {
-        proj <- Projection(method, res)
-        inputProjections <- c(inputProjections, proj)
-      }
-    }
-    #})
-    #memProf <- rbind(memProf, total(m)/1e6)
-    #memNames <- c(memNames, method)
-
-	timingList <- rbind(timingList, c(difftime(Sys.time(), t, units="sec")))
-	timingNames <- c(timingNames, method)
-  }
-  rownames(timingList) <- timingNames
-  #return(timingList)
-  #rownames(memProf) <- memNames
-  #return(memProf)
-
-  output <- list()
-
-  for (p in inputProjections) {
-    coordinates <- p@pData
-
-    coordinates <- as.matrix(apply(coordinates, 2, function(x) return( x - mean(x) )))
-
-    r <- apply(coordinates, 1, function(x) sum(x^2))^(0.5)
-    r90 <- quantile(r, c(.9))[[1]]
-
-    if (r90 > 0) {
-      coordinates <- coordinates / r90
-    }
-
-    coordinates <- t(coordinates)
-    p <- updateProjection(p, data=coordinates)
-    output[[p@name]] = p
-
-  }
-
-  # Readjust coordinates of PPT
-  c <- t(PPT[[1]][c(1,2),])
-  coord <- as.matrix(apply(c, 2, function(x) return(x - mean(x))))
-  r <- apply(coord, 1, function(x) sum(x^2))^(0.5)
-  r90 <- quantile(r, c(0.9))[[1]]
-  if (r90 > 0) {
-  	  coord <- coord / r90
-  }
-  coord <- t(coord)
-  PPT[[1]] <- coord
-
-  output2 <- list()
-  # Reposition tree node coordinatates in nondimensional space
-  for (p in output) {
-
-  		new_coords <- matrix(sapply(PPT_neighborhood, function(n)  {
-  			n_vals <- p@pData[,n]
-  			centroid <- apply(n_vals, 1, mean)
-  			return(centroid)
-    	}), nrow=2, ncol=length(PPT_neighborhood))
-  		p@PPT_C <- new_coords
-
-  	output2[[p@name]] = p
-    }
-
-  return(list(output2, rownames(exprData), PPT[[2]], fullPCA, loadings))
-}
-
 generateProjections <- function(expr, weights, filterName="",
-                                 inputProjections=c(), numCores = 1,
-                                 lean=FALSE, perm_wPCA=FALSE) {
+                                inputProjections=c(), lean=FALSE,
+                                perm_wPCA=FALSE, BPPARAM = bpparam()) {
 
   if (filterName == "novar") {
     exprData <- expr@noVarFilter
@@ -243,7 +109,7 @@ generateProjections <- function(expr, weights, filterName="",
       proj <- Projection(method, res)
       inputProjections <- c(inputProjections, proj)
     } else { ## run on reduced data
-      res <- methodList[[method]](pca_res, numCores)
+      res <- methodList[[method]](pca_res, BPPARAM)
       proj <- Projection(method, res)
       inputProjections <- c(inputProjections, proj)
       }
@@ -284,7 +150,7 @@ generateProjections <- function(expr, weights, filterName="",
 }
 
 generateTreeProjections <- function(expr, filterName="",
-                                    inputProjections=c(), numCores = 1) {
+                                    inputProjections=c(), BPPARAM = bpparam()) {
 
 
   if (filterName == "novar") {
@@ -311,7 +177,7 @@ generateTreeProjections <- function(expr, filterName="",
   pptNeighborhood <- findNeighbors(exprData, ## TODO: Originally pca_res - WHY?
                                    hdTree$princPnts,
                                    NCOL(exprData) / NCOL(hdTree$princPnts),
-                                   numCores)
+                                   BPPARAM)
 
   timingList <- rbind(timingList, c(difftime(Sys.time(), t, units="sec")))
   timingNames <- c(timingNames, "PPT")
@@ -525,9 +391,9 @@ applyPCA <- function(exprData, N=0, variance_proportion=1.0) {
 #' Performs ICA on data
 #'
 #' @param exprData Expression data, NUM_GENES x NUM_SAMPLES
-#' @param numCores Number of cores to use
+#' @param BPPARAM the parallelization backend to use
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
-applyICA <- function(exprData, numCores) {
+applyICA <- function(exprData, BPPARAM=bpparam()) {
 
   set.seed(RANDOM_SEED)
 
@@ -545,9 +411,9 @@ applyICA <- function(exprData, numCores) {
 #' Performs Spectral Embedding  on data
 #'
 #' @param exprData Expression data, NUM_GENES x NUM_SAMPLES
-#' @param numCores Number of cores to use
+#' @param BPPARAM the parallelization backend to use
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
-applySpectralEmbedding <- function(exprData, numCores) {
+applySpectralEmbedding <- function(exprData, BPPARAM = bpparam()) {
 
   set.seed(RANDOM_SEED)
 
@@ -566,15 +432,15 @@ applySpectralEmbedding <- function(exprData, numCores) {
 #' Performs tSNE with perplexity 10 on data
 #'
 #' @param exprData Expression data, NUM_GENES x NUM_SAMPLES
-#' @param numCores Number of cores to use
+#' @param BPPARAM the parallelization backend to use
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
-applytSNE10 <- function(exprData, numCores) {
+applytSNE10 <- function(exprData, BPPARAM=bpparam()) {
 
   set.seed(RANDOM_SEED)
 
   ndata <- colNormalization(exprData)
   ndataT <- t(ndata)
-  #res <- Rtsne.multicore(ndataT, dims=2, max_iter=600, perplexity=10.0, check_duplicates=F, pca=F, num_threads=numCores)
+  #res <- Rtsne.multicore(ndataT, dims=2, max_iter=600, perplexity=10.0, check_duplicates=F, pca=F, num_threads=BPPARAM$workers)
   res <- Rtsne(ndataT, dims=2, max_iter=800, perplexity=10.0, check_duplicates=F, pca=F)
   res <- res$Y
   rownames(res) <- colnames(exprData)
@@ -585,15 +451,15 @@ applytSNE10 <- function(exprData, numCores) {
 #' Performs tSNE with perplexity 30 on data
 #'
 #' @param exprData Expression data, NUM_GENES x NUM_SAMPLES
-#' @param numCores Number of cores to use
+#' @param BPPARAM the parallelization backend to use
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
-applytSNE30 <- function(exprData, numCores) {
+applytSNE30 <- function(exprData, BPPARAM=bpparam()) {
 
   set.seed(RANDOM_SEED)
 
   ndata <- colNormalization(exprData)
   ndataT <- t(ndata)
-  #res <- Rtsne.multicore(ndataT, dims=2, max_iter=600,  perplexity=30.0, check_duplicates=F, pca=F, num_threads=numCores)
+  #res <- Rtsne.multicore(ndataT, dims=2, max_iter=600,  perplexity=30.0, check_duplicates=F, pca=F, num_threads=BPPARAM$workers)
   res <- Rtsne(ndataT, dims=2, max_iter=800, perplexity=30.0, check_duplicates=F, pca=F)
   res <- res$Y
 
@@ -603,10 +469,10 @@ applytSNE30 <- function(exprData, numCores) {
 }
 
 
-applyKNN <- function(exprData, numCores) {
+applyKNN <- function(exprData, BPPARAM=bpparam()) {
 	set.seed(RANDOM_SEED)
 
-	k <- ball_tree_knn(t(exprData), 30, numCores)
+	k <- ball_tree_knn(t(exprData), 30, BPPARAM$workers)
 	nn <- k[[1]]
 	d <- k[[2]]
 
@@ -631,9 +497,9 @@ applyKNN <- function(exprData, numCores) {
 #' Performs ISOMap on data
 #'
 #' @param exprData Expression data, NUM_GENES x NUM_SAMPLES
-#' @param numCores Number of cores to use
+#' @param BPPARAM the parallelization backend to use
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
-applyISOMap <- function(exprData, numCores) {
+applyISOMap <- function(exprData, BPPARAM=bpparam()) {
 
   set.seed(RANDOM_SEED)
 
@@ -649,9 +515,9 @@ applyISOMap <- function(exprData, numCores) {
 #' Performs PCA on data that has been transformed with the Radial Basis Function.
 #'
 #' @param exprData Expression data, NUM_GENES x NUM_SAMPLES
-#' @param numCores Number of cores to use
+#' @param BPPARAM the parallelization backend to use
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
-applyRBFPCA <- function(exprData, numCores) {
+applyRBFPCA <- function(exprData, BPPARAM=bpparam()) {
 
   set.seed(RANDOM_SEED)
 
@@ -717,10 +583,10 @@ clipBottom <- function(x, mi) {
   return(x)
 }
 
-findNeighbors <- function(data, query, k, numCores) {
+findNeighbors <- function(data, query, k, BPPARAM=bpparam()) {
 
 	neighborhood <- lapply(1:ncol(query), function(x) {
-		vkn <- ball_tree_vector_knn(t(data), query[,x], k, numCores)
+		vkn <- ball_tree_vector_knn(t(data), query[,x], k, BPPARAM$workers)
 		return(vkn[[1]])
 	})
 
