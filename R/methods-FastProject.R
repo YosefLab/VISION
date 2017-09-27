@@ -3,36 +3,41 @@ require(BiocParallel)
 require(parallel)
 
 
-#'  Initializes a new FastProject object.
+#' Initializes a new FastProject object.
 #'
-#'    @param data_file file path to expression matrix
-#'    @param housekeeping file path to housekeeping data file
-#'    @param signatures list of file paths to signature files (.gmt or .txt)
-#'    @param scone scone normalization data file
-#'    @param norm_methods normalization methods to be extracted from the scone object
-#'    @param precomptued data file with precomputed signature scores (.txt)
-#'    @param nofilter if TRUE, no filter applied; else filters applied. Default is FALSE
-#'    @param nomodel if TRUE, no fnr curve calculated and all weights equal to 1. Else FNR and weights calculated.
-#'             Default is TRUE.
-#'    @param filters list of filters to compute
-#'    @param debug if 1 enable debugging features, if not not. Default is 0.
-#'    @param lean if TRUE run a lean simulation. Else more robust pipeline initiated. Default is FALSE
-#'    @param qc if TRUE calculate QC; else not. Default is FALSE
-#'    @param num_cores Number of cores to use during analysis.
-#'    @param min_signature_genes Minimum number of genes required to compute a signature
-#'    @param projections File containing precomputed projections for analysis
-#'    @param weights Precomputed weights for each coordinate. Normally computed from the FNR curve.
-#'    @param threhsold Threshold to apply for the threshold filter
-#'    @param perm_wPCA If TRUE, apply permutation WPCA to calculate significant number of PCs. Else not. Default FALSE.
-#'    @param sig_norm_method Method to apply to normalize the expression matrix before calculating signature scores
-#'    @param sig_score_method Method to apply when calculating signature scores
-#'    @param exprData expression data matrix, as opposed to specifying a data_file
-#'    @param housekeepingData housekeeping data table, as opposed to specifying a housekeeping_data file
-#'    @param sigData List of signatures, as opposed to specifying a list of signature files
-#'    @param precomputedData List of precomputed signature scores, as opposed to specifying a precomputed file
-#'    @return A FastProject object.
-#'    @examples
-#'    fp <- FastProject("expression_matrix.txt", "data/Gene Name Housekeeping.txt", c("sigfile_1.gmt", "sigfile_2.txt"), precomputed="pre_sigs.txt")
+#' @export
+#'
+#' @param data_file file path to expression matrix
+#' @param housekeeping file path to housekeeping data file
+#' @param signatures list of file paths to signature files (.gmt or .txt)
+#' @param scone scone normalization data file
+#' @param norm_methods normalization methods to be extracted from the scone object
+#' @param precomptued data file with precomputed signature scores (.txt)
+#' @param nofilter if TRUE, no filter applied; else filters applied. Default is FALSE
+#' @param nomodel if TRUE, no fnr curve calculated and all weights equal to 1. Else FNR and weights calculated.
+#'          Default is TRUE.
+#' @param filters list of filters to compute
+#' @param debug if 1 enable debugging features, if not not. Default is 0.
+#' @param lean if TRUE run a lean simulation. Else more robust pipeline initiated. Default is FALSE
+#' @param qc if TRUE calculate QC; else not. Default is FALSE
+#' @param num_cores Number of cores to use during analysis.
+#' @param min_signature_genes Minimum number of genes required to compute a signature
+#' @param projections File containing precomputed projections for analysis
+#' @param weights Precomputed weights for each coordinate. Normally computed from the FNR curve.
+#' @param threhsold Threshold to apply for the threshold filter
+#' @param perm_wPCA If TRUE, apply permutation WPCA to calculate significant number of PCs. Else not. Default FALSE.
+#' @param sig_norm_method Method to apply to normalize the expression matrix before calculating signature scores
+#' @param sig_score_method Method to apply when calculating signature scores
+#' @param exprData expression data matrix, as opposed to specifying a data_file
+#' @param housekeepingData housekeeping data table, as opposed to specifying a housekeeping_data file
+#' @param sigData List of signatures, as opposed to specifying a list of signature files
+#' @param precomputedData List of precomputed signature scores, as opposed to specifying a precomputed file
+#' @return A FastProject object.
+#' @examples
+#' fp <- FastProject("expression_matrix.txt",
+#'                   "data/Gene Name Housekeeping.txt",
+#'                   c("sigfile_1.gmt", "sigfile_2.txt"),
+#'                   precomputed="pre_sigs.txt")
 setMethod("initialize", signature(.Object="FastProject"),
           function(.Object, data_file, housekeeping, signatures, scone = NULL, norm_methods = NULL,
                    precomputed=NULL, nofilter=FALSE, nomodel=FALSE, filters=c("fano"),
@@ -140,6 +145,7 @@ setMethod("createOutputDirectory", "FastProject", function(object) {
 #'
 #' @param object FastProject object
 #' @return FastProjectOutput object
+#' @export
 #' @examples
 #' fp <- FastProject("expression_matrix.txt", "data/Gene Name Housekeeping.txt", c("sigfile_1.gmt", "sigfile_2.txt"), precomputed="pre_sigs.txt")
 #' fpout <- Analysis(fp)

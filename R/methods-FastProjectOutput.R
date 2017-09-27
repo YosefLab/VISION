@@ -30,6 +30,7 @@ setMethod("initialize", signature(.Object="FastProjectOutput"),
 #'
 #' @param fpout FastProjectOutput object
 #' @return None
+#' @export
 #' @examples
 #' fpout <- Analyze(fp)
 #' saveFPOutAndViewResults(fpout)
@@ -63,6 +64,7 @@ setMethod("saveFPOutAndViewResults", signature(fpout="FastProjectOutput"),
 #'
 #' @param fpout FastProjectOutput object
 #' @return None.
+#' @export
 #' @examples
 #' fpout <- Analyze(fp)
 #' viewResults(fpout)
