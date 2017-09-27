@@ -603,7 +603,6 @@ applytSNE30 <- function(exprData, numCores) {
 
 
 applyKNN <- function(exprData, numCores) {
-
 	set.seed(RANDOM_SEED)
 
 	k <- ball_tree_knn(t(exprData), 30, numCores)
@@ -612,21 +611,20 @@ applyKNN <- function(exprData, numCores) {
 
 	sigma <- apply(d, 1, max)
 
-    sparse_weights <- exp(-1 * (d * d) / sigma^2)
-    weights <- load_in_knn(nn, sparse_weights)
+	sparse_weights <- exp(-1 * (d * d) / sigma^2)
+  weights <- load_in_knn(nn, sparse_weights)
 
-    weightsNormFactor <- Matrix::rowSums(weights)
-    weightsNormFactor[weightsNormFactor == 0] <- 1.0
-    weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
-    weights <- weights / weightsNormFactor
+  weightsNormFactor <- Matrix::rowSums(weights)
+  weightsNormFactor[weightsNormFactor == 0] <- 1.0
+  weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
+  weights <- weights / weightsNormFactor
 
-    knnmat <- Matrix(weights, sparse=T)
-    knproj <- projectKNNs(knnmat)
+  knnmat <- Matrix(weights, sparse=T)
+  knproj <- projectKNNs(knnmat)
 
-    colnames(knproj) <- colnames(exprData)
+  colnames(knproj) <- colnames(exprData)
 
-    return(t(knproj))
-
+  return(t(knproj))
 }
 
 #' Performs ISOMap on data

@@ -369,32 +369,8 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   	tRows <- c(tRows, paste0(proj@name, "FactorSigs"))
 
-  	#return(list((1-medDissimilarity/N_SAMPLES),
-  	#			pValues,
-  	#			unlist(lapply(factorSigProjList, function(x) return(x[[1]]))),
-  	#			unlist(lapply(factorSigProjList, function(x) return(x[[2]])))
-  	#			))
-
-
     i <- i+1
   }
-
-  #factorIncluded <- F
-  #sigNumIncluded <- F
-  #if (length(projDataList) == 4) { factorIncluded <- T }
-  #if (length(projDataList) == 6) { sigNumIncluded <- T }
-
-  #sigProjMatrix <- matrix(unlist(lapply(projDataList, function(x) return(x[[1]]))), nrow=N_SIGNATURES, ncol=N_PROJECTIONS,
-  #						  byrow=T)
-  #sigProjMatrix_P <- matrix(unlist(lapply(projDataList, function(x) return(x[[2]]))), nrow=N_SIGNATURES, ncol=N_PROJECTIONS,
-  # 							byrow=T)
-  #if (factorIncluded) {
-  # 	factorSigProjMatrix <- matrix(unlist(lapply(projDataList, function(x) return(x[[3]]))), nrow=N_SIGNATURE_FACTORS,
-  #								ncol=N_PROJECTIONS, byrow=T)
-#	factorSigProjMatrix_P <- matrix(unlist(lapply(projDataList, function(x) return(x[[4]]))), nrow=N_SIGNATURE_FACTORS,
- # 								  ncol=N_PROJECTIONS, byrow=T)
-  #}
-
 
   # Concatenate Factor Sig-proj entries back in
   sigProjMatrix <- rbind(sigProjMatrix, factorSigProjMatrix, pnumSigProjMatrix)

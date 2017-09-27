@@ -221,37 +221,37 @@ jug() %>%
       return(x@filter)
     })
     return(toJSON(filters))
-  }) %>% ##TODO
-  get("/FilterGroup/(?<filter_name9>.*)/MutualInformation/Precomputed", function(req, res, err) {
-    projData <- fpout@projData
-    filter <- URLdecode(req$params$filter_name9)
-
-    signatures <- fpout@sigList
-    keys <- lapply(signatures, function(x) x@name)
-    vals <- lapply(signatures, function(x) x@isPrecomputed)
-    names(vals) <- keys
-    sigvals <- vals[which(vals == TRUE)]
-    sigs <- names(sigvals)
-
-    mI <- projData[[filter]]@mutualInformation
-
-    return(mutualInfoToJSON(mI, sigs))
-  }) %>% ##TODO
-  get("/FilterGroup/(?<filter_name11>.*)/MutualInformation/Normal", function(req, res, err) {
-    projData <- fpout@projData
-    filter <- URLdecode(req$params$filter_name11)
-
-    signatures <- fpout@sigList
-    keys <- lapply(signatures, function(x) x@name)
-    vals <- lapply(signatures, function(x) x@isPrecomputed)
-    names(vals) <- keys
-    sigvals <- vals[which(vals == FALSE)]
-    sigs <- names(sigvals)
-
-    mI <- projData[[filter]]@mutualInformation
-
-    return(mutualInfoToJSON(mI, sigs))
   }) %>%
+  # get("/FilterGroup/(?<filter_name9>.*)/MutualInformation/Precomputed", function(req, res, err) {
+  #   projData <- fpout@projData
+  #   filter <- URLdecode(req$params$filter_name9)
+  #
+  #   signatures <- fpout@sigList
+  #   keys <- lapply(signatures, function(x) x@name)
+  #   vals <- lapply(signatures, function(x) x@isPrecomputed)
+  #   names(vals) <- keys
+  #   sigvals <- vals[which(vals == TRUE)]
+  #   sigs <- names(sigvals)
+  #
+  #   mI <- projData[[filter]]@mutualInformation
+  #
+  #   return(mutualInfoToJSON(mI, sigs))
+  # }) %>% ##TODO
+  # get("/FilterGroup/(?<filter_name11>.*)/MutualInformation/Normal", function(req, res, err) {
+  #   projData <- fpout@projData
+  #   filter <- URLdecode(req$params$filter_name11)
+  #
+  #   signatures <- fpout@sigList
+  #   keys <- lapply(signatures, function(x) x@name)
+  #   vals <- lapply(signatures, function(x) x@isPrecomputed)
+  #   names(vals) <- keys
+  #   sigvals <- vals[which(vals == FALSE)]
+  #   sigs <- names(sigvals)
+  #
+  #   mI <- projData[[filter]]@mutualInformation
+  #
+  #   return(mutualInfoToJSON(mI, sigs))
+  # }) %>%
   get("/FilterGroup/(?<filter_name10>.*)/(?<pc_num1>.*)/Loadings/Positive", function(req, res, err) {
     # projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name10)
