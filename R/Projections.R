@@ -328,7 +328,8 @@ generateTreeProjections <- function(expr, filterName="",
   coord <- t(coord)
   hdTree$princPnts <- coord
 
-  output <- list(hdProj@name = hdProj)
+  output <- list()
+  output[[hdProj@name]] <- hdProj
 
   # Reposition tree node coordinates in nondimensional space
   for (proj in inputProjections) {
