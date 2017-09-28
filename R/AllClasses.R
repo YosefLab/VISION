@@ -49,8 +49,7 @@ FastProject <- setClass("FastProject",
       housekeepingData = "data.frame",
       sigData = "list",
       precomputedData= "list",
-      perm_wPCA = "logical",
-      numCores = "numeric"),
+      perm_wPCA = "logical"),
     prototype = list(
       precomputed = NULL,
       nofilter = FALSE,
@@ -59,7 +58,7 @@ FastProject <- setClass("FastProject",
       debug = 0,
       lean = FALSE,
       min_signature_genes = 5,
-      qc=FALSE,
+      qc = FALSE,
       projections = NULL,
       weights = NULL,
       threshold = 0,
@@ -68,9 +67,8 @@ FastProject <- setClass("FastProject",
       exprData = NULL,
       housekeepingData = NULL,
       sigData = NULL,
-      precomputedData=NULL,
-      perm_wPCA=FALSE,
-      numCores = 0
+      precomputedData = NULL,
+      perm_wPCA = FALSE
 ))
 
 #' a container for FastProject output data

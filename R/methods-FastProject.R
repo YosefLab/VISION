@@ -31,9 +31,6 @@ require(parallel)
 #' @param housekeepingData housekeeping data table, as opposed to specifying a housekeeping_data file
 #' @param sigData List of signatures, as opposed to specifying a list of signature files
 #' @param precomputedData List of precomputed signature scores, as opposed to specifying a precomputed file
-#' @param BPPARAM the parallelized back-end to use for parallelization. By default, the back end used is the one returned by
-#'     bpparam(). To change this, use BiocParallel to register and create an appropriate back-end.
-#'     [TODO: link to biocParallel vignette]
 #' @return A FastProject object.
 #' @examples
 #' fp <- FastProject("expression_matrix.txt",
@@ -46,7 +43,7 @@ setMethod("initialize", signature(.Object="FastProject"),
                    debug=0, lean=FALSE, qc=FALSE, min_signature_genes=5, projections="",
                    weights=NULL, threshold=0, perm_wPCA=FALSE, sig_norm_method="znorm_rows",
                    sig_score_method="weighted_avg", exprData=NULL, housekeepingData=NULL,
-                   sigData=NULL, precomputedData=NULL, BPPARAM=bpparam()) {
+                   sigData=NULL, precomputedData=NULL) {
 
 
 
@@ -102,7 +99,6 @@ setMethod("initialize", signature(.Object="FastProject"),
             .Object@debug = debug
             .Object@lean = lean
             .Object@perm_wPCA = perm_wPCA
-            .Object@BPPARAM = BPPARAM
             .Object@allData = .Object@exprData
 
             #createOutputDirectory(.Object)
@@ -148,11 +144,16 @@ setMethod("createOutputDirectory", "FastProject", function(object) {
 #' @param object FastProject object
 #' @return FastProjectOutput object
 #' @export
+#' @import BiocParallel
 #' @examples
-#' fp <- FastProject("expression_matrix.txt", "data/Gene Name Housekeeping.txt", c("sigfile_1.gmt", "sigfile_2.txt"), precomputed="pre_sigs.txt")
+#' fp <- FastProject("expression_matrix.txt", "data/Gene Name Housekeeping.txt", c("sigfile_1.gmt", "sigfile_2.txt"),
+#'                   precomputed="pre_sigs.txt")
 #' fpout <- Analysis(fp)
-setMethod("Analyze", signature(object="FastProject"), function(object) {
+setMethod("Analyze", signature(object="FastProject"),
+          function(object) {
   message("Beginning Analysis")
+  # BPPARAM = bpparam()
+  BPPARAM = SerialParam()
 
   ptm <- Sys.time()
   timingList <- (ptm - ptm)
@@ -165,7 +166,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
 
   	  fexpr <- filterGenesFano(object@exprData)
   	  res <- applyPCA(fexpr, N=30)[[1]]
-  	  kn <- ball_tree_knn(t(res), 30, object@BPPARAM$workers)
+  	  kn <- ball_tree_knn(t(res), 30, BPPARAM$workers)
   	  cl <- louvainCluster(kn, t(res))
   	  cl <- readjust_clusters(cl, t(res))
 
@@ -247,17 +248,18 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
 
   ## Define single signature evaluation for lapply method
   singleSigEval <- function(s) {
-	x <- c(-Inf)
-	if (object@sig_score_method=="naive") {
-		tryCatch({
-			x <- naiveEvalSignature(eData, s, object@weights, object@min_signature_genes)
-		}, error=function(e){})
-	} else if (object@sig_score_method=="weighted_avg") {
-		tryCatch({
-			x <- weightedEvalSignature(eData, s, object@weights, object@min_signature_genes)
-		}, error=function(e){})
-	}
-	return(x)
+    # init to an empty SignatureScores object
+  	x <- NULL
+  	if (object@sig_score_method=="naive") {
+  		tryCatch({
+  			x <- naiveEvalSignature(eData, s, object@weights, object@min_signature_genes)
+  		}, error=function(e){})
+  	} else if (object@sig_score_method=="weighted_avg") {
+  		tryCatch({
+  			x <- weightedEvalSignature(eData, s, object@weights, object@min_signature_genes)
+  		}, error=function(e){})
+  	}
+  	return(x)
   }
 
   # Score user defined signatures with defined method (default = weighted)
@@ -268,7 +270,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     message("Applying weighted signature scoring method...")
   }
 
-  sigScores <- bplapply(object@sigData, singleSigEval, BPPARAM=object@BPPARAM)
+  sigScores <- bplapply(object@sigData, singleSigEval, BPPARAM=BPPARAM)
 
   sigSizes <- lapply(object@sigData, function(s) length(s@sigDict))
 
@@ -287,8 +289,8 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   names(sigScores) <- sigNames
 
   # Remove any signatures that didn't compute correctly
-  toRemove <- lapply(sigScores, function(x) all(x@scores == c(-Inf)))
-  sigScores <- sigScores[names(which(toRemove==F))]
+  toRemove <- sapply(sigScores, is.null)
+  sigScores <- sigScores[-which(toRemove)]
 
   ## Convert Sig Scores to matrix
   names <- c()
@@ -331,13 +333,15 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     message("Applying weighted signature scoring method...")
   }
 
-  randomSigScores <- bplapply(randomSigs, singleSigEval,BPPARAM=object@BPPARAM)
+  randomSigScores <- bplapply(randomSigs, singleSigEval,BPPARAM=BPPARAM)
   names(randomSigScores) <- names(randomSigs)
 
 
   # Remove random signatures that didn't compute correctly
-  toRemove <- lapply(randomSigScores, function(x) all(x@scores == c(-Inf)))
-  randomSigScores <- randomSigScores[which(toRemove==F)]
+  toRemove <- sapply(randomSigScores, is.null)
+  randomSigScores <- sigScores[-which(toRemove)]
+  # toRemove <- lapply(randomSigScores, function(x) all(x@scores == c(-Inf)))
+  # randomSigScores <- randomSigScores[which(toRemove==F)]
 
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "Rand Sig Scores")
@@ -354,7 +358,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
 
     projectData <- generateProjections(eData, object@weights, filter, inputProjections <- c(),
                                        lean=object@lean, perm_wPCA = object@perm_wPCA,
-                                       BPPARAM = object@BPPARAM)
+                                       BPPARAM = BPPARAM)
     projs <- projectData$projections
     g <- projectData$geneNames
     pca_res <- projectData$fullPCA
@@ -454,7 +458,6 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
 #'
 #' @param fpParams List of FastProject parameters
 #' @param nexpr New expression matrix for the new FastProject object
-#' @param BPPARAM the parallelization back-end to use
 #' @return a new FastProject object
 #' @examples
 #'   fp <- FastProject("expression_matrix.txt", "data/Gene Name Housekeeping.txt",
@@ -469,7 +472,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
 #'   names(fpParams) <- slots
 #'   nfp <- extraAnalysisFastProject(fpParams, nexpr)
 
-createNewFP <- function(fpParams, nexpr, BPPARAM) {
+createNewFP <- function(fpParams, nexpr) {
 	nfp <- FastProject(exprData=nexpr, sigData=fpParams[["sigData"]],
 						housekeepingData=fpParams[["housekeepingData"]])
 
@@ -479,8 +482,6 @@ createNewFP <- function(fpParams, nexpr, BPPARAM) {
 			slot(nfp, s) <- fpParams[[s]]
 		}
 	}
-
-	nfp@BPPARAM = BPPARAM
 
 	return(nfp)
 }
