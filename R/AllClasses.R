@@ -25,7 +25,6 @@ ExpressionData <- setClass("ExpressionData",
 ))
 
 #' The FaStProject main object
-#' @export
 FastProject <- setClass("FastProject",
     slots = c(
       data_file = "character",
@@ -72,7 +71,6 @@ FastProject <- setClass("FastProject",
 ))
 
 #' a container for FastProject output data
-#' @export
 FastProjectOutput <- setClass("FastProjectOutput",
   slots = c(
     exprData = "ExpressionData",

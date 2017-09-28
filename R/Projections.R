@@ -22,13 +22,13 @@ registerMethods <- function(lean=FALSE) {
 
   projMethods <- c()
   if (!lean) {
-	projMethods <- c(projMethods, "ISOMap" = applyISOMap)
-	projMethods <- c(projMethods, "ICA" = applyICA)
-	#projMethods <- c(projMethods, "RBF Kernel PCA" = applyRBFPCA)
+  	projMethods <- c(projMethods, "ISOMap" = applyISOMap)
+  	projMethods <- c(projMethods, "ICA" = applyICA)
+  	#projMethods <- c(projMethods, "RBF Kernel PCA" = applyRBFPCA)
   }
 
   projMethods <- c(projMethods, "tSNE30" = applytSNE30)
-  projMethods <- c(projMethods, "KNN" = applyKNN)
+  # projMethods <- c(projMethods, "KNN" = applyKNN)
   projMethods <- c(projMethods, "tSNE10" = applytSNE10)
   # projMethods <- c(projMethods, "PPT" = applySimplePPT)
 

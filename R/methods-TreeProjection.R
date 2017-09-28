@@ -18,8 +18,6 @@ setMethod("initialize", signature(.Object="TreeProjection"),
 
 #' Compute KNN weights based on geodesic distances for TreeProjection objects
 #'
-#' @import stats
-#'
 #' @param object a TreeProjection object
 #' @param K the number of nearest neighbors to look at
 #' @param numCores the number of cores to utilize

@@ -5,7 +5,7 @@ require(parallel)
 
 #' Initializes a new FastProject object.
 #'
-#' @export
+#'
 #'
 #' @param data_file file path to expression matrix
 #' @param housekeeping file path to housekeeping data file
@@ -143,8 +143,7 @@ setMethod("createOutputDirectory", "FastProject", function(object) {
 #'
 #' @param object FastProject object
 #' @return FastProjectOutput object
-#' @export
-#' @import BiocParallel
+#'
 #' @examples
 #' fp <- FastProject("expression_matrix.txt", "data/Gene Name Housekeeping.txt", c("sigfile_1.gmt", "sigfile_2.txt"),
 #'                   precomputed="pre_sigs.txt")

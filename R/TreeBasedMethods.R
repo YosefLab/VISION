@@ -16,15 +16,8 @@ require("igraph")
 #'     \item distMat distance matrix between each tree node to each datapoint
 #'     \item mse the Mean-Squared-Error of the fitten tree
 #'   }
-#' @return Positions of the nodes in NUM_FEATURES dimensional space
-#' @return Binary adjacency matrix of fitted tree
-#' @return Distance matrix between fitted tree nodes and data points
-#' @return Score indicating how strucutred the data is, as the z-score of the data MSE from shuffled MSE
 
 applySimplePPT <- function(exprData, numCores, nNodes_ = round(sqrt(ncol(exprData))), sigma=0, gamma=0) {
-
-  #exprData <- t(exprData)
-
   MIN_GAMMA <- 1e-5
   MAX_GAMMA <- 1e5
   DEF_TOL <- 1e-2
@@ -289,7 +282,6 @@ projectOnTree <- function(data.pnts, V.pos, princAdj) {
 #' @param edgeAssoc (2 x N) for each point, the edge it is projected to (represented as (V1,V2), where V1<V2)
 #' @param edgePos (length N, numeric) relative postion on the edge for each point, in range [0,1]
 #'
-#' @import igraph
 #' @return non-negative symmetric matrix in which [i,j] is the tree-based distance between points i, j.
 #'
 #' @examples
