@@ -55,9 +55,9 @@ setMethod("cluster", signature(object = "Projection"),
 
 
 setMethod("computeKNNWeights", signature(object = "Projection"),
-          function(object, K = 30, numCores = 1) {
-            weights <- matrix(0L, nrow=NCOL(proj@pData), ncol=NCOL(proj@pData))
-            k <- ball_tree_knn(t(proj@pData), K, numCores)
+          function(object, K = 30, BPPARAM = bpparam()) {
+            weights <- matrix(0L, nrow=NCOL(object@pData), ncol=NCOL(object@pData))
+            k <- ball_tree_knn(t(object@pData), K, BPPARAM$workers)
             nn <- k[[1]]
             d <- k[[2]]
 
@@ -65,7 +65,7 @@ setMethod("computeKNNWeights", signature(object = "Projection"),
             sparse_weights <- exp(-1 * (d * d) / sigma^2)
 
             weights <- load_in_knn(nn, sparse_weights)
-            #d <- dist.matrix(t(proj@pData), method="euclidean")
+            #d <- dist.matrix(t(object@pData), method="euclidean")
             #weights <- exp( (-1 * (d * d)) / (NEIGHBORHOOD_SIZE)^2)
 
             weightsNormFactor <- Matrix::rowSums(weights)

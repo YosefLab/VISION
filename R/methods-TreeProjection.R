@@ -1,29 +1,29 @@
 
 
 setMethod("initialize", signature(.Object="TreeProjection"),
-          function(.Object, ..., vData, adjMat) {
+          function(.Object, pData, name, vData, adjMat) {
+            .Object@pData <- pData
+            .Object@name <- name
             .Object@vData = vData
             .Object@adjMat = adjMat
 
-            callNextMethod(.Object, ...)
-
-            proj <- projectOnTree(data.pnts = .Object@pData,
-                                  v.pos = object.vData,
-                                  princAdj = object.adjMat)
+            proj <- projectOnTree(data.pnts = pData,
+                                  V.pos = vData,
+                                  princAdj = adjMat)
             .Object@edgeAssoc <- proj$edges
             .Object@edgePos <- proj$edgePos
-          }
-          )
+            return(.Object)
+          })
 
 
 #' Compute KNN weights based on geodesic distances for TreeProjection objects
 #'
 #' @param object a TreeProjection object
 #' @param K the number of nearest neighbors to look at
-#' @param numCores the number of cores to utilize
+#' @param BPPARAM the parallelization backen to use
 #'
 setMethod("computeKNNWeights", signature(object = "TreeProjection"),
-          function(object, K=30, numCores=1) {
+          function(object, K=30, BPPARAM=bpparam()) {
             distmat <- calculateTreeDistances(princPnts = object@vData,
                                               princAdj = object@adjMat,
                                               edgeAssoc = proj$edges,

@@ -149,8 +149,9 @@ generateProjections <- function(expr, weights, filterName="",
               fullPCA = fullPCA, loadings = loadings))
 }
 
+#' Genrate projections based on a tree structure learned in high dimensonal space
 generateTreeProjections <- function(expr, filterName="",
-                                    inputProjections=c(), BPPARAM = bpparam()) {
+                                    inputProjections, BPPARAM = bpparam()) {
 
 
   if (filterName == "novar") {
@@ -174,7 +175,7 @@ generateTreeProjections <- function(expr, filterName="",
                              vData = hdTree$princPnts, adjMat = hdTree$adjMat)
 
   ncls <- apply(hdTree$distMat, 1, which.min)
-  pptNeighborhood <- findNeighbors(exprData, ## TODO: Originally pca_res - WHY?
+  pptNeighborhood <- findNeighbors(exprData, ##why was this fullPCA here?
                                    hdTree$princPnts,
                                    NCOL(exprData) / NCOL(hdTree$princPnts),
                                    BPPARAM)
@@ -199,13 +200,11 @@ generateTreeProjections <- function(expr, filterName="",
 
   # Reposition tree node coordinates in nondimensional space
   for (proj in inputProjections) {
-
     new_coords <- matrix(sapply(pptNeighborhood, function(n)  {
       n_vals <- proj@pData[,n]
       centroid <- apply(n_vals, 1, mean)
       return(centroid)
     }), nrow=2, ncol=length(pptNeighborhood))
-
     treeProj = TreeProjection(name = proj@name, pData = proj@pData,
                               vData = new_coords, adjMat = hdTree$adjMat)
     output[[treeProj@name]] = treeProj
@@ -582,14 +581,3 @@ clipBottom <- function(x, mi) {
   x[x < mi] <- mi
   return(x)
 }
-
-findNeighbors <- function(data, query, k, BPPARAM=bpparam()) {
-
-	neighborhood <- lapply(1:ncol(query), function(x) {
-		vkn <- ball_tree_vector_knn(t(data), query[,x], k, BPPARAM$workers)
-		return(vkn[[1]])
-	})
-
-	return(neighborhood)
-}
-

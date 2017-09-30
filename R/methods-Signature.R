@@ -100,8 +100,7 @@ getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
 #'  @return Labels for columns of the output matrices
 #'  @return Matrix (Num_Signatures x Num_Projections) sigProj dissimilarity score
 #'  @return SigProjMatrix_P matrix (Num_Signatures x Num_Projections) sigProj p values
-sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBORHOOD_SIZE = 0.33, numCores=1) {
-
+sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBORHOOD_SIZE = 0.33, BPPARAM=bpparam()) {
   ptm <- Sys.time()
   tRows <- c()
 
@@ -164,7 +163,7 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
 
   # Build a matrix of all signatures
   sigScoreMatrix <- matrix(unlist(bplapply(spRows, function(sig) { rank(sig@scores, ties.method="average") },
-  										   BPPARAM=MulticoreParam(workers=numCores))), nrow=N_SAMPLES, ncol=length(spRows))
+  										   BPPARAM=BPPARAM)), nrow=N_SAMPLES, ncol=length(spRows))
 
 
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
@@ -172,7 +171,7 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
 
 
   randomSigScoreMatrix <- matrix(unlist(bplapply(randomSigData, function(rsig) { rank(rsig@scores, ties.method="average") },
-  										BPPARAM=MulticoreParam(workers=numCores))), nrow=N_SAMPLES, ncol=length(randomSigData))
+  										BPPARAM=BPPARAM)), nrow=N_SAMPLES, ncol=length(randomSigData))
 
 
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
@@ -207,12 +206,7 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   i <- 1
   projnames <- names(projections)
   for (proj in projections) {
-
-  	weights <- matrix(0L, nrow=N_SAMPLES, ncol=N_SAMPLES)
-  	print(proj@name)
-  	print(dim(proj@pData))
-
-  	weights <- computeKNNWeights(proj, K=round(sqrt(N_SAMPLES)), numCores)
+  	weights <- computeKNNWeights(proj, K=round(sqrt(NCOL(proj@pData))), BPPARAM)
   	neighborhoodPrediction <- Matrix::crossprod(weights, sigScoreMatrix)
 
   	## Neighborhood dissimilatory score = |actual - predicted|
@@ -251,7 +245,7 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   			mu_x <- mean(backgrounds[[x]])
   			std_x <- biasedVectorSD(as.matrix(backgrounds[[x]]))
   			return(list(as.numeric(x), mu_x, std_x))
-  		  }, BPPARAM=MulticoreParam(workers=numCores))), nrow=length(names(backgrounds)), ncol=3, byrow=T)
+  		  }, BPPARAM=BPPARAM)), nrow=length(names(backgrounds)), ncol=3, byrow=T)
 
   	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   	tRows <- c(tRows, paste0(proj@name, "bgStat"))
@@ -261,13 +255,13 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   			numG <- x@numGenes
   			row_i <- which.min(abs(numG - bgStat[,1]))
   			return(bgStat[row_i, 2])
-  		  }, BPPARAM=MulticoreParam(workers=numCores))), nrow=nrow(medDissimilarity), ncol=ncol(medDissimilarity))
+  		  }, BPPARAM=BPPARAM)), nrow=nrow(medDissimilarity), ncol=ncol(medDissimilarity))
 
   	sigma <- matrix(unlist(bplapply(spRows, function(x) {
   			numG <- x@numGenes
   			row_i <- which.min(abs(numG - bgStat[,1]))
   			return(bgStat[row_i,3])
-  		  }, BPPARAM=MulticoreParam(workers=numCores))), nrow=nrow(medDissimilarity), ncol=ncol(medDissimilarity))
+  		  }, BPPARAM=BPPARAM)), nrow=nrow(medDissimilarity), ncol=ncol(medDissimilarity))
 
   	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   	tRows <- c(tRows, paste0(proj@name, "Mu/Sigma"))
@@ -329,7 +323,7 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
       #}
 
 
-      # Calculate signficance for Factor signatures
+      ## Calculate signficance for Factor signatures
 
   	factorSigProjList <- lapply(factorSigs, function(x) {
   			fLevels <- x[[1]]

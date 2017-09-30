@@ -359,3 +359,15 @@ calcInterEdgeDistMat <- function(v1.dist, v2.dist, path.length) {
   v2.mat <- t(replicate(length(v1.dist), v2.dist))
   return((v1.mat + v2.mat) + path.length)
 }
+
+#' Find K nearest neighbors
+findNeighbors <- function(data, query, k, BPPARAM=bpparam()) {
+
+  neighborhood <- lapply(1:ncol(query), function(x) {
+    vkn <- ball_tree_vector_knn(t(data), query[,x], k, BPPARAM$workers)
+    return(vkn[[1]])
+  })
+
+  return(neighborhood)
+}
+
