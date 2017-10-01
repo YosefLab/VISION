@@ -26,8 +26,8 @@ setMethod("computeKNNWeights", signature(object = "TreeProjection"),
           function(object, K=30, BPPARAM=bpparam()) {
             distmat <- calculateTreeDistances(princPnts = object@vData,
                                               princAdj = object@adjMat,
-                                              edgeAssoc = proj$edges,
-                                              edgePos = proj$edgesPos)
+                                              edgeAssoc = object@edgeAssoc,
+                                              edgePos = object@edgePos)
 
             kQuantile <- K / NCOL(object@pData)
             knnmat <- apply(distmat, 1, function(d) {

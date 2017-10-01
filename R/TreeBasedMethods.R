@@ -355,8 +355,8 @@ calcIntraEdgeDistMat <- function(edge.len, edgePos) {
 #' and the vertex of the second edge that is closer to the first edge
 calcInterEdgeDistMat <- function(v1.dist, v2.dist, path.length) {
   # note that input vector must not contain distance to self!
-  v1.mat <- replicate(length(v2.dist), v1.dist)
-  v2.mat <- t(replicate(length(v1.dist), v2.dist))
+  v1.mat <- v1.dist %o% rep(1, length(v2.dist))
+  v2.mat <- t(v2.dist %o% rep(1, length(v1.dist)))
   return((v1.mat + v2.mat) + path.length)
 }
 
