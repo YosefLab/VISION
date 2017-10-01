@@ -365,9 +365,7 @@ findNeighbors <- function(data, query, k, BPPARAM=bpparam()) {
 
   neighborhood <- lapply(1:ncol(query), function(x) {
     vkn <- ball_tree_vector_knn(t(data), query[,x], k, BPPARAM$workers)
-    return(vkn[[1]])
+    return(vkn)
   })
-
   return(neighborhood)
 }
-

@@ -201,8 +201,9 @@ generateTreeProjections <- function(expr, filterName="",
   # Reposition tree node coordinates in nondimensional space
   for (proj in inputProjections) {
     new_coords <- matrix(sapply(pptNeighborhood, function(n)  {
-      n_vals <- proj@pData[,n]
-      centroid <- apply(n_vals, 1, mean)
+      centroid <- proj@pData[,n$index] %*% (n$dist / sum(n$dist))
+      # n_vals <- proj@pData[,n$index] * rep(n$dist / sum(n$dist), rep(nrow(proj@pData), length(n$dist)))
+      # centroid <- apply(n_vals, 1, mean)
       return(centroid)
     }), nrow=2, ncol=length(pptNeighborhood))
     treeProj = TreeProjection(name = proj@name, pData = proj@pData,
