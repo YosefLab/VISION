@@ -52,7 +52,7 @@ public:
         }
     }
     ~DataPoint() { if (_x != NULL) free(_x); }
-    DataPoint& operator= (const DataPoint& other) {         // asignment should free old object
+    DataPoint& operator= (const DataPoint& other) {         // assignment should free old object
         if (this != &other) {
             if (_x != NULL) free(_x);
             _D = other.dimensionality();
@@ -107,8 +107,7 @@ public:
     }
 
     // Function that uses the tree to find the k nearest neighbors of target
-    void search(const T& target, int k, std::vector<int>* results, std::vector<double>* distances)
-    {
+    void search(const T& target, unsigned int k, std::vector<int>* results, std::vector<double>* distances) {
 
         // Use a priority queue to store intermediate results on
         std::priority_queue<HeapItem> heap;
@@ -138,9 +137,9 @@ public:
 		find_partitions(_root, &results, cluster_radii, L);	
 		
 		// Gather results
-		for (int i = 0; i < results.size(); i++) {
+		for (unsigned int i = 0; i < results.size(); i++) {
 			std::vector<int> clust;
-			for (int j = 0; j < results.at(i).size(); j++) {
+			for (unsigned int j = 0; j < results.at(i).size(); j++) {
 				clust.push_back(_items[results.at(i).at(j)].index() + 1);
 			}
 			clusters->push_back(clust);
@@ -179,8 +178,8 @@ private:
         HeapItem( int index, int num_points, double dist) :
             index(index), num_points(num_points), dist(dist) {}
         int index;
-        double dist;
         double num_points;
+        double dist;
         bool operator<(const HeapItem& o) const {
             return dist < o.dist;
         }
@@ -352,7 +351,7 @@ private:
 	}
 
     // Helper function that searches the tree
-    void search(Node* node, const T& target, int k, std::priority_queue<HeapItem>& heap, double& tau)
+    void search(Node* node, const T& target, unsigned int k, std::priority_queue<HeapItem>& heap, double& tau)
     {
         if (node == NULL) return;    // indicates that we're done here
 
