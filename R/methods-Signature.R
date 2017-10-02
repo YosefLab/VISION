@@ -113,6 +113,10 @@ euclideanWeights <- function(proj, N_SAMPLES, K=30, numCores=1) {
     return(weights)
 }
 
+knnWeights <- function(projs, N_SAMPLES, K=30, numCores=1) {
+    return(projs@weights)
+}
+
 #' Evaluates the significance of each signature vs. each projection. 
 #' 
 #'  @param projections Maps projections to their spatial coordinates for each sample
@@ -123,10 +127,6 @@ euclideanWeights <- function(proj, N_SAMPLES, K=30, numCores=1) {
 #'  @return Matrix (Num_Signatures x Num_Projections) sigProj dissimilarity score
 #'  @return SigProjMatrix_P matrix (Num_Signatures x Num_Projections) sigProj p values
 sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBORHOOD_SIZE = 0.33, numCores=1) {
-  
-
-  ptm <- Sys.time()
-  tRows <- c()
   
   set.seed(RANDOM_SEED)
   
@@ -181,25 +181,13 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   pnumSigProjMatrix <- matrix(0L, nrow=N_SIGNATURE_PNUM, ncol=N_PROJECTIONS)
   pnumSigProjMatrix_P <- matrix(0L, nrow=N_SIGNATURE_PNUM, ncol=N_PROJECTIONS)
 
-  timingList <- c(difftime(Sys.time(), ptm, units="secs"))
-  tRows <- c(tRows, "Initialize all Matrices")
-  
   # Build a matrix of all signatures
   sigScoreMatrix <- matrix(unlist(bplapply(spRows, function(sig) { rank(sig@scores, ties.method="average") },
   										   BPPARAM=MulticoreParam(workers=numCores))), nrow=N_SAMPLES, ncol=length(spRows))
 
 
-  timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-  tRows <- c(tRows, "SigScoreMatrix")
-
-  
   randomSigScoreMatrix <- matrix(unlist(bplapply(randomSigData, function(rsig) { rank(rsig@scores, ties.method="average") },
   										BPPARAM=MulticoreParam(workers=numCores))), nrow=N_SAMPLES, ncol=length(randomSigData))
-  
- 
-  timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-  tRows <- c(tRows, "rSigScoreMatrix")
-
   
   ### build one hot matrix for factors
   factorSigs <- list()
@@ -221,9 +209,6 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
     factorSigs[[s@name]] <- list(fLevels, factorFreq, factorMatrix)
   }
 
-  timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-  tRows <- c(tRows, "Factor Matrix")
-
   message("Evaluating signatures against projections...")
   
   i <- 1
@@ -241,18 +226,12 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
     dissimilarity <- abs(sigScoreMatrix - neighborhoodPrediction)
     medDissimilarity <- as.matrix(apply(dissimilarity, 2, median))
 
-	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-	tRows <- c(tRows, paste0(proj@name, "Dissimilarity"))
-    
 
     # Calculate scores for random signatures
     randomNeighborhoodPrediction <- Matrix::crossprod(weights, randomSigScoreMatrix)
     randomDissimilarity <- abs(randomSigScoreMatrix - randomNeighborhoodPrediction)
     randomMedDissimilarity <- as.matrix(apply(randomDissimilarity, 2, median))
  
-	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-	tRows <- c(tRows, paste0(proj@name, "RandDissimilarity"))
-
     # Group by number of genes
     backgrounds <- list()
     k <- 1
@@ -266,17 +245,11 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
       k <- k + 1
     }
 
-	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-	tRows <- c(tRows, paste0(proj@name, "GroupNumGenes"))
-    
     bgStat <- matrix(unlist(bplapply(names(backgrounds), function(x) {
 			mu_x <- mean(backgrounds[[x]])
 			std_x <- biasedVectorSD(as.matrix(backgrounds[[x]]))
 			return(list(as.numeric(x), mu_x, std_x))
 		  }, BPPARAM=MulticoreParam(workers=numCores))), nrow=length(names(backgrounds)), ncol=3, byrow=T)
-
-	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-	tRows <- c(tRows, paste0(proj@name, "bgStat"))
 
     
 	mu <- matrix(unlist(bplapply(spRows, function(x) {
@@ -291,15 +264,10 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
 			return(bgStat[row_i,3])
 		  }, BPPARAM=MulticoreParam(workers=numCores))), nrow=nrow(medDissimilarity), ncol=ncol(medDissimilarity))
 
-	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-	tRows <- c(tRows, paste0(proj@name, "Mu/Sigma"))
-	
 
     #Create CDF function for medDissmilarityPrime and apply CDF function to medDissimilarityPrime pointwise
     pValues <- pnorm( ((medDissimilarity - mu) / sigma))
 
-	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-	tRows <- c(tRows, paste0(proj@name, "PValues"))
 
     sigProjMatrix[,i] <- 1 - (medDissimilarity / N_SAMPLES)
 	sigProjMatrix_P[,i] <- pValues
@@ -388,35 +356,9 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
 	factorSigProjMatrix[,i] <- unlist(lapply(factorSigProjList, function(x) x[[1]]))
 	factorSigProjMatrix_P[,i] <- unlist(lapply(factorSigProjList, function(x) x[[2]]))
 
-	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-	tRows <- c(tRows, paste0(proj@name, "FactorSigs"))
-
-	#return(list((1-medDissimilarity/N_SAMPLES),
-	#			pValues,
-	#			unlist(lapply(factorSigProjList, function(x) return(x[[1]]))),
-	#			unlist(lapply(factorSigProjList, function(x) return(x[[2]])))
-	#			))
-
 	
   i <- i+1
   }
-
-  #factorIncluded <- F
-  #sigNumIncluded <- F
-  #if (length(projDataList) == 4) { factorIncluded <- T }
-  #if (length(projDataList) == 6) { sigNumIncluded <- T } 
-
-  #sigProjMatrix <- matrix(unlist(lapply(projDataList, function(x) return(x[[1]]))), nrow=N_SIGNATURES, ncol=N_PROJECTIONS, 
-  #						  byrow=T)
-  #sigProjMatrix_P <- matrix(unlist(lapply(projDataList, function(x) return(x[[2]]))), nrow=N_SIGNATURES, ncol=N_PROJECTIONS, 
-  # 							byrow=T)
-  #if (factorIncluded) {
-  # 	factorSigProjMatrix <- matrix(unlist(lapply(projDataList, function(x) return(x[[3]]))), nrow=N_SIGNATURE_FACTORS,
-  #								ncol=N_PROJECTIONS, byrow=T)
-#	factorSigProjMatrix_P <- matrix(unlist(lapply(projDataList, function(x) return(x[[4]]))), nrow=N_SIGNATURE_FACTORS,
- # 								  ncol=N_PROJECTIONS, byrow=T)
-  #}
-  
 
   # Concatenate Factor Sig-proj entries back in 
   sigProjMatrix <- rbind(sigProjMatrix, factorSigProjMatrix, pnumSigProjMatrix)
@@ -435,10 +377,6 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   colnames(sigProjMatrix) <- projnames
   rownames(sigProjMatrix) <- spRowLabels
 
-  timingList <- as.matrix(timingList)
-  rownames(timingList) <- tRows
-  
-  #return(list(list(spRowLabels, spColLabels, sigProjMatrix, sigProjMatrix_P), timingList))
   return(list(spRowLabels, spColLabels, sigProjMatrix, sigProjMatrix_P))
 }
 

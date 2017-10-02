@@ -5,6 +5,7 @@
 
 require("fastICA")
 require('Rtsne')
+require(largeVis)
 #require("Rtsne.multicore")
 require('igraph')
 require("rsvd")
@@ -107,6 +108,10 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
       res <- methodList[[method]](exprData)
       proj <- Projection(method, res, simFunction=euclideanWeights)
       inputProjections <- c(inputProjections, proj)
+    } else if (method == "KNN") {
+        res <- methodList[[method]](fullPCA[c(1,2),], numCores)
+        proj <- Projection(method, res, weights=res, simFunction=knnWeights)
+        inputProjections <- c(inputProjections, proj)
     } else {
       res <- methodList[[method]](pca_res, numCores)
       if (method == "PPT") {
@@ -134,6 +139,7 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
   output <- list()
   
   for (p in inputProjections) {
+
     coordinates <- p@pData
       
     coordinates <- as.matrix(apply(coordinates, 2, function(x) return( x - mean(x) ))) 
@@ -174,6 +180,8 @@ generateProjections <- function(expr, weights, filterName="", inputProjections=c
 
   	output2[[p@name]] = p
     }
+
+  output2[["KNN"]]@PPT_C <- output2[["tSNE30"]]@PPT_C
   
   return(list(output2, rownames(exprData), PPT[[2]], fullPCA, loadings))
 }
@@ -437,7 +445,7 @@ applyKNN <- function(exprData, numCores) {
 
 	set.seed(RANDOM_SEED)
 
-	k <- ball_tree_knn(t(exprData), 30, numCores)
+	k <- ball_tree_knn(t(exprData), round(sqrt(ncol(exprData))), numCores)
 	nn <- k[[1]]
 	d <- k[[2]]
 
@@ -451,12 +459,14 @@ applyKNN <- function(exprData, numCores) {
     weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
     weights <- weights / weightsNormFactor
 
-    knnmat <- Matrix(weights, sparse=T)
-    knproj <- projectKNNs(knnmat)
+    return(weights)
 
-    colnames(knproj) <- colnames(exprData)
+    #knnmat <- Matrix(weights, sparse=T)
+    #knproj <- projectKNNs(knnmat)
 
-    return(t(knproj))
+    #colnames(knproj) <- colnames(exprData)
+
+    #return(t(knproj))
 
 }
 

@@ -88,6 +88,7 @@ Projection <- setClass("Projection",
       name = "character",
       pData = "matrix",
       PPT_C = "matrix",
+      weights = "matrix",
       simFunction = "function"
     )
 )

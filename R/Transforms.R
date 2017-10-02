@@ -133,7 +133,7 @@ merge_intervals <- function(intervals) {
 	
 }
 
-createPools <- function(cl, expr, hkg) {
+createPools <- function(cl, expr, hkg=list()) {
 
 	pooled_cells <- matrix(unlist(lapply(cl, function(clust) {
 
@@ -141,12 +141,17 @@ createPools <- function(cl, expr, hkg) {
             if (is.null(dim(clust_data))) {
                 return(clust_data)
             }   
-	        fnr <- createFalseNegativeMap(clust_data, hkg)
-            clust_weights <- computeWeights(fnr[[1]], fnr[[2]], ExpressionData(clust_data))
-			p_cell <- as.matrix(apply(clust_data, 1, sum))
-            cell_norm <- as.matrix(apply(clust_weights, 1, sum))
+            if (length(hkg) > 0) {
+	            fnr <- createFalseNegativeMap(clust_data, hkg)
+                clust_weights <- computeWeights(fnr[[1]], fnr[[2]], ExpressionData(clust_data))
+			    p_cell <- as.matrix(apply(clust_data, 1, sum))
+                cell_norm <- as.matrix(apply(clust_weights, 1, sum))
 
-			return(p_cell / cell_norm)
+			    return(p_cell / cell_norm)
+            }
+
+            p_cell <- as.matrix(apply(clust_data, 1, mean))
+            return(p_cell)
 	  })), nrow=nrow(expr), ncol=length(cl))
 
     return(pooled_cells)

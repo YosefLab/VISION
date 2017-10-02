@@ -378,6 +378,8 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
 	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
 	tRows <- c(tRows, paste("Pearson Correlation", filter))
 
+    projs[["KNN"]]@pData <- projs[["tSNE30"]]@pData
+
     projData <- ProjectionData(filter=filter, projections=projs, genes=g, keys=projKeys, 
                                           sigProjMatrix=sigProjMatrix, pMatrix=pVals, PPT=PPT, fullPCA=pca_res,
                                           pearsonCorr=pearsonCorr, loadings=loadings)
