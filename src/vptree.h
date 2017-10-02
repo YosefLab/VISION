@@ -107,8 +107,7 @@ public:
     }
 
     // Function that uses the tree to find the k nearest neighbors of target
-    void search(const T& target, unsigned int k, std::vector<int>* results, std::vector<double>* distances)
-    {
+    void search(const T& target, unsigned int k, std::vector<int>* results, std::vector<double>* distances) {
 
         // Use a priority queue to store intermediate results on
         std::priority_queue<HeapItem> heap;
