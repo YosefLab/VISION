@@ -4,27 +4,23 @@ require("igraph")
 #'
 #' @param exprData Expression data -- Num_Genes x Num_Samples
 #' @param numCores Number of cores to use during this analysis
+#' @param permExprData a list of permutated expression datasets, to use for significance estimation of the tree [default:NULL]
 #' @param nNodes Number of nodes to find. Default is sqrt(N)
 #' @param sigma regularization parameter for soft-assignment of data points to nodes, used as the variance
 #'        of a guassian kernel. If 0, this is estimated automatically
 #' @param gamma graph-level regularization parameter, controlling the tradeoff between the noise-levels
 #'        in the data and the graph smoothness. If 0, this is estimated automatically.
 #' @return Information on the fitten tree
-#'   \itemize {
-#'     \item C spatial positions of the tree nodes in NUM_FEATURES dimensional space
-#'     \item W Unweighted (binary) adjacency matrix of the fitten tree
-#'     \item distMat distance matrix between each tree node to each datapoint
-#'     \item mse the Mean-Squared-Error of the fitten tree
+#'   \itemize{
+#'     \item C: spatial positions of the tree nodes in NUM_FEATURES dimensional space
+#'     \item W: Unweighted (binary) adjacency matrix of the fitten tree
+#'     \item distMat: distance matrix between each tree node to each datapoint
+#'     \item mse: the Mean-Squared-Error of the fitten tree
+#'     \item zscore: a significance score for the fitted tree
 #'   }
-#' @return Positions of the nodes in NUM_FEATURES dimensional space
-#' @return Binary adjacency matrix of fitted tree
-#' @return Distance matrix between fitted tree nodes and data points
-#' @return Score indicating how strucutred the data is, as the z-score of the data MSE from shuffled MSE
 
-applySimplePPT <- function(exprData, numCores, nNodes_ = round(sqrt(ncol(exprData))), sigma=0, gamma=0) {
-
-  #exprData <- t(exprData)
-
+applySimplePPT <- function(exprData, numCores, permExprData = NULL,
+                           nNodes_ = round(sqrt(ncol(exprData))), sigma=0, gamma=0) {
   MIN_GAMMA <- 1e-5
   MAX_GAMMA <- 1e5
   DEF_TOL <- 1e-2
@@ -130,12 +126,19 @@ applySimplePPT <- function(exprData, numCores, nNodes_ = round(sqrt(ncol(exprDat
   }
 
   tr <- fitTree(exprData, nNodes, sigma, gamma, DEF_TOL, DEF_MAX_ITER)
-  C <- tr$C
-  Wt <- tr$W
-  mse <- tr$mse
+
+  if (!is.null(permExprData)) {
+    mses <- sapply(permExprData, function(permdata) {
+      return(fitTree(permdata, nNodes, sigma, gamma, DEF_TOL, DEF_MAX_ITER)$mse)
+    })
+    zscore <- log1p((tr$mse - mean(mses)) / sd(mses))
+  } else {
+    zscore <- NULL
+  }
 
 
-  return(list(princPnts = C, adjMat = Wt, distMat = sqdist(t(exprData), t(C)), mse = mse))
+  return(list(princPnts = tr$C, adjMat = tr$W, distMat = sqdist(t(exprData), t(C)),
+              mse = tr$mse, zscore = zscore))
 }
 
 #' Fit tree using input parameters
@@ -224,7 +227,7 @@ getMSE <- function(C, X) {
 #'     \item{"spatial"}{The D-dimensional position of the projected data points}
 #'     \itam{"edge"}{a Nx2 matrix, were line i has the indices identifying the edge that datapoint i was projected on,
 #'     represented as (node a, node b). For consistency and convenience, it is maintained that a < b}
-#'     \item{"edge.pos"}{an N-length numeric with values in [0,1], the relative position on the edge of the datapoint.
+#'     \item{"edgePos"}{an N-length numeric with values in [0,1], the relative position on the edge of the datapoint.
 #'     0 is node a, 1 is node b, .5 is the exact middle of the edge, etc.}
 #'  }
 #'
@@ -276,9 +279,11 @@ projectOnTree <- function(data.pnts, V.pos, princAdj) {
   })
 
   return(list(edges = projections[1:2,],
-              edges.pos = projections[3,],
+              edgePos = projections[3,],
               spatial = projections[-c(1:3),]))
 }
+
+
 
 #' Calculate distance matrix between all pairs of ponts based on their projection onto the tree
 #'
@@ -287,14 +292,13 @@ projectOnTree <- function(data.pnts, V.pos, princAdj) {
 #' @param edgeAssoc (2 x N) for each point, the edge it is projected to (represented as (V1,V2), where V1<V2)
 #' @param edgePos (length N, numeric) relative postion on the edge for each point, in range [0,1]
 #'
-#' @import igraph
 #' @return non-negative symmetric matrix in which [i,j] is the tree-based distance between points i, j.
 #'
 #' @examples
 #' X <- matrix(rnorm(200), nrow = 2)
 #' tree <- applySimplePPT(X)
 #' proj <- projectOnTree(X, tree[[1]], tree[[2]])
-#' distmat <- calculateTreeDistances(tree[[1]], tree[[2]], proj$edges, proj$edges.pos)
+#' distmat <- calculateTreeDistances(tree[[1]], tree[[2]], proj$edges, proj$edgePos)
 calculateTreeDistances <- function(princPnts, princAdj, edgeAssoc, edgePos) {
   # get all distances in principle tree
   princAdjW <- sqdist(t(princPnts), t(princPnts)) * princAdj
@@ -313,7 +317,7 @@ calculateTreeDistances <- function(princPnts, princAdj, edgeAssoc, edgePos) {
   for (i in 1:NCOL(princEdges)) {
     inEdgeDist <- calcIntraEdgeDistMat(edge.len = nodeDistmat[princEdges[1,i],
                                                               princEdges[2,i]],
-                                       edge.pos = edgePos[edgeToPnts[,i]])
+                                       edgePos = edgePos[edgeToPnts[,i]])
     intraDist[[i]] <- inEdgeDist[,c(1,NCOL(inEdgeDist))]
     distmat[edgeToPnts[,i], edgeToPnts[,i]] <- inEdgeDist[-c(1,NROW(inEdgeDist)), -c(1,NROW(inEdgeDist))]
   }
@@ -346,11 +350,11 @@ calculateTreeDistances <- function(princPnts, princAdj, edgeAssoc, edgePos) {
 
 #' Calculate distances between all points on a given edge, including edge vertices
 #' @param edge.len the length of the node
-#' @param edge.pos the relative positions of the points on the edge (in range [0,1]).
+#' @param edgePos the relative positions of the points on the edge (in range [0,1]).
 #' @return a distance matrix, where the first and last points are the edge vertices
-calcIntraEdgeDistMat <- function(edge.len, edge.pos) {
-  edge.pos <- c(0, edge.pos, 1) * edge.len
-  pos.mat <- replicate(length(edge.pos), edge.pos)
+calcIntraEdgeDistMat <- function(edge.len, edgePos) {
+  edgePos <- c(0, edgePos, 1) * edge.len
+  pos.mat <- replicate(length(edgePos), edgePos)
   return(abs(pos.mat - t(pos.mat)))
 }
 
@@ -361,7 +365,17 @@ calcIntraEdgeDistMat <- function(edge.len, edge.pos) {
 #' and the vertex of the second edge that is closer to the first edge
 calcInterEdgeDistMat <- function(v1.dist, v2.dist, path.length) {
   # note that input vector must not contain distance to self!
-  v1.mat <- replicate(length(v2.dist), v1.dist)
-  v2.mat <- t(replicate(length(v1.dist), v2.dist))
+  v1.mat <- v1.dist %o% rep(1, length(v2.dist))
+  v2.mat <- t(v2.dist %o% rep(1, length(v1.dist)))
   return((v1.mat + v2.mat) + path.length)
+}
+
+#' Find K nearest neighbors
+findNeighbors <- function(data, query, k, BPPARAM=bpparam()) {
+
+  neighborhood <- lapply(1:ncol(query), function(x) {
+    vkn <- ball_tree_vector_knn(t(data), query[,x], k, BPPARAM$workers)
+    return(vkn)
+  })
+  return(neighborhood)
 }

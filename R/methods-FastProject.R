@@ -3,55 +3,59 @@ require(BiocParallel)
 require(parallel)
 
 
-#'  Initializes a new FastProject object.
+#' Initializes a new FastProject object.
 #'
-#'    @param data_file file path to expression matrix
-#'    @param housekeeping file path to housekeeping data file
-#'    @param signatures list of file paths to signature files (.gmt or .txt)
-#'    @param scone scone normalization data file
-#'    @param norm_methods normalization methods to be extracted from the scone object
-#'    @param precomptued data file with precomputed signature scores (.txt)
-#'    @param nofilter if TRUE, no filter applied; else filters applied. Default is FALSE
-#'    @param nomodel if TRUE, no fnr curve calculated and all weights equal to 1. Else FNR and weights calculated.
-#'             Default is TRUE.
-#'    @param filters list of filters to compute
-#'    @param debug if 1 enable debugging features, if not not. Default is 0.
-#'    @param lean if TRUE run a lean simulation. Else more robust pipeline initiated. Default is FALSE
-#'    @param qc if TRUE calculate QC; else not. Default is FALSE
-#'    @param num_cores Number of cores to use during analysis.
-#'    @param min_signature_genes Minimum number of genes required to compute a signature
-#'    @param projections File containing precomputed projections for analysis
-#'    @param weights Precomputed weights for each coordinate. Normally computed from the FNR curve.
-#'    @param threhsold Threshold to apply for the threshold filter
-#'    @param perm_wPCA If TRUE, apply permutation WPCA to calculate significant number of PCs. Else not. Default FALSE.
-#'    @param sig_norm_method Method to apply to normalize the expression matrix before calculating signature scores
-#'    @param sig_score_method Method to apply when calculating signature scores
-#'    @param exprData expression data matrix, as opposed to specifying a data_file
-#'    @param housekeepingData housekeeping data table, as opposed to specifying a housekeeping_data file
-#'    @param sigData List of signatures, as opposed to specifying a list of signature files
-#'    @param precomputedData List of precomputed signature scores, as opposed to specifying a precomputed file
-#'    @return A FastProject object.
-#'    @examples 
-#'    fp <- FastProject("expression_matrix.txt", "data/Gene Name Housekeeping.txt", c("sigfile_1.gmt", "sigfile_2.txt"), precomputed="pre_sigs.txt")
+#'
+#'
+#' @param data_file file path to expression matrix
+#' @param housekeeping file path to housekeeping data file
+#' @param signatures list of file paths to signature files (.gmt or .txt)
+#' @param scone scone normalization data file
+#' @param norm_methods normalization methods to be extracted from the scone object
+#' @param precomptued data file with precomputed signature scores (.txt)
+#' @param nofilter if TRUE, no filter applied; else filters applied. Default is FALSE
+#' @param nomodel if TRUE, no fnr curve calculated and all weights equal to 1. Else FNR and weights calculated.
+#'          Default is TRUE.
+#' @param filters list of filters to compute
+#' @param debug if 1 enable debugging features, if not not. Default is 0.
+#' @param lean if TRUE run a lean simulation. Else more robust pipeline initiated. Default is FALSE
+#' @param qc if TRUE calculate QC; else not. Default is FALSE
+#' @param min_signature_genes Minimum number of genes required to compute a signature
+#' @param projections File containing precomputed projections for analysis
+#' @param weights Precomputed weights for each coordinate. Normally computed from the FNR curve.
+#' @param threhsold Threshold to apply for the threshold filter
+#' @param perm_wPCA If TRUE, apply permutation WPCA to calculate significant number of PCs. Else not. Default FALSE.
+#' @param sig_norm_method Method to apply to normalize the expression matrix before calculating signature scores
+#' @param sig_score_method Method to apply when calculating signature scores
+#' @param exprData expression data matrix, as opposed to specifying a data_file
+#' @param housekeepingData housekeeping data table, as opposed to specifying a housekeeping_data file
+#' @param sigData List of signatures, as opposed to specifying a list of signature files
+#' @param precomputedData List of precomputed signature scores, as opposed to specifying a precomputed file
+#' @return A FastProject object.
+#' @examples
+#' fp <- FastProject("expression_matrix.txt",
+#'                   "data/Gene Name Housekeeping.txt",
+#'                   c("sigfile_1.gmt", "sigfile_2.txt"),
+#'                   precomputed="pre_sigs.txt")
 setMethod("initialize", signature(.Object="FastProject"),
-          function(.Object, data_file, housekeeping, signatures, scone = NULL, norm_methods = NULL, 
+          function(.Object, data_file, housekeeping, signatures, scone = NULL, norm_methods = NULL,
                    precomputed=NULL, nofilter=FALSE, nomodel=FALSE, filters=c("fano"),
-                   debug=0, lean=FALSE, qc=FALSE, num_cores=1, min_signature_genes=5, projections="", 
-                   weights=NULL, threshold=0, perm_wPCA=FALSE, sig_norm_method="znorm_rows", 
-                   sig_score_method="weighted_avg", exprData=NULL, housekeepingData=NULL, 
+                   debug=0, lean=FALSE, qc=FALSE, min_signature_genes=5, projections="",
+                   weights=NULL, threshold=0, perm_wPCA=FALSE, sig_norm_method="znorm_rows",
+                   sig_score_method="weighted_avg", exprData=NULL, housekeepingData=NULL,
                    sigData=NULL, precomputedData=NULL) {
-            
-            
-            
+
+
+
             ## Make sure that the minimum files are being read in.
             if (missing(data_file) && is.null(exprData) && is.null(scone)) {
               stop("Missing expression data file or SCONE object in input.")
             } else if (missing(housekeeping) && is.null(housekeepingData)) {
               stop("Missing housekeeping data file in input.")
             } else if (missing(signatures) && is.null(sigData)) {
-              stop("Missing signature data file in input.") 
+              stop("Missing signature data file in input.")
             }
-            
+
             if (is.null(scone)) {
               if (is.null(exprData)) {
               	.Object@data_file <- data_file
@@ -60,31 +64,31 @@ setMethod("initialize", signature(.Object="FastProject"),
                 .Object@exprData <- exprData
               }
             }
-            
+
             if (is.null(housekeepingData)) {
               .Object@housekeeping <- housekeeping
               .Object@housekeepingData <- readHKGToMatrix(housekeeping)
             } else {
               .Object@housekeepingData <- housekeepingData
             }
-              
+
             if (is.null(sigData)) {
               .Object@signatures <- signatures
               .Object@sigData <- readSignaturesInput(signatures)
             } else {
               .Object@sigData <- sigData
             }
-            
+
             if (is.null(weights)) {
               .Object@weights <- matrix(NA, nrow=10, ncol=0)
             } else {
               .Object@weights <- weights
             }
-            
+
             if (!is.null(precomputed)) {
               .Object@precomputedData <- readPrecomputed(precomputed, colnames(.Object@exprData))
             }
-            
+
             .Object@nofilter <- nofilter
             .Object@nomodel <- nomodel
             .Object@filters <- filters
@@ -95,18 +99,17 @@ setMethod("initialize", signature(.Object="FastProject"),
             .Object@debug = debug
             .Object@lean = lean
             .Object@perm_wPCA = perm_wPCA
-            .Object@numCores = num_cores
             .Object@allData = .Object@exprData
-            
+
             #createOutputDirectory(.Object)
-            return(.Object) 
+            return(.Object)
           }
 )
 
 setMethod("createOutputDirectory", "FastProject", function(object) {
   #' Creates the output directory structure
   mainDir <- getwd()
-  
+
   if (dir.exists(file.path(mainDir, object@output_dir))) {
     i = 1
     while(TRUE) {
@@ -115,21 +118,21 @@ setMethod("createOutputDirectory", "FastProject", function(object) {
         break
       } else {
         i = i + 1
-      }    
+      }
     }
   } else {
     dir_name = object@output_dir
   }
-  
+
   dir.create(file.path(mainDir, dir_name))
-  
+
   logger <- getLogger("FastProject")
-  
+
   #logger$setLevel(logging.INFO)
   #fh <- FileHandler(file.path(mainDir, dir_name, 'fastproject.log'))
   #fh$setFormatter(Formatter('%(asctime)s %(message)s'))
   #logger.addHandler(fh)
-  
+
   #for (x in slotNames(object)) {
   #  logger$info(paste0(x, toString(object@x)))
   #}
@@ -137,15 +140,20 @@ setMethod("createOutputDirectory", "FastProject", function(object) {
 )
 
 #' Main entry point for running FastProject Analysis
-#' 
-#' @param object FastProject object 
+#'
+#' @param object FastProject object
 #' @return FastProjectOutput object
-#' @examples 
-#' fp <- FastProject("expression_matrix.txt", "data/Gene Name Housekeeping.txt", c("sigfile_1.gmt", "sigfile_2.txt"), precomputed="pre_sigs.txt")
+#'
+#' @examples
+#' fp <- FastProject("expression_matrix.txt", "data/Gene Name Housekeeping.txt", c("sigfile_1.gmt", "sigfile_2.txt"),
+#'                   precomputed="pre_sigs.txt")
 #' fpout <- Analysis(fp)
-setMethod("Analyze", signature(object="FastProject"), function(object) {
+setMethod("Analyze", signature(object="FastProject"),
+          function(object) {
   message("Beginning Analysis")
-  
+  # BPPARAM = bpparam()
+  BPPARAM = SerialParam()
+
   ptm <- Sys.time()
   timingList <- (ptm - ptm)
   tRows <- c("Start")
@@ -153,13 +161,13 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
 
   clustered <- FALSE
   pools <- list()
-  if (ncol(object@exprData) > 25000) {	
+  if (ncol(object@exprData) > 25000) {
 
   	  fexpr <- filterGenesFano(object@exprData)
   	  res <- applyPCA(fexpr, N=30)[[1]]
-  	  kn <- ball_tree_knn(t(res), 30, object@numCores)
+  	  kn <- ball_tree_knn(t(res), 30, BPPARAM$workers)
   	  cl <- louvainCluster(kn, t(res))
-  	  cl <- readjust_clusters(cl, t(res)) 
+  	  cl <- readjust_clusters(cl, t(res))
 
       pooled_cells <- createPools(cl, object@exprData, object@housekeepingData)
 
@@ -176,24 +184,21 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
 	  names(pools) <- cn
 	  object@exprData <- pooled_cells
 	  clustered <- TRUE
-		
-  }
 
-  print(length(pools))
+  }
 
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "Partition & Sample")
 
   # Wrap expression data frame into a ExpressionData class
   eData <- ExpressionData(object@exprData, distanceMatrix=sparseDistance)
-  
+
   # If no filter threshold was specified, set it to 20% of samples
   if (object@threshold == 0) {
     num_samples <- ncol(getExprData(eData))
     object@threshold <- round(0.2 * num_samples)
   }
-  print(object@threshold)
-  
+
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "Threshold")
 
@@ -202,55 +207,55 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   filterList <- filtered[[2]]
 
   originalData <- getExprData(eData)
-  print(ncol(originalData))
 
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-  tRows <- c(tRows, "Filter") 
+  tRows <- c(tRows, "Filter")
 
   if (!clustered) {
 	falseneg_out <- createFalseNegativeMap(originalData, object@housekeepingData, object@debug)
 	func <- falseneg_out[[1]]
 	params <- falseneg_out[[2]]
   }
-  
+
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "FN Function")
 
   if (object@nomodel || clustered) {
     object@weights <- matrix(1L, nrow=nrow(originalData), ncol=ncol(originalData))
-    rownames(object@weights) <- rownames(originalData)
-    colnames(object@weights) <- colnames(originalData)
   }
   else if (all(is.na(object@weights)) || ncol(object@weights) != ncol(object@exprData)) {
     message("Computing weights from False Negative Function...")
     object@weights <- computeWeights(func, params, eData)
   }
+  rownames(object@weights) <- rownames(originalData)
+  colnames(object@weights) <- colnames(originalData)
 
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "Weights")
 
-  zero_locations <- which(getExprData(eData) == 0.0, arr.ind=TRUE) 
-    
+  zero_locations <- which(getExprData(eData) == 0.0, arr.ind=TRUE) ##TODO: not used?
+
   normalizedData <- getNormalizedCopy(eData, object@sig_norm_method)
   eData <- updateExprData(eData, normalizedData)
-  
+
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-  tRows <- c(tRows, "Normalize")    
+  tRows <- c(tRows, "Normalize")
 
   ## Define single signature evaluation for lapply method
   singleSigEval <- function(s) {
-	x <- c(-Inf)
-	if (object@sig_score_method=="naive") {
-		tryCatch({
-			x <- naiveEvalSignature(eData, s, object@weights, object@min_signature_genes)
-		}, error=function(e){})
-	} else if (object@sig_score_method=="weighted_avg") {
-		tryCatch({
-			x <- weightedEvalSignature(eData, s, object@weights, object@min_signature_genes)
-		}, error=function(e){})
-	}
-	return(x)
-  }	
+    # init to an empty SignatureScores object
+  	x <- NULL
+  	if (object@sig_score_method=="naive") {
+  		tryCatch({
+  			x <- naiveEvalSignature(eData, s, object@weights, object@min_signature_genes)
+  		}, error=function(e){})
+  	} else if (object@sig_score_method=="weighted_avg") {
+  		tryCatch({
+  			x <- weightedEvalSignature(eData, s, object@weights, object@min_signature_genes)
+  		}, error=function(e){})
+  	}
+  	return(x)
+  }
 
   # Score user defined signatures with defined method (default = weighted)
   sigScores <- c()
@@ -260,12 +265,13 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
     message("Applying weighted signature scoring method...")
   }
 
-  sigScores <- bplapply(object@sigData, singleSigEval, BPPARAM=MulticoreParam(workers=object@numCores))
+  sigScores <- bplapply(object@sigData, singleSigEval, BPPARAM=BPPARAM)
 
   sigSizes <- lapply(object@sigData, function(s) length(s@sigDict))
-  
+
   sigList <- object@sigData
   sigNames <- names(object@sigData)
+  ## TODO: get rid of this somehow
   for (s in object@precomputedData) {
   	if (length(s@sample_labels) != ncol(object@exprData)) {
 		s@scores <- s@scores[colnames(object@exprData)]
@@ -279,8 +285,8 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
   names(sigScores) <- sigNames
 
   # Remove any signatures that didn't compute correctly
-  toRemove <- lapply(sigScores, function(x) all(x@scores == c(-Inf)))
-  sigScores <- sigScores[names(which(toRemove==F))]
+  toRemove <- sapply(sigScores, is.null)
+  sigScores <- sigScores[!toRemove]
 
   ## Convert Sig Scores to matrix
   names <- c()
@@ -293,7 +299,7 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
 
   rownames(sigMatrix) <- names
   colnames(sigMatrix) <- colnames(object@exprData)
-  
+
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "Sig Scores")
 
@@ -311,99 +317,127 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
       randomSigs <- c(randomSigs, newSig)
     }
   }
-  
+
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "Random Sigs")
 
-  # Compute signature scores for random signatures generated
+  ## Compute signature scores for random signatures generated
   randomSigScores <- c()
   if (object@sig_score_method == "naive") {
     message("Applying naive signature scoring method...")
   } else if (object@sig_score_method == "weighted_avg") {
     message("Applying weighted signature scoring method...")
   }
-	
-  randomSigScores <- bplapply(randomSigs, singleSigEval,BPPARAM=MulticoreParam(workers=object@numCores))
-  names(randomSigScores) <- names(randomSigs)
-  
 
-  # Remove random signatures that didn't compute correctly
-  toRemove <- lapply(randomSigScores, function(x) all(x@scores == c(-Inf)))
-  randomSigScores <- randomSigScores[which(toRemove==F)]
-  
+  randomSigScores <- bplapply(randomSigs, singleSigEval,BPPARAM=BPPARAM)
+  names(randomSigScores) <- names(randomSigs)
+
+  ## Remove random signatures that didn't compute correctly
+  toRemove <- sapply(randomSigScores, is.null)
+  randomSigScores <- randomSigScores[!toRemove]
+
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "Rand Sig Scores")
 
   # Apply projections to filtered gene sets, create new projectionData object
-  sigClusterList <- list()
-  projDataList <- list()
+  filterModuleList <- list()
   for (filter in filterList) {
     message("Filter level: ", filter)
 
     message("Projecting data into 2 dimensions...")
 
-    projectData <- generateProjections(eData, object@weights, filter, inputProjections <- c(), lean=object@lean, perm_wPCA = object@perm_wPCA, numCores = object@numCores)
-    projs <- projectData[[1]]
-    g <- projectData[[2]]
-    PPT <- projectData[[3]]
-    pca_res <- projectData[[4]]
-    loadings <- projectData[[5]]
-    
+    sigList <- sigList[rownames(sigMatrix)]
+
+    projectData <- generateProjections(eData, object@weights, filter, inputProjections <- c(),
+                                       lean=object@lean, perm_wPCA = object@perm_wPCA,
+                                       BPPARAM = BPPARAM)
+    projs <- projectData$projections ##TODO: not used
+    g <- projectData$geneNames ## TODO: not used
+    pca_res <- projectData$fullPCA
+    loadings <- projectData$loadings ##TODO: not used
+    permMats <- projectData$permMats ##TODO: not used
+
+    message("Computing significance of signatures...")
+    sigVProj <- sigsVsProjections(projectData$projections, sigScores, randomSigScores, BPPARAM=BPPARAM)
+
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, paste0("Pr. ", filter))
 
-    message("Computing significance of signatures...")
-    sigVProj <- sigsVsProjections(projs, sigScores, randomSigScores)
-    
-    sigKeys <- sigVProj[[1]]
-    projKeys <- sigVProj[[2]]
-    sigProjMatrix <- sigVProj[[3]]
-    pVals <- sigVProj[[4]]
-    
-    timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-    tRows <- c(tRows, paste0("SigVPr ", filter))
+    message("Clustering Signatures...")
+    sigClusters <- clusterSignatures(sigList, sigMatrix, sigVProj$pVals, k=10)
 
-	pearsonCorr <- lapply(1:nrow(sigMatrix), function(i) {
+    timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
+    tRows <- c(tRows, paste0("ClusterSignaturesProjections ", filter))
+
+    projData <- ProjectionData(projections = projectData$projections,
+                               keys = sigVProj$projNames,
+                               sigProjMatrix = sigVProj$sigProjMatrix,
+                               pMatrix = sigVProj$pVals,
+                               sigClusters = sigClusters)
+
+    #########
+    message("Fitting principle tree...")
+    treeProjs <- generateTreeProjections(eData, filter,
+                                         inputProjections = projectData$projections,
+                                         permMats = projectData$permMats,
+                                         BPPARAM = BPPARAM)
+    message("Computing significance of signatures...")
+    sigVTreeProj <- sigsVsProjections(treeProjs$projections, sigScores,
+                                      randomSigScores, BPPARAM=BPPARAM)
+
+    message("Clustering Signatures...")
+    sigTreeClusters <- clusterSignatures(sigList, sigMatrix, sigVTreeProj$pVals, k=10)
+
+    timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
+    tRows <- c(tRows, paste0("ClusterSignaturesProjections ", filter))
+
+    treeProjData <- TreeProjectionData(projections = treeProjs$projections,
+                                   keys = sigVTreeProj$projNames,
+                                   sigProjMatrix = sigVTreeProj$sigProjMatrix,
+                                   pMatrix = sigVTreeProj$pVals,
+                                   sigClusters = sigTreeClusters,
+                                   treeScore = treeProjs$treeScore)
+
+    timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
+    tRows <- c(tRows, paste0("SigVTreePr ", filter))
+
+    ########
+    pearsonCorr <- lapply(1:nrow(sigMatrix), function(i) {
 		lapply(1:nrow(pca_res), function(j) {
 			return(calcPearsonCorrelation(sigMatrix[i,], pca_res[j,]))
-		})
-	})
+  		})
+  	})
 
-	pearsonCorr <- lapply(pearsonCorr, unlist)
-	pearsonCorr <- matrix(unlist(pearsonCorr), nrow=nrow(sigMatrix), ncol=nrow(pca_res), byrow=T)
+  	pearsonCorr <- lapply(pearsonCorr, unlist)
+  	pearsonCorr <- matrix(unlist(pearsonCorr), nrow=nrow(sigMatrix), ncol=nrow(pca_res), byrow=T)
 
-	rownames(pearsonCorr) <- rownames(sigMatrix)
-	colnames(pearsonCorr) <- rownames(pca_res)
+  	rownames(pearsonCorr) <- rownames(sigMatrix)
+  	colnames(pearsonCorr) <- rownames(pca_res)
 
-	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-	tRows <- c(tRows, paste("Pearson Correlation", filter))
+  	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
+  	tRows <- c(tRows, paste("Pearson Correlation", filter))
 
-    projData <- ProjectionData(filter=filter, projections=projs, genes=g, keys=projKeys, 
-                                          sigProjMatrix=sigProjMatrix, pMatrix=pVals, PPT=PPT, fullPCA=pca_res,
-                                          pearsonCorr=pearsonCorr, loadings=loadings)
+  	pcaAnnotData <- PCAnnotatorData(fullPCA = projectData$fullPCA,
+  	                                pearsonCorr = pearsonCorr,
+  	                                loadings = projectData$loadings)
 
-    projDataList[[filter]] <- projData
+  	filterModuleData <- FilterModuleData(filter = filter,
+  	                                     genes = projectData$geneNames,
+  	                                     ProjectionData = projData,
+  	                                     TreeProjectionData = treeProjData,
+  	                                     PCAnnotatorData = pcaAnnotData)
 
-	sigList <- sigList[rownames(sigMatrix)]
-  
-	message("Clustering Signatures...")
-	sigClusters <- clusterSignatures(sigList, sigMatrix, pVals, k=10)
-	sigClusterList[[filter]] <- sigClusters
-    
+  	filterModuleList[[filter]] <- filterModuleData
 
-	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-	tRows <- c(tRows, paste0("ClusterSignatures ", filter))
-      
   }
-    
 
   slots <- slotNames("FastProject")
   fpParams <- list()
   for (s in slots) {
-	fpParams[[s]] <- slot(object, s)
+	  fpParams[[s]] <- slot(object, s)
   }
 
-  fpOut <- FastProjectOutput(eData, projDataList, sigMatrix, sigList, sigClusterList, fpParams, pools)
+  fpOut <- FastProjectOutput(eData, filterModuleList, sigMatrix, sigList, fpParams, pools)
 
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "Final")
@@ -417,12 +451,13 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
 )
 
 #' Creates a new FastProject object with the new expression matrix. Called from Server.R.
-#' 
+#'
 #' @param fpParams List of FastProject parameters
 #' @param nexpr New expression matrix for the new FastProject object
 #' @return a new FastProject object
-#' @examples 
-#'   fp <- FastProject("expression_matrix.txt", "data/Gene Name Housekeeping.txt", c("sigfile_1.gmt", "sigfile_2.txt"), precomputed="pre_sigs.txt")
+#' @examples
+#'   fp <- FastProject("expression_matrix.txt", "data/Gene Name Housekeeping.txt",
+#'                     c("sigfile_1.gmt", "sigfile_2.txt"), precomputed="pre_sigs.txt")
 #'   slots <- slotNames(object)
 #'   fpParams <- list()
 #'   for (s in slots) {
@@ -433,19 +468,17 @@ setMethod("Analyze", signature(object="FastProject"), function(object) {
 #'   names(fpParams) <- slots
 #'   nfp <- extraAnalysisFastProject(fpParams, nexpr)
 
-createNewFP <- function(fpParams, nexpr, numCores) {
+createNewFP <- function(fpParams, nexpr) {
 	nfp <- FastProject(exprData=nexpr, sigData=fpParams[["sigData"]],
 						housekeepingData=fpParams[["housekeepingData"]])
 
-	slots <- names(fpParams)	
+	slots <- names(fpParams)
 	for (s in slots) {
 		if (s != "exprData" && s != "sigData" && s != "housekeepingData") {
 			slot(nfp, s) <- fpParams[[s]]
 		}
 	}
 
-	nfp@numCores = numCores
-
 	return(nfp)
 }
-  
+

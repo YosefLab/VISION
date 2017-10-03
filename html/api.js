@@ -144,19 +144,28 @@ var api = (function(){
 
     }
 
-    output.projection.tree = function(filter_group) 
+    // Tree API
+    
+    output.tree = {}
+
+    output.tree.tree = function(filter_group) 
 	{
 		var query = "/FilterGroup/";
 		query = query.concat(encodeURI(filter_group), "/Tree/List");
-		//return $.ajax(query).then(x => x);
 		return $.ajax(query).then(x => JSON.parse(x));
 	}
 
-	output.projection.tree_points = function(filter_group, projection) {
+	output.tree.tree_points = function(filter_group, projection) {
 		var query = "/FilterGroup/";
 		query = query.concat(encodeURI(filter_group), "/", encodeURI(projection), "/Tree/Points");
 		return $.ajax(query).then(x => JSON.parse(x))
 	}
+
+    output.tree.coordinates = function(filter_group, projection) {
+        var query = "/FilterGroup/";
+        query = query.concat(encodeURI(filter_group), "/", encodeURI(projection), "/Tree/Projection")
+        return $.ajax(query).then(x => JSON.parse(x))
+    }
 
 
 	// PC API

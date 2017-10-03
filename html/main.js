@@ -810,7 +810,6 @@ function drawChart() {
 
 		var proj_promise = api.projection.coordinates(filter_group, proj_key);
 
-
 		var sig_info_promise = api.signature.info(sig_key)
 
 		return $.when(proj_promise, val_promise, sig_info_promise) // Runs when both are completed
@@ -857,15 +856,16 @@ function drawChart() {
 			return $().promise()
 		}	
 
-		var proj_promise = api.projection.coordinates(filter_group, proj_key);
+		var proj_promise = api.tree.coordinates(filter_group, proj_key);
 
 		var sig_info_promise = api.signature.info(sig_key);
 
-		var tree_points = api.projection.tree_points(filter_group, proj_key);
-		var tree_adjlist = api.projection.tree(filter_group)
+		var tree_points = api.tree.tree_points(filter_group, proj_key);
+		var tree_adjlist = api.tree.tree(filter_group)
 
 		return $.when(proj_promise, val_promise, sig_info_promise, tree_points, tree_adjlist) // Runs when both are completed
 			.then(function(projection, values, sig_info, treep, treel){
+
 
 				// Massage treep for easier D3 binding
 				
@@ -962,11 +962,9 @@ function drawChart() {
 				addToPCAnalysisBox(sig_info);
 			});
 	
-
-
 	} else {
-		return;
-	}
+        return;
+    }
 
 }
 

@@ -83,35 +83,37 @@ jug() %>%
   get("/FilterGroup/(?<filter_group1>.*)/SigClusters/Normal", function(req, res, err) {
   	filter <- URLdecode(req$params$filter_group1)
   	if (filter == "1") {
-		filter = 1
-	}
-    cls <- fpout@sigClusters[[filter]]
-	cls <- cls$Computed
-
+  	  filter = 1
+  	}
+    cls <- fpout@filterModuleList[[filter]]@ProjectionData@sigClusters
+    # cls <- fpout@sigClusters[[filter]]
+    cls <- cls$Computed
 
     out <- toJSON(cls, auto_unbox=TRUE)
     return(out)
   }) %>%
   get("/FilterGroup/(?<filter_group2>.*)/SigClusters/Precomputed", function(req, res, err) {
-  	filter <- URLdecode(req$params$filter_group2)
-  	if (filter == "1") {
-		filter = 1
-	}
-    cls <- fpout@sigClusters[[filter]]
-	cls <- cls$Precomputed
-	
-    out <- toJSON(cls, auto_unbox=TRUE) 
+    filter <- URLdecode(req$params$filter_group2)
+    if (filter == "1") {
+      filter = 1
+    }
+    cls <- fpout@filterModuleList[[filter]]@ProjectionData@sigClusters
+    # cls <- fpout@sigClusters[[filter]]
+    cls <- cls$Precomputed
+
+    out <- toJSON(cls, auto_unbox=TRUE)
     return(out)
   }) %>%
   get("/FilterGroup/(?<filter_name1>.*)/(?<proj_name1>.*)/coordinates", function(req, res, err) {
-    projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name1)
     proj <- URLdecode(req$params$proj_name1)
-    out <- coordinatesToJSON(projData[[filter]]@projections[[proj]]@pData)
+    out <- coordinatesToJSON(fpout@filterModuleList[[filter]]@ProjectionData@projections[[proj]]@pData)
+    # projData <- fpout@projData
+    # out <- coordinatesToJSON(filterMod[[filter]]@projections[[proj]]@pData)
     return(out)
   }) %>%
   get("/FilterGroup/(?<filter_name2>.*)/SigProjMatrix/Normal", function(req, res, err) {
-    projData <- fpout@projData
+    # projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name2)
 
     signatures <- fpout@sigList
@@ -120,12 +122,12 @@ jug() %>%
     names(vals) <- keys
 	  sigvals <- vals[which(vals == FALSE)]
 	  sigs <- names(sigvals)
-	  
-    out <- sigProjMatrixToJSON(projData[[filter]]@sigProjMatrix, sigs)
+    out <- sigProjMatrixToJSON(fpout@filterModuleList[[filter]]@ProjectionData@sigProjMatrix, sigs)
+    # out <- sigProjMatrixToJSON(projData[[filter]]@sigProjMatrix, sigs)
     return(out)
   }) %>%
   get("/FilterGroup/(?<filter_name3>.*)/SigProjMatrix/Precomputed", function(req, res, err) {
-    projData <- fpout@projData
+    # projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name3)
 
     signatures <- fpout@sigList
@@ -134,12 +136,13 @@ jug() %>%
     names(vals) <- keys
 	  sigvals <- vals[which(vals == TRUE)]
 	  sigs <- names(sigvals)
-	  
-    out <- sigProjMatrixToJSON(projData[[filter]]@sigProjMatrix, sigs)
+
+	  out <- sigProjMatrixToJSON(fpout@filterModuleList[[filter]]@ProjectionData@sigProjMatrix, sigs)
+    # out <- sigProjMatrixToJSON(projData[[filter]]@sigProjMatrix, sigs)
     return(out)
   }) %>%
   get("/FilterGroup/(?<filter_name4>.*)/SigProjMatrix_P/Normal", function(req, res, err) {
-    projData <- fpout@projData
+    # projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name4)
 
     signatures <- fpout@sigList
@@ -149,11 +152,12 @@ jug() %>%
 	  sigvals <- vals[which(vals == FALSE)]
 	  sigs <- names(sigvals)
 
-    out <- sigProjMatrixPToJSON(projData[[filter]]@pMatrix, sigs)
+	  out <- sigProjMatrixToJSON(fpout@filterModuleList[[filter]]@ProjectionData@pMatrix, sigs)
+    # out <- sigProjMatrixPToJSON(projData[[filter]]@pMatrix, sigs)
     return(out)
   }) %>%
   get("/FilterGroup/(?<filter_name5>.*)/SigProjMatrix_P/Precomputed", function(req, res, err) {
-    projData <- fpout@projData
+    # projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name5)
 
     signatures <- fpout@sigList
@@ -162,193 +166,180 @@ jug() %>%
     names(vals) <- keys
 	  sigvals <- vals[which(vals == TRUE)]
 	  sigs <- names(sigvals)
-    
-    out <- sigProjMatrixPToJSON(projData[[filter]]@pMatrix, sigs)
+
+	  out <- sigProjMatrixToJSON(fpout@filterModuleList[[filter]]@ProjectionData@pMatrix, sigs)
+    # out <- sigProjMatrixPToJSON(projData[[filter]]@pMatrix, sigs)
     return(out)
   }) %>%
   get("/FilterGroup/(?<filter_name6>.*)/(?<proj_name2>.*)/clusters/(?<cluster_procedure>.*)/(?<param>.*)", function(req, res, err) {
-    projData <- fpout@projData
+    # projData <- fpout@projData
 
     filter <- URLdecode(req$params$filter_name6)
     proj <- URLdecode(req$params$proj_name2)
     method <- URLdecode(req$params$cluster_procedure)
     param <- as.numeric(URLdecode(req$params$param))
 
-	clust = cluster(projData[[filter]]@projections[[proj]], method, param)
+    clust <- cluster(fpout@filterModuleList[[filter]]@ProjectionData@projections[[proj]], method, param)
+	  # clust = cluster(projData[[filter]]@projections[[proj]], method, param)
     out <- clusterToJSON(clust)
     return(out)
   }) %>%
   get("/FilterGroup/(?<filter_name7>.*)/genes", function(req, res, err) {
-    projData <- fpout@projData
+    # projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name7)
 
-    out <- toJSON(projData[[filter]]@genes)
+    out <- toJSON(fpout@filterModuleList[[filter]]@genes)
+    # out <- toJSON(projData[[filter]]@genes)
 
     return(out)
   }) %>%
   get("/FilterGroup/(?<filter_name8>.*)/Tree/List", function(req, res, err) {
-    projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name8)
 
-    W <- projData[[filter]]@PPT
+    ## all Trees have the same adjacency matrix, so we can use the first one
+    W <- fpout@filterModuleList[[filter]]@TreeProjectionData@projections[[1]]@adjMat
 
     return(toJSON(W))
   }) %>%
   get("/FilterGroup/(?<filter_name18>.*)/(?<proj_name3>.*)/Tree/Points", function(req, res, err) {
-    projData <- fpout@projData
     proj <- URLdecode(req$params$proj_name3)
     filter <- URLdecode(req$params$filter_name18)
 
-    C <- projData[[filter]]@projections[[proj]]@PPT_C
+    C <- fpout@filterModuleList[[filter]]@TreeProjectionData@projections[[proj]]@vData
 
     return(toJSON(C))
   }) %>%
+  get("/FilterGroup/(?<filter_name19>.*)/(?<proj_name4>.*)/Tree/Projection", function(req, res, err) {
+    proj <- URLdecode(req$params$proj_name4)
+    filter <- URLdecode(req$params$filter_name19)
+
+    out <- coordinatesToJSON(fpout@filterModuleList[[filter]]@TreeProjectionData@projections[[proj]]@pData)
+
+    return(out)
+  }) %>%
   get("/FilterGroup/list", function(req, res, err) {
-    projData <- fpout@projData
-    filters <- sapply(projData, function(x){
-                      return(x@filter);
-                      });
+    # projData <- fpout@projData
+    # filters <- sapply(projData, function(x){
+                      # return(x@filter);
+                      # });
+    filters <- sapply(fpout@filterModuleList, function(x) {
+      return(x@filter)
+    })
     return(toJSON(filters))
   }) %>%
-  get("/FilterGroup/(?<filter_name9>.*)/MutualInformation/Precomputed", function(req, res, err) {
-    projData <- fpout@projData
-	filter <- URLdecode(req$params$filter_name9)
-
-    signatures <- fpout@sigList
-    keys <- lapply(signatures, function(x) x@name)
-    vals <- lapply(signatures, function(x) x@isPrecomputed)
-    names(vals) <- keys
-	sigvals <- vals[which(vals == TRUE)]
-	sigs <- names(sigvals)
-	
-	mI <- projData[[filter]]@mutualInformation
-
-    return(mutualInfoToJSON(mI, sigs))
-  }) %>%
-  get("/FilterGroup/(?<filter_name11>.*)/MutualInformation/Normal", function(req, res, err) {
-    projData <- fpout@projData
-	filter <- URLdecode(req$params$filter_name11)
-
-    signatures <- fpout@sigList
-    keys <- lapply(signatures, function(x) x@name)
-    vals <- lapply(signatures, function(x) x@isPrecomputed)
-    names(vals) <- keys
-	sigvals <- vals[which(vals == FALSE)]
-	sigs <- names(sigvals)
-	
-	mI <- projData[[filter]]@mutualInformation
-
-    return(mutualInfoToJSON(mI, sigs))
-  }) %>%
   get("/FilterGroup/(?<filter_name10>.*)/(?<pc_num1>.*)/Loadings/Positive", function(req, res, err) {
-    projData <- fpout@projData
-	filter <- URLdecode(req$params$filter_name10)
-	pcnum <- as.numeric(URLdecode(req$params$pc_num1))
-	
-	l <- projData[[filter]]@loadings[,pcnum]
+    # projData <- fpout@projData
+    filter <- URLdecode(req$params$filter_name10)
+    pcnum <- as.numeric(URLdecode(req$params$pc_num1))
 
-	posl <- l[which(l >= 0)]
+    l <- fpout@filterModuleList[[filter]]@PCAnnotatorData@loadings[,pcnum]
+    # l <- projData[[filter]]@loadings[,pcnum]
 
-	nposl <- sapply(posl, function(x) x / sum(posl))
+    posl <- l[which(l >= 0)]
 
-	nposl <- sort(nposl, decreasing=T)
+    nposl <- sapply(posl, function(x) x / sum(posl))
 
-	js1 <- toJSON(with(stack(nposl), tapply(values, ind, c, simplify=F)))
+    nposl <- sort(nposl, decreasing=T)
 
-	return(js1)
-    
+    js1 <- toJSON(with(stack(nposl), tapply(values, ind, c, simplify=F)))
+
+	  return(js1)
+
   }) %>%
   get("/FilterGroup/(?<filter_name16>.*)/(?<pc_num6>.*)/Loadings/Negative", function(req, res, err) {
-    projData <- fpout@projData
-	filter <- URLdecode(req$params$filter_name16)
-	pcnum <- as.numeric(URLdecode(req$params$pc_num6))
-	
-	l <- projData[[filter]]@loadings[,pcnum]
+  	filter <- URLdecode(req$params$filter_name16)
+  	pcnum <- as.numeric(URLdecode(req$params$pc_num6))
 
-	negl <- l[which(l < 0)]
+  	l <- fpout@filterModuleList[[filter]]@PCAnnotatorData@loadings[,pcnum]
 
-	nnegl <- sapply(negl, function(x) x / sum(negl))
+  	negl <- l[which(l < 0)]
 
-	nnegl <- sort(nnegl, decreasing=T)
+  	nnegl <- sapply(negl, function(x) x / sum(negl))
 
-	js2 <- toJSON(with(stack(nnegl), tapply(values, ind, c, simplify=F)))
+  	nnegl <- sort(nnegl, decreasing=T)
 
-	return(js2)
-    
+  	js2 <- toJSON(with(stack(nnegl), tapply(values, ind, c, simplify=F)))
+
+  	return(js2)
+
   }) %>%
   get("/FilterGroup/(?<filter_name12>.*)/(?<sig_name5>.*)/(?<pc_num2>.*)/Coordinates", function(req, res, err) {
-    projData <- fpout@projData
+    # projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name12)
-	pcnum <- as.numeric(URLdecode(req$params$pc_num2))
-	signame <- URLdecode(req$params$sig_name5)
-	
-	pc <- projData[[filter]]@fullPCA[pcnum,]
-	ss <- fpout@sigMatrix[signame,]
+  	pcnum <- as.numeric(URLdecode(req$params$pc_num2))
+  	signame <- URLdecode(req$params$sig_name5)
 
-	ret <- cbind(pc, ss)
-	coord <- apply(unname(ret), 1, as.list)
-	names(coord) <- rownames(ret)
+  	pc <- fpout@filterModuleList[[filter]]@PCAnnotatorData@fullPCA[pcnum,]
+  	# pc <- projData[[filter]]@fullPCA[pcnum,]
+  	ss <- fpout@sigMatrix[signame,]
+
+  	ret <- cbind(pc, ss)
+  	coord <- apply(unname(ret), 1, as.list)
+  	names(coord) <- rownames(ret)
 
     return(toJSON(coord, force=T, auto_unbox=T))
   }) %>%
   get("/FilterGroup/(?<filter_name13>.*)/PCVersus/(?<pc_num3>.*)/(?<pc_num4>.*)", function(req, res, err) {
-    projData <- fpout@projData
+    # projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name13)
-	pc1 <- as.numeric(URLdecode(req$params$pc_num3))
-	pc2 <- as.numeric(URLdecode(req$params$pc_num4))
+  	pc1 <- as.numeric(URLdecode(req$params$pc_num3))
+  	pc2 <- as.numeric(URLdecode(req$params$pc_num4))
 
-	pcdata1 <- projData[[filter]]@fullPCA[pc1,]
-	pcdata2 <- projData[[filter]]@fullPCA[pc2,]
+  	pcdata1 <- fpout@filterModuleList[[filter]]@PCAnnotatorData@fullPCA[pc1,]
+  	# pcdata1 <- projData[[filter]]@fullPCA[pc1,]
+  	pcdata2 <- fpout@filterModuleList[[filter]]@PCAnnotatorData@fullPCA[pc2,]
+  	# pcdata2 <- projData[[filter]]@fullPCA[pc2,]
 
 
-	ret <- cbind(pcdata1, pcdata2)
-	coord <- apply(unname(ret), 1, as.list)
-	names(coord) <- rownames(ret)
-
+  	ret <- cbind(pcdata1, pcdata2)
+  	coord <- apply(unname(ret), 1, as.list)
+  	names(coord) <- rownames(ret)
 
     return(toJSON(coord, force=T, auto_unbox=T))
   }) %>%
   get("/FilterGroup/(?<filter_name14>.*)/PearsonCorr/Normal", function(req, res, err) {
-    projData <- fpout@projData
-	filter <- URLdecode(req$params$filter_name14)
+    # projData <- fpout@projData
+	  filter <- URLdecode(req$params$filter_name14)
 
     signatures <- fpout@sigList
     keys <- lapply(signatures, function(x) x@name)
     vals <- lapply(signatures, function(x) x@isPrecomputed)
     names(vals) <- keys
-	sigvals <- vals[which(vals == FALSE)]
-	sigs <- names(sigvals)
-	
-	pc <- projData[[filter]]@pearsonCorr
+	  sigvals <- vals[which(vals == FALSE)]
+	  sigs <- names(sigvals)
+
+	  pc <- fpout@filterModuleList[[filter]]@PCAnnotatorData@pearsonCorr
+	  # pc <- projData[[filter]]@pearsonCorr
 
     return(pearsonCorrToJSON(pc, sigs))
   }) %>%
   get("/FilterGroup/(?<filter_name15>.*)/PearsonCorr/Precomputed", function(req, res, err) {
-    projData <- fpout@projData
-	filter <- URLdecode(req$params$filter_name15)
+    # projData <- fpout@projData
+	  filter <- URLdecode(req$params$filter_name15)
 
     signatures <- fpout@sigList
     keys <- lapply(signatures, function(x) x@name)
     vals <- lapply(signatures, function(x) x@isPrecomputed)
     names(vals) <- keys
-	sigvals <- vals[which(vals == TRUE)]
-	sigs <- names(sigvals)
-	
-	pc <- projData[[filter]]@pearsonCorr
+  	sigvals <- vals[which(vals == TRUE)]
+  	sigs <- names(sigvals)
 
-	return(pearsonCorrToJSON(pc, sigs))
+  	pc <- fpout@filterModuleList[[filter]]@PCAnnotatorData@pearsonCorr
+  	# pc <- projData[[filter]]@pearsonCorr
+
+  	return(pearsonCorrToJSON(pc, sigs))
   }) %>%
   get("/Expression", function(req, res, err) {
     return(expressionToJSON(fpout@exprData@data, matrix(NA)))
   }) %>%
   get("/FilterGroup/(?<filter_name17>.*)/Expression", function(req, res, err) {
-  	  filter <- URLdecode(req$params$filter_name17);
-  	  if (filter == "fano") {
-  	  	  data <- fpout@exprData@fanoFilter
+    filter <- URLdecode(req$params$filter_name17)
+    if (filter == "fano") {
+      data <- fpout@exprData@fanoFilter
 	  } else if (filter == "threshold") {
-	  	  data <- fpout@exprData@thresholdFilter
+  	  data <- fpout@exprData@thresholdFilter
 	  } else if (filter == "novar") {
-	  	  data <- fpout@exprData@noVar
+  	  data <- fpout@exprData@noVar
 	  } else {
 			data <- fpout@exprData@data
 	  }
@@ -395,7 +386,7 @@ jug() %>%
         return(out)
       }) %>%
   get("/person/(?<your_name2>.*)", function(req, res, err){
-    out = paste0("Hello ", 
+    out = paste0("Hello ",
                  URLdecode(req$params$your_name2),
                  "!")
     return(out)
@@ -404,31 +395,31 @@ jug() %>%
     if ('number' %in% names(req$params)) {
       number = URLdecode(req$params$number)
       number = as.integer(number) # All params are string by default
-      
-      gene_list = c( "PPP2R1A", "CDK7", "SEM1", 
-                     "PSMF1", "PSMB10", "DNM2", "CEP63", "CDC25B", 
-                     "CDC25B", "CEP57", "RAB11A", "KHDRBS1", "RCC2", 
-                     "ARPP19", "MUS81", "BACH1", "PSMA7", "CDC25C", 
-                     "CDC25C", "PSMC5", "PLCB1", "PSMC1", "APP", 
-                     "WEE1", "PPP1CB", "CCNB2", "DYNC1H1", "DCTN1", 
-                     "PSMA6", "PBX1", "NAE1", "UBC", "UBC", 
-                     "UBC", "FOXN3", "CEP41", "TUBG1", "CDK4", 
-                     "HAUS6", "CDK6", "PSMA8", "CDK3", "WNT10B", 
-                     "WNT10B", "PSMC4", "CLASP1", "PSMD4", "PSMB11", 
-                     "KDM8", "ABCB1", "TICRR", "CENPJ", "SFI1", 
-                     "DYNLL1", "PPP2R2A", "CHEK2", "YWHAG", "PKIA", 
-                     "PSMD1", "PSMD7", "CDKN1A", "PHOX2B", "PSMB7", 
-                     "NEK2", "MNAT1", "CCNH", "PHLDA1", "ORAOV1", 
+
+      gene_list = c( "PPP2R1A", "CDK7", "SEM1",
+                     "PSMF1", "PSMB10", "DNM2", "CEP63", "CDC25B",
+                     "CDC25B", "CEP57", "RAB11A", "KHDRBS1", "RCC2",
+                     "ARPP19", "MUS81", "BACH1", "PSMA7", "CDC25C",
+                     "CDC25C", "PSMC5", "PLCB1", "PSMC1", "APP",
+                     "WEE1", "PPP1CB", "CCNB2", "DYNC1H1", "DCTN1",
+                     "PSMA6", "PBX1", "NAE1", "UBC", "UBC",
+                     "UBC", "FOXN3", "CEP41", "TUBG1", "CDK4",
+                     "HAUS6", "CDK6", "PSMA8", "CDK3", "WNT10B",
+                     "WNT10B", "PSMC4", "CLASP1", "PSMD4", "PSMB11",
+                     "KDM8", "ABCB1", "TICRR", "CENPJ", "SFI1",
+                     "DYNLL1", "PPP2R2A", "CHEK2", "YWHAG", "PKIA",
+                     "PSMD1", "PSMD7", "CDKN1A", "PHOX2B", "PSMB7",
+                     "NEK2", "MNAT1", "CCNH", "PHLDA1", "ORAOV1",
                      "ATM", "SKP2", "CEP72")
-      
+
       res$json(gene_list[1:number])
-      
+
     }
     else{
       out = "ERROR!"
     }
     return(out)
-  }) %>% 
+  }) %>%
   serve_static_files("../html") %>%
   simple_error_handler_json() %>%
   serve_it(port=port)
