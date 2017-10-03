@@ -28,9 +28,8 @@ registerMethods <- function(lean=FALSE) {
   }
 
   projMethods <- c(projMethods, "tSNE30" = applytSNE30)
-  # projMethods <- c(projMethods, "KNN" = applyKNN)
+  #projMethods <- c(projMethods, "KNN" = applyKNN)
   projMethods <- c(projMethods, "tSNE10" = applytSNE10)
-  # projMethods <- c(projMethods, "PPT" = applySimplePPT)
 
   return(projMethods)
 }
@@ -64,20 +63,15 @@ generateProjections <- function(expr, weights, filterName="",
   }
 
   methodList = registerMethods(lean)
-  t <- Sys.time()
-  timingList <- (t - t)
-  timingNames <- c("Start")
 
   if (perm_wPCA) {
     res <- applyPermutationWPCA(exprData, weights, components=30)
     pca_res <- res[[1]]
-    print(dim(pca_res))
     loadings <- res[[3]]
   } else {
     res <- applyWeightedPCA(exprData, weights, maxComponents = 30)
     pca_res <- res[[1]]
     loadings <- res[[3]]
-    #m <- profmem(pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30)[[1]])
   }
 
   inputProjections <- c(inputProjections, Projection("PCA: 1,2", t(pca_res[c(1,2),])))
@@ -95,11 +89,6 @@ generateProjections <- function(expr, weights, filterName="",
   }
   fullPCA <- t(fullPCA)
 
-  timingList <- rbind(timingList, c(difftime(Sys.time(), t, units="sec")))
-  timingNames <- c(timingNames, "wPCA")
-  #memProf <- c(total(m)/1e6)
-  #memNames <- c("wPCA")
-
   for (method in names(methodList)){
     gc()
     message(method)
@@ -108,22 +97,16 @@ generateProjections <- function(expr, weights, filterName="",
       res <- methodList[[method]](exprData)
       proj <- Projection(method, res)
       inputProjections <- c(inputProjections, proj)
+    #} else if (method == "KNN") {
+    #    res <- methodList[[method]](pca_res, BPPARAM)
+    #    proj <- Projection(method, res, weights=res)
+    #    inputProjections <- c(inputProjections, proj)
     } else { ## run on reduced data
       res <- methodList[[method]](pca_res, BPPARAM)
       proj <- Projection(method, res)
       inputProjections <- c(inputProjections, proj)
       }
     }
-    #})
-    #memProf <- rbind(memProf, total(m)/1e6)
-    #memNames <- c(memNames, method)
-
-    timingList <- rbind(timingList, c(difftime(Sys.time(), t, units="sec")))
-    timingNames <- c(timingNames, method)
-    rownames(timingList) <- timingNames
-    #return(timingList)
-    #rownames(memProf) <- memNames
-    #return(memProf)
 
     output <- list()
 
@@ -144,6 +127,12 @@ generateProjections <- function(expr, weights, filterName="",
       output[[p@name]] = p
 
       }
+
+    knnres <- applyKNN(output[["PCA: 1,2"]]@pData,BPPARAM)
+    proj <- Projection("KNN", knnres, weights=knnres)
+    output[["KNN"]] <- proj
+
+    output[["KNN"]]@pData <- output[["tSNE30"]]@pData
 
   return(list(projections = output, geneNames = rownames(exprData),
               fullPCA = fullPCA, loadings = loadings))
@@ -470,9 +459,10 @@ applytSNE30 <- function(exprData, BPPARAM=bpparam()) {
 
 
 applyKNN <- function(exprData, BPPARAM=bpparam()) {
+    print(dim(exprData))
 	set.seed(RANDOM_SEED)
 
-	k <- ball_tree_knn(t(exprData), 30, BPPARAM$workers)
+	k <- ball_tree_knn(t(exprData), round(sqrt(ncol(exprData))), BPPARAM$workers)
 	nn <- k[[1]]
 	d <- k[[2]]
 
@@ -486,12 +476,7 @@ applyKNN <- function(exprData, BPPARAM=bpparam()) {
   weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
   weights <- weights / weightsNormFactor
 
-  knnmat <- Matrix(weights, sparse=T)
-  knproj <- projectKNNs(knnmat)
-
-  colnames(knproj) <- colnames(exprData)
-
-  return(t(knproj))
+  return(weights)
 }
 
 #' Performs ISOMap on data

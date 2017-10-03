@@ -101,7 +101,8 @@ PCAnnotatorData <- setClass("PCAnnotatorData",
 Projection <- setClass("Projection",
   slots = c(
     name = "character",
-    pData = "matrix"
+    pData = "matrix",
+    weights = "matrix"
 ))
 
 TreeProjection <- setClass("TreeProjection",

@@ -7,10 +7,11 @@ require("cluster")
 #' @param pData Coordinates of each sample in the projection (NUM_SAMPLES x NUM_COMPONENTS)
 #' @return Projection object
 setMethod("initialize", signature(.Object = "Projection"),
-          function(.Object, name, pData=NULL) {
+          function(.Object, name, pData=NULL, weights=matrix(NA, 1,1)) {
 
             .Object@name = name
             .Object@pData = pData
+            .Object@weights = weights
 
             return(.Object)
           }
@@ -56,6 +57,13 @@ setMethod("cluster", signature(object = "Projection"),
 
 setMethod("computeKNNWeights", signature(object = "Projection"),
           function(object, K = 30, BPPARAM = bpparam()) {
+
+           print(object@name)
+           print(object@weights[1,1])
+           if (!is.na(object@weights[1,1])) {
+                return(object@weights)
+            }
+
             weights <- matrix(0L, nrow=NCOL(object@pData), ncol=NCOL(object@pData))
             k <- ball_tree_knn(t(object@pData), K, BPPARAM$workers)
             nn <- k[[1]]

@@ -194,23 +194,28 @@ jug() %>%
     return(out)
   }) %>%
   get("/FilterGroup/(?<filter_name8>.*)/Tree/List", function(req, res, err) {
-    # projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name8)
 
     ## all Trees have the same adjacency matrix, so we can use the first one
-    W <- fpout@filterModuleList[[filter]]@TreeProjectionData@projections[[1]]@adjmat
+    W <- fpout@filterModuleList[[filter]]@TreeProjectionData@projections[[1]]@adjMat
 
     return(toJSON(W))
   }) %>%
   get("/FilterGroup/(?<filter_name18>.*)/(?<proj_name3>.*)/Tree/Points", function(req, res, err) {
-    # projData <- fpout@projData
     proj <- URLdecode(req$params$proj_name3)
     filter <- URLdecode(req$params$filter_name18)
 
     C <- fpout@filterModuleList[[filter]]@TreeProjectionData@projections[[proj]]@vData
-    # C <- projData[[filter]]@projections[[proj]]@PPT_C
 
     return(toJSON(C))
+  }) %>%
+  get("/FilterGroup/(?<filter_name19>.*)/(?<proj_name4>.*)/Tree/Projection", function(req, res, err) {
+    proj <- URLdecode(req$params$proj_name4)
+    filter <- URLdecode(req$params$filter_name19)
+
+    out <- coordinatesToJSON(fpout@filterModuleList[[filter]]@TreeProjectionData@projections[[proj]]@pData)
+
+    return(out)
   }) %>%
   get("/FilterGroup/list", function(req, res, err) {
     # projData <- fpout@projData
@@ -222,36 +227,6 @@ jug() %>%
     })
     return(toJSON(filters))
   }) %>%
-  # get("/FilterGroup/(?<filter_name9>.*)/MutualInformation/Precomputed", function(req, res, err) {
-  #   projData <- fpout@projData
-  #   filter <- URLdecode(req$params$filter_name9)
-  #
-  #   signatures <- fpout@sigList
-  #   keys <- lapply(signatures, function(x) x@name)
-  #   vals <- lapply(signatures, function(x) x@isPrecomputed)
-  #   names(vals) <- keys
-  #   sigvals <- vals[which(vals == TRUE)]
-  #   sigs <- names(sigvals)
-  #
-  #   mI <- projData[[filter]]@mutualInformation
-  #
-  #   return(mutualInfoToJSON(mI, sigs))
-  # }) %>% ##TODO
-  # get("/FilterGroup/(?<filter_name11>.*)/MutualInformation/Normal", function(req, res, err) {
-  #   projData <- fpout@projData
-  #   filter <- URLdecode(req$params$filter_name11)
-  #
-  #   signatures <- fpout@sigList
-  #   keys <- lapply(signatures, function(x) x@name)
-  #   vals <- lapply(signatures, function(x) x@isPrecomputed)
-  #   names(vals) <- keys
-  #   sigvals <- vals[which(vals == FALSE)]
-  #   sigs <- names(sigvals)
-  #
-  #   mI <- projData[[filter]]@mutualInformation
-  #
-  #   return(mutualInfoToJSON(mI, sigs))
-  # }) %>%
   get("/FilterGroup/(?<filter_name10>.*)/(?<pc_num1>.*)/Loadings/Positive", function(req, res, err) {
     # projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name10)
@@ -272,12 +247,10 @@ jug() %>%
 
   }) %>%
   get("/FilterGroup/(?<filter_name16>.*)/(?<pc_num6>.*)/Loadings/Negative", function(req, res, err) {
-    # projData <- fpout@projData
   	filter <- URLdecode(req$params$filter_name16)
   	pcnum <- as.numeric(URLdecode(req$params$pc_num6))
 
   	l <- fpout@filterModuleList[[filter]]@PCAnnotatorData@loadings[,pcnum]
-  	# l <- projData[[filter]]@loadings[,pcnum]
 
   	negl <- l[which(l < 0)]
 
