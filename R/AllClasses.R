@@ -7,6 +7,9 @@
 # scores, distance matrices, and anything else, is computed
 # on the different types of data.
 
+library(methods)
+setClassUnion('numericORNULL', members=c('numeric', 'NULL'))
+
 Cluster <- setClass("Cluster",
   slots = c(
     method = "character",
@@ -81,7 +84,6 @@ FastProjectOutput <- setClass("FastProjectOutput",
     pools = "list"
 ))
 
-
 ProjectionData <- setClass("ProjectionData",
   slots = c(
     projections = "list",
@@ -89,6 +91,13 @@ ProjectionData <- setClass("ProjectionData",
     sigProjMatrix = "matrix",
     pMatrix="matrix",
     sigClusters = "list"
+))
+
+TreeProjectionData <- setClass("TreeProjectionData",
+  contains = c("ProjectionData"),
+  slots = c(
+    treeScore = "numericORNULL"
+    # adjMat = "matrix"
 ))
 
 PCAnnotatorData <- setClass("PCAnnotatorData",
@@ -119,7 +128,7 @@ FilterModuleData <- setClass("FilterModuleData",
     filter = "character",
     genes = "character",
     ProjectionData = "ProjectionData",
-    TreeProjectionData = "ProjectionData",
+    TreeProjectionData = "TreeProjectionData",
     PCAnnotatorData = "PCAnnotatorData"
 ))
 

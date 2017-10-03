@@ -43,12 +43,17 @@ registerMethods <- function(lean=FALSE) {
 #' @param lean If T, diminished number of algorithms applied, if FALSE all algorithms applied. Default is FALSE
 #' @param perm_wPCA If TRUE, apply permutation wPCA to determine significant number of components. Default is FALSE.
 #' @param BPPARAM the backend to use for parallelization
-#' @return List of Projection objects mapping projection type to projection data
-#' @return List of gene names used during the dimensionality reduction phase
-#' @return List of relevant PPT parameters.
+#' @return list:
+#' \itemize {
+#'     \item projections: a list of Projection objects
+#'     \item geneNames: a character vector of the genes involved in the analsis
+#'     \item fullPCA: the full PCA matrix of the data
+#'     \item loadings: the loading vectors for the fullPCA matrix
+#'     \item permMats: a list of permuted and projected data matrices, used for downstream permutation tests
+#' }
 generateProjections <- function(expr, weights, filterName="",
                                 inputProjections=c(), lean=FALSE,
-                                perm_wPCA=FALSE, BPPARAM = bpparam()) {
+                                perm_wPCA=FALSE, BPPARAM = BiocParallel::bpparam()) {
 
   if (filterName == "novar") {
     exprData <- expr@noVarFilter
@@ -68,10 +73,16 @@ generateProjections <- function(expr, weights, filterName="",
     res <- applyPermutationWPCA(exprData, weights, components=30)
     pca_res <- res[[1]]
     loadings <- res[[3]]
+    permMats <- res$permuteMatrices
   } else {
     res <- applyWeightedPCA(exprData, weights, maxComponents = 30)
     pca_res <- res[[1]]
     loadings <- res[[3]]
+<<<<<<< Updated upstream
+=======
+    permMats <- NULL
+    #m <- profmem(pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30)[[1]])
+>>>>>>> Stashed changes
   }
 
   inputProjections <- c(inputProjections, Projection("PCA: 1,2", t(pca_res[c(1,2),])))
@@ -131,12 +142,13 @@ generateProjections <- function(expr, weights, filterName="",
     output[["KNN"]]@pData <- output[["tSNE30"]]@pData
 
   return(list(projections = output, geneNames = rownames(exprData),
-              fullPCA = fullPCA, loadings = loadings))
+              fullPCA = fullPCA, loadings = loadings, permMats = permMats))
 }
 
 #' Genrate projections based on a tree structure learned in high dimensonal space
 generateTreeProjections <- function(expr, filterName="",
-                                    inputProjections, BPPARAM = bpparam()) {
+                                    inputProjections, permMats = NULL,
+                                    BPPARAM = bpparam()) {
 
 
   if (filterName == "novar") {
@@ -155,7 +167,7 @@ generateTreeProjections <- function(expr, filterName="",
   timingList <- (t - t)
   timingNames <- c("Start")
 
-  hdTree <- applySimplePPT(exprData)
+  hdTree <- applySimplePPT(exprData, permExprData = permMats)
   hdProj <- TreeProjection(name = "PPT", pData = exprData,
                              vData = hdTree$princPnts, adjMat = hdTree$adjMat)
 
@@ -196,7 +208,7 @@ generateTreeProjections <- function(expr, filterName="",
     output[[treeProj@name]] = treeProj
   }
 
-  return(output)
+  return(list(projections = output, treeScore = hdTree$zscore))
 }
 
 #' Performs weighted PCA on data
@@ -255,6 +267,9 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
 
 #' Applies pemutation method to return the most significant components of weighted PCA data
 #'
+#' @details Based on the method proposed by Buja and Eyuboglu (1992), PCA is performed on the data
+#' then a permutation procedure is used to assess the significance of components
+#'
 #' @param expr Expression data
 #' @param weights Weights to apply to each coordinate in data
 #' @param components Maximum components to calculate. Default is 50.
@@ -263,29 +278,9 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
 #' @return Weighted PCA data
 #' @return Variance of each component.
 #' @return Eigenvectors of the weighted covariance matrix
+#' @return permuteMatrices: permuted matrces created for this algorithm
 applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, verbose=FALSE) {
-  #' Computes weighted PCA on data. Returns only significant components.
-  #'
-  #' After performing PCA on the data matrix, this method then uses a permutation
-  #' procedure based on Buja A and Eyuboglu N (1992) to asses components for significance.
-  #'
-  #' Parameters:
-  #'  data: (Num_Features x Num_Samples) matrix
-  #'    Matrix containing data to project
-  #'  weights: (Num_Features x Num_Samples) matrix
-  #'    Matrix containing weights to use for each coordinate in data
-  #'  components: numerical
-  #'    Max components to calculate
-  #'  p_threshold: numerical
-  #'    P-value to cutoff components at
-  #'  verbose: logical
-  #'
-  #'  Return:
-  #		Weighted PCA data
-  #		Variance of each component
-  #		Eigenvectors of weighted covariance matrix.
-
-  message("Permutation WPCA")
+  if(verbose) message("Permutation WPCA")
   comp <- min(components, nrow(expr), ncol(data))
 
   NUM_REPEATS <- 20;
@@ -300,6 +295,8 @@ applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, 
   bg_data <- matrix(0L, nrow=nrow(expr), ncol=ncol(expr))
   bg_weights <- matrix(0L, nrow=nrow(expr), ncol=ncol(expr))
 
+  permMats <- list()
+
   # Compute background data and PCAs for comparing p values
   for (i in 1:NUM_REPEATS) {
     for (j in 1:nrow(expr)) {
@@ -310,6 +307,7 @@ applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, 
 
     bg = applyWeightedPCA(bg_data, bg_weights, comp)
     bg_vals[i,] = bg[[2]]
+    permMats[[i]] <- bg[[1]]
   }
 
   mu <- as.matrix(apply(bg_vals, 2, mean))
@@ -334,7 +332,9 @@ applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, 
   eval <- eval[1:thresholdComponent]
   evec = evec[1:thresholdComponent, ]
 
-  return(list(wPCA, eval, evec))
+  permMats <- lapply(permMats, function(m) {m[1:thresholdComponent, ]})
+
+  return(list(wPCA = wPCA, eval = eval, evec = evec, permuteMatrices = permMats))
 }
 
 #' Performs PCA on data

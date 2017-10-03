@@ -355,6 +355,7 @@ setMethod("Analyze", signature(object="FastProject"),
     g <- projectData$geneNames ## TODO: not used
     pca_res <- projectData$fullPCA
     loadings <- projectData$loadings ##TODO: not used
+    permMats <- projectData$permMats ##TODO: not used
 
     message("Computing significance of signatures...")
     sigVProj <- sigsVsProjections(projectData$projections, sigScores, randomSigScores, BPPARAM=BPPARAM)
@@ -378,9 +379,11 @@ setMethod("Analyze", signature(object="FastProject"),
     message("Fitting principle tree...")
     treeProjs <- generateTreeProjections(eData, filter,
                                          inputProjections = projectData$projections,
+                                         permMats = projectData$permMats,
                                          BPPARAM = BPPARAM)
     message("Computing significance of signatures...")
-    sigVTreeProj <- sigsVsProjections(treeProjs, sigScores, randomSigScores, BPPARAM=BPPARAM)
+    sigVTreeProj <- sigsVsProjections(treeProjs$projections, sigScores,
+                                      randomSigScores, BPPARAM=BPPARAM)
 
     message("Clustering Signatures...")
     sigTreeClusters <- clusterSignatures(sigList, sigMatrix, sigVTreeProj$pVals, k=10)
@@ -388,11 +391,12 @@ setMethod("Analyze", signature(object="FastProject"),
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, paste0("ClusterSignaturesProjections ", filter))
 
-    treeProjData <- ProjectionData(projections = treeProjs,
+    treeProjData <- TreeProjectionData(projections = treeProjs$projections,
                                    keys = sigVTreeProj$projNames,
                                    sigProjMatrix = sigVTreeProj$sigProjMatrix,
                                    pMatrix = sigVTreeProj$pVals,
-                                   sigClusters = sigTreeClusters)
+                                   sigClusters = sigTreeClusters,
+                                   treeScore = treeProjs$treeScore)
 
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, paste0("SigVTreePr ", filter))

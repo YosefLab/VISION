@@ -4,20 +4,23 @@ require("igraph")
 #'
 #' @param exprData Expression data -- Num_Genes x Num_Samples
 #' @param numCores Number of cores to use during this analysis
+#' @param permExprData a list of permutated expression datasets, to use for significance estimation of the tree [default:NULL]
 #' @param nNodes Number of nodes to find. Default is sqrt(N)
 #' @param sigma regularization parameter for soft-assignment of data points to nodes, used as the variance
 #'        of a guassian kernel. If 0, this is estimated automatically
 #' @param gamma graph-level regularization parameter, controlling the tradeoff between the noise-levels
 #'        in the data and the graph smoothness. If 0, this is estimated automatically.
 #' @return Information on the fitten tree
-#'   \itemize {
-#'     \item C spatial positions of the tree nodes in NUM_FEATURES dimensional space
-#'     \item W Unweighted (binary) adjacency matrix of the fitten tree
-#'     \item distMat distance matrix between each tree node to each datapoint
-#'     \item mse the Mean-Squared-Error of the fitten tree
+#'   \itemize{
+#'     \item C: spatial positions of the tree nodes in NUM_FEATURES dimensional space
+#'     \item W: Unweighted (binary) adjacency matrix of the fitten tree
+#'     \item distMat: distance matrix between each tree node to each datapoint
+#'     \item mse: the Mean-Squared-Error of the fitten tree
+#'     \item zscore: a significance score for the fitted tree
 #'   }
 
-applySimplePPT <- function(exprData, numCores, nNodes_ = round(sqrt(ncol(exprData))), sigma=0, gamma=0) {
+applySimplePPT <- function(exprData, numCores, permExprData = NULL,
+                           nNodes_ = round(sqrt(ncol(exprData))), sigma=0, gamma=0) {
   MIN_GAMMA <- 1e-5
   MAX_GAMMA <- 1e5
   DEF_TOL <- 1e-2
@@ -123,12 +126,19 @@ applySimplePPT <- function(exprData, numCores, nNodes_ = round(sqrt(ncol(exprDat
   }
 
   tr <- fitTree(exprData, nNodes, sigma, gamma, DEF_TOL, DEF_MAX_ITER)
-  C <- tr$C
-  Wt <- tr$W
-  mse <- tr$mse
+
+  if (!is.null(permExprData)) {
+    mses <- sapply(permExprData, function(permdata) {
+      return(fitTree(permdata, nNodes, sigma, gamma, DEF_TOL, DEF_MAX_ITER)$mse)
+    })
+    zscore <- log1p((tr$mse - mean(mses)) / sd(mses))
+  } else {
+    zscore <- NULL
+  }
 
 
-  return(list(princPnts = C, adjMat = Wt, distMat = sqdist(t(exprData), t(C)), mse = mse))
+  return(list(princPnts = tr$C, adjMat = tr$W, distMat = sqdist(t(exprData), t(C)),
+              mse = tr$mse, zscore = zscore))
 }
 
 #' Fit tree using input parameters
