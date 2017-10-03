@@ -78,11 +78,8 @@ generateProjections <- function(expr, weights, filterName="",
     res <- applyWeightedPCA(exprData, weights, maxComponents = 30)
     pca_res <- res[[1]]
     loadings <- res[[3]]
-<<<<<<< Updated upstream
-=======
     permMats <- NULL
     #m <- profmem(pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30)[[1]])
->>>>>>> Stashed changes
   }
 
   inputProjections <- c(inputProjections, Projection("PCA: 1,2", t(pca_res[c(1,2),])))
