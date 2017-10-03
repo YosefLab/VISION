@@ -28,7 +28,7 @@ registerMethods <- function(lean=FALSE) {
   }
 
   projMethods <- c(projMethods, "tSNE30" = applytSNE30)
-  #projMethods <- c(projMethods, "KNN" = applyKNN)
+  projMethods <- c(projMethods, "KNN" = applyKNN)
   projMethods <- c(projMethods, "tSNE10" = applytSNE10)
 
   return(projMethods)
@@ -97,10 +97,10 @@ generateProjections <- function(expr, weights, filterName="",
       res <- methodList[[method]](exprData)
       proj <- Projection(method, res)
       inputProjections <- c(inputProjections, proj)
-    #} else if (method == "KNN") {
-    #    res <- methodList[[method]](pca_res, BPPARAM)
-    #    proj <- Projection(method, res, weights=res)
-    #    inputProjections <- c(inputProjections, proj)
+    } else if (method == "KNN") {
+        res <- methodList[[method]](pca_res, BPPARAM)
+        proj <- Projection(method, res, weights=res)
+        inputProjections <- c(inputProjections, proj)
     } else { ## run on reduced data
       res <- methodList[[method]](pca_res, BPPARAM)
       proj <- Projection(method, res)
@@ -127,10 +127,6 @@ generateProjections <- function(expr, weights, filterName="",
       output[[p@name]] = p
 
       }
-
-    knnres <- applyKNN(output[["PCA: 1,2"]]@pData,BPPARAM)
-    proj <- Projection("KNN", knnres, weights=knnres)
-    output[["KNN"]] <- proj
 
     output[["KNN"]]@pData <- output[["tSNE30"]]@pData
 

@@ -58,8 +58,6 @@ setMethod("cluster", signature(object = "Projection"),
 setMethod("computeKNNWeights", signature(object = "Projection"),
           function(object, K = 30, BPPARAM = bpparam()) {
 
-           print(object@name)
-           print(object@weights[1,1])
            if (!is.na(object@weights[1,1])) {
                 return(object@weights)
             }
