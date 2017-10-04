@@ -1,13 +1,5 @@
-#' Methods to normalize data
-#' 
-#' Different options to normalize the data before the signature
-#' values are calculated.
-#' 
-#' Determined by the sig_norm_method value in the FastProject call
-require(matrixStats)
-
 #' Calculates standard deviation with a denominator of n rather than (n-1)
-#' 
+#'
 #' @param data data matrix to apply the biased standard deviation operation to
 #' @param byRow if TRUE, apply by row. Else, by column. Default is TRUE.
 #' @return Vector of standard deviations by row or column
@@ -24,9 +16,9 @@ biasedSD <- function(data, byRow=TRUE) {
 }
 
 #' Computes the biased SD on a vector, correcting the denominator to n rather than (n-1)
-#' 
+#'
 #' @param data Vector of numbers
-#' @return Biased standard deviation of vector 
+#' @return Biased standard deviation of vector
 biasedVectorSD <- function(data) {
   d <- length(data)
   std <- sd(data) * sqrt((d-1)/d)
@@ -34,23 +26,15 @@ biasedVectorSD <- function(data) {
 }
 
 #' Does nothing, just returns the original data
-#' 
+#'
 #' @param data data matrix
 #' @return The data matrix
 noNormalization <- function(data) {
-  #' Does nothing, return the original data
-  #	 Args:
-  #		data: data matrix
-  #	
-  # Returns:
-  #		Same data matrix.
-  
-  message("No normalization applied")
   return(data)
 }
 
 #' Performs z-normalization on all columns
-#' 
+#'
 #' @param data data matrix
 #' @return Data matrix with same dimensions, with each column z-normalized.
 colNormalization <- function(data) {
@@ -65,7 +49,7 @@ colNormalization <- function(data) {
 }
 
 #' Performs z-normalization on all rows
-#' 
+#'
 #' @param data data matrix
 #' @return Data matrix with same dimensions, with each row z-normalized.
 rowNormalization <- function(data) {
@@ -79,38 +63,29 @@ rowNormalization <- function(data) {
   return(ndata)
 }
 
-#' Performs z-normalization on all columns and rows 
-#' 
+#' Performs z-normalization on all columns and rows
+#'
 #' @param data data matrix
 #' @return Data matrix with same dimensions, with each row and column z-normalized.
 rowAndColNormalization <- function(data) {
-  #' Normalize rows, then columns
-  #
-  # Args:
-  #		data: data matrix
-  #
-  #	Returns:
-  #		Data matrix with same dimensions, with both columns and rows z-normalized.
-  
   message("Applying row and column normalization...")
-  
+
   data = rowNormalization(data)
   data = colNormalization(data)
-  
+
   return(data.frame(data))
 }
 
 #' Creaes a new version of the data that has ranks (column-wise) instead of values.
-#' 
+#'
 #' @param data data matrix
 #' @return Data matrix with same dimensions, with each value representing its column-wise rank.
 colRankNormalization <- function(data) {
-  
+
   message("Applying column rank normalization...")
 
-  
   rdata <- matrix(0L, nrow=nrow(data), ncol=ncol(data))
-  
+
   for (i in 1:ncol(rdata)) {
     rdata[,i] <- rank(data[,i], ties.method="min")
   }

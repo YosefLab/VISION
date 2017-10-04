@@ -15,12 +15,12 @@
 #'  edata <- ExpressionData(expr)
 #'  filteredData <- applyFilters(eData, 10, c("threshold", "fano"))
 applyFilters <- function(data, threshold, filterInput) {
-  
+
   filterList <- c()
   expr <- getExprData(data)
-  
+
   message("Applying filters...")
-  
+
   for (filter in filterInput) {
     if (filter == "novar") {
       filterList <- c(filterList, "novar")
@@ -39,43 +39,43 @@ applyFilters <- function(data, threshold, filterInput) {
       stop("Filter not recognized")
     }
   }
-  
+
   return(list(data, filterList))
-  
+
 }
 
-#' Eliminate genes whose sample variance is equal to 0 (may remove rows); run when --nofilter option 
+#' Eliminate genes whose sample variance is equal to 0 (may remove rows); run when --nofilter option
 #' is selected
-#' 
+#'
 #' @param data expression matrix
 #' @return filtered expression matrix
 filterGenesNovar <- function(data) {
 
   message("Applying no variance filter...")
-  
+
 
   return (subset(data, apply(data, 1, var) != 0))
-  
+
 }
 #' Filter genes whose values sum to less than some threshold value (may remove rows)
-#' 
+#'
 #' @param data: (data.frame) expression matrix
-#' @param threshold: (int) threshold value to filter by 
+#' @param threshold: (int) threshold value to filter by
 #' @return filtered expression matrix
 filterGenesThreshold <- function(data, threshold) {
 
   message("Applying threshold filter...")
-  
+
   keep_ii <- which(as.matrix(apply( (data > 0), 1, sum)) > threshold)
   return(data[keep_ii,])
-    
-  
-  
+
+
+
 }
-# ' Applies the Fano filter to the input data (may remove rows)
-#' 
+#' Applies the Fano filter to the input data (may remove rows)
+#'
 #'	@param data NUM_GENES x NUM_SAMPLES expression matrix
-#'	@param num_mad number of median absolute deviations 
+#'	@param num_mad number of median absolute deviations
 #'  @return NUM_GENES_PASSED_FANO_FILTER x NUM_SAMPLES filtered expression matrix
 filterGenesFano <- function(data, num_mad=2) {
 
@@ -85,16 +85,16 @@ filterGenesFano <- function(data, num_mad=2) {
   if (ncol(data) > 50000) {
 	sub_data <- data[,sample(ncol(data), 50000)]
   }
-  
+
   mu <- apply(sub_data, 1, mean)
   sigma <- apply(sub_data, 1, sd)
-  
-  
+
+
   aa <- order(mu)
   mu_sort <- mu[aa]
   sigma_sort <- sigma[aa]
-  
-  
+
+
   N_QUANTS <- 30
   m <- floor(length(mu_sort) / N_QUANTS)
 
@@ -116,13 +116,13 @@ filterGenesFano <- function(data, num_mad=2) {
 		gene_passes_quant_i <- which(gene_passes_quant != 0)
 		gene_passes_i <- gene_passes_quant_i + (i*m)
 		return(gene_passes_i)
-	
+
 	})
 
   gpi <- unlist(genePassList)
   gene_passes[gpi] <- T
   gene_passes <- gene_passes[order(aa)]
   return(data[which(gene_passes==T),])
-  
+
 }
 

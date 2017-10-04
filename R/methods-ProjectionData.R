@@ -10,6 +10,7 @@
 #' @param keys Sample names of expression data
 #' @param sigProjMatrix Matrix storing the median consistency score per projection, signature pair
 #' @param pMatrix Matrix storing the p values for each projection, signature pair
+#' @param sigClusters the signature clusters
 #' @return ProjectionData object
 setMethod("initialize", signature(.Object="ProjectionData"),
           function(.Object, projections=NULL, keys, sigProjMatrix, pMatrix, sigClusters) {

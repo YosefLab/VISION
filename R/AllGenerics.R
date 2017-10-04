@@ -1,12 +1,16 @@
+#' @rdname FastProject-class
+#' @export
+setGeneric("FastProject", function(data_file, ...) {
+  standardGeneric("FastProject")
+})
+
 setGeneric("addSigData", function(object, data) {
   standardGeneric("addSigData")
 })
 
-
 setGeneric("Analyze", function(object) {
   standardGeneric("Analyze")
 })
-
 
 setGeneric("cluster", function(object, method, param) {
   standardGeneric("cluster")
@@ -15,7 +19,6 @@ setGeneric("cluster", function(object, method, param) {
 setGeneric("createOutputDirectory", function(object) {
   standardGeneric("createOutputDirectory")
 })
-
 
 setGeneric("getExprData", function(object) {
   standardGeneric("getExprData")
@@ -40,7 +43,6 @@ setGeneric("readExprData", function(object) {
 setGeneric("updateExprData", function(object, newData) {
   standardGeneric("updateExprData")
 })
-
 
 setGeneric("updateProjection", function(object, name, data) {
   standardGeneric("updateProjection")

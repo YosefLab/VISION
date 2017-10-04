@@ -1,8 +1,5 @@
-require(geometry)
-require(pROC)
-require(entropy)
-require(Hmisc)
-require(mclust)
+# require(geometry)
+# require(pROC)
 
 #' Initialize a new Signature object.
 #'
@@ -92,14 +89,20 @@ getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
 }
 
 #' Evaluates the significance of each signature vs. each projection.
-#'
-#'  @param projections Maps projections to their spatial coordinates for each sample
-#'  @param sigScoresData: List of SignatureScores Object, mapping signature names to their value at each coordinate
-#'  @param randomSigData: List of SignatureScores Object, mapping randomly generated signatures to scores to be compared with the real signature scores.
-#'  @return Labels for rows of the output matrices
-#'  @return Labels for columns of the output matrices
-#'  @return Matrix (Num_Signatures x Num_Projections) sigProj dissimilarity score
-#'  @return SigProjMatrix_P matrix (Num_Signatures x Num_Projections) sigProj p values
+#' @importFrom Matrix crossprod
+#' @importFrom mclust densityMclust
+#' @importFrom entropy entropy.plugin
+#' @importFrom pROC multiclass.roc
+#' @param projections Maps projections to their spatial coordinates for each sample
+#' @param sigScoresData: List of SignatureScores Object, mapping signature names to their value at each coordinate
+#' @param randomSigData: List of SignatureScores Object, mapping randomly generated signatures to scores to be compared with the real signature scores.
+#' @return list:
+#' \itemize{
+#'     \item sigNames: labels for the signatures (rows in output matrices)
+#'     \item projNames: labels for the projections (columns in output matrices)
+#'     \item sigProbMatrix: the matrix of signature-projection consistency scores
+#'     \item pVals: pvalues for the scores
+#' }
 sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBORHOOD_SIZE = 0.33, BPPARAM=bpparam()) {
   ptm <- Sys.time()
   tRows <- c()
@@ -276,53 +279,6 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
       sigProjMatrix[,i] <- 1 - (medDissimilarity / N_SAMPLES)
   	sigProjMatrix_P[,i] <- pValues
 
-      # Calculate significance for precomputed numerical signatures
-      # This is done separately because there are likely to be many repeats (e.g. for a time coordinate)
-      #j <- 1
-      #for (s in precomputedNumerical) {
-
-      #  sigScores <- rank(s@scores)
-      #  if (all(sigScores == sigScores[1])) {
-      #    pnumSigProjMatrix[j,i] <- 0.0
-      #    pnumSigProjMatrix_P[j,i] <- 1.0
-      #    next
-      #  }
-      #  sigPredictions <- crossprod(weights, sigScores)
-      #  r <- roc.area(sigScores, sigPredictions)
-      #  a <- r$A
-        #dissimilarity <- abs(sigScores - sigPredictions)
-        #medDissimilarity <- as.matrix(apply(dissimilarity, 2, median))
-
-        #Compute a background for numerical signatures
-        #NUM_REPLICATES <- 10000
-        #randomSigValues <- get_bg_dist(N_SAMPLES, NUM_REPLICATES)
-        #bgValues <- as.vector(t(sigScores))[randomSigValues]
-        #randomPredictions <- (weights %*% bgValues)
-        #randR <- roc(sigScores, sigPredictions)
-        #randA <- randR$auc
-
-        #rDissimilarity <- abs(bgValues <- randomPredictions)
-        #randomScores <- as.matrix(apply(rDissimilarity, 2, median))
-
-        #mu <- mean(randomScores)
-        #sigma <- biasedVectorSD(random_scores)
-        #if (sigma != 0) {
-        #  p_value <- pnorm((medDissimilarity - mu) / sigma)
-        #} else {
-        #  p_value <- 1.0
-        #}
-
-        #pnumSigProjMatrix[j,i] <- 1 - (medDissimilarity / N_SAMPLES)
-        #pnumSigProjMatrix_P[j,i] <- p_value
-
-
-      #  pnumSigProjMatrix[j,i] <- a
-      #  pnumSigProjMatrix_P[j,i] <- r$p.value
-
-      #  j <- j + 1
-      #}
-
-
       ## Calculate signficance for Factor signatures
 
   	factorSigProjList <- lapply(factorSigs, function(x) {
@@ -392,12 +348,15 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
 }
 
 #' Clusters signatures according to the rank sum
-#'
+#' @importFrom mclust densityMclust
 #' @param sigList List of signatures
 #' @param sigMatrix Matrix of signatures scores, NUM_SIGNATURES x NUM_SAMPLES
 #' @param k Number of clusters to generate
-#' @return List of clusters involving computed signatures
-#' @return List of clusters involving precomptued signatures
+#' @return a list:
+#' \itemize{
+#'     \item Computed: a list of clusters of computed signatures
+#'     \item Precomputed: a list of clusters of precomputed signatures
+#' }
 clusterSignatures <- function(sigList, sigMatrix, pvals, k=10) {
 
   precomputed <- lapply(sigList, function(x) x@isPrecomputed)
@@ -432,31 +391,14 @@ clusterSignatures <- function(sigList, sigMatrix, pvals, k=10) {
   	  precompcls[precomputedSigsToCluster] <- 1
   }
 
-
-  output <- list(compcls, precompcls)
-  names(output) <- c("Computed", "Precomputed")
-
-  return(output)
+  return(list(Computed = compcls, Precomputed = precompcls))
 }
 
-calcMutualInformation <- function(ss, pc) {
-
-	minVal <- min(min(ss), min(pc))
-	maxVal <- max(max(ss), max(pc))
-
-	f1 <- hist(ss, seq(minVal-0.1, maxVal+0.1, by=0.1), plot=F)$counts
-	f2 <- hist(pc, seq(minVal-0.1, maxVal+0.1, by=0.1), plot=F)$counts
-
-	jdist <- cbind(f1, f2)
-
-	h1 <- entropy.plugin(rowSums(jdist))
-	h2 <- entropy.plugin(colSums(jdist))
-	h12 <- entropy.plugin(jdist)
-	mi <- h1 + h2 - h12
-
-	return(mi)
-}
-
+#' Compute pearson correlation between signature scores and principle components
+#' @importFrom Hmisc rcorr
+#' @param ss signature scores
+#' @param pc principle components
+#' @return pearson correlaton coeffcients
 calcPearsonCorrelation <- function(ss, pc) {
 
 	pc <- rcorr(ss, pc, type="pearson")

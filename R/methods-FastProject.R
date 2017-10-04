@@ -1,11 +1,7 @@
-require(logging)
-require(BiocParallel)
-require(parallel)
-
-
 #' Initializes a new FastProject object.
 #'
-#'
+#' @import BiocParallel
+#' @import logging
 #'
 #' @param data_file file path to expression matrix
 #' @param housekeeping file path to housekeeping data file
@@ -17,7 +13,6 @@ require(parallel)
 #' @param nomodel if TRUE, no fnr curve calculated and all weights equal to 1. Else FNR and weights calculated.
 #'          Default is TRUE.
 #' @param filters list of filters to compute
-#' @param debug if 1 enable debugging features, if not not. Default is 0.
 #' @param lean if TRUE run a lean simulation. Else more robust pipeline initiated. Default is FALSE
 #' @param qc if TRUE calculate QC; else not. Default is FALSE
 #' @param min_signature_genes Minimum number of genes required to compute a signature
@@ -31,16 +26,18 @@ require(parallel)
 #' @param housekeepingData housekeeping data table, as opposed to specifying a housekeeping_data file
 #' @param sigData List of signatures, as opposed to specifying a list of signature files
 #' @param precomputedData List of precomputed signature scores, as opposed to specifying a precomputed file
-#' @return A FastProject object.
+#' @return A FastProject object
+#' @rdname FastProject-class
+#' @export
 #' @examples
 #' fp <- FastProject("expression_matrix.txt",
 #'                   "data/Gene Name Housekeeping.txt",
 #'                   c("sigfile_1.gmt", "sigfile_2.txt"),
 #'                   precomputed="pre_sigs.txt")
-setMethod("initialize", signature(.Object="FastProject"),
-          function(.Object, data_file, housekeeping, signatures, scone = NULL, norm_methods = NULL,
+setMethod("FastProject", signature("character"),
+          function(data_file, housekeeping, signatures, scone = NULL, norm_methods = NULL,
                    precomputed=NULL, nofilter=FALSE, nomodel=FALSE, filters=c("fano"),
-                   debug=0, lean=FALSE, qc=FALSE, min_signature_genes=5, projections="",
+                   lean=FALSE, qc=FALSE, min_signature_genes=5, projections="",
                    weights=NULL, threshold=0, perm_wPCA=FALSE, sig_norm_method="znorm_rows",
                    sig_score_method="weighted_avg", exprData=NULL, housekeepingData=NULL,
                    sigData=NULL, precomputedData=NULL) {
@@ -55,6 +52,8 @@ setMethod("initialize", signature(.Object="FastProject"),
             } else if (missing(signatures) && is.null(sigData)) {
               stop("Missing signature data file in input.")
             }
+
+            .Object <- new("FastProject")
 
             if (is.null(scone)) {
               if (is.null(exprData)) {
@@ -96,7 +95,6 @@ setMethod("initialize", signature(.Object="FastProject"),
             .Object@threshold <- threshold
             .Object@sig_norm_method <- sig_norm_method
             .Object@sig_score_method <- sig_score_method
-            .Object@debug = debug
             .Object@lean = lean
             .Object@perm_wPCA = perm_wPCA
             .Object@allData = .Object@exprData
@@ -106,6 +104,8 @@ setMethod("initialize", signature(.Object="FastProject"),
           }
 )
 
+#' create an output directory in the working directory
+#' @param object the FastProject object the requires an output directory
 setMethod("createOutputDirectory", "FastProject", function(object) {
   #' Creates the output directory structure
   mainDir <- getwd()
@@ -127,19 +127,11 @@ setMethod("createOutputDirectory", "FastProject", function(object) {
   dir.create(file.path(mainDir, dir_name))
 
   logger <- getLogger("FastProject")
-
-  #logger$setLevel(logging.INFO)
-  #fh <- FileHandler(file.path(mainDir, dir_name, 'fastproject.log'))
-  #fh$setFormatter(Formatter('%(asctime)s %(message)s'))
-  #logger.addHandler(fh)
-
-  #for (x in slotNames(object)) {
-  #  logger$info(paste0(x, toString(object@x)))
-  #}
-}
-)
+})
 
 #' Main entry point for running FastProject Analysis
+#'
+#' @export
 #'
 #' @param object FastProject object
 #' @return FastProjectOutput object
@@ -212,7 +204,7 @@ setMethod("Analyze", signature(object="FastProject"),
   tRows <- c(tRows, "Filter")
 
   if (!clustered) {
-	falseneg_out <- createFalseNegativeMap(originalData, object@housekeepingData, object@debug)
+	falseneg_out <- createFalseNegativeMap(originalData, object@housekeepingData)
 	func <- falseneg_out[[1]]
 	params <- falseneg_out[[2]]
   }
@@ -375,7 +367,6 @@ setMethod("Analyze", signature(object="FastProject"),
                                pMatrix = sigVProj$pVals,
                                sigClusters = sigClusters)
 
-    #########
     message("Fitting principle tree...")
     treeProjs <- generateTreeProjections(eData, filter,
                                          inputProjections = projectData$projections,
@@ -401,7 +392,6 @@ setMethod("Analyze", signature(object="FastProject"),
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, paste0("SigVTreePr ", filter))
 
-    ########
     pearsonCorr <- lapply(1:nrow(sigMatrix), function(i) {
 		lapply(1:nrow(pca_res), function(j) {
 			return(calcPearsonCorrelation(sigMatrix[i,], pca_res[j,]))
@@ -452,6 +442,8 @@ setMethod("Analyze", signature(object="FastProject"),
 
 #' Creates a new FastProject object with the new expression matrix. Called from Server.R.
 #'
+#' @export
+#'
 #' @param fpParams List of FastProject parameters
 #' @param nexpr New expression matrix for the new FastProject object
 #' @return a new FastProject object
@@ -466,7 +458,7 @@ setMethod("Analyze", signature(object="FastProject"),
 #'   subset_cells <- sample(1:ncol(fp@exprData), 200)
 #'   nexpr <- fp@exprData[,subset_cells]
 #'   names(fpParams) <- slots
-#'   nfp <- extraAnalysisFastProject(fpParams, nexpr)
+#'   nfp <- createNewFP(fpParams, nexpr)
 
 createNewFP <- function(fpParams, nexpr) {
 	nfp <- FastProject(exprData=nexpr, sigData=fpParams[["sigData"]],

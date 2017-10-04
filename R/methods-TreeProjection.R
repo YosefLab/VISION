@@ -1,5 +1,11 @@
 
-
+#' Create a TreeProjection object
+#'
+#' @param pData the projected coordinates of the data
+#' @param name the name of the projection
+#' @param vData the projected coordinates of the tree nodes
+#' @param adjMat the adjacency matrix of the tree
+#' @return a TreeProjection object
 setMethod("initialize", signature(.Object="TreeProjection"),
           function(.Object, pData, name, vData, adjMat) {
             .Object@pData <- pData
@@ -21,7 +27,7 @@ setMethod("initialize", signature(.Object="TreeProjection"),
 #' @param object a TreeProjection object
 #' @param K the number of nearest neighbors to look at
 #' @param BPPARAM the parallelization backen to use
-#'
+#' @return an all-pars distance matrix
 setMethod("computeKNNWeights", signature(object = "TreeProjection"),
           function(object, K=30, BPPARAM=bpparam()) {
             distmat <- calculateTreeDistances(princPnts = object@vData,
