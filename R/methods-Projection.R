@@ -1,5 +1,4 @@
 ## Projection wrapper class
-require("cluster")
 
 #' Initialize a Projection object
 #'
@@ -54,7 +53,11 @@ setMethod("cluster", signature(object = "Projection"),
     }
 )
 
-
+#' compute for each vector the weights to apply to it's K nearest neighbors
+#' @param object the Projecton object
+#' @param K number of neughbors to compute ths for
+#' @param BPPARAM the parallelizaton backend to use
+#' @return a weights matrix
 setMethod("computeKNNWeights", signature(object = "Projection"),
           function(object, K = 30, BPPARAM = bpparam()) {
 

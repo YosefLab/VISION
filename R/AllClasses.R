@@ -7,7 +7,7 @@
 # scores, distance matrices, and anything else, is computed
 # on the different types of data.
 
-library(methods)
+#' @importFrom methods setClassUnion
 setClassUnion('numericORNULL', members=c('numeric', 'NULL'))
 
 Cluster <- setClass("Cluster",
@@ -28,6 +28,9 @@ ExpressionData <- setClass("ExpressionData",
 ))
 
 #' The FaStProject main object
+#' @name FastProject-class
+#' @aliases FastProject
+#' @export
 FastProject <- setClass("FastProject",
     slots = c(
       data_file = "character",
@@ -37,7 +40,6 @@ FastProject <- setClass("FastProject",
       nofilter = "logical",
       nomodel = "logical",
       filters = "character",
-      debug = "numeric",
       lean = "logical",
       min_signature_genes = "numeric",
       qc = "logical",
@@ -137,13 +139,6 @@ ServerExpression <- setClass("ServerExpression",
     data = "matrix",
     sample_labels = "character",
     gene_labels = "character"
-))
-
-ServerMI <- setClass("ServerMI",
-  slots = c(
-    data = "matrix",
-    proj_labels = "character",
-    sig_labels = "character"
 ))
 
 ServerPCorr <- setClass("ServerPCorr",

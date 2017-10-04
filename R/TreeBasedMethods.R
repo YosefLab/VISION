@@ -1,5 +1,3 @@
-require("igraph")
-
 #' Applies the Simple PPT algorithm onto the expression data.
 #'
 #' @param exprData Expression data -- Num_Genes x Num_Samples
@@ -143,6 +141,7 @@ applySimplePPT <- function(exprData, numCores, permExprData = NULL,
 
 #' Fit tree using input parameters
 #'
+#' @importFrom matrixStats logSumExp
 #' @param expr Data to fit (NUM_GENES x NUM_SAMPLES)
 #' @param nNodes Number of nodes in the fitted tree, default is square-root of number of data points
 #' @param sigma Regularization parameter for soft-assignment of data points to nodes, used as the
@@ -152,7 +151,7 @@ applySimplePPT <- function(exprData, numCores, permExprData = NULL,
 #' @param tol Tolerance to use when fitting the tree
 #' @param maxIter Maximum number of Iterations ot run the algorithm for
 #' @return (list) Tree characteristics:
-#'   \itemize {
+#'   \itemize{
 #'     \item C spatial positions of the tree nodes in NUM_FEATURES dimensional space
 #'     \item unweighted (binary) adjacency matrix
 #'     \item the mean-squared error of the tree
@@ -169,15 +168,15 @@ fitTree <- function(expr, nNodes, sigma, gamma, tol, maxIter) {
   while (!(prevScore - currScore < tol) && !(currIter > maxIter)) {
     currIter <- currIter + 1
     prevScore <- currScore
-    W <- mst(graph_from_adjacency_matrix(cc_dist, weighted= T, mode="undirected"))
-    Wt <- get.adjacency(W, sparse=FALSE)
+    W <- igraph::mst(igraph::graph_from_adjacency_matrix(cc_dist, weighted= T, mode="undirected"))
+    Wt <- igraph::get.adjacency(W, sparse=FALSE)
 
     Ptmp <- -(cx_dist / sigma)
     Psums <- matrix(rep(apply(Ptmp, 1, logSumExp), each=ncol(Ptmp)), nrow=nrow(Ptmp), ncol=ncol(Ptmp), byrow=T)
     P <- exp(Ptmp - Psums)
 
     delta <- diag(colSums(P))
-    L <- laplacian_matrix(W)
+    L <- igraph::laplacian_matrix(W)
     xp <- crossprod(t(expr), P)
     invg <- as.matrix(solve( ((2 / gamma) * L) + delta))
     C <- tcrossprod(xp, invg)
@@ -223,9 +222,9 @@ getMSE <- function(C, X) {
 #' point that fall beyond the edge are projected to the closer node.
 #'
 #' @return (list) projection information:
-#'   \itemize {
+#'   \itemize{
 #'     \item{"spatial"}{The D-dimensional position of the projected data points}
-#'     \itam{"edge"}{a Nx2 matrix, were line i has the indices identifying the edge that datapoint i was projected on,
+#'     \item{"edge"}{a Nx2 matrix, were line i has the indices identifying the edge that datapoint i was projected on,
 #'     represented as (node a, node b). For consistency and convenience, it is maintained that a < b}
 #'     \item{"edgePos"}{an N-length numeric with values in [0,1], the relative position on the edge of the datapoint.
 #'     0 is node a, 1 is node b, .5 is the exact middle of the edge, etc.}
@@ -303,10 +302,10 @@ calculateTreeDistances <- function(princPnts, princAdj, edgeAssoc, edgePos) {
   # get all distances in principle tree
   princAdjW <- sqdist(t(princPnts), t(princPnts)) * princAdj
 
-  princGraph <- graph_from_adjacency_matrix(princAdjW, weighted = T, mode = "undirected")
-  nodeDistmat <- distances(princGraph)
+  princGraph <- igraph::graph_from_adjacency_matrix(princAdjW, weighted = T, mode = "undirected")
+  nodeDistmat <- igraph::distances(princGraph)
 
-  princEdges <- apply(get.edgelist(princGraph), 1, as.numeric)
+  princEdges <- apply(igraph::get.edgelist(princGraph), 1, as.numeric)
   edgeToPnts <- apply(princEdges, 2, function(x) { apply(edgeAssoc==x, 2, all) })
 
   distmat <- matrix(rep(NA, NROW(edgeToPnts) ^ 2), NROW(edgeToPnts))
@@ -370,7 +369,11 @@ calcInterEdgeDistMat <- function(v1.dist, v2.dist, path.length) {
   return((v1.mat + v2.mat) + path.length)
 }
 
-#' Find K nearest neighbors
+#' Find K nearest neighbors for each vector in query among the vectors in the given data
+#' @param data the search-space to look for nearest neighbors
+#' @param query the datapoints to find neighbors for (not necessarily exist in the data)
+#' @param k the number of neighbors to find for each vectors
+#' @param BPPARAM the parallelization backend to use
 findNeighbors <- function(data, query, k, BPPARAM=bpparam()) {
 
   neighborhood <- lapply(1:ncol(query), function(x) {

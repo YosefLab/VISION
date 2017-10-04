@@ -1,6 +1,3 @@
-require(jug)
-require(jsonlite)
-
 # Can use res$text(body) to set body of response
 # Can use res$json(obj) to convert object to json
 #  and return
