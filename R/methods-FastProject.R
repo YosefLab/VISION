@@ -1,7 +1,5 @@
-require(logging)
 require(BiocParallel)
-require(parallel)
-
+require(Biobase)
 
 #' Initializes a new FastProject object.
 #'
@@ -58,8 +56,16 @@ setMethod("initialize", signature(.Object="FastProject"),
 
             if (is.null(scone)) {
               if (is.null(exprData)) {
-              	.Object@data_file <- data_file
-                .Object@exprData <- readExprToMatrix(data_file)
+                if (class(data_file) == "character") {
+              	    .Object@data_file <- data_file
+                    .Object@exprData <- readExprToMatrix(data_file)
+                } else if (class(data_file) == "matrix") {
+                    .Object@exprData <- data_file
+                } else if (class(data_file) == "ExpressionSet") {
+                    .Object@exprData <- exprs(data_file)
+                } else {
+                    stop("Can't recognize data file")
+                }
               } else {
                 .Object@exprData <- exprData
               }
@@ -104,39 +110,6 @@ setMethod("initialize", signature(.Object="FastProject"),
             #createOutputDirectory(.Object)
             return(.Object)
           }
-)
-
-setMethod("createOutputDirectory", "FastProject", function(object) {
-  #' Creates the output directory structure
-  mainDir <- getwd()
-
-  if (dir.exists(file.path(mainDir, object@output_dir))) {
-    i = 1
-    while(TRUE) {
-      dir_name <- paste0(object@output_dir, toString(i))
-      if (!dir.exists(file.path(mainDir, dir_name))) {
-        break
-      } else {
-        i = i + 1
-      }
-    }
-  } else {
-    dir_name = object@output_dir
-  }
-
-  dir.create(file.path(mainDir, dir_name))
-
-  logger <- getLogger("FastProject")
-
-  #logger$setLevel(logging.INFO)
-  #fh <- FileHandler(file.path(mainDir, dir_name, 'fastproject.log'))
-  #fh$setFormatter(Formatter('%(asctime)s %(message)s'))
-  #logger.addHandler(fh)
-
-  #for (x in slotNames(object)) {
-  #  logger$info(paste0(x, toString(object@x)))
-  #}
-}
 )
 
 #' Main entry point for running FastProject Analysis
