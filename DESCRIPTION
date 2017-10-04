@@ -9,4 +9,7 @@ LinkingTo: Rcpp
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
-Suggests: testthat
+Suggests: testthat,
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
