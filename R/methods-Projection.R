@@ -6,17 +6,6 @@ require("cluster")
 #' @param name Name of the projection
 #' @param pData Coordinates of each sample in the projection (NUM_SAMPLES x NUM_COMPONENTS)
 #' @return Projection object
-<<<<<<< HEAD
-setMethod("initialize", signature(.Object = "Projection"), 
-          function(.Object, name, pData=NULL, ppt_c=matrix(NA, 1, 1), weights=matrix(NA, 1, 1), simFunction=euclideanWeights) {
-          
-            .Object@name = name
-            .Object@pData = pData
-            .Object@PPT_C = ppt_c
-            .Object@weights = weights
-            .Object@simFunction = simFunction
-            
-=======
 setMethod("initialize", signature(.Object = "Projection"),
           function(.Object, name, pData=NULL, weights=matrix(NA, 1,1)) {
 
@@ -24,7 +13,6 @@ setMethod("initialize", signature(.Object = "Projection"),
             .Object@pData = pData
             .Object@weights = weights
 
->>>>>>> TreeProjections
             return(.Object)
           }
 )
