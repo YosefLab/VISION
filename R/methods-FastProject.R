@@ -124,7 +124,7 @@ setMethod("initialize", signature(.Object="FastProject"),
 setMethod("Analyze", signature(object="FastProject"),
           function(object) {
   message("Beginning Analysis")
-  # BPPARAM = bpparam()
+  #BPPARAM = bpparam()
   BPPARAM = SerialParam()
 
   ptm <- Sys.time()
@@ -136,25 +136,10 @@ setMethod("Analyze", signature(object="FastProject"),
   pools <- list()
   if (ncol(object@exprData) > 25000) {
 
-  	  fexpr <- filterGenesFano(object@exprData)
-  	  res <- applyPCA(fexpr, N=30)[[1]]
-  	  kn <- ball_tree_knn(t(res), 30, BPPARAM$workers)
-  	  cl <- louvainCluster(kn, t(res))
-  	  cl <- readjust_clusters(cl, t(res))
+      microclusters <- applyMicroClustering(object@exprData, object@housekeepingData)
+      pooled_cells <- microclusters[[1]]
+      pools <- microcluster[[2]]
 
-      pooled_cells <- createPools(cl, object@exprData, object@housekeepingData)
-
-	  cn <- lapply(1:ncol(pooled_cells), function(i) return(paste0("Cluster ", i)))
-	  colnames(pooled_cells) <- cn
-	  rownames(pooled_cells) <- rownames(object@exprData)
-
-	  pools <- lapply(1:length(cl), function(i) {
-			clust_data <- object@exprData[,cl[[i]]]
-			cells <- colnames(clust_data)
-			return(cells)
-	  })
-
-	  names(pools) <- cn
 	  object@exprData <- pooled_cells
 	  clustered <- TRUE
 
@@ -214,22 +199,6 @@ setMethod("Analyze", signature(object="FastProject"),
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "Normalize")
 
-  ## Define single signature evaluation for lapply method
-  singleSigEval <- function(s) {
-    # init to an empty SignatureScores object
-  	x <- NULL
-  	if (object@sig_score_method=="naive") {
-  		tryCatch({
-  			x <- naiveEvalSignature(eData, s, object@weights, object@min_signature_genes)
-  		}, error=function(e){})
-  	} else if (object@sig_score_method=="weighted_avg") {
-  		tryCatch({
-  			x <- weightedEvalSignature(eData, s, object@weights, object@min_signature_genes)
-  		}, error=function(e){})
-  	}
-  	return(x)
-  }
-
   # Score user defined signatures with defined method (default = weighted)
   sigScores <- c()
   if (object@sig_score_method == "naive") {
@@ -238,7 +207,7 @@ setMethod("Analyze", signature(object="FastProject"),
     message("Applying weighted signature scoring method...")
   }
 
-  sigScores <- bplapply(object@sigData, singleSigEval, BPPARAM=BPPARAM)
+  sigScores <- bplapply(object@sigData, function(s) singleSigEval(s, object@sig_score_method, eData, object@weights, object@min_signature_genes), BPPARAM=BPPARAM)
 
   sigSizes <- lapply(object@sigData, function(s) length(s@sigDict))
 
@@ -277,19 +246,7 @@ setMethod("Analyze", signature(object="FastProject"),
   tRows <- c(tRows, "Sig Scores")
 
   # Construct random signatures for background distribution
-  randomSigs <- c()
-  #randomSizes <- unlist(findRepSubset(sigSizes))
-  randomSizes <- c(5, 10, 20, 50, 100, 200)
-  for (size in randomSizes) {
-    message("Creating random signature of size ", size, "...")
-    for (j in 1:3000) {
-      newSigGenes <- sample(rownames(getExprData(eData)), size)
-      newSigSigns <- rep(1, size)
-      names(newSigSigns) <- newSigGenes
-      newSig <- Signature(newSigSigns, paste0("RANDOM_BG_", size, "_", j), 'x')
-      randomSigs <- c(randomSigs, newSig)
-    }
-  }
+  randomSigs <- generatePermutationNull(3000, eData, sigSizes)
 
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
   tRows <- c(tRows, "Random Sigs")
@@ -302,7 +259,7 @@ setMethod("Analyze", signature(object="FastProject"),
     message("Applying weighted signature scoring method...")
   }
 
-  randomSigScores <- bplapply(randomSigs, singleSigEval,BPPARAM=BPPARAM)
+  randomSigScores <- bplapply(randomSigs, function(s) singleSigEval(s, object@sig_score_method, eData, object@weights, object@min_signature_genes),BPPARAM=BPPARAM)
   names(randomSigScores) <- names(randomSigs)
 
   ## Remove random signatures that didn't compute correctly
@@ -374,7 +331,6 @@ setMethod("Analyze", signature(object="FastProject"),
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, paste0("SigVTreePr ", filter))
 
-    ########
     pearsonCorr <- lapply(1:nrow(sigMatrix), function(i) {
 		lapply(1:nrow(pca_res), function(j) {
 			return(calcPearsonCorrelation(sigMatrix[i,], pca_res[j,]))

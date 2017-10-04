@@ -50,8 +50,25 @@ If you have yet to install FastProjectR, we recommend using Bioconductor to inst
 
 Once FastProjectR and R are installed, you may load in FastProjectR and all of its dependencies using `library(FastProjectR)`. 
 
-##Running FastProjectR
+##Using FastProjectR
 
+###The FastProject Pipeline
+
+FastProjectR generally follows the same pipeline from iteration to iteration, where minor differences can be specified via the various parameters in a FastProject object. On a typical FastProjectR run:
+
+- Data is read in. An expression matrix (a .txt file, ExpressionSet, or R matrix are acceptable options) and at least one signature file (.gmt or .txt) are acceptable. 
+- Non-informative genes are filtered out. By default, FastProjectR applies a Fano filter, although the user may customize this.
+- False negative rates (FNR) are estimated for each cell, unless the parameter `nomodel` is set to `FALSE`.
+- Signatures are scored.
+- Random signatures are generated as a null distribution for assessing significance to the input signatures.
+- Projections are generated (i.e. two dimensional reductions).
+- Signature consistency scores are computed for each signature-projection pairing. Significance is computed using the random signatures generated.
+- Based on signature scores and a Gausssian Mixture Model (GMM), signatures are clustered.
+- Tree-based projections are computed (e.g. SimplePPT)
+- Tree-based consistency scores and signature significances are computed.
+- Dynamic web-report is viewed. 
+
+###Analysis of Glioblastoma Cells with FastProjectR
 As described above, FastProjectR can be approached from many directions. Here, we present the simplest of applications, utilizing the `Analyze` function. 
 
 First, we'll walk through how to create a FastProject object for the `Analyze` function. Most importantly, we need expression data and signature data. Another helpful, but not obligatory, dataset is a collection of housekeeping genes (genes that you'd expect to be analyzed in all cells in this expression matrix) for the estimation of a false negative curve. For this example we'll also include some meta-data for the samples in the form of a pre-computed signature file.
@@ -67,7 +84,7 @@ fp <- FastProject("data/expression_matrix.txt", "data/Gene Name Housekeeping.txt
 
 This FastProject object will now contain all the necessary information for performing the basic analysis pipeline on the expression matrix passed in, accessed by `fp@exprData`. To note, the use may also provide the expression data by using the `exprData` argument. For example, consider the example below:
 
-```{r, collapse=T, tidy=T, message=F }
+```{r, collapse=T, tidy=T, message=F, eval=F}
 # -- read in expression data set -- 
 expr <- readExprToMatrix("data/expression_matrix.txt")
 
@@ -76,41 +93,36 @@ fp <- FastProject(expr, "data/Gene Name Housekeeping.txt", c("data/h.all.v5.2.sy
 
 ## -- Create a FastProject object with an ExpressionSet -- 
 eset <- ExpressionSet(assayData=expr)
-fp <- FastProject(eset, "data/Gene Name Housekeeping.txt", c("data/h.all.v5.2.symbols.gmt"))
+fp <- FastProject(eset, "data/Gene Name Housekeeping.txt", c("data/h.all.v5.2.symbols.gmt"), precomputed="data/precomputed_signatures.txt")
 ```
 
 Now, with a FastProject object, we can run `Analyze` which will return a FastProjectOutput object.
 
-```{r, collapse=T, tidy=T, message=F}
+```{r, collapse=T, tidy=T, message=F, results=F}
 # Run Analyze with one core
 fpOut <- Analyze(fp)
 ```
-## Figures
 
-The figure sizes have been customised so that you can easily put two images side-by-side. 
+With the FastProjectOutput object, a dynamic web report can be generated with the `viewResults` function or the `saveFPOutandViewResults` function, which will both save the FastProjectOutput object as an .rds file and launch a web browser for the dynamic report.
 
-```{r, fig.show='hold'}
-plot(1:10)
-plot(10:1)
+```{r, collapse=T, message=F, results=F, eval=F}
+viewResults(fpOut)
 ```
 
-You can enable figure captions by `fig_caption: yes` in YAML:
+###Parallel FastProjectR
 
-    output:
-      rmarkdown::html_vignette:
-        fig_caption: yes
+Importantly, FastProjectR supports parallel computation with the BiocParallel. To do so, register a BiocParallel as such and the Analyze() function will automatically use the new BPPARAM registered. 
 
-Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**.
-
-## More Examples
-
-You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`.
-
-```{r, echo=FALSE, results='asis'}
-knitr::kable(head(mtcars, 10))
+```{r, collapse=T, message=F, results=F, eval=F}
+BiocParallel::register(
+  BiocParalle::MulticoreParam(workers=2)
+)
+fpOut <- Analyze(fp)
 ```
 
-Also a quote using `>`:
+We highly recommend parallelizing the FastProjectR pipeline if extra processors are available. 
 
-> "He who gives up [code] safety for [code] speed deserves neither."
-([via](https://twitter.com/hadleywickham/status/504368538874703872))
+##Session Info
+```{r, collapse=T, tidy=T}
+sessionInfo()
+```

@@ -1,6 +1,32 @@
 ## Functions to transform the data and calculate weights
 require(loe)
 
+
+applyMicroClustering <- function(exprData, hkg=list()) {
+
+  	  fexpr <- filterGenesFano(exprData)
+  	  res <- applyPCA(fexpr, N=30)[[1]]
+  	  kn <- ball_tree_knn(t(res), 30, BPPARAM$workers)
+  	  cl <- louvainCluster(kn, t(res))
+  	  cl <- readjust_clusters(cl, t(res))
+
+      pooled_cells <- createPools(cl, exprData, hkg)
+
+	  cn <- lapply(1:ncol(pooled_cells), function(i) return(paste0("Cluster ", i)))
+	  colnames(pooled_cells) <- cn
+	  rownames(pooled_cells) <- rownames(object@exprData)
+
+	  pools <- lapply(1:length(cl), function(i) {
+			clust_data <- object@exprData[,cl[[i]]]
+			cells <- colnames(clust_data)
+			return(cells)
+	  })
+
+	  names(pools) <- cn
+
+      return(list(pooled_cells, pools))
+}
+
 #' Applies the Louvain algorithm to generate micro-clustered data
 #' 
 #' @param kn List of nearest neighbor indices and euclidean distances to these nearest neighbors

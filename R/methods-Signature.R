@@ -69,6 +69,21 @@ setMethod("addSigData", signature(object="Signature"),
             return(object)
           })
 
+generatePermutationNull <- function(num, eData, sigSizes) {
+  randomSigs <- c()
+  randomSizes <- unlist(findRepSubset(sigSizes))
+  for (size in randomSizes) {
+    message("Creating random signature of size ", size, "...")
+    for (j in 1:num) {
+      newSigGenes <- sample(rownames(getExprData(eData)), size)
+      newSigSigns <- rep(1, size)
+      names(newSigSigns) <- newSigGenes
+      newSig <- Signature(newSigSigns, paste0("RANDOM_BG_", size, "_", j), 'x')
+      randomSigs <- c(randomSigs, newSig)
+    }
+  }
+  return(randomSigs)
+}
 
 BG_DIST <- matrix(0L, nrow=0, ncol=0)
 
@@ -101,8 +116,6 @@ getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
 #'  @return Matrix (Num_Signatures x Num_Projections) sigProj dissimilarity score
 #'  @return SigProjMatrix_P matrix (Num_Signatures x Num_Projections) sigProj p values
 sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBORHOOD_SIZE = 0.33, BPPARAM=bpparam()) {
-  ptm <- Sys.time()
-  tRows <- c()
 
   set.seed(RANDOM_SEED)
 
@@ -164,18 +177,7 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
 
 
   randomSigScoreMatrix <- matrix(unlist(bplapply(randomSigData, function(rsig) { rank(rsig@scores, ties.method="average") },
-  										BPPARAM=MulticoreParam(workers=numCores))), nrow=N_SAMPLES, ncol=length(randomSigData))
-  
-  timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-  tRows <- c(tRows, "SigScoreMatrix")
-
-
-  randomSigScoreMatrix <- matrix(unlist(bplapply(randomSigData, function(rsig) { rank(rsig@scores, ties.method="average") },
   										BPPARAM=BPPARAM)), nrow=N_SAMPLES, ncol=length(randomSigData))
-
-
-  timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-  tRows <- c(tRows, "rSigScoreMatrix")
 
 
   ### build one hot matrix for factors
@@ -210,17 +212,10 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   	dissimilarity <- abs(sigScoreMatrix - neighborhoodPrediction)
   	medDissimilarity <- as.matrix(apply(dissimilarity, 2, median))
 
-  	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-  	tRows <- c(tRows, paste0(proj@name, "Dissimilarity"))
-
-
     # Calculate scores for random signatures
     randomNeighborhoodPrediction <- Matrix::crossprod(weights, randomSigScoreMatrix)
     randomDissimilarity <- abs(randomSigScoreMatrix - randomNeighborhoodPrediction)
     randomMedDissimilarity <- as.matrix(apply(randomDissimilarity, 2, median))
-
-  	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-  	tRows <- c(tRows, paste0(proj@name, "RandDissimilarity"))
 
       # Group by number of genes
       backgrounds <- list()
@@ -235,17 +230,11 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
         k <- k + 1
       }
 
-  	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-  	tRows <- c(tRows, paste0(proj@name, "GroupNumGenes"))
-
       bgStat <- matrix(unlist(bplapply(names(backgrounds), function(x) {
   			mu_x <- mean(backgrounds[[x]])
   			std_x <- biasedVectorSD(as.matrix(backgrounds[[x]]))
   			return(list(as.numeric(x), mu_x, std_x))
   		  }, BPPARAM=BPPARAM)), nrow=length(names(backgrounds)), ncol=3, byrow=T)
-
-  	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-  	tRows <- c(tRows, paste0(proj@name, "bgStat"))
 
 
   	mu <- matrix(unlist(bplapply(spRows, function(x) {
@@ -260,15 +249,9 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   			return(bgStat[row_i,3])
   		  }, BPPARAM=BPPARAM)), nrow=nrow(medDissimilarity), ncol=ncol(medDissimilarity))
 
-  	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-  	tRows <- c(tRows, paste0(proj@name, "Mu/Sigma"))
-
 
       #Create CDF function for medDissmilarityPrime and apply CDF function to medDissimilarityPrime pointwise
       pValues <- pnorm( ((medDissimilarity - mu) / sigma))
-
-  	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-  	tRows <- c(tRows, paste0(proj@name, "PValues"))
 
       sigProjMatrix[,i] <- 1 - (medDissimilarity / N_SAMPLES)
   	sigProjMatrix_P[,i] <- pValues
@@ -357,9 +340,6 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   	factorSigProjMatrix[,i] <- unlist(lapply(factorSigProjList, function(x) x[[1]]))
   	factorSigProjMatrix_P[,i] <- unlist(lapply(factorSigProjList, function(x) x[[2]]))
 
-  	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-  	tRows <- c(tRows, paste0(proj@name, "FactorSigs"))
-
     i <- i+1
   }
 
@@ -380,10 +360,6 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
   colnames(sigProjMatrix) <- projnames
   rownames(sigProjMatrix) <- spRowLabels
 
-  timingList <- as.matrix(timingList)
-  rownames(timingList) <- tRows
-
-  #return(list(list(spRowLabels, spColLabels, sigProjMatrix, sigProjMatrix_P), timingList))
   return(list(sigNames = spRowLabels, projNames = spColLabels,
               sigProjMatrix = sigProjMatrix, pVals = sigProjMatrix_P))
 }
@@ -398,15 +374,19 @@ sigsVsProjections <- function(projections, sigScoresData, randomSigData, NEIGHBO
 clusterSignatures <- function(sigList, sigMatrix, pvals, k=10) {
 
   precomputed <- lapply(sigList, function(x) x@isPrecomputed)
-  insignificant <- apply(pvals, 1, function(x) min(x) < -1.3)
 
-  keep = names(which(insignificant == T))
+  significant <- apply(pvals, 1, function(x) min(x) < -1.3)
+  
+  signif_computed <- significant[names(which(precomputed == F))]
+  signif_precomp <- significant[names(which(precomputed == T))]
+
+  keep_computed = names(which(signif_computed == T))
 
   # Cluster computed signatures and precomputed signatures separately
   computedSigsToCluster <- names(precomputed[which(precomputed==F)])
   computedSigMatrix <- sigMatrix[computedSigsToCluster,,drop=F]
 
-  computedSigMatrix <- computedSigMatrix[keep,,drop=F]
+  computedSigMatrix <- computedSigMatrix[keep_computed,,drop=F]
 
   compcls <- list()
   maxcls <- 1
@@ -420,7 +400,7 @@ clusterSignatures <- function(sigList, sigMatrix, pvals, k=10) {
 	maxcls <- max(unlist(compcls))
   }
 
-  compcls[names(which(insignificant == F))] <- maxcls + 1
+  compcls[names(which(significant == F))] <- maxcls + 1
 
   # Don't actually cluster Precomputed Signatures -- just return in a list.
   precompcls <- list()
