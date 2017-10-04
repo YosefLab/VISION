@@ -1,12 +1,13 @@
 #' Initializes a new FastProject object.
 #'
 #' @import BiocParallel
+#' @importFrom Biobase ExpressionSet
+#' @importFrom Biobase exprs
 #' @import logging
 #'
-#' @param data_file file path to expression matrix
+#' @param data expression data matrix
 #' @param housekeeping file path to housekeeping data file
 #' @param signatures list of file paths to signature files (.gmt or .txt)
-#' @param scone scone normalization data file
 #' @param norm_methods normalization methods to be extracted from the scone object
 #' @param precomptued data file with precomputed signature scores (.txt)
 #' @param nofilter if TRUE, no filter applied; else filters applied. Default is FALSE
@@ -22,7 +23,6 @@
 #' @param perm_wPCA If TRUE, apply permutation WPCA to calculate significant number of PCs. Else not. Default FALSE.
 #' @param sig_norm_method Method to apply to normalize the expression matrix before calculating signature scores
 #' @param sig_score_method Method to apply when calculating signature scores
-#' @param exprData expression data matrix, as opposed to specifying a data_file
 #' @param housekeepingData housekeeping data table, as opposed to specifying a housekeeping_data file
 #' @param sigData List of signatures, as opposed to specifying a list of signature files
 #' @param precomputedData List of precomputed signature scores, as opposed to specifying a precomputed file
@@ -34,43 +34,26 @@
 #'                   "data/Gene Name Housekeeping.txt",
 #'                   c("sigfile_1.gmt", "sigfile_2.txt"),
 #'                   precomputed="pre_sigs.txt")
-setMethod("FastProject", signature("character"),
-          function(data_file, housekeeping, signatures, scone = NULL, norm_methods = NULL,
+#'
+setMethod("FastProject", signature(data = "matrix"),
+          function(data, housekeeping, signatures, scone = NULL, norm_methods = NULL,
                    precomputed=NULL, nofilter=FALSE, nomodel=FALSE, filters=c("fano"),
                    lean=FALSE, qc=FALSE, min_signature_genes=5, projections="",
                    weights=NULL, threshold=0, perm_wPCA=FALSE, sig_norm_method="znorm_rows",
-                   sig_score_method="weighted_avg", exprData=NULL, housekeepingData=NULL,
+                   sig_score_method="weighted_avg", housekeepingData=NULL,
                    sigData=NULL, precomputedData=NULL) {
 
 
 
             ## Make sure that the minimum files are being read in.
-            if (missing(data_file) && is.null(exprData) && is.null(scone)) {
-              stop("Missing expression data file or SCONE object in input.")
-            } else if (missing(housekeeping) && is.null(housekeepingData)) {
+            if (missing(housekeeping) && is.null(housekeepingData)) {
               stop("Missing housekeeping data file in input.")
             } else if (missing(signatures) && is.null(sigData)) {
               stop("Missing signature data file in input.")
             }
 
             .Object <- new("FastProject")
-
-            if (is.null(scone)) {
-              if (is.null(exprData)) {
-                if (class(data_file) == "character") {
-              	    .Object@data_file <- data_file
-                    .Object@exprData <- readExprToMatrix(data_file)
-                } else if (class(data_file) == "matrix") {
-                    .Object@exprData <- data_file
-                } else if (class(data_file) == "ExpressionSet") {
-                    .Object@exprData <- exprs(data_file)
-                } else {
-                    stop("Can't recognize data file")
-                }
-              } else {
-                .Object@exprData <- exprData
-              }
-            }
+            .Object@exprData <- data
 
             if (is.null(housekeepingData)) {
               .Object@housekeeping <- housekeeping
@@ -111,6 +94,26 @@ setMethod("FastProject", signature("character"),
             return(.Object)
           }
 )
+
+
+#' @param data the path to the expression matrix file
+#' @rdname FastProject-class
+#' @export
+setMethod("FastProject", signature(data = "character"),
+          function(data, ...) {
+            return(FastProject(readExprToMatrix(data), ...))
+          }
+)
+
+#' @param data an ExpressionSet object with the expression matrix
+#' @rdname FastProject-class
+#' @export
+setMethod("FastProject", signature(data = "ExpressionSet"),
+          function(data, ...) {
+            return(FastProject(Biobase::exprs(data), ...))
+          }
+)
+
 
 #' Main entry point for running FastProject Analysis
 #'

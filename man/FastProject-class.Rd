@@ -6,29 +6,33 @@
 \alias{FastProject-class}
 \alias{FastProject}
 \alias{FastProject}
+\alias{FastProject,matrix-method}
 \alias{FastProject,character-method}
+\alias{FastProject,ExpressionSet-method}
 \title{The FaStProject main object}
 \usage{
-FastProject(data_file, ...)
+FastProject(data, ...)
 
-FastProject(data_file, ...)
+FastProject(data, ...)
 
-\S4method{FastProject}{character}(data_file, housekeeping, signatures,
-  scone = NULL, norm_methods = NULL, precomputed = NULL,
-  nofilter = FALSE, nomodel = FALSE, filters = c("fano"), lean = FALSE,
-  qc = FALSE, min_signature_genes = 5, projections = "", weights = NULL,
+\S4method{FastProject}{matrix}(data, housekeeping, signatures, scone = NULL,
+  norm_methods = NULL, precomputed = NULL, nofilter = FALSE,
+  nomodel = FALSE, filters = c("fano"), lean = FALSE, qc = FALSE,
+  min_signature_genes = 5, projections = "", weights = NULL,
   threshold = 0, perm_wPCA = FALSE, sig_norm_method = "znorm_rows",
-  sig_score_method = "weighted_avg", exprData = NULL,
-  housekeepingData = NULL, sigData = NULL, precomputedData = NULL)
+  sig_score_method = "weighted_avg", housekeepingData = NULL,
+  sigData = NULL, precomputedData = NULL)
+
+\S4method{FastProject}{character}(data, ...)
+
+\S4method{FastProject}{ExpressionSet}(data, ...)
 }
 \arguments{
-\item{data_file}{file path to expression matrix}
+\item{data}{expression data matrix}
 
 \item{housekeeping}{file path to housekeeping data file}
 
 \item{signatures}{list of file paths to signature files (.gmt or .txt)}
-
-\item{scone}{scone normalization data file}
 
 \item{norm_methods}{normalization methods to be extracted from the scone object}
 
@@ -55,8 +59,6 @@ Default is TRUE.}
 
 \item{sig_score_method}{Method to apply when calculating signature scores}
 
-\item{exprData}{expression data matrix, as opposed to specifying a data_file}
-
 \item{housekeepingData}{housekeeping data table, as opposed to specifying a housekeeping_data file}
 
 \item{sigData}{List of signatures, as opposed to specifying a list of signature files}
@@ -66,6 +68,10 @@ Default is TRUE.}
 \item{precomptued}{data file with precomputed signature scores (.txt)}
 
 \item{threhsold}{Threshold to apply for the threshold filter}
+
+\item{data}{the path to the expression matrix file}
+
+\item{data}{an ExpressionSet object with the expression matrix}
 }
 \value{
 A FastProject object
@@ -80,4 +86,5 @@ fp <- FastProject("expression_matrix.txt",
                   "data/Gene Name Housekeeping.txt",
                   c("sigfile_1.gmt", "sigfile_2.txt"),
                   precomputed="pre_sigs.txt")
+
 }

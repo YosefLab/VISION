@@ -4,7 +4,7 @@
 \alias{createPools}
 \title{create "super-cells" by pooling together single cells}
 \usage{
-createPools(cl, expr, hkg)
+createPools(cl, expr, hkg = list())
 }
 \arguments{
 \item{cl}{cluster association of each cell}
