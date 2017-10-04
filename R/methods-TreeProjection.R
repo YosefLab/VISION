@@ -45,9 +45,13 @@ setMethod("computeKNNWeights", signature(object = "TreeProjection"),
             sigma <- apply(knnmat, 1, max)
             weights <- exp(-1 * (knnmat * knnmat) / sigma^2)
 
+            weights[is.na(weights)] <- 0.0
+
             weightsNormFactor <- Matrix::rowSums(weights)
             weightsNormFactor[weightsNormFactor == 0] <- 1.0
             weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
             weights <- weights / weightsNormFactor
+
+            return(weights)
 
           })

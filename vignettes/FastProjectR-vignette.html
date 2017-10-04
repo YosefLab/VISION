@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Matthew Jones" />
+
+<meta name="date" content="2017-10-04" />
+
+<title>Introduction to FastProjectR</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+</style>
+
+
+
+<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Introduction to FastProjectR</h1>
+<h4 class="author"><em>Matthew Jones</em></h4>
+<h4 class="date"><em>2017-10-04</em></h4>
+
+
+
+<div id="overview" class="section level2">
+<h2>Overview</h2>
+<p>Single Cell RNA-seq (scRNA-seq) technology has proven to be an invaluable tool for characterizing heterogeneous cell populations (Patel et. al. 2014), identifying novel cell types (Villani et. al. 2017), and mapping developmental processes. In addition, scRNA-seq data sets are growing at exciting rates, highlighted by a 1.3 million cell data set mapping the mouse brain released by 10x Genomics in February of 2017. While such data sets are growing at incredible rates, there is a dearth of reliable methods that can both analyze such large data sets while at the same time accounting for the sparse and noisy data that is produced by current scRNA-seq technology. While popular methods such as PCA and tSNE are able to diminish the dimensionality of such datasets, more advanced methods are still needed to process and visualize the mega-scale data sets that are being produced.</p>
+<p>Here we present FastProjectR, an R package that can readily analyze a million cells at substantial dimensionalities and produce meaningful results in the form of a dynamic web report. FastProjectR systematically investigates an expression matrix by projecting the data into two dimensions using a series of linear and nonlinear dimensionality reduction methods and incorporating information from annotated gene sets, or “signatures.” FastProjectR provides a novel scoring method for assessing a signature’s fit to each projection using a false negative rate curve that is computed using a set of housekeeping genes; this method effectively takes into account the zero-inflated distributions inherent to scRNA-seq experiments and attributes biolgoical meaning to two dimesional projections. These signature scores are compared to one another in the context of a given projection and consistency scores are produced, providing a quantitative assessment for a given signature’s neighborhood similarity. Intuitively, the higher a signature’s consistency scores, the more clustered and identifiable are distinct cell types or substructures in the projection: this feature is given a p value which can be readily seen on the dynamic web report. FastProjectR is incredibly scalable, offering analysis of 500,000 cells across 5,948 genes in just under 5 hours, and offers all types of users a robust and informative technique for analyzing high dimensional and noisy single cell data.</p>
+<p>We offer FastProjectR as a solution that any researcher can use: our package includes an approachable API and integrates well with existing Bioconductor infrastructure. While approachable, FastProjectR also supports the more advanced bioinformatician with sophisiticated functionality as well as a modular architecture that allows the addition of new projection methods, signature scoring methods, and more.</p>
+</div>
+<div id="preliminaries" class="section level2">
+<h2>Preliminaries</h2>
+<div id="installation" class="section level3">
+<h3>Installation</h3>
+<p>If you have yet to install FastProjectR, we recommend using Bioconductor to install this pacakge. Full source code can be found at the FastProjectR github repository, available at <code>http://www.github.com/YosefLab/FastProjectR</code>. You can visit <code>http://bioconductor.org</code> and follow the instructions for installing R and Bioconductor; briefly, you may be able to install using the following commands in an R session:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="op">&gt;</span><span class="st"> </span><span class="kw">source</span>(<span class="st">&quot;http://bioconductor.org/biocLite.R&quot;</span>)
+<span class="op">&gt;</span><span class="st"> </span><span class="kw">biocLite</span>(<span class="st">&quot;FastProjectR&quot;</span>)</code></pre></div>
+</div>
+<div id="loading-in-fastprojectr" class="section level3">
+<h3>Loading in FastProjectR</h3>
+<p>Once FastProjectR and R are installed, you may load in FastProjectR and all of its dependencies using <code>library(FastProjectR)</code>.</p>
+</div>
+</div>
+<div id="using-fastprojectr" class="section level2">
+<h2>Using FastProjectR</h2>
+<div id="the-fastproject-pipeline" class="section level3">
+<h3>The FastProject Pipeline</h3>
+<p>FastProjectR generally follows the same pipeline from iteration to iteration, where minor differences can be specified via the various parameters in a FastProject object. On a typical FastProjectR run:</p>
+<ul>
+<li>Data is read in. An expression matrix (a .txt file, ExpressionSet, or R matrix are acceptable options) and at least one signature file (.gmt or .txt) are acceptable.</li>
+<li>Non-informative genes are filtered out. By default, FastProjectR applies a Fano filter, although the user may customize this.</li>
+<li>False negative rates (FNR) are estimated for each cell, unless the parameter <code>nomodel</code> is set to <code>FALSE</code>.</li>
+<li>Signatures are scored.</li>
+<li>Random signatures are generated as a null distribution for assessing significance to the input signatures.</li>
+<li>Projections are generated (i.e. two dimensional reductions).</li>
+<li>Signature consistency scores are computed for each signature-projection pairing. Significance is computed using the random signatures generated.</li>
+<li>Based on signature scores and a Gausssian Mixture Model (GMM), signatures are clustered.</li>
+<li>Tree-based projections are computed (e.g. SimplePPT)</li>
+<li>Tree-based consistency scores and signature significances are computed.</li>
+<li>Dynamic web-report is viewed.</li>
+</ul>
+</div>
+<div id="analysis-of-glioblastoma-cells-with-fastprojectr" class="section level3">
+<h3>Analysis of Glioblastoma Cells with FastProjectR</h3>
+<p>As described above, FastProjectR can be approached from many directions. Here, we present the simplest of applications, utilizing the <code>Analyze</code> function.</p>
+<p>First, we’ll walk through how to create a FastProject object for the <code>Analyze</code> function. Most importantly, we need expression data and signature data. Another helpful, but not obligatory, dataset is a collection of housekeeping genes (genes that you’d expect to be analyzed in all cells in this expression matrix) for the estimation of a false negative curve. For this example we’ll also include some meta-data for the samples in the form of a pre-computed signature file.</p>
+<p>We’ll operate on a set of 430 cells from five primary glioblastomas sequenced using scRNA-seq for 5,948 genes (Patel et. al. 2014). For our signatures, we will use the Hallmark gene set from MSigDB, which can be accessed at <code>http://software.broadinstitute.org/gsea/msigdb/collections.jsp#H</code>. The housekeeping genes we’ll use can be found in <code>Gene Name Housekeeping.txt</code>, and the pre-computed signature can be found in <code>precomptued_signatures.txt</code>. To note, we can specify multiple signature files and files containing meta-data but we’ll stick to one for this example.</p>
+<p>To create the FastProject object, use</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Create a FastProject object</span>
+fp &lt;-<span class="st"> </span><span class="kw">FastProject</span>(<span class="st">&quot;data/expression_matrix.txt&quot;</span>, <span class="st">&quot;data/Gene Name Housekeeping.txt&quot;</span>, 
+    <span class="kw">c</span>(<span class="st">&quot;data/h.all.v5.2.symbols.gmt&quot;</span>), <span class="dt">precomputed =</span> <span class="st">&quot;data/precomputed_signatures.txt&quot;</span>)</code></pre></div>
+<p>This FastProject object will now contain all the necessary information for performing the basic analysis pipeline on the expression matrix passed in, accessed by <code>fp@exprData</code>. To note, the use may also provide the expression data by using the <code>exprData</code> argument. For example, consider the example below:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># -- read in expression data set --</span>
+expr &lt;-<span class="st"> </span><span class="kw">readExprToMatrix</span>(<span class="st">&quot;data/expression_matrix.txt&quot;</span>)
+
+<span class="co"># -- Create a FastProject object with existing matrix</span>
+fp &lt;-<span class="st"> </span><span class="kw">FastProject</span>(expr, <span class="st">&quot;data/Gene Name Housekeeping.txt&quot;</span>, <span class="kw">c</span>(<span class="st">&quot;data/h.all.v5.2.symbols.gmt&quot;</span>), 
+    <span class="dt">precomputed =</span> <span class="st">&quot;data/precomputed_signatures.txt&quot;</span>)
+
+## -- Create a FastProject object with an ExpressionSet --
+eset &lt;-<span class="st"> </span><span class="kw">ExpressionSet</span>(<span class="dt">assayData =</span> expr)
+fp &lt;-<span class="st"> </span><span class="kw">FastProject</span>(eset, <span class="st">&quot;data/Gene Name Housekeeping.txt&quot;</span>, <span class="kw">c</span>(<span class="st">&quot;data/h.all.v5.2.symbols.gmt&quot;</span>), 
+    <span class="dt">precomputed =</span> <span class="st">&quot;data/precomputed_signatures.txt&quot;</span>)</code></pre></div>
+<p>Now, with a FastProject object, we can run <code>Analyze</code> which will return a FastProjectOutput object.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Run Analyze with one core</span>
+fpOut &lt;-<span class="st"> </span><span class="kw">Analyze</span>(fp)</code></pre></div>
+<p>With the FastProjectOutput object, a dynamic web report can be generated with the <code>viewResults</code> function or the <code>saveFPOutandViewResults</code> function, which will both save the FastProjectOutput object as an .rds file and launch a web browser for the dynamic report.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">viewResults</span>(fpOut)</code></pre></div>
+</div>
+<div id="parallel-fastprojectr" class="section level3">
+<h3>Parallel FastProjectR</h3>
+<p>Importantly, FastProjectR supports parallel computation with the BiocParallel. To do so, register a BiocParallel as such and the Analyze() function will automatically use the new BPPARAM registered.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">BiocParallel<span class="op">::</span><span class="kw">register</span>(
+  BiocParalle<span class="op">::</span><span class="kw">MulticoreParam</span>(<span class="dt">workers=</span><span class="dv">2</span>)
+)
+fpOut &lt;-<span class="st"> </span><span class="kw">Analyze</span>(fp)</code></pre></div>
+<p>We highly recommend parallelizing the FastProjectR pipeline if extra processors are available.</p>
+</div>
+</div>
+<div id="session-info" class="section level2">
+<h2>Session Info</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">sessionInfo</span>()
+## R version 3.4.1 (2017-06-30)
+## Platform: x86_64-apple-darwin16.7.0 (64-bit)
+## Running under: macOS Sierra 10.12.6
+## 
+## Matrix products: default
+## BLAS: /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib
+## LAPACK: /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libLAPACK.dylib
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## attached base packages:
+## [1] parallel  stats     graphics  grDevices utils     datasets  methods  
+## [8] base     
+## 
+## other attached packages:
+##  [1] RColorBrewer_1.1-2      FastProjectR_0.0.0.9000
+##  [3] mclust_5.3              Hmisc_4.0-3            
+##  [5] Formula_1.2-2           survival_2.41-3        
+##  [7] lattice_0.20-35         entropy_1.2.1          
+##  [9] pROC_1.10.0             geometry_0.3-6         
+## [11] magic_1.5-6             abind_1.4-5            
+## [13] jug_0.1.7               magrittr_1.5           
+## [15] Biobase_2.36.2          BiocGenerics_0.22.0    
+## [17] BiocParallel_1.10.1     loe_1.1                
+## [19] MASS_7.3-47             jsonlite_1.5           
+## [21] wordspace_0.2-0         RDRToolbox_1.26.0      
+## [23] rsvd_0.6                igraph_1.1.2           
+## [25] largeVis_0.2.1          Matrix_1.2-11          
+## [27] Rtsne_0.13              fastICA_1.2-1          
+## [29] matrixStats_0.52.2      cogena_1.10.0          
+## [31] kohonen_3.0.4           ggplot2_2.2.1          
+## [33] cluster_2.0.6          
+## 
+## loaded via a namespace (and not attached):
+##  [1] bitops_1.0-6        devtools_1.13.3     doParallel_1.0.10  
+##  [4] rprojroot_1.2       tools_3.4.1         backports_1.1.0    
+##  [7] R6_2.2.2            rpart_4.1-11        KernSmooth_2.23-15 
+## [10] lazyeval_0.2.0      colorspace_1.3-2    nnet_7.3-12        
+## [13] withr_2.0.0         gridExtra_2.2.1     compiler_3.4.1     
+## [16] biwt_1.0            iotools_0.1-12      formatR_1.5        
+## [19] htmlTable_1.9       logging_0.7-103     xml2_1.1.1         
+## [22] checkmate_1.8.3     caTools_1.17.1      scales_0.5.0       
+## [25] DEoptimR_1.0-8      mvtnorm_1.0-6       robustbase_0.92-7  
+## [28] commonmark_1.4      stringr_1.2.0       apcluster_1.4.4    
+## [31] digest_0.6.12       foreign_0.8-69      rmarkdown_1.6      
+## [34] sparsesvd_0.1-1     rrcov_1.4-3         base64enc_0.1-3    
+## [37] pkgconfig_2.0.1     htmltools_0.3.6     htmlwidgets_0.9    
+## [40] rlang_0.1.2         FNN_1.1             shiny_1.0.5        
+## [43] bindr_0.1           gtools_3.5.0        acepack_1.4.1      
+## [46] dplyr_0.7.2         Rcpp_0.12.12        munsell_0.4.3      
+## [49] stringi_1.1.5       yaml_2.1.14         gplots_3.0.1       
+## [52] plyr_1.8.4          grid_3.4.1          gdata_2.18.0       
+## [55] crayon_1.3.2        profmem_0.4.0       splines_3.4.1      
+## [58] knitr_1.17          fastcluster_1.1.24  reshape2_1.4.2     
+## [61] codetools_0.2-15    stats4_3.4.1        glue_1.1.1         
+## [64] evaluate_0.10.1     latticeExtra_0.6-28 data.table_1.10.4  
+## [67] httpuv_1.3.5        foreach_1.4.3       testthat_1.0.2     
+## [70] gtable_0.2.0        amap_0.8-14         assertthat_0.2.0   
+## [73] mime_0.5            xtable_1.8-2        roxygen2_6.0.1     
+## [76] class_7.3-14        pcaPP_1.9-72        tibble_1.3.4       
+## [79] iterators_1.0.8     memoise_1.1.0       bindrcpp_0.2       
+## [82] corrplot_0.77       rgl_0.98.1</code></pre></div>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

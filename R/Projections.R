@@ -1,3 +1,4 @@
+
 #' Registers the projection methods to be used
 #'
 #' @param lean If FALSE, all projections applied; else a subset of essential ones are applied. Default is FALSE.

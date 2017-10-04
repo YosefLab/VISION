@@ -1,3 +1,29 @@
+
+applyMicroClustering <- function(exprData, hkg=list()) {
+
+  	  fexpr <- filterGenesFano(exprData)
+  	  res <- applyPCA(fexpr, N=30)[[1]]
+  	  kn <- ball_tree_knn(t(res), 30, BPPARAM$workers)
+  	  cl <- louvainCluster(kn, t(res))
+  	  cl <- readjust_clusters(cl, t(res))
+
+      pooled_cells <- createPools(cl, exprData, hkg)
+
+	  cn <- lapply(1:ncol(pooled_cells), function(i) return(paste0("Cluster ", i)))
+	  colnames(pooled_cells) <- cn
+	  rownames(pooled_cells) <- rownames(object@exprData)
+
+	  pools <- lapply(1:length(cl), function(i) {
+			clust_data <- object@exprData[,cl[[i]]]
+			cells <- colnames(clust_data)
+			return(cells)
+	  })
+
+	  names(pools) <- cn
+
+      return(list(pooled_cells, pools))
+}
+
 #' Applies the Louvain algorithm to generate micro-clustered data
 #'
 #' @param kn List of nearest neighbor indices and euclidean distances to these nearest neighbors
@@ -128,25 +154,32 @@ merge_intervals <- function(intervals) {
 
 }
 
+
 #' create "super-cells" by pooling together single cells
 #' @param cl cluster association of each cell
 #' @param expr expression data
 #' @param hkg a set of housekeeping genes to use to evaluate tightness
 #' @return a matrx of expression data for the pooled cells
-createPools <- function(cl, expr, hkg) {
+createPools <- function(cl, expr, hkg=list()) {
+
 
 	pooled_cells <- matrix(unlist(lapply(cl, function(clust) {
 
 			clust_data <- expr[,clust]
-			if (is.null(dim(clust_data))) {
-			  return(clust_data)
-			  }
-			fnr <- createFalseNegativeMap(clust_data, hkg)
-			clust_weights <- computeWeights(fnr[[1]], fnr[[2]], ExpressionData(clust_data))
-			p_cell <- as.matrix(apply(clust_data, 1, sum))
-			cell_norm <- as.matrix(apply(clust_weights, 1, sum))
+            if (is.null(dim(clust_data))) {
+                return(clust_data)
+            }   
+            if (length(hkg) > 0) {
+	            fnr <- createFalseNegativeMap(clust_data, hkg)
+                clust_weights <- computeWeights(fnr[[1]], fnr[[2]], ExpressionData(clust_data))
+			    p_cell <- as.matrix(apply(clust_data, 1, sum))
+                cell_norm <- as.matrix(apply(clust_weights, 1, sum))
 
-			return(p_cell / cell_norm)
+			    return(p_cell / cell_norm)
+            }
+
+            p_cell <- as.matrix(apply(clust_data, 1, mean))
+            return(p_cell)
 	  })), nrow=nrow(expr), ncol=length(cl))
 
     return(pooled_cells)

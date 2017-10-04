@@ -1,0 +1,128 @@
+---
+title: "Introduction to FastProjectR"
+author: "Matthew Jones"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to FastProjectR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+``` {r options, include=F, cache=F, results='hide', message=F}
+
+knitr::opts_chunk$set(fig.align="center", cache=FALSE,error=FALSE,
+                      fig.width=6,fig.height=6,autodep=TRUE,
+                      out.width="600px", out.height="600px",
+                      results="markup", echo=TRUE, eval=TRUE)
+
+options(getClass.msg=FALSE)
+
+set.seed(6473) ## for reproducibility
+
+devtools::load_all()
+library(RColorBrewer)
+library(Biobase)
+
+```
+
+
+## Overview
+
+Single Cell RNA-seq (scRNA-seq) technology has proven to be an invaluable tool for characterizing heterogeneous cell populations (Patel et. al. 2014), identifying novel cell types (Villani et. al. 2017), and mapping developmental processes. In addition, scRNA-seq data sets are growing at exciting rates, highlighted by a 1.3 million cell data set mapping the mouse brain released by 10x Genomics in February of 2017. While such data sets are growing at incredible rates, there is a dearth of reliable methods that can both analyze such large data sets while at the same time accounting for the sparse and noisy data that is produced by current scRNA-seq technology. While popular methods such as PCA and tSNE are able to diminish the dimensionality of such datasets, more advanced methods are still needed to process and visualize the mega-scale data sets that are being produced.
+
+Here we present FastProjectR, an R package that can readily analyze a million cells at substantial dimensionalities and produce meaningful results in the form of a dynamic web report. FastProjectR systematically investigates an expression matrix by projecting the data into two dimensions using a series of linear and nonlinear dimensionality reduction methods and incorporating information from annotated gene sets, or “signatures.” FastProjectR provides a novel scoring method for assessing a signature’s fit to each projection using a false negative rate curve that is computed using a set of housekeeping genes; this method effectively takes into account the zero-inflated distributions inherent to scRNA-seq experiments and attributes biolgoical meaning to two dimesional projections. These signature scores are compared to one another in the context of a given projection and consistency scores are produced, providing a quantitative assessment for a given signature’s neighborhood similarity. Intuitively, the higher a signature’s consistency scores, the more clustered and identifiable are distinct cell types or substructures in the projection: this feature is given a p value which can be readily seen on the dynamic web report. FastProjectR is incredibly scalable, offering analysis of 500,000 cells across 5,948 genes in just under 5 hours, and offers all types of users a robust and informative technique for analyzing high dimensional and noisy single cell data.
+
+We offer FastProjectR as a solution that any researcher can use: our package includes an approachable API and integrates well with existing Bioconductor infrastructure. While approachable, FastProjectR also supports the more advanced bioinformatician with sophisiticated functionality as well as a modular architecture that allows the addition of new projection methods, signature scoring methods, and more. 
+
+## Preliminaries
+
+###Installation 
+
+If you have yet to install FastProjectR, we recommend using Bioconductor to install this pacakge. Full source code can be found at the FastProjectR github repository, available at `http://www.github.com/YosefLab/FastProjectR`.  You can visit `http://bioconductor.org` and follow the instructions for installing R and Bioconductor; briefly, you may be able to install using the following commands in an R session:
+
+```r
+> source("http://bioconductor.org/biocLite.R")
+> biocLite("FastProjectR")
+```
+
+###Loading in FastProjectR
+
+Once FastProjectR and R are installed, you may load in FastProjectR and all of its dependencies using `library(FastProjectR)`. 
+
+##Using FastProjectR
+
+###The FastProject Pipeline
+
+FastProjectR generally follows the same pipeline from iteration to iteration, where minor differences can be specified via the various parameters in a FastProject object. On a typical FastProjectR run:
+
+- Data is read in. An expression matrix (a .txt file, ExpressionSet, or R matrix are acceptable options) and at least one signature file (.gmt or .txt) are acceptable. 
+- Non-informative genes are filtered out. By default, FastProjectR applies a Fano filter, although the user may customize this.
+- False negative rates (FNR) are estimated for each cell, unless the parameter `nomodel` is set to `FALSE`.
+- Signatures are scored.
+- Random signatures are generated as a null distribution for assessing significance to the input signatures.
+- Projections are generated (i.e. two dimensional reductions).
+- Signature consistency scores are computed for each signature-projection pairing. Significance is computed using the random signatures generated.
+- Based on signature scores and a Gausssian Mixture Model (GMM), signatures are clustered.
+- Tree-based projections are computed (e.g. SimplePPT)
+- Tree-based consistency scores and signature significances are computed.
+- Dynamic web-report is viewed. 
+
+###Analysis of Glioblastoma Cells with FastProjectR
+As described above, FastProjectR can be approached from many directions. Here, we present the simplest of applications, utilizing the `Analyze` function. 
+
+First, we'll walk through how to create a FastProject object for the `Analyze` function. Most importantly, we need expression data and signature data. Another helpful, but not obligatory, dataset is a collection of housekeeping genes (genes that you'd expect to be analyzed in all cells in this expression matrix) for the estimation of a false negative curve. For this example we'll also include some meta-data for the samples in the form of a pre-computed signature file.
+
+We'll operate on a set of 430 cells from five primary glioblastomas sequenced using scRNA-seq  for 5,948 genes (Patel et. al. 2014). For our signatures, we will use the Hallmark gene set from MSigDB, which can be accessed at `http://software.broadinstitute.org/gsea/msigdb/collections.jsp#H`. The housekeeping genes we'll use can be found in `Gene Name Housekeeping.txt`, and the pre-computed signature can be found in `precomptued_signatures.txt`. To note, we can specify multiple signature files and files containing meta-data but we'll stick to one for this example. 
+
+To create the FastProject object, use
+
+```{r, collapse=T, tidy=T, message=F}
+# Create a FastProject object
+fp <- FastProject("data/expression_matrix.txt", "data/Gene Name Housekeeping.txt", c("data/h.all.v5.2.symbols.gmt"), precomputed="data/precomputed_signatures.txt")
+```
+
+This FastProject object will now contain all the necessary information for performing the basic analysis pipeline on the expression matrix passed in, accessed by `fp@exprData`. To note, the use may also provide the expression data by using the `exprData` argument. For example, consider the example below:
+
+```{r, collapse=T, tidy=T, message=F, eval=F}
+# -- read in expression data set -- 
+expr <- readExprToMatrix("data/expression_matrix.txt")
+
+# -- Create a FastProject object with existing matrix
+fp <- FastProject(expr, "data/Gene Name Housekeeping.txt", c("data/h.all.v5.2.symbols.gmt"), precomputed="data/precomputed_signatures.txt")
+
+## -- Create a FastProject object with an ExpressionSet -- 
+eset <- ExpressionSet(assayData=expr)
+fp <- FastProject(eset, "data/Gene Name Housekeeping.txt", c("data/h.all.v5.2.symbols.gmt"), precomputed="data/precomputed_signatures.txt")
+```
+
+Now, with a FastProject object, we can run `Analyze` which will return a FastProjectOutput object.
+
+```{r, collapse=T, tidy=T, message=F, results=F}
+# Run Analyze with one core
+fpOut <- Analyze(fp)
+```
+
+With the FastProjectOutput object, a dynamic web report can be generated with the `viewResults` function or the `saveFPOutandViewResults` function, which will both save the FastProjectOutput object as an .rds file and launch a web browser for the dynamic report.
+
+```{r, collapse=T, message=F, results=F, eval=F}
+viewResults(fpOut)
+```
+
+###Parallel FastProjectR
+
+Importantly, FastProjectR supports parallel computation with the BiocParallel. To do so, register a BiocParallel as such and the Analyze() function will automatically use the new BPPARAM registered. 
+
+```{r, collapse=T, message=F, results=F, eval=F}
+BiocParallel::register(
+  BiocParalle::MulticoreParam(workers=2)
+)
+fpOut <- Analyze(fp)
+```
+
+We highly recommend parallelizing the FastProjectR pipeline if extra processors are available. 
+
+##Session Info
+```{r, collapse=T, tidy=T}
+sessionInfo()
+```
