@@ -16,10 +16,8 @@ readExprToMatrix <- function(filename, delimiter="\t") {
 
   # check if there are any repeats in samples or genes
   uniqrows <- unique(rownames(data))
-  #uniqcols <- unique(colnames(data))
 
   data <- data[uniqrows,]
-  #data <- data[, uniqcols]
   return(data)
 }
 
