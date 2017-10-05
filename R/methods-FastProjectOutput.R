@@ -44,10 +44,10 @@ setMethod("initialize", signature(.Object="FastProjectOutput"),
 setMethod("saveFPOutAndViewResults", signature(fpout="FastProjectOutput"),
           function(fpout) {
             i <- 1
-            ofile <- paste0("FastProject_Output/fpout", i, ".rds")
+            ofile <- paste0("./fpout", i, ".rds")
             while (file.exists(ofile)) {
               i <- i+1
-              ofile <- paste0("FastProject_Output/fpout", i, ".rds")
+              ofile <- paste0("./fpout", i, ".rds")
             }
 
             saveRDS(fpout, file=ofile)
@@ -55,7 +55,7 @@ setMethod("saveFPOutAndViewResults", signature(fpout="FastProjectOutput"),
 
             message("Launching the server...")
             message("Press exit or ctrl c to exit")
-            source("FastProject_Output/server_script.R")
+            source("FastProjectR_Output/server_script.R")
           })
 
 #' View results of analysis without saving output object
@@ -77,5 +77,5 @@ setMethod("viewResults", signature(object="FastProjectOutput"),
             arg1 <<- object
             message("Launching the server...")
             message("Press exit or ctrl c to exit")
-            source("FastProject_Output/server_script.R")
+            source("FastProjectR_Output/server_script.R")
           })
