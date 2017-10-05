@@ -77,28 +77,23 @@ To create the FastProject object, use
 # Create a FastProject object
 library(FastProjectR)
 
-fp <- FastProject("data/expression_matrix.txt", 
-                  "data/GeneNameHousekeeping.txt", 
-                  c("data/h.all.v5.2.symbols.gmt"), 
-                  precomputed="data/precomputed_signatures.txt")
+fp <- FastProject("data/expression_matrix.rds",  "data/GeneNameHousekeeping.txt",  c("data/h.all.v5.2.symbols.gmt"))
 ```
 
 This FastProject object will now contain all the necessary information for performing the basic analysis pipeline on the expression matrix passed in. Note, the expression data canbe provided directly as either a numeric matrix, or an ExpressionSet object:
 
-```{r, collapse=T, tidy=T, message=F, eval=T}
+```{r, collapse=T, tidy=T, message=F, eval=F}
 # -- read in expression data set -- 
-expr <- readRDS("data/expression_matrix.RDS")
+expr <- readRDS("data/expression_matrix.rds")
 
 # -- Create a FastProject object with existing matrix
 fp <- FastProject(expr, "data/GeneNameHousekeeping.txt", 
-                  c("data/h.all.v5.2.symbols.gmt"), 
-                  precomputed="data/precomputed_signatures.txt")
+                  c("data/h.all.v5.2.symbols.gmt"))
 
 ## -- Create a FastProject object with an ExpressionSet -- 
 eset <- Biobase::ExpressionSet(assayData=expr)
 fp <- FastProject(eset, "data/GeneNameHousekeeping.txt", 
                   c("data/h.all.v5.2.symbols.gmt"), 
-                  precomputed="data/precomputed_signatures.txt")
 ```
 
 Now, with a FastProject object, we can run `Analyze` which will return a FastProjectOutput object.
@@ -107,7 +102,7 @@ FastProjectR supports parallelization with BiocParallel, so we highly recommend 
 backend and providing it to `Analyze`. If one is not provided, FastProjectR will call BiocParallel::bpparam
 to get a default backend.
 
-```{r, collapse=T, tidy=T, message=T, results='hide'}
+```{r, collapse=T, tidy=T, message=T, results='hide', eval=F}
 bp <- BiocParallel::MulticoreParam(workers=2)
 
 fpOut <- Analyze(fp, BPPARAM = bp)
