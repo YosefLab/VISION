@@ -26,7 +26,11 @@ setMethod("initialize", signature(.Object="FastProjectOutput"),
           }
 )
 
-#' Save the FastProjectOutput object as an .RDS file and view the results on a localhost
+#' Save the FastProjectOutput object as an .RDS file and view the results on a
+#' localhost
+#'
+#' Save the results object as an RDS file for future use, and launch a local
+#' server to explore the results with a browser.
 #'
 #' @param fpout FastProjectOutput object
 #' @return None
@@ -55,6 +59,9 @@ setMethod("saveFPOutAndViewResults", signature(fpout="FastProjectOutput"),
           })
 
 #' View results of analysis without saving output object
+#'
+#' launch a local server to explore the results with a browser.
+#'
 #' @param object FastProjectOutput object
 #' @rdname ViewResults
 #' @export

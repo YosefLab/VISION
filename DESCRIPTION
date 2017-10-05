@@ -44,7 +44,7 @@ Suggests:
     testthat,
     knitr,
     rmarkdown
-BiocViews:
+biocViews:
 	GeneExpression,
 	RNASeq,
 	Software,

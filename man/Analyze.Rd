@@ -16,7 +16,8 @@
 FastProjectOutput object
 }
 \description{
-Main entry point for running FastProject Analysis
+The main analysis function. Runs the entire FastProject analysis pipeline
+and returns a FastProjectOutput object with the result,
 }
 \examples{
 \dontrun{
@@ -25,5 +26,6 @@ fp <- FastProject("data/expression_matrix.txt",
                   c("extdata/geneSetLibrary.gmt",
                     "data/tcga_sigs.txt"))
 fpout <- Analysis(fp)
+ViewResults(fpout)
 }
 }

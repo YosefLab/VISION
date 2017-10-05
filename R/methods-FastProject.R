@@ -125,8 +125,10 @@ setMethod("FastProject", signature(data = "ExpressionSet"),
           }
 )
 
-
 #' Main entry point for running FastProject Analysis
+#'
+#' The main analysis function. Runs the entire FastProject analysis pipeline
+#' and returns a FastProjectOutput object with the result,
 #'
 #' @export
 #' @rdname Analyze
@@ -141,6 +143,7 @@ setMethod("FastProject", signature(data = "ExpressionSet"),
 #'                   c("extdata/geneSetLibrary.gmt",
 #'                     "data/tcga_sigs.txt"))
 #' fpout <- Analysis(fp)
+#' ViewResults(fpout)
 #' }
 setMethod("Analyze", signature(object="FastProject"),
           function(object, BPPARAM = NULL) {

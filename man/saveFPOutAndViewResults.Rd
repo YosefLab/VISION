@@ -3,7 +3,8 @@
 \docType{methods}
 \name{saveFPOutAndViewResults,FastProjectOutput-method}
 \alias{saveFPOutAndViewResults,FastProjectOutput-method}
-\title{Save the FastProjectOutput object as an .RDS file and view the results on a localhost}
+\title{Save the FastProjectOutput object as an .RDS file and view the results on a
+localhost}
 \usage{
 \S4method{saveFPOutAndViewResults}{FastProjectOutput}(fpout)
 }
@@ -14,7 +15,8 @@
 None
 }
 \description{
-Save the FastProjectOutput object as an .RDS file and view the results on a localhost
+Save the results object as an RDS file for future use, and launch a local
+server to explore the results with a browser.
 }
 \examples{
 \dontrun{

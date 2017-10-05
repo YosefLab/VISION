@@ -11,7 +11,7 @@
 \item{object}{FastProjectOutput object}
 }
 \description{
-View results of analysis without saving output object
+launch a local server to explore the results with a browser.
 }
 \examples{
 \dontrun{
