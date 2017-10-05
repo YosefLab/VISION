@@ -9,6 +9,9 @@ newAnalysis(nfp)
 \arguments{
 \item{nfp}{the new FastProject object to analyze}
 }
+\value{
+None
+}
 \description{
 Run the analysis again wth user-defined subsets or confguration
 }

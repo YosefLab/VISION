@@ -9,8 +9,10 @@ filterGenesFano(data, num_mad = 2)
 \arguments{
 \item{data}{NUM_GENES x NUM_SAMPLES expression matrix}
 
-\item{num_mad}{number of median absolute deviations
-@return NUM_GENES_PASSED_FANO_FILTER x NUM_SAMPLES filtered expression matrix}
+\item{num_mad}{number of median absolute deviations}
+}
+\value{
+NUM_GENES_PASSED_FANO_FILTER x NUM_SAMPLES filtered expression matrix
 }
 \description{
 Applies the Fano filter to the input data (may remove rows)

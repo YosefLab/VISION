@@ -16,6 +16,9 @@ findNeighbors(data, query, k, BPPARAM = bpparam())
 
 \item{BPPARAM}{the parallelization backend to use}
 }
+\value{
+a list of the k neughbors for each of the vectors in `query`
+}
 \description{
 Find K nearest neighbors for each vector in query among the vectors in the
 given data

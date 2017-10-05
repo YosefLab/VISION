@@ -17,7 +17,7 @@ readPrecomputed(filename, sampleLabels, delimiter = "\\t")
 List of Signature data types
 }
 \description{
-First row of the file contains sample labels that the signatures correspond with
+First row of file contains sample labels that the signatures correspond with
 }
 \details{
 Each subsequent row contains a signature name in the first column,

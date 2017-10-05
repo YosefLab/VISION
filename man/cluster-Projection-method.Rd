@@ -14,6 +14,9 @@
 
 \item{param}{Parameters for clustering method}
 }
+\value{
+a Cluster object
+}
 \description{
 Clusters the projection according to some method
 }

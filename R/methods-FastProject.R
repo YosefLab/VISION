@@ -364,7 +364,8 @@ setMethod("Analyze", signature(object="FastProject"),
   	})
 
   	pearsonCorr <- lapply(pearsonCorr, unlist)
-  	pearsonCorr <- matrix(unlist(pearsonCorr), nrow=nrow(sigMatrix), ncol=nrow(pca_res), byrow=T)
+  	pearsonCorr <- matrix(unlist(pearsonCorr), nrow=nrow(sigMatrix),
+  	                      ncol=nrow(pca_res), byrow=TRUE)
 
   	rownames(pearsonCorr) <- rownames(sigMatrix)
   	colnames(pearsonCorr) <- rownames(pca_res)
@@ -402,28 +403,4 @@ setMethod("Analyze", signature(object="FastProject"),
 
   #return(list(fpOut, timingList))
   return(fpOut)
-}
-)
-
-#' Creates a new FastProject object with the new expression matrix. Called from
-#' Server.R.
-#'
-#' @export
-#'
-#' @param fpParams List of FastProject parameters
-#' @param nexpr New expression matrix for the new FastProject object
-#' @return a new FastProject object
-createNewFP <- function(fpParams, nexpr) {
-	nfp <- FastProject(exprData=nexpr, sigData=fpParams[["sigData"]],
-						housekeepingData=fpParams[["housekeepingData"]])
-
-	fpslots <- names(fpParams)
-	for (s in fpslots) {
-		if (s != "exprData" && s != "sigData" && s != "housekeepingData") {
-			methods::slot(nfp, s) <- fpParams[[s]]
-		}
-	}
-
-	return(nfp)
-}
-
+})

@@ -15,6 +15,9 @@ edge, and the vertex of the second edge that is closer to the first edge}
 
 \item{path.length}{the length of the path connected the two vertices}
 }
+\value{
+a distamce matrix between all points on edge1 and all points on edge2
+}
 \description{
 Calculate all distances between points on two different edges
 }

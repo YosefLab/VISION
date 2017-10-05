@@ -16,9 +16,11 @@ generateProjections(expr, weights, filterName = "", inputProjections = c(),
 
 \item{inputProjections}{Precomputed projections}
 
-\item{lean}{If T, diminished number of algorithms applied, if FALSE all algorithms applied. Default is FALSE}
+\item{lean}{If TRUE, diminished number of algorithms applied,
+if FALSE all algorithms applied. Default is FALSE}
 
-\item{perm_wPCA}{If TRUE, apply permutation wPCA to determine significant number of components. Default is FALSE.}
+\item{perm_wPCA}{If TRUE, apply permutation wPCA to determine significant
+number of components. Default is FALSE.}
 
 \item{BPPARAM}{the backend to use for parallelization}
 }
@@ -29,7 +31,8 @@ list:
     \item geneNames: a character vector of the genes involved in the analsis
     \item fullPCA: the full PCA matrix of the data
     \item loadings: the loading vectors for the fullPCA matrix
-    \item permMats: a list of permuted and projected data matrices, used for downstream permutation tests
+    \item permMats: a list of permuted and projected data matrices, used for
+    downstream permutation tests
 }
 }
 \description{

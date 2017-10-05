@@ -70,9 +70,9 @@ filterGenesThreshold <- function(data, threshold) {
 }
 #' Applies the Fano filter to the input data (may remove rows)
 #'
-#'	@param data NUM_GENES x NUM_SAMPLES expression matrix
-#'	@param num_mad number of median absolute deviations
-#'  @return NUM_GENES_PASSED_FANO_FILTER x NUM_SAMPLES filtered expression matrix
+#' @param data NUM_GENES x NUM_SAMPLES expression matrix
+#' @param num_mad number of median absolute deviations
+#' @return NUM_GENES_PASSED_FANO_FILTER x NUM_SAMPLES filtered expression matrix
 filterGenesFano <- function(data, num_mad=2) {
 
   message("Applying fano filter...")
@@ -117,9 +117,9 @@ filterGenesFano <- function(data, num_mad=2) {
 	})
 
   gpi <- unlist(genePassList)
-  gene_passes[gpi] <- T
+  gene_passes[gpi] <- TRUE
   gene_passes <- gene_passes[order(aa)]
-  return(data[which(gene_passes==T),])
+  return(data[which(gene_passes==TRUE),])
 
 }
 

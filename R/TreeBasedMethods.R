@@ -171,11 +171,14 @@ fitTree <- function(expr, nNodes, sigma, gamma, tol, maxIter) {
   while (!(prevScore - currScore < tol) && !(currIter > maxIter)) {
     currIter <- currIter + 1
     prevScore <- currScore
-    W <- igraph::mst(igraph::graph_from_adjacency_matrix(cc_dist, weighted= T, mode="undirected"))
+    W <- igraph::mst(igraph::graph_from_adjacency_matrix(cc_dist,
+                                                         weighted= TRUE,
+                                                         mode="undirected"))
     Wt <- igraph::get.adjacency(W, sparse=FALSE)
 
     Ptmp <- -(cx_dist / sigma)
-    Psums <- matrix(rep(apply(Ptmp, 1, logSumExp), each=ncol(Ptmp)), nrow=nrow(Ptmp), ncol=ncol(Ptmp), byrow=T)
+    Psums <- matrix(rep(apply(Ptmp, 1, logSumExp), each=ncol(Ptmp)),
+                    nrow=nrow(Ptmp), ncol=ncol(Ptmp), byrow=TRUE)
     P <- exp(Ptmp - Psums)
 
     delta <- diag(colSums(P))
@@ -294,23 +297,28 @@ calculateTreeDistances <- function(princPnts, princAdj, edgeAssoc, edgePos) {
   # get all distances in principle tree
   princAdjW <- sqdist(t(princPnts), t(princPnts)) * princAdj
 
-  princGraph <- igraph::graph_from_adjacency_matrix(princAdjW, weighted = T, mode = "undirected")
+  princGraph <- igraph::graph_from_adjacency_matrix(princAdjW,
+                                                    weighted = TRUE,
+                                                    mode = "undirected")
   nodeDistmat <- igraph::distances(princGraph)
 
   princEdges <- apply(igraph::get.edgelist(princGraph), 1, as.numeric)
   edgeToPnts <- apply(princEdges, 2, function(x) { apply(edgeAssoc==x, 2, all) })
 
   distmat <- matrix(rep(NA, NROW(edgeToPnts) ^ 2), NROW(edgeToPnts))
-  # compute intra-edge distances. Store in list for later calclations and set values in result matrix
-  ## loop contains assignment to external matrix, so apply can't be used. Alternative is to use Reduce on lapply result,
-  ## but memory footprint could be problematic (it's K-choose-2 matrices of size NxN)
+  ## compute intra-edge distances. Store in list for later calclations and set
+  ## values in result matrix
+  ## loop contains assignment to external matrix, so apply can't be used.
+  ## Alternative is to use Reduce on lapply result, but memory footprint could
+  ## be problematic (it's K-choose-2 matrices of size NxN)
   intraDist <- list()
   for (i in 1:NCOL(princEdges)) {
     inEdgeDist <- calcIntraEdgeDistMat(edge.len = nodeDistmat[princEdges[1,i],
                                                               princEdges[2,i]],
                                        edgePos = edgePos[edgeToPnts[,i]])
     intraDist[[i]] <- inEdgeDist[,c(1,NCOL(inEdgeDist))]
-    distmat[edgeToPnts[,i], edgeToPnts[,i]] <- inEdgeDist[-c(1,NROW(inEdgeDist)), -c(1,NROW(inEdgeDist))]
+    distmat[edgeToPnts[,i], edgeToPnts[,i]] <- inEdgeDist[-c(1,NROW(inEdgeDist)),
+                                                          -c(1,NROW(inEdgeDist))]
   }
 
   # for each pair of edges, calculate inter-edge distances and set them in the empty matrix
@@ -336,7 +344,7 @@ calculateTreeDistances <- function(princPnts, princAdj, edgeAssoc, edgePos) {
   }
 
   # since we don't set all coordinates, but the matrix is symmetric
-  return(pmax(distmat, t(distmat), na.rm = T))
+  return(pmax(distmat, t(distmat), na.rm = TRUE))
 }
 
 #' Calculate distances between all points on a given edge, including edge vertices
@@ -355,6 +363,7 @@ calcIntraEdgeDistMat <- function(edge.len, edgePos) {
 #' @param v2.dist a vectors of all distances between all points on the second
 #' edge, and the vertex of the second edge that is closer to the first edge
 #' @param path.length the length of the path connected the two vertices
+#' @return a distamce matrix between all points on edge1 and all points on edge2
 calcInterEdgeDistMat <- function(v1.dist, v2.dist, path.length) {
   # note that input vector must not contain distance to self!
   v1.mat <- v1.dist %o% rep(1, length(v2.dist))
@@ -368,6 +377,7 @@ calcInterEdgeDistMat <- function(v1.dist, v2.dist, path.length) {
 #' @param query the points to find neighbors for (not necessarily in the data)
 #' @param k the number of neighbors to find for each vectors
 #' @param BPPARAM the parallelization backend to use
+#' @return a list of the k neughbors for each of the vectors in `query`
 findNeighbors <- function(data, query, k, BPPARAM=bpparam()) {
 
   neighborhood <- lapply(1:ncol(query), function(x) {

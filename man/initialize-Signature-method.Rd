@@ -7,7 +7,7 @@
 Should not be called directly, instead use the `new` syntax}
 \usage{
 \S4method{initialize}{Signature}(.Object, sigDict, name, source,
-  metaData = "", isPrecomputed = F, isFactor = F, cluster = 0)
+  metaData = "", isPrecomputed = FALSE, isFactor = FALSE, cluster = 0)
 }
 \arguments{
 \item{.Object}{an object}
@@ -21,10 +21,10 @@ Should not be called directly, instead use the `new` syntax}
 \item{metaData}{Metadata pertinent to signature}
 
 \item{isPrecomputed}{If TRUE indicates that this signature was precomputed.
-Else not precomputed. Default is F.}
+Else not precomputed. Default is FALSE.}
 
 \item{isFactor}{If TRUE indicates that htis signature is a Factor, else not
-a factor. Default is F.}
+a factor. Default is FALSE.}
 
 \item{cluster}{Number representing which cluster this signature is a part of.
 Default is 0.}

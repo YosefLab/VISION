@@ -64,6 +64,7 @@ setMethod("saveFPOutAndViewResults", signature(fpout="FastProjectOutput"),
 #'
 #' @param object FastProjectOutput object
 #' @rdname ViewResults
+#' @return None
 #' @export
 #' @examples
 #' \dontrun{

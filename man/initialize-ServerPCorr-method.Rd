@@ -17,6 +17,9 @@ Should not be called directly, instead use the `new` syntax}
 
 \item{sig_labels}{the labels of the signatures (rows) in the data}
 }
+\value{
+a ServerPCorr object
+}
 \description{
 Wrapper class for server Perason correlation data
 Should not be called directly, instead use the `new` syntax

@@ -10,6 +10,9 @@
 \arguments{
 \item{object}{FastProjectOutput object}
 }
+\value{
+None
+}
 \description{
 launch a local server to explore the results with a browser.
 }

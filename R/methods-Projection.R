@@ -38,6 +38,7 @@ setMethod("updateProjection", signature(object = "Projection"),
 #' @param object Projection object
 #' @param method Method by which to cluster the data
 #' @param param Parameters for clustering method
+#' @return a Cluster object
 setMethod("cluster", signature(object = "Projection"),
           function(object, method, param) {
 

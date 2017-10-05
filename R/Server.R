@@ -61,6 +61,7 @@ setMethod("initialize", signature(.Object="ServerPMatrix"),
 #' @param data pearson r correlation coefficients
 #' @param proj_labels the labels of the projections (columns) in the data
 #' @param sig_labels the labels of the signatures (rows) in the data
+#' @return a ServerPCorr object
 setMethod("initialize", signature(.Object="ServerPCorr"),
 		function(.Object, data, proj_labels, sig_labels) {
 
@@ -82,7 +83,7 @@ signatureToJSON <- function(sig) {
   # Pass in a Signature object from a FastProjectOutput Object to be converted into a JSON object
   sig@sigDict <- as.list(sig@sigDict)
 
-  json <- toJSON(sig, force=T, pretty=T, auto_unbox=T)
+  json <- toJSON(sig, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
   return(json)
 
 }
@@ -101,7 +102,7 @@ expressionToJSON <- function(expr, geneList=NULL) {
 
   sExpr <- ServerExpression(unname(expr), colnames(expr), rownames(expr))
 
-  ejson <- toJSON(sExpr, force=T, pretty=T, auto_unbox=T)
+  ejson <- toJSON(sExpr, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
 
   return(ejson)
 }
@@ -114,7 +115,7 @@ sigScoresToJSON <- function(ss) {
 
   s <- as.list(ss)
   names(s) <- rownames(as.matrix(ss))
-  json <- toJSON(s, force=T, pretty=T, auto_unbox=T)
+  json <- toJSON(s, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
 
   return(json)
 }
@@ -127,7 +128,7 @@ sigRanksToJSON <- function(ss) {
 
   s <- as.list(rank(as.matrix(ss)))
   names(s) <- names(ss)
-  json <- toJSON(s, force=T, pretty=T, auto_unbox=T)
+  json <- toJSON(s, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
 
   return(json)
 
@@ -142,7 +143,7 @@ coordinatesToJSON <- function(p) {
   coord <- apply(unname(p), 2, as.list)
   names(coord) <- colnames(p)
 
-  json <- toJSON(coord, force=T, pretty=T, auto_unbox=T)
+  json <- toJSON(coord, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
 
   return(json)
 }
@@ -154,10 +155,10 @@ coordinatesToJSON <- function(p) {
 #' @return Subsetted sigProjMatirx converted to JSON
 sigProjMatrixToJSON <- function(sigpm, sigs) {
 
-  sigpm <- sigpm[sigs,, drop=F]
+  sigpm <- sigpm[sigs,, drop=FALSE]
   sSPM <- ServerSigProjMatrix(unname(sigpm), colnames(sigpm), sigs)
 
-  json <- toJSON(sSPM, force=T, pretty=T, auto_unbox=T)
+  json <- toJSON(sSPM, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
 
   return(json)
 }
@@ -168,12 +169,12 @@ sigProjMatrixToJSON <- function(sigpm, sigs) {
 #' @return Subsetted pearson correlations converted to JSON
 pearsonCorrToJSON <- function(pc, sigs) {
 
-	pc <- pc[sigs,,drop=F]
+	pc <- pc[sigs,,drop=FALSE]
 	cn <- c()
 	for (i in 1:ncol(pc)) { cn <- c(cn, paste("PC", i)) }
 	sPC <- ServerPCorr(unname(pc), cn, sigs)
 
-	json <- toJSON(sPC, force=T, pretty=T, auto_unbox=T)
+	json <- toJSON(sPC, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
 
 	return(json)
 
@@ -186,10 +187,10 @@ pearsonCorrToJSON <- function(pc, sigs) {
 #' @return Subsetted sigProjMatrix_P converted to JSON
 sigProjMatrixPToJSON <- function(sigpmp, sigs) {
 
-  sigpmp <- as.matrix(sigpmp[sigs,, drop=F])
+  sigpmp <- as.matrix(sigpmp[sigs,, drop=FALSE])
   sPM <- ServerPMatrix(unname(sigpmp), colnames(sigpmp), sigs)
 
-  json <- toJSON(sPM, force=T, pretty=T, auto_unbox=T)
+  json <- toJSON(sPM, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
 
   return(json)
 
@@ -206,13 +207,14 @@ clusterToJSON <- function(cluster) {
   out[['param']] <- cluster@param
   out[['centers']] <- cluster@centers
   out[['data']] <- as.list(cluster@data[1,])
-  json <- toJSON(out, force=T, pretty=T, auto_unbox=TRUE)
+  json <- toJSON(out, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
 
   return(json)
 }
 
 #' Run the analysis again wth user-defined subsets or confguration
 #' @param nfp the new FastProject object to analyze
+#' @return None
 newAnalysis <- function(nfp) {
 	fpo1 <- Analyze(nfp)
 	saveFPOutAndViewResults(fpo1)

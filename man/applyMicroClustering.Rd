@@ -14,6 +14,13 @@ applyMicroClustering(exprData, hkg = list(), BPPARAM = bpparam())
 
 \item{BPPARAM}{the parallelization backend to use}
 }
+\value{
+a list:
+\itemize{
+    \item pooled cells - the super cells creates
+    \item pools - a list of data matrices of the original cells in each pool
+}
+}
 \description{
 Cluster single cells so signal is maintained but the sample size and noise
 are reduce, using the louvain clustering algorithm

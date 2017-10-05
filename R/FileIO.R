@@ -9,7 +9,8 @@ readExprToMatrix <- function(filename, delimiter="\t") {
 
   data <- as.matrix(data.table::fread(filename, sep=delimiter, skip=1, drop=1))
   rnames <- data.table::fread(filename, sep=delimiter, skip=1, select=1)
-  cnames <- utils::read.table(filename, sep=delimiter, header=T, row.names=1,nrows=1)
+  cnames <- utils::read.table(filename, sep=delimiter, header=TRUE,
+                              row.names=1,nrows=1)
   rownames(data) <- as.vector(t(rnames))
   colnames(data) <- colnames(cnames)
 
@@ -41,7 +42,8 @@ readHKGToMatrix <- function(filename, delimiter="\t") {
 readSignaturesInput <- function(filenames) {
 
   # Create a dictionary to easily compute signature sign
-  keys <- c("none" = 1.0,  'up' = 1.0, 'plus' = 1.0, 'down' = -1.0, 'dn' = -1.0, 'minus' = -1.0, 'mius'=-1.0)
+  keys <- c("none" = 1.0,  'up' = 1.0, 'plus' = 1.0, 'down' = -1.0,
+            'dn' = -1.0, 'minus' = -1.0, 'mius'=-1.0)
 
 
   # Create a list to store all signatures
@@ -122,7 +124,8 @@ readSignaturesInput <- function(filenames) {
       }
 
       for (sig in names(sigList)) {
-        newSig <- Signature(sigList[[sig]], sig, f, "", isPrecomputed=FALSE, isFactor=FALSE, cluster=0)
+        newSig <- Signature(sigList[[sig]], sig, f, "", isPrecomputed=FALSE,
+                            isFactor=FALSE, cluster=0)
         sig_data <- c(sig_data, newSig)
         sig_names <- c(sig_names, sig)
       }
@@ -136,7 +139,7 @@ readSignaturesInput <- function(filenames) {
 
 #' Reads precomputed signature values form a tab-delimited text file
 #'
-#' First row of the file contains sample labels that the signatures correspond with
+#' First row of file contains sample labels that the signatures correspond with
 #'
 #' Each subsequent row contains a signature name in the first column,
 #' followed by the signature type (either 'numerical' or 'factor')
@@ -160,7 +163,8 @@ readPrecomputed <- function(filename, sampleLabels, delimiter="\t") {
             First row should contain tab-separated list of samples")
   }
 
-  # Make sure that l1 is in the same order as sample_labels; match indices between signatrues in file & sampleLabels
+  ## Make sure that l1 is in the same order as sample_labels; match indices
+  ## between signatrues in file & sampleLabels
   sampleLabels <- as.character(as.matrix(sampleLabels))
   colnames(f) <- l1
 
@@ -192,7 +196,8 @@ readPrecomputed <- function(filename, sampleLabels, delimiter="\t") {
       stop("Column 2 of precomputed signature file should specify either 'numerical' or 'factor'")
     }
 
-    sigScores <- c(sigScores, SignatureScores(sigVals, sigName, sampleLabels, sigIsFactor, TRUE, 0))
+    sigScores <- c(sigScores, SignatureScores(sigVals, sigName, sampleLabels,
+                                              sigIsFactor, TRUE, 0))
   }
 
   return(sigScores)

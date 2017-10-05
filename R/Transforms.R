@@ -3,6 +3,11 @@
 #' @param exprData the expression data matrix
 #' @param hkg a list of house keeping genes to use as negative control
 #' @param BPPARAM the parallelization backend to use
+#' @return a list:
+#' \itemize{
+#'     \item pooled cells - the super cells creates
+#'     \item pools - a list of data matrices of the original cells in each pool
+#' }
 applyMicroClustering <- function(exprData, hkg=list(), BPPARAM=bpparam()) {
   fexpr <- filterGenesFano(exprData)
   res <- applyPCA(fexpr, N=30)[[1]]

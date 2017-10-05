@@ -10,15 +10,16 @@
 #' @param source File from which this signature was read from
 #' @param metaData Metadata pertinent to signature
 #' @param isPrecomputed If TRUE indicates that this signature was precomputed.
-#' Else not precomputed. Default is F.
+#' Else not precomputed. Default is FALSE.
 #' @param isFactor If TRUE indicates that htis signature is a Factor, else not
-#' a factor. Default is F.
+#' a factor. Default is FALSE.
 #' @param cluster Number representing which cluster this signature is a part of.
 #' Default is 0.
 #' @return Signature object
 setMethod("initialize", signature(.Object="Signature"),
-          function(.Object, sigDict, name, source, metaData="", isPrecomputed=F,
-                   isFactor=F, cluster=0) {
+          function(.Object, sigDict, name, source, metaData="",
+                   isPrecomputed=FALSE,
+                   isFactor=FALSE, cluster=0) {
             if (missing(sigDict)) {
               stop("Missing sigDict information.")
             } else if (missing(name)) {
@@ -263,7 +264,8 @@ sigsVsProjections <- function(projections, sigScoresData,
   			mu_x <- mean(backgrounds[[x]])
   			std_x <- biasedVectorSD(as.matrix(backgrounds[[x]]))
   			return(list(as.numeric(x), mu_x, std_x))
-  		  }, BPPARAM=BPPARAM)), nrow=length(names(backgrounds)), ncol=3, byrow=T)
+  		  }, BPPARAM=BPPARAM)), nrow=length(names(backgrounds)),
+  			ncol=3, byrow=TRUE)
 
 
   	mu <- matrix(unlist(bplapply(spRows, function(x) {
@@ -373,35 +375,36 @@ clusterSignatures <- function(sigList, sigMatrix, pvals, k=10) {
 
   significant <- apply(pvals, 1, function(x) min(x) < -1.3)
 
-  signif_computed <- significant[names(which(precomputed == F))]
-  signif_precomp <- significant[names(which(precomputed == T))]
+  signif_computed <- significant[names(which(precomputed == FALSE))]
+  signif_precomp <- significant[names(which(precomputed == TRUE))]
 
-  keep_computed = names(which(signif_computed == T))
+  keep_computed = names(which(signif_computed == TRUE))
 
   # Cluster computed signatures and precomputed signatures separately
-  computedSigsToCluster <- names(precomputed[which(precomputed==F)])
-  computedSigMatrix <- sigMatrix[computedSigsToCluster,,drop=F]
+  computedSigsToCluster <- names(precomputed[which(precomputed==FALSE)])
+  computedSigMatrix <- sigMatrix[computedSigsToCluster,,drop=FALSE]
 
-  computedSigMatrix <- computedSigMatrix[keep_computed,,drop=F]
+  computedSigMatrix <- computedSigMatrix[keep_computed,,drop=FALSE]
 
   compcls <- list()
   maxcls <- 1
   if (nrow(computedSigMatrix) > 1) {
-  	r <- as.matrix(t(apply(computedSigMatrix, 1, function(x) rank(x, ties.method="average"))))
+  	r <- as.matrix(t(apply(computedSigMatrix, 1,
+  	                       function(x) rank(x, ties.method="average"))))
 
 	compkm <- densityMclust(r)
 	compcls <- as.list(compkm$classification)
-	compcls <- compcls[order(unlist(compcls), decreasing=F)]
+	compcls <- compcls[order(unlist(compcls), decreasing=FALSE)]
 
 	maxcls <- max(unlist(compcls))
   }
 
-  compcls[names(which(significant == F))] <- maxcls + 1
+  compcls[names(which(significant == FALSE))] <- maxcls + 1
 
   # Don't actually cluster Precomputed Signatures -- just return in a list.
   precompcls <- list()
-  if (length(which(precomputed==T)) > 0) {
-  	  precomputedSigsToCluster <- names(precomputed[which(precomputed==T)])
+  if (length(which(precomputed==TRUE)) > 0) {
+  	  precomputedSigsToCluster <- names(precomputed[which(precomputed==TRUE)])
   	  precompcls[precomputedSigsToCluster] <- 1
   }
 
