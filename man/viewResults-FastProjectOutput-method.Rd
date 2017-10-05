@@ -3,6 +3,7 @@
 \docType{methods}
 \name{viewResults,FastProjectOutput-method}
 \alias{viewResults,FastProjectOutput-method}
+\alias{viewResults}
 \title{View results of analysis without saving output object}
 \usage{
 \S4method{viewResults}{FastProjectOutput}(object)

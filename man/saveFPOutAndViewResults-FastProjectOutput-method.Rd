@@ -3,6 +3,7 @@
 \docType{methods}
 \name{saveFPOutAndViewResults,FastProjectOutput-method}
 \alias{saveFPOutAndViewResults,FastProjectOutput-method}
+\alias{saveFPOutAndViewResults}
 \title{Save the FastProjectOutput object as an .RDS file and view the results on a
 localhost}
 \usage{

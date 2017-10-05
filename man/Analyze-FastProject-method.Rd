@@ -3,6 +3,7 @@
 \docType{methods}
 \name{Analyze,FastProject-method}
 \alias{Analyze,FastProject-method}
+\alias{Analyze}
 \title{Main entry point for running FastProject Analysis}
 \usage{
 \S4method{Analyze}{FastProject}(object, BPPARAM = NULL)

@@ -34,7 +34,7 @@ setMethod("initialize", signature(.Object="FastProjectOutput"),
 #'
 #' @param fpout FastProjectOutput object
 #' @return None
-#' @rdname saveFPOutAndViewResults
+#' @aliases saveFPOutAndViewResults
 #' @export
 #' @examples
 #' \dontrun{
@@ -63,7 +63,6 @@ setMethod("saveFPOutAndViewResults", signature(fpout="FastProjectOutput"),
 #' launch a local server to explore the results with a browser.
 #'
 #' @param object FastProjectOutput object
-#' @rdname ViewResults
 #' @return None
 #' @export
 #' @examples

@@ -131,7 +131,7 @@ setMethod("FastProject", signature(data = "ExpressionSet"),
 #' and returns a FastProjectOutput object with the result,
 #'
 #' @export
-#' @rdname Analyze
+#' @aliases Analyze
 #' @param object FastProject object
 #' @param BPPARAM a parallelization backend to use for the analysis
 #' @return FastProjectOutput object

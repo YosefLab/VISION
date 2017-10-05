@@ -7,8 +7,7 @@
 # scores, distance matrices, and anything else, is computed
 # on the different types of data.
 
-#' @importFrom methods setClassUnion
-setClassUnion('numericORNULL', members=c('numeric', 'NULL'))
+methods::setClassUnion('numericORNULL', members=c('numeric', 'NULL'))
 
 Cluster <- setClass("Cluster",
   slots = c(
@@ -27,10 +26,6 @@ ExpressionData <- setClass("ExpressionData",
       thresholdFilter = "matrix"
 ))
 
-#' The FaStProject main object
-#' @name FastProject-class
-#' @aliases FastProject
-#' @export
 FastProject <- setClass("FastProject",
     slots = c(
       housekeeping = "character",
