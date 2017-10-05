@@ -63,6 +63,7 @@ setMethod("saveFPOutAndViewResults", signature(fpout="FastProjectOutput"),
 #' launch a local server to explore the results with a browser.
 #'
 #' @param object FastProjectOutput object
+#' @aliases viewResults
 #' @return None
 #' @export
 #' @examples
