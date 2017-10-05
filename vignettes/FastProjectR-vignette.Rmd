@@ -81,6 +81,7 @@ To create the FastProject object, use
 # Create a FastProject object
 fp <- FastProject("data/expression_matrix.txt", 
                   "data/GeneNameHousekeeping.txt", 
+                  c("data/h.all.v5.2.symbols.gmt"), 
                   precomputed="data/precomputed_signatures.txt")
 ```
 
@@ -92,11 +93,13 @@ expr <- readRDS("data/expression_matrix.RDS")
 
 # -- Create a FastProject object with existing matrix
 fp <- FastProject(expr, "data/GeneNameHousekeeping.txt", 
+                  c("data/h.all.v5.2.symbols.gmt"), 
                   precomputed="data/precomputed_signatures.txt")
 
 ## -- Create a FastProject object with an ExpressionSet -- 
 eset <- ExpressionSet(assayData=expr)
 fp <- FastProject(eset, "data/GeneNameHousekeeping.txt", 
+                  c("data/h.all.v5.2.symbols.gmt"), 
                   precomputed="data/precomputed_signatures.txt")
 ```
 
