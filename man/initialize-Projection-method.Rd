@@ -3,19 +3,27 @@
 \docType{methods}
 \name{initialize,Projection-method}
 \alias{initialize,Projection-method}
-\title{Initialize a Projection object}
+\title{Initialize a Projection object
+Should not be called directly, instead use the `new` syntax}
 \usage{
 \S4method{initialize}{Projection}(.Object, name, pData = NULL,
   weights = matrix(NA, 1, 1))
 }
 \arguments{
+\item{.Object}{an object}
+
 \item{name}{Name of the projection}
 
-\item{pData}{Coordinates of each sample in the projection (NUM_SAMPLES x NUM_COMPONENTS)}
+\item{pData}{Coordinates of each sample in the projection
+(NUM_SAMPLES x NUM_COMPONENTS)}
+
+\item{weights}{a matrix of weights indicatng distances from each point
+to its closest neighbors}
 }
 \value{
 Projection object
 }
 \description{
 Initialize a Projection object
+Should not be called directly, instead use the `new` syntax
 }

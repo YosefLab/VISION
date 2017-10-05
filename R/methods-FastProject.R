@@ -42,11 +42,12 @@
 #' @rdname FastProject-class
 #' @export
 #' @examples
-#' fp <- FastProject("expression_matrix.txt",
+#' \dontrun{
+#' fp <- FastProject("data/expression_matrix.txt",
 #'                   "data/Gene Name Housekeeping.txt",
-#'                   c("sigfile_1.gmt", "sigfile_2.txt"),
-#'                   precomputed="pre_sigs.txt")
-#'
+#'                   c("extdata/geneSetLibrary.gmt",
+#'                     "data/tcga_sigs.txt"))
+#'}
 setMethod("FastProject", signature(data = "matrix"),
           function(data, housekeeping, signatures, norm_methods = NULL,
                    precomputed=NULL, nofilter=FALSE, nomodel=FALSE, filters=c("fano"),
@@ -128,15 +129,19 @@ setMethod("FastProject", signature(data = "ExpressionSet"),
 #' Main entry point for running FastProject Analysis
 #'
 #' @export
+#' @rdname Analyze
 #' @param object FastProject object
 #' @param BPPARAM a parallelization backend to use for the analysis
 #' @return FastProjectOutput object
 #'
 #' @examples
-#' fp <- FastProject("expression_matrix.txt", "data/Gene Name Housekeeping.txt",
-#'                   c("sigfile_1.gmt", "sigfile_2.txt"),
-#'                   precomputed="pre_sigs.txt")
+#' \dontrun{
+#' fp <- FastProject("data/expression_matrix.txt",
+#'                   "data/Gene Name Housekeeping.txt",
+#'                   c("extdata/geneSetLibrary.gmt",
+#'                     "data/tcga_sigs.txt"))
 #' fpout <- Analysis(fp)
+#' }
 setMethod("Analyze", signature(object="FastProject"),
           function(object, BPPARAM = NULL) {
   message("Beginning Analysis")
@@ -405,20 +410,6 @@ setMethod("Analyze", signature(object="FastProject"),
 #' @param fpParams List of FastProject parameters
 #' @param nexpr New expression matrix for the new FastProject object
 #' @return a new FastProject object
-#' @examples
-#'   fp <- FastProject("data/expression_matrix.txt",
-#'                     "data/Gene Name Housekeeping.txt",
-#'                     c("data/sigfile_1.gmt", "data/sigfile_2.txt"),
-#'                     precomputed="data/pre_sigs.txt")
-#'   fpslots <- slotNames(object)
-#'   fpParams <- list()
-#'   for (s in fpslots) {
-#'     fpParams <- c(fpParams, slot(object, s))
-#'   }
-#'   subset_cells <- sample(1:ncol(fp@exprData), 200)
-#'   nexpr <- fp@exprData[,subset_cells]
-#'   names(fpParams) <- fpslots
-#'   nfp <- createNewFP(fpParams, nexpr)
 createNewFP <- function(fpParams, nexpr) {
 	nfp <- FastProject(exprData=nexpr, sigData=fpParams[["sigData"]],
 						housekeepingData=fpParams[["housekeepingData"]])

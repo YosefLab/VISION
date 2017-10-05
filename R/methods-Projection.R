@@ -1,9 +1,14 @@
 ## Projection wrapper class
 
 #' Initialize a Projection object
+#' Should not be called directly, instead use the `new` syntax
 #'
+#' @param .Object an object
 #' @param name Name of the projection
-#' @param pData Coordinates of each sample in the projection (NUM_SAMPLES x NUM_COMPONENTS)
+#' @param pData Coordinates of each sample in the projection
+#' (NUM_SAMPLES x NUM_COMPONENTS)
+#' @param weights a matrix of weights indicatng distances from each point
+#' to its closest neighbors
 #' @return Projection object
 setMethod("initialize", signature(.Object = "Projection"),
           function(.Object, name, pData=NULL, weights=matrix(NA, 1,1)) {
@@ -33,9 +38,6 @@ setMethod("updateProjection", signature(object = "Projection"),
 #' @param object Projection object
 #' @param method Method by which to cluster the data
 #' @param param Parameters for clustering method
-#' @examples
-#' p <- Projection("PCA", pData)
-#' cl <- cluster(p, "KMeans", 10)
 setMethod("cluster", signature(object = "Projection"),
           function(object, method, param) {
 

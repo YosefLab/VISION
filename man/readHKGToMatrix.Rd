@@ -17,6 +17,3 @@ Table containing the houseekeeping gene names
 \description{
 Reads in a .txt file containing Housekeeping Gene names
 }
-\examples{
-hkg <- readHKGToMatrix("data/housekeeping_genes.txt")
-}

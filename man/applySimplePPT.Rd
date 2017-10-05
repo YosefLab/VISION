@@ -5,7 +5,7 @@
 \title{Applies the Simple PPT algorithm onto the expression data.}
 \usage{
 applySimplePPT(exprData, numCores, permExprData = NULL,
-  nNodes = round(sqrt(ncol(exprData))), sigma = 0, gamma = 0)
+  nNodes_ = round(sqrt(ncol(exprData))), sigma = 0, gamma = 0)
 }
 \arguments{
 \item{exprData}{Expression data -- Num_Genes x Num_Samples}
@@ -15,7 +15,7 @@ applySimplePPT(exprData, numCores, permExprData = NULL,
 \item{permExprData}{a list of permutated expression datasets,
 to use for significance estimation of the tree [default:NULL]}
 
-\item{nNodes}{Number of nodes to find. Default is sqrt(N)}
+\item{nNodes_}{Number of nodes to find. Default is sqrt(N)}
 
 \item{sigma}{regularization parameter for soft-assignment of data points to
 nodes, used as the variance

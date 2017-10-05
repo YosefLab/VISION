@@ -15,6 +15,3 @@ List of Signature Objects
 \description{
 Reads in a list of signature input files.
 }
-\examples{
-sigs <- readSignaturesInput(c("sigs1.txt", "sigs2.gmt"))
-}

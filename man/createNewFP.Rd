@@ -19,18 +19,3 @@ a new FastProject object
 Creates a new FastProject object with the new expression matrix. Called from
 Server.R.
 }
-\examples{
-  fp <- FastProject("data/expression_matrix.txt",
-                    "data/Gene Name Housekeeping.txt",
-                    c("data/sigfile_1.gmt", "data/sigfile_2.txt"),
-                    precomputed="data/pre_sigs.txt")
-  fpslots <- slotNames(object)
-  fpParams <- list()
-  for (s in fpslots) {
-    fpParams <- c(fpParams, slot(object, s))
-  }
-  subset_cells <- sample(1:ncol(fp@exprData), 200)
-  nexpr <- fp@exprData[,subset_cells]
-  names(fpParams) <- fpslots
-  nfp <- createNewFP(fpParams, nexpr)
-}

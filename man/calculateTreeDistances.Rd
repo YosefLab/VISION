@@ -21,9 +21,3 @@ non-negative symmetric matrix in which [i,j] is the tree-based distance between 
 \description{
 Calculate distance matrix between all pairs of ponts based on their projection onto the tree
 }
-\examples{
-X <- matrix(rnorm(200), nrow = 2)
-tree <- applySimplePPT(X)
-proj <- projectOnTree(X, tree[[1]], tree[[2]])
-distmat <- calculateTreeDistances(tree[[1]], tree[[2]], proj$edges, proj$edgePos)
-}

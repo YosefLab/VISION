@@ -30,10 +30,13 @@ setMethod("initialize", signature(.Object="FastProjectOutput"),
 #'
 #' @param fpout FastProjectOutput object
 #' @return None
+#' @rdname saveFPOutAndViewResults
 #' @export
 #' @examples
+#' \dontrun{
 #' fpout <- Analyze(fp)
 #' saveFPOutAndViewResults(fpout)
+#' }
 setMethod("saveFPOutAndViewResults", signature(fpout="FastProjectOutput"),
           function(fpout) {
             i <- 1
@@ -53,10 +56,13 @@ setMethod("saveFPOutAndViewResults", signature(fpout="FastProjectOutput"),
 
 #' View results of analysis without saving output object
 #' @param object FastProjectOutput object
+#' @rdname ViewResults
 #' @export
 #' @examples
+#' \dontrun{
 #' fpout <- Analyze(fp)
 #' viewResults(fpout)
+#' }
 setMethod("viewResults", signature(object="FastProjectOutput"),
           function(object) {
 

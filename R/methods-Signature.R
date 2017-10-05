@@ -100,8 +100,6 @@ BG_DIST <- matrix(0L, nrow=0, ncol=0)
 #' @param N_SAMPLES Number of samples to generate the distribution for
 #' @param NUM_REPLICATES Number of replicates to generate for the background distribution
 #' @return Random matrix with dimensions N_SAMPLES x NUM_REPLICATES with row ordered in ascending order
-#' @examples
-#' bgdist <- getBGDist(430, 1000)
 getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
 
   if (nrow(BG_DIST) != N_SAMPLES || ncol(BG_DIST) != NUM_REPLICATES) {

@@ -19,10 +19,6 @@ setMethod("initialize", signature(.Object="ExpressionData"),
 #'
 #' @param object ExpressionData object
 #' @return Nothing.
-#' @examples
-#' expr <- readExprtoMatrix("data/expression_matrix.txt")
-#' edata <- ExpressionMatrix(expr)
-#' readExprData(eData)
 setMethod("readExprData", signature("ExpressionData"), function(object) {
 	# Prints out the expression data stored in this object.
 
@@ -34,10 +30,6 @@ setMethod("readExprData", signature("ExpressionData"), function(object) {
 #'
 #' @param object ExpressionData object
 #' @return Expression data matrix
-#' @examples
-#' expr <- readExprtoMatrix("data/expression_matrix.txt")
-#' edata <- ExpressionMatrix(expr)
-#' exprData <- getExprData(eData)
 setMethod("getExprData", signature("ExpressionData"), function(object) {
   # Returns the expression data stored in the this object.
 

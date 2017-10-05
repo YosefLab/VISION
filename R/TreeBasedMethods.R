@@ -4,7 +4,7 @@
 #' @param numCores Number of cores to use during this analysis
 #' @param permExprData a list of permutated expression datasets,
 #' to use for significance estimation of the tree [default:NULL]
-#' @param nNodes Number of nodes to find. Default is sqrt(N)
+#' @param nNodes_ Number of nodes to find. Default is sqrt(N)
 #' @param sigma regularization parameter for soft-assignment of data points to
 #' nodes, used as the variance
 #'        of a guassian kernel. If 0, this is estimated automatically
@@ -23,7 +23,7 @@
 #'   }
 
 applySimplePPT <- function(exprData, numCores, permExprData = NULL,
-                           nNodes = round(sqrt(ncol(exprData))), sigma=0, gamma=0) {
+                           nNodes_ = round(sqrt(ncol(exprData))), sigma=0, gamma=0) {
   MIN_GAMMA <- 1e-5
   MAX_GAMMA <- 1e5
   DEF_TOL <- 1e-2
@@ -232,11 +232,6 @@ getMSE <- function(C, X) {
 #'     \item{"edgePos"}{an N-length numeric with values in [0,1], the relative position on the edge of the datapoint.
 #'     0 is node a, 1 is node b, .5 is the exact middle of the edge, etc.}
 #'  }
-#'
-#' @examples
-#' X <- matrix(rnorm(200), nrow = 2)
-#' tree <- applySimplePPT(X)
-#' proj <- projectOnTree(X, tree[[1]], tree[[2]])
 projectOnTree <- function(data.pnts, V.pos, princAdj) {
   # find closest principle point
   distmat <- sqdist(t(data.pnts), t(V.pos))
@@ -295,12 +290,6 @@ projectOnTree <- function(data.pnts, V.pos, princAdj) {
 #' @param edgePos (length N, numeric) relative postion on the edge for each point, in range [0,1]
 #'
 #' @return non-negative symmetric matrix in which [i,j] is the tree-based distance between points i, j.
-#'
-#' @examples
-#' X <- matrix(rnorm(200), nrow = 2)
-#' tree <- applySimplePPT(X)
-#' proj <- projectOnTree(X, tree[[1]], tree[[2]])
-#' distmat <- calculateTreeDistances(tree[[1]], tree[[2]], proj$edges, proj$edgePos)
 calculateTreeDistances <- function(princPnts, princAdj, edgeAssoc, edgePos) {
   # get all distances in principle tree
   princAdjW <- sqdist(t(princPnts), t(princPnts)) * princAdj

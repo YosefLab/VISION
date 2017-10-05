@@ -17,7 +17,3 @@
 \description{
 Clusters the projection according to some method
 }
-\examples{
-p <- Projection("PCA", pData)
-cl <- cluster(p, "KMeans", 10)
-}

@@ -16,8 +16,3 @@ Expression data matrix
 \description{
 Extracts the expression data from the ExpressionData object
 }
-\examples{
-expr <- readExprtoMatrix("data/expression_matrix.txt")
-edata <- ExpressionMatrix(expr)
-exprData <- getExprData(eData)
-}

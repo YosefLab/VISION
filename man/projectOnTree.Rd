@@ -31,8 +31,3 @@ data points are projected on their nearest edge, defined to be the edge that is 
 and has minimal length of orthogonal projection. Data points are projected with truncated orthogonal projection:
 point that fall beyond the edge are projected to the closer node.
 }
-\examples{
-X <- matrix(rnorm(200), nrow = 2)
-tree <- applySimplePPT(X)
-proj <- projectOnTree(X, tree[[1]], tree[[2]])
-}

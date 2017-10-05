@@ -6,20 +6,21 @@
 \usage{
 readPrecomputed(filename, sampleLabels, delimiter = "\\t")
 }
+\arguments{
+\item{filename}{Filename to read the precomputed signatures from}
+
+\item{sampleLabels}{List of labels for which we want the signature scores}
+
+\item{delimiter}{Delimiter to use when reading in file. Default is tab.}
+}
+\value{
+List of Signature data types
+}
 \description{
 First row of the file contains sample labels that the signatures correspond with
 }
 \details{
 Each subsequent row contains a signature name in the first column,
- followed by the signature type (either 'numerical' or 'factor')
- followed by the signature values, one for each sample label in the file
-
-@param filename Filename to read the precomputed signatures from
- @param sampleLables List of labels for which we want the signature scores
- @param delimiter Delimiter to use when reading in file. Default is tab.
- @returns List of Signature data types
- @examples
- expr <- readExprToMatrix("expression.txt")
- samples <- colnames(expr)
- precomputed <- readPrecomputed("precomputed_sigs.txt", samples)
+followed by the signature type (either 'numerical' or 'factor')
+followed by the signature values, one for each sample label in the file
 }

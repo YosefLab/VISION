@@ -92,9 +92,10 @@ The FaStProject main object
 Initializes a new FastProject object.
 }
 \examples{
-fp <- FastProject("expression_matrix.txt",
+\dontrun{
+fp <- FastProject("data/expression_matrix.txt",
                   "data/Gene Name Housekeeping.txt",
-                  c("sigfile_1.gmt", "sigfile_2.txt"),
-                  precomputed="pre_sigs.txt")
-
+                  c("extdata/geneSetLibrary.gmt",
+                    "data/tcga_sigs.txt"))
+}
 }

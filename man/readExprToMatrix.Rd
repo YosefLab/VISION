@@ -9,11 +9,10 @@ readExprToMatrix(filename, delimiter = "\\t")
 \arguments{
 \item{filename}{path to the file to be read in}
 
-\item{delimiter}{delimiter to use while reading in the file. Default is "\\t"
-
- @returns: Matrix read in from filename.
- @examples
- expr <- readExprToMatrix("data/expression_matrix.txt")}
+\item{delimiter}{delimiter to use while reading in the file. Default is "\\t"}
+}
+\value{
+Matrix read in from filename.
 }
 \description{
 Reads in an expression matrix from a file path to a matrix

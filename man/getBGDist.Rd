@@ -17,6 +17,3 @@ Random matrix with dimensions N_SAMPLES x NUM_REPLICATES with row ordered in asc
 \description{
 Generates, or if already generated retrieves, a random Background Distribution
 }
-\examples{
-bgdist <- getBGDist(430, 1000)
-}
