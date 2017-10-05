@@ -32,64 +32,64 @@
 #' @param sig_norm_method Method to apply to normalize the expression matrix
 #' before calculating signature scores
 #' @param sig_score_method Method to apply when calculating signature scores
-#' @param housekeepingData housekeeping data table, as opposed to specifying a
-#' housekeeping_data file
-#' @param sigData List of signatures, as opposed to specifying a list of
-#' signature files
-#' @param precomputedData List of precomputed signature scores, as opposed to
-#' specifying a precomputed file
 #' @return A FastProject object
 #' @rdname FastProject-class
 #' @export
 #' @examples
-#' \dontrun{
-#' fp <- FastProject("data/expression_matrix.txt",
-#'                   "data/Gene Name Housekeeping.txt",
-#'                   c("extdata/geneSetLibrary.gmt",
-#'                     "data/tcga_sigs.txt"))
-#'}
+#' expMat <- matrix(rnorm(200000), nrow=500)
+#' rownames(expMat) <- paste0("gene",1:500)
+#'
+#' # create housekeeping genes
+#' hkg <- paste0("gene",sample(1:500, 50))
+#'
+#' #create 20 signatures of 25 genes each
+#' sigs <- lapply(1:20, function(i) {
+#' sigData <- sign(rnorm(25))
+#' names(sigData) <- paste0("gene",sample(1:100,25))
+#' return(createUserGeneSignature(name = paste0("sig",i),
+#'                                sigData = sigData))
+#' }
+#'
+#' fp <- FastProject(data = expMat,
+#'                   housekeeping = hkg,
+#'                   signatures = sigs)
 setMethod("FastProject", signature(data = "matrix"),
           function(data, housekeeping, signatures, norm_methods = NULL,
-                   precomputed=NULL, nofilter=FALSE, nomodel=FALSE, filters=c("fano"),
-                   lean=FALSE, qc=FALSE, min_signature_genes=5, projections="",
-                   weights=NULL, threshold=0, perm_wPCA=FALSE, sig_norm_method="znorm_rows",
-                   sig_score_method="weighted_avg", housekeepingData=NULL,
-                   sigData=NULL, precomputedData=NULL) {
-
-
-
-            ## Make sure that the minimum files are being read in.
-            if (missing(housekeeping) && is.null(housekeepingData)) {
-              stop("Missing housekeeping data file in input.")
-            } else if (missing(signatures) && is.null(sigData)) {
-              stop("Missing signature data file in input.")
-            }
+                   precomputed=NULL, nofilter=FALSE, nomodel=FALSE,
+                   filters=c("fano"), lean=FALSE, qc=FALSE,
+                   min_signature_genes=5, projections="", weights=NULL,
+                   threshold=0, perm_wPCA=FALSE, sig_norm_method="znorm_rows",
+                   sig_score_method="weighted_avg", precomputedData=NULL) {
 
             .Object <- new("FastProject")
             .Object@exprData <- data
 
-            if (is.null(housekeepingData)) {
-              .Object@housekeeping <- housekeeping
+            if (!is.character(housekeeping)){
+              stop("housekeeping must be file path or character vector")
+            } else if (length(housekeeping) == 1) {
               .Object@housekeepingData <- readHKGToMatrix(housekeeping)
             } else {
-              .Object@housekeepingData <- housekeepingData
+              .Object@housekeepingData <- data.frame(hkg = housekeeping)
             }
 
-            if (is.null(sigData)) {
-              .Object@signatures <- signatures
+            if (is.list(signatures)) {
+              .Object@sigData <- signatures
+            } else if (is.character(signatures)) {
               .Object@sigData <- readSignaturesInput(signatures)
             } else {
-              .Object@sigData <- sigData
+              stop("signatures must be paths to signature files or list of
+                   Signature objects")
+            }
+
+            if (!is.null(precomputed)) {
+              .Object@precomputedData <- readPrecomputed(
+                precomputed, colnames(.Object@exprData))
             }
 
             if (is.null(weights)) {
               .Object@weights <- matrix(NA, nrow=10, ncol=0)
             } else {
               .Object@weights <- weights
-            }
-
-            if (!is.null(precomputed)) {
-              .Object@precomputedData <- readPrecomputed(precomputed, colnames(.Object@exprData))
             }
 
             .Object@nofilter <- nofilter
@@ -112,16 +112,18 @@ setMethod("FastProject", signature(data = "matrix"),
 #' @rdname FastProject-class
 #' @export
 setMethod("FastProject", signature(data = "character"),
-          function(data, ...) {
-            return(FastProject(readExprToMatrix(data), ...))
+          function(data, housekeeping, signatures, ...) {
+            return(FastProject(readExprToMatrix(data),
+                               housekeeping, signatures,...))
           }
 )
 
 #' @rdname FastProject-class
 #' @export
 setMethod("FastProject", signature(data = "ExpressionSet"),
-          function(data, ...) {
-            return(FastProject(Biobase::exprs(data), ...))
+          function(data, housekeeping, signatures, ...) {
+            return(FastProject(Biobase::exprs(data),
+                               housekeeping, signatures,...))
           }
 )
 
@@ -137,13 +139,28 @@ setMethod("FastProject", signature(data = "ExpressionSet"),
 #' @return FastProjectOutput object
 #'
 #' @examples
+#' expMat <- matrix(rnorm(200000), nrow=500)
+#' rownames(expMat) <- paste0("gene",1:500)
+#'
+#' # create housekeeping genes
+#' hkg <- paste0("gene",sample(1:500, 50))
+#'
+#' #create 20 signatures of 25 genes each
+#' sigs <- lapply(1:20, function(i) {
+#' sigData <- sign(rnorm(25))
+#' names(sigData) <- paste0("gene",sample(1:100,25))
+#' return(createUserGeneSignature(name = paste0("sig",i),
+#'                                sigData = sigData))
+#' })
+#'
+#' fp <- FastProject(data = expMat,
+#'                   housekeeping = hkg,
+#'                   signatures = sigs)
+#'
+#' ## Analyze requires actual non-random data to run properly
 #' \dontrun{
-#' fp <- FastProject("data/expression_matrix.txt",
-#'                   "data/Gene Name Housekeeping.txt",
-#'                   c("extdata/geneSetLibrary.gmt",
-#'                     "data/tcga_sigs.txt"))
-#' fpout <- Analysis(fp)
-#' ViewResults(fpout)
+#' bp <- BiocParallel::SerialParam()
+#' fp.out <- Analyze(fp, BPPARAM=bp)
 #' }
 setMethod("Analyze", signature(object="FastProject"),
           function(object, BPPARAM = NULL) {

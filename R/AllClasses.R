@@ -28,9 +28,6 @@ ExpressionData <- setClass("ExpressionData",
 
 FastProject <- setClass("FastProject",
     slots = c(
-      housekeeping = "character",
-      signatures = "character",
-      precomputed = "character",
       nofilter = "logical",
       nomodel = "logical",
       filters = "character",
@@ -49,7 +46,6 @@ FastProject <- setClass("FastProject",
       precomputedData= "list",
       perm_wPCA = "logical"),
     prototype = list(
-      precomputed = NULL,
       nofilter = FALSE,
       nomodel = FALSE,
       pca_filter = FALSE,

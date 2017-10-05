@@ -3,7 +3,8 @@
 \docType{methods}
 \name{sigEqual,Signature-method}
 \alias{sigEqual,Signature-method}
-\title{Method for testing whether or not signatures are equal to one another (if all signs, genes and name are the same.)}
+\title{Method for testing whether or not signatures are equal to one another
+(if all signs, genes and name are the same.)}
 \usage{
 \S4method{sigEqual}{Signature}(object, compareSig)
 }
@@ -16,5 +17,6 @@
 TRUE if sigs are equal, else FALSE
 }
 \description{
-Method for testing whether or not signatures are equal to one another (if all signs, genes and name are the same.)
+Method for testing whether or not signatures are equal to one another
+(if all signs, genes and name are the same.)
 }
