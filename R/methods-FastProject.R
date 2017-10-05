@@ -122,10 +122,6 @@ setMethod("FastProject", signature(data = "ExpressionSet"),
 #' @param object FastProject object
 #' @return FastProjectOutput object
 #'
-#' @examples
-#' fp <- FastProject("expression_matrix.txt", "data/Gene Name Housekeeping.txt", c("sigfile_1.gmt", "sigfile_2.txt"),
-#'                   precomputed="pre_sigs.txt")
-#' fpout <- Analysis(fp)
 setMethod("Analyze", signature(object="FastProject"),
           function(object, BPPARAM=NULL) {
   message("Beginning Analysis")
@@ -306,6 +302,8 @@ setMethod("Analyze", signature(object="FastProject"),
 
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, paste0("ClusterSignaturesProjections ", filter))
+
+    return(sigVProj$sigProjMatrix)
 
     projData <- ProjectionData(projections = projectData$projections,
                                keys = sigVProj$projNames,

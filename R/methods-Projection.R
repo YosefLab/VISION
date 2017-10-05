@@ -75,8 +75,6 @@ setMethod("computeKNNWeights", signature(object = "Projection"),
             sparse_weights <- exp(-1 * (d * d) / sigma^2)
 
             weights <- load_in_knn(nn, sparse_weights)
-            #d <- dist.matrix(t(object@pData), method="euclidean")
-            #weights <- exp( (-1 * (d * d)) / (NEIGHBORHOOD_SIZE)^2)
 
             weightsNormFactor <- Matrix::rowSums(weights)
             weightsNormFactor[weightsNormFactor == 0] <- 1.0

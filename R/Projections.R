@@ -442,7 +442,6 @@ applytSNE30 <- function(exprData, BPPARAM=bpparam()) {
 #'
 #' @return the weghted adjacency matrix of the KNN graph
 applyKNN <- function(exprData, BPPARAM=bpparam()) {
-    print(dim(exprData))
 	set.seed(RANDOM_SEED)
 
 	k <- ball_tree_knn(t(exprData), round(sqrt(ncol(exprData))), BPPARAM$workers)

@@ -136,8 +136,8 @@ findRepSubset <- function(ls) {
 	ls <- unique(sort(unlist(ls)))
 
 	intervals <- lapply(as.list(as.numeric(ls)), function(x) {
-	  return(list(x - x/5, x + x/5)))
-	}
+	  return(list(x - x/5, x + x/5))
+	})
 	n_intervals <- merge_intervals(intervals)
 
 	reprsub <- lapply(n_intervals, function(i) round((i[[1]] + i[[2]]) / 2))

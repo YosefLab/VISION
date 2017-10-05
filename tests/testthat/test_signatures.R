@@ -111,10 +111,10 @@ test_that("Test Signature Scores against correct Signature Score Matrix", {
   expr <- readExprToMatrix("test_data/expression_matrix.txt")
   eData <- ExpressionData(expr)
   sigList <- readSignaturesInput(c("test_data/published_signatures/h.all.v5.2.symbols.gmt"))
-  housekeeping_data <- readHKGToMatrix("test_data/housekeeping_genes/Gene Name Housekeeping.txt")
+  housekeeping_data <- readHKGToMatrix("test_data/housekeeping_genes/GeneNameHousekeeping.txt")
   
   
-  fneg_out <- createFalseNegativeMap(expr, housekeeping_data, FALSE)
+  fneg_out <- createFalseNegativeMap(expr, housekeeping_data)
   func <- fneg_out[[1]]
   params <- fneg_out[[2]]
   

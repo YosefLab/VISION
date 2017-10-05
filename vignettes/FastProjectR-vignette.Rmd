@@ -23,6 +23,7 @@ set.seed(6473) ## for reproducibility
 devtools::load_all()
 library(RColorBrewer)
 library(Biobase)
+library(BiocParallel)
 
 ```
 
@@ -100,7 +101,7 @@ Now, with a FastProject object, we can run `Analyze` which will return a FastPro
 
 ```{r, collapse=T, tidy=T, message=F, results=F}
 # Run Analyze with one core
-fpOut <- Analyze(fp)
+fpOut <- Analyze(fp, BPPARAM=SerialParam())
 ```
 
 With the FastProjectOutput object, a dynamic web report can be generated with the `viewResults` function or the `saveFPOutandViewResults` function, which will both save the FastProjectOutput object as an .rds file and launch a web browser for the dynamic report.
@@ -114,10 +115,7 @@ viewResults(fpOut)
 Importantly, FastProjectR supports parallel computation with the BiocParallel. To do so, register a BiocParallel as such and the Analyze() function will automatically use the new BPPARAM registered. 
 
 ```{r, collapse=T, message=F, results=F, eval=F}
-BiocParallel::register(
-  BiocParalle::MulticoreParam(workers=2)
-)
-fpOut <- Analyze(fp)
+fpOut <- Analyze(fp, BPPARAM=MulticoreParam(2))
 ```
 
 We highly recommend parallelizing the FastProjectR pipeline if extra processors are available. 
