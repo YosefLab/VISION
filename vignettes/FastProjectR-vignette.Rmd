@@ -73,13 +73,13 @@ As described above, FastProjectR can be approached from many directions. Here, w
 
 First, we'll walk through how to create a FastProject object for the `Analyze` function. Most importantly, we need expression data and signature data. Another helpful, but not obligatory, dataset is a collection of housekeeping genes (genes that you'd expect to be analyzed in all cells in this expression matrix) for the estimation of a false negative curve. For this example we'll also include some meta-data for the samples in the form of a pre-computed signature file.
 
-We'll operate on a set of 430 cells from five primary glioblastomas sequenced using scRNA-seq  for 5,948 genes (Patel et. al. 2014). For our signatures, we will use the Hallmark gene set from MSigDB, which can be accessed at `http://software.broadinstitute.org/gsea/msigdb/collections.jsp#H`. The housekeeping genes we'll use can be found in `Gene Name Housekeeping.txt`, and the pre-computed signature can be found in `precomptued_signatures.txt`. To note, we can specify multiple signature files and files containing meta-data but we'll stick to one for this example. 
+We'll operate on a set of 430 cells from five primary glioblastomas sequenced using scRNA-seq  for 5,948 genes (Patel et. al. 2014). For our signatures, we will use the Hallmark gene set from MSigDB, which can be accessed at `http://software.broadinstitute.org/gsea/msigdb/collections.jsp#H`. The housekeeping genes we'll use can be found in `GeneNameHousekeeping.txt`, and the pre-computed signature can be found in `precomptued_signatures.txt`. To note, we can specify multiple signature files and files containing meta-data but we'll stick to one for this example. 
 
 To create the FastProject object, use
 
 ```{r, collapse=T, tidy=T, message=F}
 # Create a FastProject object
-fp <- FastProject("data/expression_matrix.txt", "data/Gene Name Housekeeping.txt", c("data/h.all.v5.2.symbols.gmt"), precomputed="data/precomputed_signatures.txt")
+fp <- FastProject("data/expression_matrix.txt", "data/GeneNameHousekeeping.txt", c("data/h.all.v5.2.symbols.gmt"), precomputed="data/precomputed_signatures.txt")
 ```
 
 This FastProject object will now contain all the necessary information for performing the basic analysis pipeline on the expression matrix passed in, accessed by `fp@exprData`. To note, the use may also provide the expression data by using the `exprData` argument. For example, consider the example below:
@@ -89,11 +89,11 @@ This FastProject object will now contain all the necessary information for perfo
 expr <- readExprToMatrix("data/expression_matrix.txt")
 
 # -- Create a FastProject object with existing matrix
-fp <- FastProject(expr, "data/Gene Name Housekeeping.txt", c("data/h.all.v5.2.symbols.gmt"), precomputed="data/precomputed_signatures.txt")
+fp <- FastProject(expr, "data/GeneNameHousekeeping.txt", c("data/h.all.v5.2.symbols.gmt"), precomputed="data/precomputed_signatures.txt")
 
 ## -- Create a FastProject object with an ExpressionSet -- 
 eset <- ExpressionSet(assayData=expr)
-fp <- FastProject(eset, "data/Gene Name Housekeeping.txt", c("data/h.all.v5.2.symbols.gmt"), precomputed="data/precomputed_signatures.txt")
+fp <- FastProject(eset, "data/GeneNameHousekeeping.txt", c("data/h.all.v5.2.symbols.gmt"), precomputed="data/precomputed_signatures.txt")
 ```
 
 Now, with a FastProject object, we can run `Analyze` which will return a FastProjectOutput object.
