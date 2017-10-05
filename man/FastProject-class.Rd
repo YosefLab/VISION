@@ -15,7 +15,7 @@ FastProject(data, housekeeping, signatures, ...)
   nomodel = FALSE, filters = c("fano"), lean = FALSE, qc = FALSE,
   min_signature_genes = 5, projections = "", weights = NULL,
   threshold = 0, perm_wPCA = FALSE, sig_norm_method = "znorm_rows",
-  sig_score_method = "weighted_avg", precomputedData = NULL)
+  sig_score_method = "weighted_avg")
 
 \S4method{FastProject}{character}(data, housekeeping, signatures, ...)
 
@@ -87,7 +87,7 @@ sigData <- sign(rnorm(25))
 names(sigData) <- paste0("gene",sample(1:100,25))
 return(createUserGeneSignature(name = paste0("sig",i),
                                sigData = sigData))
-}
+})
 
 fp <- FastProject(data = expMat,
                   housekeeping = hkg,
