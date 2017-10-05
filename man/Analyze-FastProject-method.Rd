@@ -21,12 +21,27 @@ The main analysis function. Runs the entire FastProject analysis pipeline
 and returns a FastProjectOutput object with the result,
 }
 \examples{
+expMat <- matrix(rnorm(200000), nrow=500)
+rownames(expMat) <- paste0("gene",1:500)
+
+# create housekeeping genes
+hkg <- paste0("gene",sample(1:500, 50))
+
+#create 20 signatures of 25 genes each
+sigs <- lapply(1:20, function(i) {
+sigData <- sign(rnorm(25))
+names(sigData) <- paste0("gene",sample(1:100,25))
+return(createUserGeneSignature(name = paste0("sig",i),
+                               sigData = sigData))
+})
+
+fp <- FastProject(data = expMat,
+                  housekeeping = hkg,
+                  signatures = sigs)
+
+## Analyze requires actual non-random data to run properly
 \dontrun{
-fp <- FastProject("data/expression_matrix.txt",
-                  "data/Gene Name Housekeeping.txt",
-                  c("extdata/geneSetLibrary.gmt",
-                    "data/tcga_sigs.txt"))
-fpout <- Analysis(fp)
-ViewResults(fpout)
+bp <- BiocParallel::SerialParam()
+fp.out <- Analyze(fp, BPPARAM=bp)
 }
 }

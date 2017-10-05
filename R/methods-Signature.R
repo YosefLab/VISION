@@ -11,7 +11,7 @@
 #' @param metaData Metadata pertinent to signature
 #' @param isPrecomputed If TRUE indicates that this signature was precomputed.
 #' Else not precomputed. Default is FALSE.
-#' @param isFactor If TRUE indicates that htis signature is a Factor, else not
+#' @param isFactor If TRUE indicates that this signature is a Factor, else not
 #' a factor. Default is FALSE.
 #' @param cluster Number representing which cluster this signature is a part of.
 #' Default is 0.
@@ -42,7 +42,29 @@ setMethod("initialize", signature(.Object="Signature"),
           }
 )
 
-#' Method for testing whether or not signatures are equal to one another (if all signs, genes and name are the same.)
+#' Create a user-defined gene signature
+#'
+#' @param name the name of the signature
+#' @param sigData a named vector where the names correspond to genes in the
+#' data and the values are either `1.0` for up-regulated (or positive) genes,
+#' and `-1.0` for down regulated (negtive) genes.
+#' @param metadata metadata that is relevent to the signature. [Default:NULL]
+#' @export
+#' @return a Signature object
+#' @examples
+#' sig <- createUserGeneSignature(name="signature", c(gene1=1.0,gene17=1.0,
+#'                                                    gene4=1.0, gene31=-1.0,
+#'                                                    gene3=-1.0, gene9=1.0))
+#' sig2 <- createUserGeneSignature(name="signature", c(gene18=1.0,gene29=1.0,
+#'                                                    gene400=-1.0, gene1=-1.0,
+#'                                                    gene7=1.0, gene9=1.0))
+createUserGeneSignature <- function(name, sigData, metadata="") {
+    return(new("Signature", sigDict=sigData, name=name, metaData=metadata,
+                   source="user-defined"))
+}
+
+#' Method for testing whether or not signatures are equal to one another
+#' (if all signs, genes and name are the same.)
 #'
 #' @param object Signature object
 #' @param compareSig Other signature to compare against

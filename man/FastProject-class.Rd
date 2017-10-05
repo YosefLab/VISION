@@ -8,29 +8,28 @@
 \alias{FastProject,ExpressionSet-method}
 \title{Initializes a new FastProject object.}
 \usage{
-FastProject(data, ...)
+FastProject(data, housekeeping, signatures, ...)
 
 \S4method{FastProject}{matrix}(data, housekeeping, signatures,
   norm_methods = NULL, precomputed = NULL, nofilter = FALSE,
   nomodel = FALSE, filters = c("fano"), lean = FALSE, qc = FALSE,
   min_signature_genes = 5, projections = "", weights = NULL,
   threshold = 0, perm_wPCA = FALSE, sig_norm_method = "znorm_rows",
-  sig_score_method = "weighted_avg", housekeepingData = NULL,
-  sigData = NULL, precomputedData = NULL)
+  sig_score_method = "weighted_avg", precomputedData = NULL)
 
-\S4method{FastProject}{character}(data, ...)
+\S4method{FastProject}{character}(data, housekeeping, signatures, ...)
 
-\S4method{FastProject}{ExpressionSet}(data, ...)
+\S4method{FastProject}{ExpressionSet}(data, housekeeping, signatures, ...)
 }
 \arguments{
 \item{data}{expression data - can be numeric matrix, path of a file or
 ExpressionSet object}
 
-\item{...}{additional arguments}
-
 \item{housekeeping}{file path to housekeeping data file}
 
 \item{signatures}{list of file paths to signature files (.gmt or .txt)}
+
+\item{...}{additional arguments}
 
 \item{norm_methods}{normalization methods to be extracted from the scone
 object}
@@ -68,15 +67,6 @@ number of PCs. Else not. Default FALSE.}
 before calculating signature scores}
 
 \item{sig_score_method}{Method to apply when calculating signature scores}
-
-\item{housekeepingData}{housekeeping data table, as opposed to specifying a
-housekeeping_data file}
-
-\item{sigData}{List of signatures, as opposed to specifying a list of
-signature files}
-
-\item{precomputedData}{List of precomputed signature scores, as opposed to
-specifying a precomputed file}
 }
 \value{
 A FastProject object
@@ -85,10 +75,21 @@ A FastProject object
 Initializes a new FastProject object.
 }
 \examples{
-\dontrun{
-fp <- FastProject("data/expression_matrix.txt",
-                  "data/Gene Name Housekeeping.txt",
-                  c("extdata/geneSetLibrary.gmt",
-                    "data/tcga_sigs.txt"))
+expMat <- matrix(rnorm(200000), nrow=500)
+rownames(expMat) <- paste0("gene",1:500)
+
+# create housekeeping genes
+hkg <- paste0("gene",sample(1:500, 50))
+
+#create 20 signatures of 25 genes each
+sigs <- lapply(1:20, function(i) {
+sigData <- sign(rnorm(25))
+names(sigData) <- paste0("gene",sample(1:100,25))
+return(createUserGeneSignature(name = paste0("sig",i),
+                               sigData = sigData))
 }
+
+fp <- FastProject(data = expMat,
+                  housekeeping = hkg,
+                  signatures = sigs)
 }
