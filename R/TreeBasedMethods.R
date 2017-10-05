@@ -28,7 +28,7 @@ applySimplePPT <- function(exprData, numCores, permExprData = NULL,
   Wt <- NULL
 
   if (sigma == 0) {
-    km <- kmeans(t(exprData), centers=round(sqrt(ncol(exprData))), nstart=1, iter.max=50)$centers
+    km <- stats::kmeans(t(exprData), centers=round(sqrt(ncol(exprData))), nstart=1, iter.max=50)$centers
 
     sigma <- mean(apply(as.matrix(sqdist(t(exprData), km)), 1, min))
   }
@@ -91,8 +91,7 @@ applySimplePPT <- function(exprData, numCores, permExprData = NULL,
 
       # Calculate the degree distribution
       deg <- colSums(Wt)
-      br <- seq(0, max(1, max(deg)))
-      degDist <- hist(deg, br, plot=F)$counts
+      degDist <- unname(table(deg))
       deg_g2c <- 0
       if (length(degDist) > 2) {
         deg_g2c <- sum(degDist[seq(3, length(degDist))])
@@ -107,8 +106,7 @@ applySimplePPT <- function(exprData, numCores, permExprData = NULL,
         currMSE <- tr$mse
 
         deg <- colSums(Wt)
-        br <- seq(0, max(1, max(deg)))
-        degDist <- hist(deg, br, plot=F)$counts
+        degDist <- unname(table(deg))
         deg_g2c <- 0
         if (length(degDist) > 2) {
           deg_g2c <- sum(degDist[seq(3, length(degDist))])
@@ -129,7 +127,7 @@ applySimplePPT <- function(exprData, numCores, permExprData = NULL,
     mses <- sapply(permExprData, function(permdata) {
       return(fitTree(permdata, nNodes, sigma, gamma, DEF_TOL, DEF_MAX_ITER)$mse)
     })
-    zscore <- log1p((tr$mse - mean(mses)) / sd(mses))
+    zscore <- log1p((tr$mse - mean(mses)) / stats::sd(mses))
   } else {
     zscore <- NULL
   }
@@ -158,7 +156,7 @@ applySimplePPT <- function(exprData, numCores, permExprData = NULL,
 #'   }
 
 fitTree <- function(expr, nNodes, sigma, gamma, tol, maxIter) {
-  km <- kmeans(t(expr), centers=nNodes, nstart=10, iter.max=100)$centers
+  km <- stats::kmeans(t(expr), centers=nNodes, nstart=10, iter.max=100)$centers
   cc_dist <- as.matrix(sqdist(km, km))
   cx_dist <- as.matrix(sqdist(t(expr), km))
   prevScore = Inf

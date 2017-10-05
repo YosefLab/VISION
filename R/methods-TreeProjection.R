@@ -37,7 +37,7 @@ setMethod("computeKNNWeights", signature(object = "TreeProjection"),
 
             kQuantile <- K / NCOL(object@pData)
             knnmat <- apply(distmat, 1, function(d) {
-              partition <- quantile(d, kQuantile)
+              partition <- stats::quantile(d, kQuantile)
               d[d > partition] <- Inf
               return(d)
             })

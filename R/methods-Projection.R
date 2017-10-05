@@ -41,8 +41,9 @@ setMethod("cluster", signature(object = "Projection"),
 
             if(method == "KMeans")
             {
-                km <- kmeans(t(object@pData), centers=param)
-                clust <- Cluster(method, param, km$centers, t(as.matrix(km$cluster)))
+                km <- stats::kmeans(t(object@pData), centers=param)
+                clust <- Cluster(method, param, km$centers,
+                                 t(as.matrix(km$cluster)))
             }
             else
             {

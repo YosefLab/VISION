@@ -75,7 +75,7 @@ generateProjections <- function(expr, weights, filterName="",
   fullPCA <- as.matrix(apply(fullPCA, 2, function(x) return( x - mean(x) )))
 
   r <- apply(fullPCA, 1, function(x) sum(x^2))^(0.5)
-  r90 <- quantile(r, c(.9))[[1]]
+  r90 <- stats::quantile(r, c(.9))[[1]]
 
   if (r90 > 0) {
     fullPCA <- fullPCA / r90
@@ -109,7 +109,7 @@ generateProjections <- function(expr, weights, filterName="",
       coordinates <- as.matrix(apply(coordinates, 2, function(x) return( x - mean(x) )))
 
       r <- apply(coordinates, 1, function(x) sum(x^2))^(0.5)
-      r90 <- quantile(r, c(.9))[[1]]
+      r90 <- stats::quantile(r, c(.9))[[1]]
 
       if (r90 > 0) {
         coordinates <- coordinates / r90
@@ -175,7 +175,7 @@ generateTreeProjections <- function(expr, filterName="",
   c <- t(hdTree$princPnts[c(1,2),])
   coord <- as.matrix(apply(c, 2, function(x) return(x - mean(x))))
   r <- apply(coord, 1, function(x) sum(x^2))^(0.5)
-  r90 <- quantile(r, c(0.9))[[1]]
+  r90 <- stats::quantile(r, c(0.9))[[1]]
   if (r90 > 0) {
     coord <- coord / r90
   }
@@ -274,7 +274,7 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
 #' }
 applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, verbose=FALSE) {
   if(verbose) message("Permutation WPCA")
-  comp <- min(components, nrow(expr), ncol(data))
+  comp <- min(components, nrow(expr), ncol(expr))
 
   NUM_REPEATS <- 20;
 
@@ -308,7 +308,7 @@ applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, 
   sigma[which(sigma==0)] <- 1.0
 
   # Compute pvals from survival function & threshold components
-  pvals <- 1 - pnorm((eval - mu) / sigma)
+  pvals <- 1 - stats::pnorm((eval - mu) / sigma)
   thresholdComponent_i = which(pvals > p_threshold, arr.ind=TRUE)
   if (length(thresholdComponent_i) == 0) {
     thresholdComponent <- nrow(wPCA)
@@ -331,17 +331,16 @@ applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, 
 }
 
 #' Performs PCA on data
-#'
 #' @param exprData Expression data
 #' @param N Number of components to retain. Default is 0
 #' @param variance_proportion Retain top X PC's such that this much variance is retained; if N=0, then apply this method
 #' @return Matrix containing N components for each sample.
 applyPCA <- function(exprData, N=0, variance_proportion=1.0) {
-  res <- prcomp(x=t(exprData), retx=TRUE, center=TRUE)
+  res <- stats::prcomp(x=t(exprData), retx=TRUE, center=TRUE)
 
   if(N == 0) {
     total_var <- as.matrix(cumsum(res$sdev^2 / sum(res$sdev^2)))
-    last_i <- tail(which(total_var <= variance_proportion), n=1)
+    last_i <- utils::tail(which(total_var <= variance_proportion), n=1)
     N <- last_i
   }
   return(list(t(res$x[,1:N])*-1, t(res$rotation)))
@@ -504,7 +503,7 @@ applyRBFPCA <- function(exprData, BPPARAM=bpparam()) {
   kMat <- kMat / kMatNormFactor
 
   # Compute normalized matrix & covariance matrix
-  kMat <- as.matrix(kMat, 1, function(x) (x - mean(x)) / sd(x))
+  kMat <- as.matrix(kMat, 1, function(x) (x - mean(x)) / stats::sd(x))
   W <- tcrossprod(kMat)
 
   decomp <- rsvd::rsvd(W, k=2)

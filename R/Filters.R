@@ -54,7 +54,7 @@ filterGenesNovar <- function(data) {
   message("Applying no variance filter...")
 
 
-  return (subset(data, apply(data, 1, var) != 0))
+  return (subset(data, apply(data, 1, stats::var) != 0))
 
 }
 #' Filter genes whose values sum to less than some threshold value (may remove rows)
@@ -87,7 +87,7 @@ filterGenesFano <- function(data, num_mad=2) {
   }
 
   mu <- apply(sub_data, 1, mean)
-  sigma <- apply(sub_data, 1, sd)
+  sigma <- apply(sub_data, 1, stats::sd)
 
 
   aa <- order(mu)
@@ -111,8 +111,9 @@ filterGenesFano <- function(data, num_mad=2) {
 		mu_quant[which(mu_quant == 0)] <- 1
 		sigma_quant <- sigma_sort[rr]
 		fano_quant <- (sigma_quant ** 2) / (mu_quant)
-		mad_quant <- median(abs(fano_quant - median(fano_quant)))
-		gene_passes_quant <- (fano_quant > (median(fano_quant) + num_mad * mad_quant))
+		mad_quant <- median(abs(fano_quant - stats::median(fano_quant)))
+		gene_passes_quant <- (fano_quant > (stats::median(fano_quant)
+		                                    + num_mad * mad_quant))
 		gene_passes_quant_i <- which(gene_passes_quant != 0)
 		gene_passes_i <- gene_passes_quant_i + (i*m)
 		return(gene_passes_i)

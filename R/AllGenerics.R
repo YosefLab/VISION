@@ -8,7 +8,7 @@ setGeneric("addSigData", function(object, data) {
   standardGeneric("addSigData")
 })
 
-setGeneric("Analyze", function(object) {
+setGeneric("Analyze", function(object, BPPARAM) {
   standardGeneric("Analyze")
 })
 

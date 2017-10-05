@@ -127,10 +127,11 @@ setMethod("FastProject", signature(data = "ExpressionSet"),
 #'                   precomputed="pre_sigs.txt")
 #' fpout <- Analysis(fp)
 setMethod("Analyze", signature(object="FastProject"),
-          function(object) {
+          function(object, BPPARAM=NULL) {
   message("Beginning Analysis")
-  #BPPARAM = bpparam()
-  BPPARAM = SerialParam()
+  if(is.null(BPPARAM)) {
+    BPPARAM <- SerialParam()
+  }
 
   ptm <- Sys.time()
   timingList <- (ptm - ptm)
@@ -141,9 +142,11 @@ setMethod("Analyze", signature(object="FastProject"),
   pools <- list()
   if (ncol(object@exprData) > 25000) {
 
-      microclusters <- applyMicroClustering(object@exprData, object@housekeepingData)
+      microclusters <- applyMicroClustering(object@exprData,
+                                            object@housekeepingData,
+                                            BPPARAM)
       pooled_cells <- microclusters[[1]]
-      pools <- microcluster[[2]]
+      pools <- microclusters[[2]]
 
 	  object@exprData <- pooled_cells
 	  clustered <- TRUE
@@ -154,7 +157,7 @@ setMethod("Analyze", signature(object="FastProject"),
   tRows <- c(tRows, "Partition & Sample")
 
   # Wrap expression data frame into a ExpressionData class
-  eData <- ExpressionData(object@exprData, distanceMatrix=sparseDistance)
+  eData <- ExpressionData(object@exprData)
 
   # If no filter threshold was specified, set it to 20% of samples
   if (object@threshold == 0) {
@@ -364,7 +367,7 @@ setMethod("Analyze", signature(object="FastProject"),
 
   }
 
-  slots <- slotNames("FastProject")
+  slots <- methods::slotNames("FastProject")
   fpParams <- list()
   for (s in slots) {
 	  fpParams[[s]] <- slot(object, s)
@@ -393,24 +396,23 @@ setMethod("Analyze", signature(object="FastProject"),
 #' @examples
 #'   fp <- FastProject("expression_matrix.txt", "data/Gene Name Housekeeping.txt",
 #'                     c("sigfile_1.gmt", "sigfile_2.txt"), precomputed="pre_sigs.txt")
-#'   slots <- slotNames(object)
+#'   fpslots <- slotNames(object)
 #'   fpParams <- list()
-#'   for (s in slots) {
+#'   for (s in fpslots) {
 #'     fpParams <- c(fpParams, slot(object, s))
 #'   }
 #'   subset_cells <- sample(1:ncol(fp@exprData), 200)
 #'   nexpr <- fp@exprData[,subset_cells]
-#'   names(fpParams) <- slots
+#'   names(fpParams) <- fpslots
 #'   nfp <- createNewFP(fpParams, nexpr)
-
 createNewFP <- function(fpParams, nexpr) {
 	nfp <- FastProject(exprData=nexpr, sigData=fpParams[["sigData"]],
 						housekeepingData=fpParams[["housekeepingData"]])
 
-	slots <- names(fpParams)
-	for (s in slots) {
+	fpslots <- names(fpParams)
+	for (s in fpslots) {
 		if (s != "exprData" && s != "sigData" && s != "housekeepingData") {
-			slot(nfp, s) <- fpParams[[s]]
+			methods::slot(nfp, s) <- fpParams[[s]]
 		}
 	}
 

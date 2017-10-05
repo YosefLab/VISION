@@ -11,7 +11,7 @@ biasedSD <- function(data, byRow=TRUE) {
     a = 2
     d <- nrow(data)
   }
-  std <- apply(data, a, sd) * sqrt(((d-1)/d))
+  std <- apply(data, a, stats::sd) * sqrt(((d-1)/d))
   return(std)
 }
 
@@ -21,7 +21,7 @@ biasedSD <- function(data, byRow=TRUE) {
 #' @return Biased standard deviation of vector
 biasedVectorSD <- function(data) {
   d <- length(data)
-  std <- sd(data) * sqrt((d-1)/d)
+  std <- stats::sd(data) * sqrt((d-1)/d)
   return(std)
 }
 

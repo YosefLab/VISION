@@ -9,10 +9,9 @@ readExprToMatrix <- function(filename, delimiter="\t") {
 
   message("Loading data from ", filename, " ...")
 
-  #data <- as.matrix(read.table(filename, sep= delimiter, header=TRUE, row.names=1))
   data <- as.matrix(data.table::fread(filename, sep=delimiter, skip=1, drop=1))
   rnames <- data.table::fread(filename, sep=delimiter, skip=1, select=1)
-  cnames <- read.table(filename, sep=delimiter, header=T, row.names=1,nrows=1)
+  cnames <- utils::read.table(filename, sep=delimiter, header=T, row.names=1,nrows=1)
   rownames(data) <- as.vector(t(rnames))
   colnames(data) <- colnames(cnames)
 
@@ -35,7 +34,7 @@ readExprToMatrix <- function(filename, delimiter="\t") {
 readHKGToMatrix <- function(filename, delimiter="\t") {
 
   message("Loading data from ", filename, "...")
-  return(read.table(filename, sep=delimiter))
+  return(utils::read.table(filename, sep=delimiter))
 }
 
 #' Reads in a list of signature input files.
@@ -101,7 +100,7 @@ readSignaturesInput <- function(filenames) {
 
     } else if (file_ext == "txt") {
       sigList <- list()
-      inp <- as.matrix(read.table(filename, sep="\t"))
+      inp <- as.matrix(utils::read.table(filename, sep="\t"))
 
       for (r in 1:nrow(inp)) {
         dat <- inp[r,]
@@ -161,7 +160,7 @@ readPrecomputed <- function(filename, sampleLabels, delimiter="\t") {
 
   message("Loading data from ", filename)
 
-  f <- as.matrix(read.table(filename, sep=delimiter))
+  f <- as.matrix(utils::read.table(filename, sep=delimiter))
   l1 <- f[1,]
   l2 <- f[2,]
 
@@ -191,7 +190,7 @@ readPrecomputed <- function(filename, sampleLabels, delimiter="\t") {
       , warning=function(w) {
         message("Error in precomputed signature:", sigName)
         ind <- which(is.na(sigVals))
-        stop("Error in sample ", sample_labels[ind-2])
+        stop("Error in sample ", sampleLabels[ind-2])
       })
 
     } else if (sigType == "factor") {

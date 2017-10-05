@@ -1,34 +1,39 @@
+#' Cluster single cells so signal is maintained but the sample size and noise
+#' are reduce, using the louvain clustering algorithm
+#' @param exprData the expression data matrix
+#' @param hkg a list of house keeping genes to use as negative control
+#' @param BPPARAM the parallelization backend to use
+applyMicroClustering <- function(exprData, hkg=list(), BPPARAM=bpparam()) {
+  fexpr <- filterGenesFano(exprData)
+  res <- applyPCA(fexpr, N=30)[[1]]
+  kn <- ball_tree_knn(t(res), 30, BPPARAM$workers)
+  cl <- louvainCluster(kn, t(res))
+  cl <- readjust_clusters(cl, t(res))
 
-applyMicroClustering <- function(exprData, hkg=list()) {
+  pooled_cells <- createPools(cl, exprData, hkg)
 
-  	  fexpr <- filterGenesFano(exprData)
-  	  res <- applyPCA(fexpr, N=30)[[1]]
-  	  kn <- ball_tree_knn(t(res), 30, BPPARAM$workers)
-  	  cl <- louvainCluster(kn, t(res))
-  	  cl <- readjust_clusters(cl, t(res))
+  cn <- lapply(1:ncol(pooled_cells), function(i) return(paste0("Cluster ", i)))
+  colnames(pooled_cells) <- cn
+  rownames(pooled_cells) <- rownames(exprData)
 
-      pooled_cells <- createPools(cl, exprData, hkg)
+  pools <- lapply(1:length(cl), function(i) {
+    clust_data <- exprData[,cl[[i]]]
+    cells <- colnames(clust_data)
+    return(cells)
+    })
 
-	  cn <- lapply(1:ncol(pooled_cells), function(i) return(paste0("Cluster ", i)))
-	  colnames(pooled_cells) <- cn
-	  rownames(pooled_cells) <- rownames(object@exprData)
+  names(pools) <- cn
 
-	  pools <- lapply(1:length(cl), function(i) {
-			clust_data <- object@exprData[,cl[[i]]]
-			cells <- colnames(clust_data)
-			return(cells)
-	  })
-
-	  names(pools) <- cn
-
-      return(list(pooled_cells, pools))
+  return(list(pooled_cells, pools))
 }
 
 #' Applies the Louvain algorithm to generate micro-clustered data
 #'
-#' @param kn List of nearest neighbor indices and euclidean distances to these nearest neighbors
+#' @param kn List of nearest neighbor indices and euclidean distances to these
+#' nearest neighbors
 #' @param data Data matrix
-#' @return List of clusters, each entry being a vector of indices representing samples in the cluster.
+#' @return List of clusters, each entry being a vector of indices representing
+#' samples in the cluster.
 louvainCluster <- function(kn, data) {
 
 	nn <- kn[[1]]
@@ -39,7 +44,7 @@ louvainCluster <- function(kn, data) {
 
 	# Create an undirected knn graph
 	g <- igraph::graph_from_adj_list(nnl, mode="out")
-	E(g)$weights <- as.vector(t(d))
+	igraph::E(g)$weights <- as.vector(t(d))
 	g <- igraph::as.undirected(g, mode="each")
 
 	# Now apply the louvain algorithm to cluster the graph
@@ -47,7 +52,7 @@ louvainCluster <- function(kn, data) {
 
 	# Gather cluster vector to list of clusters
 	clusters <- list()
-	mem <- as.vector(membership(cl))
+	mem <- as.vector(igraph::membership(cl))
 	for (i in 1:length(mem)) {
 		n <- as.character(mem[[i]])
 		if (n %in% names(clusters)) {
@@ -65,11 +70,15 @@ louvainCluster <- function(kn, data) {
 
 #' Repartitions existing clusters to achieve desired granularity.
 #'
-#' By default, minimum number of clusters to be generated is the squareroot of the number of cells.
+#' By default, minimum number of clusters to be generated is the squareroot of
+#' the number of cells.
 #'
-#' @param clusters List of clusters, each entry being a vector of cells in a cluster.
-#' @param data NUM_SAMPLES x NUM_FEATURES data matrix that was used to generate clusters
-#' @return Repartitioned clusters, such that a desireable number of microclusters is acheived.
+#' @param clusters List of clusters, each entry being a vector of cells in a
+#' cluster.
+#' @param data NUM_SAMPLES x NUM_FEATURES data matrix that was used to generate
+#' clusters
+#' @return Repartitioned clusters, such that a desireable number of
+#' microclusters is acheived.
 readjust_clusters <- function(clusters, data, cellsPerPartition=100) {
 
 	NUM_PARTITIONS = round(nrow(data) / cellsPerPartition)
@@ -87,9 +96,11 @@ readjust_clusters <- function(clusters, data, cellsPerPartition=100) {
 			currCl = clusters[[i]]
 			subData <- data[currCl,]
 			if (length(currCl) > cellsPerPartition) {
-				nCl <- kmeans(subData, centers=round(nrow(subData) / cellsPerPartition), iter.max=100)
+				nCl <- stats::kmeans(subData,
+				                     centers=round(nrow(subData) / cellsPerPartition),
+				                     iter.max=100)
 			} else {
-				nCl <- kmeans(subData, centers=1, iter.max=100)
+				nCl <- stats::kmeans(subData, centers=1, iter.max=100)
 			}
 			newClust <- nCl$cluster
 			# Gather cluster vector to list of clusters
@@ -117,13 +128,16 @@ readjust_clusters <- function(clusters, data, cellsPerPartition=100) {
 }
 
 #' find a representative subset of numbers from a given vector
-#' @param ls a lst of numbers to find a minimal representation of their distibution
+#' @param ls a lst of numbers to find a minimal representation of their
+#' distibution
 #' @return a list of representatve numbers
 findRepSubset <- function(ls) {
 
 	ls <- unique(sort(unlist(ls)))
 
-	intervals <- lapply(as.list(as.numeric(ls)), function(x) return(list(x - x/5, x + x/5)))
+	intervals <- lapply(as.list(as.numeric(ls)), function(x) {
+	  return(list(x - x/5, x + x/5)))
+	}
 	n_intervals <- merge_intervals(intervals)
 
 	reprsub <- lapply(n_intervals, function(i) round((i[[1]] + i[[2]]) / 2))
@@ -168,10 +182,11 @@ createPools <- function(cl, expr, hkg=list()) {
 			clust_data <- expr[,clust]
             if (is.null(dim(clust_data))) {
                 return(clust_data)
-            }   
+            }
             if (length(hkg) > 0) {
 	            fnr <- createFalseNegativeMap(clust_data, hkg)
-                clust_weights <- computeWeights(fnr[[1]], fnr[[2]], ExpressionData(clust_data))
+                clust_weights <- computeWeights(fnr[[1]], fnr[[2]],
+                                                ExpressionData(clust_data))
 			    p_cell <- as.matrix(apply(clust_data, 1, sum))
                 cell_norm <- as.matrix(apply(clust_weights, 1, sum))
 
@@ -186,8 +201,9 @@ createPools <- function(cl, expr, hkg=list()) {
 
 }
 
-#' Uses gene names in the housekeeping genes file to create a mapping of false negatives.
-#' Creates a functional fit for each sample based on that sample's HK genes
+#' Uses gene names in the housekeeping genes file to create a mapping of false
+#' negatives. Creates a functional fit for each sample based on that sample's
+#' HK genes
 #' @importFrom stats optim
 #' @param data Data matix
 #' @param houskeeping_genes Housekeeping gene table
@@ -197,7 +213,7 @@ createFalseNegativeMap <- function(data, housekeeping_genes) {
 
   message("Creating False Negative Map...")
 
-  # get subset of genes to be used, ie those included in the housekeeping genes set
+  #subset of genes to be used,ie those included in the housekeeping genes set
   keep_ii <- which(rownames(data) %in% housekeeping_genes[[1]])
 
   # Filter out genes with no variance
@@ -270,7 +286,11 @@ createFalseNegativeMap <- function(data, housekeeping_genes) {
   }
 
   bounds <- list(c(0, Inf), c(0, 2))
-  initialGuesses <- list(c(3.5, 1), c(5.5, 1), c(1.5, .5), c(5.5, .5), c(3.5, 1.7))
+  initialGuesses <- list(c(3.5, 1),
+                         c(5.5, 1),
+                         c(1.5, .5),
+                         c(5.5, .5),
+                         c(3.5, 1.7))
 
   for (k in 1:(ncol(gamma) - 1)) {
     best_eval <- 1e99
@@ -295,13 +315,16 @@ createFalseNegativeMap <- function(data, housekeeping_genes) {
 }
 
 #' Calculates weights for the data from the FNR curves
-#' Weights represent p(not expressed | not detectd) for zero values and are equal to 1.0 for detected values
+#' Weights represent p(not expressed | not detectd) for zero values and are
+#' equal to 1.0 for detected values
 #'
-#' @param fit_func Function parameterized by params that maps each mu_h to a false negative estimate
-#' @param params (4 x NUM_SAMPLES) Matrix containing parameters for the false negative fit function
+#' @param fit_func Function parameterized by params that maps each mu_h to a
+#' false negative estimate
+#' @param params (4 x NUM_SAMPLES) Matrix containing parameters for the false
+#' negative fit function
 #' @param exprData Data from which probability derives
-#' @return Weight matrix (NUM_GENES x NUM_SAMPLES) which includes the estimated weight for each data point in
-#' input matrix. Ranges form 0 to 1.
+#' @return Weight matrix (NUM_GENES x NUM_SAMPLES) which includes the estimated
+#' weight for each data point in input matrix. Ranges form 0 to 1.
 computeWeights <- function(fit_func, params, exprData) {
   expr <- getExprData(exprData);
 
@@ -311,7 +334,10 @@ computeWeights <- function(fit_func, params, exprData) {
   mu_h <- apply(expr, 1, function(r) sum(r)) / countNonZero
 
   for (i in 1:ncol(fnProb)) {
-    fnProb[,i] = fit_func(mu_h, params[,i][1], params[,i][2], params[,i][3], params[,i][4])
+    fnProb[,i] = fit_func(mu_h, params[,i][1],
+                          params[,i][2],
+                          params[,i][3],
+                          params[,i][4])
   }
 
   pdE <- 1 - fnProb
