@@ -20,10 +20,6 @@ options(getClass.msg=FALSE)
 
 set.seed(6473) ## for reproducibility
 
-devtools::load_all()
-library(RColorBrewer)
-library(Biobase)
-
 ```
 
 
@@ -79,6 +75,8 @@ To create the FastProject object, use
 
 ```{r, collapse=T, tidy=T, message=T}
 # Create a FastProject object
+library(FastProjectR)
+
 fp <- FastProject("data/expression_matrix.txt", 
                   "data/GeneNameHousekeeping.txt", 
                   c("data/h.all.v5.2.symbols.gmt"), 
@@ -97,7 +95,7 @@ fp <- FastProject(expr, "data/GeneNameHousekeeping.txt",
                   precomputed="data/precomputed_signatures.txt")
 
 ## -- Create a FastProject object with an ExpressionSet -- 
-eset <- ExpressionSet(assayData=expr)
+eset <- Biobase::ExpressionSet(assayData=expr)
 fp <- FastProject(eset, "data/GeneNameHousekeeping.txt", 
                   c("data/h.all.v5.2.symbols.gmt"), 
                   precomputed="data/precomputed_signatures.txt")

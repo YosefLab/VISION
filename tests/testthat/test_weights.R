@@ -4,10 +4,10 @@ test_that("Testing weight matrix created correctly", {
   
   expr <- readExprToMatrix("test_data/expression_matrix.txt")
   eData <- ExpressionData(expr)
-  housekeeping_data <- readHKGToMatrix("test_data/housekeeping_genes/Gene Name Housekeeping.txt")
+  housekeeping_data <- readHKGToMatrix("test_data/housekeeping_genes/GeneNameHousekeeping.txt")
   
   
-  fneg_out <- createFalseNegativeMap(expr, housekeeping_data, FALSE)
+  fneg_out <- createFalseNegativeMap(expr, housekeeping_data)
   func <- fneg_out[[1]]
   params <- fneg_out[[2]]
   
@@ -27,10 +27,10 @@ test_that("Testing weight matrix created correctly", {
 test_that("Compare Output to Previous Weights Matrix", {
   expr <- readExprToMatrix("test_data/expression_matrix.txt")
   eData <- ExpressionData(expr)
-  housekeeping_data <- readHKGToMatrix("test_data/housekeeping_genes/Gene Name Housekeeping.txt")
+  housekeeping_data <- readHKGToMatrix("test_data/housekeeping_genes/GeneNameHousekeeping.txt")
   
   
-  fneg_out <- createFalseNegativeMap(expr, housekeeping_data, FALSE)
+  fneg_out <- createFalseNegativeMap(expr, housekeeping_data)
   func <- fneg_out[[1]]
   params <- fneg_out[[2]]
   
