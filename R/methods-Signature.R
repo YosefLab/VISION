@@ -2,17 +2,23 @@
 # require(pROC)
 
 #' Initialize a new Signature object.
+#' Should not be called directly, instead use the `new` syntax
 #'
+#' @param .Object an object
 #' @param sigDict Named list of signs for each gene in the signature
 #' @param name Name of the signature
 #' @param source File from which this signature was read from
 #' @param metaData Metadata pertinent to signature
-#' @param isPreocomputed If TRUE indicates that this signature was precomputed. Else not precomputed. Default is F.
-#' @param isFactor If TRUE indicates that htis signature is a Factor, else not a factor. Default is F.
-#' @param cluster Number representing which cluster this signature is a part of. Default is 0.
+#' @param isPrecomputed If TRUE indicates that this signature was precomputed.
+#' Else not precomputed. Default is F.
+#' @param isFactor If TRUE indicates that htis signature is a Factor, else not
+#' a factor. Default is F.
+#' @param cluster Number representing which cluster this signature is a part of.
+#' Default is 0.
 #' @return Signature object
 setMethod("initialize", signature(.Object="Signature"),
-          function(.Object, sigDict, name, source, metaData="", isPrecomputed=F, isFactor=F, cluster=0) {
+          function(.Object, sigDict, name, source, metaData="", isPrecomputed=F,
+                   isFactor=F, cluster=0) {
             if (missing(sigDict)) {
               stop("Missing sigDict information.")
             } else if (missing(name)) {
@@ -66,11 +72,16 @@ setMethod("addSigData", signature(object="Signature"),
             return(object)
           })
 
+#' Generate random signatures for a null distribution by permuting the data
+#' @param num the number of signatures to generate
+#' @param eData the data to use for the permutations
+#' @param sigSizes the sizes of the true signatures, to inform selection of the
+#' random signature sizes
+#' @return a vector of random Signature objects
 generatePermutationNull <- function(num, eData, sigSizes) {
   randomSigs <- c()
   randomSizes <- unlist(findRepSubset(sigSizes))
   for (size in randomSizes) {
-    message("Creating random signature of size ", size, "...")
     for (j in 1:num) {
       newSigGenes <- sample(rownames(getExprData(eData)), size)
       newSigSigns <- rep(1, size)
@@ -109,9 +120,13 @@ getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
 #' @importFrom mclust densityMclust
 #' @importFrom entropy entropy.plugin
 #' @importFrom pROC multiclass.roc
-#' @param projections Maps projections to their spatial coordinates for each sample
-#' @param sigScoresData: List of SignatureScores Object, mapping signature names to their value at each coordinate
-#' @param randomSigData: List of SignatureScores Object, mapping randomly generated signatures to scores to be compared with the real signature scores.
+#' @param projections Maps projections to their spatial coordinates for each
+#' sample
+#' @param sigScoresData List of SignatureScores Object, mapping signature
+#' names to their value at each coordinate
+#' @param randomSigData List of SignatureScores Object, mapping randomly
+#' generated signatures to scores to be compared with the real signature scores.
+#' @param BPPARAM the parallelization backend to use
 #' @return list:
 #' \itemize{
 #'     \item sigNames: labels for the signatures (rows in output matrices)
@@ -120,8 +135,7 @@ getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
 #'     \item pVals: pvalues for the scores
 #' }
 sigsVsProjections <- function(projections, sigScoresData,
-                              randomSigData, NEIGHBORHOOD_SIZE = 0.33,
-                              BPPARAM=bpparam()) {
+                              randomSigData, BPPARAM=bpparam()) {
 
   set.seed(RANDOM_SEED)
 
@@ -347,6 +361,8 @@ sigsVsProjections <- function(projections, sigScoresData,
 #' @importFrom mclust densityMclust
 #' @param sigList List of signatures
 #' @param sigMatrix Matrix of signatures scores, NUM_SIGNATURES x NUM_SAMPLES
+#' @param pvals the corresponding P-values for each score,
+#' NUM_SIGNATURES x NUM_SAMPLES
 #' @param k Number of clusters to generate
 #' @return a list:
 #' \itemize{

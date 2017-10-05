@@ -1,5 +1,7 @@
 #' Wrapper class for ExpressionData object for JSON.
+#' Should not be called directly, instead use the `new` syntax
 #'
+#' @param .Object an object
 #' @param data Expression data
 #' @param sample_labels Labels of samples in expression data
 #' @param gene_labels Lables of genes in expression data
@@ -16,7 +18,9 @@ setMethod("initialize", signature(.Object="ServerExpression"),
 )
 
 #' Wrapper class for Signature Projection Matrix
+#' Should not be called directly, instead use the `new` syntax
 #'
+#' @param .Object an object
 #' @param data Signatrue Projection matrix as obtained from sigsVsProjections
 #' @param proj_labels Projection names
 #' @param sig_labels Names of signatures
@@ -33,7 +37,9 @@ setMethod("initialize", signature(.Object="ServerSigProjMatrix"),
 )
 
 #' Wrapper class for the P value matrix calculated during sigsVsProjections
+#' Should not be called directly, instead use the `new` syntax
 #'
+#' @param .Object an object
 #' @param data P values for each signature, projection pair in the form of a matrix
 #' @param proj_labels Projection names
 #' @param sig_labels Names of signatures
@@ -49,6 +55,9 @@ setMethod("initialize", signature(.Object="ServerPMatrix"),
           })
 
 #' Wrapper class for server Perason correlation data
+#' Should not be called directly, instead use the `new` syntax
+#'
+#' @param .Object an object
 #' @param data pearson r correlation coefficients
 #' @param proj_labels the labels of the projections (columns) in the data
 #' @param sig_labels the labels of the signatures (rows) in the data
@@ -126,7 +135,7 @@ sigRanksToJSON <- function(ss) {
 
 #' Converts a projection into a JSON object mapping each sample to a projection coordinate.
 #' @importFrom jsonlite toJSON
-#' @param p: Projection coordinate data (NUM_SAMPLES x NUM_COMPONENTS)
+#' @param p Projection coordinate data (NUM_SAMPLES x NUM_COMPONENTS)
 #' @return JSON object mapping each sample to a projection coordinate.
 coordinatesToJSON <- function(p) {
 

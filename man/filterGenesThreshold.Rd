@@ -7,9 +7,9 @@
 filterGenesThreshold(data, threshold)
 }
 \arguments{
-\item{data:}{(data.frame) expression matrix}
+\item{data}{(data.frame) expression matrix}
 
-\item{threshold:}{(int) threshold value to filter by}
+\item{threshold}{(int) threshold value to filter by}
 }
 \value{
 filtered expression matrix

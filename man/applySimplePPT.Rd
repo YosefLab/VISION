@@ -5,27 +5,32 @@
 \title{Applies the Simple PPT algorithm onto the expression data.}
 \usage{
 applySimplePPT(exprData, numCores, permExprData = NULL,
-  nNodes_ = round(sqrt(ncol(exprData))), sigma = 0, gamma = 0)
+  nNodes = round(sqrt(ncol(exprData))), sigma = 0, gamma = 0)
 }
 \arguments{
 \item{exprData}{Expression data -- Num_Genes x Num_Samples}
 
 \item{numCores}{Number of cores to use during this analysis}
 
-\item{permExprData}{a list of permutated expression datasets, to use for significance estimation of the tree [default:NULL]}
-
-\item{sigma}{regularization parameter for soft-assignment of data points to nodes, used as the variance
-of a guassian kernel. If 0, this is estimated automatically}
-
-\item{gamma}{graph-level regularization parameter, controlling the tradeoff between the noise-levels
-in the data and the graph smoothness. If 0, this is estimated automatically.}
+\item{permExprData}{a list of permutated expression datasets,
+to use for significance estimation of the tree [default:NULL]}
 
 \item{nNodes}{Number of nodes to find. Default is sqrt(N)}
+
+\item{sigma}{regularization parameter for soft-assignment of data points to
+nodes, used as the variance
+       of a guassian kernel. If 0, this is estimated automatically}
+
+\item{gamma}{graph-level regularization parameter, controlling the tradeoff
+between the noise-levels
+       in the data and the graph smoothness. If 0, this is estimated
+       automatically.}
 }
 \value{
 Information on the fitten tree
   \itemize{
-    \item C: spatial positions of the tree nodes in NUM_FEATURES dimensional space
+    \item C: spatial positions of the tree nodes in NUM_FEATURES dimensional
+    space
     \item W: Unweighted (binary) adjacency matrix of the fitten tree
     \item distMat: distance matrix between each tree node to each datapoint
     \item mse: the Mean-Squared-Error of the fitten tree

@@ -14,7 +14,7 @@ Each subsequent row contains a signature name in the first column,
  followed by the signature type (either 'numerical' or 'factor')
  followed by the signature values, one for each sample label in the file
 
-@param  filename Filename to read the precomputed signatures from
+@param filename Filename to read the precomputed signatures from
  @param sampleLables List of labels for which we want the signature scores
  @param delimiter Delimiter to use when reading in file. Default is tab.
  @returns List of Signature data types

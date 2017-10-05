@@ -9,6 +9,8 @@
   sigProjMatrix, pMatrix, sigClusters, treeScore)
 }
 \arguments{
+\item{.Object}{an object}
+
 \item{projections}{List of Projection objects to be stored}
 
 \item{keys}{Sample names of expression data}
@@ -29,4 +31,5 @@ Stores a list of Projection objects, filter name, and a logical value indicating
 PCA was performed. Also stores clusters, a signature to projection matrix, and relevant gene names
 and signature / projection keys.
 Initializes a ProjectionData object for neatly storing all relevant data to a given projection section
+Should not be called directly, instead use the `new` syntax
 }

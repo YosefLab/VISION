@@ -1,13 +1,19 @@
 #' Initialize a new FastProjectOuptput object
+#' should not be called directly, use the `new` syntax
 #'
+#' @param .Object an object
 #' @param eData ExpressionData matrix
 #' @param filterModuleList List of FilterModuleData objects
-#' @param sigMatirx Matrix of signature scores (NUM_SIGS x NUM_CELLS)
+#' @param sigMatrix Matrix of signature scores (NUM_SIGS x NUM_CELLS)
 #' @param sigList List of Signatures
-#' @param fpParams List of the FastProject parameters that were used to generate this object
+#' @param fpParams List of the FastProject parameters that were used to
+#' generate this object
+#' @param pools a list of pooling information for pooling single cells into
+#' representative super-cell clusters
 #' @return FastProjectOutput object.
 setMethod("initialize", signature(.Object="FastProjectOutput"),
-          function(.Object, eData, filterModuleList, sigMatrix, sigList, fpParams, pools) {
+          function(.Object, eData, filterModuleList, sigMatrix, sigList,
+                   fpParams, pools) {
 
             .Object@exprData <- eData
             .Object@filterModuleList <- filterModuleList
@@ -46,8 +52,7 @@ setMethod("saveFPOutAndViewResults", signature(fpout="FastProjectOutput"),
           })
 
 #' View results of analysis without saving output object
-#'
-#' @param fpout FastProjectOutput object
+#' @param object FastProjectOutput object
 #' @export
 #' @examples
 #' fpout <- Analyze(fp)

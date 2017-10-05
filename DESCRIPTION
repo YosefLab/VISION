@@ -3,7 +3,7 @@ Title: Two dimensional visualization of single-cell data
 Version: 0.99.0
 Authors@R: c(person("Matt", "Jones", email = "mattjones315@gmail.com", role = c("aut")),
 			 person("Tal", "Ashuach", email = "tal_ashuach@berkeley.edu", role = c("aut", "cre")),
-			 person("David", "Detomaso", email = "david.detomaso@berkeley.edu", role = c("aut", "cre")),
+			 person("David", "Detomaso", email = "david.detomaso@berkeley.edu", role = c("aut")),
 			 person("Nir", "Yosef", email = "niryosef@berkeley.edu", role = c("ctb", "cph")))
 Author: Matt Jones [aut], Tal Ashuach [aut, cre], David Detomaso [aut], Nir Yosef [ctb]
 Maintainer: Tal Ashuach <tal_ashuach@berkeley.edu>

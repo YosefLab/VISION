@@ -5,10 +5,12 @@
 \alias{Analyze,FastProject-method}
 \title{Main entry point for running FastProject Analysis}
 \usage{
-\S4method{Analyze}{FastProject}(object)
+\S4method{Analyze}{FastProject}(object, BPPARAM = NULL)
 }
 \arguments{
 \item{object}{FastProject object}
+
+\item{BPPARAM}{a parallelization backend to use for the analysis}
 }
 \value{
 FastProjectOutput object
@@ -17,7 +19,8 @@ FastProjectOutput object
 Main entry point for running FastProject Analysis
 }
 \examples{
-fp <- FastProject("expression_matrix.txt", "data/Gene Name Housekeeping.txt", c("sigfile_1.gmt", "sigfile_2.txt"),
+fp <- FastProject("expression_matrix.txt", "data/Gene Name Housekeeping.txt",
+                  c("sigfile_1.gmt", "sigfile_2.txt"),
                   precomputed="pre_sigs.txt")
 fpout <- Analysis(fp)
 }

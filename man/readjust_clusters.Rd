@@ -7,13 +7,20 @@
 readjust_clusters(clusters, data, cellsPerPartition = 100)
 }
 \arguments{
-\item{clusters}{List of clusters, each entry being a vector of cells in a cluster.}
+\item{clusters}{List of clusters, each entry being a vector of cells in a
+cluster.}
 
-\item{data}{NUM_SAMPLES x NUM_FEATURES data matrix that was used to generate clusters}
+\item{data}{NUM_SAMPLES x NUM_FEATURES data matrix that was used to generate
+clusters}
+
+\item{cellsPerPartition}{the number of cells for a single partition the
+algorithm should aim for}
 }
 \value{
-Repartitioned clusters, such that a desireable number of microclusters is acheived.
+Repartitioned clusters, such that a desireable number of
+microclusters is acheived.
 }
 \description{
-By default, minimum number of clusters to be generated is the squareroot of the number of cells.
+By default, minimum number of clusters to be generated is the squareroot of
+the number of cells.
 }

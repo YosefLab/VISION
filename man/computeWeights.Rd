@@ -3,22 +3,26 @@
 \name{computeWeights}
 \alias{computeWeights}
 \title{Calculates weights for the data from the FNR curves
-Weights represent p(not expressed | not detectd) for zero values and are equal to 1.0 for detected values}
+Weights represent p(not expressed | not detectd) for zero values and are
+equal to 1.0 for detected values}
 \usage{
 computeWeights(fit_func, params, exprData)
 }
 \arguments{
-\item{fit_func}{Function parameterized by params that maps each mu_h to a false negative estimate}
+\item{fit_func}{Function parameterized by params that maps each mu_h to a
+false negative estimate}
 
-\item{params}{(4 x NUM_SAMPLES) Matrix containing parameters for the false negative fit function}
+\item{params}{(4 x NUM_SAMPLES) Matrix containing parameters for the false
+negative fit function}
 
 \item{exprData}{Data from which probability derives}
 }
 \value{
-Weight matrix (NUM_GENES x NUM_SAMPLES) which includes the estimated weight for each data point in
-input matrix. Ranges form 0 to 1.
+Weight matrix (NUM_GENES x NUM_SAMPLES) which includes the estimated
+weight for each data point in input matrix. Ranges form 0 to 1.
 }
 \description{
 Calculates weights for the data from the FNR curves
-Weights represent p(not expressed | not detectd) for zero values and are equal to 1.0 for detected values
+Weights represent p(not expressed | not detectd) for zero values and are
+equal to 1.0 for detected values
 }

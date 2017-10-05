@@ -1,7 +1,7 @@
 #' Wrapper class for a particular cluster.
-#'
+#' Should be called using the `new` syntax.
 #' Maps a cluster type to the the resulting cluster data.
-#'
+#' @param .Object An object.
 #' @param method clustering method used
 #' @param param clusterng parameter used
 #' @param centers cluster centroid

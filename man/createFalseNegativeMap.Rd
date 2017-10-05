@@ -2,15 +2,16 @@
 % Please edit documentation in R/Transforms.R
 \name{createFalseNegativeMap}
 \alias{createFalseNegativeMap}
-\title{Uses gene names in the housekeeping genes file to create a mapping of false negatives.
-Creates a functional fit for each sample based on that sample's HK genes}
+\title{Uses gene names in the housekeeping genes file to create a mapping of false
+negatives. Creates a functional fit for each sample based on that sample's
+HK genes}
 \usage{
 createFalseNegativeMap(data, housekeeping_genes)
 }
 \arguments{
 \item{data}{Data matix}
 
-\item{houskeeping_genes}{Housekeeping gene table}
+\item{housekeeping_genes}{Housekeeping gene table}
 }
 \value{
 Fit function used to fit expression values to FN rate
@@ -18,6 +19,7 @@ Fit function used to fit expression values to FN rate
 Sample specific parameters to use with the fit function
 }
 \description{
-Uses gene names in the housekeeping genes file to create a mapping of false negatives.
-Creates a functional fit for each sample based on that sample's HK genes
+Uses gene names in the housekeeping genes file to create a mapping of false
+negatives. Creates a functional fit for each sample based on that sample's
+HK genes
 }

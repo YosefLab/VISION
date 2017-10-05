@@ -3,12 +3,15 @@
 \docType{methods}
 \name{initialize,ServerExpression-method}
 \alias{initialize,ServerExpression-method}
-\title{Wrapper class for ExpressionData object for JSON.}
+\title{Wrapper class for ExpressionData object for JSON.
+Should not be called directly, instead use the `new` syntax}
 \usage{
 \S4method{initialize}{ServerExpression}(.Object, data, sample_labels,
   gene_labels)
 }
 \arguments{
+\item{.Object}{an object}
+
 \item{data}{Expression data}
 
 \item{sample_labels}{Labels of samples in expression data}
@@ -20,4 +23,5 @@ ServerExpression object
 }
 \description{
 Wrapper class for ExpressionData object for JSON.
+Should not be called directly, instead use the `new` syntax
 }

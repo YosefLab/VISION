@@ -1,6 +1,8 @@
 
 #' Create a TreeProjection object
+#' Should not be called directly, instead use the `new` syntax
 #'
+#' @param .Object an object
 #' @param pData the projected coordinates of the data
 #' @param name the name of the projection
 #' @param vData the projected coordinates of the tree nodes

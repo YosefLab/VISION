@@ -77,6 +77,8 @@ louvainCluster <- function(kn, data) {
 #' cluster.
 #' @param data NUM_SAMPLES x NUM_FEATURES data matrix that was used to generate
 #' clusters
+#' @param cellsPerPartition the number of cells for a single partition the
+#' algorithm should aim for
 #' @return Repartitioned clusters, such that a desireable number of
 #' microclusters is acheived.
 readjust_clusters <- function(clusters, data, cellsPerPartition=100) {
@@ -136,8 +138,8 @@ findRepSubset <- function(ls) {
 	ls <- unique(sort(unlist(ls)))
 
 	intervals <- lapply(as.list(as.numeric(ls)), function(x) {
-	  return(list(x - x/5, x + x/5)))
-	}
+	  return(list(x - x/5, x + x/5))
+	})
 	n_intervals <- merge_intervals(intervals)
 
 	reprsub <- lapply(n_intervals, function(i) round((i[[1]] + i[[2]]) / 2))
@@ -147,7 +149,7 @@ findRepSubset <- function(ls) {
 }
 
 #' merge overlapping intervals
-#' @param a list of intervals
+#' @param intervals a list of intervals
 #' @return a list of intervals where overlaps are merged into a single interval.
 merge_intervals <- function(intervals) {
 
@@ -206,7 +208,7 @@ createPools <- function(cl, expr, hkg=list()) {
 #' HK genes
 #' @importFrom stats optim
 #' @param data Data matix
-#' @param houskeeping_genes Housekeeping gene table
+#' @param housekeeping_genes Housekeeping gene table
 #' @return Fit function used to fit expression values to FN rate
 #' @return Sample specific parameters to use with the fit function
 createFalseNegativeMap <- function(data, housekeeping_genes) {

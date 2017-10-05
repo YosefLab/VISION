@@ -19,5 +19,5 @@ Prints out expression data
 \examples{
 expr <- readExprtoMatrix("data/expression_matrix.txt")
 edata <- ExpressionMatrix(expr)
-readExprData(eData) 
+readExprData(eData)
 }

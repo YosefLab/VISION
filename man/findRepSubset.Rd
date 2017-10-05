@@ -7,7 +7,8 @@
 findRepSubset(ls)
 }
 \arguments{
-\item{ls}{a lst of numbers to find a minimal representation of their distibution}
+\item{ls}{a lst of numbers to find a minimal representation of their
+distibution}
 }
 \value{
 a list of representatve numbers

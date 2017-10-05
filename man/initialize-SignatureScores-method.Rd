@@ -3,27 +3,31 @@
 \docType{methods}
 \name{initialize,SignatureScores-method}
 \alias{initialize,SignatureScores-method}
-\title{Initializes a new SignatureScores object}
+\title{Initializes a new SignatureScores object
+Should not be called directly, instead use the `new` syntax}
 \usage{
 \S4method{initialize}{SignatureScores}(.Object, scores, name, sample_labels,
   isFactor, isPrecomputed, numGenes)
 }
 \arguments{
+\item{.Object}{an object}
+
 \item{scores}{Signature scores}
 
 \item{name}{Name of signature}
+
+\item{sample_labels}{Sample names of expression matrix}
 
 \item{isFactor}{Indicates whether or not this is a factor signature}
 
 \item{isPrecomputed}{Indicates whether or not this score was precomputed}
 
 \item{numGenes}{The number of genes used to calculate the score}
-
-\item{sample_lables}{Sample names of expression matrix}
 }
 \value{
 New SignatureScores object
 }
 \description{
 Initializes a new SignatureScores object
+Should not be called directly, instead use the `new` syntax
 }

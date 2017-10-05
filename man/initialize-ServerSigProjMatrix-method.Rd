@@ -3,12 +3,15 @@
 \docType{methods}
 \name{initialize,ServerSigProjMatrix-method}
 \alias{initialize,ServerSigProjMatrix-method}
-\title{Wrapper class for Signature Projection Matrix}
+\title{Wrapper class for Signature Projection Matrix
+Should not be called directly, instead use the `new` syntax}
 \usage{
 \S4method{initialize}{ServerSigProjMatrix}(.Object, data, proj_labels,
   sig_labels)
 }
 \arguments{
+\item{.Object}{an object}
+
 \item{data}{Signatrue Projection matrix as obtained from sigsVsProjections}
 
 \item{proj_labels}{Projection names}
@@ -20,4 +23,5 @@ ServerSigProjMatrix object
 }
 \description{
 Wrapper class for Signature Projection Matrix
+Should not be called directly, instead use the `new` syntax
 }

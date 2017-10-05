@@ -15,7 +15,7 @@ FastProject(data, ...)
 
 FastProject(data, ...)
 
-\S4method{FastProject}{matrix}(data, housekeeping, signatures, scone = NULL,
+\S4method{FastProject}{matrix}(data, housekeeping, signatures,
   norm_methods = NULL, precomputed = NULL, nofilter = FALSE,
   nomodel = FALSE, filters = c("fano"), lean = FALSE, qc = FALSE,
   min_signature_genes = 5, projections = "", weights = NULL,
@@ -28,50 +28,60 @@ FastProject(data, ...)
 \S4method{FastProject}{ExpressionSet}(data, ...)
 }
 \arguments{
-\item{data}{expression data matrix}
+\item{data}{expression data - can be numeric matrix, path of a file or
+ExpressionSet object}
+
+\item{...}{additional arguments}
 
 \item{housekeeping}{file path to housekeeping data file}
 
 \item{signatures}{list of file paths to signature files (.gmt or .txt)}
 
-\item{norm_methods}{normalization methods to be extracted from the scone object}
+\item{norm_methods}{normalization methods to be extracted from the scone
+object}
 
-\item{nofilter}{if TRUE, no filter applied; else filters applied. Default is FALSE}
+\item{precomputed}{data file with precomputed signature scores (.txt)}
 
-\item{nomodel}{if TRUE, no fnr curve calculated and all weights equal to 1. Else FNR and weights calculated.
-Default is TRUE.}
+\item{nofilter}{if TRUE, no filter applied; else filters applied.
+Default is FALSE}
+
+\item{nomodel}{if TRUE, no fnr curve calculated and all weights equal to 1.
+Else FNR and weights calculated.
+         Default is TRUE.}
 
 \item{filters}{list of filters to compute}
 
-\item{lean}{if TRUE run a lean simulation. Else more robust pipeline initiated. Default is FALSE}
+\item{lean}{if TRUE run a lean simulation. Else more robust pipeline
+initiated. Default is FALSE}
 
 \item{qc}{if TRUE calculate QC; else not. Default is FALSE}
 
-\item{min_signature_genes}{Minimum number of genes required to compute a signature}
+\item{min_signature_genes}{Minimum number of genes required to compute a
+signature}
 
 \item{projections}{File containing precomputed projections for analysis}
 
-\item{weights}{Precomputed weights for each coordinate. Normally computed from the FNR curve.}
+\item{weights}{Precomputed weights for each coordinate. Normally computed
+from the FNR curve.}
 
-\item{perm_wPCA}{If TRUE, apply permutation WPCA to calculate significant number of PCs. Else not. Default FALSE.}
+\item{threshold}{Threshold to apply for the threshold filter}
 
-\item{sig_norm_method}{Method to apply to normalize the expression matrix before calculating signature scores}
+\item{perm_wPCA}{If TRUE, apply permutation WPCA to calculate significant
+number of PCs. Else not. Default FALSE.}
+
+\item{sig_norm_method}{Method to apply to normalize the expression matrix
+before calculating signature scores}
 
 \item{sig_score_method}{Method to apply when calculating signature scores}
 
-\item{housekeepingData}{housekeeping data table, as opposed to specifying a housekeeping_data file}
+\item{housekeepingData}{housekeeping data table, as opposed to specifying a
+housekeeping_data file}
 
-\item{sigData}{List of signatures, as opposed to specifying a list of signature files}
+\item{sigData}{List of signatures, as opposed to specifying a list of
+signature files}
 
-\item{precomputedData}{List of precomputed signature scores, as opposed to specifying a precomputed file}
-
-\item{precomptued}{data file with precomputed signature scores (.txt)}
-
-\item{threhsold}{Threshold to apply for the threshold filter}
-
-\item{data}{the path to the expression matrix file}
-
-\item{data}{an ExpressionSet object with the expression matrix}
+\item{precomputedData}{List of precomputed signature scores, as opposed to
+specifying a precomputed file}
 }
 \value{
 A FastProject object

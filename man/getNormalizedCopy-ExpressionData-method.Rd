@@ -7,11 +7,14 @@
 \usage{
 \S4method{getNormalizedCopy}{ExpressionData}(object, func)
 }
+\arguments{
+\item{object}{ExpressionData object}
+
+\item{func}{normalization method to apply}
+}
+\value{
+Normalized data matrix according to function specified.
+}
 \description{
-@param object ExpressionData object
- @param func normalization method to apply
- @return Normalized data matrix according to function specified.  
- @example 
- eData <- ExpressionData(expr)
- ne <- getNormalizedCopy(eData, "znorm_rows")
+Calculates the specified normalized data matrix
 }

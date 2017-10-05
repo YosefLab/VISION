@@ -1,6 +1,6 @@
 #' Reads in an expression matrix from a file path to a matrix
-#'	@param filename: path to the file to be read in
-#'	@param delimiter: delimiter to use while reading in the file. Default is "\\t"
+#'	@param filename path to the file to be read in
+#'	@param delimiter delimiter to use while reading in the file. Default is "\\t"
 #'
 #'  @returns: Matrix read in from filename.
 #'  @examples
@@ -147,7 +147,7 @@ readSignaturesInput <- function(filenames) {
 #'  followed by the signature type (either 'numerical' or 'factor')
 #'  followed by the signature values, one for each sample label in the file
 #'
-#'  @param  filename Filename to read the precomputed signatures from
+#'  @param filename Filename to read the precomputed signatures from
 #'  @param sampleLables List of labels for which we want the signature scores
 #'  @param delimiter Delimiter to use when reading in file. Default is tab.
 #'  @returns List of Signature data types

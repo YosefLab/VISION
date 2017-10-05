@@ -2,7 +2,8 @@
 % Please edit documentation in R/methods-FastProject.R
 \name{createNewFP}
 \alias{createNewFP}
-\title{Creates a new FastProject object with the new expression matrix. Called from Server.R.}
+\title{Creates a new FastProject object with the new expression matrix. Called from
+Server.R.}
 \usage{
 createNewFP(fpParams, nexpr)
 }
@@ -15,18 +16,21 @@ createNewFP(fpParams, nexpr)
 a new FastProject object
 }
 \description{
-Creates a new FastProject object with the new expression matrix. Called from Server.R.
+Creates a new FastProject object with the new expression matrix. Called from
+Server.R.
 }
 \examples{
-  fp <- FastProject("expression_matrix.txt", "data/Gene Name Housekeeping.txt",
-                    c("sigfile_1.gmt", "sigfile_2.txt"), precomputed="pre_sigs.txt")
-  slots <- slotNames(object)
+  fp <- FastProject("data/expression_matrix.txt",
+                    "data/Gene Name Housekeeping.txt",
+                    c("data/sigfile_1.gmt", "data/sigfile_2.txt"),
+                    precomputed="data/pre_sigs.txt")
+  fpslots <- slotNames(object)
   fpParams <- list()
-  for (s in slots) {
+  for (s in fpslots) {
     fpParams <- c(fpParams, slot(object, s))
   }
   subset_cells <- sample(1:ncol(fp@exprData), 200)
   nexpr <- fp@exprData[,subset_cells]
-  names(fpParams) <- slots
+  names(fpParams) <- fpslots
   nfp <- createNewFP(fpParams, nexpr)
 }

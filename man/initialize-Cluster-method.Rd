@@ -3,11 +3,15 @@
 \docType{methods}
 \name{initialize,Cluster-method}
 \alias{initialize,Cluster-method}
-\title{Wrapper class for a particular cluster.}
+\title{Wrapper class for a particular cluster.
+Should be called using the `new` syntax.
+Maps a cluster type to the the resulting cluster data.}
 \usage{
 \S4method{initialize}{Cluster}(.Object, method, param, centers, data)
 }
 \arguments{
+\item{.Object}{An object.}
+
 \item{method}{clustering method used}
 
 \item{param}{clusterng parameter used}
@@ -20,5 +24,7 @@
 a Cluster object
 }
 \description{
+Wrapper class for a particular cluster.
+Should be called using the `new` syntax.
 Maps a cluster type to the the resulting cluster data.
 }

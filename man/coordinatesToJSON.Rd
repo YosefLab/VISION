@@ -7,7 +7,7 @@
 coordinatesToJSON(p)
 }
 \arguments{
-\item{p:}{Projection coordinate data (NUM_SAMPLES x NUM_COMPONENTS)}
+\item{p}{Projection coordinate data (NUM_SAMPLES x NUM_COMPONENTS)}
 }
 \value{
 JSON object mapping each sample to a projection coordinate.

@@ -3,11 +3,14 @@
 \docType{methods}
 \name{initialize,ServerPMatrix-method}
 \alias{initialize,ServerPMatrix-method}
-\title{Wrapper class for the P value matrix calculated during sigsVsProjections}
+\title{Wrapper class for the P value matrix calculated during sigsVsProjections
+Should not be called directly, instead use the `new` syntax}
 \usage{
 \S4method{initialize}{ServerPMatrix}(.Object, data, proj_labels, sig_labels)
 }
 \arguments{
+\item{.Object}{an object}
+
 \item{data}{P values for each signature, projection pair in the form of a matrix}
 
 \item{proj_labels}{Projection names}
@@ -19,4 +22,5 @@ ServerPMatrix object
 }
 \description{
 Wrapper class for the P value matrix calculated during sigsVsProjections
+Should not be called directly, instead use the `new` syntax
 }

@@ -11,6 +11,9 @@ clusterSignatures(sigList, sigMatrix, pvals, k = 10)
 
 \item{sigMatrix}{Matrix of signatures scores, NUM_SIGNATURES x NUM_SAMPLES}
 
+\item{pvals}{the corresponding P-values for each score,
+NUM_SIGNATURES x NUM_SAMPLES}
+
 \item{k}{Number of clusters to generate}
 }
 \value{

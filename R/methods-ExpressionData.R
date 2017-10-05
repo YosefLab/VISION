@@ -1,11 +1,10 @@
 
 #' Initializes an ExpressionData object
-#'
+#' should not be called directly, use the `new` syntax
+#' @param .Object an object
 #' @param data expression data matrix
+#' @param ... additional arguments
 #' @return ExpressionData object
-#' @examples
-#' expr <- readExprtoMatrix("data/expression_matrix.txt")
-#' edata <- ExpressionMatrix(expr)
 setMethod("initialize", signature(.Object="ExpressionData"),
           function(.Object, data, ...) {
             .Object@data <- data
@@ -57,14 +56,11 @@ setMethod("updateExprData", signature("ExpressionData"), function(object, newDat
 })
 
 #' Calculates the specified normalized data matrix
-#'
-#'  @param object ExpressionData object
-#'  @param func normalization method to apply
-#'  @return Normalized data matrix according to function specified.
-#'  @example
-#'  eData <- ExpressionData(expr)
-#'  ne <- getNormalizedCopy(eData, "znorm_rows")
-setMethod("getNormalizedCopy", signature("ExpressionData"), function(object, func) {
+#' @param object ExpressionData object
+#' @param func normalization method to apply
+#' @return Normalized data matrix according to function specified.
+setMethod("getNormalizedCopy", signature("ExpressionData"),
+          function(object, func) {
 
   if (func == "none") {
     return(noNormalization(object@data))

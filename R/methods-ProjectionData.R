@@ -6,6 +6,7 @@
 
 #' Initializes a ProjectionData object for neatly storing all relevant data to a given projection section
 #'
+#' @param .Object an object
 #' @param projections List of Projection objects to be stored
 #' @param keys Sample names of expression data
 #' @param sigProjMatrix Matrix storing the median consistency score per projection, signature pair

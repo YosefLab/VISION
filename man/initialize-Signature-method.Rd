@@ -3,12 +3,15 @@
 \docType{methods}
 \name{initialize,Signature-method}
 \alias{initialize,Signature-method}
-\title{Initialize a new Signature object.}
+\title{Initialize a new Signature object.
+Should not be called directly, instead use the `new` syntax}
 \usage{
 \S4method{initialize}{Signature}(.Object, sigDict, name, source,
   metaData = "", isPrecomputed = F, isFactor = F, cluster = 0)
 }
 \arguments{
+\item{.Object}{an object}
+
 \item{sigDict}{Named list of signs for each gene in the signature}
 
 \item{name}{Name of the signature}
@@ -17,15 +20,19 @@
 
 \item{metaData}{Metadata pertinent to signature}
 
-\item{isFactor}{If TRUE indicates that htis signature is a Factor, else not a factor. Default is F.}
+\item{isPrecomputed}{If TRUE indicates that this signature was precomputed.
+Else not precomputed. Default is F.}
 
-\item{cluster}{Number representing which cluster this signature is a part of. Default is 0.}
+\item{isFactor}{If TRUE indicates that htis signature is a Factor, else not
+a factor. Default is F.}
 
-\item{isPreocomputed}{If TRUE indicates that this signature was precomputed. Else not precomputed. Default is F.}
+\item{cluster}{Number representing which cluster this signature is a part of.
+Default is 0.}
 }
 \value{
 Signature object
 }
 \description{
 Initialize a new Signature object.
+Should not be called directly, instead use the `new` syntax
 }

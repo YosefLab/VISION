@@ -6,13 +6,16 @@
 \usage{
 applyFilters(data, threshold, filterInput)
 }
+\arguments{
+\item{data}{ExpressionData object}
+
+\item{threshold}{minimum number of samples gene must be detected in to pass}
+
+\item{filterInput}{list of filters to compute}
+}
+\value{
+List of the updated ExpressionData object, and the list of filters applied.
+}
 \description{
-@param data ExpressionData object
- @param threshold minimum number of samples gene must be detected in to pass
- @param filterInput list of filters to compute
- @return List of the updated ExpressionData object, and the list of filters applied.
- @examples
- expr <- readExprToMatrix("data/expression.txt")
- edata <- ExpressionData(expr)
- filteredData <- applyFilters(eData, 10, c("threshold", "fano"))
+Applies filters to the inputted expression data (may remove rows)
 }

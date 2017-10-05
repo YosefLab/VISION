@@ -7,7 +7,7 @@
 merge_intervals(intervals)
 }
 \arguments{
-\item{a}{list of intervals}
+\item{intervals}{a list of intervals}
 }
 \value{
 a list of intervals where overlaps are merged into a single interval.

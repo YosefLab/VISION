@@ -6,14 +6,10 @@
 
 #' Applies filters to the inputted expression data (may remove rows)
 #'
-#'  @param data ExpressionData object
-#'  @param threshold minimum number of samples gene must be detected in to pass
-#'  @param filterInput list of filters to compute
-#'  @return List of the updated ExpressionData object, and the list of filters applied.
-#'  @examples
-#'  expr <- readExprToMatrix("data/expression.txt")
-#'  edata <- ExpressionData(expr)
-#'  filteredData <- applyFilters(eData, 10, c("threshold", "fano"))
+#' @param data ExpressionData object
+#' @param threshold minimum number of samples gene must be detected in to pass
+#' @param filterInput list of filters to compute
+#' @return List of the updated ExpressionData object, and the list of filters applied.
 applyFilters <- function(data, threshold, filterInput) {
 
   filterList <- c()
@@ -59,8 +55,8 @@ filterGenesNovar <- function(data) {
 }
 #' Filter genes whose values sum to less than some threshold value (may remove rows)
 #'
-#' @param data: (data.frame) expression matrix
-#' @param threshold: (int) threshold value to filter by
+#' @param data (data.frame) expression matrix
+#' @param threshold (int) threshold value to filter by
 #' @return filtered expression matrix
 filterGenesThreshold <- function(data, threshold) {
 
@@ -111,7 +107,7 @@ filterGenesFano <- function(data, num_mad=2) {
 		mu_quant[which(mu_quant == 0)] <- 1
 		sigma_quant <- sigma_sort[rr]
 		fano_quant <- (sigma_quant ** 2) / (mu_quant)
-		mad_quant <- median(abs(fano_quant - stats::median(fano_quant)))
+		mad_quant <- stats::median(abs(fano_quant - stats::median(fano_quant)))
 		gene_passes_quant <- (fano_quant > (stats::median(fano_quant)
 		                                    + num_mad * mad_quant))
 		gene_passes_quant_i <- which(gene_passes_quant != 0)

@@ -3,11 +3,14 @@
 \docType{methods}
 \name{initialize,ServerPCorr-method}
 \alias{initialize,ServerPCorr-method}
-\title{Wrapper class for server Perason correlation data}
+\title{Wrapper class for server Perason correlation data
+Should not be called directly, instead use the `new` syntax}
 \usage{
 \S4method{initialize}{ServerPCorr}(.Object, data, proj_labels, sig_labels)
 }
 \arguments{
+\item{.Object}{an object}
+
 \item{data}{pearson r correlation coefficients}
 
 \item{proj_labels}{the labels of the projections (columns) in the data}
@@ -16,4 +19,5 @@
 }
 \description{
 Wrapper class for server Perason correlation data
+Should not be called directly, instead use the `new` syntax
 }

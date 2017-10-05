@@ -7,11 +7,13 @@
 calcInterEdgeDistMat(v1.dist, v2.dist, path.length)
 }
 \arguments{
-\item{v1.dist}{a vectors of all distances between all points on the first edge,
-and the vertex of the first edge that is closer to the second edge}
+\item{v1.dist}{a vectors of all distances between all points on the first
+edge, and the vertex of the first edge that is closer to the second edge}
 
-\item{v2.dist}{a vectors of all distances between all points on the second edge,
-and the vertex of the second edge that is closer to the first edge}
+\item{v2.dist}{a vectors of all distances between all points on the second
+edge, and the vertex of the second edge that is closer to the first edge}
+
+\item{path.length}{the length of the path connected the two vertices}
 }
 \description{
 Calculate all distances between points on two different edges

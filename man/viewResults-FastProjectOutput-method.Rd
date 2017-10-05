@@ -8,7 +8,7 @@
 \S4method{viewResults}{FastProjectOutput}(object)
 }
 \arguments{
-\item{fpout}{FastProjectOutput object}
+\item{object}{FastProjectOutput object}
 }
 \description{
 View results of analysis without saving output object

@@ -2,19 +2,21 @@
 % Please edit documentation in R/TreeBasedMethods.R
 \name{findNeighbors}
 \alias{findNeighbors}
-\title{Find K nearest neighbors for each vector in query among the vectors in the given data}
+\title{Find K nearest neighbors for each vector in query among the vectors in the
+given data}
 \usage{
 findNeighbors(data, query, k, BPPARAM = bpparam())
 }
 \arguments{
 \item{data}{the search-space to look for nearest neighbors}
 
-\item{query}{the datapoints to find neighbors for (not necessarily exist in the data)}
+\item{query}{the points to find neighbors for (not necessarily in the data)}
 
 \item{k}{the number of neighbors to find for each vectors}
 
 \item{BPPARAM}{the parallelization backend to use}
 }
 \description{
-Find K nearest neighbors for each vector in query among the vectors in the given data
+Find K nearest neighbors for each vector in query among the vectors in the
+given data
 }

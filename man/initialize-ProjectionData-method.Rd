@@ -9,6 +9,8 @@
   sigProjMatrix, pMatrix, sigClusters)
 }
 \arguments{
+\item{.Object}{an object}
+
 \item{projections}{List of Projection objects to be stored}
 
 \item{keys}{Sample names of expression data}

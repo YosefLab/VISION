@@ -3,20 +3,22 @@
 \docType{methods}
 \name{initialize,ExpressionData-method}
 \alias{initialize,ExpressionData-method}
-\title{Initializes an ExpressionData object}
+\title{Initializes an ExpressionData object
+should not be called directly, use the `new` syntax}
 \usage{
 \S4method{initialize}{ExpressionData}(.Object, data, ...)
 }
 \arguments{
+\item{.Object}{an object}
+
 \item{data}{expression data matrix}
+
+\item{...}{additional arguments}
 }
 \value{
 ExpressionData object
 }
 \description{
 Initializes an ExpressionData object
-}
-\examples{
-expr <- readExprtoMatrix("data/expression_matrix.txt")
-edata <- ExpressionMatrix(expr)
+should not be called directly, use the `new` syntax
 }

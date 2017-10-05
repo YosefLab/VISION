@@ -5,27 +5,39 @@
 #' @importFrom Biobase exprs
 #' @import logging
 #'
-#' @param data expression data matrix
+#' @param data expression data - can be numeric matrix, path of a file or
+#' ExpressionSet object
 #' @param housekeeping file path to housekeeping data file
 #' @param signatures list of file paths to signature files (.gmt or .txt)
-#' @param norm_methods normalization methods to be extracted from the scone object
-#' @param precomptued data file with precomputed signature scores (.txt)
-#' @param nofilter if TRUE, no filter applied; else filters applied. Default is FALSE
-#' @param nomodel if TRUE, no fnr curve calculated and all weights equal to 1. Else FNR and weights calculated.
+#' @param norm_methods normalization methods to be extracted from the scone
+#' object
+#' @param precomputed data file with precomputed signature scores (.txt)
+#' @param nofilter if TRUE, no filter applied; else filters applied.
+#' Default is FALSE
+#' @param nomodel if TRUE, no fnr curve calculated and all weights equal to 1.
+#' Else FNR and weights calculated.
 #'          Default is TRUE.
 #' @param filters list of filters to compute
-#' @param lean if TRUE run a lean simulation. Else more robust pipeline initiated. Default is FALSE
+#' @param lean if TRUE run a lean simulation. Else more robust pipeline
+#' initiated. Default is FALSE
 #' @param qc if TRUE calculate QC; else not. Default is FALSE
-#' @param min_signature_genes Minimum number of genes required to compute a signature
+#' @param min_signature_genes Minimum number of genes required to compute a
+#' signature
 #' @param projections File containing precomputed projections for analysis
-#' @param weights Precomputed weights for each coordinate. Normally computed from the FNR curve.
-#' @param threhsold Threshold to apply for the threshold filter
-#' @param perm_wPCA If TRUE, apply permutation WPCA to calculate significant number of PCs. Else not. Default FALSE.
-#' @param sig_norm_method Method to apply to normalize the expression matrix before calculating signature scores
+#' @param weights Precomputed weights for each coordinate. Normally computed
+#' from the FNR curve.
+#' @param threshold Threshold to apply for the threshold filter
+#' @param perm_wPCA If TRUE, apply permutation WPCA to calculate significant
+#' number of PCs. Else not. Default FALSE.
+#' @param sig_norm_method Method to apply to normalize the expression matrix
+#' before calculating signature scores
 #' @param sig_score_method Method to apply when calculating signature scores
-#' @param housekeepingData housekeeping data table, as opposed to specifying a housekeeping_data file
-#' @param sigData List of signatures, as opposed to specifying a list of signature files
-#' @param precomputedData List of precomputed signature scores, as opposed to specifying a precomputed file
+#' @param housekeepingData housekeeping data table, as opposed to specifying a
+#' housekeeping_data file
+#' @param sigData List of signatures, as opposed to specifying a list of
+#' signature files
+#' @param precomputedData List of precomputed signature scores, as opposed to
+#' specifying a precomputed file
 #' @return A FastProject object
 #' @rdname FastProject-class
 #' @export
@@ -36,7 +48,7 @@
 #'                   precomputed="pre_sigs.txt")
 #'
 setMethod("FastProject", signature(data = "matrix"),
-          function(data, housekeeping, signatures, scone = NULL, norm_methods = NULL,
+          function(data, housekeeping, signatures, norm_methods = NULL,
                    precomputed=NULL, nofilter=FALSE, nomodel=FALSE, filters=c("fano"),
                    lean=FALSE, qc=FALSE, min_signature_genes=5, projections="",
                    weights=NULL, threshold=0, perm_wPCA=FALSE, sig_norm_method="znorm_rows",
@@ -95,8 +107,7 @@ setMethod("FastProject", signature(data = "matrix"),
           }
 )
 
-
-#' @param data the path to the expression matrix file
+#' @param ... additional arguments
 #' @rdname FastProject-class
 #' @export
 setMethod("FastProject", signature(data = "character"),
@@ -105,7 +116,6 @@ setMethod("FastProject", signature(data = "character"),
           }
 )
 
-#' @param data an ExpressionSet object with the expression matrix
 #' @rdname FastProject-class
 #' @export
 setMethod("FastProject", signature(data = "ExpressionSet"),
@@ -118,19 +128,20 @@ setMethod("FastProject", signature(data = "ExpressionSet"),
 #' Main entry point for running FastProject Analysis
 #'
 #' @export
-#'
 #' @param object FastProject object
+#' @param BPPARAM a parallelization backend to use for the analysis
 #' @return FastProjectOutput object
 #'
 #' @examples
-#' fp <- FastProject("expression_matrix.txt", "data/Gene Name Housekeeping.txt", c("sigfile_1.gmt", "sigfile_2.txt"),
+#' fp <- FastProject("expression_matrix.txt", "data/Gene Name Housekeeping.txt",
+#'                   c("sigfile_1.gmt", "sigfile_2.txt"),
 #'                   precomputed="pre_sigs.txt")
 #' fpout <- Analysis(fp)
 setMethod("Analyze", signature(object="FastProject"),
-          function(object, BPPARAM=NULL) {
+          function(object, BPPARAM = NULL) {
   message("Beginning Analysis")
   if(is.null(BPPARAM)) {
-    BPPARAM <- SerialParam()
+    BPPARAM <- bpparam()
   }
 
   ptm <- Sys.time()
@@ -370,7 +381,7 @@ setMethod("Analyze", signature(object="FastProject"),
   slots <- methods::slotNames("FastProject")
   fpParams <- list()
   for (s in slots) {
-	  fpParams[[s]] <- slot(object, s)
+	  fpParams[[s]] <- methods::slot(object, s)
   }
 
   fpOut <- FastProjectOutput(eData, filterModuleList, sigMatrix, sigList, fpParams, pools)
@@ -386,7 +397,8 @@ setMethod("Analyze", signature(object="FastProject"),
 }
 )
 
-#' Creates a new FastProject object with the new expression matrix. Called from Server.R.
+#' Creates a new FastProject object with the new expression matrix. Called from
+#' Server.R.
 #'
 #' @export
 #'
@@ -394,8 +406,10 @@ setMethod("Analyze", signature(object="FastProject"),
 #' @param nexpr New expression matrix for the new FastProject object
 #' @return a new FastProject object
 #' @examples
-#'   fp <- FastProject("expression_matrix.txt", "data/Gene Name Housekeeping.txt",
-#'                     c("sigfile_1.gmt", "sigfile_2.txt"), precomputed="pre_sigs.txt")
+#'   fp <- FastProject("data/expression_matrix.txt",
+#'                     "data/Gene Name Housekeeping.txt",
+#'                     c("data/sigfile_1.gmt", "data/sigfile_2.txt"),
+#'                     precomputed="data/pre_sigs.txt")
 #'   fpslots <- slotNames(object)
 #'   fpParams <- list()
 #'   for (s in fpslots) {

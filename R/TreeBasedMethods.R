@@ -2,15 +2,20 @@
 #'
 #' @param exprData Expression data -- Num_Genes x Num_Samples
 #' @param numCores Number of cores to use during this analysis
-#' @param permExprData a list of permutated expression datasets, to use for significance estimation of the tree [default:NULL]
+#' @param permExprData a list of permutated expression datasets,
+#' to use for significance estimation of the tree [default:NULL]
 #' @param nNodes Number of nodes to find. Default is sqrt(N)
-#' @param sigma regularization parameter for soft-assignment of data points to nodes, used as the variance
+#' @param sigma regularization parameter for soft-assignment of data points to
+#' nodes, used as the variance
 #'        of a guassian kernel. If 0, this is estimated automatically
-#' @param gamma graph-level regularization parameter, controlling the tradeoff between the noise-levels
-#'        in the data and the graph smoothness. If 0, this is estimated automatically.
+#' @param gamma graph-level regularization parameter, controlling the tradeoff
+#' between the noise-levels
+#'        in the data and the graph smoothness. If 0, this is estimated
+#'        automatically.
 #' @return Information on the fitten tree
 #'   \itemize{
-#'     \item C: spatial positions of the tree nodes in NUM_FEATURES dimensional space
+#'     \item C: spatial positions of the tree nodes in NUM_FEATURES dimensional
+#'     space
 #'     \item W: Unweighted (binary) adjacency matrix of the fitten tree
 #'     \item distMat: distance matrix between each tree node to each datapoint
 #'     \item mse: the Mean-Squared-Error of the fitten tree
@@ -18,7 +23,7 @@
 #'   }
 
 applySimplePPT <- function(exprData, numCores, permExprData = NULL,
-                           nNodes_ = round(sqrt(ncol(exprData))), sigma=0, gamma=0) {
+                           nNodes = round(sqrt(ncol(exprData))), sigma=0, gamma=0) {
   MIN_GAMMA <- 1e-5
   MAX_GAMMA <- 1e5
   DEF_TOL <- 1e-2
@@ -356,10 +361,11 @@ calcIntraEdgeDistMat <- function(edge.len, edgePos) {
 }
 
 #' Calculate all distances between points on two different edges
-#' @param v1.dist a vectors of all distances between all points on the first edge,
-#' and the vertex of the first edge that is closer to the second edge
-#' @param v2.dist a vectors of all distances between all points on the second edge,
-#' and the vertex of the second edge that is closer to the first edge
+#' @param v1.dist a vectors of all distances between all points on the first
+#' edge, and the vertex of the first edge that is closer to the second edge
+#' @param v2.dist a vectors of all distances between all points on the second
+#' edge, and the vertex of the second edge that is closer to the first edge
+#' @param path.length the length of the path connected the two vertices
 calcInterEdgeDistMat <- function(v1.dist, v2.dist, path.length) {
   # note that input vector must not contain distance to self!
   v1.mat <- v1.dist %o% rep(1, length(v2.dist))
@@ -367,9 +373,10 @@ calcInterEdgeDistMat <- function(v1.dist, v2.dist, path.length) {
   return((v1.mat + v2.mat) + path.length)
 }
 
-#' Find K nearest neighbors for each vector in query among the vectors in the given data
+#' Find K nearest neighbors for each vector in query among the vectors in the
+#' given data
 #' @param data the search-space to look for nearest neighbors
-#' @param query the datapoints to find neighbors for (not necessarily exist in the data)
+#' @param query the points to find neighbors for (not necessarily in the data)
 #' @param k the number of neighbors to find for each vectors
 #' @param BPPARAM the parallelization backend to use
 findNeighbors <- function(data, query, k, BPPARAM=bpparam()) {

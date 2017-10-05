@@ -3,11 +3,14 @@
 \docType{methods}
 \name{initialize,TreeProjection-method}
 \alias{initialize,TreeProjection-method}
-\title{Create a TreeProjection object}
+\title{Create a TreeProjection object
+Should not be called directly, instead use the `new` syntax}
 \usage{
 \S4method{initialize}{TreeProjection}(.Object, pData, name, vData, adjMat)
 }
 \arguments{
+\item{.Object}{an object}
+
 \item{pData}{the projected coordinates of the data}
 
 \item{name}{the name of the projection}
@@ -21,4 +24,5 @@ a TreeProjection object
 }
 \description{
 Create a TreeProjection object
+Should not be called directly, instead use the `new` syntax
 }

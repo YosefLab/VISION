@@ -7,9 +7,9 @@
 readExprToMatrix(filename, delimiter = "\\t")
 }
 \arguments{
-\item{filename:}{path to the file to be read in}
+\item{filename}{path to the file to be read in}
 
-\item{delimiter:}{delimiter to use while reading in the file. Default is "\\t"
+\item{delimiter}{delimiter to use while reading in the file. Default is "\\t"
 
  @returns: Matrix read in from filename.
  @examples

@@ -7,12 +7,14 @@
 louvainCluster(kn, data)
 }
 \arguments{
-\item{kn}{List of nearest neighbor indices and euclidean distances to these nearest neighbors}
+\item{kn}{List of nearest neighbor indices and euclidean distances to these
+nearest neighbors}
 
 \item{data}{Data matrix}
 }
 \value{
-List of clusters, each entry being a vector of indices representing samples in the cluster.
+List of clusters, each entry being a vector of indices representing
+samples in the cluster.
 }
 \description{
 Applies the Louvain algorithm to generate micro-clustered data

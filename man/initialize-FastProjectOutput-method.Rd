@@ -3,25 +3,33 @@
 \docType{methods}
 \name{initialize,FastProjectOutput-method}
 \alias{initialize,FastProjectOutput-method}
-\title{Initialize a new FastProjectOuptput object}
+\title{Initialize a new FastProjectOuptput object
+should not be called directly, use the `new` syntax}
 \usage{
 \S4method{initialize}{FastProjectOutput}(.Object, eData, filterModuleList,
   sigMatrix, sigList, fpParams, pools)
 }
 \arguments{
+\item{.Object}{an object}
+
 \item{eData}{ExpressionData matrix}
 
 \item{filterModuleList}{List of FilterModuleData objects}
 
+\item{sigMatrix}{Matrix of signature scores (NUM_SIGS x NUM_CELLS)}
+
 \item{sigList}{List of Signatures}
 
-\item{fpParams}{List of the FastProject parameters that were used to generate this object}
+\item{fpParams}{List of the FastProject parameters that were used to
+generate this object}
 
-\item{sigMatirx}{Matrix of signature scores (NUM_SIGS x NUM_CELLS)}
+\item{pools}{a list of pooling information for pooling single cells into
+representative super-cell clusters}
 }
 \value{
 FastProjectOutput object.
 }
 \description{
 Initialize a new FastProjectOuptput object
+should not be called directly, use the `new` syntax
 }
