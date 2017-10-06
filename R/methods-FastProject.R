@@ -1,14 +1,20 @@
 #' Initializes a new FastProject object.
 #'
 #' @import BiocParallel
-#' @importFrom Biobase ExpressionSet
-#' @importFrom Biobase exprs
+#' @importFrom Biobase ExpressionSet exprs
+#' @importFrom SummarizedExperiment SummarizedExperiment assay
 #' @import logging
 #'
-#' @param data expression data - can be numeric matrix, path of a file or
-#' ExpressionSet object
-#' @param housekeeping file path to housekeeping data file
-#' @param signatures list of file paths to signature files (.gmt or .txt)
+#' @param data expression data - can be one of these: \itemize{
+#' \item numeric matrix
+#' \item path of a file,
+#' \item ExpressionSet object
+#' \item SummerizedExperiment object (or extending classes)
+#' }
+#' @param signatures list of file paths to signature files (.gmt or .txt) or a
+#' list of Signature objects
+#' @param housekeeping file path to housekeeping data file, or vector of gene
+#' names
 #' @param norm_methods normalization methods to be extracted from the scone
 #' object
 #' @param precomputed data file with precomputed signature scores (.txt)
@@ -54,7 +60,7 @@
 #'                      signatures = sigs,
 #'                      housekeeping = hkg)
 setMethod("FastProject", signature(data = "matrix"),
-            function(data, housekeeping, signatures, norm_methods = NULL,
+            function(data, signatures, housekeeping, norm_methods = NULL,
                     precomputed=NULL, nofilter=FALSE, nomodel=FALSE,
                     filters=c("fano"), lean=FALSE, qc=FALSE,
                     min_signature_genes=5, projections="", weights=NULL,
@@ -125,6 +131,15 @@ setMethod("FastProject", signature(data = "ExpressionSet"),
             }
 )
 
+#' @rdname FastProject-class
+#' @export
+setMethod("FastProject", signature(data = "SummarizedExperiment"),
+          function(data, ...) {
+            return(FastProject(SummarizedExperiment::assay(data), ...))
+          }
+)
+
+
 #' Main entry point for running FastProject Analysis
 #'
 #' The main analysis function. Runs the entire FastProject analysis pipeline
@@ -164,18 +179,16 @@ setMethod("Analyze", signature(object="FastProject"),
             function(object, BPPARAM = NULL) {
     message("Beginning Analysis")
     if(is.null(BPPARAM)) {
-    BPPARAM <- SerialParam()
+        BPPARAM <- SerialParam()
     }
 
     ptm <- Sys.time()
     timingList <- (ptm - ptm)
     tRows <- c("Start")
 
-
     clustered <- FALSE
     pools <- list()
     if (ncol(object@exprData) > 25000) {
-
         microclusters <- applyMicroClustering(object@exprData,
                                             object@housekeepingData,
                                             BPPARAM)
@@ -184,7 +197,6 @@ setMethod("Analyze", signature(object="FastProject"),
 
         object@exprData <- pooled_cells
         clustered <- TRUE
-
     }
 
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
@@ -223,7 +235,8 @@ setMethod("Analyze", signature(object="FastProject"),
     if (object@nomodel || clustered) {
     object@weights <- matrix(1L, nrow=nrow(originalData), ncol=ncol(originalData))
     }
-    else if (all(is.na(object@weights)) || ncol(object@weights) != ncol(object@exprData)) {
+    else if (all(is.na(object@weights)) ||
+             ncol(object@weights) != ncol(object@exprData)) {
     message("Computing weights from False Negative Function...")
     object@weights <- computeWeights(func, params, eData)
     }
@@ -232,8 +245,6 @@ setMethod("Analyze", signature(object="FastProject"),
 
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, "Weights")
-
-    zero_locations <- which(getExprData(eData) == 0.0, arr.ind=TRUE) ##TODO: not used?
 
     normalizedData <- getNormalizedCopy(eData, object@sig_norm_method)
     eData <- updateExprData(eData, normalizedData)
@@ -249,7 +260,10 @@ setMethod("Analyze", signature(object="FastProject"),
     message("Applying weighted signature scoring method...")
     }
 
-    sigScores <- bplapply(object@sigData, function(s) singleSigEval(s, object@sig_score_method, eData, object@weights, object@min_signature_genes), BPPARAM=BPPARAM)
+    sigScores <- bplapply(object@sigData, function(s) {
+      singleSigEval(s, object@sig_score_method, eData, object@weights,
+                    object@min_signature_genes)
+    }, BPPARAM=BPPARAM)
 
     sigSizes <- lapply(object@sigData, function(s) length(s@sigDict))
 
@@ -262,7 +276,8 @@ setMethod("Analyze", signature(object="FastProject"),
         s@sample_labels <- colnames(object@exprData)
     }
     sigScores <- c(sigScores, s)
-    sigList<- c(sigList, Signature(list(), s@name, "", "", isPrecomputed=TRUE, isFactor=s@isFactor, cluster=0))
+    sigList<- c(sigList, Signature(list(), s@name, "", "", isPrecomputed=TRUE,
+                                   isFactor=s@isFactor, cluster=0))
     sigNames <- c(sigNames, s@name)
     }
     names(sigList) <- sigNames
@@ -274,7 +289,8 @@ setMethod("Analyze", signature(object="FastProject"),
 
     ## Convert Sig Scores to matrix
     names <- c()
-    sigMatrix <- matrix(0L, nrow=length(sigScores), ncol=length(sigScores[[1]]@scores))
+    sigMatrix <- matrix(0L, nrow=length(sigScores),
+                        ncol=length(sigScores[[1]]@scores))
     for (sig in 1:length(sigScores)) {
     names <- c(names, sigScores[[sig]]@name)
     scores <- t(as.matrix(sigScores[[sig]]@scores))
@@ -301,7 +317,10 @@ setMethod("Analyze", signature(object="FastProject"),
     message("Applying weighted signature scoring method...")
     }
 
-    randomSigScores <- bplapply(randomSigs, function(s) singleSigEval(s, object@sig_score_method, eData, object@weights, object@min_signature_genes),BPPARAM=BPPARAM)
+    randomSigScores <- bplapply(randomSigs, function(s) {
+      singleSigEval(s, object@sig_score_method, eData, object@weights,
+                    object@min_signature_genes)
+    } ,BPPARAM=BPPARAM)
     names(randomSigScores) <- names(randomSigs)
 
     ## Remove random signatures that didn't compute correctly
@@ -320,9 +339,10 @@ setMethod("Analyze", signature(object="FastProject"),
 
     sigList <- sigList[rownames(sigMatrix)]
 
-    projectData <- generateProjections(eData, object@weights, filter, inputProjections <- c(),
-                                        lean=object@lean, perm_wPCA = object@perm_wPCA,
-                                        BPPARAM = BPPARAM)
+    projectData <- generateProjections(eData, object@weights, filter,
+                               inputProjections <- c(),
+                               lean=object@lean, perm_wPCA = object@perm_wPCA,
+                               BPPARAM = BPPARAM)
     projs <- projectData$projections ##TODO: not used
     g <- projectData$geneNames ## TODO: not used
     pca_res <- projectData$fullPCA
@@ -330,7 +350,8 @@ setMethod("Analyze", signature(object="FastProject"),
     permMats <- projectData$permMats ##TODO: not used
 
     message("Computing significance of signatures...")
-    sigVProj <- sigsVsProjections(projectData$projections, sigScores, randomSigScores, BPPARAM=BPPARAM)
+    sigVProj <- sigsVsProjections(projectData$projections, sigScores,
+                                  randomSigScores, BPPARAM=BPPARAM)
 
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, paste0("Pr. ", filter))
@@ -349,15 +370,16 @@ setMethod("Analyze", signature(object="FastProject"),
 
     message("Fitting principle tree...")
     treeProjs <- generateTreeProjections(eData, filter,
-                                            inputProjections = projectData$projections,
-                                            permMats = projectData$permMats,
-                                            BPPARAM = BPPARAM)
+                                    inputProjections = projectData$projections,
+                                    permMats = projectData$permMats,
+                                    BPPARAM = BPPARAM)
     message("Computing significance of signatures...")
     sigVTreeProj <- sigsVsProjections(treeProjs$projections, sigScores,
                                         randomSigScores, BPPARAM=BPPARAM)
 
     message("Clustering Signatures...")
-    sigTreeClusters <- clusterSignatures(sigList, sigMatrix, sigVTreeProj$pVals, k=10)
+    sigTreeClusters <- clusterSignatures(sigList, sigMatrix,
+                                         sigVTreeProj$pVals, k=10)
 
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, paste0("ClusterSignaturesProjections ", filter))
@@ -385,7 +407,8 @@ setMethod("Analyze", signature(object="FastProject"),
         rownames(pearsonCorr) <- rownames(sigMatrix)
         colnames(pearsonCorr) <- rownames(pca_res)
 
-        timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
+        timingList <- rbind(timingList, c(difftime(Sys.time(), ptm,
+                                                   units="secs")))
         tRows <- c(tRows, paste("Pearson Correlation", filter))
 
         pcaAnnotData <- PCAnnotatorData(fullPCA = projectData$fullPCA,
@@ -408,13 +431,16 @@ setMethod("Analyze", signature(object="FastProject"),
         fpParams[[s]] <- methods::slot(object, s)
     }
 
-    fpOut <- FastProjectOutput(eData, filterModuleList, sigMatrix, sigList, fpParams, pools)
+    fpOut <- FastProjectOutput(eData, filterModuleList, sigMatrix, sigList,
+                               fpParams, pools)
 
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, "Final")
 
     timingList <- as.matrix(timingList)
     rownames(timingList) <- tRows
+
+    message("Analysis Complete!")
 
     #return(list(fpOut, timingList))
     return(fpOut)

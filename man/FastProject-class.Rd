@@ -6,6 +6,7 @@
 \alias{FastProject,matrix-method}
 \alias{FastProject,character-method}
 \alias{FastProject,ExpressionSet-method}
+\alias{FastProject,SummarizedExperiment-method}
 \title{Initializes a new FastProject object.}
 \usage{
 FastProject(data, ...)
@@ -20,16 +21,24 @@ FastProject(data, ...)
 \S4method{FastProject}{character}(data, ...)
 
 \S4method{FastProject}{ExpressionSet}(data, ...)
+
+\S4method{FastProject}{SummarizedExperiment}(data, ...)
 }
 \arguments{
-\item{data}{expression data - can be numeric matrix, path of a file or
-ExpressionSet object}
+\item{data}{expression data - can be one of these: \itemize{
+\item numeric matrix
+\item path of a file,
+\item ExpressionSet object
+\item SummerizedExperiment object (or extending classes)
+}}
 
 \item{...}{additional arguments}
 
-\item{signatures}{list of file paths to signature files (.gmt or .txt)}
+\item{signatures}{list of file paths to signature files (.gmt or .txt) or a
+list of Signature objects}
 
-\item{housekeeping}{file path to housekeeping data file}
+\item{housekeeping}{file path to housekeeping data file, or vector of gene
+names}
 
 \item{norm_methods}{normalization methods to be extracted from the scone
 object}

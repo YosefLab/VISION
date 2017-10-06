@@ -68,12 +68,12 @@ First, we'll walk through how to create a FastProject object for the `Analyze` f
 
 We'll operate on a set of 430 cells from five primary glioblastomas sequenced using scRNA-seq  for 5,948 genes (Patel et. al. 2014). For our signatures, we will use the Hallmark gene set from MSigDB, which is available [here](http://software.broadinstitute.org/gsea/msigdb/collections.jsp#H). The housekeeping genes we'll use can be found in `GeneNameHousekeeping.txt`, and the pre-computed signature can be found in `precomptued_signatures.txt`. To note, we can specify multiple signature files and files containing meta-data but we'll stick to one for this example. 
 
-The expression data, signature data and housekeeping genes can be provided in a number of different ways: the expression data can be either a path to a tab-delimited .txt file, a numeric matrix directly or an ExpressionSet object; signature data can be provided as a list of .gmt files, .txt files or Signature objects (additional info on signature below); housekeeping genes can wither be a charater vector with gene names or a file with a list of gene names (one per row).
+The expression data, signature data and housekeeping genes can be provided in a number of different ways: the expression data can be either a path to a tab-delimited .txt file, a numeric matrix directly, an ExpressionSet object or a SummerizedExperiment object; signature data can be provided as a list of .gmt files, .txt files or Signature objects (additional info on signature below); housekeeping genes can wither be a charater vector with gene names or a file with a list of gene names (one per row).
 All of these initialization would result in the same FastProject object being created:
 
 ```{r, collapse=F, message=T}
 # -- load FastProjectR
-devtools::load_all()
+library(FastProjectR)
 
 # -- read in expression data set
 expr <- as.matrix(read.table("data/expression_matrix.txt", 
@@ -81,16 +81,16 @@ expr <- as.matrix(read.table("data/expression_matrix.txt",
 hkg <- read.table("data/GeneNameHousekeeping.txt", stringsAsFactors = FALSE)$V1
 
 # -- Create a FastProject object with existing matrix
-fp <- FastProject(expr, hkg, c("data/h.all.v5.2.symbols.gmt"))
+fp <- FastProject(expr, c("data/h.all.v5.2.symbols.gmt"), hkg)
 
 ## -- Create a FastProject object with an ExpressionSet 
-eset <- Biobase::ExpressionSet(assayData=expr)
-fp <- FastProject(eset, hkg, c("data/h.all.v5.2.symbols.gmt")) 
+se <- SummarizedExperiment::SummarizedExperiment(assays = list(counts = expr))
+fp <- FastProject(se, c("data/h.all.v5.2.symbols.gmt"), hkg) 
 
 # -- or just provide that files to FastProject
 fp <- FastProject("data/expression_matrix.txt",  
-                  "data/GeneNameHousekeeping.txt",
-                  c("data/h.all.v5.2.symbols.gmt"))
+                  c("data/h.all.v5.2.symbols.gmt"),
+                  "data/GeneNameHousekeeping.txt",)
 ```
 
 Now, with a FastProject object, we can run `Analyze` which will run the FastProject pipeline and return a FastProjectOutput object.
