@@ -79,7 +79,7 @@ filterGenesFano <- function(data, num_mad=2) {
   sub_data <- data
   # if too many samples, subsample for fano filter
   if (ncol(data) > 50000) {
-	sub_data <- data[,sample(ncol(data), 50000)]
+    sub_data <- data[,sample(ncol(data), 50000)]
   }
 
   mu <- apply(sub_data, 1, mean)
@@ -97,24 +97,24 @@ filterGenesFano <- function(data, num_mad=2) {
   gene_passes <- rep(0, nrow(sub_data)) == 1
 
   genePassList <- lapply(0:N_QUANTS, function(i) {
-		if (i == N_QUANTS-1) {
-			rr <- seq(i*m+1, length(mu_sort))
-		} else {
-			rr <- seq(i*m+1, (i+1)*m)
-		}
+        if (i == N_QUANTS-1) {
+            rr <- seq(i*m+1, length(mu_sort))
+        } else {
+            rr <- seq(i*m+1, (i+1)*m)
+        }
 
-		mu_quant <- mu_sort[rr]
-		mu_quant[which(mu_quant == 0)] <- 1
-		sigma_quant <- sigma_sort[rr]
-		fano_quant <- (sigma_quant ** 2) / (mu_quant)
-		mad_quant <- stats::median(abs(fano_quant - stats::median(fano_quant)))
-		gene_passes_quant <- (fano_quant > (stats::median(fano_quant)
-		                                    + num_mad * mad_quant))
-		gene_passes_quant_i <- which(gene_passes_quant != 0)
-		gene_passes_i <- gene_passes_quant_i + (i*m)
-		return(gene_passes_i)
+        mu_quant <- mu_sort[rr]
+        mu_quant[which(mu_quant == 0)] <- 1
+        sigma_quant <- sigma_sort[rr]
+        fano_quant <- (sigma_quant ** 2) / (mu_quant)
+        mad_quant <- stats::median(abs(fano_quant - stats::median(fano_quant)))
+        gene_passes_quant <- (fano_quant > (stats::median(fano_quant)
+                                            + num_mad * mad_quant))
+        gene_passes_quant_i <- which(gene_passes_quant != 0)
+        gene_passes_i <- gene_passes_quant_i + (i*m)
+        return(gene_passes_i)
 
-	})
+    })
 
   gpi <- unlist(genePassList)
   gene_passes[gpi] <- TRUE

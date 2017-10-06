@@ -41,35 +41,35 @@ applyMicroClustering <- function(exprData, hkg=list(), BPPARAM=bpparam()) {
 #' samples in the cluster.
 louvainCluster <- function(kn, data) {
 
-	nn <- kn[[1]]
-	d <- kn[[2]]
+    nn <- kn[[1]]
+    d <- kn[[2]]
   d <- exp(-1 * (d*d) / .05)
 
-	nnl <- lapply(1:nrow(nn), function(i) nn[i,])
+    nnl <- lapply(1:nrow(nn), function(i) nn[i,])
 
-	# Create an undirected knn graph
-	g <- igraph::graph_from_adj_list(nnl, mode="out")
-	igraph::E(g)$weights <- as.vector(t(d))
-	g <- igraph::as.undirected(g, mode="each")
+    # Create an undirected knn graph
+    g <- igraph::graph_from_adj_list(nnl, mode="out")
+    igraph::E(g)$weights <- as.vector(t(d))
+    g <- igraph::as.undirected(g, mode="each")
 
-	# Now apply the louvain algorithm to cluster the graph
-	cl <- igraph::cluster_louvain(g)
+    # Now apply the louvain algorithm to cluster the graph
+    cl <- igraph::cluster_louvain(g)
 
-	# Gather cluster vector to list of clusters
-	clusters <- list()
-	mem <- as.vector(igraph::membership(cl))
-	for (i in 1:length(mem)) {
-		n <- as.character(mem[[i]])
-		if (n %in% names(clusters)) {
-			clusters[[n]] <- c(clusters[[n]], i)
-		} else {
-			clusters[[n]] <- c(i)
-		}
-	}
+    # Gather cluster vector to list of clusters
+    clusters <- list()
+    mem <- as.vector(igraph::membership(cl))
+    for (i in 1:length(mem)) {
+        n <- as.character(mem[[i]])
+        if (n %in% names(clusters)) {
+            clusters[[n]] <- c(clusters[[n]], i)
+        } else {
+            clusters[[n]] <- c(i)
+        }
+    }
 
-	clusters <- lapply(clusters, function(i) i <- rownames(data)[i])
+    clusters <- lapply(clusters, function(i) i <- rownames(data)[i])
 
-	return(clusters)
+    return(clusters)
 
 }
 
@@ -88,50 +88,50 @@ louvainCluster <- function(kn, data) {
 #' microclusters is acheived.
 readjust_clusters <- function(clusters, data, cellsPerPartition=100) {
 
-	NUM_PARTITIONS = round(nrow(data) / cellsPerPartition)
-	EPSILON = .15
+    NUM_PARTITIONS = round(nrow(data) / cellsPerPartition)
+    EPSILON = .15
 
-	currPart = length(clusters)
-	clusterList <- list()
+    currPart = length(clusters)
+    clusterList <- list()
 
-	while (currPart < ((1 - EPSILON)*NUM_PARTITIONS)) {
-		clusterList <- list()
-		cluster_offset = 0
-		for (i in 1:length(clusters)) {
+    while (currPart < ((1 - EPSILON)*NUM_PARTITIONS)) {
+        clusterList <- list()
+        cluster_offset = 0
+        for (i in 1:length(clusters)) {
 
-			# Apply kmeans clustering to existing cluster
-			currCl = clusters[[i]]
-			subData <- data[currCl,]
-			if (length(currCl) > cellsPerPartition) {
-				nCl <- stats::kmeans(subData,
-				                     centers=round(nrow(subData) / cellsPerPartition),
-				                     iter.max=100)
-			} else {
-				nCl <- stats::kmeans(subData, centers=1, iter.max=100)
-			}
-			newClust <- nCl$cluster
-			# Gather cluster vector to list of clusters
-			for (i in 1:length(newClust)) {
-				n <- as.character(newClust[[i]] + cluster_offset)
-				sample_n <- names(newClust)[[i]]
-				if (n %in% names(clusterList)) {
-					clusterList[[n]] <- c(clusterList[[n]], sample_n)
-				} else {
-					clusterList[[n]] <- c(sample_n)
-				}
+            # Apply kmeans clustering to existing cluster
+            currCl = clusters[[i]]
+            subData <- data[currCl,]
+            if (length(currCl) > cellsPerPartition) {
+                nCl <- stats::kmeans(subData,
+                                     centers=round(nrow(subData) / cellsPerPartition),
+                                     iter.max=100)
+            } else {
+                nCl <- stats::kmeans(subData, centers=1, iter.max=100)
+            }
+            newClust <- nCl$cluster
+            # Gather cluster vector to list of clusters
+            for (i in 1:length(newClust)) {
+                n <- as.character(newClust[[i]] + cluster_offset)
+                sample_n <- names(newClust)[[i]]
+                if (n %in% names(clusterList)) {
+                    clusterList[[n]] <- c(clusterList[[n]], sample_n)
+                } else {
+                    clusterList[[n]] <- c(sample_n)
+                }
 
-			}
+            }
 
-			# Now add to cluster offset for next re-clustering
-			cluster_offset <- cluster_offset + max(newClust)
-		}
+            # Now add to cluster offset for next re-clustering
+            cluster_offset <- cluster_offset + max(newClust)
+        }
 
-		currPart <- length(clusterList)
-		clusters <- clusterList
+        currPart <- length(clusterList)
+        clusters <- clusterList
 
-	}
+    }
 
-	return(clusters)
+    return(clusters)
 }
 
 #' find a representative subset of numbers from a given vector
@@ -140,16 +140,16 @@ readjust_clusters <- function(clusters, data, cellsPerPartition=100) {
 #' @return a list of representatve numbers
 findRepSubset <- function(ls) {
 
-	ls <- unique(sort(unlist(ls)))
+    ls <- unique(sort(unlist(ls)))
 
-	intervals <- lapply(as.list(as.numeric(ls)), function(x) {
-	  return(list(x - x/5, x + x/5))
-	})
-	n_intervals <- merge_intervals(intervals)
+    intervals <- lapply(as.list(as.numeric(ls)), function(x) {
+      return(list(x - x/5, x + x/5))
+    })
+    n_intervals <- merge_intervals(intervals)
 
-	reprsub <- lapply(n_intervals, function(i) round((i[[1]] + i[[2]]) / 2))
+    reprsub <- lapply(n_intervals, function(i) round((i[[1]] + i[[2]]) / 2))
 
-	return(reprsub)
+    return(reprsub)
 
 }
 
@@ -158,20 +158,20 @@ findRepSubset <- function(ls) {
 #' @return a list of intervals where overlaps are merged into a single interval.
 merge_intervals <- function(intervals) {
 
-	for (i in 1:length(intervals)) {
-		interval <- intervals[[i]]
-		if (i < length(intervals) - 1) {
-			nxt <- intervals[[i+1]]
-			if (interval[[2]] >= nxt[[1]]) {
-				n_int = list(nxt[[1]], interval[[2]])
-				intervals[[i+1]] <- n_int
-				intervals[[i]] <- NULL
-				return(merge_intervals(intervals))
-			}
-		}
-	}
+    for (i in 1:length(intervals)) {
+        interval <- intervals[[i]]
+        if (i < length(intervals) - 1) {
+            nxt <- intervals[[i+1]]
+            if (interval[[2]] >= nxt[[1]]) {
+                n_int = list(nxt[[1]], interval[[2]])
+                intervals[[i+1]] <- n_int
+                intervals[[i]] <- NULL
+                return(merge_intervals(intervals))
+            }
+        }
+    }
 
-	return(intervals)
+    return(intervals)
 
 }
 
@@ -184,25 +184,25 @@ merge_intervals <- function(intervals) {
 createPools <- function(cl, expr, hkg=list()) {
 
 
-	pooled_cells <- matrix(unlist(lapply(cl, function(clust) {
+    pooled_cells <- matrix(unlist(lapply(cl, function(clust) {
 
-			clust_data <- expr[,clust]
+            clust_data <- expr[,clust]
             if (is.null(dim(clust_data))) {
                 return(clust_data)
             }
             if (length(hkg) > 0) {
-	            fnr <- createFalseNegativeMap(clust_data, hkg)
+                fnr <- createFalseNegativeMap(clust_data, hkg)
                 clust_weights <- computeWeights(fnr[[1]], fnr[[2]],
                                                 ExpressionData(clust_data))
-			    p_cell <- as.matrix(apply(clust_data, 1, sum))
+                p_cell <- as.matrix(apply(clust_data, 1, sum))
                 cell_norm <- as.matrix(apply(clust_weights, 1, sum))
 
-			    return(p_cell / cell_norm)
+                return(p_cell / cell_norm)
             }
 
             p_cell <- as.matrix(apply(clust_data, 1, mean))
             return(p_cell)
-	  })), nrow=nrow(expr), ncol=length(cl))
+      })), nrow=nrow(expr), ncol=length(cl))
 
     return(pooled_cells)
 

@@ -85,15 +85,15 @@ weightedEvalSignature <- function(expr, sig, weights, min_signature_genes) {
 ## Define single signature evaluation for lapply method
 singleSigEval <- function(s, sig_score_method, eData, weights, min_signature_genes) {
     # init to an empty SignatureScores object
-  	x <- NULL
-  	if (sig_score_method=="naive") {
-  		tryCatch({
-  			x <- naiveEvalSignature(eData, s, weights, min_signature_genes)
-  		}, error=function(e){})
-  	} else if (sig_score_method=="weighted_avg") {
-  		tryCatch({
-  			x <- weightedEvalSignature(eData, s, weights, min_signature_genes)
-  		}, error=function(e){})
-  	}
-  	return(x)
+      x <- NULL
+      if (sig_score_method=="naive") {
+          tryCatch({
+              x <- naiveEvalSignature(eData, s, weights, min_signature_genes)
+          }, error=function(e){})
+      } else if (sig_score_method=="weighted_avg") {
+          tryCatch({
+              x <- weightedEvalSignature(eData, s, weights, min_signature_genes)
+          }, error=function(e){})
+      }
+      return(x)
   }

@@ -63,15 +63,15 @@ setMethod("initialize", signature(.Object="ServerPMatrix"),
 #' @param sig_labels the labels of the signatures (rows) in the data
 #' @return a ServerPCorr object
 setMethod("initialize", signature(.Object="ServerPCorr"),
-		function(.Object, data, proj_labels, sig_labels) {
+        function(.Object, data, proj_labels, sig_labels) {
 
-		.Object@data <- data
-		.Object@proj_labels <- proj_labels
-		.Object@sig_labels <- sig_labels
+        .Object@data <- data
+        .Object@proj_labels <- proj_labels
+        .Object@sig_labels <- sig_labels
 
-		return(.Object)
+        return(.Object)
 
-		})
+        })
 
 
 #' Converts Signature object to JSON
@@ -169,14 +169,14 @@ sigProjMatrixToJSON <- function(sigpm, sigs) {
 #' @return Subsetted pearson correlations converted to JSON
 pearsonCorrToJSON <- function(pc, sigs) {
 
-	pc <- pc[sigs,,drop=FALSE]
-	cn <- c()
-	for (i in 1:ncol(pc)) { cn <- c(cn, paste("PC", i)) }
-	sPC <- ServerPCorr(unname(pc), cn, sigs)
+    pc <- pc[sigs,,drop=FALSE]
+    cn <- c()
+    for (i in 1:ncol(pc)) { cn <- c(cn, paste("PC", i)) }
+    sPC <- ServerPCorr(unname(pc), cn, sigs)
 
-	json <- toJSON(sPC, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
+    json <- toJSON(sPC, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
 
-	return(json)
+    return(json)
 
 }
 
@@ -216,6 +216,6 @@ clusterToJSON <- function(cluster) {
 #' @param nfp the new FastProject object to analyze
 #' @return None
 newAnalysis <- function(nfp) {
-	fpo1 <- Analyze(nfp)
-	saveFPOutAndViewResults(fpo1)
+    fpo1 <- Analyze(nfp)
+    saveFPOutAndViewResults(fpo1)
 }

@@ -182,8 +182,8 @@ setMethod("Analyze", signature(object="FastProject"),
       pooled_cells <- microclusters[[1]]
       pools <- microclusters[[2]]
 
-	  object@exprData <- pooled_cells
-	  clustered <- TRUE
+      object@exprData <- pooled_cells
+      clustered <- TRUE
 
   }
 
@@ -212,9 +212,9 @@ setMethod("Analyze", signature(object="FastProject"),
   tRows <- c(tRows, "Filter")
 
   if (!clustered) {
-	falseneg_out <- createFalseNegativeMap(originalData, object@housekeepingData)
-	func <- falseneg_out[[1]]
-	params <- falseneg_out[[2]]
+    falseneg_out <- createFalseNegativeMap(originalData, object@housekeepingData)
+    func <- falseneg_out[[1]]
+    params <- falseneg_out[[2]]
   }
 
   timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
@@ -257,10 +257,10 @@ setMethod("Analyze", signature(object="FastProject"),
   sigNames <- names(object@sigData)
   ## TODO: get rid of this somehow
   for (s in object@precomputedData) {
-  	if (length(s@sample_labels) != ncol(object@exprData)) {
-		s@scores <- s@scores[colnames(object@exprData)]
-		s@sample_labels <- colnames(object@exprData)
-	}
+      if (length(s@sample_labels) != ncol(object@exprData)) {
+        s@scores <- s@scores[colnames(object@exprData)]
+        s@sample_labels <- colnames(object@exprData)
+    }
     sigScores <- c(sigScores, s)
     sigList<- c(sigList, Signature(list(), s@name, "", "", isPrecomputed=TRUE, isFactor=s@isFactor, cluster=0))
     sigNames <- c(sigNames, s@name)
@@ -373,39 +373,39 @@ setMethod("Analyze", signature(object="FastProject"),
     tRows <- c(tRows, paste0("SigVTreePr ", filter))
 
     pearsonCorr <- lapply(1:nrow(sigMatrix), function(i) {
-		lapply(1:nrow(pca_res), function(j) {
-			return(calcPearsonCorrelation(sigMatrix[i,], pca_res[j,]))
-  		})
-  	})
+        lapply(1:nrow(pca_res), function(j) {
+            return(calcPearsonCorrelation(sigMatrix[i,], pca_res[j,]))
+          })
+      })
 
-  	pearsonCorr <- lapply(pearsonCorr, unlist)
-  	pearsonCorr <- matrix(unlist(pearsonCorr), nrow=nrow(sigMatrix),
-  	                      ncol=nrow(pca_res), byrow=TRUE)
+      pearsonCorr <- lapply(pearsonCorr, unlist)
+      pearsonCorr <- matrix(unlist(pearsonCorr), nrow=nrow(sigMatrix),
+                            ncol=nrow(pca_res), byrow=TRUE)
 
-  	rownames(pearsonCorr) <- rownames(sigMatrix)
-  	colnames(pearsonCorr) <- rownames(pca_res)
+      rownames(pearsonCorr) <- rownames(sigMatrix)
+      colnames(pearsonCorr) <- rownames(pca_res)
 
-  	timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-  	tRows <- c(tRows, paste("Pearson Correlation", filter))
+      timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
+      tRows <- c(tRows, paste("Pearson Correlation", filter))
 
-  	pcaAnnotData <- PCAnnotatorData(fullPCA = projectData$fullPCA,
-  	                                pearsonCorr = pearsonCorr,
-  	                                loadings = projectData$loadings)
+      pcaAnnotData <- PCAnnotatorData(fullPCA = projectData$fullPCA,
+                                      pearsonCorr = pearsonCorr,
+                                      loadings = projectData$loadings)
 
-  	filterModuleData <- FilterModuleData(filter = filter,
-  	                                     genes = projectData$geneNames,
-  	                                     ProjectionData = projData,
-  	                                     TreeProjectionData = treeProjData,
-  	                                     PCAnnotatorData = pcaAnnotData)
+      filterModuleData <- FilterModuleData(filter = filter,
+                                           genes = projectData$geneNames,
+                                           ProjectionData = projData,
+                                           TreeProjectionData = treeProjData,
+                                           PCAnnotatorData = pcaAnnotData)
 
-  	filterModuleList[[filter]] <- filterModuleData
+      filterModuleList[[filter]] <- filterModuleData
 
   }
 
   slots <- methods::slotNames("FastProject")
   fpParams <- list()
   for (s in slots) {
-	  fpParams[[s]] <- methods::slot(object, s)
+      fpParams[[s]] <- methods::slot(object, s)
   }
 
   fpOut <- FastProjectOutput(eData, filterModuleList, sigMatrix, sigList, fpParams, pools)

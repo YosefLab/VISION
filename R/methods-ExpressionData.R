@@ -20,7 +20,7 @@ setMethod("initialize", signature(.Object="ExpressionData"),
 #' @param object ExpressionData object
 #' @return Nothing.
 setMethod("readExprData", signature("ExpressionData"), function(object) {
-	# Prints out the expression data stored in this object.
+    # Prints out the expression data stored in this object.
 
   print(object@data)
   return()

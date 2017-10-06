@@ -459,15 +459,15 @@ applytSNE30 <- function(exprData, BPPARAM=bpparam()) {
 #' @return the weghted adjacency matrix of the KNN graph
 applyKNN <- function(exprData, BPPARAM=bpparam()) {
     print(dim(exprData))
-	set.seed(RANDOM_SEED)
+    set.seed(RANDOM_SEED)
 
-	k <- ball_tree_knn(t(exprData), round(sqrt(ncol(exprData))), BPPARAM$workers)
-	nn <- k[[1]]
-	d <- k[[2]]
+    k <- ball_tree_knn(t(exprData), round(sqrt(ncol(exprData))), BPPARAM$workers)
+    nn <- k[[1]]
+    d <- k[[2]]
 
-	sigma <- apply(d, 1, max)
+    sigma <- apply(d, 1, max)
 
-	sparse_weights <- exp(-1 * (d * d) / sigma^2)
+    sparse_weights <- exp(-1 * (d * d) / sigma^2)
   weights <- load_in_knn(nn, sparse_weights)
 
   weightsNormFactor <- Matrix::rowSums(weights)
@@ -541,13 +541,13 @@ applyRBFPCA <- function(exprData, BPPARAM=bpparam()) {
 #' @return n x m distance matrix
 sqdist <- function(X, Y) {
 
-	aa = rowSums(X**2)
-	bb = rowSums(Y**2)
-	x = -2 * tcrossprod(X, Y)
-	x = x + aa
-	x = t(t(x) + bb)
-	x[which(x<0)] <- 0
-	return(x)
+    aa = rowSums(X**2)
+    bb = rowSums(Y**2)
+    x = -2 * tcrossprod(X, Y)
+    x = x + aa
+    x = t(t(x) + bb)
+    x[which(x<0)] <- 0
+    return(x)
 
 }
 

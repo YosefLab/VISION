@@ -236,14 +236,14 @@ sigsVsProjections <- function(projections, sigScoresData,
     factorMatrix <- matrix(0L, nrow=N_SAMPLES, ncol=length(fLevels))
 
     factList <- lapply(fLevels, function(fval) {
-				factorMatrixRow <- matrix(0L, nrow=N_SAMPLES, ncol=1)
-				equal_ii <- which(fValues == fval)
-				factorMatrixRow[equal_ii] <- 1
-				return(list(length(equal_ii) / length(fValues), factorMatrixRow))
-			})
-	factorFreq <- lapply(factList, function(x) return(x[[1]]))
-	factorMatrix <- matrix(unlist(lapply(factList, function(x) return(x[[2]]))),
-	                       nrow=N_SAMPLES, ncol=length(fLevels))
+                factorMatrixRow <- matrix(0L, nrow=N_SAMPLES, ncol=1)
+                equal_ii <- which(fValues == fval)
+                factorMatrixRow[equal_ii] <- 1
+                return(list(length(equal_ii) / length(fValues), factorMatrixRow))
+            })
+    factorFreq <- lapply(factList, function(x) return(x[[1]]))
+    factorMatrix <- matrix(unlist(lapply(factList, function(x) return(x[[2]]))),
+                           nrow=N_SAMPLES, ncol=length(fLevels))
 
     factorSigs[[s@name]] <- list(fLevels, factorFreq, factorMatrix)
   }
@@ -253,12 +253,12 @@ sigsVsProjections <- function(projections, sigScoresData,
   i <- 1
   projnames <- names(projections)
   for (proj in projections) {
-  	weights <- computeKNNWeights(proj, K=round(sqrt(NCOL(proj@pData))), BPPARAM)
-  	neighborhoodPrediction <- Matrix::crossprod(weights, sigScoreMatrix)
+      weights <- computeKNNWeights(proj, K=round(sqrt(NCOL(proj@pData))), BPPARAM)
+      neighborhoodPrediction <- Matrix::crossprod(weights, sigScoreMatrix)
 
-  	## Neighborhood dissimilatory score = |actual - predicted|
-  	dissimilarity <- abs(sigScoreMatrix - neighborhoodPrediction)
-  	medDissimilarity <- as.matrix(apply(dissimilarity, 2, stats::median))
+      ## Neighborhood dissimilatory score = |actual - predicted|
+      dissimilarity <- abs(sigScoreMatrix - neighborhoodPrediction)
+      medDissimilarity <- as.matrix(apply(dissimilarity, 2, stats::median))
 
     # Calculate scores for random signatures
     randomNeighborhoodPrediction <- Matrix::crossprod(weights,
@@ -283,73 +283,73 @@ sigsVsProjections <- function(projections, sigScoresData,
       }
 
       bgStat <- matrix(unlist(bplapply(names(backgrounds), function(x) {
-  			mu_x <- mean(backgrounds[[x]])
-  			std_x <- biasedVectorSD(as.matrix(backgrounds[[x]]))
-  			return(list(as.numeric(x), mu_x, std_x))
-  		  }, BPPARAM=BPPARAM)), nrow=length(names(backgrounds)),
-  			ncol=3, byrow=TRUE)
+              mu_x <- mean(backgrounds[[x]])
+              std_x <- biasedVectorSD(as.matrix(backgrounds[[x]]))
+              return(list(as.numeric(x), mu_x, std_x))
+            }, BPPARAM=BPPARAM)), nrow=length(names(backgrounds)),
+              ncol=3, byrow=TRUE)
 
 
-  	mu <- matrix(unlist(bplapply(spRows, function(x) {
-  			numG <- x@numGenes
-  			row_i <- which.min(abs(numG - bgStat[,1]))
-  			return(bgStat[row_i, 2])
-  		  }, BPPARAM=BPPARAM)), nrow=nrow(medDissimilarity),
-  			ncol=ncol(medDissimilarity))
+      mu <- matrix(unlist(bplapply(spRows, function(x) {
+              numG <- x@numGenes
+              row_i <- which.min(abs(numG - bgStat[,1]))
+              return(bgStat[row_i, 2])
+            }, BPPARAM=BPPARAM)), nrow=nrow(medDissimilarity),
+              ncol=ncol(medDissimilarity))
 
-  	sigma <- matrix(unlist(bplapply(spRows, function(x) {
-  			numG <- x@numGenes
-  			row_i <- which.min(abs(numG - bgStat[,1]))
-  			return(bgStat[row_i,3])
-  		  }, BPPARAM=BPPARAM)), nrow=nrow(medDissimilarity),
-  			ncol=ncol(medDissimilarity))
+      sigma <- matrix(unlist(bplapply(spRows, function(x) {
+              numG <- x@numGenes
+              row_i <- which.min(abs(numG - bgStat[,1]))
+              return(bgStat[row_i,3])
+            }, BPPARAM=BPPARAM)), nrow=nrow(medDissimilarity),
+              ncol=ncol(medDissimilarity))
 
 
       #Create CDF function for medDissmilarityPrime and apply CDF function to
-  	  #medDissimilarityPrime pointwise
-  	pValues <- stats::pnorm( ((medDissimilarity - mu) / sigma))
+        #medDissimilarityPrime pointwise
+      pValues <- stats::pnorm( ((medDissimilarity - mu) / sigma))
 
-  	sigProjMatrix[,i] <- 1 - (medDissimilarity / N_SAMPLES)
-  	sigProjMatrix_P[,i] <- pValues
+      sigProjMatrix[,i] <- 1 - (medDissimilarity / N_SAMPLES)
+      sigProjMatrix_P[,i] <- pValues
 
       ## Calculate signficance for Factor signatures
 
-  	factorSigProjList <- lapply(factorSigs, function(x) {
-  			fLevels <- x[[1]]
-  			factorFreq <- x[[2]]
-  			fMatrix <- x[[3]]
+      factorSigProjList <- lapply(factorSigs, function(x) {
+              fLevels <- x[[1]]
+              factorFreq <- x[[2]]
+              fMatrix <- x[[3]]
 
-  			if (1 %in% factorFreq) {
-  				return(list(0.0, 1.0))
-  			}
+              if (1 %in% factorFreq) {
+                  return(list(0.0, 1.0))
+              }
 
-  			N_LEVELS <- length(fLevels)
-  			factorPredictions <- Matrix::crossprod(weights, fMatrix)
+              N_LEVELS <- length(fLevels)
+              factorPredictions <- Matrix::crossprod(weights, fMatrix)
 
-  			labels <- apply(fMatrix, 1, which.max)
+              labels <- apply(fMatrix, 1, which.max)
 
-  			# Get predicted index and corresponding probability
-  			preds_ii <- apply(factorPredictions, 1, which.max)
-  			preds <- factorPredictions[cbind(1:nrow(factorPredictions), preds_ii)]
+              # Get predicted index and corresponding probability
+              preds_ii <- apply(factorPredictions, 1, which.max)
+              preds <- factorPredictions[cbind(1:nrow(factorPredictions), preds_ii)]
 
-  			r <- multiclass.roc(labels, preds_ii, levels=seq(1, length(fLevels)))
-  			a <- r$auc
+              r <- multiclass.roc(labels, preds_ii, levels=seq(1, length(fLevels)))
+              a <- r$auc
 
-  			# Calculate the p value for precomputed signature
-  			krList <- list()
-  			for (k in 1:length(fLevels)) {
-  				krList <- c(krList, list(preds_ii[labels==k]))
-  			}
+              # Calculate the p value for precomputed signature
+              krList <- list()
+              for (k in 1:length(fLevels)) {
+                  krList <- c(krList, list(preds_ii[labels==k]))
+              }
 
-  			krTest <- stats::kruskal.test(krList)
+              krTest <- stats::kruskal.test(krList)
 
-  			return(list(a, krTest$p.value))
-  		  })
+              return(list(a, krTest$p.value))
+            })
 
-  	factorSigProjMatrix[,i] <- unlist(lapply(factorSigProjList,
-  	                                         function(x) x[[1]]))
-  	factorSigProjMatrix_P[,i] <- unlist(lapply(factorSigProjList,
-  	                                           function(x) x[[2]]))
+      factorSigProjMatrix[,i] <- unlist(lapply(factorSigProjList,
+                                               function(x) x[[1]]))
+      factorSigProjMatrix_P[,i] <- unlist(lapply(factorSigProjList,
+                                                 function(x) x[[2]]))
 
     i <- i+1
   }
@@ -411,14 +411,14 @@ clusterSignatures <- function(sigList, sigMatrix, pvals, k=10) {
   compcls <- list()
   maxcls <- 1
   if (nrow(computedSigMatrix) > 1) {
-  	r <- as.matrix(t(apply(computedSigMatrix, 1,
-  	                       function(x) rank(x, ties.method="average"))))
+      r <- as.matrix(t(apply(computedSigMatrix, 1,
+                             function(x) rank(x, ties.method="average"))))
 
-	compkm <- densityMclust(r)
-	compcls <- as.list(compkm$classification)
-	compcls <- compcls[order(unlist(compcls), decreasing=FALSE)]
+    compkm <- densityMclust(r)
+    compcls <- as.list(compkm$classification)
+    compcls <- compcls[order(unlist(compcls), decreasing=FALSE)]
 
-	maxcls <- max(unlist(compcls))
+    maxcls <- max(unlist(compcls))
   }
 
   compcls[names(which(significant == FALSE))] <- maxcls + 1
@@ -426,8 +426,8 @@ clusterSignatures <- function(sigList, sigMatrix, pvals, k=10) {
   # Don't actually cluster Precomputed Signatures -- just return in a list.
   precompcls <- list()
   if (length(which(precomputed==TRUE)) > 0) {
-  	  precomputedSigsToCluster <- names(precomputed[which(precomputed==TRUE)])
-  	  precompcls[precomputedSigsToCluster] <- 1
+        precomputedSigsToCluster <- names(precomputed[which(precomputed==TRUE)])
+        precompcls[precomputedSigsToCluster] <- 1
   }
 
   return(list(Computed = compcls, Precomputed = precompcls))
@@ -440,9 +440,9 @@ clusterSignatures <- function(sigList, sigMatrix, pvals, k=10) {
 #' @return pearson correlaton coeffcients
 calcPearsonCorrelation <- function(ss, pc) {
 
-	pc <- rcorr(ss, pc, type="pearson")
+    pc <- rcorr(ss, pc, type="pearson")
 
-	return(pc[[1]][1,2])
+    return(pc[[1]][1,2])
 
 }
 
