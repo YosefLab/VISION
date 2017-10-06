@@ -41,9 +41,10 @@ LazyData: true
 BugReports: https://github.com/YosefLab/FastProjectR/issues
 RoxygenNote: 6.0.1
 Suggests: 
-    testthat,
-    knitr,
-    rmarkdown
+	BiocStyle,
+	knitr,
+	rmarkdown,
+    testthat
 biocViews:
 	GeneExpression,
 	RNASeq,

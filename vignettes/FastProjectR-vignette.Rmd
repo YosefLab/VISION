@@ -1,8 +1,6 @@
 ---
 title: "Introduction to FastProjectR"
 author: "Matthew Jones"
-date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Introduction to FastProjectR}
   %\VignetteEngine{knitr::rmarkdown}
