@@ -51,10 +51,10 @@
 #' })
 #'
 #' fp <- FastProject(data = expMat,
-#'                   housekeeping = hkg,
-#'                   signatures = sigs)
+#'                   signatures = sigs,
+#'                   housekeeping = hkg)
 setMethod("FastProject", signature(data = "matrix"),
-          function(data, housekeeping, signatures, norm_methods = NULL,
+          function(data, signatures, housekeeping, norm_methods = NULL,
                    precomputed=NULL, nofilter=FALSE, nomodel=FALSE,
                    filters=c("fano"), lean=FALSE, qc=FALSE,
                    min_signature_genes=5, projections="", weights=NULL,
@@ -112,18 +112,16 @@ setMethod("FastProject", signature(data = "matrix"),
 #' @rdname FastProject-class
 #' @export
 setMethod("FastProject", signature(data = "character"),
-          function(data, housekeeping, signatures, ...) {
-            return(FastProject(readExprToMatrix(data),
-                               housekeeping, signatures,...))
+          function(data, ...) {
+            return(FastProject(readExprToMatrix(data), ...))
           }
 )
 
 #' @rdname FastProject-class
 #' @export
 setMethod("FastProject", signature(data = "ExpressionSet"),
-          function(data, housekeeping, signatures, ...) {
-            return(FastProject(Biobase::exprs(data),
-                               housekeeping, signatures,...))
+          function(data, ...) {
+            return(FastProject(Biobase::exprs(data), ...))
           }
 )
 
