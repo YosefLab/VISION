@@ -77,7 +77,7 @@ library(FastProjectR)
 # -- read in expression data set
 expr <- as.matrix(read.table("data/expression_matrix.txt", 
                    header = T, sep = '\t', row.names = 1))
-hkg <- read.table("data/GeneNameHousekeeping.txt", stringsAsFactors = F)$V1
+hkg <- read.table("data/GeneNameHousekeeping.txt", stringsAsFactors = FALSE)$V1
 
 # -- Create a FastProject object with existing matrix
 fp <- FastProject(expr, c("data/h.all.v5.2.symbols.gmt"), hkg)
