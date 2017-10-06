@@ -7,14 +7,14 @@
 #' @param gene_labels Lables of genes in expression data
 #' @return ServerExpression object
 setMethod("initialize", signature(.Object="ServerExpression"),
-          function(.Object,data, sample_labels, gene_labels) {
+            function(.Object,data, sample_labels, gene_labels) {
 
             .Object@data <- data
             .Object@sample_labels <- sample_labels
             .Object@gene_labels <- gene_labels
 
             return(.Object)
-          }
+            }
 )
 
 #' Wrapper class for Signature Projection Matrix
@@ -26,14 +26,14 @@ setMethod("initialize", signature(.Object="ServerExpression"),
 #' @param sig_labels Names of signatures
 #' @return ServerSigProjMatrix object
 setMethod("initialize", signature(.Object="ServerSigProjMatrix"),
-          function(.Object, data, proj_labels, sig_labels) {
+            function(.Object, data, proj_labels, sig_labels) {
 
             .Object@data <- data
             .Object@proj_labels <- proj_labels
             .Object@sig_labels <- sig_labels
 
             return(.Object)
-          }
+            }
 )
 
 #' Wrapper class for the P value matrix calculated during sigsVsProjections
@@ -45,14 +45,14 @@ setMethod("initialize", signature(.Object="ServerSigProjMatrix"),
 #' @param sig_labels Names of signatures
 #' @return ServerPMatrix object
 setMethod("initialize", signature(.Object="ServerPMatrix"),
-          function(.Object, data, proj_labels, sig_labels) {
+            function(.Object, data, proj_labels, sig_labels) {
 
             .Object@data <- data
             .Object@proj_labels <- proj_labels
             .Object@sig_labels <- sig_labels
 
             return(.Object)
-          })
+            })
 
 #' Wrapper class for server Perason correlation data
 #' Should not be called directly, instead use the `new` syntax
@@ -80,11 +80,11 @@ setMethod("initialize", signature(.Object="ServerPCorr"),
 #' @return JSON formatted Signature object.
 signatureToJSON <- function(sig) {
 
-  # Pass in a Signature object from a FastProjectOutput Object to be converted into a JSON object
-  sig@sigDict <- as.list(sig@sigDict)
+    # Pass in a Signature object from a FastProjectOutput Object to be converted into a JSON object
+    sig@sigDict <- as.list(sig@sigDict)
 
-  json <- toJSON(sig, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
-  return(json)
+    json <- toJSON(sig, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
+    return(json)
 
 }
 
@@ -95,16 +95,16 @@ signatureToJSON <- function(sig) {
 #' @return (Potentially) subsetted expression matrix
 expressionToJSON <- function(expr, geneList=NULL) {
 
-  if (!is.null(geneList)) {
+    if (!is.null(geneList)) {
     geneList = intersect(geneList, rownames(expr))
     expr <- expr[geneList,]
-  }
+    }
 
-  sExpr <- ServerExpression(unname(expr), colnames(expr), rownames(expr))
+    sExpr <- ServerExpression(unname(expr), colnames(expr), rownames(expr))
 
-  ejson <- toJSON(sExpr, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
+    ejson <- toJSON(sExpr, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
 
-  return(ejson)
+    return(ejson)
 }
 
 #' Converts row of sigantures score matrix to JSON
@@ -113,11 +113,11 @@ expressionToJSON <- function(expr, geneList=NULL) {
 #' @return Signature scores list to JSON, with names of each entry that of the list names
 sigScoresToJSON <- function(ss) {
 
-  s <- as.list(ss)
-  names(s) <- rownames(as.matrix(ss))
-  json <- toJSON(s, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
+    s <- as.list(ss)
+    names(s) <- rownames(as.matrix(ss))
+    json <- toJSON(s, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
 
-  return(json)
+    return(json)
 }
 
 #' Converts list of signature ranks to JSON
@@ -126,11 +126,11 @@ sigScoresToJSON <- function(ss) {
 #' @return Signature ranks as JSON, with names of each entry that of list names
 sigRanksToJSON <- function(ss) {
 
-  s <- as.list(rank(as.matrix(ss)))
-  names(s) <- names(ss)
-  json <- toJSON(s, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
+    s <- as.list(rank(as.matrix(ss)))
+    names(s) <- names(ss)
+    json <- toJSON(s, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
 
-  return(json)
+    return(json)
 
 }
 
@@ -140,12 +140,12 @@ sigRanksToJSON <- function(ss) {
 #' @return JSON object mapping each sample to a projection coordinate.
 coordinatesToJSON <- function(p) {
 
-  coord <- apply(unname(p), 2, as.list)
-  names(coord) <- colnames(p)
+    coord <- apply(unname(p), 2, as.list)
+    names(coord) <- colnames(p)
 
-  json <- toJSON(coord, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
+    json <- toJSON(coord, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
 
-  return(json)
+    return(json)
 }
 
 #' Converts a sigProjMatrix from a FastProjectOutput Object to a JSON object
@@ -155,12 +155,12 @@ coordinatesToJSON <- function(p) {
 #' @return Subsetted sigProjMatirx converted to JSON
 sigProjMatrixToJSON <- function(sigpm, sigs) {
 
-  sigpm <- sigpm[sigs,, drop=FALSE]
-  sSPM <- ServerSigProjMatrix(unname(sigpm), colnames(sigpm), sigs)
+    sigpm <- sigpm[sigs,, drop=FALSE]
+    sSPM <- ServerSigProjMatrix(unname(sigpm), colnames(sigpm), sigs)
 
-  json <- toJSON(sSPM, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
+    json <- toJSON(sSPM, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
 
-  return(json)
+    return(json)
 }
 
 #' convert perason correlation coeffcients between PCs and sgnatures into a JSON object
@@ -187,12 +187,12 @@ pearsonCorrToJSON <- function(pc, sigs) {
 #' @return Subsetted sigProjMatrix_P converted to JSON
 sigProjMatrixPToJSON <- function(sigpmp, sigs) {
 
-  sigpmp <- as.matrix(sigpmp[sigs,, drop=FALSE])
-  sPM <- ServerPMatrix(unname(sigpmp), colnames(sigpmp), sigs)
+    sigpmp <- as.matrix(sigpmp[sigs,, drop=FALSE])
+    sPM <- ServerPMatrix(unname(sigpmp), colnames(sigpmp), sigs)
 
-  json <- toJSON(sPM, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
+    json <- toJSON(sPM, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
 
-  return(json)
+    return(json)
 
 }
 
@@ -202,14 +202,14 @@ sigProjMatrixPToJSON <- function(sigpmp, sigs) {
 #' @return Cluster object converted to JSON
 clusterToJSON <- function(cluster) {
 
-  out <- list()
-  out[['method']] <- cluster@method
-  out[['param']] <- cluster@param
-  out[['centers']] <- cluster@centers
-  out[['data']] <- as.list(cluster@data[1,])
-  json <- toJSON(out, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
+    out <- list()
+    out[['method']] <- cluster@method
+    out[['param']] <- cluster@param
+    out[['centers']] <- cluster@centers
+    out[['data']] <- as.list(cluster@data[1,])
+    json <- toJSON(out, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
 
-  return(json)
+    return(json)
 }
 
 #' Run the analysis again wth user-defined subsets or confguration

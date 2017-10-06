@@ -15,34 +15,34 @@
 #' @return SignatureScore object
 naiveEvalSignature <- function(expr, sig, weights, min_signature_genes) {
 
-  exprData <- getExprData(expr)
+    exprData <- getExprData(expr)
 
-  # Select genes in signature that are in the expression matrix
-  keep_ii <- which(names(sig@sigDict) %in% rownames(exprData))
-  sigVector <- (sig@sigDict)[keep_ii]
+    # Select genes in signature that are in the expression matrix
+    keep_ii <- which(names(sig@sigDict) %in% rownames(exprData))
+    sigVector <- (sig@sigDict)[keep_ii]
 
-  if (length(sigVector) == 0) {
+    if (length(sigVector) == 0) {
     stop("No genes match signature.")
-  }
-  if (length(sigVector) < min_signature_genes) {
+    }
+    if (length(sigVector) < min_signature_genes) {
     stop("Too few genes match signature.")
-  }
+    }
 
-  sigGenes <- exprData[names(sigVector),]
+    sigGenes <- exprData[names(sigVector),]
 
-  weights <- matrix(1, nrow=nrow(sigGenes), ncol=ncol(sigGenes))
+    weights <- matrix(1, nrow=nrow(sigGenes), ncol=ncol(sigGenes))
 
 
-  pdata <- sigGenes * sigVector * weights;
+    pdata <- sigGenes * sigVector * weights;
 
-  sigScores <- colSums(pdata)
+    sigScores <- colSums(pdata)
 
-  sigScores <- sigScores / length(sigVector)
+    sigScores <- sigScores / length(sigVector)
 
-  sigObj <- SignatureScores(sigScores, sig@name, colnames(pdata),
-                           isFactor=FALSE, isPrecomputed=FALSE, numGenes=length(sigVector))
+    sigObj <- SignatureScores(sigScores, sig@name, colnames(pdata),
+                            isFactor=FALSE, isPrecomputed=FALSE, numGenes=length(sigVector))
 
-  return(sigObj)
+    return(sigObj)
 }
 
 #' Evaluate signature with weights computed from FNR curve.
@@ -54,46 +54,46 @@ naiveEvalSignature <- function(expr, sig, weights, min_signature_genes) {
 #' @return SignatureScore object
 weightedEvalSignature <- function(expr, sig, weights, min_signature_genes) {
 
-  exprData <- getExprData(expr)
+    exprData <- getExprData(expr)
 
-  # Select genes in signature that are in the expression matrix
-  keep_ii <- names(sig@sigDict) %in% rownames(exprData)
-  sigVector <- (sig@sigDict)[keep_ii]
+    # Select genes in signature that are in the expression matrix
+    keep_ii <- names(sig@sigDict) %in% rownames(exprData)
+    sigVector <- (sig@sigDict)[keep_ii]
 
-  if (length(sigVector) == 0) {
+    if (length(sigVector) == 0) {
     stop("No genes match signature.")
-  }
-  if (length(sigVector) < min_signature_genes) {
+    }
+    if (length(sigVector) < min_signature_genes) {
     stop("Too few genes match signature.")
-  }
+    }
 
-  sigGenes <- exprData[names(sigVector),]
-  weights <- weights[names(sigVector),]
+    sigGenes <- exprData[names(sigVector),]
+    weights <- weights[names(sigVector),]
 
-  pdata <- sigGenes * sigVector * weights
+    pdata <- sigGenes * sigVector * weights
 
-  sigScores <- colSums(pdata)
-  sigScores <- sigScores / colSums(abs(sigVector) * weights)
+    sigScores <- colSums(pdata)
+    sigScores <- sigScores / colSums(abs(sigVector) * weights)
 
-  sigObj <- SignatureScores(sigScores, sig@name, colnames(pdata),
+    sigObj <- SignatureScores(sigScores, sig@name, colnames(pdata),
                             isFactor=FALSE, isPrecomputed=FALSE, numGenes=length(sigVector))
 
-  return(sigObj)
+    return(sigObj)
 
 }
 
 ## Define single signature evaluation for lapply method
 singleSigEval <- function(s, sig_score_method, eData, weights, min_signature_genes) {
     # init to an empty SignatureScores object
-      x <- NULL
-      if (sig_score_method=="naive") {
-          tryCatch({
-              x <- naiveEvalSignature(eData, s, weights, min_signature_genes)
-          }, error=function(e){})
-      } else if (sig_score_method=="weighted_avg") {
-          tryCatch({
-              x <- weightedEvalSignature(eData, s, weights, min_signature_genes)
-          }, error=function(e){})
-      }
-      return(x)
-  }
+        x <- NULL
+        if (sig_score_method=="naive") {
+            tryCatch({
+                x <- naiveEvalSignature(eData, s, weights, min_signature_genes)
+            }, error=function(e){})
+        } else if (sig_score_method=="weighted_avg") {
+            tryCatch({
+                x <- weightedEvalSignature(eData, s, weights, min_signature_genes)
+            }, error=function(e){})
+        }
+        return(x)
+    }

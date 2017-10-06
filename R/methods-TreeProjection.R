@@ -9,19 +9,19 @@
 #' @param adjMat the adjacency matrix of the tree
 #' @return a TreeProjection object
 setMethod("initialize", signature(.Object="TreeProjection"),
-          function(.Object, pData, name, vData, adjMat) {
+            function(.Object, pData, name, vData, adjMat) {
             .Object@pData <- pData
             .Object@name <- name
             .Object@vData = vData
             .Object@adjMat = adjMat
 
             proj <- projectOnTree(data.pnts = pData,
-                                  V.pos = vData,
-                                  princAdj = adjMat)
+                                    V.pos = vData,
+                                    princAdj = adjMat)
             .Object@edgeAssoc <- proj$edges
             .Object@edgePos <- proj$edgePos
             return(.Object)
-          })
+            })
 
 
 #' Compute KNN weights based on geodesic distances for TreeProjection objects
@@ -31,17 +31,17 @@ setMethod("initialize", signature(.Object="TreeProjection"),
 #' @param BPPARAM the parallelization backen to use
 #' @return an all-pars distance matrix
 setMethod("computeKNNWeights", signature(object = "TreeProjection"),
-          function(object, K=30, BPPARAM=bpparam()) {
+            function(object, K=30, BPPARAM=bpparam()) {
             distmat <- calculateTreeDistances(princPnts = object@vData,
-                                              princAdj = object@adjMat,
-                                              edgeAssoc = object@edgeAssoc,
-                                              edgePos = object@edgePos)
+                                                princAdj = object@adjMat,
+                                                edgeAssoc = object@edgeAssoc,
+                                                edgePos = object@edgePos)
 
             kQuantile <- K / NCOL(object@pData)
             knnmat <- apply(distmat, 1, function(d) {
-              partition <- stats::quantile(d, kQuantile)
-              d[d > partition] <- Inf
-              return(d)
+                partition <- stats::quantile(d, kQuantile)
+                d[d > partition] <- Inf
+                return(d)
             })
 
             sigma <- apply(knnmat, 1, max)
@@ -56,4 +56,4 @@ setMethod("computeKNNWeights", signature(object = "TreeProjection"),
 
             return(weights)
 
-          })
+            })

@@ -14,7 +14,7 @@
 #' @param sigClusters the signature clusters
 #' @return ProjectionData object
 setMethod("initialize", signature(.Object="ProjectionData"),
-          function(.Object, projections=NULL, keys, sigProjMatrix, pMatrix, sigClusters) {
+            function(.Object, projections=NULL, keys, sigProjMatrix, pMatrix, sigClusters) {
 
             .Object@projections <- projections
             .Object@keys <- keys
@@ -22,6 +22,6 @@ setMethod("initialize", signature(.Object="ProjectionData"),
             .Object@pMatrix <- pMatrix
             .Object@sigClusters <- sigClusters
             return(.Object)
-          }
+            }
 )
 

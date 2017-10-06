@@ -1,57 +1,57 @@
 #' @rdname FastProject-class
 #' @export
 setGeneric("FastProject", function(data, ...) {
-  standardGeneric("FastProject")
+    standardGeneric("FastProject")
 })
 
 setGeneric("addSigData", function(object, data) {
-  standardGeneric("addSigData")
+    standardGeneric("addSigData")
 })
 
 setGeneric("Analyze", function(object, ...) {
-  standardGeneric("Analyze")
+    standardGeneric("Analyze")
 })
 
 setGeneric("cluster", function(object, method, param) {
-  standardGeneric("cluster")
+    standardGeneric("cluster")
 })
 
 setGeneric("createOutputDirectory", function(object) {
-  standardGeneric("createOutputDirectory")
+    standardGeneric("createOutputDirectory")
 })
 
 setGeneric("getExprData", function(object) {
-  standardGeneric("getExprData")
+    standardGeneric("getExprData")
 })
 
 setGeneric("getNormalizedCopy", function(object, func) {
-  standardGeneric("getNormalizedCopy")
+    standardGeneric("getNormalizedCopy")
 })
 
 setGeneric("saveFPOutAndViewResults", function(fpout) {
-  standardGeneric("saveFPOutAndViewResults")
+    standardGeneric("saveFPOutAndViewResults")
 })
 
 setGeneric("sigEqual", function(object, compareSig) {
-  standardGeneric("sigEqual")
+    standardGeneric("sigEqual")
 })
 
 setGeneric("readExprData", function(object) {
-  standardGeneric("readExprData")
+    standardGeneric("readExprData")
 })
 
 setGeneric("updateExprData", function(object, newData) {
-  standardGeneric("updateExprData")
+    standardGeneric("updateExprData")
 })
 
 setGeneric("updateProjection", function(object, name, data) {
-  standardGeneric("updateProjection")
+    standardGeneric("updateProjection")
 })
 
 setGeneric("viewResults", function(object) {
-  standardGeneric("viewResults")
+    standardGeneric("viewResults")
 })
 
 setGeneric("computeKNNWeights", function(object, K, BPPARAM) {
-  standardGeneric("computeKNNWeights")
+    standardGeneric("computeKNNWeights")
 })

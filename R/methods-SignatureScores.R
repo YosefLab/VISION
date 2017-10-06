@@ -11,8 +11,8 @@
 #' @param numGenes The number of genes used to calculate the score
 #' @return New SignatureScores object
 setMethod("initialize", signature(.Object="SignatureScores"),
-          function(.Object, scores, name, sample_labels,
-                   isFactor, isPrecomputed, numGenes) {
+            function(.Object, scores, name, sample_labels,
+                    isFactor, isPrecomputed, numGenes) {
 
             .Object@scores = scores
             .Object@name = name
@@ -22,5 +22,5 @@ setMethod("initialize", signature(.Object="SignatureScores"),
             .Object@numGenes = numGenes
 
             return(.Object)
-          }
+            }
 )

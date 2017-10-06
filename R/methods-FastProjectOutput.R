@@ -12,8 +12,8 @@
 #' representative super-cell clusters
 #' @return FastProjectOutput object.
 setMethod("initialize", signature(.Object="FastProjectOutput"),
-          function(.Object, eData, filterModuleList, sigMatrix, sigList,
-                   fpParams, pools) {
+            function(.Object, eData, filterModuleList, sigMatrix, sigList,
+                    fpParams, pools) {
 
             .Object@exprData <- eData
             .Object@filterModuleList <- filterModuleList
@@ -23,7 +23,7 @@ setMethod("initialize", signature(.Object="FastProjectOutput"),
             .Object@pools <- pools
 
             return(.Object)
-          }
+            }
 )
 
 #' Save the FastProjectOutput object as an .RDS file and view the results on a
@@ -61,12 +61,12 @@ setMethod("initialize", signature(.Object="FastProjectOutput"),
 #' saveFPOutAndViewResults(fp.out)
 #' }
 setMethod("saveFPOutAndViewResults", signature(fpout="FastProjectOutput"),
-          function(fpout) {
+            function(fpout) {
             i <- 1
             ofile <- paste0("./fpout", i, ".rds")
             while (file.exists(ofile)) {
-              i <- i+1
-              ofile <- paste0("./fpout", i, ".rds")
+                i <- i+1
+                ofile <- paste0("./fpout", i, ".rds")
             }
 
             saveRDS(fpout, file=ofile)
@@ -75,7 +75,7 @@ setMethod("saveFPOutAndViewResults", signature(fpout="FastProjectOutput"),
             message("Launching the server...")
             message("Press exit or ctrl c to exit")
             source("FastProjectR_Output/server_script.R")
-          })
+            })
 
 #' View results of analysis without saving output object
 #'
@@ -110,10 +110,10 @@ setMethod("saveFPOutAndViewResults", signature(fpout="FastProjectOutput"),
 #' viewResults(fp.out)
 #' }
 setMethod("viewResults", signature(object="FastProjectOutput"),
-          function(object) {
+            function(object) {
 
             arg1 <<- object
             message("Launching the server...")
             message("Press exit or ctrl c to exit")
             source("FastProjectR_Output/server_script.R")
-          })
+            })

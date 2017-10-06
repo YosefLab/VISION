@@ -5,18 +5,18 @@
 #' @return List of projection methods to be applied.
 registerMethods <- function(lean=FALSE) {
 
-  projMethods <- c()
-  if (!lean) {
+    projMethods <- c()
+    if (!lean) {
     projMethods <- c(projMethods, "ISOMap" = applyISOMap)
     projMethods <- c(projMethods, "ICA" = applyICA)
     #projMethods <- c(projMethods, "RBF Kernel PCA" = applyRBFPCA)
-  }
+    }
 
-  projMethods <- c(projMethods, "tSNE30" = applytSNE30)
-  projMethods <- c(projMethods, "KNN" = applyKNN)
-  projMethods <- c(projMethods, "tSNE10" = applytSNE10)
+    projMethods <- c(projMethods, "tSNE30" = applytSNE30)
+    projMethods <- c(projMethods, "KNN" = applyKNN)
+    projMethods <- c(projMethods, "tSNE10" = applytSNE10)
 
-  return(projMethods)
+    return(projMethods)
 }
 
 #' Projects data into 2 dimensions using a variety of linear and non-linear methods.
@@ -43,91 +43,91 @@ generateProjections <- function(expr, weights, filterName="",
                                 inputProjections=c(), lean=FALSE,
                                 perm_wPCA=FALSE, BPPARAM = BiocParallel::bpparam()) {
 
-  if (filterName == "novar") {
+    if (filterName == "novar") {
     exprData <- expr@noVarFilter
-  } else if (filterName == "threshold") {
+    } else if (filterName == "threshold") {
     exprData <- expr@thresholdFilter
-  } else if (filterName == "fano") {
+    } else if (filterName == "fano") {
     exprData <- expr@fanoFilter
-  } else if (filterName == "") {
+    } else if (filterName == "") {
     exprData <- expr@data
-  } else {
+    } else {
     stop("FilterName not recognized: ", filterName)
-  }
+    }
 
-  methodList = registerMethods(lean)
+    methodList = registerMethods(lean)
 
-  if (perm_wPCA) {
+    if (perm_wPCA) {
     res <- applyPermutationWPCA(exprData, weights, components=30)
     pca_res <- res[[1]]
     loadings <- res[[3]]
     permMats <- res$permuteMatrices
-  } else {
+    } else {
     res <- applyWeightedPCA(exprData, weights, maxComponents = 30)
     pca_res <- res[[1]]
     loadings <- res[[3]]
     permMats <- NULL
     #m <- profmem(pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30)[[1]])
-  }
+    }
 
-  inputProjections <- c(inputProjections, Projection("PCA: 1,2", t(pca_res[c(1,2),])))
-  inputProjections <- c(inputProjections, Projection("PCA: 1,3", t(pca_res[c(1,3),])))
-  inputProjections <- c(inputProjections, Projection("PCA: 2,3", t(pca_res[c(2,3),])))
+    inputProjections <- c(inputProjections, Projection("PCA: 1,2", t(pca_res[c(1,2),])))
+    inputProjections <- c(inputProjections, Projection("PCA: 1,3", t(pca_res[c(1,3),])))
+    inputProjections <- c(inputProjections, Projection("PCA: 2,3", t(pca_res[c(2,3),])))
 
-  fullPCA <- t(pca_res[1:min(15,nrow(pca_res)),])
-  fullPCA <- as.matrix(apply(fullPCA, 2, function(x) return( x - mean(x) )))
+    fullPCA <- t(pca_res[1:min(15,nrow(pca_res)),])
+    fullPCA <- as.matrix(apply(fullPCA, 2, function(x) return( x - mean(x) )))
 
-  r <- apply(fullPCA, 1, function(x) sum(x^2))^(0.5)
-  r90 <- stats::quantile(r, c(.9))[[1]]
+    r <- apply(fullPCA, 1, function(x) sum(x^2))^(0.5)
+    r90 <- stats::quantile(r, c(.9))[[1]]
 
-  if (r90 > 0) {
+    if (r90 > 0) {
     fullPCA <- fullPCA / r90
-  }
-  fullPCA <- t(fullPCA)
+    }
+    fullPCA <- t(fullPCA)
 
-  for (method in names(methodList)){
+    for (method in names(methodList)){
     gc()
     message(method)
     ## run on raw data
     if (method == "ICA" || method == "RBF Kernel PCA") {
-      res <- methodList[[method]](exprData)
-      proj <- Projection(method, res)
-      inputProjections <- c(inputProjections, proj)
+        res <- methodList[[method]](exprData)
+        proj <- Projection(method, res)
+        inputProjections <- c(inputProjections, proj)
     } else if (method == "KNN") {
         res <- methodList[[method]](pca_res, BPPARAM)
         proj <- Projection(method, res, weights=res)
         inputProjections <- c(inputProjections, proj)
     } else { ## run on reduced data
-      res <- methodList[[method]](pca_res, BPPARAM)
-      proj <- Projection(method, res)
-      inputProjections <- c(inputProjections, proj)
-      }
+        res <- methodList[[method]](pca_res, BPPARAM)
+        proj <- Projection(method, res)
+        inputProjections <- c(inputProjections, proj)
+        }
     }
 
     output <- list()
 
     for (p in inputProjections) {
-      coordinates <- p@pData
+        coordinates <- p@pData
 
-      coordinates <- as.matrix(apply(coordinates, 2, function(x) return( x - mean(x) )))
+        coordinates <- as.matrix(apply(coordinates, 2, function(x) return( x - mean(x) )))
 
-      r <- apply(coordinates, 1, function(x) sum(x^2))^(0.5)
-      r90 <- stats::quantile(r, c(.9))[[1]]
+        r <- apply(coordinates, 1, function(x) sum(x^2))^(0.5)
+        r90 <- stats::quantile(r, c(.9))[[1]]
 
-      if (r90 > 0) {
+        if (r90 > 0) {
         coordinates <- coordinates / r90
-      }
+        }
 
-      coordinates <- t(coordinates)
-      p <- updateProjection(p, data=coordinates)
-      output[[p@name]] = p
+        coordinates <- t(coordinates)
+        p <- updateProjection(p, data=coordinates)
+        output[[p@name]] = p
 
-      }
+        }
 
     output[["KNN"]]@pData <- output[["tSNE30"]]@pData
 
-  return(list(projections = output, geneNames = rownames(exprData),
-              fullPCA = fullPCA, loadings = loadings, permMats = permMats))
+    return(list(projections = output, geneNames = rownames(exprData),
+                fullPCA = fullPCA, loadings = loadings, permMats = permMats))
 }
 
 #' Genrate projections based on a tree structure learned in high dimensonal space
@@ -152,64 +152,64 @@ generateTreeProjections <- function(expr, filterName="",
                                     BPPARAM = bpparam()) {
 
 
-  if (filterName == "novar") {
+    if (filterName == "novar") {
     exprData <- expr@noVarFilter
-  } else if (filterName == "threshold") {
+    } else if (filterName == "threshold") {
     exprData <- expr@thresholdFilter
-  } else if (filterName == "fano") {
+    } else if (filterName == "fano") {
     exprData <- expr@fanoFilter
-  } else if (filterName == "") {
+    } else if (filterName == "") {
     exprData <- expr@data
-  } else {
+    } else {
     stop("FilterName not recognized: ", filterName)
-  }
+    }
 
-  t <- Sys.time()
-  timingList <- (t - t)
-  timingNames <- c("Start")
+    t <- Sys.time()
+    timingList <- (t - t)
+    timingNames <- c("Start")
 
-  hdTree <- applySimplePPT(exprData, permExprData = permMats)
-  hdProj <- TreeProjection(name = "PPT", pData = exprData,
-                             vData = hdTree$princPnts, adjMat = hdTree$adjMat)
+    hdTree <- applySimplePPT(exprData, permExprData = permMats)
+    hdProj <- TreeProjection(name = "PPT", pData = exprData,
+                                vData = hdTree$princPnts, adjMat = hdTree$adjMat)
 
-  ncls <- apply(hdTree$distMat, 1, which.min)
-  pptNeighborhood <- findNeighbors(exprData, ##why was this fullPCA here?
-                                   hdTree$princPnts,
-                                   NCOL(exprData) / NCOL(hdTree$princPnts),
-                                   BPPARAM)
+    ncls <- apply(hdTree$distMat, 1, which.min)
+    pptNeighborhood <- findNeighbors(exprData, ##why was this fullPCA here?
+                                    hdTree$princPnts,
+                                    NCOL(exprData) / NCOL(hdTree$princPnts),
+                                    BPPARAM)
 
-  timingList <- rbind(timingList, c(difftime(Sys.time(), t, units="sec")))
-  timingNames <- c(timingNames, "PPT")
-  rownames(timingList) <- timingNames
+    timingList <- rbind(timingList, c(difftime(Sys.time(), t, units="sec")))
+    timingNames <- c(timingNames, "PPT")
+    rownames(timingList) <- timingNames
 
-  # Readjust coordinates of PPT
-  c <- t(hdTree$princPnts[c(1,2),])
-  coord <- as.matrix(apply(c, 2, function(x) return(x - mean(x))))
-  r <- apply(coord, 1, function(x) sum(x^2))^(0.5)
-  r90 <- stats::quantile(r, c(0.9))[[1]]
-  if (r90 > 0) {
+    # Readjust coordinates of PPT
+    c <- t(hdTree$princPnts[c(1,2),])
+    coord <- as.matrix(apply(c, 2, function(x) return(x - mean(x))))
+    r <- apply(coord, 1, function(x) sum(x^2))^(0.5)
+    r90 <- stats::quantile(r, c(0.9))[[1]]
+    if (r90 > 0) {
     coord <- coord / r90
-  }
-  coord <- t(coord)
-  hdTree$princPnts <- coord
+    }
+    coord <- t(coord)
+    hdTree$princPnts <- coord
 
-  output <- list()
-  output[[hdProj@name]] <- hdProj
+    output <- list()
+    output[[hdProj@name]] <- hdProj
 
-  # Reposition tree node coordinates in nondimensional space
-  for (proj in inputProjections) {
+    # Reposition tree node coordinates in nondimensional space
+    for (proj in inputProjections) {
     new_coords <- matrix(sapply(pptNeighborhood, function(n)  {
-      centroid <- proj@pData[,n$index] %*% t(n$dist / sum(n$dist))
-      # n_vals <- proj@pData[,n$index] * rep(n$dist / sum(n$dist), rep(nrow(proj@pData), length(n$dist)))
-      # centroid <- apply(n_vals, 1, mean)
-      return(centroid)
+        centroid <- proj@pData[,n$index] %*% t(n$dist / sum(n$dist))
+        # n_vals <- proj@pData[,n$index] * rep(n$dist / sum(n$dist), rep(nrow(proj@pData), length(n$dist)))
+        # centroid <- apply(n_vals, 1, mean)
+        return(centroid)
     }), nrow=2, ncol=length(pptNeighborhood))
     treeProj = TreeProjection(name = proj@name, pData = proj@pData,
-                              vData = new_coords, adjMat = hdTree$adjMat)
+                                vData = new_coords, adjMat = hdTree$adjMat)
     output[[treeProj@name]] = treeProj
-  }
+    }
 
-  return(list(projections = output, treeScore = hdTree$zscore))
+    return(list(projections = output, treeScore = hdTree$zscore))
 }
 
 #' Performs weighted PCA on data
@@ -223,46 +223,46 @@ generateTreeProjections <- function(expr, filterName="",
 #' @return Variance of each component
 #' @return Eigenvectors of weighted covariance matrix, aka the variable loadings
 applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
-  set.seed(RANDOM_SEED)
+    set.seed(RANDOM_SEED)
 
-  projData <- exprData
-  if (nrow(projData) != nrow(weights) || ncol(projData) != ncol(weights)) {
+    projData <- exprData
+    if (nrow(projData) != nrow(weights) || ncol(projData) != ncol(weights)) {
     weights <- weights[rownames(exprData), ]
-  }
+    }
 
-  # Center data
-  wmean <- as.matrix(rowSums(multMat(projData, weights)) / rowSums(weights))
-  dataCentered <- as.matrix(apply(projData, 2, function(x) x - wmean))
+    # Center data
+    wmean <- as.matrix(rowSums(multMat(projData, weights)) / rowSums(weights))
+    dataCentered <- as.matrix(apply(projData, 2, function(x) x - wmean))
 
-  # Compute weighted data
-  #wDataCentered <- multMat(dataCentered, weights)
-  wDataCentered <- dataCentered * weights
+    # Compute weighted data
+    #wDataCentered <- multMat(dataCentered, weights)
+    wDataCentered <- dataCentered * weights
 
-  # Weighted covariance / correlation matrices
-  W <- tcrossprod(wDataCentered)
-  Z <- tcrossprod(weights)
+    # Weighted covariance / correlation matrices
+    W <- tcrossprod(wDataCentered)
+    Z <- tcrossprod(weights)
 
-  wcov <- W / Z
-  wcov[which(is.na(wcov))] <- 0.0
-  var <- diag(wcov)
+    wcov <- W / Z
+    wcov[which(is.na(wcov))] <- 0.0
+    var <- diag(wcov)
 
-  # SVD of wieghted correlation matrix
-  ncomp <- min(ncol(projData), nrow(projData), maxComponents)
-  decomp <- rsvd::rsvd(wcov, k=ncomp)
-  evec <- t(decomp$u)
+    # SVD of wieghted correlation matrix
+    ncomp <- min(ncol(projData), nrow(projData), maxComponents)
+    decomp <- rsvd::rsvd(wcov, k=ncomp)
+    evec <- t(decomp$u)
 
-  # Project down using computed eigenvectors
-  dataCentered <- dataCentered / sqrt(var)
-  wpcaData <- crossprod(t(evec), dataCentered)
-  #wpcaData <- wpcaData * (decomp$d*decomp$d)
-  eval <- as.matrix(apply(wpcaData, 1, var))
-  totalVar <- sum(apply(projData, 1, var))
-  eval <- eval / totalVar
+    # Project down using computed eigenvectors
+    dataCentered <- dataCentered / sqrt(var)
+    wpcaData <- crossprod(t(evec), dataCentered)
+    #wpcaData <- wpcaData * (decomp$d*decomp$d)
+    eval <- as.matrix(apply(wpcaData, 1, var))
+    totalVar <- sum(apply(projData, 1, var))
+    eval <- eval / totalVar
 
-  colnames(evec) <- rownames(exprData)
+    colnames(evec) <- rownames(exprData)
 
 
-  return(list(wpcaData, eval, t(evec)))
+    return(list(wpcaData, eval, t(evec)))
 
 }
 
@@ -284,61 +284,61 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
 #'     \item permuteMatrices: the permuted matrices generated as the null distrbution
 #' }
 applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, verbose=FALSE) {
-  if(verbose) message("Permutation WPCA")
-  comp <- min(components, nrow(expr), ncol(expr))
+    if(verbose) message("Permutation WPCA")
+    comp <- min(components, nrow(expr), ncol(expr))
 
-  NUM_REPEATS <- 20;
+    NUM_REPEATS <- 20;
 
-  w <- applyWeightedPCA(expr, weights, comp)
-  wPCA <- w[[1]]
-  eval <- w[[2]]
-  evec <- w[[3]]
+    w <- applyWeightedPCA(expr, weights, comp)
+    wPCA <- w[[1]]
+    eval <- w[[2]]
+    evec <- w[[3]]
 
-  # Instantiate matrices for background distribution
-  bg_vals <- matrix(0L, nrow=NUM_REPEATS, ncol=components)
-  bg_data <- matrix(0L, nrow=nrow(expr), ncol=ncol(expr))
-  bg_weights <- matrix(0L, nrow=nrow(expr), ncol=ncol(expr))
+    # Instantiate matrices for background distribution
+    bg_vals <- matrix(0L, nrow=NUM_REPEATS, ncol=components)
+    bg_data <- matrix(0L, nrow=nrow(expr), ncol=ncol(expr))
+    bg_weights <- matrix(0L, nrow=nrow(expr), ncol=ncol(expr))
 
-  permMats <- list()
+    permMats <- list()
 
-  # Compute background data and PCAs for comparing p values
-  for (i in 1:NUM_REPEATS) {
+    # Compute background data and PCAs for comparing p values
+    for (i in 1:NUM_REPEATS) {
     for (j in 1:nrow(expr)) {
-      random_i <- sample(ncol(expr));
-      bg_data[j,] <- expr[j,random_i]
-      bg_weights[j,] <- weights[j,random_i]
+        random_i <- sample(ncol(expr));
+        bg_data[j,] <- expr[j,random_i]
+        bg_weights[j,] <- weights[j,random_i]
     }
 
     bg = applyWeightedPCA(bg_data, bg_weights, comp)
     bg_vals[i,] = bg[[2]]
     permMats[[i]] <- bg[[1]]
-  }
+    }
 
-  mu <- as.matrix(apply(bg_vals, 2, mean))
-  sigma <- as.matrix(apply(bg_vals, 2, biasedVectorSD))
-  sigma[which(sigma==0)] <- 1.0
+    mu <- as.matrix(apply(bg_vals, 2, mean))
+    sigma <- as.matrix(apply(bg_vals, 2, biasedVectorSD))
+    sigma[which(sigma==0)] <- 1.0
 
-  # Compute pvals from survival function & threshold components
-  pvals <- 1 - stats::pnorm((eval - mu) / sigma)
-  thresholdComponent_i = which(pvals > p_threshold, arr.ind=TRUE)
-  if (length(thresholdComponent_i) == 0) {
+    # Compute pvals from survival function & threshold components
+    pvals <- 1 - stats::pnorm((eval - mu) / sigma)
+    thresholdComponent_i = which(pvals > p_threshold, arr.ind=TRUE)
+    if (length(thresholdComponent_i) == 0) {
     thresholdComponent <- nrow(wPCA)
-  } else {
+    } else {
     thresholdComponent <- thresholdComponent_i[[1]]
-  }
+    }
 
-  if (thresholdComponent < 5) {
+    if (thresholdComponent < 5) {
     # Less than 5 components identified as significant.  Preserving top 5.
     thresholdComponent <- 5
-  }
+    }
 
-  wPCA <- wPCA[1:thresholdComponent, ]
-  eval <- eval[1:thresholdComponent]
-  evec = evec[1:thresholdComponent, ]
+    wPCA <- wPCA[1:thresholdComponent, ]
+    eval <- eval[1:thresholdComponent]
+    evec = evec[1:thresholdComponent, ]
 
-  permMats <- lapply(permMats, function(m) {m[1:thresholdComponent, ]})
+    permMats <- lapply(permMats, function(m) {m[1:thresholdComponent, ]})
 
-  return(list(wPCA = wPCA, eval = eval, evec = evec, permuteMatrices = permMats))
+    return(list(wPCA = wPCA, eval = eval, evec = evec, permuteMatrices = permMats))
 }
 
 #' Performs PCA on data
@@ -347,14 +347,14 @@ applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, 
 #' @param variance_proportion Retain top X PC's such that this much variance is retained; if N=0, then apply this method
 #' @return Matrix containing N components for each sample.
 applyPCA <- function(exprData, N=0, variance_proportion=1.0) {
-  res <- stats::prcomp(x=t(exprData), retx=TRUE, center=TRUE)
+    res <- stats::prcomp(x=t(exprData), retx=TRUE, center=TRUE)
 
-  if(N == 0) {
+    if(N == 0) {
     total_var <- as.matrix(cumsum(res$sdev^2 / sum(res$sdev^2)))
     last_i <- utils::tail(which(total_var <= variance_proportion), n=1)
     N <- last_i
-  }
-  return(list(t(res$x[,1:N])*-1, t(res$rotation)))
+    }
+    return(list(t(res$x[,1:N])*-1, t(res$rotation)))
 }
 
 #' Performs ICA on data
@@ -365,17 +365,17 @@ applyPCA <- function(exprData, N=0, variance_proportion=1.0) {
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
 applyICA <- function(exprData, BPPARAM=bpparam()) {
 
-  set.seed(RANDOM_SEED)
+    set.seed(RANDOM_SEED)
 
-  ndata <- colNormalization(exprData)
-  ndataT <- t(ndata)
-  res <- fastICA(ndataT, n.comp=2, maxit=100, tol=.00001, alg.typ="parallel", fun="logcosh", alpha=1,
-                 method = "C", row.norm=FALSE, verbose=TRUE)
+    ndata <- colNormalization(exprData)
+    ndataT <- t(ndata)
+    res <- fastICA(ndataT, n.comp=2, maxit=100, tol=.00001, alg.typ="parallel", fun="logcosh", alpha=1,
+                    method = "C", row.norm=FALSE, verbose=TRUE)
 
-  res <- res$S
-  rownames(res) <- colnames(exprData)
+    res <- res$S
+    rownames(res) <- colnames(exprData)
 
-  return(res)
+    return(res)
 }
 
 #' Performs Spectral Embedding  on data
@@ -388,17 +388,17 @@ applyICA <- function(exprData, BPPARAM=bpparam()) {
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
 applySpectralEmbedding <- function(exprData, BPPARAM = bpparam()) {
 
-  set.seed(RANDOM_SEED)
+    set.seed(RANDOM_SEED)
 
-  ndata <- colNormalization(exprData)
+    ndata <- colNormalization(exprData)
 
-  adj <- as.matrix(dist.matrix(t(ndata)))
-  adm <- graph_from_adjacency_matrix(adj, weighted=TRUE)
-  res <- embed_adjacency_matrix(adm, 2)$X
+    adj <- as.matrix(dist.matrix(t(ndata)))
+    adm <- graph_from_adjacency_matrix(adj, weighted=TRUE)
+    res <- embed_adjacency_matrix(adm, 2)$X
 
-  rownames(res) <- colnames(exprData)
+    rownames(res) <- colnames(exprData)
 
-  return(res)
+    return(res)
 
 }
 
@@ -412,17 +412,17 @@ applySpectralEmbedding <- function(exprData, BPPARAM = bpparam()) {
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
 applytSNE10 <- function(exprData, BPPARAM=bpparam()) {
 
-  set.seed(RANDOM_SEED)
+    set.seed(RANDOM_SEED)
 
-  ndata <- colNormalization(exprData)
-  ndataT <- t(ndata)
-  #res <- Rtsne.multicore(ndataT, dims=2, max_iter=600, perplexity=10.0,
-  #     check_duplicates=FALSE, pca=FALSE, num_threads=BPPARAM$workers)
-  res <- Rtsne(ndataT, dims=2, max_iter=800, perplexity=10.0,
-               check_duplicates=FALSE, pca=FALSE)
-  res <- res$Y
-  rownames(res) <- colnames(exprData)
-  return(res)
+    ndata <- colNormalization(exprData)
+    ndataT <- t(ndata)
+    #res <- Rtsne.multicore(ndataT, dims=2, max_iter=600, perplexity=10.0,
+    #     check_duplicates=FALSE, pca=FALSE, num_threads=BPPARAM$workers)
+    res <- Rtsne(ndataT, dims=2, max_iter=800, perplexity=10.0,
+                check_duplicates=FALSE, pca=FALSE)
+    res <- res$Y
+    rownames(res) <- colnames(exprData)
+    return(res)
 
 }
 
@@ -435,20 +435,20 @@ applytSNE10 <- function(exprData, BPPARAM=bpparam()) {
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
 applytSNE30 <- function(exprData, BPPARAM=bpparam()) {
 
-  set.seed(RANDOM_SEED)
+    set.seed(RANDOM_SEED)
 
-  ndata <- colNormalization(exprData)
-  ndataT <- t(ndata)
-  #res <- Rtsne.multicore(ndataT, dims=2, max_iter=600,
-  # perplexity=30.0, check_duplicates=FALSE, pca=FALSE,
-  #num_threads=BPPARAM$workers)
-  res <- Rtsne(ndataT, dims=2, max_iter=800, perplexity=30.0,
-               check_duplicates=FALSE, pca=FALSE)
-  res <- res$Y
+    ndata <- colNormalization(exprData)
+    ndataT <- t(ndata)
+    #res <- Rtsne.multicore(ndataT, dims=2, max_iter=600,
+    # perplexity=30.0, check_duplicates=FALSE, pca=FALSE,
+    #num_threads=BPPARAM$workers)
+    res <- Rtsne(ndataT, dims=2, max_iter=800, perplexity=30.0,
+                check_duplicates=FALSE, pca=FALSE)
+    res <- res$Y
 
-  rownames(res) <- colnames(exprData)
+    rownames(res) <- colnames(exprData)
 
-  return(res)
+    return(res)
 }
 
 #' create a Knearest neighbor graph from the data
@@ -468,14 +468,14 @@ applyKNN <- function(exprData, BPPARAM=bpparam()) {
     sigma <- apply(d, 1, max)
 
     sparse_weights <- exp(-1 * (d * d) / sigma^2)
-  weights <- load_in_knn(nn, sparse_weights)
+    weights <- load_in_knn(nn, sparse_weights)
 
-  weightsNormFactor <- Matrix::rowSums(weights)
-  weightsNormFactor[weightsNormFactor == 0] <- 1.0
-  weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
-  weights <- weights / weightsNormFactor
+    weightsNormFactor <- Matrix::rowSums(weights)
+    weightsNormFactor[weightsNormFactor == 0] <- 1.0
+    weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
+    weights <- weights / weightsNormFactor
 
-  return(weights)
+    return(weights)
 }
 
 #' Performs ISOMap on data
@@ -487,14 +487,14 @@ applyKNN <- function(exprData, BPPARAM=bpparam()) {
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
 applyISOMap <- function(exprData, BPPARAM=bpparam()) {
 
-  set.seed(RANDOM_SEED)
+    set.seed(RANDOM_SEED)
 
-  res <- Isomap(t(exprData), dims=2)
-  res <- res$dim2
+    res <- Isomap(t(exprData), dims=2)
+    res <- res$dim2
 
-  rownames(res) <- colnames(exprData)
+    rownames(res) <- colnames(exprData)
 
-  return(res)
+    return(res)
 
 }
 
@@ -505,31 +505,31 @@ applyISOMap <- function(exprData, BPPARAM=bpparam()) {
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
 applyRBFPCA <- function(exprData, BPPARAM=bpparam()) {
 
-  set.seed(RANDOM_SEED)
+    set.seed(RANDOM_SEED)
 
-  ndata <- colNormalization(exprData)
-  distanceMatrix <- as.matrix(dist.matrix(t(ndata)))
-  distanceMatrix <- log(distanceMatrix)
-  point_mult(distanceMatrix, distanceMatrix)
-  kMat <- as.matrix(exp(-1 * (distanceMatrix) / .33^2))
-  diag(kMat) <- 0
-  kMatNormFactor <- rowSums(kMat)
-  kMatNormFactor[kMatNormFactor == 0] <- 1.0
-  kMatNormFactor[is.na(kMatNormFactor)] <- 1.0
-  kMat <- kMat / kMatNormFactor
+    ndata <- colNormalization(exprData)
+    distanceMatrix <- as.matrix(dist.matrix(t(ndata)))
+    distanceMatrix <- log(distanceMatrix)
+    point_mult(distanceMatrix, distanceMatrix)
+    kMat <- as.matrix(exp(-1 * (distanceMatrix) / .33^2))
+    diag(kMat) <- 0
+    kMatNormFactor <- rowSums(kMat)
+    kMatNormFactor[kMatNormFactor == 0] <- 1.0
+    kMatNormFactor[is.na(kMatNormFactor)] <- 1.0
+    kMat <- kMat / kMatNormFactor
 
-  # Compute normalized matrix & covariance matrix
-  kMat <- as.matrix(kMat, 1, function(x) (x - mean(x)) / stats::sd(x))
-  W <- tcrossprod(kMat)
+    # Compute normalized matrix & covariance matrix
+    kMat <- as.matrix(kMat, 1, function(x) (x - mean(x)) / stats::sd(x))
+    W <- tcrossprod(kMat)
 
-  decomp <- rsvd::rsvd(W, k=2)
-  evec <- decomp$u
+    decomp <- rsvd::rsvd(W, k=2)
+    evec <- decomp$u
 
-  # project down using evec
-  rbfpca <- crossprod(t(kMat), evec)
-  rownames(rbfpca) <- colnames(exprData)
+    # project down using evec
+    rbfpca <- crossprod(t(kMat), evec)
+    rownames(rbfpca) <- colnames(exprData)
 
-  return(rbfpca)
+    return(rbfpca)
 
 }
 
@@ -557,6 +557,6 @@ sqdist <- function(X, Y) {
 #' @param mi Minimum value
 #' @return Data matrix with all values less than MI set to 0
 clipBottom <- function(x, mi) {
-  x[x < mi] <- mi
-  return(x)
+    x[x < mi] <- mi
+    return(x)
 }

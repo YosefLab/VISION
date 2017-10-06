@@ -16,7 +16,7 @@
 #' @param treeScore a significance score for the fitted tree
 #' @return ProjectionData object
 setMethod("initialize", signature(.Object="TreeProjectionData"),
-          function(.Object, projections=NULL, keys, sigProjMatrix, pMatrix, sigClusters, treeScore) {
+            function(.Object, projections=NULL, keys, sigProjMatrix, pMatrix, sigClusters, treeScore) {
             .Object@projections <- projections
             .Object@keys <- keys
             .Object@sigProjMatrix <- sigProjMatrix
@@ -24,6 +24,6 @@ setMethod("initialize", signature(.Object="TreeProjectionData"),
             .Object@sigClusters <- sigClusters
             .Object@treeScore <- treeScore
             return(.Object)
-          }
+            }
 )
 

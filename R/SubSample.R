@@ -9,14 +9,14 @@
 #'     \item the data included in the subsample
 #' }
 splitSamples <- function(data, sampleSize) {
-  # Set seed so outputs are reproduceable
-  set.seed(RANDOM_SEED)
+    # Set seed so outputs are reproduceable
+    set.seed(RANDOM_SEED)
 
-  data <- sample(data)
-  sub <- data[1:sampleSize,]
-  holdout <- data[sampleSize:nrow(data),]
+    data <- sample(data)
+    sub <- data[1:sampleSize,]
+    holdout <- data[sampleSize:nrow(data),]
 
-  return(list(holdout, sub))
+    return(list(holdout, sub))
 
 
 

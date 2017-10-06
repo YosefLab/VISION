@@ -9,27 +9,27 @@
 #'     \item pools - a list of data matrices of the original cells in each pool
 #' }
 applyMicroClustering <- function(exprData, hkg=list(), BPPARAM=bpparam()) {
-  fexpr <- filterGenesFano(exprData)
-  res <- applyPCA(fexpr, N=30)[[1]]
-  kn <- ball_tree_knn(t(res), 30, BPPARAM$workers)
-  cl <- louvainCluster(kn, t(res))
-  cl <- readjust_clusters(cl, t(res))
+    fexpr <- filterGenesFano(exprData)
+    res <- applyPCA(fexpr, N=30)[[1]]
+    kn <- ball_tree_knn(t(res), 30, BPPARAM$workers)
+    cl <- louvainCluster(kn, t(res))
+    cl <- readjust_clusters(cl, t(res))
 
-  pooled_cells <- createPools(cl, exprData, hkg)
+    pooled_cells <- createPools(cl, exprData, hkg)
 
-  cn <- lapply(1:ncol(pooled_cells), function(i) return(paste0("Cluster ", i)))
-  colnames(pooled_cells) <- cn
-  rownames(pooled_cells) <- rownames(exprData)
+    cn <- lapply(1:ncol(pooled_cells), function(i) return(paste0("Cluster ", i)))
+    colnames(pooled_cells) <- cn
+    rownames(pooled_cells) <- rownames(exprData)
 
-  pools <- lapply(1:length(cl), function(i) {
+    pools <- lapply(1:length(cl), function(i) {
     clust_data <- exprData[,cl[[i]]]
     cells <- colnames(clust_data)
     return(cells)
     })
 
-  names(pools) <- cn
+    names(pools) <- cn
 
-  return(list(pooled_cells, pools))
+    return(list(pooled_cells, pools))
 }
 
 #' Applies the Louvain algorithm to generate micro-clustered data
@@ -43,7 +43,7 @@ louvainCluster <- function(kn, data) {
 
     nn <- kn[[1]]
     d <- kn[[2]]
-  d <- exp(-1 * (d*d) / .05)
+    d <- exp(-1 * (d*d) / .05)
 
     nnl <- lapply(1:nrow(nn), function(i) nn[i,])
 
@@ -104,8 +104,8 @@ readjust_clusters <- function(clusters, data, cellsPerPartition=100) {
             subData <- data[currCl,]
             if (length(currCl) > cellsPerPartition) {
                 nCl <- stats::kmeans(subData,
-                                     centers=round(nrow(subData) / cellsPerPartition),
-                                     iter.max=100)
+                                        centers=round(nrow(subData) / cellsPerPartition),
+                                        iter.max=100)
             } else {
                 nCl <- stats::kmeans(subData, centers=1, iter.max=100)
             }
@@ -143,7 +143,7 @@ findRepSubset <- function(ls) {
     ls <- unique(sort(unlist(ls)))
 
     intervals <- lapply(as.list(as.numeric(ls)), function(x) {
-      return(list(x - x/5, x + x/5))
+        return(list(x - x/5, x + x/5))
     })
     n_intervals <- merge_intervals(intervals)
 
@@ -202,7 +202,7 @@ createPools <- function(cl, expr, hkg=list()) {
 
             p_cell <- as.matrix(apply(clust_data, 1, mean))
             return(p_cell)
-      })), nrow=nrow(expr), ncol=length(cl))
+        })), nrow=nrow(expr), ncol=length(cl))
 
     return(pooled_cells)
 
@@ -218,94 +218,94 @@ createPools <- function(cl, expr, hkg=list()) {
 #' @return Sample specific parameters to use with the fit function
 createFalseNegativeMap <- function(data, housekeeping_genes) {
 
-  message("Creating False Negative Map...")
+    message("Creating False Negative Map...")
 
-  #subset of genes to be used,ie those included in the housekeeping genes set
-  keep_ii <- which(rownames(data) %in% housekeeping_genes[[1]])
+    #subset of genes to be used,ie those included in the housekeeping genes set
+    keep_ii <- which(rownames(data) %in% housekeeping_genes[[1]])
 
-  # Filter out genes with no variance
-  data_hk <- data[keep_ii, ]
-  data_hk <- filterGenesNovar(data_hk)
+    # Filter out genes with no variance
+    data_hk <- data[keep_ii, ]
+    data_hk <- filterGenesNovar(data_hk)
 
-  # calculate the distributions for hk gene
-  # Gamma is 1 for any non-zero data point
-  # Mu_h is the row (per gene) average of non zero points
-  gamma <- as.matrix(data_hk)
-  gamma_i <- which(gamma > 0)
-  gamma[gamma_i] <- 1
-  mu_h <- as.matrix(apply(data_hk, 1, function(r) sum(r) / sum(r!=0)))
+    # calculate the distributions for hk gene
+    # Gamma is 1 for any non-zero data point
+    # Mu_h is the row (per gene) average of non zero points
+    gamma <- as.matrix(data_hk)
+    gamma_i <- which(gamma > 0)
+    gamma[gamma_i] <- 1
+    mu_h <- as.matrix(apply(data_hk, 1, function(r) sum(r) / sum(r!=0)))
 
 
-  # Fit a function mapping mu to gammas
-  func <- function(xvals, x0, a, L=0, S=1) {
+    # Fit a function mapping mu to gammas
+    func <- function(xvals, x0, a, L=0, S=1) {
     return(L + (S/(1 + exp((xvals-x0)*a))))
-  }
+    }
 
 
-  efun <- function(x, y, args) {
+    efun <- function(x, y, args) {
     if (args[[1]] < 0) {
-      args[[1]] = 0
+        args[[1]] = 0
     } else if (args[[1]] > Inf) {
-      args[[1]] = Inf
+        args[[1]] = Inf
     }
 
     if (args[[2]] < 0) {
-      args[[2]] = 0
+        args[[2]] = 0
     } else if (args[[2]] > 2) {
-      args[[2]] = 2
+        args[[2]] = 2
     }
     out <- func(x, args[[1]], args[[2]])
     return(sum((out-y)**2))
-  }
+    }
 
 
-  params <- matrix(0L, ncol=ncol(gamma), nrow=4)
+    params <- matrix(0L, ncol=ncol(gamma), nrow=4)
 
-  x <- c(mu_h)
+    x <- c(mu_h)
 
-  if(length(x) > 30) {
+    if(length(x) > 30) {
     q_indices <- round(length(x)/30 * seq(0, 29))
-  } else {
+    } else {
     q_indices <- seq(0, 29)
-  }
+    }
 
-  q_indices <- c(q_indices, length(x))
+    q_indices <- c(q_indices, length(x))
 
-  sort_i <- order(x)
-  x_sorted <- x[sort_i]
+    sort_i <- order(x)
+    x_sorted <- x[sort_i]
 
-  y <- 1-gamma
-  y_sorted <- y[sort_i,]
+    y <- 1-gamma
+    y_sorted <- y[sort_i,]
 
-  # Store the mean expression of genes per quantile
-  x_quant <- rep(0, length(q_indices)-1);
+    # Store the mean expression of genes per quantile
+    x_quant <- rep(0, length(q_indices)-1);
 
-  # Store the mean expression of genes in a sample per quantile
-  y_quant <- matrix(0L, nrow=length(q_indices)-1, ncol=ncol(y))
+    # Store the mean expression of genes in a sample per quantile
+    y_quant <- matrix(0L, nrow=length(q_indices)-1, ncol=ncol(y))
 
-  for(i in 1:(length(q_indices)-1)){
+    for(i in 1:(length(q_indices)-1)){
     start_i <- q_indices[i]+1;
     end_i <- q_indices[i+1];
 
     x_quant[i] <- mean(x_sorted[start_i:end_i]);
     y_quant[i,] = colMeans(as.matrix(y_sorted[start_i:end_i,]))
 
-  }
+    }
 
-  bounds <- list(c(0, Inf), c(0, 2))
-  initialGuesses <- list(c(3.5, 1),
-                         c(5.5, 1),
-                         c(1.5, .5),
-                         c(5.5, .5),
-                         c(3.5, 1.7))
+    bounds <- list(c(0, Inf), c(0, 2))
+    initialGuesses <- list(c(3.5, 1),
+                            c(5.5, 1),
+                            c(1.5, .5),
+                            c(5.5, .5),
+                            c(3.5, 1.7))
 
-  for (k in 1:(ncol(gamma) - 1)) {
+    for (k in 1:(ncol(gamma) - 1)) {
     best_eval <- 1e99
     for (ig in initialGuesses) {
 
-      res <- optim(par=c(ig), efun, x=x_quant, y=y_quant[,k])
+        res <- optim(par=c(ig), efun, x=x_quant, y=y_quant[,k])
 
-      if (res$value < best_eval) {
+        if (res$value < best_eval) {
         best_eval <- res$value
         param <- res$par
         params[1,k] = param[1]
@@ -313,11 +313,11 @@ createFalseNegativeMap <- function(data, housekeeping_genes) {
         params[3,k] = 0
         params[4,k] = 1
 
-      }
+        }
     }
-  }
+    }
 
-  return(list(func, params))
+    return(list(func, params))
 
 }
 
@@ -333,37 +333,37 @@ createFalseNegativeMap <- function(data, housekeeping_genes) {
 #' @return Weight matrix (NUM_GENES x NUM_SAMPLES) which includes the estimated
 #' weight for each data point in input matrix. Ranges form 0 to 1.
 computeWeights <- function(fit_func, params, exprData) {
-  expr <- getExprData(exprData);
+    expr <- getExprData(exprData);
 
-  fnProb <- matrix(0L, nrow = nrow(expr), ncol = ncol(expr))
-  countNonZero <- apply(expr, 1, function(c) sum(c!=0))
-  countNonZero[which(countNonZero == 0)] <- 1;
-  mu_h <- apply(expr, 1, function(r) sum(r)) / countNonZero
+    fnProb <- matrix(0L, nrow = nrow(expr), ncol = ncol(expr))
+    countNonZero <- apply(expr, 1, function(c) sum(c!=0))
+    countNonZero[which(countNonZero == 0)] <- 1;
+    mu_h <- apply(expr, 1, function(r) sum(r)) / countNonZero
 
-  for (i in 1:ncol(fnProb)) {
+    for (i in 1:ncol(fnProb)) {
     fnProb[,i] = fit_func(mu_h, params[,i][1],
-                          params[,i][2],
-                          params[,i][3],
-                          params[,i][4])
-  }
+                            params[,i][2],
+                            params[,i][3],
+                            params[,i][4])
+    }
 
-  pdE <- 1 - fnProb
-  pnd <- apply(expr, 1, function(r) sum(r==0)) / ncol(expr)
-  pe <- (1 - pnd) / apply(pdE, 1, function(r) mean(r))
+    pdE <- 1 - fnProb
+    pnd <- apply(expr, 1, function(r) sum(r==0)) / ncol(expr)
+    pe <- (1 - pnd) / apply(pdE, 1, function(r) mean(r))
 
-  pe[which(is.na(pe))] <- 1.0
-  pnd[which(pnd == 0)] <- 1.0 / ncol(expr)
+    pe[which(is.na(pe))] <- 1.0
+    pnd[which(pnd == 0)] <- 1.0 / ncol(expr)
 
-  pne_nd <- 1 - (1-pdE)* (pe / pnd)
-  pne_nd[which(pne_nd < 0)] <- 0.0
-  pne_nd[which(pne_nd > 1)] <- 1.0
+    pne_nd <- 1 - (1-pdE)* (pe / pnd)
+    pne_nd[which(pne_nd < 0)] <- 0.0
+    pne_nd[which(pne_nd > 1)] <- 1.0
 
-  weights <- pne_nd
-  weights[which(expr > 0)] <- 1.0
+    weights <- pne_nd
+    weights[which(expr > 0)] <- 1.0
 
-  rownames(weights) <- rownames(expr)
-  colnames(weights) <- colnames(expr)
+    rownames(weights) <- rownames(expr)
+    colnames(weights) <- colnames(expr)
 
-  return(weights)
+    return(weights)
 
 }

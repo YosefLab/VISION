@@ -11,14 +11,14 @@
 #' to its closest neighbors
 #' @return Projection object
 setMethod("initialize", signature(.Object = "Projection"),
-          function(.Object, name, pData=NULL, weights=matrix(NA, 1,1)) {
+            function(.Object, name, pData=NULL, weights=matrix(NA, 1,1)) {
 
             .Object@name = name
             .Object@pData = pData
             .Object@weights = weights
 
             return(.Object)
-          }
+            }
 )
 
 #' Updates the coordinate data stored in this object.
@@ -27,10 +27,10 @@ setMethod("initialize", signature(.Object = "Projection"),
 #' @param data New data to be stored in the object
 #' @return Updated Projection object.
 setMethod("updateProjection", signature(object = "Projection"),
-          function(object, data) {
+            function(object, data) {
             object@pData <- data
             return(object)
-          }
+            }
 )
 
 #' Clusters the projection according to some method
@@ -40,13 +40,13 @@ setMethod("updateProjection", signature(object = "Projection"),
 #' @param param Parameters for clustering method
 #' @return a Cluster object
 setMethod("cluster", signature(object = "Projection"),
-          function(object, method, param) {
+            function(object, method, param) {
 
             if(method == "KMeans")
             {
                 km <- stats::kmeans(t(object@pData), centers=param)
                 clust <- Cluster(method, param, km$centers,
-                                 t(as.matrix(km$cluster)))
+                                    t(as.matrix(km$cluster)))
             }
             else
             {
@@ -63,9 +63,9 @@ setMethod("cluster", signature(object = "Projection"),
 #' @param BPPARAM the parallelizaton backend to use
 #' @return a weights matrix
 setMethod("computeKNNWeights", signature(object = "Projection"),
-          function(object, K = 30, BPPARAM = bpparam()) {
+            function(object, K = 30, BPPARAM = bpparam()) {
 
-           if (!is.na(object@weights[1,1])) {
+            if (!is.na(object@weights[1,1])) {
                 return(object@weights)
             }
 
@@ -85,6 +85,6 @@ setMethod("computeKNNWeights", signature(object = "Projection"),
             weights <- weights / weightsNormFactor
 
             return(weights)
-          }
+            }
 )
 

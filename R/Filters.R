@@ -12,31 +12,31 @@
 #' @return List of the updated ExpressionData object, and the list of filters applied.
 applyFilters <- function(data, threshold, filterInput) {
 
-  filterList <- c()
-  expr <- getExprData(data)
+    filterList <- c()
+    expr <- getExprData(data)
 
-  message("Applying filters...")
+    message("Applying filters...")
 
-  for (filter in filterInput) {
+    for (filter in filterInput) {
     if (filter == "novar") {
-      filterList <- c(filterList, "novar")
-      expr <- filterGenesNovar(expr)
-      data@noVarFilter <- expr
+        filterList <- c(filterList, "novar")
+        expr <- filterGenesNovar(expr)
+        data@noVarFilter <- expr
     } else if (filter == "threshold") {
-      filterList <- c(filterList, "threshold")
-      expr <- filterGenesThreshold(expr, threshold)
-      data@thresholdFilter <- expr
+        filterList <- c(filterList, "threshold")
+        expr <- filterGenesThreshold(expr, threshold)
+        data@thresholdFilter <- expr
     } else if (filter == "fano") {
-      filterList <- c(filterList, "fano")
-      texpr <- filterGenesThreshold(expr, threshold)
-      expr <- filterGenesFano(texpr)
-      data@fanoFilter <- expr
+        filterList <- c(filterList, "fano")
+        texpr <- filterGenesThreshold(expr, threshold)
+        expr <- filterGenesFano(texpr)
+        data@fanoFilter <- expr
     } else {
-      stop("Filter not recognized")
+        stop("Filter not recognized")
     }
-  }
+    }
 
-  return(list(data, filterList))
+    return(list(data, filterList))
 
 }
 
@@ -47,10 +47,10 @@ applyFilters <- function(data, threshold, filterInput) {
 #' @return filtered expression matrix
 filterGenesNovar <- function(data) {
 
-  message("Applying no variance filter...")
+    message("Applying no variance filter...")
 
 
-  return (subset(data, apply(data, 1, stats::var) != 0))
+    return (subset(data, apply(data, 1, stats::var) != 0))
 
 }
 #' Filter genes whose values sum to less than some threshold value (may remove rows)
@@ -60,10 +60,10 @@ filterGenesNovar <- function(data) {
 #' @return filtered expression matrix
 filterGenesThreshold <- function(data, threshold) {
 
-  message("Applying threshold filter...")
+    message("Applying threshold filter...")
 
-  keep_ii <- which(as.matrix(apply( (data > 0), 1, sum)) > threshold)
-  return(data[keep_ii,])
+    keep_ii <- which(as.matrix(apply( (data > 0), 1, sum)) > threshold)
+    return(data[keep_ii,])
 
 
 
@@ -75,28 +75,28 @@ filterGenesThreshold <- function(data, threshold) {
 #' @return NUM_GENES_PASSED_FANO_FILTER x NUM_SAMPLES filtered expression matrix
 filterGenesFano <- function(data, num_mad=2) {
 
-  message("Applying fano filter...")
-  sub_data <- data
-  # if too many samples, subsample for fano filter
-  if (ncol(data) > 50000) {
+    message("Applying fano filter...")
+    sub_data <- data
+    # if too many samples, subsample for fano filter
+    if (ncol(data) > 50000) {
     sub_data <- data[,sample(ncol(data), 50000)]
-  }
+    }
 
-  mu <- apply(sub_data, 1, mean)
-  sigma <- apply(sub_data, 1, stats::sd)
-
-
-  aa <- order(mu)
-  mu_sort <- mu[aa]
-  sigma_sort <- sigma[aa]
+    mu <- apply(sub_data, 1, mean)
+    sigma <- apply(sub_data, 1, stats::sd)
 
 
-  N_QUANTS <- 30
-  m <- floor(length(mu_sort) / N_QUANTS)
+    aa <- order(mu)
+    mu_sort <- mu[aa]
+    sigma_sort <- sigma[aa]
 
-  gene_passes <- rep(0, nrow(sub_data)) == 1
 
-  genePassList <- lapply(0:N_QUANTS, function(i) {
+    N_QUANTS <- 30
+    m <- floor(length(mu_sort) / N_QUANTS)
+
+    gene_passes <- rep(0, nrow(sub_data)) == 1
+
+    genePassList <- lapply(0:N_QUANTS, function(i) {
         if (i == N_QUANTS-1) {
             rr <- seq(i*m+1, length(mu_sort))
         } else {
@@ -116,10 +116,10 @@ filterGenesFano <- function(data, num_mad=2) {
 
     })
 
-  gpi <- unlist(genePassList)
-  gene_passes[gpi] <- TRUE
-  gene_passes <- gene_passes[order(aa)]
-  return(data[which(gene_passes==TRUE),])
+    gpi <- unlist(genePassList)
+    gene_passes[gpi] <- TRUE
+    gene_passes <- gene_passes[order(aa)]
+    return(data[which(gene_passes==TRUE),])
 
 }
 

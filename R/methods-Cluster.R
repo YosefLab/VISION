@@ -8,7 +8,7 @@
 #' @param data cluster-assocated data
 #' @return a Cluster object
 setMethod("initialize", signature(.Object="Cluster"),
-          function(.Object, method, param, centers, data) {
+            function(.Object, method, param, centers, data) {
 
             .Object@method <- method
             .Object@param <- param
@@ -16,4 +16,4 @@ setMethod("initialize", signature(.Object="Cluster"),
             .Object@data <- data
 
             return(.Object)
-          })
+            })
