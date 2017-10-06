@@ -288,7 +288,7 @@ createFalseNegativeMap <- function(data, housekeeping_genes) {
     end_i <- q_indices[i+1];
 
     x_quant[i] <- mean(x_sorted[start_i:end_i]);
-    y_quant[i,] = colMeans(y_sorted[start_i:end_i,])
+    y_quant[i,] = colMeans(as.matrix(y_sorted[start_i:end_i,]))
 
   }
 
