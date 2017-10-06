@@ -8,28 +8,28 @@
 \alias{FastProject,ExpressionSet-method}
 \title{Initializes a new FastProject object.}
 \usage{
-FastProject(data, ...)
+FastProject(data, housekeeping, signatures, ...)
 
-\S4method{FastProject}{matrix}(data, signatures, housekeeping,
+\S4method{FastProject}{matrix}(data, housekeeping, signatures,
   norm_methods = NULL, precomputed = NULL, nofilter = FALSE,
   nomodel = FALSE, filters = c("fano"), lean = FALSE, qc = FALSE,
   min_signature_genes = 5, projections = "", weights = NULL,
   threshold = 0, perm_wPCA = FALSE, sig_norm_method = "znorm_rows",
   sig_score_method = "weighted_avg")
 
-\S4method{FastProject}{character}(data, ...)
+\S4method{FastProject}{character}(data, housekeeping, signatures, ...)
 
-\S4method{FastProject}{ExpressionSet}(data, ...)
+\S4method{FastProject}{ExpressionSet}(data, housekeeping, signatures, ...)
 }
 \arguments{
 \item{data}{expression data - can be numeric matrix, path of a file or
 ExpressionSet object}
 
-\item{...}{additional arguments}
+\item{housekeeping}{file path to housekeeping data file}
 
 \item{signatures}{list of file paths to signature files (.gmt or .txt)}
 
-\item{housekeeping}{file path to housekeeping data file}
+\item{...}{additional arguments}
 
 \item{norm_methods}{normalization methods to be extracted from the scone
 object}
@@ -40,7 +40,8 @@ object}
 Default is FALSE}
 
 \item{nomodel}{if TRUE, no fnr curve calculated and all weights equal to 1.
-Else FNR and weights calculated.  Default is FALSE.}
+Else FNR and weights calculated.
+         Default is TRUE.}
 
 \item{filters}{list of filters to compute}
 
