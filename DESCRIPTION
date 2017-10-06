@@ -1,6 +1,6 @@
 Package: FastProjectR
 Title: Two dimensional visualization of single-cell data
-Version: 0.99.0
+Version: 0.99.1
 Authors@R: c(person("Matt", "Jones", email = "mattjones315@gmail.com", role = c("aut")),
 			 person("Tal", "Ashuach", email = "tal_ashuach@berkeley.edu", role = c("aut", "cre")),
 			 person("David", "Detomaso", email = "david.detomaso@berkeley.edu", role = c("aut")),
