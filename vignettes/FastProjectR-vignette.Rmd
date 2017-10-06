@@ -1,6 +1,9 @@
 ---
 title: "Introduction to FastProjectR"
 author: "Matthew Jones"
+date: "`r BiocStyle::doc_date()`"
+package: "`r BiocStyle::pkg_ver('BiocStyle')`"
+output: BiocStyle::html_document2
 vignette: >
   %\VignetteIndexEntry{Introduction to FastProjectR}
   %\VignetteEngine{knitr::rmarkdown}
