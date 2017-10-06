@@ -164,8 +164,7 @@ setMethod("Analyze", signature(object="FastProject"),
             function(object, BPPARAM = NULL) {
     message("Beginning Analysis")
     if(is.null(BPPARAM)) {
-    BPPARAM <- bpparam()
-    print(BPPARAM)
+    BPPARAM <- SerialParam()
     }
 
     ptm <- Sys.time()

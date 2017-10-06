@@ -73,7 +73,7 @@ All of these initialization would result in the same FastProject object being cr
 
 ```{r, collapse=F, message=T}
 # -- load FastProjectR
-library(FastProjectR)
+devtools::load_all()
 
 # -- read in expression data set
 expr <- as.matrix(read.table("data/expression_matrix.txt", 
@@ -81,16 +81,16 @@ expr <- as.matrix(read.table("data/expression_matrix.txt",
 hkg <- read.table("data/GeneNameHousekeeping.txt", stringsAsFactors = FALSE)$V1
 
 # -- Create a FastProject object with existing matrix
-fp <- FastProject(expr, c("data/h.all.v5.2.symbols.gmt"), hkg)
+fp <- FastProject(expr, hkg, c("data/h.all.v5.2.symbols.gmt"))
 
 ## -- Create a FastProject object with an ExpressionSet 
 eset <- Biobase::ExpressionSet(assayData=expr)
-fp <- FastProject(eset, c("data/h.all.v5.2.symbols.gmt"), hkg) 
+fp <- FastProject(eset, hkg, c("data/h.all.v5.2.symbols.gmt")) 
 
 # -- or just provide that files to FastProject
 fp <- FastProject("data/expression_matrix.txt",  
-                  c("data/h.all.v5.2.symbols.gmt"),
-                  "data/GeneNameHousekeeping.txt")
+                  "data/GeneNameHousekeeping.txt",
+                  c("data/h.all.v5.2.symbols.gmt"))
 ```
 
 Now, with a FastProject object, we can run `Analyze` which will run the FastProject pipeline and return a FastProjectOutput object.

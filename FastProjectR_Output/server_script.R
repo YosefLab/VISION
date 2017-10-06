@@ -23,6 +23,10 @@ if (class(arg1) == "FastProjectOutput") {
   fpout <- readRDS(arg1)
 }
 
+path <- find.package("FastProjectR")
+
+setwd(path)
+
 port <- sample(8000:9999, 1)
 url <- paste0("http://127.0.0.1:", port, "/html_output/Results.html")
 browseURL(url)
@@ -420,6 +424,6 @@ jug() %>%
     }
     return(out)
   }) %>%
-  serve_static_files("../html_output") %>%
+  serve_static_files("../html_output", root_path=setwd(path)) %>%
   simple_error_handler_json() %>%
   serve_it(port=port)
