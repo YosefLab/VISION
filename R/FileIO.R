@@ -10,7 +10,7 @@ readExprToMatrix <- function(filename, delimiter="\t") {
     f <- fp[[length(fp)]]
     fsplit <- unlist(strsplit(f, "[.]"))
     if (fsplit[[length(fsplit)]] == "rds") {
-    return(readRDS(filename))
+        return(readRDS(filename))
     }
 
     data <- as.matrix(data.table::fread(filename, sep=delimiter, skip=1, drop=1))

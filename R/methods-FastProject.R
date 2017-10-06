@@ -54,7 +54,7 @@
 #'                      signatures = sigs,
 #'                      housekeeping = hkg)
 setMethod("FastProject", signature(data = "matrix"),
-            function(data, signatures, housekeeping, norm_methods = NULL,
+            function(data, housekeeping, signatures, norm_methods = NULL,
                     precomputed=NULL, nofilter=FALSE, nomodel=FALSE,
                     filters=c("fano"), lean=FALSE, qc=FALSE,
                     min_signature_genes=5, projections="", weights=NULL,
@@ -165,6 +165,7 @@ setMethod("Analyze", signature(object="FastProject"),
     message("Beginning Analysis")
     if(is.null(BPPARAM)) {
     BPPARAM <- bpparam()
+    print(BPPARAM)
     }
 
     ptm <- Sys.time()
