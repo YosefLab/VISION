@@ -100,7 +100,7 @@ backend and providing it to `Analyze`. If one is not provided, FastProjectR will
 to get a default backend.
 Here we provide a serial back-end since it's platform independent. For more details on setting up parallelization back-ends, see the [BiocParallel package page](http://bioconductor.org/packages/release/bioc/html/BiocParallel.html)
 
-```{r, collapse=T, message=T, results='hide', eval=T}
+```{r, collapse=T, message=T}
 bp <- BiocParallel::SerialParam()
 
 fpOut <- Analyze(fp, BPPARAM = bp)
@@ -123,7 +123,7 @@ A great resource for gene signatures is `MSigDB`, curated by the Broad institute
 If there is a set of proprietary genes of interest, a user-defined signature can be created in two ways:
 ### creating a Signature object
 Once a set of genes that are up or down regulated in the process or cell type of interest are selected, creating a Signature object is relatively straightforward:
-```{r create signature object}
+```{r create signature object, collapse=T}
 up.genes <- c("ug1","ug2","ug3","ug4","ug5","ug6","ug7","ug8","ug9")
 down.genes <- c("dg1","dg2","dg3","dg4","dg5","dg6")
 
