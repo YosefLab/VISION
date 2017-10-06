@@ -15,8 +15,7 @@
 #' @param nofilter if TRUE, no filter applied; else filters applied.
 #' Default is FALSE
 #' @param nomodel if TRUE, no fnr curve calculated and all weights equal to 1.
-#' Else FNR and weights calculated.
-#'          Default is TRUE.
+#' Else FNR and weights calculated.  Default is FALSE.
 #' @param filters list of filters to compute
 #' @param lean if TRUE run a lean simulation. Else more robust pipeline
 #' initiated. Default is FALSE
@@ -54,7 +53,7 @@
 #'                   housekeeping = hkg,
 #'                   signatures = sigs)
 setMethod("FastProject", signature(data = "matrix"),
-          function(data, housekeeping, signatures, norm_methods = NULL,
+          function(data, signatures, housekeeping, norm_methods = NULL,
                    precomputed=NULL, nofilter=FALSE, nomodel=FALSE,
                    filters=c("fano"), lean=FALSE, qc=FALSE,
                    min_signature_genes=5, projections="", weights=NULL,
@@ -63,13 +62,14 @@ setMethod("FastProject", signature(data = "matrix"),
 
             .Object <- new("FastProject")
             .Object@exprData <- data
-
-            if (!is.character(housekeeping)){
-              stop("housekeeping must be file path or character vector")
-            } else if (length(housekeeping) == 1) {
-              .Object@housekeepingData <- readHKGToMatrix(housekeeping)
-            } else {
-              .Object@housekeepingData <- data.frame(hkg = housekeeping)
+            if(!missing(housekeeping)){
+                if (!is.character(housekeeping)){
+                  stop("housekeeping must be file path or character vector")
+                } else if (length(housekeeping) == 1) {
+                  .Object@housekeepingData <- readHKGToMatrix(housekeeping)
+                } else {
+                  .Object@housekeepingData <- data.frame(hkg = housekeeping)
+                }
             }
 
             if (is.list(signatures)) {
@@ -112,18 +112,16 @@ setMethod("FastProject", signature(data = "matrix"),
 #' @rdname FastProject-class
 #' @export
 setMethod("FastProject", signature(data = "character"),
-          function(data, housekeeping, signatures, ...) {
-            return(FastProject(readExprToMatrix(data),
-                               housekeeping, signatures,...))
+          function(data, ...) {
+            return(FastProject(readExprToMatrix(data), ...))
           }
 )
 
 #' @rdname FastProject-class
 #' @export
 setMethod("FastProject", signature(data = "ExpressionSet"),
-          function(data, housekeeping, signatures, ...) {
-            return(FastProject(Biobase::exprs(data),
-                               housekeeping, signatures,...))
+          function(data, ...) {
+            return(FastProject(Biobase::exprs(data), ...))
           }
 )
 

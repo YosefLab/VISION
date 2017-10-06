@@ -6,24 +6,19 @@
 readExprToMatrix <- function(filename, delimiter="\t") {
 
   message("Loading data from ", filename, " ...")
-  fp <- unlist(strsplit(filename, "/"))
-  f <- fp[[length(fp)]]
-  fsplit <- unlist(strsplit(f, "[.]"))
-  if (fsplit[[length(fsplit)]] == "rds") {
-    return(readRDS(filename))
-  }
 
-  data <- as.matrix(data.table::fread(filename, sep=delimiter, skip=1, drop=1))
-  rnames <- data.table::fread(filename, sep=delimiter, skip=1, select=1)
-  cnames <- utils::read.table(filename, sep=delimiter, header=TRUE,
-                              row.names=1,nrows=1)
-  rownames(data) <- as.vector(t(rnames))
-  colnames(data) <- colnames(cnames)
+  data <- as.matrix(read.table(filename, sep = delimiter,
+                               header = TRUE, row.names = 1))
+
+  # data <- as.matrix(data.table::fread(filename, sep=delimiter, skip=1, drop=1))
+  # rnames <- data.table::fread(filename, sep=delimiter, skip=1, select=1)
+  # cnames <- utils::read.table(filename, sep=delimiter, header=TRUE,
+  #                             row.names=1,nrows=1)
+  # rownames(data) <- as.vector(t(rnames))
+  # colnames(data) <- colnames(cnames)
 
   # check if there are any repeats in samples or genes
-  uniqrows <- unique(rownames(data))
-
-  data <- data[uniqrows,]
+  data <- data[unique(rownames(data)),]
   return(data)
 }
 

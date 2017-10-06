@@ -1,11 +1,11 @@
 Package: FastProjectR
 Title: Two dimensional visualization of single-cell data
 Version: 0.99.0
-Authors@R: c(person("Matt", "Jones", email = "mattjones315@gmail.com", role = c("aut")),
-			 person("Tal", "Ashuach", email = "tal_ashuach@berkeley.edu", role = c("aut", "cre")),
-			 person("David", "Detomaso", email = "david.detomaso@berkeley.edu", role = c("aut")),
-			 person("Nir", "Yosef", email = "niryosef@berkeley.edu", role = c("ctb", "cph")))
-Author: Matt Jones [aut], Tal Ashuach [aut, cre], David Detomaso [aut], Nir Yosef [ctb]
+Authors@R: c(person("Tal", "Ashuach", email = "tal_ashuach@berkeley.edu", role = c("aut", "cre")),
+			person("Matt", "Jones", email = "mattjones315@gmail.com", role = c("aut")),
+		    person("David", "Detomaso", email = "david.detomaso@berkeley.edu", role = c("aut")),
+			person("Nir", "Yosef", email = "niryosef@berkeley.edu", role = c("ctb")))
+Author: Tal Ashuach [aut, cre], Matt Jones [aut], David Detomaso [aut], Nir Yosef [ctb]
 Maintainer: Tal Ashuach <tal_ashuach@berkeley.edu>
 Description: FastProjectR analyzes expression data and produces a dynamic report in which various two dimensional projections of the data can be explored. Annotated gene sets ("signatures") are incorporated so projection features can be understood in relation to the biological processes present in the data. In addition to standard dimensionality reduction methods, FastProjectR incorporates fitting a high dimensional principle tree to allow exploring continuous processes. FastProjectR supports the analysis of massive datasets - theoretically up to a million single cells at any sequencing depth, and an interactive visualization platforms that enables subset analysis based on two dimensional representations.
 Depends: R (>= 3.4)

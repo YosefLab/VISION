@@ -1,6 +1,6 @@
 #' @rdname FastProject-class
 #' @export
-setGeneric("FastProject", function(data, housekeeping, signatures, ...) {
+setGeneric("FastProject", function(data, ...) {
   standardGeneric("FastProject")
 })
 
