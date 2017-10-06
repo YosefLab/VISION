@@ -37,9 +37,28 @@ setMethod("initialize", signature(.Object="FastProjectOutput"),
 #' @aliases saveFPOutAndViewResults
 #' @export
 #' @examples
+#' expMat <- matrix(rnorm(200000), nrow=500)
+#' rownames(expMat) <- paste0("gene",1:500)
+#'
+#' # create housekeeping genes
+#' hkg <- paste0("gene",sample(1:500, 50))
+#'
+#' #create 20 signatures of 25 genes each
+#' sigs <- lapply(1:20, function(i) {
+#' sigData <- sign(rnorm(25))
+#' names(sigData) <- paste0("gene",sample(1:100,25))
+#' return(createUserGeneSignature(name = paste0("sig",i),
+#'                                sigData = sigData))
+#' })
+#'
+#' fp <- FastProject(data = expMat,
+#'                   housekeeping = hkg,
+#'                   signatures = sigs)
+#'
+#' ## Analyze requires actual non-random data to run properly
 #' \dontrun{
-#' fpout <- Analyze(fp)
-#' saveFPOutAndViewResults(fpout)
+#' fp.out <- Analyze(fp)
+#' saveFPOutAndViewResults(fp.out)
 #' }
 setMethod("saveFPOutAndViewResults", signature(fpout="FastProjectOutput"),
           function(fpout) {
@@ -67,9 +86,28 @@ setMethod("saveFPOutAndViewResults", signature(fpout="FastProjectOutput"),
 #' @return None
 #' @export
 #' @examples
+#' expMat <- matrix(rnorm(200000), nrow=500)
+#' rownames(expMat) <- paste0("gene",1:500)
+#'
+#' # create housekeeping genes
+#' hkg <- paste0("gene",sample(1:500, 50))
+#'
+#' #create 20 signatures of 25 genes each
+#' sigs <- lapply(1:20, function(i) {
+#' sigData <- sign(rnorm(25))
+#' names(sigData) <- paste0("gene",sample(1:100,25))
+#' return(createUserGeneSignature(name = paste0("sig",i),
+#'                                sigData = sigData))
+#' })
+#'
+#' fp <- FastProject(data = expMat,
+#'                   housekeeping = hkg,
+#'                   signatures = sigs)
+#'
+#' ## Analyze requires actual non-random data to run properly
 #' \dontrun{
-#' fpout <- Analyze(fp)
-#' viewResults(fpout)
+#' fp.out <- Analyze(fp)
+#' viewResults(fp.out)
 #' }
 setMethod("viewResults", signature(object="FastProjectOutput"),
           function(object) {
