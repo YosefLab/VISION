@@ -1,3 +1,5 @@
-Changes in version 0.99.1 (2017-10-17)
+Changes in version 0.99.2 (2017-10-17)
 ========================
-* submittion to bioconductor
+* Removed tidy tag from Vignette to avoid formatR dep
+* various cosmetic changes to code
+* Added content to Vignette and switch most chunks to eval=TRUE
