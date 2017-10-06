@@ -41,7 +41,7 @@ Default is FALSE}
 
 \item{nomodel}{if TRUE, no fnr curve calculated and all weights equal to 1.
 Else FNR and weights calculated.
-         Default is TRUE.}
+             Default is TRUE.}
 
 \item{filters}{list of filters to compute}
 
@@ -86,10 +86,10 @@ sigs <- lapply(1:20, function(i) {
 sigData <- sign(rnorm(25))
 names(sigData) <- paste0("gene",sample(1:100,25))
 return(createUserGeneSignature(name = paste0("sig",i),
-                               sigData = sigData))
+                                 sigData = sigData))
 })
 
 fp <- FastProject(data = expMat,
-                  signatures = sigs,
-                  housekeeping = hkg)
+                     signatures = sigs,
+                     housekeeping = hkg)
 }

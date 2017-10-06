@@ -23,11 +23,11 @@ in the data and the graph smoothness. If 0, this is estimated automatically}
 }
 \value{
 (list) Tree characteristics:
-  \itemize{
+     \itemize{
     \item C spatial positions of the tree nodes in NUM_FEATURES dimensional space
     \item unweighted (binary) adjacency matrix
     \item the mean-squared error of the tree
-  }
+     }
 }
 \description{
 Fit tree using input parameters

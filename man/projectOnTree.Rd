@@ -15,13 +15,13 @@ projectOnTree(data.pnts, V.pos, princAdj)
 }
 \value{
 (list) projection information:
-  \itemize{
+     \itemize{
     \item{"spatial"}{The D-dimensional position of the projected data points}
     \item{"edge"}{a Nx2 matrix, were line i has the indices identifying the edge that datapoint i was projected on,
     represented as (node a, node b). For consistency and convenience, it is maintained that a < b}
     \item{"edgePos"}{an N-length numeric with values in [0,1], the relative position on the edge of the datapoint.
     0 is node a, 1 is node b, .5 is the exact middle of the edge, etc.}
- }
+     }
 }
 \description{
 Project the given dataoints onto the tree defined by the vertices (V.pos) and binary adjacency matrix (princAdj)
