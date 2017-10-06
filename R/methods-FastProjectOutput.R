@@ -48,12 +48,12 @@ setMethod("initialize", signature(.Object="FastProjectOutput"),
 #' sigData <- sign(rnorm(25))
 #' names(sigData) <- paste0("gene",sample(1:100,25))
 #' return(createUserGeneSignature(name = paste0("sig",i),
-#'                                sigData = sigData))
+#'                                  sigData = sigData))
 #' })
 #'
 #' fp <- FastProject(data = expMat,
-#'                   housekeeping = hkg,
-#'                   signatures = sigs)
+#'                      housekeeping = hkg,
+#'                      signatures = sigs)
 #'
 #' ## Analyze requires actual non-random data to run properly
 #' \dontrun{
@@ -97,12 +97,12 @@ setMethod("saveFPOutAndViewResults", signature(fpout="FastProjectOutput"),
 #' sigData <- sign(rnorm(25))
 #' names(sigData) <- paste0("gene",sample(1:100,25))
 #' return(createUserGeneSignature(name = paste0("sig",i),
-#'                                sigData = sigData))
+#'                                  sigData = sigData))
 #' })
 #'
 #' fp <- FastProject(data = expMat,
-#'                   housekeeping = hkg,
-#'                   signatures = sigs)
+#'                      housekeeping = hkg,
+#'                      signatures = sigs)
 #'
 #' ## Analyze requires actual non-random data to run properly
 #' \dontrun{

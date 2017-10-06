@@ -16,7 +16,7 @@
 #' Default is FALSE
 #' @param nomodel if TRUE, no fnr curve calculated and all weights equal to 1.
 #' Else FNR and weights calculated.
-#'          Default is TRUE.
+#'              Default is TRUE.
 #' @param filters list of filters to compute
 #' @param lean if TRUE run a lean simulation. Else more robust pipeline
 #' initiated. Default is FALSE
@@ -47,12 +47,12 @@
 #' sigData <- sign(rnorm(25))
 #' names(sigData) <- paste0("gene",sample(1:100,25))
 #' return(createUserGeneSignature(name = paste0("sig",i),
-#'                                sigData = sigData))
+#'                                  sigData = sigData))
 #' })
 #'
 #' fp <- FastProject(data = expMat,
-#'                   signatures = sigs,
-#'                   housekeeping = hkg)
+#'                      signatures = sigs,
+#'                      housekeeping = hkg)
 setMethod("FastProject", signature(data = "matrix"),
             function(data, signatures, housekeeping, norm_methods = NULL,
                     precomputed=NULL, nofilter=FALSE, nomodel=FALSE,
@@ -148,12 +148,12 @@ setMethod("FastProject", signature(data = "ExpressionSet"),
 #' sigData <- sign(rnorm(25))
 #' names(sigData) <- paste0("gene",sample(1:100,25))
 #' return(createUserGeneSignature(name = paste0("sig",i),
-#'                                sigData = sigData))
+#'                                  sigData = sigData))
 #' })
 #'
 #' fp <- FastProject(data = expMat,
-#'                   housekeeping = hkg,
-#'                   signatures = sigs)
+#'                      housekeeping = hkg,
+#'                      signatures = sigs)
 #'
 #' ## Analyze requires actual non-random data to run properly
 #' \dontrun{

@@ -7,20 +7,20 @@
 #' @param nNodes_ Number of nodes to find. Default is sqrt(N)
 #' @param sigma regularization parameter for soft-assignment of data points to
 #' nodes, used as the variance
-#'        of a guassian kernel. If 0, this is estimated automatically
+#'          of a guassian kernel. If 0, this is estimated automatically
 #' @param gamma graph-level regularization parameter, controlling the tradeoff
 #' between the noise-levels
-#'        in the data and the graph smoothness. If 0, this is estimated
-#'        automatically.
+#'          in the data and the graph smoothness. If 0, this is estimated
+#'          automatically.
 #' @return Information on the fitten tree
-#'   \itemize{
+#'      \itemize{
 #'     \item C: spatial positions of the tree nodes in NUM_FEATURES dimensional
 #'     space
 #'     \item W: Unweighted (binary) adjacency matrix of the fitten tree
 #'     \item distMat: distance matrix between each tree node to each datapoint
 #'     \item mse: the Mean-Squared-Error of the fitten tree
 #'     \item zscore: a significance score for the fitted tree
-#'   }
+#'      }
 
 applySimplePPT <- function(exprData, numCores, permExprData = NULL,
                             nNodes_ = round(sqrt(ncol(exprData))), sigma=0, gamma=0) {
@@ -148,17 +148,17 @@ applySimplePPT <- function(exprData, numCores, permExprData = NULL,
 #' @param expr Data to fit (NUM_GENES x NUM_SAMPLES)
 #' @param nNodes Number of nodes in the fitted tree, default is square-root of number of data points
 #' @param sigma Regularization parameter for soft-assignment of data points to nodes, used as the
-#'              variance of a gaussian kernel. If 0, this is estimated automatically.
+#'                  variance of a gaussian kernel. If 0, this is estimated automatically.
 #' @param gamma Graph-level regularization parameter, controlling the tradeoff between the noise-levels
-#'              in the data and the graph smoothness. If 0, this is estimated automatically
+#'                  in the data and the graph smoothness. If 0, this is estimated automatically
 #' @param tol Tolerance to use when fitting the tree
 #' @param maxIter Maximum number of Iterations ot run the algorithm for
 #' @return (list) Tree characteristics:
-#'   \itemize{
+#'      \itemize{
 #'     \item C spatial positions of the tree nodes in NUM_FEATURES dimensional space
 #'     \item unweighted (binary) adjacency matrix
 #'     \item the mean-squared error of the tree
-#'   }
+#'      }
 
 fitTree <- function(expr, nNodes, sigma, gamma, tol, maxIter) {
     km <- stats::kmeans(t(expr), centers=nNodes, nstart=10, iter.max=100)$centers
@@ -228,13 +228,13 @@ getMSE <- function(C, X) {
 #' point that fall beyond the edge are projected to the closer node.
 #'
 #' @return (list) projection information:
-#'   \itemize{
+#'      \itemize{
 #'     \item{"spatial"}{The D-dimensional position of the projected data points}
 #'     \item{"edge"}{a Nx2 matrix, were line i has the indices identifying the edge that datapoint i was projected on,
 #'     represented as (node a, node b). For consistency and convenience, it is maintained that a < b}
 #'     \item{"edgePos"}{an N-length numeric with values in [0,1], the relative position on the edge of the datapoint.
 #'     0 is node a, 1 is node b, .5 is the exact middle of the edge, etc.}
-#'  }
+#'      }
 projectOnTree <- function(data.pnts, V.pos, princAdj) {
     # find closest principle point
     distmat <- sqdist(t(data.pnts), t(V.pos))

@@ -53,11 +53,11 @@ setMethod("initialize", signature(.Object="Signature"),
 #' @return a Signature object
 #' @examples
 #' sig <- createUserGeneSignature(name="signature", c(gene1=1.0,gene17=1.0,
-#'                                                    gene4=1.0, gene31=-1.0,
-#'                                                    gene3=-1.0, gene9=1.0))
+#'                                                      gene4=1.0, gene31=-1.0,
+#'                                                      gene3=-1.0, gene9=1.0))
 #' sig2 <- createUserGeneSignature(name="signature", c(gene18=1.0,gene29=1.0,
-#'                                                    gene400=-1.0, gene1=-1.0,
-#'                                                    gene7=1.0, gene9=1.0))
+#'                                                      gene400=-1.0, gene1=-1.0,
+#'                                                      gene7=1.0, gene9=1.0))
 createUserGeneSignature <- function(name, sigData, metadata="") {
     return(new("Signature", sigDict=sigData, name=name, metaData=metadata,
                     source="user-defined"))
