@@ -90,7 +90,7 @@ fp <- FastProject(se, c("data/h.all.v5.2.symbols.gmt"), hkg)
 # -- or just provide that files to FastProject
 fp <- FastProject("data/expression_matrix.txt",  
                   c("data/h.all.v5.2.symbols.gmt"),
-                  "data/GeneNameHousekeeping.txt",)
+                  "data/GeneNameHousekeeping.txt")
 ```
 
 Now, with a FastProject object, we can run `Analyze` which will run the FastProject pipeline and return a FastProjectOutput object.

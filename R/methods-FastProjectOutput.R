@@ -75,8 +75,14 @@ setMethod("saveFPOutAndViewResults", signature(fpout="FastProjectOutput"),
             message("Launching the server...")
             message("Press exit or ctrl c to exit")
             path <- find.package("FastProjectR")
-            source(paste0(path, "/FastProjectR_Output/server_script.R"))
+            curpath <- getwd()
+            tryCatch(expr = {
+                source(file.path(path, "FastProjectR_Output",
+                                 "server_script.R"))
+            }, finally = {
+                setwd(curpath)
             })
+        })
 
 #' View results of analysis without saving output object
 #'
@@ -117,5 +123,10 @@ setMethod("viewResults", signature(object="FastProjectOutput"),
             message("Launching the server...")
             message("Press exit or ctrl c to exit")
             path <- find.package("FastProjectR")
-            source(paste0(path, "/FastProjectR_Output/server_script.R"))
+            curpath <- getwd()
+            tryCatch(expr = {
+              source(file.path(path, "FastProjectR_Output", "server_script.R"))
+            }, finally = {
+              setwd(curpath)
             })
+        })
