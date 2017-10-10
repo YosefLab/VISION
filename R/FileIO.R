@@ -35,8 +35,8 @@ readExprToMatrix <- function(filename, delimiter="\t") {
 readHKGToMatrix <- function(filename, delimiter="\t") {
 
     message("Loading data from ", filename, "...")
-    hkg <- as.matrix(read.table(filename, sep=delimiter))
-    return(as.matrix(apply(hkg, 1, toupper)))
+    hkg <- as.matrix(utils::read.table(filename, sep=delimiter))
+    return(apply(hkg, 1, toupper))
 }
 
 #' Reads in a list of signature input files.
