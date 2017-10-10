@@ -51,6 +51,7 @@ applySimplePPT <- function(exprData, numCores, permExprData = NULL,
     C <- tr$C
     Wt <- tr$W
     currMSE <- tr$mse
+    minGamma <- MIN_GAMMA
 
     while ( ((prevMSE / currMSE) - 1 < 0.05) && currGamma <= MAX_GAMMA) {
         prevMSE <- currMSE

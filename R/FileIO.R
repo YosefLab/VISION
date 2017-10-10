@@ -17,7 +17,7 @@ readExprToMatrix <- function(filename, delimiter="\t") {
     rnames <- data.table::fread(filename, sep=delimiter, skip=1, select=1)
     cnames <- utils::read.table(filename, sep=delimiter, header=TRUE,
                                 row.names=1,nrows=1)
-    rownames(data) <- as.vector(t(rnames))
+    rownames(data) <- sapply(as.vector(t(rnames)), toupper)
     colnames(data) <- colnames(cnames)
 
     # check if there are any repeats in samples or genes
@@ -35,7 +35,8 @@ readExprToMatrix <- function(filename, delimiter="\t") {
 readHKGToMatrix <- function(filename, delimiter="\t") {
 
     message("Loading data from ", filename, "...")
-    return(utils::read.table(filename, sep=delimiter))
+    hkg <- as.matrix(read.table(filename, sep=delimiter))
+    return(as.matrix(apply(hkg, 1, toupper)))
 }
 
 #' Reads in a list of signature input files.
@@ -136,7 +137,7 @@ readSignaturesInput <- function(filenames) {
     }
     }
 
-    names(sig_data) <- sig_names
+    names(sig_data) <- sapply(sig_names, toupper)
 
     return (sig_data)
 }

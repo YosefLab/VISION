@@ -81,6 +81,20 @@ double single_euclidean_distance(int d, const DataPoint &t1, const DataPoint &t2
 	return sqrt(dd);
 }
 
+double jaccard_distance(const DataPoint &t1, const DataPoint &t2) {
+    double un = .0;
+    double inter = .0;
+    for (int d = 0; d < t1.dimensionality(); d++) {
+        if (t1.x(d) > 0 && t2.x(d)) {
+            inter++;
+        }
+        if (t1.x(d) > 0 || t2.x(d) > 0) {
+            un++;     
+        }
+    }
+    return 1 - (inter / un);
+}
+
 
 template<typename T, double (*distance)( const T&, const T& )>
 class VpTree

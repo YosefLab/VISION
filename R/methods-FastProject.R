@@ -60,7 +60,7 @@
 #'                      signatures = sigs,
 #'                      housekeeping = hkg)
 setMethod("FastProject", signature(data = "matrix"),
-            function(data, signatures, housekeeping, norm_methods = NULL,
+            function(data, signatures, housekeeping=NULL, norm_methods = NULL,
                     precomputed=NULL, nofilter=FALSE, nomodel=FALSE,
                     filters=c("fano"), lean=FALSE, qc=FALSE,
                     min_signature_genes=5, projections="", weights=NULL,
@@ -69,13 +69,15 @@ setMethod("FastProject", signature(data = "matrix"),
 
             .Object <- new("FastProject")
             .Object@exprData <- data
+            rownames(.Object@exprData) <- sapply(rownames(.Object@exprData), toupper)
 
-            if (!is.character(housekeeping)){
-                stop("housekeeping must be file path or character vector")
+            if (is.null(housekeeping)) {
+                .Object@housekeepingData <- matrix(NA)
+                .Object@nomodel = TRUE
             } else if (length(housekeeping) == 1) {
                 .Object@housekeepingData <- readHKGToMatrix(housekeeping)
             } else {
-                .Object@housekeepingData <- data.frame(hkg = housekeeping)
+                .Object@housekeepingData <- housekeeping
             }
 
             if (is.list(signatures)) {
@@ -99,7 +101,9 @@ setMethod("FastProject", signature(data = "matrix"),
             }
 
             .Object@nofilter <- nofilter
-            .Object@nomodel <- nomodel
+            if (!.Object@nomodel) {
+                .Object@nomodel <- nomodel
+            }
             .Object@filters <- filters
             .Object@projections <- projections
             .Object@threshold <- threshold
@@ -109,7 +113,6 @@ setMethod("FastProject", signature(data = "matrix"),
             .Object@perm_wPCA = perm_wPCA
             .Object@allData = .Object@exprData
 
-            #createOutputDirectory(.Object)
             return(.Object)
             }
 )
@@ -223,23 +226,21 @@ setMethod("Analyze", signature(object="FastProject"),
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, "Filter")
 
-    if (!clustered) {
+    if (!clustered && !object@nomodel) {
     falseneg_out <- createFalseNegativeMap(originalData, object@housekeepingData)
     func <- falseneg_out[[1]]
     params <- falseneg_out[[2]]
+
+    message("Computing weights from False Negative Function...")
+    object@weights <- computeWeights(func, params, eData)
+
+    } else if (all(is.na(object@weights)) || ncol(object@weights) != ncol(object@exprData)) {
+    object@weights <- matrix(1L, nrow=nrow(originalData), ncol=ncol(originalData))
     }
 
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, "FN Function")
 
-    if (object@nomodel || clustered) {
-    object@weights <- matrix(1L, nrow=nrow(originalData), ncol=ncol(originalData))
-    }
-    else if (all(is.na(object@weights)) ||
-             ncol(object@weights) != ncol(object@exprData)) {
-    message("Computing weights from False Negative Function...")
-    object@weights <- computeWeights(func, params, eData)
-    }
     rownames(object@weights) <- rownames(originalData)
     colnames(object@weights) <- colnames(originalData)
 

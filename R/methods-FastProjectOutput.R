@@ -124,9 +124,6 @@ setMethod("viewResults", signature(object="FastProjectOutput"),
             message("Press exit or ctrl c to exit")
             path <- find.package("FastProjectR")
             curpath <- getwd()
-            tryCatch(expr = {
-              source(file.path(path, "FastProjectR_Output", "server_script.R"))
-            }, finally = {
-              setwd(curpath)
-            })
+            source(file.path(path, "FastProjectR_Output", "server_script.R"))
+            setwd(curpath)
         })

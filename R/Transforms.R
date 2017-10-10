@@ -9,13 +9,23 @@
 #'     \item pools - a list of data matrices of the original cells in each pool
 #' }
 applyMicroClustering <- function(exprData, hkg=list(), BPPARAM=bpparam()) {
-    fexpr <- filterGenesFano(exprData)
-    res <- applyPCA(fexpr, N=30)[[1]]
-    kn <- ball_tree_knn(t(res), 30, BPPARAM$workers)
-    cl <- louvainCluster(kn, t(res))
-    cl <- readjust_clusters(cl, t(res))
+    texpr <- filterGenesThreshold(exprData, 0.2*ncol(exprData)) 
+    fexpr <- filterGenesFano(texpr)
+    
+    falseneg_out <- createFalseNegativeMap(exprData, hkg)
+    func <- falseneg_out[[1]]
+    params <- falseneg_out[[2]]
 
-    pooled_cells <- createPools(cl, exprData, hkg)
+    weights <- computeWeights(func, params, ExpressionData(exprData))
+    rownames(weights) <- rownames(exprData)
+    colnames(weights) <- colnames(exprData)
+
+    res <- applyWeightedPCA(fexpr, weights, maxComponents=10)[[1]]
+    kn <- ball_tree_knn(t(res), round(sqrt(ncol(res))), BPPARAM$workers)
+    cl <- louvainCluster(kn, t(res))
+    cl <- readjust_clusters(cl, t(res), cellsPerPartition=100)
+
+    pooled_cells <- createPools(cl, exprData, weights)
 
     cn <- lapply(1:ncol(pooled_cells), function(i) return(paste0("Cluster ", i)))
     colnames(pooled_cells) <- cn
@@ -43,7 +53,8 @@ louvainCluster <- function(kn, data) {
 
     nn <- kn[[1]]
     d <- kn[[2]]
-    d <- exp(-1 * (d*d) / .05)
+    sigma <- apply(d, 1, max)
+    d <- exp(-1 * (d*d) / sigma^2)
 
     nnl <- lapply(1:nrow(nn), function(i) nn[i,])
 
@@ -181,19 +192,17 @@ merge_intervals <- function(intervals) {
 #' @param expr expression data
 #' @param hkg a set of housekeeping genes to use to evaluate tightness
 #' @return a matrx of expression data for the pooled cells
-createPools <- function(cl, expr, hkg=list()) {
+createPools <- function(cl, expr, weights) {
 
 
     pooled_cells <- matrix(unlist(lapply(cl, function(clust) {
 
             clust_data <- expr[,clust]
+            clust_weights <- weights[,clust]
             if (is.null(dim(clust_data))) {
                 return(clust_data)
             }
-            if (length(hkg) > 0) {
-                fnr <- createFalseNegativeMap(clust_data, hkg)
-                clust_weights <- computeWeights(fnr[[1]], fnr[[2]],
-                                                ExpressionData(clust_data))
+            if (ncol(clust_weights) > 0) {
                 p_cell <- as.matrix(apply(clust_data, 1, sum))
                 cell_norm <- as.matrix(apply(clust_weights, 1, sum))
 
@@ -221,7 +230,7 @@ createFalseNegativeMap <- function(data, housekeeping_genes) {
     message("Creating False Negative Map...")
 
     #subset of genes to be used,ie those included in the housekeeping genes set
-    keep_ii <- which(rownames(data) %in% housekeeping_genes[[1]])
+    keep_ii <- which(rownames(data) %in% housekeeping_genes)
 
     # Filter out genes with no variance
     data_hk <- data[keep_ii, ]
@@ -287,8 +296,8 @@ createFalseNegativeMap <- function(data, housekeeping_genes) {
     start_i <- q_indices[i]+1;
     end_i <- q_indices[i+1];
 
-    x_quant[i] <- mean(x_sorted[start_i:end_i]);
-    y_quant[i,] = colMeans(as.matrix(y_sorted[start_i:end_i,]))
+    x_quant[i] <- mean(x_sorted[start_i:min(end_i, length(x_sorted))], );
+    y_quant[i,] = colMeans(as.matrix(y_sorted[start_i:min(end_i, length(y_sorted))], ))
 
     }
 

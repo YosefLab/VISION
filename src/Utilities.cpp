@@ -3,10 +3,12 @@
 #include <Rcpp.h> 
 #include "vptree.h"
 #include <iostream>
-//#include <omp.h>
+#ifdef _OPENMP
+    #include <omp.h>
+    //[[Rcpp::plugins(openmp)]]
+#endif
 #include <string>
 #include <sstream>
-//[[Rcpp::plugins(openmp)]]
 using namespace Rcpp;
 
 
@@ -136,16 +138,23 @@ List ball_tree_knn(NumericMatrix X ,int K, int n_threads) {
 
 	std::vector< std::vector<int> > ind_arr(N, std::vector<int>(K+1));
 	std::vector< std::vector<double> > dist_arr(N, std::vector<double>(K+1));
-			
-	//omp_set_num_threads(n_threads);
 	
-	//#pragma omp parallel
-	//{
-	//#pragma omp for 
-	for (int n = 0; n < N; n++) {
-		tree -> search(obj_X[n], K+1, &ind_arr[n], &dist_arr[n]);
-	}
-	//}
+    #ifdef _OPENMP
+	    omp_set_num_threads(n_threads);
+	
+        #pragma omp parallel
+	    {
+	    #pragma omp for 
+	    for (int n = 0; n < N; n++) {
+		    tree -> search(obj_X[n], K+1, &ind_arr[n], &dist_arr[n]);
+	    }
+	    }
+    #else 
+	    for (int n = 0; n < N; n++) {
+		    tree -> search(obj_X[n], K+1, &ind_arr[n], &dist_arr[n]);
+	    }
+    #endif
+
 
 	for (int i = 0; i < N; i++) {
 		NumericVector ind(ind_arr[i].begin(), ind_arr[i].end());
