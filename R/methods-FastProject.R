@@ -67,16 +67,16 @@ setMethod("FastProject", signature(data = "matrix"),
                     filters=c("fano"), lean=FALSE, qc=FALSE,
                     min_signature_genes=5, projections="", weights=NULL,
                     threshold=0, perm_wPCA=FALSE, sig_norm_method="znorm_rows",
-                    sig_score_method="weighted_avg", pool=F, cellsPerPartition=100) {
                     sig_score_method="weighted_avg", pool=FALSE,
                     cellsPerPartition=100) {
 
             .Object <- new("FastProject")
             .Object@exprData <- data
-            rownames(.Object@exprData) <- sapply(rownames(.Object@exprData), toupper)
+            rownames(.Object@exprData) <- sapply(rownames(.Object@exprData),
+                                                 toupper)
 
             if (is.null(housekeeping)) {
-                .Object@housekeepingData <- matrix(NA)
+                .Object@housekeepingData <- c()
                 .Object@nomodel = TRUE
             } else if (length(housekeeping) == 1) {
                 .Object@housekeepingData <- readHKGToMatrix(housekeeping)
