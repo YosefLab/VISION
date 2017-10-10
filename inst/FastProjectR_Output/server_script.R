@@ -28,7 +28,7 @@ path <- find.package("FastProjectR")
 setwd(path)
 
 port <- sample(8000:9999, 1)
-url <- paste0("http://127.0.0.1:", port, "/html_output/Results.html")
+url <- paste0("http://127.0.0.1:", port, "html_output/Results.html")
 browseURL(url)
 
 # Launch the server

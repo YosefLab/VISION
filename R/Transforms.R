@@ -8,7 +8,7 @@
 #'     \item pooled cells - the super cells creates
 #'     \item pools - a list of data matrices of the original cells in each pool
 #' }
-applyMicroClustering <- function(exprData, hkg=list(), BPPARAM=bpparam()) {
+applyMicroClustering <- function(exprData, hkg=matrix(), cellsPerPartition=100, BPPARAM=bpparam()) {
     texpr <- filterGenesThreshold(exprData, 0.2*ncol(exprData)) 
     fexpr <- filterGenesFano(texpr)
     
@@ -23,7 +23,7 @@ applyMicroClustering <- function(exprData, hkg=list(), BPPARAM=bpparam()) {
     res <- applyWeightedPCA(fexpr, weights, maxComponents=10)[[1]]
     kn <- ball_tree_knn(t(res), round(sqrt(ncol(res))), BPPARAM$workers)
     cl <- louvainCluster(kn, t(res))
-    cl <- readjust_clusters(cl, t(res), cellsPerPartition=100)
+    cl <- readjust_clusters(cl, t(res), cellsPerPartition=cellsPerPartition)
 
     pooled_cells <- createPools(cl, exprData, weights)
 

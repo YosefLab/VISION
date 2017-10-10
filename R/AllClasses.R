@@ -44,7 +44,9 @@ FastProject <- setClass("FastProject",
         housekeepingData = "matrix",
         sigData = "list",
         precomputedData= "list",
-        perm_wPCA = "logical"),
+        perm_wPCA = "logical",
+        pool = "logical",
+        cellsPerPartition= "numeric"),
     prototype = list(
         nofilter = FALSE,
         nomodel = FALSE,
@@ -61,7 +63,9 @@ FastProject <- setClass("FastProject",
         housekeepingData = NULL,
         sigData = NULL,
         precomputedData = NULL,
-        perm_wPCA = FALSE
+        perm_wPCA = FALSE,
+        pool = F,
+        cellsPerPartition=100
 ))
 
 #' a container for FastProject output data

@@ -65,7 +65,7 @@ setMethod("FastProject", signature(data = "matrix"),
                     filters=c("fano"), lean=FALSE, qc=FALSE,
                     min_signature_genes=5, projections="", weights=NULL,
                     threshold=0, perm_wPCA=FALSE, sig_norm_method="znorm_rows",
-                    sig_score_method="weighted_avg") {
+                    sig_score_method="weighted_avg", pool=F, cellsPerPartition=100) {
 
             .Object <- new("FastProject")
             .Object@exprData <- data
@@ -112,6 +112,8 @@ setMethod("FastProject", signature(data = "matrix"),
             .Object@lean = lean
             .Object@perm_wPCA = perm_wPCA
             .Object@allData = .Object@exprData
+            .Object@pool = pool
+            .Object@cellsPerPartition = cellsPerPartition
 
             return(.Object)
             }
@@ -191,9 +193,10 @@ setMethod("Analyze", signature(object="FastProject"),
 
     clustered <- FALSE
     pools <- list()
-    if (ncol(object@exprData) > 25000) {
+    if (ncol(object@exprData) > 15000 || object@pool) {
         microclusters <- applyMicroClustering(object@exprData,
                                             object@housekeepingData,
+                                            object@cellsPerPartition,
                                             BPPARAM)
         pooled_cells <- microclusters[[1]]
         pools <- microclusters[[2]]
