@@ -17,7 +17,9 @@
 #' names
 #' @param norm_methods normalization methods to be extracted from the scone
 #' object
-#' @param precomputed data file with precomputed signature scores (.txt)
+#' @param precomputed data file with precomputed signature scores (.txt), or a
+#' data.frame with meta information. Note that rows should match samples in the
+#' data, and columns should either be factors or numerics.
 #' @param nofilter if TRUE, no filter applied; else filters applied.
 #' Default is FALSE
 #' @param nomodel if TRUE, no fnr curve calculated and all weights equal to 1.
@@ -66,6 +68,8 @@ setMethod("FastProject", signature(data = "matrix"),
                     min_signature_genes=5, projections="", weights=NULL,
                     threshold=0, perm_wPCA=FALSE, sig_norm_method="znorm_rows",
                     sig_score_method="weighted_avg", pool=F, cellsPerPartition=100) {
+                    sig_score_method="weighted_avg", pool=FALSE,
+                    cellsPerPartition=100) {
 
             .Object <- new("FastProject")
             .Object@exprData <- data
@@ -90,8 +94,13 @@ setMethod("FastProject", signature(data = "matrix"),
             }
 
             if (!is.null(precomputed)) {
-                .Object@precomputedData <- readPrecomputed(
-                precomputed, colnames(.Object@exprData))
+                if(is.data.frame(precomputed)) {
+                    .Object@precomputedData <-
+                        SigScoresFromDataframe(precomputed)
+                } else {
+                    .Object@precomputedData <- readPrecomputed(
+                    precomputed, colnames(.Object@exprData))
+                }
             }
 
             if (is.null(weights)) {

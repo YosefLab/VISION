@@ -24,3 +24,26 @@ setMethod("initialize", signature(.Object="SignatureScores"),
             return(.Object)
             }
 )
+
+
+#' Generate signature scores based on an input data.frame
+#'
+#' These are either factors or numeric values with known values for each sample
+#' Can be conditions of interest, batch annotations, qc information, etc.
+#'
+#' @param df a data.frame object where each column is a cell signature. Names of
+#' columns are signatue names. Rownames must correspond to appropriate samples
+#'
+#' @note Factor signatures and numeric signatures are treated differently. Make
+#' sure that the class of each input column is the correct one.
+SigScoresFromDataframe <- function(df) {
+    sigScores <- c()
+    for(i in 1:NCOL(df)) {
+        sigScores <- c(sigScores, SignatureScores(df[,i],
+                                              colnames(df)[i],
+                                              rownames(df),
+                                              is.factor(df[,i]),
+                                              TRUE, 0))
+    }
+    return(sigScores)
+}

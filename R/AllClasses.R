@@ -64,7 +64,7 @@ FastProject <- setClass("FastProject",
         sigData = NULL,
         precomputedData = NULL,
         perm_wPCA = FALSE,
-        pool = F,
+        pool = FALSE,
         cellsPerPartition=100
 ))
 
