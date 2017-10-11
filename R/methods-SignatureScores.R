@@ -39,7 +39,7 @@ setMethod("initialize", signature(.Object="SignatureScores"),
 SigScoresFromDataframe <- function(df) {
     sigScores <- c()
     for(i in 1:NCOL(df)) {
-        sigScores <- c(sigScores, SignatureScores(df[,i],
+        sigScores <- c(sigScores, SignatureScores(as.numeric(df[,i]),
                                               colnames(df)[i],
                                               rownames(df),
                                               is.factor(df[,i]),
