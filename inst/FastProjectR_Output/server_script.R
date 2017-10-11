@@ -28,7 +28,7 @@ path <- find.package("FastProjectR")
 setwd(path)
 
 port <- sample(8000:9999, 1)
-url <- paste0("http://127.0.0.1:", port, "html_output/Results.html")
+url <- paste0("http://127.0.0.1:", port, "/html_output/Results.html")
 browseURL(url)
 
 # Launch the server
@@ -38,7 +38,7 @@ jug() %>%
     name <- URLdecode(req$params$sig_name1)
     out <- "Signature does not exist!"
     if (name %in% rownames(sigMatrix)) {
-      out <- sigScoresToJSON(sigMatrix[name,])
+      out <- FastProjectR:::sigScoresToJSON(sigMatrix[name,])
     }
     return(out)
   }) %>%
@@ -56,7 +56,7 @@ jug() %>%
     out <- "Signature does not exist!"
     if (name %in% names(signatures)) {
       sig <- signatures[[name]]
-      out <- signatureToJSON(sig)
+      out <- FastProjectR:::signatureToJSON(sig)
     }
     return(out)
   }) %>%
@@ -65,7 +65,7 @@ jug() %>%
     name <- URLdecode(req$params$sig_name3)
     out <- "Signature does not exist!"
     if (name %in% rownames(sigMatrix)) {
-      out <- sigRanksToJSON(sigMatrix[name,])
+      out <- FastProjectR:::sigRanksToJSON(sigMatrix[name,])
     }
     return(out)
   }) %>%
@@ -80,7 +80,7 @@ jug() %>%
         sig = fpout@sigList[[index]]
         genes = names(sig@sigDict)
         expMat = fpout@exprData@data
-        return(expressionToJSON(expMat, genes))
+        return(FastProjectR:::expressionToJSON(expMat, genes))
     }
     return(out)
   }) %>%
@@ -111,7 +111,7 @@ jug() %>%
   get("/FilterGroup/(?<filter_name1>.*)/(?<proj_name1>.*)/coordinates", function(req, res, err) {
     filter <- URLdecode(req$params$filter_name1)
     proj <- URLdecode(req$params$proj_name1)
-    out <- coordinatesToJSON(fpout@filterModuleList[[filter]]@ProjectionData@projections[[proj]]@pData)
+    out <- FastProjectR:::coordinatesToJSON(fpout@filterModuleList[[filter]]@ProjectionData@projections[[proj]]@pData)
     # projData <- fpout@projData
     # out <- coordinatesToJSON(filterMod[[filter]]@projections[[proj]]@pData)
     return(out)
@@ -126,7 +126,7 @@ jug() %>%
     names(vals) <- keys
 	  sigvals <- vals[which(vals == FALSE)]
 	  sigs <- names(sigvals)
-    out <- sigProjMatrixToJSON(fpout@filterModuleList[[filter]]@ProjectionData@sigProjMatrix, sigs)
+    out <- FastProjectR:::sigProjMatrixToJSON(fpout@filterModuleList[[filter]]@ProjectionData@sigProjMatrix, sigs)
     # out <- sigProjMatrixToJSON(projData[[filter]]@sigProjMatrix, sigs)
     return(out)
   }) %>%
@@ -141,7 +141,7 @@ jug() %>%
 	  sigvals <- vals[which(vals == TRUE)]
 	  sigs <- names(sigvals)
 
-	  out <- sigProjMatrixToJSON(fpout@filterModuleList[[filter]]@ProjectionData@sigProjMatrix, sigs)
+	  out <- FastProjectR:::sigProjMatrixToJSON(fpout@filterModuleList[[filter]]@ProjectionData@sigProjMatrix, sigs)
     # out <- sigProjMatrixToJSON(projData[[filter]]@sigProjMatrix, sigs)
     return(out)
   }) %>%
@@ -156,7 +156,7 @@ jug() %>%
 	  sigvals <- vals[which(vals == FALSE)]
 	  sigs <- names(sigvals)
 
-	  out <- sigProjMatrixToJSON(fpout@filterModuleList[[filter]]@ProjectionData@pMatrix, sigs)
+	  out <- FastProjectR:::sigProjMatrixToJSON(fpout@filterModuleList[[filter]]@ProjectionData@pMatrix, sigs)
     # out <- sigProjMatrixPToJSON(projData[[filter]]@pMatrix, sigs)
     return(out)
   }) %>%
@@ -171,7 +171,7 @@ jug() %>%
 	  sigvals <- vals[which(vals == TRUE)]
 	  sigs <- names(sigvals)
 
-	  out <- sigProjMatrixToJSON(fpout@filterModuleList[[filter]]@ProjectionData@pMatrix, sigs)
+	  out <- FastProjectR:::sigProjMatrixToJSON(fpout@filterModuleList[[filter]]@ProjectionData@pMatrix, sigs)
     # out <- sigProjMatrixPToJSON(projData[[filter]]@pMatrix, sigs)
     return(out)
   }) %>%
@@ -183,9 +183,9 @@ jug() %>%
     method <- URLdecode(req$params$cluster_procedure)
     param <- as.numeric(URLdecode(req$params$param))
 
-    clust <- cluster(fpout@filterModuleList[[filter]]@ProjectionData@projections[[proj]], method, param)
+    clust <- FastProjectR:::cluster(fpout@filterModuleList[[filter]]@ProjectionData@projections[[proj]], method, param)
 	  # clust = cluster(projData[[filter]]@projections[[proj]], method, param)
-    out <- clusterToJSON(clust)
+    out <- FastProjectR:::clusterToJSON(clust)
     return(out)
   }) %>%
   get("/FilterGroup/(?<filter_name7>.*)/genes", function(req, res, err) {
@@ -217,7 +217,7 @@ jug() %>%
     proj <- URLdecode(req$params$proj_name4)
     filter <- URLdecode(req$params$filter_name19)
 
-    out <- coordinatesToJSON(fpout@filterModuleList[[filter]]@TreeProjectionData@projections[[proj]]@pData)
+    out <- FastProjectR:::coordinatesToJSON(fpout@filterModuleList[[filter]]@TreeProjectionData@projections[[proj]]@pData)
 
     return(out)
   }) %>%
@@ -315,7 +315,7 @@ jug() %>%
 	  pc <- fpout@filterModuleList[[filter]]@PCAnnotatorData@pearsonCorr
 	  # pc <- projData[[filter]]@pearsonCorr
 
-    return(pearsonCorrToJSON(pc, sigs))
+    return(FastProjectR:::pearsonCorrToJSON(pc, sigs))
   }) %>%
   get("/FilterGroup/(?<filter_name15>.*)/PearsonCorr/Precomputed", function(req, res, err) {
     # projData <- fpout@projData
@@ -331,10 +331,10 @@ jug() %>%
   	pc <- fpout@filterModuleList[[filter]]@PCAnnotatorData@pearsonCorr
   	# pc <- projData[[filter]]@pearsonCorr
 
-  	return(pearsonCorrToJSON(pc, sigs))
+  	return(FastProjectR:::pearsonCorrToJSON(pc, sigs))
   }) %>%
   get("/Expression", function(req, res, err) {
-    return(expressionToJSON(fpout@exprData@data, matrix(NA)))
+    return(FastProjectR:::expressionToJSON(fpout@exprData@data, matrix(NA)))
   }) %>%
   get("/FilterGroup/(?<filter_name17>.*)/Expression", function(req, res, err) {
     filter <- URLdecode(req$params$filter_name17)
@@ -350,7 +350,7 @@ jug() %>%
 
 	  genes <- rownames(data)
 
-	  return(expressionToJSON(data, genes))
+	  return(FastProjectR:::expressionToJSON(data, genes))
 
   }) %>%
   post("/Analysis/Run/", function(req, res, err) {
