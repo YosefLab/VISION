@@ -28,7 +28,7 @@ setGeneric("getNormalizedCopy", function(object, func) {
     standardGeneric("getNormalizedCopy")
 })
 
-setGeneric("saveFPOutAndViewResults", function(fpout) {
+setGeneric("saveFPOutAndViewResults", function(fpout, ...) {
     standardGeneric("saveFPOutAndViewResults")
 })
 

@@ -33,6 +33,8 @@ setMethod("initialize", signature(.Object="FastProjectOutput"),
 #' server to explore the results with a browser.
 #'
 #' @param fpout FastProjectOutput object
+#' @param ofile the path to save the object in. If NULL, the object is saved
+#' in the working directory [default:NULL]
 #' @return None
 #' @aliases saveFPOutAndViewResults
 #' @export
@@ -61,24 +63,27 @@ setMethod("initialize", signature(.Object="FastProjectOutput"),
 #' saveFPOutAndViewResults(fp.out)
 #' }
 setMethod("saveFPOutAndViewResults", signature(fpout="FastProjectOutput"),
-            function(fpout) {
-            i <- 1
-            ofile <- paste0("./fpout", i, ".rds")
-            while (file.exists(ofile)) {
-                i <- i+1
+            function(fpout, ofile=NULL) {
+            if(is.null(ofile)) {
+                i <- 1
                 ofile <- paste0("./fpout", i, ".rds")
+                while (file.exists(ofile)) {
+                    i <- i+1
+                    ofile <- paste0("./fpout", i, ".rds")
+                }
             }
 
             saveRDS(fpout, file=ofile)
-            arg1 <<- ofile
 
             message("Launching the server...")
             message("Press exit or ctrl c to exit")
             path <- find.package("FastProjectR")
             curpath <- getwd()
             tryCatch(expr = {
-                source(file.path(path, "FastProjectR_Output",
-                                 "server_script.R"))
+                e <- new.env()
+                e$arg1 <- ofile
+                sys.source(file = file.path(path, "FastProjectR_Output",
+                                 "server_script.R"), envir = e)
             }, finally = {
                 setwd(curpath)
             })
@@ -119,16 +124,16 @@ setMethod("saveFPOutAndViewResults", signature(fpout="FastProjectOutput"),
 setMethod("viewResults", signature(object="FastProjectOutput"),
             function(object) {
 
-            arg1 <<- object
             message("Launching the server...")
             message("Press exit or ctrl c to exit")
             path <- find.package("FastProjectR")
             curpath <- getwd()
             tryCatch(expr = {
-                source(file.path(path,
-                                 "FastProjectR_Output",
-                                 "server_script.R"))
+                e <- new.env()
+                e$arg1 <- object
+                sys.source(file = file.path(path, "FastProjectR_Output",
+                                            "server_script.R"), envir = e)
             }, finally = {
-              setwd(curpath)
+                setwd(curpath)
             })
         })
