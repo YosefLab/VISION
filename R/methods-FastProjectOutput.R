@@ -35,7 +35,7 @@ setMethod("initialize", signature(.Object="FastProjectOutput"),
 #' @param fpout FastProjectOutput object
 #' @param ofile the path to save the object in. If NULL, the object is saved
 #' in the working directory [default:NULL]
-#' @return None
+#' @return the path of the saved file
 #' @aliases saveFPOutAndViewResults
 #' @export
 #' @examples
@@ -74,29 +74,20 @@ setMethod("saveFPOutAndViewResults", signature(fpout="FastProjectOutput"),
             }
 
             saveRDS(fpout, file=ofile)
-
-            message("Launching the server...")
-            message("Press exit or ctrl c to exit")
-            path <- find.package("FastProjectR")
-            curpath <- getwd()
-            tryCatch(expr = {
-                e <- new.env()
-                e$arg1 <- ofile
-                sys.source(file = file.path(path, "FastProjectR_Output",
-                                 "server_script.R"), envir = e)
-            }, finally = {
-                setwd(curpath)
-            })
+            viewResults(fpout)
+            return(ofile)
         })
 
 #' View results of analysis without saving output object
 #'
 #' launch a local server to explore the results with a browser.
 #'
-#' @param object FastProjectOutput object
+#' @param object FastProjectOutput object or path to a file containing such an
+#' object (saved using saveAndViewResults, or directly using saveRDS)
 #' @aliases viewResults
 #' @return None
 #' @export
+#' @rdname viewResults
 #' @examples
 #' expMat <- matrix(rnorm(200000), nrow=500)
 #' rownames(expMat) <- paste0("gene",1:500)
@@ -137,3 +128,14 @@ setMethod("viewResults", signature(object="FastProjectOutput"),
                 setwd(curpath)
             })
         })
+
+#' @rdname viewResults
+#' @export
+setMethod("viewResults", signature(object="character"),
+          function(object) {
+              fpo <- readRDS(object)
+              if(!methods::is(fpo, "FastProjectOutput")){
+                  stop("loaded object not a valid FastProjectOutput object")
+              }
+              viewResults(fpo)
+          })

@@ -5,12 +5,15 @@
 \title{Cluster single cells so signal is maintained but the sample size and noise
 are reduce, using the louvain clustering algorithm}
 \usage{
-applyMicroClustering(exprData, hkg = list(), BPPARAM = bpparam())
+applyMicroClustering(exprData, hkg = matrix(), cellsPerPartition = 100,
+  BPPARAM = bpparam())
 }
 \arguments{
 \item{exprData}{the expression data matrix}
 
-\item{hkg}{a list of house keeping genes to use as negative control}
+\item{hkg}{a matrix vector of house keeping genes to use as negative control}
+
+\item{cellsPerPartition}{control over the minimum number of cells to put into each supercell}
 
 \item{BPPARAM}{the parallelization backend to use}
 }
