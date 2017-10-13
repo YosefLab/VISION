@@ -409,17 +409,21 @@ setMethod("Analyze", signature(object="FastProject"),
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, paste0("SigVTreePr ", filter))
 
-    pearsonCorr <- lapply(1:nrow(sigMatrix), function(i) {
+    precomp_names <- sapply(object@precomputedData, function(x) ifelse(x@isFactor, x@name,))
+    computedSigMatrix <- sigMatrix[setdiff(rownames(sigMatrix), precomp_names),]
+
+
+    pearsonCorr <- lapply(1:nrow(computedSigMatrix), function(i) {
         lapply(1:nrow(pca_res), function(j) {
-            return(calcPearsonCorrelation(sigMatrix[i,], pca_res[j,]))
+            return(calcPearsonCorrelation(computedSigMatrix[i,], pca_res[j,]))
             })
         })
 
         pearsonCorr <- lapply(pearsonCorr, unlist)
-        pearsonCorr <- matrix(unlist(pearsonCorr), nrow=nrow(sigMatrix),
+        pearsonCorr <- matrix(unlist(pearsonCorr), nrow=nrow(computedSigMatrix),
                             ncol=nrow(pca_res), byrow=TRUE)
 
-        rownames(pearsonCorr) <- rownames(sigMatrix)
+        rownames(pearsonCorr) <- rownames(computedSigMatrix)
         colnames(pearsonCorr) <- rownames(pca_res)
 
         timingList <- rbind(timingList, c(difftime(Sys.time(), ptm,

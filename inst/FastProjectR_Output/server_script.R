@@ -175,6 +175,36 @@ jug() %>%
     # out <- sigProjMatrixPToJSON(projData[[filter]]@pMatrix, sigs)
     return(out)
   }) %>%
+  get("/FilterGroup/(?<filter_name20>.*)/Tree/SigProjMatrix_P/Normal", function(req, res, err) {
+    # projData <- fpout@projData
+    filter <- URLdecode(req$params$filter_name20)
+
+    signatures <- fpout@sigList
+    keys <- lapply(signatures, function(x) x@name)
+    vals <- lapply(signatures, function(x) x@isPrecomputed)
+    names(vals) <- keys
+	  sigvals <- vals[which(vals == FALSE)]
+	  sigs <- names(sigvals)
+
+	  out <- FastProjectR:::sigProjMatrixToJSON(fpout@filterModuleList[[filter]]@TreeProjectionData@pMatrix, sigs)
+    # out <- sigProjMatrixPToJSON(projData[[filter]]@pMatrix, sigs)
+    return(out)
+  }) %>%
+  get("/FilterGroup/(?<filter_name21>.*)/Tree/SigProjMatrix_P/Precomputed", function(req, res, err) {
+    # projData <- fpout@projData
+    filter <- URLdecode(req$params$filter_name21)
+
+    signatures <- fpout@sigList
+    keys <- lapply(signatures, function(x) x@name)
+    vals <- lapply(signatures, function(x) x@isPrecomputed)
+    names(vals) <- keys
+	  sigvals <- vals[which(vals == TRUE)]
+	  sigs <- names(sigvals)
+
+	  out <- FastProjectR:::sigProjMatrixToJSON(fpout@filterModuleList[[filter]]@TreeProjectionData@pMatrix, sigs)
+    # out <- sigProjMatrixPToJSON(projData[[filter]]@pMatrix, sigs)
+    return(out)
+  }) %>%
   get("/FilterGroup/(?<filter_name6>.*)/(?<proj_name2>.*)/clusters/(?<cluster_procedure>.*)/(?<param>.*)", function(req, res, err) {
     # projData <- fpout@projData
 
