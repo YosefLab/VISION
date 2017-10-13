@@ -365,6 +365,7 @@ window.onload = function()
 
 	$("#tree_tab").on("click", function() {
 		global_status.main_vis = "tree";
+        createTableFromData();
 		drawChart();
 	});
 
@@ -1106,6 +1107,8 @@ function createTableFromData()
 	var matrix_promise;
 	if (global_status.main_vis == "sigvp") {
 		matrix_promise = api.filterGroup.sigProjMatrixP(global_status.filter_group, global_status.precomputed);
+    } else if (global_status.main_vis == "tree") {
+        matrix_promise = api.filterGroup.treeSigProjMatrixP(global_status.filter_group, global_status.precomputed);
 	} else {
 		matrix_promise = api.filterGroup.pCorr(global_status.filter_group, global_status.precomputed);
 	}

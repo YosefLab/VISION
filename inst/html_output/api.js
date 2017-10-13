@@ -81,6 +81,17 @@ var api = (function(){
 	  return $.ajax(query).then(x => JSON.parse(x))
     }
 
+    output.filterGroup.treeSigProjMatrixP = function(filter_group, precomputed)
+    {
+      var query = "/FilterGroup/"
+      if (precomputed) {
+		query = query.concat(encodeURI(filter_group), "/Tree/SigProjMatrix_P/Precomputed")
+	  } else {
+	  	query = query.concat(encodeURI(filter_group), "/Tree/SigProjMatrix_P/Normal")
+	  }
+	  return $.ajax(query).then(x => JSON.parse(x))
+    }
+
     output.filterGroup.list = function()
     {
       var query = "/FilterGroup/list";
