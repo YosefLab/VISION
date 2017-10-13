@@ -10,11 +10,12 @@
 #'     \item pooled cells - the super cells creates
 #'     \item pools - a list of data matrices of the original cells in each pool
 #' }
-applyMicroClustering <- function(exprData, nomodel=T, hkg=matrix(), cellsPerPartition=100, BPPARAM=bpparam()) {
+applyMicroClustering <- function(exprData, nomodel=TRUE, hkg=matrix(),
+                                 cellsPerPartition=100, BPPARAM=bpparam()) {
 
-    texpr <- filterGenesThreshold(exprData, 0.2*ncol(exprData)) 
+    texpr <- filterGenesThreshold(exprData, 0.2*ncol(exprData))
     fexpr <- filterGenesFano(texpr)
-    
+
     if (!nomodel) {
         falseneg_out <- createFalseNegativeMap(exprData, hkg)
         func <- falseneg_out[[1]]
