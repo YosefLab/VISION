@@ -1,6 +1,7 @@
 #' Cluster single cells so signal is maintained but the sample size and noise
 #' are reduce, using the louvain clustering algorithm
 #' @param exprData the expression data matrix
+#' @param nomodel a boolean value indicating whether or not to apply FNR curve weight calculations
 #' @param hkg a matrix vector of house keeping genes to use as negative control
 #' @param cellsPerPartition control over the minimum number of cells to put into each supercell
 #' @param BPPARAM the parallelization backend to use
@@ -9,15 +10,20 @@
 #'     \item pooled cells - the super cells creates
 #'     \item pools - a list of data matrices of the original cells in each pool
 #' }
-applyMicroClustering <- function(exprData, hkg=matrix(), cellsPerPartition=100, BPPARAM=bpparam()) {
+applyMicroClustering <- function(exprData, nomodel=T, hkg=matrix(), cellsPerPartition=100, BPPARAM=bpparam()) {
+
     texpr <- filterGenesThreshold(exprData, 0.2*ncol(exprData)) 
     fexpr <- filterGenesFano(texpr)
     
-    falseneg_out <- createFalseNegativeMap(exprData, hkg)
-    func <- falseneg_out[[1]]
-    params <- falseneg_out[[2]]
+    if (!nomodel) {
+        falseneg_out <- createFalseNegativeMap(exprData, hkg)
+        func <- falseneg_out[[1]]
+        params <- falseneg_out[[2]]
 
-    weights <- computeWeights(func, params, ExpressionData(exprData))
+        weights <- computeWeights(func, params, ExpressionData(exprData))
+    } else {
+        weights <- matrix(1L, nrow=nrow(exprData), ncol=ncol(exprData))
+    }
     rownames(weights) <- rownames(exprData)
     colnames(weights) <- colnames(exprData)
 
