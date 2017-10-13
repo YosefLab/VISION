@@ -11,12 +11,13 @@
 \usage{
 FastProject(data, ...)
 
-\S4method{FastProject}{matrix}(data, signatures, housekeeping,
+\S4method{FastProject}{matrix}(data, signatures, housekeeping = NULL,
   norm_methods = NULL, precomputed = NULL, nofilter = FALSE,
   nomodel = FALSE, filters = c("fano"), lean = FALSE, qc = FALSE,
   min_signature_genes = 5, projections = "", weights = NULL,
   threshold = 0, perm_wPCA = FALSE, sig_norm_method = "znorm_rows",
-  sig_score_method = "weighted_avg")
+  sig_score_method = "weighted_avg", pool = FALSE,
+  cellsPerPartition = 100)
 
 \S4method{FastProject}{character}(data, ...)
 
@@ -43,7 +44,9 @@ names}
 \item{norm_methods}{normalization methods to be extracted from the scone
 object}
 
-\item{precomputed}{data file with precomputed signature scores (.txt)}
+\item{precomputed}{data file with precomputed signature scores (.txt), or a
+data.frame with meta information. Note that rows should match samples in the
+data, and columns should either be factors or numerics.}
 
 \item{nofilter}{if TRUE, no filter applied; else filters applied.
 Default is FALSE}
@@ -76,6 +79,10 @@ number of PCs. Else not. Default FALSE.}
 before calculating signature scores}
 
 \item{sig_score_method}{Method to apply when calculating signature scores}
+
+\item{pool}{a boolean value indicating whether or not to create supercells}
+
+\item{cellsPerPartition}{the minimum number of cells to put into a cluster}
 }
 \value{
 A FastProject object

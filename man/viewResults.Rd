@@ -4,12 +4,16 @@
 \name{viewResults,FastProjectOutput-method}
 \alias{viewResults,FastProjectOutput-method}
 \alias{viewResults}
+\alias{viewResults,character-method}
 \title{View results of analysis without saving output object}
 \usage{
 \S4method{viewResults}{FastProjectOutput}(object)
+
+\S4method{viewResults}{character}(object)
 }
 \arguments{
-\item{object}{FastProjectOutput object}
+\item{object}{FastProjectOutput object or path to a file containing such an
+object (saved using saveAndViewResults, or directly using saveRDS)}
 }
 \value{
 None

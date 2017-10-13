@@ -33,7 +33,8 @@ setMethod("initialize", signature(.Object="SignatureScores"),
 #'
 #' @param df a data.frame object where each column is a cell signature. Names of
 #' columns are signatue names. Rownames must correspond to appropriate samples
-#'
+#' @return a list of SignatureScore objects, one for each column in the
+#' data.frame
 #' @note Factor signatures and numeric signatures are treated differently. Make
 #' sure that the class of each input column is the correct one.
 SigScoresFromDataframe <- function(df) {

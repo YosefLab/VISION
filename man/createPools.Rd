@@ -4,14 +4,14 @@
 \alias{createPools}
 \title{create "super-cells" by pooling together single cells}
 \usage{
-createPools(cl, expr, hkg = list())
+createPools(cl, expr, weights)
 }
 \arguments{
 \item{cl}{cluster association of each cell}
 
 \item{expr}{expression data}
 
-\item{hkg}{a set of housekeeping genes to use to evaluate tightness}
+\item{weights}{the weight matrix computed from the FNR curve}
 }
 \value{
 a matrx of expression data for the pooled cells

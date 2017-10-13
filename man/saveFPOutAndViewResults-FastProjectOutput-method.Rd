@@ -7,13 +7,16 @@
 \title{Save the FastProjectOutput object as an .RDS file and view the results on a
 localhost}
 \usage{
-\S4method{saveFPOutAndViewResults}{FastProjectOutput}(fpout)
+\S4method{saveFPOutAndViewResults}{FastProjectOutput}(fpout, ofile = NULL)
 }
 \arguments{
 \item{fpout}{FastProjectOutput object}
+
+\item{ofile}{the path to save the object in. If NULL, the object is saved
+in the working directory [default:NULL]}
 }
 \value{
-None
+the path of the saved file
 }
 \description{
 Save the results object as an RDS file for future use, and launch a local
