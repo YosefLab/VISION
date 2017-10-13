@@ -40,6 +40,8 @@
 #' @param sig_norm_method Method to apply to normalize the expression matrix
 #' before calculating signature scores
 #' @param sig_score_method Method to apply when calculating signature scores
+#' @param pool a boolean value indicating whether or not to create supercells
+#' @param cellsPerPartition the minimum number of cells to put into a cluster
 #' @return A FastProject object
 #' @rdname FastProject-class
 #' @export

@@ -1,7 +1,8 @@
 #' Cluster single cells so signal is maintained but the sample size and noise
 #' are reduce, using the louvain clustering algorithm
 #' @param exprData the expression data matrix
-#' @param hkg a list of house keeping genes to use as negative control
+#' @param hkg a matrix vector of house keeping genes to use as negative control
+#' @param cellsPerPartition control over the minimum number of cells to put into each supercell
 #' @param BPPARAM the parallelization backend to use
 #' @return a list:
 #' \itemize{
@@ -190,7 +191,7 @@ merge_intervals <- function(intervals) {
 #' create "super-cells" by pooling together single cells
 #' @param cl cluster association of each cell
 #' @param expr expression data
-#' @param hkg a set of housekeeping genes to use to evaluate tightness
+#' @param weights the weight matrix computed from the FNR curve
 #' @return a matrx of expression data for the pooled cells
 createPools <- function(cl, expr, weights) {
 
