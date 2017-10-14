@@ -1,31 +1,3 @@
-#' Initialize a new FastProjectOuptput object
-#' should not be called directly, use the `new` syntax
-#'
-#' @param .Object an object
-#' @param eData ExpressionData matrix
-#' @param filterModuleList List of FilterModuleData objects
-#' @param sigMatrix Matrix of signature scores (NUM_SIGS x NUM_CELLS)
-#' @param sigList List of Signatures
-#' @param fpParams List of the FastProject parameters that were used to
-#' generate this object
-#' @param pools a list of pooling information for pooling single cells into
-#' representative super-cell clusters
-#' @return FastProjectOutput object.
-setMethod("initialize", signature(.Object="FastProjectOutput"),
-            function(.Object, eData, filterModuleList, sigMatrix, sigList,
-                    fpParams, pools) {
-
-            .Object@exprData <- eData
-            .Object@filterModuleList <- filterModuleList
-            .Object@sigMatrix <- sigMatrix
-            .Object@sigList <- sigList
-            .Object@fpParams <- fpParams
-            .Object@pools <- pools
-
-            return(.Object)
-            }
-)
-
 #' Save the FastProjectOutput object as an .RDS file and view the results on a
 #' localhost
 #'
@@ -62,7 +34,7 @@ setMethod("initialize", signature(.Object="FastProjectOutput"),
 #' fp.out <- Analyze(fp)
 #' saveFPOutAndViewResults(fp.out)
 #' }
-setMethod("saveFPOutAndViewResults", signature(fpout="FastProjectOutput"),
+setMethod("saveFPOutAndViewResults", signature(fpout="FastProject"),
             function(fpout, ofile=NULL) {
             if(is.null(ofile)) {
                 i <- 1
@@ -112,7 +84,7 @@ setMethod("saveFPOutAndViewResults", signature(fpout="FastProjectOutput"),
 #' fp.out <- Analyze(fp)
 #' viewResults(fp.out)
 #' }
-setMethod("viewResults", signature(object="FastProjectOutput"),
+setMethod("viewResults", signature(object="FastProject"),
             function(object) {
 
             message("Launching the server...")
@@ -135,7 +107,7 @@ setMethod("viewResults", signature(object="character"),
           function(object) {
               fpo <- readRDS(object)
               if(!methods::is(fpo, "FastProjectOutput")){
-                  stop("loaded object not a valid FastProjectOutput object")
+                  stop("loaded object not a valid FastProject object")
               }
               viewResults(fpo)
           })

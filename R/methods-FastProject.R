@@ -73,9 +73,10 @@ setMethod("FastProject", signature(data = "matrix"),
                     cellsPerPartition=100) {
 
             .Object <- new("FastProject")
-            .Object@exprData <- data
-            rownames(.Object@exprData) <- sapply(rownames(.Object@exprData),
-                                                 toupper)
+
+            rownames(data) <- sapply(rownames(data), toupper)
+            .Object@allData = data
+            .Object@exprData <- ExpressionData(data)
 
             if (is.null(housekeeping)) {
                 .Object@housekeepingData <- c()
@@ -122,7 +123,6 @@ setMethod("FastProject", signature(data = "matrix"),
             .Object@sig_score_method <- sig_score_method
             .Object@lean = lean
             .Object@perm_wPCA = perm_wPCA
-            .Object@allData = .Object@exprData
             .Object@pool = pool
             .Object@cellsPerPartition = cellsPerPartition
 
@@ -202,71 +202,43 @@ setMethod("Analyze", signature(object="FastProject"),
     timingList <- (ptm - ptm)
     tRows <- c("Start")
 
-    clustered <- FALSE
-    pools <- list()
-    if (ncol(object@exprData) > 15000 || object@pool) {
-        microclusters <- applyMicroClustering(object@exprData,
-                                            object@housekeepingData,
-                                            object@cellsPerPartition,
-                                            BPPARAM)
-        pooled_cells <- microclusters[[1]]
-        pools <- microclusters[[2]]
-
-        object@exprData <- pooled_cells
-        clustered <- TRUE
-    }
+    object <- poolCells(object)
 
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, "Partition & Sample")
 
-    # Wrap expression data frame into a ExpressionData class
-    eData <- ExpressionData(object@exprData)
-
-    # If no filter threshold was specified, set it to 20% of samples
-    if (object@threshold == 0) {
-    num_samples <- ncol(getExprData(eData))
-    object@threshold <- round(0.2 * num_samples)
-    }
-
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, "Threshold")
 
-    filtered <- applyFilters(eData, object@threshold, object@filters)
-    eData <- filtered[[1]]
-    filterList <- filtered[[2]]
+    ## filter data - s
+    object <- filterData(object)
 
-    originalData <- getExprData(eData)
+    ## filterdata - e
 
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, "Filter")
 
-    if (!clustered && !object@nomodel) {
-    falseneg_out <- createFalseNegativeMap(originalData, object@housekeepingData)
-    func <- falseneg_out[[1]]
-    params <- falseneg_out[[2]]
+    object <- calcWeights(object)
 
-    message("Computing weights from False Negative Function...")
-    object@weights <- computeWeights(func, params, eData)
-
-    } else if (all(is.na(object@weights)) || ncol(object@weights) != ncol(object@exprData)) {
-    object@weights <- matrix(1L, nrow=nrow(originalData), ncol=ncol(originalData))
-    }
-
+    ## calcWeights - e
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, "FN Function")
 
-    rownames(object@weights) <- rownames(originalData)
-    colnames(object@weights) <- colnames(originalData)
 
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, "Weights")
 
-    normalizedData <- getNormalizedCopy(eData, object@sig_norm_method)
-    eData <- updateExprData(eData, normalizedData)
+    ## normalizedData - s
+
+    normalizedData <- getNormalizedCopy(object@exprData, object@sig_norm_method)
+    object@exprData <- updateExprData(object@exprData, normalizedData)
+
+    ## normalizeData - e
 
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, "Normalize")
 
+    ## compute signature scores - s
     # Score user defined signatures with defined method (default = weighted)
     sigScores <- c()
     if (object@sig_score_method == "naive") {
@@ -276,7 +248,7 @@ setMethod("Analyze", signature(object="FastProject"),
     }
 
     sigScores <- bplapply(object@sigData, function(s) {
-      singleSigEval(s, object@sig_score_method, eData, object@weights,
+      singleSigEval(s, object@sig_score_method, object@exprData, object@weights,
                     object@min_signature_genes)
     }, BPPARAM=BPPARAM)
 
@@ -319,7 +291,7 @@ setMethod("Analyze", signature(object="FastProject"),
     tRows <- c(tRows, "Sig Scores")
 
     # Construct random signatures for background distribution
-    randomSigs <- generatePermutationNull(3000, eData, sigSizes)
+    randomSigs <- generatePermutationNull(3000, object@exprData, sigSizes)
 
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, "Random Sigs")
@@ -333,7 +305,7 @@ setMethod("Analyze", signature(object="FastProject"),
     }
 
     randomSigScores <- bplapply(randomSigs, function(s) {
-      singleSigEval(s, object@sig_score_method, eData, object@weights,
+      singleSigEval(s, object@sig_score_method, object@exprData, object@weights,
                     object@min_signature_genes)
     } ,BPPARAM=BPPARAM)
     names(randomSigScores) <- names(randomSigs)
@@ -344,17 +316,19 @@ setMethod("Analyze", signature(object="FastProject"),
 
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, "Rand Sig Scores")
-
+    ## calc sig scores - e
     # Apply projections to filtered gene sets, create new projectionData object
     filterModuleList <- list()
-    for (filter in filterList) {
+
+    ## calculate projections - s
+    for (filter in object@filters) {
     message("Filter level: ", filter)
 
     message("Projecting data into 2 dimensions...")
 
     sigList <- sigList[rownames(sigMatrix)]
 
-    projectData <- generateProjections(eData, object@weights, filter,
+    projectData <- generateProjections(object@exprData, object@weights, filter,
                                inputProjections <- c(),
                                lean=object@lean, perm_wPCA = object@perm_wPCA,
                                BPPARAM = BPPARAM)
@@ -384,7 +358,7 @@ setMethod("Analyze", signature(object="FastProject"),
                                 sigClusters = sigClusters)
 
     message("Fitting principle tree...")
-    treeProjs <- generateTreeProjections(eData, filter,
+    treeProjs <- generateTreeProjections(object@exprData, filter,
                                     inputProjections = projectData$projections,
                                     permMats = projectData$permMats,
                                     BPPARAM = BPPARAM)
@@ -450,8 +424,9 @@ setMethod("Analyze", signature(object="FastProject"),
         fpParams[[s]] <- methods::slot(object, s)
     }
 
-    fpOut <- FastProjectOutput(eData, filterModuleList, sigMatrix, sigList,
-                               fpParams, pools)
+    ## TODO!!!
+    # fpOut <- FastProjectOutput(eData, filterModuleList, sigMatrix, sigList,
+    #                            fpParams, pools)
 
     timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
     tRows <- c(tRows, "Final")
@@ -464,3 +439,68 @@ setMethod("Analyze", signature(object="FastProject"),
     #return(list(fpOut, timingList))
     return(fpOut)
 })
+
+#' create micro-clusters that reduce noise and complexity while maintaining
+#' the overall signal in the data
+#' @param object the FastProject object to cluster the cells of
+#' @return the FastProject with pooled cells
+poolCells <- function(object) {
+    if (ncol(getExprData(object@exprData)) > 15000 || object@pool) {
+        microclusters <- applyMicroClustering(getExprData(object@exprData),
+                                              object@housekeepingData,
+                                              object@cellsPerPartition,
+                                              BPPARAM)
+        object@exprData <- ExpressionData(microclusters[[1]])
+        object@pools <- microclusters[[2]]
+    }
+    return(object)
+}
+
+#' filter data accourding to the provided filters
+#' @param object the FastProject object
+#' @return the FastProject object, populated with filtered data
+filterData <- function(object) {
+    message("filtering data...")
+    if (object@threshold == 0) {
+        num_samples <- ncol(getExprData(object@exprData))
+        object@threshold <- round(0.2 * num_samples)
+    }
+
+    object@exprData <- applyFilters(object@exprData,
+                                    object@threshold,
+                                    object@filters)
+    return(object)
+
+}
+
+#' Calculate weights based on the false negative rates, computed using the
+#' provided housekeeping genes
+#' @param object the FastProject object
+#' @return the FastProject object with populated weights slot
+calcWeights <- function(object) {
+    ##TODO:patch
+    clustered <- (ncol(getExprData(object@exprData)) > 15000 || object@pool)
+    if (!clustered && !object@nomodel) {
+        message("Computing weights from False Negative Function...")
+        falseneg_out <- createFalseNegativeMap(object@allData,
+                                               object@housekeepingData)
+        object@weights <- computeWeights(falseneg_out[[1]], falseneg_out[[2]],
+                                         object@exprData)
+
+    } else if (all(is.na(object@weights)) ||
+               ncol(object@weights) != ncol(object@exprData)) {
+        object@weights <- matrix(1L, nrow=nrow(object@allData),
+                                 ncol=ncol(object@allData))
+    }
+
+    rownames(object@weights) <- rownames(object@allData)
+    colnames(object@weights) <- colnames(object@allData)
+    return(object)
+}
+
+
+normalizeData <- function() {}
+calcSigScores <- function() {}
+calcProjections <- function() {} ##Including Tree projections
+calcSigProjMatrix <- function() {}
+calcPcaCorrelations <- function() {}
