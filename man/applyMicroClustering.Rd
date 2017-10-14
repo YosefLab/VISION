@@ -5,7 +5,7 @@
 \title{Cluster single cells so signal is maintained but the sample size and noise
 are reduce, using the louvain clustering algorithm}
 \usage{
-applyMicroClustering(exprData, nomodel = T, hkg = matrix(),
+applyMicroClustering(exprData, nomodel = TRUE, hkg = matrix(),
   cellsPerPartition = 100, BPPARAM = bpparam())
 }
 \arguments{
