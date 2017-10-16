@@ -198,45 +198,13 @@ setMethod("Analyze", signature(object="FastProject"),
         BPPARAM <- SerialParam()
     }
 
-    ptm <- Sys.time()
-    timingList <- (ptm - ptm)
-    tRows <- c("Start")
-
     object <- poolCells(object)
 
-    timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-    tRows <- c(tRows, "Partition & Sample")
-
-    timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-    tRows <- c(tRows, "Threshold")
-
-    ## filter data - s
     object <- filterData(object)
-
-    ## filterdata - e
-
-    timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-    tRows <- c(tRows, "Filter")
 
     object <- calcWeights(object)
 
-    ## calcWeights - e
-    timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-    tRows <- c(tRows, "FN Function")
-
-
-    timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-    tRows <- c(tRows, "Weights")
-
-    ## normalizedData - s
-
-    normalizedData <- getNormalizedCopy(object@exprData, object@sig_norm_method)
-    object@exprData <- updateExprData(object@exprData, normalizedData)
-
-    ## normalizeData - e
-
-    timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-    tRows <- c(tRows, "Normalize")
+    object <- normalizeData(object)
 
     ## compute signature scores - s
     # Score user defined signatures with defined method (default = weighted)
@@ -256,7 +224,6 @@ setMethod("Analyze", signature(object="FastProject"),
 
     sigList <- object@sigData
     sigNames <- names(object@sigData)
-    ## TODO: get rid of this somehow
     for (s in object@precomputedData) {
         if (length(s@sample_labels) != ncol(object@exprData)) {
         s@scores <- s@scores[colnames(object@exprData)]
@@ -287,21 +254,17 @@ setMethod("Analyze", signature(object="FastProject"),
     rownames(sigMatrix) <- names
     colnames(sigMatrix) <- colnames(object@exprData)
 
-    timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-    tRows <- c(tRows, "Sig Scores")
 
     # Construct random signatures for background distribution
     randomSigs <- generatePermutationNull(3000, object@exprData, sigSizes)
 
-    timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-    tRows <- c(tRows, "Random Sigs")
 
     ## Compute signature scores for random signatures generated
     randomSigScores <- c()
     if (object@sig_score_method == "naive") {
-    message("Applying naive signature scoring method...")
+        message("Applying naive signature scoring method...")
     } else if (object@sig_score_method == "weighted_avg") {
-    message("Applying weighted signature scoring method...")
+        message("Applying weighted signature scoring method...")
     }
 
     randomSigScores <- bplapply(randomSigs, function(s) {
@@ -314,8 +277,6 @@ setMethod("Analyze", signature(object="FastProject"),
     toRemove <- sapply(randomSigScores, is.null)
     randomSigScores <- randomSigScores[!toRemove]
 
-    timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-    tRows <- c(tRows, "Rand Sig Scores")
     ## calc sig scores - e
     # Apply projections to filtered gene sets, create new projectionData object
     filterModuleList <- list()
@@ -342,14 +303,8 @@ setMethod("Analyze", signature(object="FastProject"),
     sigVProj <- sigsVsProjections(projectData$projections, sigScores,
                                   randomSigScores, BPPARAM=BPPARAM)
 
-    timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-    tRows <- c(tRows, paste0("Pr. ", filter))
-
     message("Clustering Signatures...")
     sigClusters <- clusterSignatures(sigList, sigMatrix, sigVProj$pVals, k=10)
-
-    timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-    tRows <- c(tRows, paste0("ClusterSignaturesProjections ", filter))
 
     projData <- ProjectionData(projections = projectData$projections,
                                 keys = sigVProj$projNames,
@@ -370,18 +325,12 @@ setMethod("Analyze", signature(object="FastProject"),
     sigTreeClusters <- clusterSignatures(sigList, sigMatrix,
                                          sigVTreeProj$pVals, k=10)
 
-    timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-    tRows <- c(tRows, paste0("ClusterSignaturesProjections ", filter))
-
     treeProjData <- TreeProjectionData(projections = treeProjs$projections,
                                     keys = sigVTreeProj$projNames,
                                     sigProjMatrix = sigVTreeProj$sigProjMatrix,
                                     pMatrix = sigVTreeProj$pVals,
                                     sigClusters = sigTreeClusters,
                                     treeScore = treeProjs$treeScore)
-
-    timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-    tRows <- c(tRows, paste0("SigVTreePr ", filter))
 
     precomp_names <- sapply(object@precomputedData, function(x) ifelse(x@isFactor, x@name,))
     computedSigMatrix <- sigMatrix[setdiff(rownames(sigMatrix), precomp_names),]
@@ -399,10 +348,6 @@ setMethod("Analyze", signature(object="FastProject"),
 
         rownames(pearsonCorr) <- rownames(computedSigMatrix)
         colnames(pearsonCorr) <- rownames(pca_res)
-
-        timingList <- rbind(timingList, c(difftime(Sys.time(), ptm,
-                                                   units="secs")))
-        tRows <- c(tRows, paste("Pearson Correlation", filter))
 
         pcaAnnotData <- PCAnnotatorData(fullPCA = projectData$fullPCA,
                                         pearsonCorr = pearsonCorr,
@@ -427,13 +372,7 @@ setMethod("Analyze", signature(object="FastProject"),
     ## TODO!!!
     # fpOut <- FastProjectOutput(eData, filterModuleList, sigMatrix, sigList,
     #                            fpParams, pools)
-
-    timingList <- rbind(timingList, c(difftime(Sys.time(), ptm, units="secs")))
-    tRows <- c(tRows, "Final")
-
-    timingList <- as.matrix(timingList)
-    rownames(timingList) <- tRows
-
+    #
     message("Analysis Complete!")
 
     #return(list(fpOut, timingList))
@@ -499,8 +438,10 @@ calcWeights <- function(object) {
 }
 
 
-normalizeData <- function() {}
-calcSigScores <- function() {}
-calcProjections <- function() {} ##Including Tree projections
-calcSigProjMatrix <- function() {}
-calcPcaCorrelations <- function() {}
+normalizeData <- function(object) {
+    normalizedData <- getNormalizedCopy(object@exprData, object@sig_norm_method)
+    object@exprData <- updateExprData(object@exprData, normalizedData)
+    return(object)
+}
+
+analyzeProjections <- function() {}
