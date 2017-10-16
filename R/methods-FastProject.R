@@ -307,7 +307,7 @@ setMethod("Analyze", signature(object="FastProject"),
     sigMatrix <- matrix(0L, nrow=length(sigScores),
                         ncol=length(sigScores[[1]]@scores))
     for (sig in 1:length(sigScores)) {
-    names <- c(names, sigScores[[sig]]@name)
+    names <- c(names, toupper(sigScores[[sig]]@name))
     scores <- t(as.matrix(sigScores[[sig]]@scores))
     sigMatrix[sig,] <- scores
     }

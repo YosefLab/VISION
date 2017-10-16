@@ -160,7 +160,7 @@ public:
 		}
 
 
-		PRINT("%d\n", clusters->size());
+	
 
 	}
 

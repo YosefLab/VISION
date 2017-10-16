@@ -282,11 +282,11 @@ createFalseNegativeMap <- function(data, housekeeping_genes) {
 
     if(length(x) > 30) {
     q_indices <- round(length(x)/30 * seq(0, 29))
+    q_indices <- c(q_indices, length(x))
     } else {
-    q_indices <- seq(0, 29)
+    q_indices <- seq(0, length(mu_h))
     }
 
-    q_indices <- c(q_indices, length(x))
 
     sort_i <- order(x)
     x_sorted <- x[sort_i]

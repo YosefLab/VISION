@@ -106,7 +106,7 @@ generatePermutationNull <- function(num, eData, sigSizes) {
     randomSizes <- unlist(findRepSubset(sigSizes))
     for (size in randomSizes) {
     for (j in 1:num) {
-        newSigGenes <- sample(rownames(getExprData(eData)), size)
+        newSigGenes <- sample(rownames(getExprData(eData)), min(size, nrow(getExprData(eData))))
         newSigSigns <- rep(1, size)
         names(newSigSigns) <- newSigGenes
         newSig <- Signature(newSigSigns, paste0("RANDOM_BG_", size, "_", j), 'x')
