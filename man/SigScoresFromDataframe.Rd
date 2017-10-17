@@ -4,11 +4,14 @@
 \alias{SigScoresFromDataframe}
 \title{Generate signature scores based on an input data.frame}
 \usage{
-SigScoresFromDataframe(df)
+SigScoresFromDataframe(df, sampleLabels)
 }
 \arguments{
 \item{df}{a data.frame object where each column is a cell signature. Names of
 columns are signatue names. Rownames must correspond to appropriate samples}
+
+\item{sampleLabels}{a character vector representing sample names in 
+the expression matrix}
 }
 \value{
 a list of SignatureScore objects, one for each column in the
