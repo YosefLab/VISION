@@ -231,7 +231,7 @@ sigsVsProjections <- function(projections, sigScoresData,
     factorSigs <- list()
     for (s in precomputedFactor) {
     fValues <- s@scores
-    fLevels <- unique(fValues)
+    fLevels <- levels(fValues)
     factorFreq <- matrix(0L, ncol=length(fLevels))
     factorMatrix <- matrix(0L, nrow=N_SAMPLES, ncol=length(fLevels))
 

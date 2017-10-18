@@ -78,7 +78,7 @@ setMethod("FastProject", signature(data = "matrix"),
                                                  toupper)
 
             if (is.null(housekeeping)) {
-                .Object@housekeepingData <- c()
+                .Object@housekeepingData <- character()
                 .Object@nomodel = TRUE
             } else if (length(housekeeping) == 1) {
                 .Object@housekeepingData <- readHKGToMatrix(housekeeping)
@@ -97,11 +97,11 @@ setMethod("FastProject", signature(data = "matrix"),
 
             if (!is.null(precomputed)) {
                 if(is.data.frame(precomputed)) {
-                    .Object@precomputedData <-
-                        SigScoresFromDataframe(precomputed)
+                    .Object@precomputedData <- SigScoresFromDataframe(
+                        precomputed, colnames(.Object@exprData))
                 } else {
                     .Object@precomputedData <- readPrecomputed(
-                    precomputed, colnames(.Object@exprData))
+                        precomputed, colnames(.Object@exprData))
                 }
             }
 
@@ -286,14 +286,16 @@ setMethod("Analyze", signature(object="FastProject"),
     sigNames <- names(object@sigData)
     ## TODO: get rid of this somehow
     for (s in object@precomputedData) {
+
         if (length(s@sample_labels) != ncol(object@exprData)) {
-        s@scores <- s@scores[colnames(object@exprData)]
-        s@sample_labels <- colnames(object@exprData)
-    }
-    sigScores <- c(sigScores, s)
-    sigList<- c(sigList, Signature(list(), s@name, "", "", isPrecomputed=TRUE,
-                                   isFactor=s@isFactor, cluster=0))
-    sigNames <- c(sigNames, s@name)
+            s@scores <- s@scores[colnames(object@exprData)]
+            s@sample_labels <- colnames(object@exprData)
+        }
+
+        sigScores <- c(sigScores, s)
+        sigList<- c(sigList, Signature(list(), s@name, "", "", isPrecomputed=TRUE,
+                                       isFactor=s@isFactor, cluster=0))
+        sigNames <- c(sigNames, s@name)
     }
     names(sigList) <- sigNames
     names(sigScores) <- sigNames

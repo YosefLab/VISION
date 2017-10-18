@@ -171,6 +171,12 @@ readPrecomputed <- function(filename, sampleLabels, delimiter="\t") {
     ## Make sure that l1 is in the same order as sample_labels; match indices
     ## between signatrues in file & sampleLabels
     sampleLabels <- as.character(as.matrix(sampleLabels))
+
+    common <- intersect(l1[-c(1,2)], sampleLabels)
+    if (length(common) != length(sampleLabels)){
+        stop("Provided precomputed signature dataframe must have same sample labels as the expression matrix")
+    }
+
     colnames(f) <- l1
 
     f[,3:ncol(f)] <- f[,sampleLabels]
@@ -195,7 +201,7 @@ readPrecomputed <- function(filename, sampleLabels, delimiter="\t") {
 
     } else if (sigType == "factor") {
         sigIsFactor <- TRUE
-        sigVals <- as.numeric(as.matrix(sigVals))
+        sigVals <- as.factor(as.matrix(sigVals))
 
     } else {
         stop("Column 2 of precomputed signature file should specify either 'numerical' or 'factor'")
