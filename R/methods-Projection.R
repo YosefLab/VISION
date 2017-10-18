@@ -3,23 +3,22 @@
 #' Initialize a Projection object
 #' Should not be called directly, instead use the `new` syntax
 #'
-#' @param .Object an object
 #' @param name Name of the projection
 #' @param pData Coordinates of each sample in the projection
 #' (NUM_SAMPLES x NUM_COMPONENTS)
 #' @param weights a matrix of weights indicatng distances from each point
 #' to its closest neighbors
 #' @return Projection object
-setMethod("initialize", signature(.Object = "Projection"),
-            function(.Object, name, pData=NULL, weights=matrix(NA, 1,1)) {
 
+Projection <- function(name, pData=NULL, weights=matrix(NA, 1,1)) {
+            .Object <- new("Projection")
             .Object@name = name
             .Object@pData = pData
             .Object@weights = weights
 
             return(.Object)
             }
-)
+
 
 #' Updates the coordinate data stored in this object.
 #'

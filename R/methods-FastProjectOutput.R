@@ -1,7 +1,6 @@
 #' Initialize a new FastProjectOuptput object
 #' should not be called directly, use the `new` syntax
 #'
-#' @param .Object an object
 #' @param eData ExpressionData matrix
 #' @param filterModuleList List of FilterModuleData objects
 #' @param sigMatrix Matrix of signature scores (NUM_SIGS x NUM_CELLS)
@@ -11,10 +10,9 @@
 #' @param pools a list of pooling information for pooling single cells into
 #' representative super-cell clusters
 #' @return FastProjectOutput object.
-setMethod("initialize", signature(.Object="FastProjectOutput"),
-            function(.Object, eData, filterModuleList, sigMatrix, sigList,
+FastProjectOutput <- function(eData, filterModuleList, sigMatrix, sigList,
                     fpParams, pools) {
-
+            .Object <- new("FastProjectOutput")
             .Object@exprData <- eData
             .Object@filterModuleList <- filterModuleList
             .Object@sigMatrix <- sigMatrix
@@ -24,7 +22,6 @@ setMethod("initialize", signature(.Object="FastProjectOutput"),
 
             return(.Object)
             }
-)
 
 #' Save the FastProjectOutput object as an .RDS file and view the results on a
 #' localhost
