@@ -130,7 +130,7 @@ down.genes <- c("dg1","dg2","dg3","dg4","dg5","dg6")
 sigData <- c(rep(1.0,length(up.genes)),rep(-1.0,length(down.genes)))
 names(sigData) <- c(up.genes, down.genes)
 
-sig <- createUserGeneSignature(name = "Interesting Process", sigData = sigData)
+sig <- createGeneSignature(name = "Interesting Process", sigData = sigData)
 ```
 
 ### Signature files
