@@ -79,7 +79,7 @@ setMethod("FastProject", signature(data = "matrix"),
             .Object@exprData <- ExpressionData(data)
 
             if (is.null(housekeeping)) {
-                .Object@housekeepingData <- c()
+                .Object@housekeepingData <- character()
                 .Object@nomodel = TRUE
             } else if (length(housekeeping) == 1) {
                 .Object@housekeepingData <- readHKGToMatrix(housekeeping)
@@ -98,11 +98,11 @@ setMethod("FastProject", signature(data = "matrix"),
 
             if (!is.null(precomputed)) {
                 if(is.data.frame(precomputed)) {
-                    .Object@precomputedData <-
-                        SigScoresFromDataframe(precomputed)
+                    .Object@precomputedData <- SigScoresFromDataframe(
+                        precomputed, colnames(.Object@exprData))
                 } else {
                     .Object@precomputedData <- readPrecomputed(
-                    precomputed, colnames(.Object@exprData))
+                        precomputed, colnames(.Object@exprData))
                 }
             }
 
@@ -316,6 +316,7 @@ calcSignatureScores <- function(object, BPPARAM=NULL) {
     sigList <- object@sigData
     sigNames <- names(object@sigData)
     for (s in object@precomputedData) {
+
         if (length(s@sample_labels) != ncol(object@exprData)) {
             s@scores <- s@scores[colnames(object@exprData)]
             s@sample_labels <- colnames(object@exprData)
