@@ -10,7 +10,7 @@ SigScoresFromDataframe(df, sampleLabels)
 \item{df}{a data.frame object where each column is a cell signature. Names of
 columns are signatue names. Rownames must correspond to appropriate samples}
 
-\item{sampleLabels}{a character vector representing sample names in 
+\item{sampleLabels}{a character vector representing sample names in
 the expression matrix}
 }
 \value{

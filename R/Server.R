@@ -1,77 +1,67 @@
 #' Wrapper class for ExpressionData object for JSON.
 #' Should not be called directly, instead use the `new` syntax
 #'
-#' @param .Object an object
 #' @param data Expression data
 #' @param sample_labels Labels of samples in expression data
 #' @param gene_labels Lables of genes in expression data
 #' @return ServerExpression object
-setMethod("initialize", signature(.Object="ServerExpression"),
-            function(.Object,data, sample_labels, gene_labels) {
-
+ServerExpression <- function(data, sample_labels, gene_labels) {
+            .Object <- new("ServerExpression")
             .Object@data <- data
             .Object@sample_labels <- sample_labels
             .Object@gene_labels <- gene_labels
 
             return(.Object)
             }
-)
 
 #' Wrapper class for Signature Projection Matrix
 #' Should not be called directly, instead use the `new` syntax
 #'
-#' @param .Object an object
 #' @param data Signatrue Projection matrix as obtained from sigsVsProjections
 #' @param proj_labels Projection names
 #' @param sig_labels Names of signatures
 #' @return ServerSigProjMatrix object
-setMethod("initialize", signature(.Object="ServerSigProjMatrix"),
-            function(.Object, data, proj_labels, sig_labels) {
-
+ServerSigProjMatrix <- function(data, proj_labels, sig_labels) {
+            .Object <- new("ServerSigProjMatrix")
             .Object@data <- data
             .Object@proj_labels <- proj_labels
             .Object@sig_labels <- sig_labels
 
             return(.Object)
             }
-)
 
 #' Wrapper class for the P value matrix calculated during sigsVsProjections
 #' Should not be called directly, instead use the `new` syntax
 #'
-#' @param .Object an object
 #' @param data P values for each signature, projection pair in the form of a matrix
 #' @param proj_labels Projection names
 #' @param sig_labels Names of signatures
 #' @return ServerPMatrix object
-setMethod("initialize", signature(.Object="ServerPMatrix"),
-            function(.Object, data, proj_labels, sig_labels) {
-
+ServerPMatrix <- function(data, proj_labels, sig_labels) {
+            .Object <- new("ServerPMatrix")
             .Object@data <- data
             .Object@proj_labels <- proj_labels
             .Object@sig_labels <- sig_labels
 
             return(.Object)
-            })
+            }
 
 #' Wrapper class for server Perason correlation data
 #' Should not be called directly, instead use the `new` syntax
 #'
-#' @param .Object an object
 #' @param data pearson r correlation coefficients
 #' @param proj_labels the labels of the projections (columns) in the data
 #' @param sig_labels the labels of the signatures (rows) in the data
 #' @return a ServerPCorr object
-setMethod("initialize", signature(.Object="ServerPCorr"),
-        function(.Object, data, proj_labels, sig_labels) {
-
+ServerPCorr <- function(data, proj_labels, sig_labels) {
+        .Object <- new("ServerPCorr")
         .Object@data <- data
         .Object@proj_labels <- proj_labels
         .Object@sig_labels <- sig_labels
 
         return(.Object)
 
-        })
+        }
 
 
 #' Converts Signature object to JSON

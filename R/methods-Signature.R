@@ -4,7 +4,6 @@
 #' Initialize a new Signature object.
 #' Should not be called directly, instead use the `new` syntax
 #'
-#' @param .Object an object
 #' @param sigDict Named list of signs for each gene in the signature
 #' @param name Name of the signature
 #' @param source File from which this signature was read from
@@ -16,10 +15,10 @@
 #' @param cluster Number representing which cluster this signature is a part of.
 #' Default is 0.
 #' @return Signature object
-setMethod("initialize", signature(.Object="Signature"),
-            function(.Object, sigDict, name, source, metaData="",
+Signature <- function(sigDict, name, source, metaData="",
                     isPrecomputed=FALSE,
                     isFactor=FALSE, cluster=0) {
+            .Object <- new("Signature")
             if (missing(sigDict)) {
                 stop("Missing sigDict information.")
             } else if (missing(name)) {
@@ -36,11 +35,8 @@ setMethod("initialize", signature(.Object="Signature"),
             .Object@isFactor = isFactor
             .Object@cluster = cluster
 
-
-            return(.Object);
-
+            return(.Object)
             }
-)
 
 #' Create a user-defined gene signature
 #'

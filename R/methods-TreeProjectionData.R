@@ -7,7 +7,6 @@
 #' Initializes a ProjectionData object for neatly storing all relevant data to a given projection section
 #' Should not be called directly, instead use the `new` syntax
 #'
-#' @param .Object an object
 #' @param projections List of Projection objects to be stored
 #' @param keys Sample names of expression data
 #' @param sigProjMatrix Matrix storing the median consistency score per projection, signature pair
@@ -15,8 +14,9 @@
 #' @param sigClusters a list of signature clusters
 #' @param treeScore a significance score for the fitted tree
 #' @return ProjectionData object
-setMethod("initialize", signature(.Object="TreeProjectionData"),
-            function(.Object, projections=NULL, keys, sigProjMatrix, pMatrix, sigClusters, treeScore) {
+TreeProjectionData <- function(projections=NULL, keys, sigProjMatrix,
+                               pMatrix, sigClusters, treeScore) {
+            .Object <- new("TreeProjectionData")
             .Object@projections <- projections
             .Object@keys <- keys
             .Object@sigProjMatrix <- sigProjMatrix
@@ -25,5 +25,4 @@ setMethod("initialize", signature(.Object="TreeProjectionData"),
             .Object@treeScore <- treeScore
             return(.Object)
             }
-)
 
