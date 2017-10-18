@@ -99,10 +99,10 @@ setMethod("FastProject", signature(data = "matrix"),
             if (!is.null(precomputed)) {
                 if(is.data.frame(precomputed)) {
                     .Object@precomputedData <- SigScoresFromDataframe(
-                        precomputed, colnames(.Object@exprData))
+                        precomputed, colnames(.Object@allData))
                 } else {
                     .Object@precomputedData <- readPrecomputed(
-                        precomputed, colnames(.Object@exprData))
+                        precomputed, colnames(.Object@allData))
                 }
             }
 

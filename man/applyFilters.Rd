@@ -14,7 +14,7 @@ applyFilters(data, threshold, filterInput)
 \item{filterInput}{list of filters to compute}
 }
 \value{
-List of the updated ExpressionData object, and the list of filters applied.
+The updated ExpressionData object
 }
 \description{
 Applies filters to the inputted expression data (may remove rows)

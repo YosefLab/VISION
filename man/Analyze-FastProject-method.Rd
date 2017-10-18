@@ -14,7 +14,7 @@
 \item{BPPARAM}{a parallelization backend to use for the analysis}
 }
 \value{
-FastProjectOutput object
+FastProject object
 }
 \description{
 The main analysis function. Runs the entire FastProject analysis pipeline

@@ -9,7 +9,7 @@
 #' @param data ExpressionData object
 #' @param threshold minimum number of samples gene must be detected in to pass
 #' @param filterInput list of filters to compute
-#' @return List of the updated ExpressionData object, and the list of filters applied.
+#' @return The updated ExpressionData object
 applyFilters <- function(data, threshold, filterInput) {
     expr <- getExprData(data)
 

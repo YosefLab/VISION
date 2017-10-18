@@ -12,7 +12,7 @@
 \S4method{viewResults}{character}(object)
 }
 \arguments{
-\item{object}{FastProjectOutput object or path to a file containing such an
+\item{object}{FastProject object or path to a file containing such an
 object (saved using saveAndViewResults, or directly using saveRDS)}
 }
 \value{
@@ -32,7 +32,7 @@ hkg <- paste0("gene",sample(1:500, 50))
 sigs <- lapply(1:20, function(i) {
 sigData <- sign(rnorm(25))
 names(sigData) <- paste0("gene",sample(1:100,25))
-return(createUserGeneSignature(name = paste0("sig",i),
+return(createGeneSignature(name = paste0("sig",i),
                                  sigData = sigData))
 })
 

@@ -10,7 +10,7 @@ localhost}
 \S4method{saveFPOutAndViewResults}{FastProject}(fpout, ofile = NULL)
 }
 \arguments{
-\item{fpout}{FastProjectOutput object}
+\item{fpout}{FastProject object}
 
 \item{ofile}{the path to save the object in. If NULL, the object is saved
 in the working directory [default:NULL]}
@@ -33,7 +33,7 @@ hkg <- paste0("gene",sample(1:500, 50))
 sigs <- lapply(1:20, function(i) {
 sigData <- sign(rnorm(25))
 names(sigData) <- paste0("gene",sample(1:100,25))
-return(createUserGeneSignature(name = paste0("sig",i),
+return(createGeneSignature(name = paste0("sig",i),
                                  sigData = sigData))
 })
 
