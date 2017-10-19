@@ -9,34 +9,27 @@
 #' @param data ExpressionData object
 #' @param threshold minimum number of samples gene must be detected in to pass
 #' @param filterInput list of filters to compute
-#' @return List of the updated ExpressionData object, and the list of filters applied.
+#' @return The updated ExpressionData object
 applyFilters <- function(data, threshold, filterInput) {
-
-    filterList <- c()
     expr <- getExprData(data)
 
-    message("Applying filters...")
-
     for (filter in filterInput) {
-    if (filter == "novar") {
-        filterList <- c(filterList, "novar")
-        expr <- filterGenesNovar(expr)
-        data@noVarFilter <- expr
-    } else if (filter == "threshold") {
-        filterList <- c(filterList, "threshold")
-        expr <- filterGenesThreshold(expr, threshold)
-        data@thresholdFilter <- expr
-    } else if (filter == "fano") {
-        filterList <- c(filterList, "fano")
-        texpr <- filterGenesThreshold(expr, threshold)
-        expr <- filterGenesFano(texpr)
-        data@fanoFilter <- expr
-    } else {
-        stop("Filter not recognized")
-    }
+        if (filter == "novar") {
+            expr <- filterGenesNovar(expr)
+            data@noVarFilter <- expr
+        } else if (filter == "threshold") {
+            expr <- filterGenesThreshold(expr, threshold)
+            data@thresholdFilter <- expr
+        } else if (filter == "fano") {
+            texpr <- filterGenesThreshold(expr, threshold)
+            expr <- filterGenesFano(texpr)
+            data@fanoFilter <- expr
+        } else {
+            stop("Filter not recognized")
+        }
     }
 
-    return(list(data, filterList))
+    return(data)
 
 }
 

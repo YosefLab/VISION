@@ -11,8 +11,8 @@ test_that("Threshold filter returns null on test matrix", {
 test_that("All filters reduce rows, not columns", {
   data <- readExprToMatrix("test_data/expression_matrix.txt")
   exprData <- ExpressionData(data)
-  filteredList <- applyFilters(exprData, 20, c("threshold", "fano"))
-  filteredData <- filteredList[[1]]
+  filters <- c("threshold", "fano")
+  filteredData <- applyFilters(exprData, 20, filters)
   
   expect_equal(ncol(filteredData@thresholdFilter), ncol(data))
   expect_true(nrow(filteredData@thresholdFilter) <= nrow(data))

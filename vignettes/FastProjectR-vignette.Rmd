@@ -106,7 +106,7 @@ bp <- BiocParallel::SerialParam()
 fpOut <- Analyze(fp, BPPARAM = bp)
 ```
 
-With the FastProjectOutput object, a dynamic web report can be generated with the `viewResults` function or the `saveFPOutandViewResults` function, which will both save the FastProjectOutput object as an .rds file and launch a web browser for the dynamic report.
+With the FastProjectOutput object, a dynamic web report can be generated with the `viewResults` function or the `saveAndViewResults` function, which will both save the FastProjectOutput object as an .rds file and launch a web browser for the dynamic report.
 
 ```{r, collapse=T, message=F, results=F, eval=F}
 viewResults(fpOut)
@@ -130,7 +130,7 @@ down.genes <- c("dg1","dg2","dg3","dg4","dg5","dg6")
 sigData <- c(rep(1.0,length(up.genes)),rep(-1.0,length(down.genes)))
 names(sigData) <- c(up.genes, down.genes)
 
-sig <- createUserGeneSignature(name = "Interesting Process", sigData = sigData)
+sig <- createGeneSignature(name = "Interesting Process", sigData = sigData)
 ```
 
 ### Signature files

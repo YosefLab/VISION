@@ -1,19 +1,18 @@
 
 #' Initializes an ExpressionData object
 #' should not be called directly, use the `new` syntax
-#' @param .Object an object
 #' @param data expression data matrix
 #' @param ... additional arguments
 #' @return ExpressionData object
-setMethod("initialize", signature(.Object="ExpressionData"),
-            function(.Object, data, ...) {
+ExpressionData <- function(data, ...) {
+            .Object <- new("ExpressionData")
             .Object@data <- data
             .Object@fanoFilter <- matrix(NA)
             .Object@thresholdFilter <-matrix(NA)
             .Object@noVarFilter <- matrix(NA)
             return(.Object)
 
-            })
+            }
 
 #' Prints out expression data
 #'

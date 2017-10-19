@@ -4,7 +4,6 @@
 #' Initialize a new Signature object.
 #' Should not be called directly, instead use the `new` syntax
 #'
-#' @param .Object an object
 #' @param sigDict Named list of signs for each gene in the signature
 #' @param name Name of the signature
 #' @param source File from which this signature was read from
@@ -16,10 +15,10 @@
 #' @param cluster Number representing which cluster this signature is a part of.
 #' Default is 0.
 #' @return Signature object
-setMethod("initialize", signature(.Object="Signature"),
-            function(.Object, sigDict, name, source, metaData="",
+Signature <- function(sigDict, name, source, metaData="",
                     isPrecomputed=FALSE,
                     isFactor=FALSE, cluster=0) {
+            .Object <- new("Signature")
             if (missing(sigDict)) {
                 stop("Missing sigDict information.")
             } else if (missing(name)) {
@@ -36,11 +35,8 @@ setMethod("initialize", signature(.Object="Signature"),
             .Object@isFactor = isFactor
             .Object@cluster = cluster
 
-
-            return(.Object);
-
+            return(.Object)
             }
-)
 
 #' Create a user-defined gene signature
 #'
@@ -52,13 +48,13 @@ setMethod("initialize", signature(.Object="Signature"),
 #' @export
 #' @return a Signature object
 #' @examples
-#' sig <- createUserGeneSignature(name="signature", c(gene1=1.0,gene17=1.0,
+#' sig <- createGeneSignature(name="signature", c(gene1=1.0,gene17=1.0,
 #'                                                      gene4=1.0, gene31=-1.0,
 #'                                                      gene3=-1.0, gene9=1.0))
-#' sig2 <- createUserGeneSignature(name="signature", c(gene18=1.0,gene29=1.0,
+#' sig2 <- createGeneSignature(name="signature", c(gene18=1.0,gene29=1.0,
 #'                                                      gene400=-1.0, gene1=-1.0,
 #'                                                      gene7=1.0, gene9=1.0))
-createUserGeneSignature <- function(name, sigData, metadata="") {
+createGeneSignature <- function(name, sigData, metadata="") {
     return(new("Signature", sigDict=sigData, name=name, metaData=metadata,
                     source="user-defined"))
 }

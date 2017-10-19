@@ -39,14 +39,20 @@ FastProject <- setClass("FastProject",
         threshold = "numeric",
         sig_norm_method = "character",
         sig_score_method = "character",
-        exprData = "matrix",
+        exprData = "ExpressionData",
         allData = "matrix",
         housekeepingData = "character",
         sigData = "list",
         precomputedData= "list",
         perm_wPCA = "logical",
         pool = "logical",
-        cellsPerPartition= "numeric"),
+        randomSigScores = "list",
+        sigScores = "list",
+        cellsPerPartition= "numeric",
+        filterModuleList = "list",
+        sigMatrix = "matrix",
+        fpParams = "list",
+        pools = "list"),
     prototype = list(
         nofilter = FALSE,
         nomodel = FALSE,
@@ -65,18 +71,13 @@ FastProject <- setClass("FastProject",
         precomputedData = NULL,
         perm_wPCA = FALSE,
         pool = FALSE,
-        cellsPerPartition=100
-))
-
-#' a container for FastProject output data
-FastProjectOutput <- setClass("FastProjectOutput",
-    slots = c(
-    exprData = "ExpressionData",
-    filterModuleList = "list",
-    sigMatrix = "matrix",
-    sigList = "list",
-    fpParams = "list",
-    pools = "list"
+        randomSigScores = NULL,
+        sigScores = NULL,
+        cellsPerPartition = 100,
+        filterModuleList = NULL,
+        sigMatrix = NULL,
+        fpParams = NULL,
+        pools=NULL
 ))
 
 ProjectionData <- setClass("ProjectionData",

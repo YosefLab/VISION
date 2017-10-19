@@ -33,7 +33,8 @@ applySimplePPT <- function(exprData, numCores, permExprData = NULL,
     Wt <- NULL
 
     if (sigma == 0) {
-    km <- stats::kmeans(t(exprData), centers=round(sqrt(ncol(exprData))), nstart=1, iter.max=50)$centers
+    km <- stats::kmeans(t(exprData), centers=round(sqrt(ncol(exprData))),
+                        nstart=1, iter.max=50)$centers
 
     sigma <- mean(apply(as.matrix(sqdist(t(exprData), km)), 1, min))
     }

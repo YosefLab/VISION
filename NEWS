@@ -1,3 +1,8 @@
+Changes in version 0.99.6 (2017-10-18)
+========================
+* Added support for numeric precomputed signatures
+* removed initialize overrides
+
 Changes in version 0.99.5 (2017-10-13)
 ========================
 * Server launching issues fixed

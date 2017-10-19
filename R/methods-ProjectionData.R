@@ -6,16 +6,15 @@
 
 #' Initializes a ProjectionData object for neatly storing all relevant data to a given projection section
 #'
-#' @param .Object an object
 #' @param projections List of Projection objects to be stored
 #' @param keys Sample names of expression data
 #' @param sigProjMatrix Matrix storing the median consistency score per projection, signature pair
 #' @param pMatrix Matrix storing the p values for each projection, signature pair
 #' @param sigClusters the signature clusters
 #' @return ProjectionData object
-setMethod("initialize", signature(.Object="ProjectionData"),
-            function(.Object, projections=NULL, keys, sigProjMatrix, pMatrix, sigClusters) {
-
+ProjectionData <- function(projections=NULL, keys, sigProjMatrix,
+                           pMatrix, sigClusters) {
+            .Object <- new("ProjectionData")
             .Object@projections <- projections
             .Object@keys <- keys
             .Object@sigProjMatrix <- sigProjMatrix
@@ -23,5 +22,4 @@ setMethod("initialize", signature(.Object="ProjectionData"),
             .Object@sigClusters <- sigClusters
             return(.Object)
             }
-)
 

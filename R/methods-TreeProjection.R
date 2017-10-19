@@ -2,14 +2,13 @@
 #' Create a TreeProjection object
 #' Should not be called directly, instead use the `new` syntax
 #'
-#' @param .Object an object
 #' @param pData the projected coordinates of the data
 #' @param name the name of the projection
 #' @param vData the projected coordinates of the tree nodes
 #' @param adjMat the adjacency matrix of the tree
 #' @return a TreeProjection object
-setMethod("initialize", signature(.Object="TreeProjection"),
-            function(.Object, pData, name, vData, adjMat) {
+TreeProjection <- function(pData, name, vData, adjMat) {
+            .Object <- new("TreeProjection")
             .Object@pData <- pData
             .Object@name <- name
             .Object@vData = vData
@@ -21,7 +20,7 @@ setMethod("initialize", signature(.Object="TreeProjection"),
             .Object@edgeAssoc <- proj$edges
             .Object@edgePos <- proj$edgePos
             return(.Object)
-            })
+            }
 
 
 #' Compute KNN weights based on geodesic distances for TreeProjection objects
