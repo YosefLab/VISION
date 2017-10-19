@@ -28,7 +28,6 @@
 #' @param filters list of filters to compute
 #' @param lean if TRUE run a lean simulation. Else more robust pipeline
 #' initiated. Default is FALSE
-#' @param qc if TRUE calculate QC; else not. Default is FALSE
 #' @param min_signature_genes Minimum number of genes required to compute a
 #' signature
 #' @param projections File containing precomputed projections for analysis
@@ -66,9 +65,9 @@
 setMethod("FastProject", signature(data = "matrix"),
             function(data, signatures, housekeeping=NULL, norm_methods = NULL,
                     precomputed=NULL, nofilter=FALSE, nomodel=FALSE,
-                    filters=c("fano"), lean=FALSE, qc=FALSE,
-                    min_signature_genes=5, projections="", weights=NULL,
-                    threshold=0, perm_wPCA=FALSE, sig_norm_method="znorm_rows",
+                    filters=c("fano"), lean=FALSE, min_signature_genes=5,
+                    projections="", weights=NULL, threshold=0, perm_wPCA=FALSE,
+                    sig_norm_method="znorm_rows",
                     sig_score_method="weighted_avg", pool=FALSE,
                     cellsPerPartition=100) {
 
@@ -155,7 +154,6 @@ setMethod("FastProject", signature(data = "SummarizedExperiment"),
           }
 )
 
-
 #' Main entry point for running FastProject Analysis
 #'
 #' The main analysis function. Runs the entire FastProject analysis pipeline
@@ -225,7 +223,7 @@ setMethod("Analyze", signature(object="FastProject"),
 #' @param ofile the path to save the object in. If NULL, the object is saved
 #' in the working directory [default:NULL]
 #' @return the path of the saved file
-#' @aliases saveFPOutAndViewResults
+#' @aliases saveAndViewResults
 #' @export
 #' @examples
 #' expMat <- matrix(rnorm(200000), nrow=500)
@@ -249,9 +247,9 @@ setMethod("Analyze", signature(object="FastProject"),
 #' ## Analyze requires actual non-random data to run properly
 #' \dontrun{
 #' fp.out <- Analyze(fp)
-#' saveFPOutAndViewResults(fp.out)
+#' saveAndViewResults(fp.out)
 #' }
-setMethod("saveFPOutAndViewResults", signature(fpout="FastProject"),
+setMethod("saveAndViewResults", signature(fpout="FastProject"),
           function(fpout, ofile=NULL) {
             if(is.null(ofile)) {
               i <- 1
@@ -329,3 +327,35 @@ setMethod("viewResults", signature(object="character"),
             viewResults(fpo)
           })
 
+#' create new FastProject object from a subset of the data in an existing one
+#' @param fp the FastProject object to subset
+#' @param subset the indices of the samples to keep
+#' @return a new FastProject object with the new data and the same analysis
+#' parameters
+createNewFP <- function(fp, subset) {
+    .Object <- new("FastProject")
+    nexpr <- fp@allData[,subset]
+    rownames(nexpr) <- sapply(rownames(nexpr), toupper)
+    .Object@allData = nexpr
+    .Object@exprData <- ExpressionData(nexpr)
+
+    .Object@housekeepingData <- fp@housekeepingData
+    .Object@sigData <- fp@sigData
+
+    ## TODO: this should be subset accourding to the new data somehow
+    .Object@precomputedData <- fp@precomputedData
+
+    .Object@weights <- fp@weights[,subset]
+    .Object@nofilter <- fp@nofilter
+    .Object@filters <- fp@filters
+    .Object@projections <- fp@projections
+    .Object@threshold <- fp@threshold
+    .Object@sig_norm_method <- fp@sig_norm_method
+    .Object@sig_score_method <- fp@sig_score_method
+    .Object@lean = fp@lean
+    .Object@perm_wPCA = fp@perm_wPCA
+    .Object@pool = fp@pool
+    .Object@cellsPerPartition = fp@cellsPerPartition
+
+    return(.Object)
+}

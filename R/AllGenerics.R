@@ -28,8 +28,8 @@ setGeneric("getNormalizedCopy", function(object, func) {
     standardGeneric("getNormalizedCopy")
 })
 
-setGeneric("saveFPOutAndViewResults", function(fpout, ...) {
-    standardGeneric("saveFPOutAndViewResults")
+setGeneric("saveAndViewResults", function(fpout, ...) {
+    standardGeneric("saveAndViewResults")
 })
 
 setGeneric("sigEqual", function(object, compareSig) {

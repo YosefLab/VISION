@@ -106,7 +106,7 @@ bp <- BiocParallel::SerialParam()
 fpOut <- Analyze(fp, BPPARAM = bp)
 ```
 
-With the FastProjectOutput object, a dynamic web report can be generated with the `viewResults` function or the `saveFPOutandViewResults` function, which will both save the FastProjectOutput object as an .rds file and launch a web browser for the dynamic report.
+With the FastProjectOutput object, a dynamic web report can be generated with the `viewResults` function or the `saveAndViewResults` function, which will both save the FastProjectOutput object as an .rds file and launch a web browser for the dynamic report.
 
 ```{r, collapse=T, message=F, results=F, eval=F}
 viewResults(fpOut)
