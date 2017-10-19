@@ -43,7 +43,7 @@ jug() %>%
     return(out)
   }) %>%
   get("/Signature/ListPrecomputed", function(req, res, err){
-    signatures <- fpout@sigList
+    signatures <- fpout@sigData
     keys <- lapply(signatures, function(x) x@name)
     vals <- lapply(signatures, function(x) x@isPrecomputed)
     names(vals) <- keys
@@ -51,7 +51,7 @@ jug() %>%
     return(out)
   }) %>%
   get("/Signature/Info/(?<sig_name2>.*)", function(req, res, err){
-    signatures <- fpout@sigList
+    signatures <- fpout@sigData
     name <- URLdecode(req$params$sig_name2)
     out <- "Signature does not exist!"
     if (name %in% names(signatures)) {
@@ -70,14 +70,14 @@ jug() %>%
     return(out)
   }) %>%
   get("/Signature/Expression/(?<sig_name4>.*)", function(req, res, err) {
-    all_names = sapply(fpout@sigList, function(x){return(x@name)})
+    all_names = sapply(fpout@sigData, function(x){return(x@name)})
     name <- URLdecode(req$params$sig_name4)
     index = match(name, all_names)
     if(is.na(index)){
         out <- "Signature does not exist!"
     }
     else{
-        sig = fpout@sigList[[index]]
+        sig = fpout@sigData[[index]]
         genes = names(sig@sigDict)
         expMat = fpout@exprData@data
         return(FastProjectR:::expressionToJSON(expMat, genes))
@@ -120,7 +120,7 @@ jug() %>%
     # projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name2)
 
-    signatures <- fpout@sigList
+    signatures <- fpout@sigData
     keys <- lapply(signatures, function(x) x@name)
     vals <- lapply(signatures, function(x) x@isPrecomputed)
     names(vals) <- keys
@@ -134,7 +134,7 @@ jug() %>%
     # projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name3)
 
-    signatures <- fpout@sigList
+    signatures <- fpout@sigData
     keys <- lapply(signatures, function(x) x@name)
     vals <- lapply(signatures, function(x) x@isPrecomputed)
     names(vals) <- keys
@@ -149,7 +149,7 @@ jug() %>%
     # projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name4)
 
-    signatures <- fpout@sigList
+    signatures <- fpout@sigData
     keys <- lapply(signatures, function(x) x@name)
     vals <- lapply(signatures, function(x) x@isPrecomputed)
     names(vals) <- keys
@@ -164,7 +164,7 @@ jug() %>%
     # projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name5)
 
-    signatures <- fpout@sigList
+    signatures <- fpout@sigData
     keys <- lapply(signatures, function(x) x@name)
     vals <- lapply(signatures, function(x) x@isPrecomputed)
     names(vals) <- keys
@@ -179,7 +179,7 @@ jug() %>%
     # projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name20)
 
-    signatures <- fpout@sigList
+    signatures <- fpout@sigData
     keys <- lapply(signatures, function(x) x@name)
     vals <- lapply(signatures, function(x) x@isPrecomputed)
     names(vals) <- keys
@@ -194,7 +194,7 @@ jug() %>%
     # projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name21)
 
-    signatures <- fpout@sigList
+    signatures <- fpout@sigData
     keys <- lapply(signatures, function(x) x@name)
     vals <- lapply(signatures, function(x) x@isPrecomputed)
     names(vals) <- keys
@@ -335,7 +335,7 @@ jug() %>%
     # projData <- fpout@projData
 	  filter <- URLdecode(req$params$filter_name14)
 
-    signatures <- fpout@sigList
+    signatures <- fpout@sigData
     keys <- lapply(signatures, function(x) x@name)
     vals <- lapply(signatures, function(x) x@isPrecomputed)
     names(vals) <- keys
@@ -351,7 +351,7 @@ jug() %>%
     # projData <- fpout@projData
 	  filter <- URLdecode(req$params$filter_name15)
 
-    signatures <- fpout@sigList
+    signatures <- fpout@sigData
     keys <- lapply(signatures, function(x) x@name)
     vals <- lapply(signatures, function(x) x@isPrecomputed)
     names(vals) <- keys
@@ -386,20 +386,15 @@ jug() %>%
   post("/Analysis/Run/", function(req, res, err) {
 	subset <- fromJSON(req$body)
 	subset <- subset[!is.na(subset)]
-	fpParams <- fpout@fpParams
-	allData <- fpParams[["allData"]]
+	allData <- fpout@allData
 
 	if (length(fpout@pools) > 0) {
-		print(class(subset))
 		clust <- fpout@pools[subset]
-		print('here')
 		subset <- unlist(clust)
 	}
-	print(subset)
-	nexpr <- allData[,subset]
 
-	nfp <- createNewFP(fpout@fpParams, nexpr, 1)
-	newAnalysis(nfp)
+	nfp <- FastProjectR:::createNewFP(fpout, subset)
+	FastProjectR:::newAnalysis(nfp)
 	return()
   }) %>%
   get("/path2", function(req, res, err){

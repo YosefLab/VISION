@@ -13,7 +13,7 @@ FastProject(data, ...)
 
 \S4method{FastProject}{matrix}(data, signatures, housekeeping = NULL,
   norm_methods = NULL, precomputed = NULL, nofilter = FALSE,
-  nomodel = FALSE, filters = c("fano"), lean = FALSE, qc = FALSE,
+  nomodel = FALSE, filters = c("fano"), lean = FALSE,
   min_signature_genes = 5, projections = "", weights = NULL,
   threshold = 0, perm_wPCA = FALSE, sig_norm_method = "znorm_rows",
   sig_score_method = "weighted_avg", pool = FALSE,
@@ -60,8 +60,6 @@ Else FNR and weights calculated.
 \item{lean}{if TRUE run a lean simulation. Else more robust pipeline
 initiated. Default is FALSE}
 
-\item{qc}{if TRUE calculate QC; else not. Default is FALSE}
-
 \item{min_signature_genes}{Minimum number of genes required to compute a
 signature}
 
@@ -101,7 +99,7 @@ hkg <- paste0("gene",sample(1:500, 50))
 sigs <- lapply(1:20, function(i) {
 sigData <- sign(rnorm(25))
 names(sigData) <- paste0("gene",sample(1:100,25))
-return(createUserGeneSignature(name = paste0("sig",i),
+return(createGeneSignature(name = paste0("sig",i),
                                  sigData = sigData))
 })
 
