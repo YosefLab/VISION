@@ -342,8 +342,11 @@ createNewFP <- function(fp, subset) {
     .Object@housekeepingData <- fp@housekeepingData
     .Object@sigData <- fp@sigData
 
-    ## TODO: this should be subset accourding to the new data somehow
-    .Object@precomputedData <- fp@precomputedData
+    .Object@precomputedData <- lapply(fp@precomputedData, function(sigscore) {
+        sigscore@scores <- sigscore@scores[subset]
+        sigscore@sample_labels <- sigscore@sample_labels[subset]
+        return(sigscore)
+    })
 
     .Object@weights <- fp@weights[,subset]
     .Object@nofilter <- fp@nofilter
