@@ -156,7 +156,7 @@ setMethod("FastProject", signature(data = "SummarizedExperiment"),
 #' Main entry point for running FastProject Analysis
 #'
 #' The main analysis function. Runs the entire FastProject analysis pipeline
-#' and returns a FastProjectOutput object with the result,
+#' and returns a FastProject object populated with the result,
 #'
 #' @export
 #' @aliases Analyze
@@ -214,7 +214,7 @@ setMethod("Analyze", signature(object="FastProject"),
     return(object)
 })
 
-#' Save the FastProjectOutput object as an .RDS file and view the results on a
+#' Save the FastProject object as an .RDS file and view the results on a
 #' localhost
 #'
 #' Save the results object as an RDS file for future use, and launch a local

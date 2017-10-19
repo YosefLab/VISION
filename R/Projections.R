@@ -223,7 +223,6 @@ generateTreeProjections <- function(expr, filterName="",
 #' @return Variance of each component
 #' @return Eigenvectors of weighted covariance matrix, aka the variable loadings
 applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
-    set.seed(RANDOM_SEED)
 
     projData <- exprData
     if (nrow(projData) != nrow(weights) || ncol(projData) != ncol(weights)) {
@@ -365,8 +364,6 @@ applyPCA <- function(exprData, N=0, variance_proportion=1.0) {
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
 applyICA <- function(exprData, BPPARAM=bpparam()) {
 
-    set.seed(RANDOM_SEED)
-
     ndata <- colNormalization(exprData)
     ndataT <- t(ndata)
     res <- fastICA(ndataT, n.comp=2, maxit=100, tol=.00001, alg.typ="parallel", fun="logcosh", alpha=1,
@@ -387,8 +384,6 @@ applyICA <- function(exprData, BPPARAM=bpparam()) {
 #' @importFrom igraph embed_adjacency_matrix
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
 applySpectralEmbedding <- function(exprData, BPPARAM = bpparam()) {
-
-    set.seed(RANDOM_SEED)
 
     ndata <- colNormalization(exprData)
 
@@ -412,8 +407,6 @@ applySpectralEmbedding <- function(exprData, BPPARAM = bpparam()) {
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
 applytSNE10 <- function(exprData, BPPARAM=bpparam()) {
 
-    set.seed(RANDOM_SEED)
-
     ndata <- colNormalization(exprData)
     ndataT <- t(ndata)
     #res <- Rtsne.multicore(ndataT, dims=2, max_iter=600, perplexity=10.0,
@@ -434,8 +427,6 @@ applytSNE10 <- function(exprData, BPPARAM=bpparam()) {
 #' @param BPPARAM the parallelization backend to use
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
 applytSNE30 <- function(exprData, BPPARAM=bpparam()) {
-
-    set.seed(RANDOM_SEED)
 
     ndata <- colNormalization(exprData)
     ndataT <- t(ndata)
@@ -458,8 +449,6 @@ applytSNE30 <- function(exprData, BPPARAM=bpparam()) {
 #'
 #' @return the weghted adjacency matrix of the KNN graph
 applyKNN <- function(exprData, BPPARAM=bpparam()) {
-    print(dim(exprData))
-    set.seed(RANDOM_SEED)
 
     k <- ball_tree_knn(t(exprData), round(sqrt(ncol(exprData))), BPPARAM$workers)
     nn <- k[[1]]
@@ -487,8 +476,6 @@ applyKNN <- function(exprData, BPPARAM=bpparam()) {
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
 applyISOMap <- function(exprData, BPPARAM=bpparam()) {
 
-    set.seed(RANDOM_SEED)
-
     res <- Isomap(t(exprData), dims=2)
     res <- res$dim2
 
@@ -504,8 +491,6 @@ applyISOMap <- function(exprData, BPPARAM=bpparam()) {
 #' @param BPPARAM the parallelization backend to use
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
 applyRBFPCA <- function(exprData, BPPARAM=bpparam()) {
-
-    set.seed(RANDOM_SEED)
 
     ndata <- colNormalization(exprData)
     distanceMatrix <- as.matrix(dist.matrix(t(ndata)))

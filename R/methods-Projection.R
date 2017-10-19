@@ -11,11 +11,8 @@
 #' @return Projection object
 
 Projection <- function(name, pData=NULL, weights=matrix(NA, 1,1)) {
-            .Object <- new("Projection")
-            .Object@name = name
-            .Object@pData = pData
-            .Object@weights = weights
-
+            .Object <- new("Projection", name=name, pData=pData,
+                           weights=weights)
             return(.Object)
             }
 

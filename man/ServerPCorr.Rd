@@ -2,8 +2,7 @@
 % Please edit documentation in R/Server.R
 \name{ServerPCorr}
 \alias{ServerPCorr}
-\title{Wrapper class for server Perason correlation data
-Should not be called directly, instead use the `new` syntax}
+\title{Wrapper class for server Perason correlation data}
 \usage{
 ServerPCorr(data, proj_labels, sig_labels)
 }
@@ -19,5 +18,4 @@ a ServerPCorr object
 }
 \description{
 Wrapper class for server Perason correlation data
-Should not be called directly, instead use the `new` syntax
 }

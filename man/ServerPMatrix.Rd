@@ -2,8 +2,7 @@
 % Please edit documentation in R/Server.R
 \name{ServerPMatrix}
 \alias{ServerPMatrix}
-\title{Wrapper class for the P value matrix calculated during sigsVsProjections
-Should not be called directly, instead use the `new` syntax}
+\title{Wrapper class for the P value matrix calculated during sigsVsProjections}
 \usage{
 ServerPMatrix(data, proj_labels, sig_labels)
 }
@@ -19,5 +18,4 @@ ServerPMatrix object
 }
 \description{
 Wrapper class for the P value matrix calculated during sigsVsProjections
-Should not be called directly, instead use the `new` syntax
 }

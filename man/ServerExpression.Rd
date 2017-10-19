@@ -2,8 +2,7 @@
 % Please edit documentation in R/Server.R
 \name{ServerExpression}
 \alias{ServerExpression}
-\title{Wrapper class for ExpressionData object for JSON.
-Should not be called directly, instead use the `new` syntax}
+\title{Wrapper class for ExpressionData object for JSON.}
 \usage{
 ServerExpression(data, sample_labels, gene_labels)
 }
@@ -19,5 +18,4 @@ ServerExpression object
 }
 \description{
 Wrapper class for ExpressionData object for JSON.
-Should not be called directly, instead use the `new` syntax
 }
