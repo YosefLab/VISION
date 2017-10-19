@@ -232,6 +232,7 @@ sigsVsProjections <- function(projections, sigScoresData,
 
     sigProjMatrix_Padj[sigProjMatrix_Padj == 0] <- 10^(-300)
 
+    sigProjMatrix <- as.matrix(sigProjMatrix)
     sigProjMatrix_Padj <- as.matrix(log10(sigProjMatrix_Padj))
 
     return(list(sigProjMatrix = sigProjMatrix, pVals = sigProjMatrix_Padj))

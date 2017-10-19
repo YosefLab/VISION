@@ -17,7 +17,7 @@ library(jug)
 library(jsonlite)
 
 
-if (class(arg1) == "FastProjectOutput") {
+if (class(arg1) == "FastProject") {
   fpout <- arg1
 } else {
   fpout <- readRDS(arg1)
