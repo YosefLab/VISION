@@ -389,13 +389,12 @@ jug() %>%
 	allData <- fpout@allData
 
 	if (length(fpout@pools) > 0) {
-		print(class(subset))
 		clust <- fpout@pools[subset]
 		subset <- unlist(clust)
 	}
-	print(subset)
-	nexpr <- allData[,subset]
 
+	nfp <- FastProjectR:::createNewFP(fpout, subset)
+	FastProjectR:::newAnalysis(nfp)
 	return()
   }) %>%
   get("/path2", function(req, res, err){
