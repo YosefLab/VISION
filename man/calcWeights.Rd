@@ -5,10 +5,13 @@
 \title{Calculate weights based on the false negative rates, computed using the
 provided housekeeping genes}
 \usage{
-calcWeights(object)
+calcWeights(object, nomodel = object@nomodel)
 }
 \arguments{
 \item{object}{the FastProject object}
+
+\item{nomodel}{(optional) if TRUE, no fnr curve calculated and all weights
+equal to 1. Else FNR and weights calculated.}
 }
 \value{
 the FastProject object with populated weights slot

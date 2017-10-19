@@ -52,8 +52,7 @@ data, and columns should either be factors or numerics.}
 Default is FALSE}
 
 \item{nomodel}{if TRUE, no fnr curve calculated and all weights equal to 1.
-Else FNR and weights calculated.
-             Default is TRUE.}
+Else FNR and weights calculated. [Default:FALSE]}
 
 \item{filters}{list of filters to compute}
 

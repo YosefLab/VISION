@@ -4,10 +4,17 @@
 \alias{analyzeProjections}
 \title{Analyze projections}
 \usage{
-analyzeProjections(object, BPPARAM)
+analyzeProjections(object, lean = object@lean, perm_wPCA = object@perm_wPCA,
+  BPPARAM)
 }
 \arguments{
 \item{object}{the FastProject object}
+
+\item{lean}{if TRUE run a lean simulation. Else more robust pipeline
+initiated. Default is FALSE}
+
+\item{perm_wPCA}{If TRUE, apply permutation WPCA to calculate significant
+number of PCs. Else not. Default FALSE.}
 
 \item{BPPARAM}{the parallelization backend to use}
 }

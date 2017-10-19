@@ -1,24 +1,32 @@
 #' create micro-clusters that reduce noise and complexity while maintaining
 #' the overall signal in the data
-#' @param object the FastProject object to cluster the cells of
+#' @param object the FastProject object for which to cluster the cells
+#' @param cellsPerPartition the minimum number of cells to put into a cluster
 #' @param BPPARAM the parallelization backend to use
 #' @return the FastProject with pooled cells
-poolCells <- function(object, BPPARAM=SerialParam()) {
-    if (ncol(getExprData(object@exprData)) > 15000 || object@pool) {
-        microclusters <- applyMicroClustering(getExprData(object@exprData),
-                                              object@housekeepingData,
-                                              object@cellsPerPartition,
-                                              BPPARAM)
-        object@exprData <- ExpressionData(microclusters[[1]])
-        object@pools <- microclusters[[2]]
-    }
+poolCells <- function(object,
+                      cellsPerPartition=object@cellsPerPartition,
+                      BPPARAM=SerialParam()) {
+    object@cellsPerPartition <- cellsPerPartition
+    microclusters <- applyMicroClustering(getExprData(object@exprData),
+                                          object@housekeepingData,
+                                          object@cellsPerPartition,
+                                          BPPARAM)
+    object@exprData <- ExpressionData(microclusters[[1]])
+    object@pools <- microclusters[[2]]
     return(object)
 }
 
 #' filter data accourding to the provided filters
 #' @param object the FastProject object
+#' @param threshold threshold to apply for the threshold filter
+#' @param filters list of filters to compute options are limited to
 #' @return the FastProject object, populated with filtered data
-filterData <- function(object) {
+filterData <- function(object,
+                       threshold=object@threshold,
+                       filters=object@filters) {
+    object@filters <- filters
+    object@threshold <- threshold
     message("filtering data...")
     if (object@threshold == 0) {
         num_samples <- ncol(getExprData(object@exprData))
@@ -34,8 +42,12 @@ filterData <- function(object) {
 #' Calculate weights based on the false negative rates, computed using the
 #' provided housekeeping genes
 #' @param object the FastProject object
+#' @param nomodel (optional) if TRUE, no fnr curve calculated and all weights
+#' equal to 1. Else FNR and weights calculated.
 #' @return the FastProject object with populated weights slot
-calcWeights <- function(object) {
+calcWeights <- function(object,
+                        nomodel=object@nomodel) {
+    object@nomodel <- nomodel
     clustered <- (ncol(getExprData(object@exprData)) > 15000 || object@pool)
     if (!clustered && !object@nomodel) {
         message("Computing weights from False Negative Function...")
@@ -57,8 +69,12 @@ calcWeights <- function(object) {
 
 #' Normalize the data
 #' @param object the FastPrpject object
+#' @param sig_norm_method (optional) Method to apply to normalize the expression
+#' matrix before calculating signature scores
 #' @return the FastProject object with normalized data matrices
-normalizeData <- function(object) {
+normalizeData <- function(object,
+                          sig_norm_method=object@sig_norm_method) {
+    object@sig_norm_method <- sig_norm_method
     object@exprData <- updateExprData(object@exprData,
                                     getNormalizedCopy(object@exprData,
                                                       object@sig_norm_method))
@@ -73,10 +89,26 @@ normalizeData <- function(object) {
 #' generated to create a null distribution
 #'
 #' @param object the FastProject object
+#' @param sigData a list of Signature objects for which to compute the scores
+#' @param precomputedData a list of existing cell-signatures
+#' @param sig_score_method the scoring method to use
+#' @param min_signature_genes the minimal number of genes that must be present
+#' in both the data and the signature for the signature to be evaluated
 #' @param BPPARAM the parallelization backend to use for these computations
 #' @return the FastProject object, with signature score slots populated
-calcSignatureScores <- function(object, BPPARAM=NULL) {
+calcSignatureScores <- function(object,
+                                sigData=object@sigData,
+                                precomputedData=object@precomputedData,
+                                sig_score_method=object@sig_score_method,
+                                min_signature_genes=object@min_signature_genes,
+                                BPPARAM=NULL) {
     if(is.null(BPPARAM)) BPPARAM <- SerialParam()
+
+    ## override object parameters
+    if(!is.null(sigData)) object@sigData <- sigData
+    if(!is.null(precomputedData)) object@precomputedData <- precomputedData
+    object@sig_score_method <- sig_score_method
+    object@min_signature_genes <- min_signature_genes
 
     sigScores <- bplapply(object@sigData, function(s) {
         singleSigEval(s, object@sig_score_method, object@exprData,
@@ -147,9 +179,19 @@ calcSignatureScores <- function(object, BPPARAM=NULL) {
 #' consistency of the resulting space with the signature scores is computed
 #' to find signals that are captured succesfully by the projections.
 #' @param object the FastProject object
+#' @param lean if TRUE run a lean simulation. Else more robust pipeline
+#' initiated. Default is FALSE
+#' @param perm_wPCA If TRUE, apply permutation WPCA to calculate significant
+#' number of PCs. Else not. Default FALSE.
 #' @param BPPARAM the parallelization backend to use
 #' @return the FastProject object with values set for the analysis results
-analyzeProjections <- function(object, BPPARAM) {
+analyzeProjections <- function(object,
+                               lean=object@lean,
+                               perm_wPCA=object@perm_wPCA,
+                               BPPARAM) {
+  object@lean <- lean
+  object@perm_wPCA <- perm_wPCA
+
   # Apply projections to filtered gene sets, create new projectionData object
   filterModuleList <- list()
 

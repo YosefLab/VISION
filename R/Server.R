@@ -206,6 +206,5 @@ clusterToJSON <- function(cluster) {
 #' @param nfp the new FastProject object to analyze
 #' @return None
 newAnalysis <- function(nfp) {
-    fpo1 <- Analyze(nfp)
-    saveFPOutAndViewResults(fpo1)
+    saveAndViewResults(Analyze(nfp))
 }

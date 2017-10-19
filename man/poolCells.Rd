@@ -5,10 +5,13 @@
 \title{create micro-clusters that reduce noise and complexity while maintaining
 the overall signal in the data}
 \usage{
-poolCells(object, BPPARAM = SerialParam())
+poolCells(object, cellsPerPartition = object@cellsPerPartition,
+  BPPARAM = SerialParam())
 }
 \arguments{
-\item{object}{the FastProject object to cluster the cells of}
+\item{object}{the FastProject object for which to cluster the cells}
+
+\item{cellsPerPartition}{the minimum number of cells to put into a cluster}
 
 \item{BPPARAM}{the parallelization backend to use}
 }
