@@ -35,7 +35,7 @@ applyMicroClustering <- function(exprData, nomodel=TRUE, hkg=matrix(),
 
     pooled_cells <- createPools(cl, exprData, weights)
 
-    cn <- lapply(1:ncol(pooled_cells), function(i) return(paste0("Cluster ", i)))
+    cn <- paste0("cluster ", 1:ncol(pooled_cells))
     colnames(pooled_cells) <- cn
     rownames(pooled_cells) <- rownames(exprData)
 
