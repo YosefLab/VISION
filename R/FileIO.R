@@ -137,7 +137,7 @@ readSignaturesInput <- function(filenames) {
     }
     }
 
-    names(sig_data) <- sapply(sig_names, toupper)
+    names(sig_data) <- sig_names
 
     return (sig_data)
 }

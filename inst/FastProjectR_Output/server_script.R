@@ -27,8 +27,15 @@ path <- find.package("FastProjectR")
 
 setwd(path)
 
-port <- sample(8000:9999, 1)
-url <- paste0("http://127.0.0.1:", port, "/html_output/Results.html")
+if (is.null(port)) {
+    port <- sample(8000:9999, 1)
+}
+if (is.null(host)) {
+    host <- "127.0.0.1"
+}
+
+url <- paste0("http://", host, ":", port, "/html_output/Results.html")
+message(paste("Navigate to", url, "in a browser to interact with the app."))
 browseURL(url)
 
 # Launch the server
@@ -451,4 +458,4 @@ jug() %>%
   }) %>%
   serve_static_files("../html_output", root_path=setwd(path)) %>%
   simple_error_handler_json() %>%
-  serve_it(port=port)
+  serve_it(host=host, port=port)

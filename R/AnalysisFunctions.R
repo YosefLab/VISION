@@ -119,9 +119,9 @@ calcSignatureScores <- function(object,
     sigList <- object@sigData
     sigNames <- names(object@sigData)
     for (s in object@precomputedData) {
-        if (length(s@sample_labels) != ncol(object@exprData)) {
-            s@scores <- s@scores[colnames(object@exprData)]
-            s@sample_labels <- colnames(object@exprData)
+        if (length(s@sample_labels) != ncol(getExprData(object@exprData))) {
+            s@scores <- s@scores[colnames(getExprData(object@exprData))]
+            s@sample_labels <- colnames(getExprData(object@exprData))
         }
         sigScores <- c(sigScores, s)
         sigList<- c(sigList, Signature(list(), s@name, "", "",
@@ -148,7 +148,7 @@ calcSignatureScores <- function(object,
     }
 
     rownames(sigMatrix) <- names
-    colnames(sigMatrix) <- colnames(object@exprData)
+    colnames(sigMatrix) <- colnames(getExprData(object@exprData))
     object@sigMatrix <- sigMatrix
 
     object@sigData <- sigList[rownames(sigMatrix)]
@@ -219,7 +219,7 @@ analyzeProjections <- function(object,
                                          sigVProj$pVals, k=10)
 
         projData <- ProjectionData(projections = projectData$projections,
-                                   keys = sigVProj$projNames,
+                                   keys = colnames(sigVProj$sigProjMatrix),
                                    sigProjMatrix = sigVProj$sigProjMatrix,
                                    pMatrix = sigVProj$pVals,
                                    sigClusters = sigClusters)
@@ -241,7 +241,7 @@ analyzeProjections <- function(object,
                                              sigVTreeProj$pVals, k=10)
 
         treeProjData <- TreeProjectionData(projections = treeProjs$projections,
-                                   keys = sigVTreeProj$projNames,
+                                   keys = colnames(sigVTreeProj$sigProjMatrix),
                                    sigProjMatrix = sigVTreeProj$sigProjMatrix,
                                    pMatrix = sigVTreeProj$pVals,
                                    sigClusters = sigTreeClusters,
