@@ -332,7 +332,7 @@ setMethod("viewResults", signature(object="FastProject"),
 setMethod("viewResults", signature(object="character"),
           function(object, port=NULL, host=NULL) {
             fpo <- readRDS(object)
-            if(!methods::is(fpo, "FastProject")){
+            if(!is(fpo, "FastProject")){
               stop("loaded object not a valid FastProject object")
             }
             viewResults(fpo, port, host)

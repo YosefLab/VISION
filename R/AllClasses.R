@@ -7,7 +7,7 @@
 # scores, distance matrices, and anything else, is computed
 # on the different types of data.
 
-methods::setClassUnion('numericORNULL', members=c('numeric', 'NULL'))
+setClassUnion('numericORNULL', members=c('numeric', 'NULL'))
 
 Cluster <- setClass("Cluster",
     slots = c(
