@@ -132,9 +132,9 @@ applySimplePPT <- function(exprData, numCores, permExprData = NULL,
     tr <- fitTree(exprData, nNodes, sigma, gamma, DEF_TOL, DEF_MAX_ITER)
 
     if (!is.null(permExprData)) {
-    mses <- sapply(permExprData, function(permdata) {
+    mses <- vapply(permExprData, function(permdata) {
         return(fitTree(permdata, nNodes, sigma, gamma, DEF_TOL, DEF_MAX_ITER)$mse)
-    })
+    }, 0.0)
     zscore <- log1p((tr$mse - mean(mses)) / sd(mses))
     } else {
     zscore <- NULL
@@ -249,7 +249,7 @@ projectOnTree <- function(data.pnts, V.pos, princAdj) {
     distmat[major.bool] <- NA # replace closest with NA
     neigh <- princAdj[major.ind,] # get neighbors of nearest pp
     distmat[neigh == 0] <- NA # remove non-neighbors
-    projections <- sapply(1:NCOL(data.pnts), function(i) {
+    projections <- vapply(1:NCOL(data.pnts), function(i) {
     # for each datapoint, find edge with smallest orthogonal projection
     edges <- t(apply(cbind(major.ind[i], which(!is.na(distmat[i,]))), 1, sort))
 
@@ -280,7 +280,7 @@ projectOnTree <- function(data.pnts, V.pos, princAdj) {
 
         return(c(edges, rpos, spos))
     }
-    })
+    }, as.double(1:(3+NROW(data.pnts))))
 
     return(list(edges = projections[1:2,],
                 edgePos = projections[3,],

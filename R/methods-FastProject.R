@@ -72,7 +72,7 @@ setMethod("FastProject", signature(data = "matrix"),
 
             .Object <- new("FastProject")
 
-            rownames(data) <- sapply(rownames(data), toupper)
+            rownames(data) <- toupper(rownames(data))
             .Object@allData = data
             .Object@exprData <- ExpressionData(data)
 
@@ -348,7 +348,7 @@ setMethod("viewResults", signature(object="character"),
 createNewFP <- function(fp, subset) {
     .Object <- new("FastProject")
     nexpr <- fp@allData[,subset]
-    rownames(nexpr) <- sapply(rownames(nexpr), toupper)
+    rownames(nexpr) <- toupper(rownames(nexpr))
     .Object@allData = nexpr
     .Object@exprData <- ExpressionData(nexpr)
 

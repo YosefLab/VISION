@@ -77,7 +77,7 @@ jug() %>%
     return(out)
   }) %>%
   get("/Signature/Expression/(?<sig_name4>.*)", function(req, res, err) {
-    all_names = sapply(fpout@sigData, function(x){return(x@name)})
+    all_names = vapply(fpout@sigData, function(x){ return(x@name) }, "")
     name <- URLdecode(req$params$sig_name4)
     index = match(name, all_names)
     if(is.na(index)){
@@ -232,26 +232,20 @@ jug() %>%
     return(out)
   }) %>%
   get("/FilterGroup/list", function(req, res, err) {
-    # projData <- fpout@projData
-    # filters <- sapply(projData, function(x){
-                      # return(x@filter);
-                      # });
-    filters <- sapply(fpout@filterModuleList, function(x) {
+    filters <- vapply(fpout@filterModuleList, function(x) {
       return(x@filter)
-    })
+    }, "")
     return(toJSON(filters))
   }) %>%
   get("/FilterGroup/(?<filter_name10>.*)/(?<pc_num1>.*)/Loadings/Positive", function(req, res, err) {
-    # projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name10)
     pcnum <- as.numeric(URLdecode(req$params$pc_num1))
 
     l <- fpout@filterModuleList[[filter]]@PCAnnotatorData@loadings[,pcnum]
-    # l <- projData[[filter]]@loadings[,pcnum]
 
     posl <- l[l >= 0]
-
-    nposl <- sapply(posl, function(x) x / sum(posl))
+    sumposl <- sum(posl)
+    nposl <- vapply(posl, function(x) x / sumposl, 1.0)
 
     nposl <- sort(nposl, decreasing=T)
 
@@ -267,8 +261,8 @@ jug() %>%
   	l <- fpout@filterModuleList[[filter]]@PCAnnotatorData@loadings[,pcnum]
 
   	negl <- l[l < 0]
-
-  	nnegl <- sapply(negl, function(x) x / sum(negl))
+    sumneg1 <- sum(negl)
+  	nnegl <- vapply(negl, function(x) x / sumneg1, 1.0)
 
   	nnegl <- sort(nnegl, decreasing=T)
 

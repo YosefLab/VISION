@@ -133,7 +133,7 @@ calcSignatureScores <- function(object,
     names(sigScores) <- sigNames
 
     # Remove any signatures that didn't compute correctly
-    toRemove <- sapply(sigScores, is.null)
+    toRemove <- vapply(sigScores, is.null, TRUE)
     sigScores <- sigScores[!toRemove]
     object@sigScores <- sigScores
 
@@ -166,7 +166,7 @@ calcSignatureScores <- function(object,
     names(randomSigScores) <- names(randomSigs)
 
     ## Remove random signatures that didn't compute correctly
-    toRemove <- sapply(randomSigScores, is.null)
+    toRemove <- vapply(randomSigScores, is.null, TRUE)
     object@randomSigScores <- randomSigScores[!toRemove]
 
     return(object)
@@ -248,10 +248,9 @@ analyzeProjections <- function(object,
                                    treeScore = treeProjs$treeScore)
 
         ## remove the factors from the pearson correlation calculation
-        precomp_names <- sapply(object@precomputedData, function(x) {
-          ifelse(x@isFactor, x@name, NA)
-        })
-        precomp_names <- precomp_names[!is.na(precomp_names)]
+        precomp_names <- vapply(object@precomputedData, function(x) {
+            ifelse(x@isFactor, x@name, NULL)
+        }, "")
         computedSigMatrix <- object@sigMatrix[setdiff(rownames(object@sigMatrix),
                                                       precomp_names),]
 

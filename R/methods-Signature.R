@@ -145,7 +145,9 @@ sigsVsProjections <- function(projections, sigScoresData,
   N_SAMPLES <- length(sigScoresData[[1]]@sample_labels)
 
   # Build a matrix of all non-precomputed signatures
-  geneSigs <- sigScoresData[ sapply(sigScoresData, function(x) !x@isPrecomputed)]
+  geneSigs <- sigScoresData[vapply(sigScoresData,
+                                   function(x) !x@isPrecomputed,
+                                   TRUE)]
   sigScoreMatrix <- matrix(unlist(bplapply(geneSigs, function(sig) {
     rank(sig@scores, ties.method="average")
   },
@@ -161,7 +163,8 @@ sigsVsProjections <- function(projections, sigScoresData,
   BPPARAM=BPPARAM)), nrow=N_SAMPLES, ncol=length(randomSigData))
 
   # TODO: Set names of randomSigData in Analyze and use
-  colnames(randomSigScoreMatrix) <- sapply(randomSigData, function(x) x@name)
+  colnames(randomSigScoreMatrix) <- vapply(randomSigData,
+                                           function(x) x@name, "")
 
 
   message("Evaluating signatures against projections...")
