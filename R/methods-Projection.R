@@ -31,6 +31,7 @@ setMethod("updateProjection", signature(object = "Projection"),
 
 #' Clusters the projection according to some method
 #'
+#' @importFrom stats kmeans
 #' @param object Projection object
 #' @param method Method by which to cluster the data
 #' @param param Parameters for clustering method
@@ -40,7 +41,7 @@ setMethod("cluster", signature(object = "Projection"),
 
             if(method == "KMeans")
             {
-                km <- stats::kmeans(t(object@pData), centers=param)
+                km <- kmeans(t(object@pData), centers=param)
                 clust <- Cluster(method, param, km$centers,
                                     t(as.matrix(km$cluster)))
             }

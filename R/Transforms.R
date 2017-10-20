@@ -96,7 +96,7 @@ louvainCluster <- function(kn, data) {
 #'
 #' By default, minimum number of clusters to be generated is the squareroot of
 #' the number of cells.
-#'
+#' @importFrom stats kmeans
 #' @param clusters List of clusters, each entry being a vector of cells in a
 #' cluster.
 #' @param data NUM_SAMPLES x NUM_FEATURES data matrix that was used to generate
@@ -122,11 +122,11 @@ readjust_clusters <- function(clusters, data, cellsPerPartition=100) {
             currCl = clusters[[i]]
             subData <- data[currCl,]
             if (length(currCl) > cellsPerPartition) {
-                nCl <- stats::kmeans(subData,
-                                        centers=round(nrow(subData) / cellsPerPartition),
-                                        iter.max=100)
+                nCl <- kmeans(subData,
+                              centers=round(nrow(subData) / cellsPerPartition),
+                              iter.max=100)
             } else {
-                nCl <- stats::kmeans(subData, centers=1, iter.max=100)
+                nCl <- kmeans(subData, centers=1, iter.max=100)
             }
             newClust <- nCl$cluster
             # Gather cluster vector to list of clusters

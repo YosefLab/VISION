@@ -107,14 +107,14 @@ generatePermutationNull <- function(num, eData, sigSizes) {
 BG_DIST <- matrix(0L, nrow=0, ncol=0)
 
 #' Generates, or if already generated retrieves, a random Background Distribution
-#'
+#' @importFrom stats rnorm
 #' @param N_SAMPLES Number of samples to generate the distribution for
 #' @param NUM_REPLICATES Number of replicates to generate for the background distribution
 #' @return Random matrix with dimensions N_SAMPLES x NUM_REPLICATES with row ordered in ascending order
 getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
 
   if (nrow(BG_DIST) != N_SAMPLES || ncol(BG_DIST) != NUM_REPLICATES) {
-    BG_DIST <- matrix(stats::rnorm(N_SAMPLES*NUM_REPLICATES),
+    BG_DIST <- matrix(rnorm(N_SAMPLES*NUM_REPLICATES),
                       nrow=N_SAMPLES, ncol=NUM_REPLICATES)
     BG_DIST <- apply(BG_DIST, 2, order)
   }
@@ -126,6 +126,7 @@ getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
 #' Evaluates the significance of each signature vs. each projection.
 #' @importFrom mclust densityMclust
 #' @importFrom entropy entropy.plugin
+#' @importFrom stats p.adjust
 #' @param projections Maps projections to their spatial coordinates for each
 #' sample
 #' @param sigScoresData List of SignatureScores Object, mapping signature
@@ -207,10 +208,10 @@ sigsVsProjections <- function(projections, sigScoresData,
   # FDR-correct
 
   sigProjMatrix_Padj <- matrix(
-    stats::p.adjust(
-      as.matrix(sigProjMatrix_P),
-      method="BH"
-    ),
+      p.adjust(
+          as.matrix(sigProjMatrix_P),
+          method="BH"
+      ),
     nrow=nrow(sigProjMatrix_P),
     ncol=ncol(sigProjMatrix_P)
   )
@@ -227,6 +228,7 @@ sigsVsProjections <- function(projections, sigScoresData,
 
 #' Evaluates the significance of each numeric signature vs. a
 #' single projections weights
+#' @importFrom stats median pnorm
 #' @param sigData
 #' @param sigScoreMatrix
 #' @param randomSigData
@@ -248,14 +250,14 @@ sigsVsProjection_n <- function(sigData, sigScoreMatrix,
 
   ## Neighborhood dissimilatory score = |actual - predicted|
   dissimilarity <- abs(sigScoreMatrix - neighborhoodPrediction)
-  medDissimilarity <- as.matrix(apply(dissimilarity, 2, stats::median))
+  medDissimilarity <- as.matrix(apply(dissimilarity, 2, median))
 
   # Calculate scores for random signatures
   randomNeighborhoodPrediction <- weights %*% randomSigScoreMatrix
   randomDissimilarity <- abs(randomSigScoreMatrix -
                                randomNeighborhoodPrediction)
   randomMedDissimilarity <- as.matrix(apply(randomDissimilarity, 2,
-                                            stats::median))
+                                            median))
 
   # Group by number of genes
   backgrounds <- list()
@@ -298,7 +300,7 @@ sigsVsProjection_n <- function(sigData, sigScoreMatrix,
 
   #Create CDF function for medDissmilarityPrime and apply CDF function to
   #medDissimilarityPrime pointwise
-  pvals <- stats::pnorm( ((medDissimilarity - mu) / sigma))
+  pvals <- pnorm( ((medDissimilarity - mu) / sigma))
 
   consistency <- 1 - (medDissimilarity / N_SAMPLES)
 
@@ -312,6 +314,7 @@ sigsVsProjection_n <- function(sigData, sigScoreMatrix,
 
 #' Evaluates the significance of each precomputed numeric signature vs. a
 #' single projections weights
+#' @importFrom stats pnorm
 #' @param sigScoresData List of SignatureScores Object, mapping signature
 #' names to their value at each coordinate
 #' @param weights numeric matrix of dimension N_SAMPLES x N_SAMPLES
@@ -359,7 +362,7 @@ sigsVsProjection_pcn <- function(sigScoresData, weights){
     sigma <- biasedVectorSD(randomScores)
 
     if (sigma != 0) {
-      p_value <- stats::pnorm((medDissimilarity - mu) / sigma)
+      p_value <- pnorm((medDissimilarity - mu) / sigma)
     } else {
       p_value <- 1.0
     }
@@ -374,6 +377,7 @@ sigsVsProjection_pcn <- function(sigScoresData, weights){
 
 #' Evaluates the significance of each precomputed factor signature vs. a
 #' single projections weights
+#' @importFrom stats kruskal.test
 #' @param sigScoresData List of SignatureScores Object, mapping signature
 #' names to their value at each coordinate
 #' @param weights numeric matrix of dimension N_SAMPLES x N_SAMPLES
@@ -433,7 +437,7 @@ sigsVsProjection_pcf <- function(sigScoresData, weights){
       krList <- c(krList, list(preds_ii[labels==k]))
     }
 
-    krTest <- stats::kruskal.test(krList)
+    krTest <- kruskal.test(krList)
 
     consistency[s@name] <- krTest$statistic
     pvals[s@name] <- krTest$p.value

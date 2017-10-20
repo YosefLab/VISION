@@ -1,5 +1,5 @@
 #' Calculates standard deviation with a denominator of n rather than (n-1)
-#'
+#' @importFrom stats sd
 #' @param data data matrix to apply the biased standard deviation operation to
 #' @param byRow if TRUE, apply by row. Else, by column. Default is TRUE.
 #' @return Vector of standard deviations by row or column
@@ -11,17 +11,17 @@ biasedSD <- function(data, byRow=TRUE) {
     a = 2
     d <- nrow(data)
     }
-    std <- apply(data, a, stats::sd) * sqrt(((d-1)/d))
+    std <- apply(data, a, sd) * sqrt(((d-1)/d))
     return(std)
 }
 
 #' Computes the biased SD on a vector, correcting the denominator to n rather than (n-1)
-#'
+#' @importFrom stats sd
 #' @param data Vector of numbers
 #' @return Biased standard deviation of vector
 biasedVectorSD <- function(data) {
     d <- length(data)
-    std <- stats::sd(data) * sqrt((d-1)/d)
+    std <- sd(data) * sqrt((d-1)/d)
     return(std)
 }
 

@@ -21,6 +21,7 @@ registerMethods <- function(lean=FALSE) {
 
 #' Projects data into 2 dimensions using a variety of linear and non-linear methods.
 #'
+#' @importFrom stats quantile
 #' @param expr ExpressionData object
 #' @param weights weights estimated from FNR curve
 #' @param filterName name of filter, to extract correct data for projections
@@ -78,7 +79,7 @@ generateProjections <- function(expr, weights, filterName="",
     fullPCA <- as.matrix(apply(fullPCA, 2, function(x) return( x - mean(x) )))
 
     r <- apply(fullPCA, 1, function(x) sum(x^2))^(0.5)
-    r90 <- stats::quantile(r, c(.9))[[1]]
+    r90 <- quantile(r, c(.9))[[1]]
 
     if (r90 > 0) {
     fullPCA <- fullPCA / r90
@@ -112,7 +113,7 @@ generateProjections <- function(expr, weights, filterName="",
         coordinates <- as.matrix(apply(coordinates, 2, function(x) return( x - mean(x) )))
 
         r <- apply(coordinates, 1, function(x) sum(x^2))^(0.5)
-        r90 <- stats::quantile(r, c(.9))[[1]]
+        r90 <- quantile(r, c(.9))[[1]]
 
         if (r90 > 0) {
         coordinates <- coordinates / r90
@@ -132,6 +133,7 @@ generateProjections <- function(expr, weights, filterName="",
 
 #' Genrate projections based on a tree structure learned in high dimensonal space
 #'
+#' @importFrom stats quantile
 #' @param expr the expressionSet object
 #' @param filterName the filtered data to use
 #' @param inputProjections a list of Projection objects. For each Projection, a
@@ -186,7 +188,7 @@ generateTreeProjections <- function(expr, filterName="",
     c <- t(hdTree$princPnts[c(1,2),])
     coord <- as.matrix(apply(c, 2, function(x) return(x - mean(x))))
     r <- apply(coord, 1, function(x) sum(x^2))^(0.5)
-    r90 <- stats::quantile(r, c(0.9))[[1]]
+    r90 <- quantile(r, c(0.9))[[1]]
     if (r90 > 0) {
     coord <- coord / r90
     }
@@ -270,6 +272,7 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
 #' @details Based on the method proposed by Buja and Eyuboglu (1992), PCA is performed on the data
 #' then a permutation procedure is used to assess the significance of components
 #'
+#' @importFrom stats pnorm
 #' @param expr Expression data
 #' @param weights Weights to apply to each coordinate in data
 #' @param components Maximum components to calculate. Default is 50.
@@ -318,7 +321,7 @@ applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, 
     sigma[sigma==0] <- 1.0
 
     # Compute pvals from survival function & threshold components
-    pvals <- 1 - stats::pnorm((eval - mu) / sigma)
+    pvals <- 1 - pnorm((eval - mu) / sigma)
     thresholdComponent_i = which(pvals > p_threshold, arr.ind=TRUE)
     if (length(thresholdComponent_i) == 0) {
         thresholdComponent <- nrow(wPCA)
@@ -341,16 +344,18 @@ applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, 
 }
 
 #' Performs PCA on data
+#' @importFrom  utils tail
+#' @importFrom stats prcomp
 #' @param exprData Expression data
 #' @param N Number of components to retain. Default is 0
 #' @param variance_proportion Retain top X PC's such that this much variance is retained; if N=0, then apply this method
 #' @return Matrix containing N components for each sample.
 applyPCA <- function(exprData, N=0, variance_proportion=1.0) {
-    res <- stats::prcomp(x=t(exprData), retx=TRUE, center=TRUE)
+    res <- prcomp(x=t(exprData), retx=TRUE, center=TRUE)
 
     if(N == 0) {
     total_var <- as.matrix(cumsum(res$sdev^2 / sum(res$sdev^2)))
-    last_i <- utils::tail(which(total_var <= variance_proportion), n=1)
+    last_i <- tail(which(total_var <= variance_proportion), n=1)
     N <- last_i
     }
     return(list(t(res$x[,1:N])*-1, t(res$rotation)))
@@ -487,6 +492,7 @@ applyISOMap <- function(exprData, BPPARAM=bpparam()) {
 
 #' Performs PCA on data that has been transformed with the Radial Basis Function.
 #'
+#' @importFrom stats sd
 #' @param exprData Expression data, NUM_GENES x NUM_SAMPLES
 #' @param BPPARAM the parallelization backend to use
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
@@ -504,7 +510,7 @@ applyRBFPCA <- function(exprData, BPPARAM=bpparam()) {
     kMat <- kMat / kMatNormFactor
 
     # Compute normalized matrix & covariance matrix
-    kMat <- as.matrix(kMat, 1, function(x) (x - mean(x)) / stats::sd(x))
+    kMat <- as.matrix(kMat, 1, function(x) (x - mean(x)) / sd(x))
     W <- tcrossprod(kMat)
 
     decomp <- rsvd::rsvd(W, k=2)
