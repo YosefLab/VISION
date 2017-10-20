@@ -41,9 +41,9 @@ fp <- FastProject(data = expMat,
                      housekeeping = hkg,
                      signatures = sigs)
 
-## Analyze requires actual non-random data to run properly
+## analyze requires actual non-random data to run properly
 \dontrun{
-fp.out <- Analyze(fp)
+fp.out <- analyze(fp)
 saveAndViewResults(fp.out)
 }
 }

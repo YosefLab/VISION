@@ -8,8 +8,8 @@ setGeneric("addSigData", function(object, data) {
     standardGeneric("addSigData")
 })
 
-setGeneric("Analyze", function(object, ...) {
-    standardGeneric("Analyze")
+setGeneric("analyze", function(object, ...) {
+    standardGeneric("analyze")
 })
 
 setGeneric("cluster", function(object, method, param) {

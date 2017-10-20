@@ -172,7 +172,7 @@ calcSignatureScores <- function(object,
     return(object)
 }
 
-#' Analyze projections
+#' analyze projections
 #'
 #' This is the main analysis function. For each filtered dataset, a set of
 #' different projection onto low-dimensional space are computed, and the

@@ -62,9 +62,9 @@ FastProjectR generally follows the same pipeline from iteration to iteration, wh
 - Dynamic web-report is viewed. 
 
 ### Analysis of Glioblastoma Cells with FastProjectR
-As described above, FastProjectR can be approached from many directions. Here, we present the simplest of applications, utilizing the `Analyze` function. 
+As described above, FastProjectR can be approached from many directions. Here, we present the simplest of applications, utilizing the `analyze` function. 
 
-First, we'll walk through how to create a FastProject object for the `Analyze` function. Most importantly, we need expression data and signature data. Another helpful, but not obligatory, dataset is a collection of housekeeping genes (genes that you'd expect to be detected in all cells in this expression matrix) for the estimation of a false negative curve. For this example we'll also include some meta-data for the samples in the form of a pre-computed signature file.
+First, we'll walk through how to create a FastProject object for the `analyze` function. Most importantly, we need expression data and signature data. Another helpful, but not obligatory, dataset is a collection of housekeeping genes (genes that you'd expect to be detected in all cells in this expression matrix) for the estimation of a false negative curve. For this example we'll also include some meta-data for the samples in the form of a pre-computed signature file.
 
 We'll operate on a set of 430 cells from five primary glioblastomas sequenced using scRNA-seq  for 5,948 genes (Patel et. al. 2014). For our signatures, we will use the Hallmark gene set from MSigDB, which is available [here](http://software.broadinstitute.org/gsea/msigdb/collections.jsp#H). The housekeeping genes we'll use can be found in `GeneNameHousekeeping.txt`, and the pre-computed signature can be found in `precomptued_signatures.txt`. To note, we can specify multiple signature files and files containing meta-data but we'll stick to one for this example. 
 
@@ -93,17 +93,17 @@ fp <- FastProject("data/expression_matrix.txt",
                   "data/GeneNameHousekeeping.txt")
 ```
 
-Now, with a FastProject object, we can run `Analyze` which will run the FastProject pipeline and return a FastProjectOutput object.
+Now, with a FastProject object, we can run `analyze` which will run the FastProject pipeline and return a FastProjectOutput object.
 
 FastProjectR supports parallelization with BiocParallel, so we highly recommend registering a parallelization
-backend and providing it to `Analyze`. If one is not provided, FastProjectR will call BiocParallel::bpparam
+backend and providing it to `analyze`. If one is not provided, FastProjectR will call BiocParallel::bpparam
 to get a default backend.
 Here we provide a serial back-end since it's platform independent. For more details on setting up parallelization back-ends, see the [BiocParallel package page](http://bioconductor.org/packages/release/bioc/html/BiocParallel.html)
 
 ```{r, collapse=T, message=T}
 bp <- BiocParallel::SerialParam()
 
-fp <- Analyze(fp, BPPARAM = bp)
+fp <- analyze(fp, BPPARAM = bp)
 ```
 
 With the FastProjectOutput object, a dynamic web report can be generated with the `viewResults` function or the `saveAndViewResults` function, which will both save the FastProjectOutput object as an .rds file and launch a web browser for the dynamic report.

@@ -24,7 +24,7 @@ test_that("Read in .txt and .gmt files together", {
 
 test_that("Naive Sig Scores computed correctly", {
   
-  expr <- readExprToMatrix("test_data/expression_matrix.txt")
+  expr <- readExprAsMatrix("test_data/expression_matrix.txt")
   eData <- ExpressionData(expr)
   sigList <- readSignaturesInput(c("test_data/published_signatures/h.all.v5.2.symbols.gmt"))
   
@@ -51,7 +51,7 @@ test_that("Naive Sig Scores computed correctly", {
 })
 
 test_that("Naive Sig Eval is same as Weighted Sig Eval with all weights 1", {
-  expr <- readExprToMatrix("test_data/expression_matrix.txt")
+  expr <- readExprAsMatrix("test_data/expression_matrix.txt")
   eData <- ExpressionData(expr)
   sigList <- readSignaturesInput(c("test_data/published_signatures/h.all.v5.2.symbols.gmt"))
   

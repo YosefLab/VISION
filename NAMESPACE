@@ -2,8 +2,8 @@
 
 export(FastProject)
 export(createGeneSignature)
-exportMethods(Analyze)
 exportMethods(FastProject)
+exportMethods(analyze)
 exportMethods(saveAndViewResults)
 exportMethods(viewResults)
 import(BiocParallel)

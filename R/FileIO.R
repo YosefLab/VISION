@@ -3,7 +3,7 @@
 #' @param sep seperator to use while reading in the file. Default is "\\t"
 #'
 #' @return Matrix read in from filename.
-readExprToMatrix <- function(filename, sep="\t") {
+readExprAsMatrix <- function(filename, sep="\t") {
 
     message("Loading data from ", filename, " ...")
     f <- basename(filename)

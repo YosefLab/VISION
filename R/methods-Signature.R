@@ -162,7 +162,7 @@ sigsVsProjections <- function(projections, sigScoresData,
   },
   BPPARAM=BPPARAM)), nrow=N_SAMPLES, ncol=length(randomSigData))
 
-  # TODO: Set names of randomSigData in Analyze and use
+  # TODO: Set names of randomSigData in analyze and use
   colnames(randomSigScoreMatrix) <- vapply(randomSigData,
                                            function(x) x@name, "")
 
