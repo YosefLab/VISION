@@ -132,7 +132,6 @@ getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
 }
 
 #' Evaluates the significance of each signature vs. each projection.
-#' @importFrom Matrix crossprod
 #' @importFrom mclust densityMclust
 #' @importFrom entropy entropy.plugin
 #' @param projections Maps projections to their spatial coordinates for each
@@ -255,15 +254,14 @@ sigsVsProjection_n <- function(sigData, sigScoreMatrix,
 
     N_SAMPLES = nrow(weights)
 
-    neighborhoodPrediction <- Matrix::crossprod(weights, sigScoreMatrix)
+    neighborhoodPrediction <- weights %*% sigScoreMatrix
 
     ## Neighborhood dissimilatory score = |actual - predicted|
     dissimilarity <- abs(sigScoreMatrix - neighborhoodPrediction)
     medDissimilarity <- as.matrix(apply(dissimilarity, 2, stats::median))
 
     # Calculate scores for random signatures
-    randomNeighborhoodPrediction <- Matrix::crossprod(weights,
-                                                        randomSigScoreMatrix)
+    randomNeighborhoodPrediction <- weights %*% randomSigScoreMatrix
     randomDissimilarity <- abs(randomSigScoreMatrix -
                                     randomNeighborhoodPrediction)
     randomMedDissimilarity <- as.matrix(apply(randomDissimilarity, 2,
@@ -354,16 +352,16 @@ sigsVsProjection_pcn <- function(sigScoresData, weights){
             next
         }
 
-        sigPredictions <- crossprod(weights, sigScores) 
+        sigPredictions <- weights %*% sigScores 
         dissimilarity <- abs(sigScores - sigPredictions)
-        medDissimilarity <- as.matrix(apply(dissimilarity, 2, median))
+        medDissimilarity <- median(dissimilarity)
 
         #Compute a background for numerical signatures
         NUM_REPLICATES <- 3000
         bgValues <- replicate(NUM_REPLICATES, sample(sigScores))
-        randomPredictions <- (weights %*% bgValues)
+        randomPredictions <- weights %*% bgValues
 
-        rDissimilarity <- abs(bgValues <- randomPredictions)
+        rDissimilarity <- abs(bgValues - randomPredictions)
         randomScores <- as.matrix(apply(rDissimilarity, 2, median))
 
 
@@ -431,7 +429,7 @@ sigsVsProjection_pcf <- function(sigScoresData, weights){
             pvals[s@name] <- 1.0
         }
 
-        factorPredictions <- Matrix::crossprod(weights, factorMatrix)
+        factorPredictions <- weights %*% factorMatrix
 
         labels <- apply(factorMatrix, 1, which.max)
 
