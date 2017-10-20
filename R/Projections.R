@@ -449,6 +449,7 @@ applytSNE30 <- function(exprData, BPPARAM=bpparam()) {
 
 #' create a Knearest neighbor graph from the data
 #'
+#' @importFrom Matrix rowSums
 #' @param exprData the data to base the KNN graph on
 #' @param BPPARAM the parallelization backend to use for the computation
 #'
@@ -464,7 +465,7 @@ applyKNN <- function(exprData, BPPARAM=bpparam()) {
     sparse_weights <- exp(-1 * (d * d) / sigma^2)
     weights <- load_in_knn(nn, sparse_weights)
 
-    weightsNormFactor <- Matrix::rowSums(weights)
+    weightsNormFactor <- rowSums(weights)
     weightsNormFactor[weightsNormFactor == 0] <- 1.0
     weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
     weights <- weights / weightsNormFactor
