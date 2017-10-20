@@ -48,7 +48,7 @@ setGeneric("updateProjection", function(object, name, data) {
     standardGeneric("updateProjection")
 })
 
-setGeneric("viewResults", function(object) {
+setGeneric("viewResults", function(object, ...) {
     standardGeneric("viewResults")
 })
 

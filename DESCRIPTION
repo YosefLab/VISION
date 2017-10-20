@@ -26,7 +26,6 @@ Imports:
 	matrixStats,
 	mclust,
 	methods, 
-	pROC, 
 	Rcpp, 
 	RDRToolbox, 
 	rsvd, 

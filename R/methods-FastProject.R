@@ -223,6 +223,10 @@ setMethod("Analyze", signature(object="FastProject"),
 #' @param fpout FastProject object
 #' @param ofile the path to save the object in. If NULL, the object is saved
 #' in the working directory [default:NULL]
+#' @param port The port on which to serve the output viewer.  If omitted, a
+#' random port between 8000 and 9999 is chosen.
+#' @param host The host used to serve the output viewer. If omitted, "127.0.0.1"
+#' is used.
 #' @return the path of the saved file
 #' @aliases saveAndViewResults
 #' @export
@@ -251,7 +255,7 @@ setMethod("Analyze", signature(object="FastProject"),
 #' saveAndViewResults(fp.out)
 #' }
 setMethod("saveAndViewResults", signature(fpout="FastProject"),
-          function(fpout, ofile=NULL) {
+          function(fpout, ofile=NULL, port=NULL, host=NULL) {
             if(is.null(ofile)) {
               i <- 1
               ofile <- paste0("./fpout", i, ".rds")
@@ -262,7 +266,7 @@ setMethod("saveAndViewResults", signature(fpout="FastProject"),
             }
 
             saveRDS(fpout, file=ofile)
-            viewResults(fpout)
+            viewResults(fpout, port, host)
             return(ofile)
           })
 
@@ -272,6 +276,10 @@ setMethod("saveAndViewResults", signature(fpout="FastProject"),
 #'
 #' @param object FastProject object or path to a file containing such an
 #' object (saved using saveAndViewResults, or directly using saveRDS)
+#' @param port The port on which to serve the output viewer.  If omitted, a
+#' random port between 8000 and 9999 is chosen.
+#' @param host The host used to serve the output viewer. If omitted, "127.0.0.1"
+#' is used.
 #' @aliases viewResults
 #' @return None
 #' @export
@@ -301,7 +309,7 @@ setMethod("saveAndViewResults", signature(fpout="FastProject"),
 #' viewResults(fp.out)
 #' }
 setMethod("viewResults", signature(object="FastProject"),
-          function(object) {
+          function(object, port=NULL, host=NULL) {
 
             message("Launching the server...")
             message("Press exit or ctrl c to exit")
@@ -310,6 +318,8 @@ setMethod("viewResults", signature(object="FastProject"),
             tryCatch(expr = {
               e <- new.env()
               e$arg1 <- object
+              e$port <- port
+              e$host <- host
               sys.source(file = file.path(path, "FastProjectR_Output",
                                           "server_script.R"), envir = e)
             }, finally = {
@@ -320,12 +330,12 @@ setMethod("viewResults", signature(object="FastProject"),
 #' @rdname viewResults
 #' @export
 setMethod("viewResults", signature(object="character"),
-          function(object) {
+          function(object, port=NULL, host=NULL) {
             fpo <- readRDS(object)
             if(!methods::is(fpo, "FastProject")){
               stop("loaded object not a valid FastProject object")
             }
-            viewResults(fpo)
+            viewResults(fpo, port, host)
           })
 
 #' create new FastProject object from a subset of the data in an existing one
