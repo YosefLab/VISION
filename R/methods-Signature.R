@@ -1,5 +1,4 @@
 # require(geometry)
-# require(pROC)
 
 #' Initialize a new Signature object.
 #' Should not be called directly, instead use the `new` syntax
@@ -136,7 +135,6 @@ getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
 #' @importFrom Matrix crossprod
 #' @importFrom mclust densityMclust
 #' @importFrom entropy entropy.plugin
-#' @importFrom pROC multiclass.roc
 #' @param projections Maps projections to their spatial coordinates for each
 #' sample
 #' @param sigScoresData List of SignatureScores Object, mapping signature
@@ -441,8 +439,6 @@ sigsVsProjection_pcf <- function(sigScoresData, weights){
         preds_ii <- apply(factorPredictions, 1, which.max)
         preds <- factorPredictions[cbind(1:nrow(factorPredictions), preds_ii)]
 
-        r <- multiclass.roc(labels, preds_ii, levels=seq(1, length(fLevels)))
-
         # Calculate the p value for precomputed signature
         krList <- list()
         for (k in 1:length(fLevels)) {
@@ -451,7 +447,7 @@ sigsVsProjection_pcf <- function(sigScoresData, weights){
 
         krTest <- stats::kruskal.test(krList)
 
-        consistency[s@name] <- r$auc
+        consistency[s@name] <- krTest$statistic
         pvals[s@name] <- krTest$p.value
 
     }
