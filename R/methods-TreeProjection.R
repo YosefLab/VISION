@@ -8,19 +8,14 @@
 #' @param adjMat the adjacency matrix of the tree
 #' @return a TreeProjection object
 TreeProjection <- function(pData, name, vData, adjMat) {
-            .Object <- new("TreeProjection")
-            .Object@pData <- pData
-            .Object@name <- name
-            .Object@vData = vData
-            .Object@adjMat = adjMat
-
-            proj <- projectOnTree(data.pnts = pData,
-                                    V.pos = vData,
-                                    princAdj = adjMat)
-            .Object@edgeAssoc <- proj$edges
-            .Object@edgePos <- proj$edgePos
-            return(.Object)
-            }
+    proj <- projectOnTree(data.pnts = pData,
+                            V.pos = vData,
+                            princAdj = adjMat)
+    .Object <- new("TreeProjection", pData=pData, name=name,
+                   vData=vData, adjMat=adjMat, edgeAssoc=proj$edges,
+                   edgePos=proj$edgePos)
+    return(.Object)
+    }
 
 
 #' Compute KNN weights based on geodesic distances for TreeProjection objects

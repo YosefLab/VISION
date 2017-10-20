@@ -4,10 +4,22 @@
 \alias{calcSignatureScores}
 \title{calculate signature scores}
 \usage{
-calcSignatureScores(object, BPPARAM = NULL)
+calcSignatureScores(object, sigData = object@sigData,
+  precomputedData = object@precomputedData,
+  sig_score_method = object@sig_score_method,
+  min_signature_genes = object@min_signature_genes, BPPARAM = NULL)
 }
 \arguments{
 \item{object}{the FastProject object}
+
+\item{sigData}{a list of Signature objects for which to compute the scores}
+
+\item{precomputedData}{a list of existing cell-signatures}
+
+\item{sig_score_method}{the scoring method to use}
+
+\item{min_signature_genes}{the minimal number of genes that must be present
+in both the data and the signature for the signature to be evaluated}
 
 \item{BPPARAM}{the parallelization backend to use for these computations}
 }

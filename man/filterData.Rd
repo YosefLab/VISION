@@ -4,10 +4,14 @@
 \alias{filterData}
 \title{filter data accourding to the provided filters}
 \usage{
-filterData(object)
+filterData(object, threshold = object@threshold, filters = object@filters)
 }
 \arguments{
 \item{object}{the FastProject object}
+
+\item{threshold}{threshold to apply for the threshold filter}
+
+\item{filters}{list of filters to compute options are limited to}
 }
 \value{
 the FastProject object, populated with filtered data

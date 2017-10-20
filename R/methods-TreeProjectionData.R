@@ -16,13 +16,9 @@
 #' @return ProjectionData object
 TreeProjectionData <- function(projections=NULL, keys, sigProjMatrix,
                                pMatrix, sigClusters, treeScore) {
-            .Object <- new("TreeProjectionData")
-            .Object@projections <- projections
-            .Object@keys <- keys
-            .Object@sigProjMatrix <- sigProjMatrix
-            .Object@pMatrix <- pMatrix
-            .Object@sigClusters <- sigClusters
-            .Object@treeScore <- treeScore
-            return(.Object)
-            }
+    .Object <- new("TreeProjectionData", projections=projections, keys=keys,
+                   sigProjMatrix=sigProjMatrix, pMatrix=pMatrix,
+                   sigClusters=sigClusters, treeScore=treeScore)
+    return(.Object)
+    }
 

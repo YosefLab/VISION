@@ -14,12 +14,9 @@
 #' @return ProjectionData object
 ProjectionData <- function(projections=NULL, keys, sigProjMatrix,
                            pMatrix, sigClusters) {
-            .Object <- new("ProjectionData")
-            .Object@projections <- projections
-            .Object@keys <- keys
-            .Object@sigProjMatrix <- sigProjMatrix
-            .Object@pMatrix <- pMatrix
-            .Object@sigClusters <- sigClusters
+            .Object <- new("ProjectionData", projections=projections,
+                           keys=keys, sigProjMatrix=sigProjMatrix,
+                           pMatrix=pMatrix, sigClusters=sigClusters)
             return(.Object)
             }
 

@@ -1,9 +1,9 @@
 #' Reads in an expression matrix from a file path to a matrix
 #' @param filename path to the file to be read in
-#' @param delimiter delimiter to use while reading in the file. Default is "\\t"
+#' @param sep seperator to use while reading in the file. Default is "\\t"
 #'
 #' @return Matrix read in from filename.
-readExprToMatrix <- function(filename, delimiter="\t") {
+readExprToMatrix <- function(filename, sep="\t") {
 
     message("Loading data from ", filename, " ...")
     fp <- unlist(strsplit(filename, "/"))
@@ -13,9 +13,9 @@ readExprToMatrix <- function(filename, delimiter="\t") {
         return(readRDS(filename))
     }
 
-    data <- as.matrix(data.table::fread(filename, sep=delimiter, skip=1, drop=1))
-    rnames <- data.table::fread(filename, sep=delimiter, skip=1, select=1)
-    cnames <- utils::read.table(filename, sep=delimiter, header=TRUE,
+    data <- as.matrix(data.table::fread(filename, sep=sep, skip=1, drop=1))
+    rnames <- data.table::fread(filename, sep=sep, skip=1, select=1)
+    cnames <- utils::read.table(filename, sep=sep, header=TRUE,
                                 row.names=1,nrows=1)
     rownames(data) <- sapply(as.vector(t(rnames)), toupper)
     colnames(data) <- colnames(cnames)
@@ -30,12 +30,12 @@ readExprToMatrix <- function(filename, delimiter="\t") {
 #' Reads in a .txt file containing Housekeeping Gene names
 #'
 #' @param filename path to the file to be read in
-#' @param delimiter delimiter to use while reading in the file. Default is tab.
+#' @param sep seperator to use while reading in the file. Default is tab.
 #' @return Table containing the houseekeeping gene names
-readHKGToMatrix <- function(filename, delimiter="\t") {
+readHKGToMatrix <- function(filename, sep="\t") {
 
     message("Loading data from ", filename, "...")
-    hkg <- as.matrix(utils::read.table(filename, sep=delimiter))
+    hkg <- as.matrix(utils::read.table(filename, sep=sep))
     return(apply(hkg, 1, toupper))
 }
 
@@ -152,14 +152,14 @@ readSignaturesInput <- function(filenames) {
 #'
 #' @param filename Filename to read the precomputed signatures from
 #' @param sampleLabels List of labels for which we want the signature scores
-#' @param delimiter Delimiter to use when reading in file. Default is tab.
+#' @param sep seperator to use when reading in file. Default is tab.
 #' @return List of Signature data types
-readPrecomputed <- function(filename, sampleLabels, delimiter="\t") {
+readPrecomputed <- function(filename, sampleLabels, sep="\t") {
 
 
     message("Loading data from ", filename)
 
-    f <- as.matrix(utils::read.table(filename, sep=delimiter))
+    f <- as.matrix(utils::read.table(filename, sep=sep))
     l1 <- f[1,]
     l2 <- f[2,]
 

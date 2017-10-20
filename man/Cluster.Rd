@@ -3,7 +3,6 @@
 \name{Cluster}
 \alias{Cluster}
 \title{Wrapper class for a particular cluster.
-Should be called using the `new` syntax.
 Maps a cluster type to the the resulting cluster data.}
 \usage{
 Cluster(method, param, centers, data)
@@ -22,6 +21,5 @@ a Cluster object
 }
 \description{
 Wrapper class for a particular cluster.
-Should be called using the `new` syntax.
 Maps a cluster type to the the resulting cluster data.
 }

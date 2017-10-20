@@ -23,8 +23,7 @@
 #' @param nofilter if TRUE, no filter applied; else filters applied.
 #' Default is FALSE
 #' @param nomodel if TRUE, no fnr curve calculated and all weights equal to 1.
-#' Else FNR and weights calculated.
-#'              Default is TRUE.
+#' Else FNR and weights calculated. [Default:FALSE]
 #' @param filters list of filters to compute
 #' @param lean if TRUE run a lean simulation. Else more robust pipeline
 #' initiated. Default is FALSE
@@ -157,7 +156,7 @@ setMethod("FastProject", signature(data = "SummarizedExperiment"),
 #' Main entry point for running FastProject Analysis
 #'
 #' The main analysis function. Runs the entire FastProject analysis pipeline
-#' and returns a FastProjectOutput object with the result,
+#' and returns a FastProject object populated with the result,
 #'
 #' @export
 #' @aliases Analyze
@@ -196,7 +195,9 @@ setMethod("Analyze", signature(object="FastProject"),
         BPPARAM <- SerialParam()
     }
 
-    object <- poolCells(object)
+    if (ncol(getExprData(object@exprData)) > 15000 || object@pool) {
+        object <- poolCells(object, BPPARAM = BPPARAM)
+    }
 
     object <- filterData(object)
 
@@ -204,16 +205,16 @@ setMethod("Analyze", signature(object="FastProject"),
 
     object <- normalizeData(object)
 
-    object <- calcSignatureScores(object, BPPARAM)
+    object <- calcSignatureScores(object, BPPARAM = BPPARAM)
 
-    object <- analyzeProjections(object, BPPARAM)
+    object <- analyzeProjections(object, BPPARAM = BPPARAM)
 
     message("Analysis Complete!")
 
     return(object)
 })
 
-#' Save the FastProjectOutput object as an .RDS file and view the results on a
+#' Save the FastProject object as an .RDS file and view the results on a
 #' localhost
 #'
 #' Save the results object as an RDS file for future use, and launch a local

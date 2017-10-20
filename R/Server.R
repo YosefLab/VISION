@@ -1,66 +1,50 @@
 #' Wrapper class for ExpressionData object for JSON.
-#' Should not be called directly, instead use the `new` syntax
 #'
 #' @param data Expression data
 #' @param sample_labels Labels of samples in expression data
 #' @param gene_labels Lables of genes in expression data
 #' @return ServerExpression object
 ServerExpression <- function(data, sample_labels, gene_labels) {
-            .Object <- new("ServerExpression")
-            .Object@data <- data
-            .Object@sample_labels <- sample_labels
-            .Object@gene_labels <- gene_labels
-
+            .Object <- new("ServerExpression", data=data,
+                           sample_labels=sample_labels,
+                           gene_labels=gene_labels)
             return(.Object)
             }
 
 #' Wrapper class for Signature Projection Matrix
-#' Should not be called directly, instead use the `new` syntax
 #'
 #' @param data Signatrue Projection matrix as obtained from sigsVsProjections
 #' @param proj_labels Projection names
 #' @param sig_labels Names of signatures
 #' @return ServerSigProjMatrix object
 ServerSigProjMatrix <- function(data, proj_labels, sig_labels) {
-            .Object <- new("ServerSigProjMatrix")
-            .Object@data <- data
-            .Object@proj_labels <- proj_labels
-            .Object@sig_labels <- sig_labels
-
+            .Object <- new("ServerSigProjMatrix", data=data,
+                           proj_labels=proj_labels, sig_labels=sig_labels)
             return(.Object)
             }
 
 #' Wrapper class for the P value matrix calculated during sigsVsProjections
-#' Should not be called directly, instead use the `new` syntax
 #'
 #' @param data P values for each signature, projection pair in the form of a matrix
 #' @param proj_labels Projection names
 #' @param sig_labels Names of signatures
 #' @return ServerPMatrix object
 ServerPMatrix <- function(data, proj_labels, sig_labels) {
-            .Object <- new("ServerPMatrix")
-            .Object@data <- data
-            .Object@proj_labels <- proj_labels
-            .Object@sig_labels <- sig_labels
-
+            .Object <- new("ServerPMatrix", data=data, proj_labels=proj_labels,
+                           sig_labels=sig_labels)
             return(.Object)
             }
 
 #' Wrapper class for server Perason correlation data
-#' Should not be called directly, instead use the `new` syntax
 #'
 #' @param data pearson r correlation coefficients
 #' @param proj_labels the labels of the projections (columns) in the data
 #' @param sig_labels the labels of the signatures (rows) in the data
 #' @return a ServerPCorr object
 ServerPCorr <- function(data, proj_labels, sig_labels) {
-        .Object <- new("ServerPCorr")
-        .Object@data <- data
-        .Object@proj_labels <- proj_labels
-        .Object@sig_labels <- sig_labels
-
+        .Object <- new("ServerPCorr", data=data, proj_labels=proj_labels,
+                       sig_labels=sig_labels)
         return(.Object)
-
         }
 
 
@@ -70,7 +54,7 @@ ServerPCorr <- function(data, proj_labels, sig_labels) {
 #' @return JSON formatted Signature object.
 signatureToJSON <- function(sig) {
 
-    # Pass in a Signature object from a FastProjectOutput Object to be converted into a JSON object
+    # Pass in a Signature object from a FastProject Object to be converted into a JSON object
     sig@sigDict <- as.list(sig@sigDict)
 
     json <- toJSON(sig, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
@@ -138,7 +122,7 @@ coordinatesToJSON <- function(p) {
     return(json)
 }
 
-#' Converts a sigProjMatrix from a FastProjectOutput Object to a JSON object
+#' Converts a sigProjMatrix from a FastProject Object to a JSON object
 #' @importFrom jsonlite toJSON
 #' @param sigpm SigProjMatrix
 #' @param sigs Signatures to subset form sigpm
@@ -206,6 +190,5 @@ clusterToJSON <- function(cluster) {
 #' @param nfp the new FastProject object to analyze
 #' @return None
 newAnalysis <- function(nfp) {
-    fpo1 <- Analyze(nfp)
-    saveFPOutAndViewResults(fpo1)
+    saveAndViewResults(Analyze(nfp))
 }

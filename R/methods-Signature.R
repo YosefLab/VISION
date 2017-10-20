@@ -17,25 +17,20 @@
 Signature <- function(sigDict, name, source, metaData="",
                     isPrecomputed=FALSE,
                     isFactor=FALSE, cluster=0) {
-            .Object <- new("Signature")
-            if (missing(sigDict)) {
-                stop("Missing sigDict information.")
-            } else if (missing(name)) {
-                stop("Missing signature name.")
-            } else if (missing(source)) {
-                stop("Missing source file.")
-            }
+    if (missing(sigDict)) {
+        stop("Missing sigDict information.")
+    } else if (missing(name)) {
+        stop("Missing signature name.")
+    } else if (missing(source)) {
+      stop("Missing source file.")
+    }
 
-            .Object@sigDict = sigDict
-            .Object@name = name
-            .Object@source = source
-            .Object@metaData = metaData
-            .Object@isPrecomputed = isPrecomputed
-            .Object@isFactor = isFactor
-            .Object@cluster = cluster
+    .Object <- new("Signature", sigDict=sigDict, name=name, source=source,
+                   metaData=metaData, isPrecomputed=isPrecomputed,
+                   isFactor=isFactor, cluster=cluster)
 
-            return(.Object)
-            }
+    return(.Object)
+    }
 
 #' Create a user-defined gene signature
 #'
@@ -121,7 +116,6 @@ BG_DIST <- matrix(0L, nrow=0, ncol=0)
 getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
 
     if (nrow(BG_DIST) != N_SAMPLES || ncol(BG_DIST) != NUM_REPLICATES) {
-    set.seed(RANDOM_SEED)
     BG_DIST <- matrix(stats::rnorm(N_SAMPLES*NUM_REPLICATES),
                         nrow=N_SAMPLES, ncol=NUM_REPLICATES)
     BG_DIST <- apply(BG_DIST, 2, order)
@@ -148,8 +142,6 @@ getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
 #' }
 sigsVsProjections <- function(projections, sigScoresData,
                                 randomSigData, BPPARAM=bpparam()) {
-
-    set.seed(RANDOM_SEED)
 
     N_SAMPLES <- length(sigScoresData[[1]]@sample_labels)
 

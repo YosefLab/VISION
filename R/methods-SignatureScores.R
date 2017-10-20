@@ -11,16 +11,11 @@
 #' @return New SignatureScores object
 SignatureScores <- function(scores, name, sample_labels,
                     isFactor, isPrecomputed, numGenes) {
-            .Object <- new("SignatureScores")
-            .Object@scores = scores
-            .Object@name = name
-            .Object@sample_labels = sample_labels
-            .Object@isFactor = isFactor
-            .Object@isPrecomputed = isPrecomputed
-            .Object@numGenes = numGenes
-
-            return(.Object)
-            }
+    .Object <- new("SignatureScores", scores=scores, name=name,
+                   sample_labels=sample_labels, isFactor=isFactor,
+                   isPrecomputed=isPrecomputed, numGenes=numGenes)
+    return(.Object)
+    }
 
 
 #' Generate signature scores based on an input data.frame

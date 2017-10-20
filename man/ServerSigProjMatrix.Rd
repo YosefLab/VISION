@@ -2,8 +2,7 @@
 % Please edit documentation in R/Server.R
 \name{ServerSigProjMatrix}
 \alias{ServerSigProjMatrix}
-\title{Wrapper class for Signature Projection Matrix
-Should not be called directly, instead use the `new` syntax}
+\title{Wrapper class for Signature Projection Matrix}
 \usage{
 ServerSigProjMatrix(data, proj_labels, sig_labels)
 }
@@ -19,5 +18,4 @@ ServerSigProjMatrix object
 }
 \description{
 Wrapper class for Signature Projection Matrix
-Should not be called directly, instead use the `new` syntax
 }

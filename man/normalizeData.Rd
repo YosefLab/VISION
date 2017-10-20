@@ -4,10 +4,13 @@
 \alias{normalizeData}
 \title{Normalize the data}
 \usage{
-normalizeData(object)
+normalizeData(object, sig_norm_method = object@sig_norm_method)
 }
 \arguments{
 \item{object}{the FastPrpject object}
+
+\item{sig_norm_method}{(optional) Method to apply to normalize the expression
+matrix before calculating signature scores}
 }
 \value{
 the FastProject object with normalized data matrices
