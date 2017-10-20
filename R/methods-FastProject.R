@@ -320,8 +320,10 @@ setMethod("viewResults", signature(object="FastProject"),
               e$arg1 <- object
               e$port <- port
               e$host <- host
-              sys.source(file = file.path(path, "FastProjectR_Output",
-                                          "server_script.R"), envir = e)
+              sys.source(file = system.file(package = "FastProjectR",
+                                            file.path("FastProjectR_Output",
+                                                      "server_script.R")),
+                         envir = e)
             }, finally = {
               setwd(curpath)
             })
