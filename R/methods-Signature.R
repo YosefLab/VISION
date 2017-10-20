@@ -229,10 +229,14 @@ sigsVsProjections <- function(projections, sigScoresData,
 
 #' Evaluates the significance of each numeric signature vs. a 
 #' single projections weights
-#' @param sigData
-#' @param sigScoreMatrix
-#' @param randomSigData
-#' @param randomSigScoreMatrix
+#' @param sigData a list of SignatureScores objects representing input user
+#' signatures
+#' @param sigScoreMatrix a numeric matrix (N_SAMPLES x N_SIGNATURES) containing
+#' the signature scores for every (signature, sample)
+#' @param randomSigData a list of SignatureScores objects representing a suitable
+#' background distribution to go with `sigData`
+#' @param randomSigScoreMatrix a numeric matrix (N_SAMPLES x N_SIGNATURES) containing
+#' the signature scores associated wiht signatures in randomSigData
 #' @param weights numeric matrix of dimension N_SAMPLES x N_SAMPLES
 #' @return list:
 #' \itemize{
