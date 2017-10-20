@@ -33,19 +33,17 @@ applyFilters <- function(data, threshold, filterInput) {
 
 }
 
-#' Eliminate genes whose sample variance is equal to 0 (may remove rows); run when --nofilter option
+#' Eliminate genes whose sample variance is equal to 0 (may remove rows);
+#' run when --nofilter option
 #' is selected
 #' @importFrom stats var
 #' @param data expression matrix
 #' @return filtered expression matrix
 filterGenesNovar <- function(data) {
-
     message("Applying no variance filter...")
-
-
-    return (subset(data, apply(data, 1, var) != 0))
-
+    return(data[apply(data, 1, var) != 0,])
 }
+
 #' Filter genes whose values sum to less than some threshold value (may remove rows)
 #'
 #' @param data (data.frame) expression matrix
@@ -55,6 +53,7 @@ filterGenesThreshold <- function(data, threshold) {
     message("Applying threshold filter...")
     return(data[rowSums(data > 0) > threshold,])
 }
+
 #' Applies the Fano filter to the input data (may remove rows)
 #' @importFrom stats median sd
 #' @param data NUM_GENES x NUM_SAMPLES expression matrix
