@@ -242,7 +242,7 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
     Z <- tcrossprod(weights)
 
     wcov <- W / Z
-    wcov[which(is.na(wcov))] <- 0.0
+    wcov[is.na(wcov)] <- 0.0
     var <- diag(wcov)
 
     # SVD of wieghted correlation matrix
@@ -315,15 +315,15 @@ applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, 
 
     mu <- as.matrix(apply(bg_vals, 2, mean))
     sigma <- as.matrix(apply(bg_vals, 2, biasedVectorSD))
-    sigma[which(sigma==0)] <- 1.0
+    sigma[sigma==0] <- 1.0
 
     # Compute pvals from survival function & threshold components
     pvals <- 1 - stats::pnorm((eval - mu) / sigma)
     thresholdComponent_i = which(pvals > p_threshold, arr.ind=TRUE)
     if (length(thresholdComponent_i) == 0) {
-    thresholdComponent <- nrow(wPCA)
+        thresholdComponent <- nrow(wPCA)
     } else {
-    thresholdComponent <- thresholdComponent_i[[1]]
+        thresholdComponent <- thresholdComponent_i[[1]]
     }
 
     if (thresholdComponent < 5) {
@@ -531,7 +531,7 @@ sqdist <- function(X, Y) {
     x = -2 * tcrossprod(X, Y)
     x = x + aa
     x = t(t(x) + bb)
-    x[which(x<0)] <- 0
+    x[x<0] <- 0
     return(x)
 
 }

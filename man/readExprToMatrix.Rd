@@ -4,12 +4,12 @@
 \alias{readExprToMatrix}
 \title{Reads in an expression matrix from a file path to a matrix}
 \usage{
-readExprToMatrix(filename, delimiter = "\\t")
+readExprToMatrix(filename, sep = "\\t")
 }
 \arguments{
 \item{filename}{path to the file to be read in}
 
-\item{delimiter}{delimiter to use while reading in the file. Default is "\\t"}
+\item{sep}{seperator to use while reading in the file. Default is "\\t"}
 }
 \value{
 Matrix read in from filename.

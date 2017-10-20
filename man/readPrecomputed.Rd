@@ -4,14 +4,14 @@
 \alias{readPrecomputed}
 \title{Reads precomputed signature values form a tab-delimited text file}
 \usage{
-readPrecomputed(filename, sampleLabels, delimiter = "\\t")
+readPrecomputed(filename, sampleLabels, sep = "\\t")
 }
 \arguments{
 \item{filename}{Filename to read the precomputed signatures from}
 
 \item{sampleLabels}{List of labels for which we want the signature scores}
 
-\item{delimiter}{Delimiter to use when reading in file. Default is tab.}
+\item{sep}{seperator to use when reading in file. Default is tab.}
 }
 \value{
 List of Signature data types

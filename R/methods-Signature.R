@@ -225,9 +225,9 @@ sigsVsProjections <- function(projections, sigScoresData,
 
     factList <- lapply(fLevels, function(fval) {
                 factorMatrixRow <- matrix(0L, nrow=N_SAMPLES, ncol=1)
-                equal_ii <- which(fValues == fval)
+                equal_ii <- fValues == fval
                 factorMatrixRow[equal_ii] <- 1
-                return(list(length(equal_ii) / length(fValues), factorMatrixRow))
+                return(list(sum(equal_ii) / length(fValues), factorMatrixRow))
             })
     factorFreq <- lapply(factList, function(x) return(x[[1]]))
     factorMatrix <- matrix(unlist(lapply(factList, function(x) return(x[[2]]))),
@@ -381,17 +381,17 @@ sigsVsProjections <- function(projections, sigScoresData,
 #' }
 clusterSignatures <- function(sigList, sigMatrix, pvals, k=10) {
 
-    precomputed <- lapply(sigList, function(x) x@isPrecomputed)
+    precomputed <- vapply(sigList, function(x) x@isPrecomputed, TRUE)
 
     significant <- apply(pvals, 1, function(x) min(x) < -1.3)
 
-    signif_computed <- significant[names(which(precomputed == FALSE))]
-    signif_precomp <- significant[names(which(precomputed == TRUE))]
+    signif_computed <- significant[names(which(!precomputed))]
+    signif_precomp <- significant[names(which(precomputed))]
 
-    keep_computed = names(which(signif_computed == TRUE))
+    keep_computed = names(signif_computed)
 
     # Cluster computed signatures and precomputed signatures separately
-    computedSigsToCluster <- names(precomputed[which(precomputed==FALSE)])
+    computedSigsToCluster <- names(precomputed[!precomputed])
     computedSigMatrix <- sigMatrix[computedSigsToCluster,,drop=FALSE]
 
     computedSigMatrix <- computedSigMatrix[keep_computed,,drop=FALSE]
@@ -409,12 +409,12 @@ clusterSignatures <- function(sigList, sigMatrix, pvals, k=10) {
     maxcls <- max(unlist(compcls))
     }
 
-    compcls[names(which(significant == FALSE))] <- maxcls + 1
+    compcls[names(significant[!significant])] <- maxcls + 1
 
     # Don't actually cluster Precomputed Signatures -- just return in a list.
     precompcls <- list()
-    if (length(which(precomputed==TRUE)) > 0) {
-        precomputedSigsToCluster <- names(precomputed[which(precomputed==TRUE)])
+    if (sum(precomputed) > 0) {
+        precomputedSigsToCluster <- names(precomputed[precomputed])
         precompcls[precomputedSigsToCluster] <- 1
     }
 

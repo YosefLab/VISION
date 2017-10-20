@@ -18,7 +18,7 @@ FastProject object
 }
 \description{
 The main analysis function. Runs the entire FastProject analysis pipeline
-and returns a FastProjectOutput object with the result,
+and returns a FastProject object populated with the result,
 }
 \examples{
 expMat <- matrix(rnorm(200000), nrow=500)

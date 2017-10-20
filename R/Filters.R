@@ -52,14 +52,8 @@ filterGenesNovar <- function(data) {
 #' @param threshold (int) threshold value to filter by
 #' @return filtered expression matrix
 filterGenesThreshold <- function(data, threshold) {
-
     message("Applying threshold filter...")
-
-    keep_ii <- which(as.matrix(apply( (data > 0), 1, sum)) > threshold)
-    return(data[keep_ii,])
-
-
-
+    return(data[rowSums(data > 0) > threshold,])
 }
 #' Applies the Fano filter to the input data (may remove rows)
 #'
@@ -87,7 +81,7 @@ filterGenesFano <- function(data, num_mad=2) {
     N_QUANTS <- 30
     m <- floor(length(mu_sort) / N_QUANTS)
 
-    gene_passes <- rep(0, nrow(sub_data)) == 1
+    gene_passes <- rep(FALSE, nrow(sub_data))
 
     genePassList <- lapply(0:N_QUANTS, function(i) {
         if (i == N_QUANTS-1) {
@@ -97,22 +91,20 @@ filterGenesFano <- function(data, num_mad=2) {
         }
 
         mu_quant <- mu_sort[rr]
-        mu_quant[which(mu_quant == 0)] <- 1
+        mu_quant[mu_quant == 0] <- 1
         sigma_quant <- sigma_sort[rr]
         fano_quant <- (sigma_quant ** 2) / (mu_quant)
         mad_quant <- stats::median(abs(fano_quant - stats::median(fano_quant)))
         gene_passes_quant <- (fano_quant > (stats::median(fano_quant)
                                             + num_mad * mad_quant))
-        gene_passes_quant_i <- which(gene_passes_quant != 0)
-        gene_passes_i <- gene_passes_quant_i + (i*m)
+        gene_passes_i <- (gene_passes_quant != 0) + (i*m)
         return(gene_passes_i)
 
     })
 
-    gpi <- unlist(genePassList)
-    gene_passes[gpi] <- TRUE
+    gene_passes[unlist(genePassList)] <- TRUE
     gene_passes <- gene_passes[order(aa)]
-    return(data[which(gene_passes==TRUE),])
+    return(data[gene_passes,])
 
 }
 

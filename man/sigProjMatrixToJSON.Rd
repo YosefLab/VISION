@@ -2,7 +2,7 @@
 % Please edit documentation in R/Server.R
 \name{sigProjMatrixToJSON}
 \alias{sigProjMatrixToJSON}
-\title{Converts a sigProjMatrix from a FastProjectOutput Object to a JSON object}
+\title{Converts a sigProjMatrix from a FastProject Object to a JSON object}
 \usage{
 sigProjMatrixToJSON(sigpm, sigs)
 }
@@ -15,5 +15,5 @@ sigProjMatrixToJSON(sigpm, sigs)
 Subsetted sigProjMatirx converted to JSON
 }
 \description{
-Converts a sigProjMatrix from a FastProjectOutput Object to a JSON object
+Converts a sigProjMatrix from a FastProject Object to a JSON object
 }

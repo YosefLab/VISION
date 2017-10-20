@@ -323,7 +323,7 @@ calculateTreeDistances <- function(princPnts, princAdj, edgeAssoc, edgePos) {
                                                             -c(1,NROW(inEdgeDist))]
     }
 
-    # for each pair of edges, calculate inter-edge distances and set them in the empty matrix
+    ## for each pair of edges, calculate inter-edge distances and set them in the empty matrix
     for (i in 1:(NCOL(princEdges)-1)) {
     for (j in (i+1):NCOL(princEdges)) {
         ## figure out which pair is the right one (one with shortest distance)
