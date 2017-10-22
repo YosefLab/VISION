@@ -15,15 +15,15 @@ applyFilters <- function(data, threshold, filterInput) {
 
     for (filter in filterInput) {
         if (filter == "novar") {
-            expr <- filterGenesNovar(expr)
-            data@noVarFilter <- expr
+            f_expr <- filterGenesNovar(expr)
+            data@noVarFilter <- f_expr
         } else if (filter == "threshold") {
-            expr <- filterGenesThreshold(expr, threshold)
-            data@thresholdFilter <- expr
+            f_expr <- filterGenesThreshold(expr, threshold)
+            data@thresholdFilter <- f_expr
         } else if (filter == "fano") {
-            texpr <- filterGenesThreshold(expr, threshold)
-            expr <- filterGenesFano(texpr)
-            data@fanoFilter <- expr
+            t_expr <- filterGenesThreshold(expr, threshold)
+            f_expr <- filterGenesFano(t_expr)
+            data@fanoFilter <- f_expr
         } else {
             stop("Filter not recognized")
         }
