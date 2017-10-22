@@ -78,7 +78,7 @@ library(FastProjectR)
 # -- read in expression data set
 expr <- as.matrix(read.table("data/expression_matrix.txt", 
                    header = TRUE, sep = '\t', row.names = 1))
-hkg <- read.table("data/GeneNameHousekeeping.txt", stringsAsFactors = FALSE)$V1
+hkg <- housekeeping$default
 
 # -- Create a FastProject object with existing matrix
 fp <- FastProject(expr, c("data/h.all.v5.2.symbols.gmt"), hkg)
@@ -90,7 +90,7 @@ fp <- FastProject(se, c("data/h.all.v5.2.symbols.gmt"), hkg)
 # -- or just provide that files to FastProject
 fp <- FastProject("data/expression_matrix.txt",  
                   c("data/h.all.v5.2.symbols.gmt"),
-                  "data/GeneNameHousekeeping.txt")
+                  housekeeping=hkg)
 ```
 
 Now, with a FastProject object, we can run `analyze` which will run the FastProject pipeline and return a FastProjectOutput object.
