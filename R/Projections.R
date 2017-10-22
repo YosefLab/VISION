@@ -364,8 +364,7 @@ applyPCA <- function(exprData, N=0, variance_proportion=1.0) {
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
 applyICA <- function(exprData, BPPARAM=bpparam()) {
 
-    ndata <- colNormalization(exprData)
-    ndataT <- t(ndata)
+    ndataT <- t(exprData)
     res <- fastICA(ndataT, n.comp=2, maxit=100, tol=.00001, alg.typ="parallel", fun="logcosh", alpha=1,
                     method = "C", row.norm=FALSE, verbose=TRUE)
 
@@ -385,9 +384,8 @@ applyICA <- function(exprData, BPPARAM=bpparam()) {
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
 applySpectralEmbedding <- function(exprData, BPPARAM = bpparam()) {
 
-    ndata <- colNormalization(exprData)
 
-    adj <- as.matrix(dist.matrix(t(ndata)))
+    adj <- as.matrix(dist.matrix(t(exprData)))
     adm <- graph_from_adjacency_matrix(adj, weighted=TRUE)
     res <- embed_adjacency_matrix(adm, 2)$X
 
@@ -407,8 +405,7 @@ applySpectralEmbedding <- function(exprData, BPPARAM = bpparam()) {
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
 applytSNE10 <- function(exprData, BPPARAM=bpparam()) {
 
-    ndata <- colNormalization(exprData)
-    ndataT <- t(ndata)
+    ndataT <- t(exprData)
     #res <- Rtsne.multicore(ndataT, dims=2, max_iter=600, perplexity=10.0,
     #     check_duplicates=FALSE, pca=FALSE, num_threads=BPPARAM$workers)
     res <- Rtsne(ndataT, dims=2, max_iter=800, perplexity=10.0,
@@ -428,8 +425,7 @@ applytSNE10 <- function(exprData, BPPARAM=bpparam()) {
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
 applytSNE30 <- function(exprData, BPPARAM=bpparam()) {
 
-    ndata <- colNormalization(exprData)
-    ndataT <- t(ndata)
+    ndataT <- t(exprData)
     #res <- Rtsne.multicore(ndataT, dims=2, max_iter=600,
     # perplexity=30.0, check_duplicates=FALSE, pca=FALSE,
     #num_threads=BPPARAM$workers)
@@ -492,8 +488,7 @@ applyISOMap <- function(exprData, BPPARAM=bpparam()) {
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
 applyRBFPCA <- function(exprData, BPPARAM=bpparam()) {
 
-    ndata <- colNormalization(exprData)
-    distanceMatrix <- as.matrix(dist.matrix(t(ndata)))
+    distanceMatrix <- as.matrix(dist.matrix(t(exprData)))
     distanceMatrix <- log(distanceMatrix)
     point_mult(distanceMatrix, distanceMatrix)
     kMat <- as.matrix(exp(-1 * (distanceMatrix) / .33^2))
