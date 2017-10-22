@@ -22,8 +22,6 @@ generated signatures to scores to be compared with the real signature scores.}
 \value{
 list:
 \itemize{
-    \item sigNames: labels for the signatures (rows in output matrices)
-    \item projNames: labels for the projections (columns in output matrices)
     \item sigProbMatrix: the matrix of signature-projection consistency scores
     \item pVals: pvalues for the scores
 }

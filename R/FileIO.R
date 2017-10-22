@@ -23,19 +23,6 @@ readExprAsMatrix <- function(filename, sep="\t") {
     return(data)
 }
 
-#' Reads in a .txt file containing Housekeeping Gene names
-#'
-#' @importFrom utils read.table
-#' @param filename path to the file to be read in
-#' @param sep seperator to use while reading in the file. Default is tab.
-#' @return Table containing the houseekeeping gene names
-readHKGToMatrix <- function(filename, sep="\t") {
-
-    message("Loading data from ", filename, "...")
-    hkg <- as.matrix(read.table(filename, sep=sep))
-    return(apply(hkg, 1, toupper))
-}
-
 #' Reads in a list of signature input files.
 #' @importFrom utils read.table
 #' @importFrom cogena gmt2list

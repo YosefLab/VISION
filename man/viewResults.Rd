@@ -7,13 +7,19 @@
 \alias{viewResults,character-method}
 \title{View results of analysis without saving output object}
 \usage{
-\S4method{viewResults}{FastProject}(object)
+\S4method{viewResults}{FastProject}(object, port = NULL, host = NULL)
 
-\S4method{viewResults}{character}(object)
+\S4method{viewResults}{character}(object, port = NULL, host = NULL)
 }
 \arguments{
 \item{object}{FastProject object or path to a file containing such an
 object (saved using saveAndViewResults, or directly using saveRDS)}
+
+\item{port}{The port on which to serve the output viewer.  If omitted, a
+random port between 8000 and 9999 is chosen.}
+
+\item{host}{The host used to serve the output viewer. If omitted, "127.0.0.1"
+is used.}
 }
 \value{
 None
@@ -25,8 +31,8 @@ launch a local server to explore the results with a browser.
 expMat <- matrix(rnorm(200000), nrow=500)
 rownames(expMat) <- paste0("gene",1:500)
 
-# create housekeeping genes
-hkg <- paste0("gene",sample(1:500, 50))
+# choose housekeeping genes
+hkg <- housekeeping$default
 
 #create 20 signatures of 25 genes each
 sigs <- lapply(1:20, function(i) {

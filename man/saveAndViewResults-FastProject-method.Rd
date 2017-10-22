@@ -7,13 +7,20 @@
 \title{Save the FastProject object as an .RDS file and view the results on a
 localhost}
 \usage{
-\S4method{saveAndViewResults}{FastProject}(fpout, ofile = NULL)
+\S4method{saveAndViewResults}{FastProject}(fpout, ofile = NULL, port = NULL,
+  host = NULL)
 }
 \arguments{
 \item{fpout}{FastProject object}
 
 \item{ofile}{the path to save the object in. If NULL, the object is saved
 in the working directory [default:NULL]}
+
+\item{port}{The port on which to serve the output viewer.  If omitted, a
+random port between 8000 and 9999 is chosen.}
+
+\item{host}{The host used to serve the output viewer. If omitted, "127.0.0.1"
+is used.}
 }
 \value{
 the path of the saved file
@@ -26,8 +33,8 @@ server to explore the results with a browser.
 expMat <- matrix(rnorm(200000), nrow=500)
 rownames(expMat) <- paste0("gene",1:500)
 
-# create housekeeping genes
-hkg <- paste0("gene",sample(1:500, 50))
+# choose housekeeping genes
+hkg <- housekeeping$default
 
 #create 20 signatures of 25 genes each
 sigs <- lapply(1:20, function(i) {

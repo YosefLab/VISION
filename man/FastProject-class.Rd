@@ -38,8 +38,7 @@ FastProject(data, ...)
 \item{signatures}{list of file paths to signature files (.gmt or .txt) or a
 list of Signature objects}
 
-\item{housekeeping}{file path to housekeeping data file, or vector of gene
-names}
+\item{housekeeping}{vector of gene names}
 
 \item{norm_methods}{normalization methods to be extracted from the scone
 object}
@@ -91,8 +90,8 @@ Initializes a new FastProject object.
 expMat <- matrix(rnorm(200000), nrow=500)
 rownames(expMat) <- paste0("gene",1:500)
 
-# create housekeeping genes
-hkg <- paste0("gene",sample(1:500, 50))
+# choose housekeeping genes
+hkg <- housekeeping$default
 
 #create 20 signatures of 25 genes each
 sigs <- lapply(1:20, function(i) {

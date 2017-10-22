@@ -5,7 +5,7 @@
 \title{analyze projections}
 \usage{
 analyzeProjections(object, lean = object@lean, perm_wPCA = object@perm_wPCA,
-  BPPARAM)
+  BPPARAM = NULL)
 }
 \arguments{
 \item{object}{the FastProject object}

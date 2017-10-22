@@ -13,8 +13,7 @@
 #' }
 #' @param signatures list of file paths to signature files (.gmt or .txt) or a
 #' list of Signature objects
-#' @param housekeeping file path to housekeeping data file, or vector of gene
-#' names
+#' @param housekeeping vector of gene names
 #' @param norm_methods normalization methods to be extracted from the scone
 #' object
 #' @param precomputed data file with precomputed signature scores (.txt), or a
@@ -47,8 +46,8 @@
 #' expMat <- matrix(rnorm(200000), nrow=500)
 #' rownames(expMat) <- paste0("gene",1:500)
 #'
-#' # create housekeeping genes
-#' hkg <- paste0("gene",sample(1:500, 50))
+#' # choose housekeeping genes
+#' hkg <- housekeeping$default
 #'
 #' #create 20 signatures of 25 genes each
 #' sigs <- lapply(1:20, function(i) {
@@ -79,8 +78,6 @@ setMethod("FastProject", signature(data = "matrix"),
             if (is.null(housekeeping)) {
                 .Object@housekeepingData <- character()
                 .Object@nomodel = TRUE
-            } else if (length(housekeeping) == 1) {
-                .Object@housekeepingData <- readHKGToMatrix(housekeeping)
             } else {
                 .Object@housekeepingData <- housekeeping
             }
@@ -168,8 +165,8 @@ setMethod("FastProject", signature(data = "SummarizedExperiment"),
 #' expMat <- matrix(rnorm(200000), nrow=500)
 #' rownames(expMat) <- paste0("gene",1:500)
 #'
-#' # create housekeeping genes
-#' hkg <- paste0("gene",sample(1:500, 50))
+#' # choose housekeeping genes
+#' hkg <- housekeeping$default
 #'
 #' #create 20 signatures of 25 genes each
 #' sigs <- lapply(1:20, function(i) {
@@ -234,8 +231,8 @@ setMethod("analyze", signature(object="FastProject"),
 #' expMat <- matrix(rnorm(200000), nrow=500)
 #' rownames(expMat) <- paste0("gene",1:500)
 #'
-#' # create housekeeping genes
-#' hkg <- paste0("gene",sample(1:500, 50))
+#' # choose housekeeping genes
+#' hkg <- housekeeping$default
 #'
 #' #create 20 signatures of 25 genes each
 #' sigs <- lapply(1:20, function(i) {
@@ -288,8 +285,8 @@ setMethod("saveAndViewResults", signature(fpout="FastProject"),
 #' expMat <- matrix(rnorm(200000), nrow=500)
 #' rownames(expMat) <- paste0("gene",1:500)
 #'
-#' # create housekeeping genes
-#' hkg <- paste0("gene",sample(1:500, 50))
+#' # choose housekeeping genes
+#' hkg <- housekeeping$default
 #'
 #' #create 20 signatures of 25 genes each
 #' sigs <- lapply(1:20, function(i) {
