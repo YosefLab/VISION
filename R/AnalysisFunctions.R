@@ -9,9 +9,9 @@ poolCells <- function(object,
                       BPPARAM=SerialParam()) {
     object@cellsPerPartition <- cellsPerPartition
     microclusters <- applyMicroClustering(getExprData(object@exprData),
-                                          object@housekeepingData,
-                                          object@cellsPerPartition,
-                                          BPPARAM)
+                                          hkg=object@housekeepingData,
+                                          cellsPerPartition=object@cellsPerPartition,
+                                          BPPARAM=BPPARAM)
     object@exprData <- ExpressionData(microclusters[[1]])
     object@pools <- microclusters[[2]]
     return(object)
@@ -51,19 +51,19 @@ calcWeights <- function(object,
     clustered <- (ncol(getExprData(object@exprData)) > 15000 || object@pool)
     if (!clustered && !object@nomodel) {
         message("Computing weights from False Negative Function...")
-        falseneg_out <- createFalseNegativeMap(object@allData,
+        falseneg_out <- createFalseNegativeMap(getExprData(object@exprData),
                                                object@housekeepingData)
         object@weights <- computeWeights(falseneg_out[[1]], falseneg_out[[2]],
                                          object@exprData)
 
     } else if (all(is.na(object@weights)) ||
                ncol(object@weights) != ncol(object@exprData)) {
-        object@weights <- matrix(1L, nrow=nrow(object@allData),
-                                 ncol=ncol(object@allData))
+        object@weights <- matrix(1L, nrow=nrow(getExprData(object@exprData)),
+                                 ncol=ncol(getExprData(object@exprData)))
     }
 
-    rownames(object@weights) <- rownames(object@allData)
-    colnames(object@weights) <- colnames(object@allData)
+    rownames(object@weights) <- rownames(getExprData(object@exprData))
+    colnames(object@weights) <- colnames(getExprData(object@exprData))
     return(object)
 }
 
@@ -188,7 +188,10 @@ calcSignatureScores <- function(object,
 analyzeProjections <- function(object,
                                lean=object@lean,
                                perm_wPCA=object@perm_wPCA,
-                               BPPARAM) {
+                               BPPARAM=NULL) {
+
+  if(is.null(BPPARAM)) BPPARAM <- SerialParam()
+
   object@lean <- lean
   object@perm_wPCA <- perm_wPCA
 
