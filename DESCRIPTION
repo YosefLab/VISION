@@ -13,7 +13,6 @@ Imports:
 	Biobase,
 	BiocParallel,
 	cogena, 
-	data.table,
 	entropy,
 	fastICA,
 	Hmisc,

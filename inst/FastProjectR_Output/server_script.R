@@ -77,7 +77,7 @@ jug() %>%
     return(out)
   }) %>%
   get("/Signature/Expression/(?<sig_name4>.*)", function(req, res, err) {
-    all_names = sapply(fpout@sigData, function(x){return(x@name)})
+    all_names = vapply(fpout@sigData, function(x){ return(x@name) }, "")
     name <- URLdecode(req$params$sig_name4)
     index = match(name, all_names)
     if(is.na(index)){
@@ -119,67 +119,47 @@ jug() %>%
     filter <- URLdecode(req$params$filter_name1)
     proj <- URLdecode(req$params$proj_name1)
     out <- FastProjectR:::coordinatesToJSON(fpout@filterModuleList[[filter]]@ProjectionData@projections[[proj]]@pData)
-    # projData <- fpout@projData
-    # out <- coordinatesToJSON(filterMod[[filter]]@projections[[proj]]@pData)
     return(out)
   }) %>%
   get("/FilterGroup/(?<filter_name2>.*)/SigProjMatrix/Normal", function(req, res, err) {
-    # projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name2)
 
     signatures <- fpout@sigData
-    keys <- lapply(signatures, function(x) x@name)
-    vals <- lapply(signatures, function(x) x@isPrecomputed)
-    names(vals) <- keys
-	  sigvals <- vals[which(vals == FALSE)]
-	  sigs <- names(sigvals)
+    keys <- vapply(signatures, function(x) x@name, "")
+    vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
+	  sigs <- keys[!vals]
     out <- FastProjectR:::sigProjMatrixToJSON(fpout@filterModuleList[[filter]]@ProjectionData@sigProjMatrix, sigs)
-    # out <- sigProjMatrixToJSON(projData[[filter]]@sigProjMatrix, sigs)
     return(out)
   }) %>%
   get("/FilterGroup/(?<filter_name3>.*)/SigProjMatrix/Precomputed", function(req, res, err) {
-    # projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name3)
 
     signatures <- fpout@sigData
-    keys <- lapply(signatures, function(x) x@name)
-    vals <- lapply(signatures, function(x) x@isPrecomputed)
-    names(vals) <- keys
-	  sigvals <- vals[which(vals == TRUE)]
-	  sigs <- names(sigvals)
-
+    keys <- vapply(signatures, function(x) x@name, "")
+    vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
+    sigs <- keys[!vals]
 	  out <- FastProjectR:::sigProjMatrixToJSON(fpout@filterModuleList[[filter]]@ProjectionData@sigProjMatrix, sigs)
-    # out <- sigProjMatrixToJSON(projData[[filter]]@sigProjMatrix, sigs)
     return(out)
   }) %>%
   get("/FilterGroup/(?<filter_name4>.*)/SigProjMatrix_P/Normal", function(req, res, err) {
-    # projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name4)
 
     signatures <- fpout@sigData
-    keys <- lapply(signatures, function(x) x@name)
-    vals <- lapply(signatures, function(x) x@isPrecomputed)
-    names(vals) <- keys
-	  sigvals <- vals[which(vals == FALSE)]
-	  sigs <- names(sigvals)
-
+    keys <- vapply(signatures, function(x) x@name, "")
+    vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
+    sigs <- keys[!vals]
 	  out <- FastProjectR:::sigProjMatrixToJSON(fpout@filterModuleList[[filter]]@ProjectionData@pMatrix, sigs)
-    # out <- sigProjMatrixPToJSON(projData[[filter]]@pMatrix, sigs)
     return(out)
   }) %>%
   get("/FilterGroup/(?<filter_name5>.*)/SigProjMatrix_P/Precomputed", function(req, res, err) {
-    # projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name5)
 
     signatures <- fpout@sigData
-    keys <- lapply(signatures, function(x) x@name)
-    vals <- lapply(signatures, function(x) x@isPrecomputed)
-    names(vals) <- keys
-	  sigvals <- vals[which(vals == TRUE)]
-	  sigs <- names(sigvals)
-
+    keys <- vapply(signatures, function(x) x@name, "")
+    vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
+    sigs <- keys[vals]
+    
 	  out <- FastProjectR:::sigProjMatrixToJSON(fpout@filterModuleList[[filter]]@ProjectionData@pMatrix, sigs)
-    # out <- sigProjMatrixPToJSON(projData[[filter]]@pMatrix, sigs)
     return(out)
   }) %>%
   get("/FilterGroup/(?<filter_name20>.*)/Tree/SigProjMatrix_P/Normal", function(req, res, err) {
@@ -187,14 +167,10 @@ jug() %>%
     filter <- URLdecode(req$params$filter_name20)
 
     signatures <- fpout@sigData
-    keys <- lapply(signatures, function(x) x@name)
-    vals <- lapply(signatures, function(x) x@isPrecomputed)
-    names(vals) <- keys
-	  sigvals <- vals[which(vals == FALSE)]
-	  sigs <- names(sigvals)
-
+    keys <- vapply(signatures, function(x) x@name, "")
+    vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
+    sigs <- keys[!vals]
 	  out <- FastProjectR:::sigProjMatrixToJSON(fpout@filterModuleList[[filter]]@TreeProjectionData@pMatrix, sigs)
-    # out <- sigProjMatrixPToJSON(projData[[filter]]@pMatrix, sigs)
     return(out)
   }) %>%
   get("/FilterGroup/(?<filter_name21>.*)/Tree/SigProjMatrix_P/Precomputed", function(req, res, err) {
@@ -202,12 +178,9 @@ jug() %>%
     filter <- URLdecode(req$params$filter_name21)
 
     signatures <- fpout@sigData
-    keys <- lapply(signatures, function(x) x@name)
-    vals <- lapply(signatures, function(x) x@isPrecomputed)
-    names(vals) <- keys
-	  sigvals <- vals[which(vals == TRUE)]
-	  sigs <- names(sigvals)
-
+    keys <- vapply(signatures, function(x) x@name, "")
+    vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
+    sigs <- keys[vals]
 	  out <- FastProjectR:::sigProjMatrixToJSON(fpout@filterModuleList[[filter]]@TreeProjectionData@pMatrix, sigs)
     # out <- sigProjMatrixPToJSON(projData[[filter]]@pMatrix, sigs)
     return(out)
@@ -259,26 +232,20 @@ jug() %>%
     return(out)
   }) %>%
   get("/FilterGroup/list", function(req, res, err) {
-    # projData <- fpout@projData
-    # filters <- sapply(projData, function(x){
-                      # return(x@filter);
-                      # });
-    filters <- sapply(fpout@filterModuleList, function(x) {
+    filters <- vapply(fpout@filterModuleList, function(x) {
       return(x@filter)
-    })
+    }, "")
     return(toJSON(filters))
   }) %>%
   get("/FilterGroup/(?<filter_name10>.*)/(?<pc_num1>.*)/Loadings/Positive", function(req, res, err) {
-    # projData <- fpout@projData
     filter <- URLdecode(req$params$filter_name10)
     pcnum <- as.numeric(URLdecode(req$params$pc_num1))
 
     l <- fpout@filterModuleList[[filter]]@PCAnnotatorData@loadings[,pcnum]
-    # l <- projData[[filter]]@loadings[,pcnum]
 
-    posl <- l[which(l >= 0)]
-
-    nposl <- sapply(posl, function(x) x / sum(posl))
+    posl <- l[l >= 0]
+    sumposl <- sum(posl)
+    nposl <- vapply(posl, function(x) x / sumposl, 1.0)
 
     nposl <- sort(nposl, decreasing=T)
 
@@ -293,9 +260,9 @@ jug() %>%
 
   	l <- fpout@filterModuleList[[filter]]@PCAnnotatorData@loadings[,pcnum]
 
-  	negl <- l[which(l < 0)]
-
-  	nnegl <- sapply(negl, function(x) x / sum(negl))
+  	negl <- l[l < 0]
+    sumneg1 <- sum(negl)
+  	nnegl <- vapply(negl, function(x) x / sumneg1, 1.0)
 
   	nnegl <- sort(nnegl, decreasing=T)
 
@@ -343,12 +310,9 @@ jug() %>%
 	  filter <- URLdecode(req$params$filter_name14)
 
     signatures <- fpout@sigData
-    keys <- lapply(signatures, function(x) x@name)
-    vals <- lapply(signatures, function(x) x@isPrecomputed)
-    names(vals) <- keys
-	  sigvals <- vals[which(vals == FALSE)]
-	  sigs <- names(sigvals)
-
+    keys <- vapply(signatures, function(x) x@name, "")
+    vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
+    sigs <- keys[!vals]
 	  pc <- fpout@filterModuleList[[filter]]@PCAnnotatorData@pearsonCorr
 	  # pc <- projData[[filter]]@pearsonCorr
 
@@ -359,12 +323,9 @@ jug() %>%
 	  filter <- URLdecode(req$params$filter_name15)
 
     signatures <- fpout@sigData
-    keys <- lapply(signatures, function(x) x@name)
-    vals <- lapply(signatures, function(x) x@isPrecomputed)
-    names(vals) <- keys
-  	sigvals <- vals[which(vals == TRUE)]
-  	sigs <- names(sigvals)
-
+    keys <- vapply(signatures, function(x) x@name, "")
+    vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
+    sigs <- keys[vals]
   	pc <- fpout@filterModuleList[[filter]]@PCAnnotatorData@pearsonCorr
   	# pc <- projData[[filter]]@pearsonCorr
 

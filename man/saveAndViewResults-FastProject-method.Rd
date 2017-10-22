@@ -4,7 +4,7 @@
 \name{saveAndViewResults,FastProject-method}
 \alias{saveAndViewResults,FastProject-method}
 \alias{saveAndViewResults}
-\title{Save the FastProjectOutput object as an .RDS file and view the results on a
+\title{Save the FastProject object as an .RDS file and view the results on a
 localhost}
 \usage{
 \S4method{saveAndViewResults}{FastProject}(fpout, ofile = NULL)
@@ -41,9 +41,9 @@ fp <- FastProject(data = expMat,
                      housekeeping = hkg,
                      signatures = sigs)
 
-## Analyze requires actual non-random data to run properly
+## analyze requires actual non-random data to run properly
 \dontrun{
-fp.out <- Analyze(fp)
+fp.out <- analyze(fp)
 saveAndViewResults(fp.out)
 }
 }

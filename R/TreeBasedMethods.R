@@ -1,5 +1,6 @@
 #' Applies the Simple PPT algorithm onto the expression data.
 #'
+#' @importFrom stats kmeans sd
 #' @param exprData Expression data -- Num_Genes x Num_Samples
 #' @param numCores Number of cores to use during this analysis
 #' @param permExprData a list of permutated expression datasets,
@@ -33,7 +34,7 @@ applySimplePPT <- function(exprData, numCores, permExprData = NULL,
     Wt <- NULL
 
     if (sigma == 0) {
-    km <- stats::kmeans(t(exprData), centers=round(sqrt(ncol(exprData))),
+    km <- kmeans(t(exprData), centers=round(sqrt(ncol(exprData))),
                         nstart=1, iter.max=50)$centers
 
     sigma <- mean(apply(as.matrix(sqdist(t(exprData), km)), 1, min))
@@ -131,10 +132,10 @@ applySimplePPT <- function(exprData, numCores, permExprData = NULL,
     tr <- fitTree(exprData, nNodes, sigma, gamma, DEF_TOL, DEF_MAX_ITER)
 
     if (!is.null(permExprData)) {
-    mses <- sapply(permExprData, function(permdata) {
+    mses <- vapply(permExprData, function(permdata) {
         return(fitTree(permdata, nNodes, sigma, gamma, DEF_TOL, DEF_MAX_ITER)$mse)
-    })
-    zscore <- log1p((tr$mse - mean(mses)) / stats::sd(mses))
+    }, 0.0)
+    zscore <- log1p((tr$mse - mean(mses)) / sd(mses))
     } else {
     zscore <- NULL
     }
@@ -146,6 +147,7 @@ applySimplePPT <- function(exprData, numCores, permExprData = NULL,
 
 #' Fit tree using input parameters
 #'
+#' @importFrom stats kmeans
 #' @importFrom matrixStats logSumExp
 #' @param expr Data to fit (NUM_GENES x NUM_SAMPLES)
 #' @param nNodes Number of nodes in the fitted tree, default is square-root of number of data points
@@ -163,7 +165,7 @@ applySimplePPT <- function(exprData, numCores, permExprData = NULL,
 #'      }
 
 fitTree <- function(expr, nNodes, sigma, gamma, tol, maxIter) {
-    km <- stats::kmeans(t(expr), centers=nNodes, nstart=10, iter.max=100)$centers
+    km <- kmeans(t(expr), centers=nNodes, nstart=10, iter.max=100)$centers
     cc_dist <- as.matrix(sqdist(km, km))
     cx_dist <- as.matrix(sqdist(t(expr), km))
     prevScore = Inf
@@ -247,7 +249,7 @@ projectOnTree <- function(data.pnts, V.pos, princAdj) {
     distmat[major.bool] <- NA # replace closest with NA
     neigh <- princAdj[major.ind,] # get neighbors of nearest pp
     distmat[neigh == 0] <- NA # remove non-neighbors
-    projections <- sapply(1:NCOL(data.pnts), function(i) {
+    projections <- vapply(1:NCOL(data.pnts), function(i) {
     # for each datapoint, find edge with smallest orthogonal projection
     edges <- t(apply(cbind(major.ind[i], which(!is.na(distmat[i,]))), 1, sort))
 
@@ -278,7 +280,7 @@ projectOnTree <- function(data.pnts, V.pos, princAdj) {
 
         return(c(edges, rpos, spos))
     }
-    })
+    }, as.double(1:(3+NROW(data.pnts))))
 
     return(list(edges = projections[1:2,],
                 edgePos = projections[3,],
@@ -323,7 +325,7 @@ calculateTreeDistances <- function(princPnts, princAdj, edgeAssoc, edgePos) {
                                                             -c(1,NROW(inEdgeDist))]
     }
 
-    # for each pair of edges, calculate inter-edge distances and set them in the empty matrix
+    ## for each pair of edges, calculate inter-edge distances and set them in the empty matrix
     for (i in 1:(NCOL(princEdges)-1)) {
     for (j in (i+1):NCOL(princEdges)) {
         ## figure out which pair is the right one (one with shortest distance)

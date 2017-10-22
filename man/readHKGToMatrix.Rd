@@ -4,12 +4,12 @@
 \alias{readHKGToMatrix}
 \title{Reads in a .txt file containing Housekeeping Gene names}
 \usage{
-readHKGToMatrix(filename, delimiter = "\\t")
+readHKGToMatrix(filename, sep = "\\t")
 }
 \arguments{
 \item{filename}{path to the file to be read in}
 
-\item{delimiter}{delimiter to use while reading in the file. Default is tab.}
+\item{sep}{seperator to use while reading in the file. Default is tab.}
 }
 \value{
 Table containing the houseekeeping gene names

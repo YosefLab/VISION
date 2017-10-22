@@ -72,7 +72,7 @@ setMethod("FastProject", signature(data = "matrix"),
 
             .Object <- new("FastProject")
 
-            rownames(data) <- sapply(rownames(data), toupper)
+            rownames(data) <- toupper(rownames(data))
             .Object@allData = data
             .Object@exprData <- ExpressionData(data)
 
@@ -133,7 +133,7 @@ setMethod("FastProject", signature(data = "matrix"),
 #' @export
 setMethod("FastProject", signature(data = "character"),
             function(data, ...) {
-            return(FastProject(readExprToMatrix(data), ...))
+            return(FastProject(readExprAsMatrix(data), ...))
             }
 )
 
@@ -159,7 +159,7 @@ setMethod("FastProject", signature(data = "SummarizedExperiment"),
 #' and returns a FastProject object populated with the result,
 #'
 #' @export
-#' @aliases Analyze
+#' @aliases analyze
 #' @param object FastProject object
 #' @param BPPARAM a parallelization backend to use for the analysis
 #' @return FastProject object
@@ -183,12 +183,12 @@ setMethod("FastProject", signature(data = "SummarizedExperiment"),
 #'                      housekeeping = hkg,
 #'                      signatures = sigs)
 #'
-#' ## Analyze requires actual non-random data to run properly
+#' ## analyze requires actual non-random data to run properly
 #' \dontrun{
 #' bp <- BiocParallel::SerialParam()
-#' fp.out <- Analyze(fp, BPPARAM=bp)
+#' fp.out <- analyze(fp, BPPARAM=bp)
 #' }
-setMethod("Analyze", signature(object="FastProject"),
+setMethod("analyze", signature(object="FastProject"),
             function(object, BPPARAM = NULL) {
     message("Beginning Analysis")
     if(is.null(BPPARAM)) {
@@ -249,9 +249,9 @@ setMethod("Analyze", signature(object="FastProject"),
 #'                      housekeeping = hkg,
 #'                      signatures = sigs)
 #'
-#' ## Analyze requires actual non-random data to run properly
+#' ## analyze requires actual non-random data to run properly
 #' \dontrun{
-#' fp.out <- Analyze(fp)
+#' fp.out <- analyze(fp)
 #' saveAndViewResults(fp.out)
 #' }
 setMethod("saveAndViewResults", signature(fpout="FastProject"),
@@ -303,9 +303,9 @@ setMethod("saveAndViewResults", signature(fpout="FastProject"),
 #'                      housekeeping = hkg,
 #'                      signatures = sigs)
 #'
-#' ## Analyze requires actual non-random data to run properly
+#' ## analyze requires actual non-random data to run properly
 #' \dontrun{
-#' fp.out <- Analyze(fp)
+#' fp.out <- analyze(fp)
 #' viewResults(fp.out)
 #' }
 setMethod("viewResults", signature(object="FastProject"),
@@ -320,8 +320,10 @@ setMethod("viewResults", signature(object="FastProject"),
               e$arg1 <- object
               e$port <- port
               e$host <- host
-              sys.source(file = file.path(path, "FastProjectR_Output",
-                                          "server_script.R"), envir = e)
+              sys.source(file = system.file(package = "FastProjectR",
+                                            file.path("FastProjectR_Output",
+                                                      "server_script.R")),
+                         envir = e)
             }, finally = {
               setwd(curpath)
             })
@@ -332,7 +334,7 @@ setMethod("viewResults", signature(object="FastProject"),
 setMethod("viewResults", signature(object="character"),
           function(object, port=NULL, host=NULL) {
             fpo <- readRDS(object)
-            if(!methods::is(fpo, "FastProject")){
+            if(!is(fpo, "FastProject")){
               stop("loaded object not a valid FastProject object")
             }
             viewResults(fpo, port, host)
@@ -346,7 +348,7 @@ setMethod("viewResults", signature(object="character"),
 createNewFP <- function(fp, subset) {
     .Object <- new("FastProject")
     nexpr <- fp@allData[,subset]
-    rownames(nexpr) <- sapply(rownames(nexpr), toupper)
+    rownames(nexpr) <- toupper(rownames(nexpr))
     .Object@allData = nexpr
     .Object@exprData <- ExpressionData(nexpr)
 

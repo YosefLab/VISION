@@ -3,44 +3,41 @@
 #' @param sep seperator to use while reading in the file. Default is "\\t"
 #'
 #' @return Matrix read in from filename.
-readExprToMatrix <- function(filename, sep="\t") {
+readExprAsMatrix <- function(filename, sep="\t") {
 
     message("Loading data from ", filename, " ...")
-    fp <- unlist(strsplit(filename, "/"))
-    f <- fp[[length(fp)]]
+    f <- basename(filename)
     fsplit <- unlist(strsplit(f, "[.]"))
     if (fsplit[[length(fsplit)]] == "rds") {
         return(readRDS(filename))
     }
+    data <- as.matrix(read.table(filename, header = TRUE, sep=sep,
+                                 row.names = 1))
 
-    data <- as.matrix(data.table::fread(filename, sep=sep, skip=1, drop=1))
-    rnames <- data.table::fread(filename, sep=sep, skip=1, select=1)
-    cnames <- utils::read.table(filename, sep=sep, header=TRUE,
-                                row.names=1,nrows=1)
-    rownames(data) <- sapply(as.vector(t(rnames)), toupper)
-    colnames(data) <- colnames(cnames)
+    # make sure gene names are all upper case to facilitate easy matching later
+    rownames(data) <- toupper(rownames(data))
 
     # check if there are any repeats in samples or genes
-    uniqrows <- unique(rownames(data))
+    data <- data[unique(rownames(data)),]
 
-    data <- data[uniqrows,]
     return(data)
 }
 
 #' Reads in a .txt file containing Housekeeping Gene names
 #'
+#' @importFrom utils read.table
 #' @param filename path to the file to be read in
 #' @param sep seperator to use while reading in the file. Default is tab.
 #' @return Table containing the houseekeeping gene names
 readHKGToMatrix <- function(filename, sep="\t") {
 
     message("Loading data from ", filename, "...")
-    hkg <- as.matrix(utils::read.table(filename, sep=sep))
+    hkg <- as.matrix(read.table(filename, sep=sep))
     return(apply(hkg, 1, toupper))
 }
 
 #' Reads in a list of signature input files.
-#'
+#' @importFrom utils read.table
 #' @importFrom cogena gmt2list
 #' @param filenames a list of paths to signature input files
 #' @return List of Signature Objects
@@ -101,7 +98,7 @@ readSignaturesInput <- function(filenames) {
 
     } else if (file_ext == "txt") {
         sigList <- list()
-        inp <- as.matrix(utils::read.table(filename, sep="\t"))
+        inp <- as.matrix(read.table(filename, sep="\t"))
 
         for (r in 1:nrow(inp)) {
         dat <- inp[r,]
@@ -150,6 +147,7 @@ readSignaturesInput <- function(filenames) {
 #' followed by the signature type (either 'numerical' or 'factor')
 #' followed by the signature values, one for each sample label in the file
 #'
+#' @importFrom utils read.table
 #' @param filename Filename to read the precomputed signatures from
 #' @param sampleLabels List of labels for which we want the signature scores
 #' @param sep seperator to use when reading in file. Default is tab.
@@ -159,7 +157,7 @@ readPrecomputed <- function(filename, sampleLabels, sep="\t") {
 
     message("Loading data from ", filename)
 
-    f <- as.matrix(utils::read.table(filename, sep=sep))
+    f <- as.matrix(read.table(filename, sep=sep))
     l1 <- f[1,]
     l2 <- f[2,]
 

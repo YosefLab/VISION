@@ -96,7 +96,7 @@ louvainCluster <- function(kn, data) {
 #'
 #' By default, minimum number of clusters to be generated is the squareroot of
 #' the number of cells.
-#'
+#' @importFrom stats kmeans
 #' @param clusters List of clusters, each entry being a vector of cells in a
 #' cluster.
 #' @param data NUM_SAMPLES x NUM_FEATURES data matrix that was used to generate
@@ -122,11 +122,11 @@ readjust_clusters <- function(clusters, data, cellsPerPartition=100) {
             currCl = clusters[[i]]
             subData <- data[currCl,]
             if (length(currCl) > cellsPerPartition) {
-                nCl <- stats::kmeans(subData,
-                                        centers=round(nrow(subData) / cellsPerPartition),
-                                        iter.max=100)
+                nCl <- kmeans(subData,
+                              centers=round(nrow(subData) / cellsPerPartition),
+                              iter.max=100)
             } else {
-                nCl <- stats::kmeans(subData, centers=1, iter.max=100)
+                nCl <- kmeans(subData, centers=1, iter.max=100)
             }
             newClust <- nCl$cluster
             # Gather cluster vector to list of clusters
@@ -238,18 +238,14 @@ createFalseNegativeMap <- function(data, housekeeping_genes) {
     message("Creating False Negative Map...")
 
     #subset of genes to be used,ie those included in the housekeeping genes set
-    keep_ii <- which(rownames(data) %in% housekeeping_genes)
-
+    data_hk <- data[rownames(data) %in% housekeeping_genes,]
     # Filter out genes with no variance
-    data_hk <- data[keep_ii, ]
     data_hk <- filterGenesNovar(data_hk)
 
     # calculate the distributions for hk gene
     # Gamma is 1 for any non-zero data point
     # Mu_h is the row (per gene) average of non zero points
-    gamma <- as.matrix(data_hk)
-    gamma_i <- which(gamma > 0)
-    gamma[gamma_i] <- 1
+    gamma <- as.matrix(data_hk) > 0
     mu_h <- as.matrix(apply(data_hk, 1, function(r) sum(r) / sum(r!=0)))
 
 
@@ -354,7 +350,7 @@ computeWeights <- function(fit_func, params, exprData) {
 
     fnProb <- matrix(0L, nrow = nrow(expr), ncol = ncol(expr))
     countNonZero <- apply(expr, 1, function(c) sum(c!=0))
-    countNonZero[which(countNonZero == 0)] <- 1;
+    countNonZero[countNonZero == 0] <- 1
     mu_h <- apply(expr, 1, function(r) sum(r)) / countNonZero
 
     for (i in 1:ncol(fnProb)) {
@@ -368,15 +364,15 @@ computeWeights <- function(fit_func, params, exprData) {
     pnd <- apply(expr, 1, function(r) sum(r==0)) / ncol(expr)
     pe <- (1 - pnd) / apply(pdE, 1, function(r) mean(r))
 
-    pe[which(is.na(pe))] <- 1.0
-    pnd[which(pnd == 0)] <- 1.0 / ncol(expr)
+    pe[is.na(pe)] <- 1.0
+    pnd[pnd == 0] <- 1.0 / ncol(expr)
 
     pne_nd <- 1 - (1-pdE)* (pe / pnd)
-    pne_nd[which(pne_nd < 0)] <- 0.0
-    pne_nd[which(pne_nd > 1)] <- 1.0
+    pne_nd[pne_nd < 0] <- 0.0
+    pne_nd[pne_nd > 1] <- 1.0
 
     weights <- pne_nd
-    weights[which(expr > 0)] <- 1.0
+    weights[expr > 0] <- 1.0
 
     rownames(weights) <- rownames(expr)
     colnames(weights) <- colnames(expr)

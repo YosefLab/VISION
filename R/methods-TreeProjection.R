@@ -19,7 +19,8 @@ TreeProjection <- function(pData, name, vData, adjMat) {
 
 
 #' Compute KNN weights based on geodesic distances for TreeProjection objects
-#'
+#' @importFrom stats quantile
+#' @importFrom Matrix rowSums
 #' @param object a TreeProjection object
 #' @param K the number of nearest neighbors to look at
 #' @param BPPARAM the parallelization backen to use
@@ -33,7 +34,7 @@ setMethod("computeKNNWeights", signature(object = "TreeProjection"),
 
             kQuantile <- K / NCOL(object@pData)
             knnmat <- apply(distmat, 1, function(d) {
-                partition <- stats::quantile(d, kQuantile)
+                partition <- quantile(d, kQuantile)
                 d[d > partition] <- Inf
                 return(d)
             })
@@ -43,7 +44,7 @@ setMethod("computeKNNWeights", signature(object = "TreeProjection"),
 
             weights[is.na(weights)] <- 0.0
 
-            weightsNormFactor <- Matrix::rowSums(weights)
+            weightsNormFactor <- rowSums(weights)
             weightsNormFactor[weightsNormFactor == 0] <- 1.0
             weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
             weights <- weights / weightsNormFactor

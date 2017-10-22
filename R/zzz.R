@@ -11,7 +11,7 @@
 #' @docType package
 #' @import Rcpp
 #' @importFrom Rcpp evalCpp sourceCpp
-#' @importFrom methods new
+#' @import methods
 #' @import jug
 #' @import loe
 #' @useDynLib FastProjectR

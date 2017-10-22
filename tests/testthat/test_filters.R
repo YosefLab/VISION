@@ -9,7 +9,7 @@ test_that("Threshold filter returns null on test matrix", {
 })
 
 test_that("All filters reduce rows, not columns", {
-  data <- readExprToMatrix("test_data/expression_matrix.txt")
+  data <- readExprAsMatrix("test_data/expression_matrix.txt")
   exprData <- ExpressionData(data)
   filters <- c("threshold", "fano")
   filteredData <- applyFilters(exprData, 20, filters)

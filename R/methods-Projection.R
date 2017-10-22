@@ -31,6 +31,7 @@ setMethod("updateProjection", signature(object = "Projection"),
 
 #' Clusters the projection according to some method
 #'
+#' @importFrom stats kmeans
 #' @param object Projection object
 #' @param method Method by which to cluster the data
 #' @param param Parameters for clustering method
@@ -40,7 +41,7 @@ setMethod("cluster", signature(object = "Projection"),
 
             if(method == "KMeans")
             {
-                km <- stats::kmeans(t(object@pData), centers=param)
+                km <- kmeans(t(object@pData), centers=param)
                 clust <- Cluster(method, param, km$centers,
                                     t(as.matrix(km$cluster)))
             }
@@ -54,6 +55,7 @@ setMethod("cluster", signature(object = "Projection"),
 )
 
 #' compute for each vector the weights to apply to it's K nearest neighbors
+#' @importFrom Matrix rowSums
 #' @param object the Projecton object
 #' @param K number of neughbors to compute ths for
 #' @param BPPARAM the parallelizaton backend to use
@@ -75,7 +77,7 @@ setMethod("computeKNNWeights", signature(object = "Projection"),
 
             weights <- load_in_knn(nn, sparse_weights)
 
-            weightsNormFactor <- Matrix::rowSums(weights)
+            weightsNormFactor <- rowSums(weights)
             weightsNormFactor[weightsNormFactor == 0] <- 1.0
             weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
             weights <- weights / weightsNormFactor

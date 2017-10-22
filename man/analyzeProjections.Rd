@@ -2,7 +2,7 @@
 % Please edit documentation in R/AnalysisFunctions.R
 \name{analyzeProjections}
 \alias{analyzeProjections}
-\title{Analyze projections}
+\title{analyze projections}
 \usage{
 analyzeProjections(object, lean = object@lean, perm_wPCA = object@perm_wPCA,
   BPPARAM)

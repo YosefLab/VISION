@@ -2,7 +2,8 @@
 % Please edit documentation in R/Filters.R
 \name{filterGenesNovar}
 \alias{filterGenesNovar}
-\title{Eliminate genes whose sample variance is equal to 0 (may remove rows); run when --nofilter option
+\title{Eliminate genes whose sample variance is equal to 0 (may remove rows);
+run when --nofilter option
 is selected}
 \usage{
 filterGenesNovar(data)
@@ -14,6 +15,7 @@ filterGenesNovar(data)
 filtered expression matrix
 }
 \description{
-Eliminate genes whose sample variance is equal to 0 (may remove rows); run when --nofilter option
+Eliminate genes whose sample variance is equal to 0 (may remove rows);
+run when --nofilter option
 is selected
 }
