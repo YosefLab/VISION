@@ -4,3 +4,8 @@ language: R
 r: bioc-devel
 sudo: false
 cache: packages
+
+# Specify which branches trigger builds
+branches:
+    only:
+        - staging
