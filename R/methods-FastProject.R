@@ -28,7 +28,6 @@
 #' initiated. Default is FALSE
 #' @param min_signature_genes Minimum number of genes required to compute a
 #' signature
-#' @param projections File containing precomputed projections for analysis
 #' @param weights Precomputed weights for each coordinate. Normally computed
 #' from the FNR curve.
 #' @param threshold Threshold to apply for the threshold filter
@@ -64,7 +63,7 @@ setMethod("FastProject", signature(data = "matrix"),
             function(data, signatures, housekeeping=NULL, norm_methods = NULL,
                     precomputed=NULL, nofilter=FALSE, nomodel=FALSE,
                     filters=c("fano"), lean=FALSE, min_signature_genes=5,
-                    projections="", weights=NULL, threshold=0, perm_wPCA=FALSE,
+                    weights=NULL, threshold=0, perm_wPCA=FALSE,
                     sig_norm_method="znorm_rows",
                     sig_score_method="weighted_avg", pool=FALSE,
                     cellsPerPartition=100) {
@@ -112,7 +111,6 @@ setMethod("FastProject", signature(data = "matrix"),
                 .Object@nomodel <- nomodel
             }
             .Object@filters <- filters
-            .Object@projections <- projections
             .Object@threshold <- threshold
             .Object@sig_norm_method <- sig_norm_method
             .Object@sig_score_method <- sig_score_method
@@ -361,7 +359,6 @@ createNewFP <- function(fp, subset) {
     .Object@weights <- fp@weights[,subset]
     .Object@nofilter <- fp@nofilter
     .Object@filters <- fp@filters
-    .Object@projections <- fp@projections
     .Object@threshold <- fp@threshold
     .Object@sig_norm_method <- fp@sig_norm_method
     .Object@sig_score_method <- fp@sig_score_method
