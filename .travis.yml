@@ -1,11 +1,22 @@
 # R for travis: see documentation at https://docs.travis-ci.com/user/languages/r
 
 language: R
-r: bioc-devel
-sudo: false
 cache: packages
 
-# Specify which branches trigger builds
-branches:
-    only:
-        - staging
+r:
+    - bioc-release
+    - bioc-devel
+
+sudo: false
+
+## Turn this to true before submission to CRAN/Bioconductor
+warnings_are_errors: false
+
+bioc_packages:
+    - BiocCheck
+
+before_install:
+    - Rscript -e 'update.packages(ask = FALSE)'
+
+after_success:
+    - R CMD BiocCheck .
