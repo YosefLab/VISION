@@ -83,12 +83,12 @@ expressionToJSON <- function(expr, geneList=NULL) {
 
 #' Converts row of sigantures score matrix to JSON
 #' @importFrom jsonlite toJSON
-#' @param ss List of signature scores
+#' @param ss single-column dataframe with scores for a single signature
 #' @return Signature scores list to JSON, with names of each entry that of the list names
 sigScoresToJSON <- function(ss) {
 
-    s <- as.list(ss)
-    names(s) <- rownames(as.matrix(ss))
+    s <- as.list(ss[[1]])
+    names(s) <- rownames(ss)
     json <- toJSON(s, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
 
     return(json)
@@ -96,12 +96,12 @@ sigScoresToJSON <- function(ss) {
 
 #' Converts list of signature ranks to JSON
 #' @importFrom jsonlite toJSON
-#' @param ss List of rank values
+#' @param ss single-column dataframe with ranks for a single signature
 #' @return Signature ranks as JSON, with names of each entry that of list names
 sigRanksToJSON <- function(ss) {
 
-    s <- as.list(rank(as.matrix(ss)))
-    names(s) <- names(ss)
+    s <- as.list(rank(ss[[1]]))
+    names(s) <- rownames(ss)
     json <- toJSON(s, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
 
     return(json)

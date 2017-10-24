@@ -102,6 +102,8 @@ calcSignatureScores <- function(object,
                                 sig_score_method=object@sig_score_method,
                                 min_signature_genes=object@min_signature_genes,
                                 BPPARAM=NULL) {
+
+    message("Evaluating Signature Scores on Cells...")
     if(is.null(BPPARAM)) BPPARAM <- SerialParam()
 
     ## override object parameters
@@ -138,21 +140,12 @@ calcSignatureScores <- function(object,
     object@sigScores <- sigScores
 
     ## Convert Sig Scores to matrix
-    names <- c()
-    sigMatrix <- matrix(0L, nrow=length(sigScores),
-                        ncol=length(sigScores[[1]]@scores))
-    for (sig in 1:length(sigScores)) {
-        names <- c(names, sigScores[[sig]]@name)
-        scores <- t(as.matrix(sigScores[[sig]]@scores))
-        sigMatrix[sig,] <- scores
-    }
+    # Note: This needs to be a data frame because some scores are factors
+    object@sigMatrix = data.frame(lapply(sigScores, function(x) x@scores))
 
-    rownames(sigMatrix) <- names
-    colnames(sigMatrix) <- colnames(getExprData(object@exprData))
-    object@sigMatrix <- sigMatrix
+    object@sigData <- sigList[colnames(object@sigMatrix)]
 
-    object@sigData <- sigList[rownames(sigMatrix)]
-
+    message("Computing background distribution for signature scores...")
     # Construct random signatures for background distribution
     sigSizes <- lapply(object@sigData, function(s) length(s@sigDict))
     randomSigs <- generatePermutationNull(3000, object@exprData, sigSizes)
@@ -219,7 +212,7 @@ analyzeProjections <- function(object,
 
         message("Clustering Signatures...")
         sigClusters <- clusterSignatures(object@sigData, object@sigMatrix,
-                                         sigVProj$pVals, k=10)
+                                         sigVProj$pVals)
 
         projData <- ProjectionData(projections = projectData$projections,
                                    keys = colnames(sigVProj$sigProjMatrix),
@@ -241,7 +234,7 @@ analyzeProjections <- function(object,
 
         message("Clustering Signatures...")
         sigTreeClusters <- clusterSignatures(object@sigData, object@sigMatrix,
-                                             sigVTreeProj$pVals, k=10)
+                                             sigVTreeProj$pVals)
 
         treeProjData <- TreeProjectionData(projections = treeProjs$projections,
                                    keys = colnames(sigVTreeProj$sigProjMatrix),
@@ -254,8 +247,9 @@ analyzeProjections <- function(object,
         precomp_names <- vapply(object@precomputedData, function(x) {
             ifelse(x@isFactor, x@name, NULL)
         }, "")
-        computedSigMatrix <- object@sigMatrix[setdiff(rownames(object@sigMatrix),
-                                                      precomp_names),]
+        computedSigMatrix <- object@sigMatrix[,setdiff(colnames(object@sigMatrix),
+                                                      precomp_names),drop=FALSE]
+        computedSigMatrix <- t(as.matrix(computedSigMatrix))
 
 
         pearsonCorr <- lapply(1:nrow(computedSigMatrix), function(i) {

@@ -44,8 +44,8 @@ jug() %>%
     sigMatrix <- fpout@sigMatrix
     name <- URLdecode(req$params$sig_name1)
     out <- "Signature does not exist!"
-    if (name %in% rownames(sigMatrix)) {
-      out <- FastProjectR:::sigScoresToJSON(sigMatrix[name,])
+    if (name %in% colnames(sigMatrix)) {
+      out <- FastProjectR:::sigScoresToJSON(sigMatrix[name])
     }
     return(out)
   }) %>%
@@ -71,8 +71,8 @@ jug() %>%
     sigMatrix <- fpout@sigMatrix
     name <- URLdecode(req$params$sig_name3)
     out <- "Signature does not exist!"
-    if (name %in% rownames(sigMatrix)) {
-      out <- FastProjectR:::sigRanksToJSON(sigMatrix[name,])
+    if (name %in% colnames(sigMatrix)) {
+      out <- FastProjectR:::sigRanksToJSON(sigMatrix[name])
     }
     return(out)
   }) %>%
@@ -279,7 +279,7 @@ jug() %>%
 
   	pc <- fpout@filterModuleList[[filter]]@PCAnnotatorData@fullPCA[pcnum,]
   	# pc <- projData[[filter]]@fullPCA[pcnum,]
-  	ss <- fpout@sigMatrix[signame,]
+  	ss <- fpout@sigMatrix[,signame]
 
   	ret <- cbind(pc, ss)
   	coord <- apply(unname(ret), 1, as.list)

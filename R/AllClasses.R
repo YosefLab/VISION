@@ -50,7 +50,7 @@ FastProject <- setClass("FastProject",
         sigScores = "list",
         cellsPerPartition= "numeric",
         filterModuleList = "list",
-        sigMatrix = "matrix",
+        sigMatrix = "data.frame",
         fpParams = "list",
         pools = "list"),
     prototype = list(

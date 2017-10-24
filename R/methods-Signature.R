@@ -454,50 +454,53 @@ sigsVsProjection_pcf <- function(sigScoresData, weights){
 }
 
 #' Clusters signatures according to the rank sum
-#' @importFrom mclust densityMclust
+#' @importFrom mclust Mclust
 #' @param sigList List of signatures
-#' @param sigMatrix Matrix of signatures scores, NUM_SIGNATURES x NUM_SAMPLES
+#' @param sigMatrix data.frame of signatures scores, NUM_SAMPLES x NUM_SIGNATURES
 #' @param pvals the corresponding P-values for each score,
 #' NUM_SIGNATURES x NUM_SAMPLES
-#' @param k Number of clusters to generate
 #' @return a list:
 #' \itemize{
 #'     \item Computed: a list of clusters of computed signatures
 #'     \item Precomputed: a list of clusters of precomputed signatures
 #' }
-clusterSignatures <- function(sigList, sigMatrix, pvals, k=10) {
+clusterSignatures <- function(sigList, sigMatrix, pvals) {
 
   precomputed <- vapply(sigList, function(x) x@isPrecomputed, TRUE)
-
   significant <- apply(pvals, 1, function(x) min(x) < -1.3)
+
   comp_names <- names(precomputed)[!precomputed]
   signif_computed <- significant[comp_names]
-  signif_precomp <- significant[names(precomputed)[precomputed]]
 
   keep_computed = names(signif_computed)[signif_computed]
 
   # Cluster computed signatures and precomputed signatures separately
-  computedSigMatrix <- sigMatrix[comp_names,,drop=FALSE]
-  computedSigMatrix <- computedSigMatrix[keep_computed,,drop=FALSE]
+  computedSigMatrix <- sigMatrix[, keep_computed,drop=FALSE]
 
   compcls <- list()
   maxcls <- 1
-  if (nrow(computedSigMatrix) > 1) {
-    r <- as.matrix(t(apply(computedSigMatrix, 1,
-                           function(x) rank(x, ties.method="average"))))
+  if (ncol(computedSigMatrix) > 1) {
 
-    compkm <- densityMclust(r)
+    r <- colRanks(
+            as.matrix(computedSigMatrix),
+            ties.method="average",
+            preserveShape=TRUE
+        )
+
+    compkm <- Mclust(t(r))
+
     compcls <- as.list(compkm$classification)
+    names(compcls) = colnames(computedSigMatrix)
     compcls <- compcls[order(unlist(compcls), decreasing=FALSE)]
 
     maxcls <- max(unlist(compcls))
   }
 
-  compcls[names(significant)[!significant]] <- maxcls + 1
+  compcls[names(signif_computed)[!signif_computed]] <- maxcls + 1
 
   # Don't actually cluster Precomputed Signatures -- just return in a list.
   precompcls <- list()
-  if (sum(precomputed) > 0) {
+  if (any(precomputed)) {
     precomputedSigsToCluster <- names(precomputed)[precomputed]
     precompcls[precomputedSigsToCluster] <- 1
   }
