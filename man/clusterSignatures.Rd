@@ -4,17 +4,15 @@
 \alias{clusterSignatures}
 \title{Clusters signatures according to the rank sum}
 \usage{
-clusterSignatures(sigList, sigMatrix, pvals, k = 10)
+clusterSignatures(sigList, sigMatrix, pvals)
 }
 \arguments{
 \item{sigList}{List of signatures}
 
-\item{sigMatrix}{Matrix of signatures scores, NUM_SIGNATURES x NUM_SAMPLES}
+\item{sigMatrix}{data.frame of signatures scores, NUM_SAMPLES x NUM_SIGNATURES}
 
 \item{pvals}{the corresponding P-values for each score,
 NUM_SIGNATURES x NUM_SAMPLES}
-
-\item{k}{Number of clusters to generate}
 }
 \value{
 a list:

@@ -7,7 +7,7 @@
 sigScoresToJSON(ss)
 }
 \arguments{
-\item{ss}{List of signature scores}
+\item{ss}{single-column dataframe with scores for a single signature}
 }
 \value{
 Signature scores list to JSON, with names of each entry that of the list names

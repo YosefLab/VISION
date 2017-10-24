@@ -7,7 +7,7 @@
 sigRanksToJSON(ss)
 }
 \arguments{
-\item{ss}{List of rank values}
+\item{ss}{single-column dataframe with ranks for a single signature}
 }
 \value{
 Signature ranks as JSON, with names of each entry that of list names
