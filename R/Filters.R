@@ -40,8 +40,10 @@ applyFilters <- function(data, threshold, filterInput) {
 #' @param data expression matrix
 #' @return filtered expression matrix
 filterGenesNovar <- function(data) {
-    message("Applying no variance filter...")
-    return(data[apply(data, 1, var) != 0,])
+    message("Applying no variance filter...", appendLF=FALSE)
+    fdata <- data[apply(data, 1, var) != 0,]
+    message(paste(nrow(fdata), "Genes Retained"))
+    return(fdata)
 }
 
 #' Filter genes whose values sum to less than some threshold value (may remove rows)
@@ -50,8 +52,10 @@ filterGenesNovar <- function(data) {
 #' @param threshold (int) threshold value to filter by
 #' @return filtered expression matrix
 filterGenesThreshold <- function(data, threshold) {
-    message("Applying threshold filter...")
-    return(data[rowSums(data > 0) > threshold,])
+    message("Applying threshold filter...", appendLF=FALSE)
+    fdata <- data[rowSums(data > 0) > threshold,]
+    message(paste(nrow(fdata), "Genes Retained"))
+    return(fdata)
 }
 
 #' Applies the Fano filter to the input data (may remove rows)
@@ -61,7 +65,7 @@ filterGenesThreshold <- function(data, threshold) {
 #' @return NUM_GENES_PASSED_FANO_FILTER x NUM_SAMPLES filtered expression matrix
 filterGenesFano <- function(data, num_mad=2) {
 
-    message("Applying fano filter...")
+    message("Applying fano filter...", appendLF=FALSE)
     sub_data <- data
     # if too many samples, subsample for fano filter
     if (ncol(data) > 50000) {
@@ -103,7 +107,9 @@ filterGenesFano <- function(data, num_mad=2) {
 
     gene_passes[unlist(genePassList)] <- TRUE
     gene_passes <- gene_passes[order(aa)]
-    return(data[gene_passes,])
+    fdata <- data[gene_passes,]
+    message(paste(nrow(fdata), "Genes Retained"))
+    return(fdata)
 
 }
 
