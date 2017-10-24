@@ -1,20 +1,3 @@
-#' Calculates standard deviation with a denominator of n rather than (n-1)
-#' @importFrom stats sd
-#' @param data data matrix to apply the biased standard deviation operation to
-#' @param byRow if TRUE, apply by row. Else, by column. Default is TRUE.
-#' @return Vector of standard deviations by row or column
-biasedSD <- function(data, byRow=TRUE) {
-
-    a <- 1
-    d <- ncol(data)
-    if (!byRow) {
-    a = 2
-    d <- nrow(data)
-    }
-    std <- apply(data, a, sd) * sqrt(((d-1)/d))
-    return(std)
-}
-
 #' Computes the biased SD on a vector, correcting the denominator to n rather than (n-1)
 #' @importFrom stats sd
 #' @param data Vector of numbers
@@ -34,32 +17,35 @@ noNormalization <- function(data) {
 }
 
 #' Performs z-normalization on all columns
-#'
+#' @importFrom matrixStats colMeans2
+#' @importFrom matrixStats colSds
 #' @param data data matrix
 #' @return Data matrix with same dimensions, with each column z-normalized.
 colNormalization <- function(data) {
 
     message("Applying z-normalization on all columns...")
 
-    ndata <- t(data)
-    mu <- rowMeans(ndata)
-    sigma <- biasedSD(ndata)
-    ndata <- (ndata - mu) / sigma
-    return(t(ndata))
+    mu <- colMeans2(data)
+    sigma <- colSds(data)
+    sigma[sigma == 0] <- 1.0
+    ndata <- t(
+               (t(data) - mu)/sigma
+              )
+    return(ndata)
 }
 
 #' Performs z-normalization on all rows
-#'
+#' @importFrom matrixStats rowMeans2
+#' @importFrom matrixStats rowSds
 #' @param data data matrix
 #' @return Data matrix with same dimensions, with each row z-normalized.
 rowNormalization <- function(data) {
 
     message("Applying z-normalization on all rows...")
-    mu <- rowMeans(data)
-    sigma <- biasedSD(data)
+    mu <- rowMeans2(data)
+    sigma <- rowSds(data)
     sigma[sigma == 0] <- 1.0
-    ndata <- apply(data, 1, function(r) (r - mean(r)) / biasedVectorSD(r))
-    ndata <- ( (data - mu) / sigma)
+    ndata <- (data - mu) / sigma
     return(ndata)
 }
 
@@ -73,22 +59,18 @@ rowAndColNormalization <- function(data) {
     data = rowNormalization(data)
     data = colNormalization(data)
 
-    return(data.frame(data))
+    return(data)
 }
 
 #' Creaes a new version of the data that has ranks (column-wise) instead of values.
-#'
+#' @importFrom matrixStats colRanks
 #' @param data data matrix
 #' @return Data matrix with same dimensions, with each value representing its column-wise rank.
 colRankNormalization <- function(data) {
 
     message("Applying column rank normalization...")
 
-    rdata <- matrix(0L, nrow=nrow(data), ncol=ncol(data))
-
-    for (i in 1:ncol(rdata)) {
-    rdata[,i] <- rank(data[,i], ties.method="min")
-    }
+    rdata = colRanks(data, ties.method="min",  preserveShape=TRUE)
     rownames(rdata) <- rownames(data)
     colnames(rdata) <- colnames(data)
     return(rdata)
