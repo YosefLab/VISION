@@ -2,7 +2,7 @@
 .Rhistory
 .RData
 inst/doc
-src\*
-src-x64\*
-src-i386\*
+src/*
+src-x64/*
+src-i386/*
 *RcppExports*
