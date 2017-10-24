@@ -148,23 +148,33 @@ sigsVsProjections <- function(projections, sigScoresData,
   geneSigs <- sigScoresData[vapply(sigScoresData,
                                    function(x) !x@isPrecomputed,
                                    TRUE)]
-  sigScoreMatrix <- matrix(unlist(bplapply(geneSigs, function(sig) {
-    rank(sig@scores, ties.method="average")
-  },
-  BPPARAM=BPPARAM)), nrow=N_SAMPLES, ncol=length(geneSigs))
 
+  sigScoreMatrix <- do.call(
+               cbind,
+               lapply(geneSigs, function(sig) sig@scores)
+  )
+  sampleLabels <- rownames(sigScoreMatrix)
+  sigScoreMatrix <- matrixStats::colRanks(
+             sigScoreMatrix, preserveShape=TRUE, ties.method="average"
+  )
   colnames(sigScoreMatrix) <- names(geneSigs)
+  rownames(sigScoreMatrix) <- sampleLabels
 
 
   # Build a matrix of random background signatures
-  randomSigScoreMatrix <- matrix(unlist(bplapply(randomSigData, function(rsig) {
-    rank(rsig@scores, ties.method="average")
-  },
-  BPPARAM=BPPARAM)), nrow=N_SAMPLES, ncol=length(randomSigData))
+  randomSigScoreMatrix <- do.call(
+               cbind,
+               lapply(randomSigData, function(rsig) rsig@scores)
+  )
+  sampleLabels <- rownames(randomSigScoreMatrix)
+  randomSigScoreMatrix <- matrixStats::colRanks(
+             randomSigScoreMatrix, preserveShape=TRUE, ties.method="average"
+  )
 
   # TODO: Set names of randomSigData in analyze and use
   colnames(randomSigScoreMatrix) <- vapply(randomSigData,
                                            function(x) x@name, "")
+  rownames(randomSigScoreMatrix) <- sampleLabels
 
 
   message("Evaluating signatures against projections...")
