@@ -1533,7 +1533,7 @@ function exprotSigProj() {
 	}
 
 	return $.when(proj_promise, sig_promise)
-		.then(function(projection, signature, sig_info) {
+		.then(function(projection, signature) {
 		
 			var points = [];
 			for (sample_label in signature) {

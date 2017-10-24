@@ -124,7 +124,6 @@ getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
 }
 
 #' Evaluates the significance of each signature vs. each projection.
-#' @importFrom mclust densityMclust
 #' @importFrom entropy entropy.plugin
 #' @importFrom stats p.adjust
 #' @param projections Maps projections to their spatial coordinates for each
@@ -437,6 +436,7 @@ sigsVsProjection_pcf <- function(sigScoresData, weights){
     if (1 %in% factorFreq) {
       consistency[s@name] <- 0.0
       pvals[s@name] <- 1.0
+      next
     }
 
     factorPredictions <- weights %*% factorMatrix
