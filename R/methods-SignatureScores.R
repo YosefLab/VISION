@@ -39,7 +39,7 @@ SigScoresFromDataframe <- function(df, sampleLabels) {
         stop("Provided precomputed signature dataframe must have same sample labels as the expression matrix")
     }
 
-    df = df[row.names(df),]
+    df = df[sampleLabels, , drop=FALSE]
 
     for(i in 1:NCOL(df)) {
 
