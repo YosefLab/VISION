@@ -43,7 +43,8 @@ Suggests:
 	BiocStyle,
 	knitr,
 	rmarkdown,
-    testthat
+    testthat,
+    ggplot2
 biocViews:
 	GeneExpression,
 	RNASeq,

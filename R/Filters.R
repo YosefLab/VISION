@@ -62,8 +62,15 @@ filterGenesThreshold <- function(data, threshold) {
 #' @importFrom stats median sd
 #' @param data NUM_GENES x NUM_SAMPLES expression matrix
 #' @param num_mad number of median absolute deviations
+#' @param plot whether or not to generate a diagnostic plot
 #' @return NUM_GENES_PASSED_FANO_FILTER x NUM_SAMPLES filtered expression matrix
-filterGenesFano <- function(data, num_mad=2) {
+filterGenesFano <- function(data, num_mad=2, plot=FALSE) {
+
+    if(plot){
+        if(!requireNamespace("ggplot2", quietly = TRUE)){
+            stop("ggplot2 is required to plot filter results.")
+        }
+    }
 
     message("Applying fano filter...", appendLF=FALSE)
     sub_data <- data
@@ -72,13 +79,13 @@ filterGenesFano <- function(data, num_mad=2) {
     sub_data <- data[,sample(ncol(data), 50000)]
     }
 
-    mu <- apply(sub_data, 1, mean)
-    sigma <- apply(sub_data, 1, sd)
+    mu <- matrixStats::rowMeans2(sub_data)
+    fano <- matrixStats::rowVars(sub_data) / mu
 
 
     aa <- order(mu)
     mu_sort <- mu[aa]
-    sigma_sort <- sigma[aa]
+    fano_sort <- fano[aa]
 
 
     N_QUANTS <- 30
@@ -95,8 +102,7 @@ filterGenesFano <- function(data, num_mad=2) {
 
         mu_quant <- mu_sort[rr]
         mu_quant[mu_quant == 0] <- 1
-        sigma_quant <- sigma_sort[rr]
-        fano_quant <- (sigma_quant ** 2) / (mu_quant)
+        fano_quant <- fano_sort[rr]
         mad_quant <- median(abs(fano_quant - median(fano_quant)))
         gene_passes_quant <- (fano_quant > (median(fano_quant)
                                             + num_mad * mad_quant))
@@ -109,6 +115,15 @@ filterGenesFano <- function(data, num_mad=2) {
     gene_passes <- gene_passes[order(aa)]
     fdata <- data[gene_passes,]
     message(paste(nrow(fdata), "Genes Retained"))
+
+    if(plot) {
+        g <- ggplot() + aes(x=mu, y=fano, color=gene_passes) +
+            geom_point(size=.5, alpha=.5) +
+            scale_x_log10() +
+            ylim(0, quantile(fano, .99)) +
+            scale_color_manual(values=c("FALSE"="black", "TRUE"="darkcyan"))
+        print(g)
+    }
     return(fdata)
 
 }
