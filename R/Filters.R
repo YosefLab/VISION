@@ -100,7 +100,7 @@ filterGenesFano <- function(data, num_mad=2) {
         mad_quant <- median(abs(fano_quant - median(fano_quant)))
         gene_passes_quant <- (fano_quant > (median(fano_quant)
                                             + num_mad * mad_quant))
-        gene_passes_i <- (gene_passes_quant != 0) + (i*m)
+        gene_passes_i <- which(gene_passes_quant != 0) + (i*m)
         return(gene_passes_i)
 
     })
