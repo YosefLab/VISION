@@ -145,23 +145,6 @@ calcSignatureScores <- function(object,
 
     object@sigData <- sigList[colnames(object@sigMatrix)]
 
-    message("Computing background distribution for signature scores...")
-    # Construct random signatures for background distribution
-    sigSizes <- lapply(object@sigData, function(s) length(s@sigDict))
-    randomSigs <- generatePermutationNull(3000, object@exprData, sigSizes)
-
-    ## Compute signature scores for random signatures generated
-    randomSigScores <- bplapply(randomSigs, function(s) {
-        singleSigEval(s, object@sig_score_method, object@exprData,
-                      object@weights,
-                      object@min_signature_genes)
-    } ,BPPARAM=BPPARAM)
-    names(randomSigScores) <- names(randomSigs)
-
-    ## Remove random signatures that didn't compute correctly
-    toRemove <- vapply(randomSigScores, is.null, TRUE)
-    object@randomSigScores <- randomSigScores[!toRemove]
-
     return(object)
 }
 
@@ -188,6 +171,8 @@ analyzeProjections <- function(object,
   object@lean <- lean
   object@perm_wPCA <- perm_wPCA
 
+  randomSigScores <- calculateSignatureBackground(object, num=3000, BPPARAM=BPPARAM)
+
   # Apply projections to filtered gene sets, create new projectionData object
   filterModuleList <- list()
 
@@ -207,7 +192,7 @@ analyzeProjections <- function(object,
         message("Computing significance of signatures...")
         sigVProj <- sigsVsProjections(projectData$projections,
                                       object@sigScores,
-                                      object@randomSigScores,
+                                      randomSigScores,
                                       BPPARAM=BPPARAM)
 
         message("Clustering Signatures...")
@@ -229,7 +214,7 @@ analyzeProjections <- function(object,
         message("Computing significance of signatures...")
         sigVTreeProj <- sigsVsProjections(treeProjs$projections,
                                           object@sigScores,
-                                          object@randomSigScores,
+                                          randomSigScores,
                                           BPPARAM=BPPARAM)
 
         message("Clustering Signatures...")

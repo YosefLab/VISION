@@ -83,6 +83,43 @@ setMethod("addSigData", signature(object="Signature"),
             return(object)
           })
 
+
+#' calculate background signature scores
+#'
+#' For each signature-cell pair, compute a score that captures the level of
+#' correspondence between the cell and the signature.
+#' To estimate significance of these scores, a set of random gene signatures is
+#' generated to create a null distribution
+#'
+#' @param object the FastProject object
+#' @param num the number of signatures to generate
+#' @param BPPARAM the parallelization backend to use for these computations
+#' @return numeric matrix of random signature scores SIGNATURES x CELLS
+calculateSignatureBackground <- function(object, num, BPPARAM=NULL) {
+
+    if(is.null(BPPARAM)) BPPARAM <- SerialParam()
+
+    message("Computing background distribution for signature scores...")
+    # Construct random signatures for background distribution
+    sigSizes <- lapply(object@sigData, function(s) length(s@sigDict))
+    randomSigs <- generatePermutationNull(num, object@exprData, sigSizes)
+
+    ## Compute signature scores for random signatures generated
+    randomSigScores <- bplapply(randomSigs, function(s) {
+        singleSigEval(s, object@sig_score_method, object@exprData,
+                      object@weights,
+                      object@min_signature_genes)
+    } ,BPPARAM=BPPARAM)
+    names(randomSigScores) <- names(randomSigs)
+
+    ## Remove random signatures that didn't compute correctly
+    toRemove <- vapply(randomSigScores, is.null, TRUE)
+    randomSigScores <- randomSigScores[!toRemove]
+
+    return(randomSigScores)
+
+}
+
 #' Generate random signatures for a null distribution by permuting the data
 #' @param num the number of signatures to generate
 #' @param eData the data to use for the permutations
