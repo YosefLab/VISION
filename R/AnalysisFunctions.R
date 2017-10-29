@@ -229,9 +229,13 @@ analyzeProjections <- function(object,
                                    treeScore = treeProjs$treeScore)
 
         ## remove the factors from the pearson correlation calculation
-        precomp_names <- vapply(object@precomputedData, function(x) {
-            ifelse(x@isFactor, x@name, NULL)
-        }, "")
+        factor_precomp <- vapply(object@precomputedData,
+                                 function(x) x@isFactor, FUN.VALUE=TRUE)
+        precomp_names <- vapply(object@precomputedData,
+                                 function(x) x@name, FUN.VALUE="")
+
+        precomp_names <- precomp_names[factor_precomp]
+
         computedSigMatrix <- object@sigMatrix[,setdiff(colnames(object@sigMatrix),
                                                       precomp_names),drop=FALSE]
         computedSigMatrix <- t(as.matrix(computedSigMatrix))
