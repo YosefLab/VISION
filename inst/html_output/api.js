@@ -1,5 +1,23 @@
 var api = (function(){
 
+    /* Coordinates come in in the form:
+     * [
+     *  [x, y, sample_name],
+     *  [x, y, sample_name2],
+     *  ...
+     * ]
+     * Converting back to the format we want is faster in Javascript than in R
+     */
+
+    fix_coordinates = function(x){
+        result =  _(x)
+                    .keyBy(x => x[2])
+                    .mapValues(x => x.slice(0, 2))
+                    .value();
+
+        return result;
+    }
+
     var output = {};
 
     // Signature API
@@ -130,7 +148,7 @@ var api = (function(){
       var query = "/FilterGroup/"
       query = query.concat(encodeURI(filter_group), "/",
               encodeURI(projection_name), "/coordinates")
-      return $.ajax(query, {dataType: "json"}).then(x => x)
+      return $.ajax(query, {dataType: "json"}).then(x => fix_coordinates(x))
     }
 
     output.projection.clusters = function(filter_group, projection_name,
@@ -163,7 +181,7 @@ var api = (function(){
     output.tree.coordinates = function(filter_group, projection) {
         var query = "/FilterGroup/";
         query = query.concat(encodeURI(filter_group), "/", encodeURI(projection), "/Tree/Projection")
-        return $.ajax(query, {dataType: "json"}).then(x => x)
+        return $.ajax(query, {dataType: "json"}).then(x => fix_coordinates(x))
     }
 
 
@@ -188,17 +206,17 @@ var api = (function(){
 
     output.expression = {}
 
-    output.expression.filtered_expression = function(filter_group) {
-		query = "/FilterGroup/";
-		query = query.concat(encodeURI(filter_group), "/Expression");
+    output.expression.gene = function(gene_name) {
+		query = "/Expression/Gene/";
+		query = query.concat(encodeURI(gene_name));
 		return $.ajax(query, {dataType: "json"}).then(x => x)
 	}
 
-    output.expression.all = function() {
-
-      return $.ajax(query, {dataType: "json"}).then(x => x)
-    }
-
+    output.expression.genes = {}
+    output.expression.genes.list = function() {
+		query = "/Expression/Genes/List";
+		return $.ajax(query, {dataType: "json"}).then(x => x)
+	}
 
 	// Analysis API
 	

@@ -618,7 +618,7 @@ function addToGeneBox() {
 
 	dbid = "#gene-analysis-content";
 
-	var gene_promise = api.expression.filtered_expression(global_status.filter_group);
+	var gene_promise = api.expression.genes.list()
 
 	return $.when(gene_promise
 			.then(function(genes) {
@@ -635,8 +635,8 @@ function addToGeneBox() {
 				content = "<table id='gene-table' style='width:75%; margin-left: 5%;'>";
 				content += "<tr><th>Gene Name</th</tr>";
 
-				for (i = 0; i < genes.data.length; i++) {
-					content += "<tr><td class='gene-cell'>" + genes.gene_labels[i] + "</td></tr>";
+				for (i = 0; i < genes.length; i++) {
+					content += "<tr><td class='gene-cell'>" + genes[i] + "</td></tr>";
 				}
 
 				content += "</table>";
@@ -722,29 +722,26 @@ function drawDistChart() {
 
 	var filter_group = global_status.filter_group;
 
-	var val_promise = api.expression.filtered_expression("None");
+    var selected_gene = global_status.selected_gene;
+	var val_promise = api.expression.gene(selected_gene);
 
 	return $.when(val_promise
 			.then(function(values) {
 
-			var selected_gene = global_status.selected_gene;
-			var gene_ind = values.gene_labels.indexOf(selected_gene);
-			var expr_data = values.data[gene_ind];
+			var expr_data = _.values(values)
 
 			expr_data = create_dist(expr_data);
-			var x_vals = Array.apply(null, Array(expr_data.length)).map(function (_, i) {return i * 0.05;});
-			console.log(x_vals);
+			var x_vals = _.range(expr_data.length).map(i => i * 0.05);
 
 			expr_data = convert_to_range(expr_data, -1.75, 1.75);
 			x_vals = convert_to_range(x_vals, -1.75, 1.75);
 
 			var points = [];
 			for (i = 0; i < expr_data.length; i++) {
-				var sample_label = values.sample_labels[i];
 				var x = x_vals[i];
 				var y = expr_data[i];
 				var score = .01;
-				var sample_label = values.sample_labels[i];
+				var sample_label = "";
 				points.push([x, y, score, sample_label]);
 			}
 
@@ -797,7 +794,7 @@ function drawChart() {
 		{val_promise = api.signature.ranks(sig_key)}
 
 	if (global_status.scatterColorOption == "gene") {
-		val_promise = api.expression.filtered_expression("None");
+		val_promise = api.expression.gene(global_status.selected_gene)
 	}
 
 	if (global_status.main_vis == "sigvp") {
@@ -821,25 +818,12 @@ function drawChart() {
 
 				var points = [];
 				
-				if (global_status.scatterColorOption != "gene") {
-					for(sample_label in values){
-						var x = projection[sample_label][0]
-						var y = projection[sample_label][1]
-						var sig_score = values[sample_label]
-						points.push([x, y, sig_score, sample_label]);
-					}
-				} else {
-					var gene_ind = values.gene_labels.indexOf(global_status.selected_gene);
-					var gene_data = values.data[gene_ind];
-
-					for (i = 0; i < gene_data.length; i++) {
-						sample_label = values.sample_labels[i]
-						var x = projection[sample_label][0];
-						var y = projection[sample_label][1];
-						var score = gene_data[i];
-						points.push([x, y, score, sample_label]);
-					}
-				}
+                for(sample_label in values){
+                    var x = projection[sample_label][0]
+                    var y = projection[sample_label][1]
+                    var sig_score = values[sample_label]
+                    points.push([x, y, sig_score, sample_label]);
+                }
 
 				global_scatter.setData(points, sig_info.isFactor);
 
@@ -877,25 +861,12 @@ function drawChart() {
 
 				var points = [];
 				
-				if (global_status.scatterColorOption != "gene") {
-					for(sample_label in values){
-						var x = projection[sample_label][0]
-						var y = projection[sample_label][1]
-						var sig_score = values[sample_label]
-						points.push([x, y, sig_score, sample_label]);
-					}
-				} else {
-					var gene_ind = values.gene_labels.indexOf(global_status.selected_gene);
-					var gene_data = values.data[gene_ind];
-
-					for (i = 0; i < gene_data.length; i++) {
-						sample_label = values.sample_labels[i]
-						var x = projection[sample_label][0];
-						var y = projection[sample_label][1];
-						var score = gene_data[i];
-						points.push([x, y, score, sample_label, "Sample"]);
-					}
-				}
+                for(sample_label in values){
+                    var x = projection[sample_label][0]
+                    var y = projection[sample_label][1]
+                    var sig_score = values[sample_label]
+                    points.push([x, y, sig_score, sample_label]);
+                }
 
 				for (i = 0; i < treep[0].length; i++) {
 					var x = treep[0][i];
@@ -936,25 +907,12 @@ function drawChart() {
 				$("#plot-subtitle").text(sig_key);
 
 				var points = []
-				if (global_status.scatterColorOption != "gene") {
-					for(sample_label in values){
-						var x = projection[sample_label][0]
-						var y = projection[sample_label][1]
-						var sig_score = values[sample_label]
-						points.push([x, y, sig_score, sample_label]);
-					}
-				} else {
-					var gene_ind = values.gene_labels.indexOf(global_status.selected_gene);
-					var gene_data = values.data[gene_ind];
-
-					for (i = 0; i < gene_data.length; i++) {
-						sample_label = values.sample_labels[i]
-						var x = projection[sample_label][0];
-						var y = projection[sample_label][1];
-						var score = gene_data[i];
-						points.push([x, y, score, sample_label]);
-					}
-				}
+                for(sample_label in values){
+                    var x = projection[sample_label][0]
+                    var y = projection[sample_label][1]
+                    var sig_score = values[sample_label]
+                    points.push([x, y, sig_score, sample_label]);
+                }
 
 				global_scatter.setData(points, sig_info.isFactor);
 

@@ -250,7 +250,7 @@ setMethod("analyze", signature(object="FastProject"),
 #' saveAndViewResults(fp.out)
 #' }
 setMethod("saveAndViewResults", signature(fpout="FastProject"),
-          function(fpout, ofile=NULL, port=NULL, host=NULL) {
+          function(fpout, ofile=NULL, port=NULL, host=NULL, browser=TRUE) {
             if(is.null(ofile)) {
               i <- 1
               ofile <- paste0("./fpout", i, ".rds")
@@ -261,7 +261,7 @@ setMethod("saveAndViewResults", signature(fpout="FastProject"),
             }
 
             saveRDS(fpout, file=ofile)
-            viewResults(fpout, port, host)
+            viewResults(fpout, port, host, browser)
             return(ofile)
           })
 
@@ -275,6 +275,7 @@ setMethod("saveAndViewResults", signature(fpout="FastProject"),
 #' random port between 8000 and 9999 is chosen.
 #' @param host The host used to serve the output viewer. If omitted, "127.0.0.1"
 #' is used.
+#' @param browser Whether or not to launch the browser automatically (default=TRUE)
 #' @aliases viewResults
 #' @return None
 #' @export
@@ -304,35 +305,22 @@ setMethod("saveAndViewResults", signature(fpout="FastProject"),
 #' viewResults(fp.out)
 #' }
 setMethod("viewResults", signature(object="FastProject"),
-          function(object, port=NULL, host=NULL) {
+          function(object, port=NULL, host=NULL, browser=TRUE) {
 
             message("Launching the server...")
             message("Press exit or ctrl c to exit")
-            path <- find.package("FastProjectR")
-            curpath <- getwd()
-            tryCatch(expr = {
-              e <- new.env()
-              e$arg1 <- object
-              e$port <- port
-              e$host <- host
-              sys.source(file = system.file(package = "FastProjectR",
-                                            file.path("FastProjectR_Output",
-                                                      "server_script.R")),
-                         envir = e)
-            }, finally = {
-              setwd(curpath)
-            })
+            launchServer(object, port, host, browser)
           })
 
 #' @rdname viewResults
 #' @export
 setMethod("viewResults", signature(object="character"),
-          function(object, port=NULL, host=NULL) {
+          function(object, port=NULL, host=NULL, browser=TRUE) {
             fpo <- readRDS(object)
             if(!is(fpo, "FastProject")){
               stop("loaded object not a valid FastProject object")
             }
-            viewResults(fpo, port, host)
+            viewResults(fpo, port, host, browser)
           })
 
 #' create new FastProject object from a subset of the data in an existing one
