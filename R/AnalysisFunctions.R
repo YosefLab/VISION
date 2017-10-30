@@ -177,7 +177,7 @@ analyzeProjections <- function(object,
 
         projectData <- generateProjections(object@exprData, object@weights,
                                            filter,
-                                           inputProjections <- c(),
+                                           inputProjections=object@inputProjections,
                                            lean=object@lean,
                                            perm_wPCA=object@perm_wPCA,
                                            BPPARAM = BPPARAM)

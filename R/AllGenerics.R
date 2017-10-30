@@ -12,6 +12,10 @@ setGeneric("analyze", function(object, ...) {
     standardGeneric("analyze")
 })
 
+setGeneric("addProjection", function(object, ...) {
+    standardGeneric("addProjection")
+})
+
 setGeneric("cluster", function(object, method, param) {
     standardGeneric("cluster")
 })

@@ -207,6 +207,42 @@ setMethod("analyze", signature(object="FastProject"),
     return(object)
 })
 
+#' Add a set of projection coordinates
+#'
+#' @export
+#' @param object FastProject object
+#' @param name Name of the projection
+#' @param coordinates numeric matrix or data.frame. Coordinates of each
+#' sample in the projection (NUM_SAMPLES x NUM_COMPONENTS)
+#' @return FastProject object
+setMethod("addProjection", signature(object="FastProject"),
+            function(object, name, coordinates) {
+
+    if(is(coordinates, "data.frame")){
+        coordinates = as.matrix(coordinates)
+    }
+
+    # Verify that projection coordinates are correct
+    samples = object@exprData@data
+    sample_names = colnames(samples)
+
+    if(length(intersect(sample_names, rownames(coordinates))) != dim(coordinates)[1]){
+        stop("Supplied coordinates must have rowlabels that match sample/cell names")
+    }
+
+    if(dim(coordinates)[2] != 2){
+        stop("Projection must have exactly 2 components")
+    }
+
+
+    # Add it to the object
+    proj = Projection(name, coordinates)
+
+    object@inputProjections = c(object@inputProjections, proj)
+
+    return(object)
+})
+
 #' Save the FastProject object as an .RDS file and view the results on a
 #' localhost
 #'
