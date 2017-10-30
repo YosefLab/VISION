@@ -8,14 +8,12 @@
 
 #' Naive eval Siganture, just sums the columns * sign, equivalent to all weights = 1
 #'
-#' @param expr ExpressionData object
+#' @param exprData numeric Matrix Genes x Cells
 #' @param sig Signature to be evalauting
 #' @param weights Weight matrix computed through FNR curve
 #' @param min_signature_genes Minimum number of genes to evaluate
 #' @return SignatureScore object
-naiveEvalSignature <- function(expr, sig, weights, min_signature_genes) {
-
-    exprData <- getExprData(expr)
+naiveEvalSignature <- function(exprData, sig, weights, min_signature_genes) {
 
     # Select genes in signature that are in the expression matrix
     sig_names <- toupper(names(sig@sigDict))
@@ -48,14 +46,12 @@ naiveEvalSignature <- function(expr, sig, weights, min_signature_genes) {
 
 #' Evaluate signature with weights computed from FNR curve.
 #'
-#' @param expr ExpressionData object
+#' @param exprData numeric Matrix Genes x Cells
 #' @param sig Signature to be evalauting
 #' @param weights Weight matrix computed through FNR curve
 #' @param min_signature_genes Minimum number of genes to evaluate
 #' @return SignatureScore object
-weightedEvalSignature <- function(expr, sig, weights, min_signature_genes) {
-
-    exprData <- getExprData(expr)
+weightedEvalSignature <- function(exprData, sig, weights, min_signature_genes) {
 
     # Select genes in signature that are in the expression matrix
     sig_names <- toupper(names(sig@sigDict))

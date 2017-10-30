@@ -104,9 +104,11 @@ calculateSignatureBackground <- function(object, num, BPPARAM=NULL) {
     sigSizes <- lapply(object@sigData, function(s) length(s@sigDict))
     randomSigs <- generatePermutationNull(num, object@exprData, sigSizes)
 
+    normExpr <- getNormalizedCopy(object@exprData, object@sig_norm_method)
+
     ## Compute signature scores for random signatures generated
     randomSigScores <- bplapply(randomSigs, function(s) {
-        singleSigEval(s, object@sig_score_method, object@exprData,
+        singleSigEval(s, object@sig_score_method, normExpr,
                       object@weights,
                       object@min_signature_genes)
     } ,BPPARAM=BPPARAM)

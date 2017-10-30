@@ -67,20 +67,6 @@ calcWeights <- function(object,
     return(object)
 }
 
-#' Normalize the data
-#' @param object the FastPrpject object
-#' @param sig_norm_method (optional) Method to apply to normalize the expression
-#' matrix before calculating signature scores
-#' @return the FastProject object with normalized data matrices
-normalizeData <- function(object,
-                          sig_norm_method=object@sig_norm_method) {
-    object@sig_norm_method <- sig_norm_method
-    object@exprData <- updateExprData(object@exprData,
-                                    getNormalizedCopy(object@exprData,
-                                                      object@sig_norm_method))
-    return(object)
-}
-
 #' calculate signature scores
 #'
 #' For each signature-cell pair, compute a score that captures the level of
@@ -91,6 +77,8 @@ normalizeData <- function(object,
 #' @param object the FastProject object
 #' @param sigData a list of Signature objects for which to compute the scores
 #' @param precomputedData a list of existing cell-signatures
+#' @param sig_norm_method (optional) Method to apply to normalize the expression
+#' matrix before calculating signature scores
 #' @param sig_score_method the scoring method to use
 #' @param min_signature_genes the minimal number of genes that must be present
 #' in both the data and the signature for the signature to be evaluated
@@ -99,6 +87,7 @@ normalizeData <- function(object,
 calcSignatureScores <- function(object,
                                 sigData=object@sigData,
                                 precomputedData=object@precomputedData,
+                                sig_norm_method=object@sig_norm_method,
                                 sig_score_method=object@sig_score_method,
                                 min_signature_genes=object@min_signature_genes,
                                 BPPARAM=NULL) {
@@ -109,11 +98,15 @@ calcSignatureScores <- function(object,
     ## override object parameters
     if(!is.null(sigData)) object@sigData <- sigData
     if(!is.null(precomputedData)) object@precomputedData <- precomputedData
+    object@sig_norm_method <- sig_norm_method
     object@sig_score_method <- sig_score_method
     object@min_signature_genes <- min_signature_genes
 
+    normExpr <- getNormalizedCopy(object@exprData, object@sig_norm_method)
+
+
     sigScores <- bplapply(object@sigData, function(s) {
-        singleSigEval(s, object@sig_score_method, object@exprData,
+        singleSigEval(s, object@sig_score_method, normExpr,
                       object@weights,
                       object@min_signature_genes)
     }, BPPARAM=BPPARAM)
@@ -121,9 +114,9 @@ calcSignatureScores <- function(object,
     sigList <- object@sigData
     sigNames <- names(object@sigData)
     for (s in object@precomputedData) {
-        if (length(s@sample_labels) != ncol(getExprData(object@exprData))) {
-            s@scores <- s@scores[colnames(getExprData(object@exprData))]
-            s@sample_labels <- colnames(getExprData(object@exprData))
+        if (length(s@sample_labels) != ncol(normExpr)) {
+            s@scores <- s@scores[colnames(normExpr)]
+            s@sample_labels <- colnames(normExpr)
         }
         sigScores <- c(sigScores, s)
         sigList<- c(sigList, Signature(list(), s@name, "", "",

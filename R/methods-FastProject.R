@@ -198,8 +198,6 @@ setMethod("analyze", signature(object="FastProject"),
 
     object <- calcWeights(object)
 
-    object <- normalizeData(object)
-
     object <- calcSignatureScores(object, BPPARAM = BPPARAM)
 
     object <- analyzeProjections(object, BPPARAM = BPPARAM)
