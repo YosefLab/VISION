@@ -101,8 +101,7 @@ calculateSignatureBackground <- function(object, num, BPPARAM=NULL) {
 
     message("Computing background distribution for signature scores...")
     # Construct random signatures for background distribution
-    sigSizes <- lapply(object@sigData, function(s) length(s@sigDict))
-    randomSigs <- generatePermutationNull(num, object@exprData, sigSizes)
+    randomSigs <- generatePermutationNull(num, object@exprData, object@sigData)
 
     normExpr <- getNormalizedCopy(object@exprData, object@sig_norm_method)
 
@@ -125,16 +124,40 @@ calculateSignatureBackground <- function(object, num, BPPARAM=NULL) {
 #' Generate random signatures for a null distribution by permuting the data
 #' @param num the number of signatures to generate
 #' @param eData the data to use for the permutations
-#' @param sigSizes the sizes of the true signatures, to inform selection of the
+#' @param sigData list of signature objects
 #' random signature sizes
 #' @return a vector of random Signature objects
-generatePermutationNull <- function(num, eData, sigSizes) {
+generatePermutationNull <- function(num, eData, sigData) {
+
+  # Remove precomputed
+  precomputed <- vapply(sigData, function(s) s@isPrecomputed, TRUE)
+  sigData <- sigData[!precomputed]
+
+  sigSize <- vapply(sigData, function(s) length(s@sigDict), 1)
+  sigBalance <- vapply(sigData, function(s) {
+                           positive = sum(s@sigDict >= 0)
+                           balance = positive / length(s@sigDict)
+                           return(balance)
+    }, 1)
+
+  sigBalance[sigBalance < 0.5] = 1 - sigBalance[sigBalance < 0.5]
+
+  #sigVars = cbind(sigSize, sigBalance)
+  sigVars = cbind(sigSize) # TODO: incorporate the sigBalance here
+  km <- kmeans(sigVars, 5) # TODO: choose number of components better
+
   randomSigs <- c()
-  randomSizes <- unlist(findRepSubset(sigSizes))
-  for (size in randomSizes) {
+
+  for (i in seq(dim(km$centers)[1])) {
+
+    size <- km$centers[i,"sigSize"]
+    size <- round(size)
+    #balance <- km$centers[i,"sigBalance"]
+    balance <- 1
+
     for (j in 1:num) {
       newSigGenes <- sample(rownames(getExprData(eData)), min(size, nrow(getExprData(eData))))
-      newSigSigns <- rep(1, size)
+      newSigSigns <- sample(c(1, -1), length(newSigGenes), replace=TRUE, prob=c(balance, 1-balance))
       names(newSigSigns) <- newSigGenes
       newSig <- Signature(newSigSigns, paste0("RANDOM_BG_", size, "_", j), 'x')
       randomSigs <- c(randomSigs, newSig)
