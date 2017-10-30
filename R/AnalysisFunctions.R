@@ -112,20 +112,16 @@ calcSignatureScores <- function(object,
     }, BPPARAM=BPPARAM)
 
     sigList <- object@sigData
-    sigNames <- names(object@sigData)
     for (s in object@precomputedData) {
         if (length(s@sample_labels) != ncol(normExpr)) {
             s@scores <- s@scores[colnames(normExpr)]
             s@sample_labels <- colnames(normExpr)
         }
-        sigScores <- c(sigScores, s)
-        sigList<- c(sigList, Signature(list(), s@name, "", "",
+        sigScores[[s@name]] <- s
+        sigList[[s@name]] <- Signature(list(), s@name, "", "",
                                        isPrecomputed=TRUE,
-                                       isFactor=s@isFactor, cluster=0))
-        sigNames <- c(sigNames, s@name)
+                                       isFactor=s@isFactor, cluster=0)
     }
-    names(sigList) <- sigNames
-    names(sigScores) <- sigNames
 
     # Remove any signatures that didn't compute correctly
     toRemove <- vapply(sigScores, is.null, TRUE)
@@ -134,7 +130,8 @@ calcSignatureScores <- function(object,
 
     ## Convert Sig Scores to matrix
     # Note: This needs to be a data frame because some scores are factors
-    object@sigMatrix = data.frame(lapply(sigScores, function(x) x@scores))
+    object@sigMatrix = data.frame(lapply(sigScores, function(x) x@scores),
+                                  check.names=FALSE)
 
     object@sigData <- sigList[colnames(object@sigMatrix)]
 
