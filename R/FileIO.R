@@ -37,16 +37,12 @@ readSignaturesInput <- function(filenames) {
 
     # Create a list to store all signatures
     sig_data <- list()
-    # Create list to store all relevant sig names
-    sig_names <- c()
 
     for (filename in filenames) {
     message("Loading data from ", filename, " ...")
-    fp <- unlist(strsplit(filename, "/"))
-    f <- fp[[length(fp)]]
-    fsplit <- unlist(strsplit(f, "[.]"))
 
-    file_ext <- fsplit[[length(fsplit)]]
+    fsplit <- strsplit(basename(filename), "\\.")[[1]]
+    file_ext <- fsplit[2]
 
     if (file_ext == "gmt") {
         inp <- gmt2list(filename)
@@ -60,11 +56,11 @@ readSignaturesInput <- function(filenames) {
 
         if (is.element(tolower(sig_parts[[length(sig_parts)]]), names(keys))) {
             key <- tolower(sig_parts[[length(sig_parts)]])
+            sig_name <- paste(sig_parts[1:length(sig_parts)-1], collapse="_")
+        } else {
+            sig_name <- sig
         }
 
-        if (sig %in% sig_names) {
-            next;
-        }
 
         for (k in inp[[sig]]) {
             elem <- strsplit(k, ",")
@@ -78,9 +74,14 @@ readSignaturesInput <- function(filenames) {
         }
 
         names(values) <- genes
-        newSig <- Signature(values, sig, f, "", cluster=0)
-        sig_data <- c(sig_data, newSig)
-        sig_names <- c(sig_names, sig)
+        if (sig_name %in% names(sig_data)) {
+            existingSig <- sig_data[[sig_name]]
+            existingSig@sigDict[names(values)] <- values
+            sig_data[[sig_name]] <- existingSig
+        } else {
+            newSig <- Signature(values, sig_name, filename, "", cluster=0)
+            sig_data[[sig_name]] <- newSig
+        }
         }
 
     } else if (file_ext == "txt") {
@@ -99,7 +100,7 @@ readSignaturesInput <- function(filenames) {
             gene <- toupper(dat[[3]])
         }
 
-        if (sigName %in% sig_names) {
+        if (sigName %in% names(sig_data)) {
             next
         }
 
@@ -113,15 +114,12 @@ readSignaturesInput <- function(filenames) {
         }
 
         for (sig in names(sigList)) {
-        newSig <- Signature(sigList[[sig]], sig, f, "", isPrecomputed=FALSE,
+        newSig <- Signature(sigList[[sig]], sig, filename, "", isPrecomputed=FALSE,
                             isFactor=FALSE, cluster=0)
-        sig_data <- c(sig_data, newSig)
-        sig_names <- c(sig_names, sig)
+        sig_data[[sig]] <- newSig
         }
     }
     }
-
-    names(sig_data) <- sig_names
 
     return (sig_data)
 }
