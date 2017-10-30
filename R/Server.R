@@ -67,14 +67,21 @@ signatureToJSON <- function(sig) {
 #' @param expr Expression Matrix
 #' @param geneList optional list of genes to subset from expr
 #' @return (Potentially) subsetted expression matrix
-expressionToJSON <- function(expr, geneList=NULL) {
+expressionToJSON <- function(expr, geneList=NULL, zscore=FALSE) {
 
     if (!is.null(geneList)) {
         geneList = intersect(geneList, rownames(expr))
         expr <- expr[geneList,, drop=FALSE]
     }
 
-    sExpr <- ServerExpression(expr, colnames(expr), rownames(expr))
+    if (zscore) {
+        rm <- matrixStats::rowMeans2(expr)
+        rsd <- matrixStats::rowSds(expr)
+        rsd[rsd == 0] <- 1.0
+        expr_norm <- (expr - rm) / rsd
+    }
+
+    sExpr <- ServerExpression(expr_norm, colnames(expr), rownames(expr))
 
     ejson <- toJSON(sExpr, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
 
@@ -268,7 +275,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             }
             genes = names(sig@sigDict)
             expMat = object@exprData@data
-            return(FastProjectR:::expressionToJSON(expMat, genes))
+            return(FastProjectR:::expressionToJSON(expMat, genes, zscore=TRUE))
         }
         return(out)
       }) %>%

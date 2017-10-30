@@ -525,13 +525,15 @@ HeatMap.prototype.setColormap = function()
     var vals = vals_p.concat(vals_m);
 
     vals = d3.merge(vals);
+    // Rows were z-normalized before getting here
+    // So values shoudl be symmetric and zero-centered
     vals = vals.sort(d3.ascending);
     var upper = d3.quantile(vals, 0.99);
     var low = d3.quantile(vals, 0.01);
-    var mid = (low + upper)/2;
+    var scale = Math.max(Math.abs(low), upper)
 
     self.colorScale = d3.scale.linear()
-        .domain([low, mid, upper])
+        .domain([scale*-1, 0, scale])
         .range(["steelblue", "white", "lightcoral"]);
 
 };
