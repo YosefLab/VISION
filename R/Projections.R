@@ -232,8 +232,8 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
     }
 
     # Center data
-    wmean <- as.matrix(rowSums(multMat(projData, weights)) / rowSums(weights))
-    dataCentered <- as.matrix(apply(projData, 2, function(x) x - wmean))
+    wmean <- rowSums(multMat(projData, weights)) / rowSums(weights)
+    dataCentered <- projData - wmean
 
     # Compute weighted data
     #wDataCentered <- multMat(dataCentered, weights)
