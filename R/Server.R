@@ -263,6 +263,9 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         }
         else{
             sig = object@sigData[[index]]
+            if(sig@isPrecomputed) {
+                stop("Can't get expression for precomputed signature")
+            }
             genes = names(sig@sigDict)
             expMat = object@exprData@data
             return(FastProjectR:::expressionToJSON(expMat, genes))
