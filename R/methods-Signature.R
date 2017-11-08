@@ -512,13 +512,21 @@ sigsVsProjection_pcf <- function(sigScoresData, weights){
     # Calculate the p value for precomputed signature
     krList <- list()
     for (k in 1:length(fLevels)) {
-      krList <- c(krList, list(preds_ii[labels==k]))
+        group <- preds_ii[labels==k]
+        if(length(group) > 0){
+            krList <- c(krList, list(group))
+        }
     }
 
-    krTest <- kruskal.test(krList)
+    if(length(krList) > 0){
+        krTest <- kruskal.test(krList)
 
-    consistency[s@name] <- krTest$statistic
-    pvals[s@name] <- krTest$p.value
+        consistency[s@name] <- krTest$statistic
+        pvals[s@name] <- krTest$p.value
+    } else {
+        consistency[s@name] <- 0
+        pvals[s@name] <- 1.0
+    }
 
   }
 
