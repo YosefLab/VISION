@@ -113,11 +113,73 @@ calcSignatureScores <- function(object,
 
     sigList <- object@sigData
     for (s in object@precomputedData) {
-        if (length(s@sample_labels) != ncol(normExpr)) {
+
+        if(is.null(object@pools)){
             s@scores <- s@scores[colnames(normExpr)]
             s@sample_labels <- colnames(normExpr)
+            sigScores[[s@name]] <- s
+        } else {
+            if(s@isFactor){
+                ## Need to compute majority level in each group
+                N_MicroClusters <- ncol(normExpr)
+                newlevels <- union(
+                                   union("~", levels(s@scores)),
+                                   paste0("~", levels(s@scores))
+                                   )
+
+                clustScores <- factor(integer(N_MicroClusters),
+                                levels=newlevels)
+                names(clustScores) <- colnames(normExpr)
+                for(clust in names(clustScores)){
+
+                    pool <- object@pools[[clust]]
+
+                    if(length(pool) == 0){ #TODO: This shouldn't happen
+                        clustScores[clust] = "~"
+                        next
+                    }
+
+                    vals <- s@scores[match(pool, s@sample_labels)]
+                    freq <- table(vals) / length(vals)
+                    maxval <- freq[which.max(freq)]
+                    if(maxval >= .9){
+                        clust_val <- names(maxval)
+                    } else if (maxval > .5) {
+                        clust_val <- paste0("~",names(maxval))
+                    } else {
+                        clust_val = "~"
+                    }
+                    clustScores[clust] = clust_val
+                }
+            } else { # Then it must be numeric, just average
+
+                ## Need to compute majority level in each group
+                N_MicroClusters <- ncol(normExpr)
+
+                clustScores <- numeric(N_MicroClusters)
+                names(clustScores) <- colnames(normExpr)
+                for(clust in names(clustScores)){
+
+                    pool <- object@pools[[clust]]
+
+                    if(length(pool) == 0){ #TODO: This shouldn't happen
+                        clustScores[clust] = 0
+                        next
+                    }
+
+                    vals <- s@scores[match(pool, s@sample_labels)]
+                    clust_val = mean(vals)
+                    clustScores[clust] = clust_val
+                }
+            }
+
+            sigScores[[s@name]] <- SignatureScores(
+                                       clustScores, s@name,
+                                       names(clustScores), s@isFactor,
+                                       s@isPrecomputed, 0)
         }
-        sigScores[[s@name]] <- s
+
+
         sigList[[s@name]] <- Signature(list(), s@name, "", "",
                                        isPrecomputed=TRUE,
                                        isFactor=s@isFactor, cluster=0)
