@@ -42,7 +42,7 @@ readSignaturesInput <- function(filenames) {
     message("Loading data from ", filename, " ...")
 
     fsplit <- strsplit(basename(filename), "\\.")[[1]]
-    file_ext <- fsplit[2]
+    file_ext <- fsplit[length(fsplit)]
 
     if (file_ext == "gmt") {
         inp <- gmt2list(filename)
