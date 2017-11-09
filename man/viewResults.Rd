@@ -7,9 +7,11 @@
 \alias{viewResults,character-method}
 \title{View results of analysis without saving output object}
 \usage{
-\S4method{viewResults}{FastProject}(object, port = NULL, host = NULL)
+\S4method{viewResults}{FastProject}(object, port = NULL, host = NULL,
+  browser = TRUE)
 
-\S4method{viewResults}{character}(object, port = NULL, host = NULL)
+\S4method{viewResults}{character}(object, port = NULL, host = NULL,
+  browser = TRUE)
 }
 \arguments{
 \item{object}{FastProject object or path to a file containing such an
@@ -20,6 +22,8 @@ random port between 8000 and 9999 is chosen.}
 
 \item{host}{The host used to serve the output viewer. If omitted, "127.0.0.1"
 is used.}
+
+\item{browser}{Whether or not to launch the browser automatically (default=TRUE)}
 }
 \value{
 None

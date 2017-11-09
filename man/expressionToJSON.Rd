@@ -4,7 +4,7 @@
 \alias{expressionToJSON}
 \title{Convertes expression matrix to JSON}
 \usage{
-expressionToJSON(expr, geneList = NULL)
+expressionToJSON(expr, geneList = NULL, zscore = FALSE)
 }
 \arguments{
 \item{expr}{Expression Matrix}

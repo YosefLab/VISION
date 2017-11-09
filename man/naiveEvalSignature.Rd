@@ -4,10 +4,10 @@
 \alias{naiveEvalSignature}
 \title{Different ways to evalutate the signature score}
 \usage{
-naiveEvalSignature(expr, sig, weights, min_signature_genes)
+naiveEvalSignature(exprData, sig, weights, min_signature_genes)
 }
 \arguments{
-\item{expr}{ExpressionData object}
+\item{exprData}{numeric Matrix Genes x Cells}
 
 \item{sig}{Signature to be evalauting}
 

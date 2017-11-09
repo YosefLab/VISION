@@ -4,14 +4,14 @@
 \alias{generatePermutationNull}
 \title{Generate random signatures for a null distribution by permuting the data}
 \usage{
-generatePermutationNull(num, eData, sigSizes)
+generatePermutationNull(num, eData, sigData)
 }
 \arguments{
 \item{num}{the number of signatures to generate}
 
 \item{eData}{the data to use for the permutations}
 
-\item{sigSizes}{the sizes of the true signatures, to inform selection of the
+\item{sigData}{list of signature objects
 random signature sizes}
 }
 \value{

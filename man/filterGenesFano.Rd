@@ -4,12 +4,14 @@
 \alias{filterGenesFano}
 \title{Applies the Fano filter to the input data (may remove rows)}
 \usage{
-filterGenesFano(data, num_mad = 2)
+filterGenesFano(data, num_mad = 2, plot = FALSE)
 }
 \arguments{
 \item{data}{NUM_GENES x NUM_SAMPLES expression matrix}
 
 \item{num_mad}{number of median absolute deviations}
+
+\item{plot}{whether or not to generate a diagnostic plot}
 }
 \value{
 NUM_GENES_PASSED_FANO_FILTER x NUM_SAMPLES filtered expression matrix

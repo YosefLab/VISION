@@ -6,6 +6,7 @@
 \usage{
 calcSignatureScores(object, sigData = object@sigData,
   precomputedData = object@precomputedData,
+  sig_norm_method = object@sig_norm_method,
   sig_score_method = object@sig_score_method,
   min_signature_genes = object@min_signature_genes, BPPARAM = NULL)
 }
@@ -15,6 +16,9 @@ calcSignatureScores(object, sigData = object@sigData,
 \item{sigData}{a list of Signature objects for which to compute the scores}
 
 \item{precomputedData}{a list of existing cell-signatures}
+
+\item{sig_norm_method}{(optional) Method to apply to normalize the expression
+matrix before calculating signature scores}
 
 \item{sig_score_method}{the scoring method to use}
 
