@@ -143,16 +143,24 @@ generatePermutationNull <- function(num, eData, sigData) {
   sigBalance[sigBalance < 0.5] = 1 - sigBalance[sigBalance < 0.5]
 
   #sigVars = cbind(sigSize, sigBalance)
-  sigVars = cbind(sigSize) # TODO: incorporate the sigBalance here
-  km <- kmeans(sigVars, 5) # TODO: choose number of components better
+  sigVars <- cbind(sigSize) # TODO: incorporate the sigBalance here
+
+  n_components <- 5
+  if(dim(unique(sigVars))[1] <= n_components){
+      centers <- unique(sigVars)
+  } else {
+      km <- kmeans(sigVars, n_components) # TODO: choose number of components better
+      centers <- km$centers
+  }
+
 
   randomSigs <- c()
 
-  for (i in seq(dim(km$centers)[1])) {
+  for (i in seq(dim(centers)[1])) {
 
-    size <- km$centers[i,"sigSize"]
+    size <- centers[i,"sigSize"]
     size <- round(size)
-    #balance <- km$centers[i,"sigBalance"]
+    #balance <- centers[i,"sigBalance"]
     balance <- 1
 
     for (j in 1:num) {
