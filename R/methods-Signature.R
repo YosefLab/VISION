@@ -543,6 +543,7 @@ sigsVsProjection_pcf <- function(sigScoresData, weights){
 
 #' Clusters signatures according to the rank sum
 #' @importFrom mclust Mclust
+#' @importFrom mclust mclustBIC
 #' @param sigList List of signatures
 #' @param sigMatrix data.frame of signatures scores, NUM_SAMPLES x NUM_SIGNATURES
 #' @param pvals the corresponding P-values for each score,

@@ -115,8 +115,6 @@ calcSignatureScores <- function(object,
     for (s in object@precomputedData) {
 
         if(is.null(object@pools)){
-            s@scores <- s@scores[colnames(normExpr)]
-            s@sample_labels <- colnames(normExpr)
             sigScores[[s@name]] <- s
         } else {
             if(s@isFactor){
