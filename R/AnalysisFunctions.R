@@ -262,7 +262,7 @@ analyzeProjections <- function(object,
                                    inputProjections = projectData$projections,
                                    permMats = projectData$permMats,
                                    BPPARAM = BPPARAM)
-
+        
         message("Computing significance of signatures...")
         sigVTreeProj <- sigsVsProjections(treeProjs$projections,
                                           object@sigScores,

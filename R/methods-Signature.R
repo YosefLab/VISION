@@ -305,6 +305,7 @@ sigsVsProjections <- function(projections, sigScoresData,
   sigProjMatrix <- as.matrix(sigProjMatrix)
   sigProjMatrix_Padj <- as.matrix(log10(sigProjMatrix_Padj))
 
+
   return(list(sigProjMatrix = sigProjMatrix, pVals = sigProjMatrix_Padj))
 }
 
@@ -386,15 +387,24 @@ sigsVsProjection_n <- function(sigData, sigScoreMatrix,
   #Create CDF function for medDissmilarityPrime and apply CDF function to
   #medDissimilarityPrime pointwise
   pvals <- pnorm( ((medDissimilarity - mu) / sigma))
+  pvals_emp <- matrix(unlist(lapply(rownames(medDissimilarity), function(x) {
+        numG <- sigData[[x]]@numGenes
+        entry_i <- which.min(abs(numG - as.numeric(names(backgrounds))))
+        pv = lapply(medDissimilarity[x,], function(s) (length(which(s > backgrounds[[entry_i]]))) / (length(backgrounds[[entry_i]])))
+        return(unlist(pv))
+    })), nrow=nrow(medDissimilarity), ncol=ncol(medDissimilarity))
 
+  colnames(pvals_emp) <- colnames(medDissimilarity)
+  rownames(pvals_emp) <- rownames(medDissimilarity)
   consistency <- 1 - (medDissimilarity / N_SAMPLES)
 
   #Reduce from matrix col to char-vector
   pvals <- pvals[,1]
+  pvals_emp <- pvals_emp[,1]
   consistency <- consistency[,1]
 
-
-  return(list(consistency=consistency, pvals=pvals))
+  #return(list(consistency=consistency, pvals=pvals, pvals_emp=pvals_emp))
+  return(list(consistency=consistency, pvals=pvals, empvals=pvals_emp))
 }
 
 #' Evaluates the significance of each precomputed numeric signature vs. a
@@ -575,6 +585,7 @@ clusterSignatures <- function(sigList, sigMatrix, pvals) {
             preserveShape=TRUE
         )
 
+    message("before mclust")
     compkm <- Mclust(t(r))
 
     compcls <- as.list(compkm$classification)
