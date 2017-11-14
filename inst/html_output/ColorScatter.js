@@ -67,10 +67,6 @@ function ColorScatter(parent, colorbar, legend)
         .attr("width", self.width)
         .append("g")
         .call(self.zoom)
-        .on("mousedown.zoom", null)
-        .on("touchstart.zoom", null)
-        .on("touchmove.zoom", null)
-        .on("touchend.zoom", null)
         .call(self.tip);
 
     this.svg.append("rect")
@@ -477,10 +473,16 @@ ColorScatter.prototype.toggleLasso = function(enable) {
 			.on("end", self.lasso_end);
 
 		self.svg.call(self.lasso);
+        self.svg
+            .on("mousedown.zoom", null)
+        .on("touchstart.zoom", null)
+        .on("touchmove.zoom", null)
+        .on("touchend.zoom", null)
 
 		self.lasso.items(self.svg.selectAll("circle"));
 	} else {
 		self.lasso_area.remove();
+        self.svg.call(self.zoom);
 	}
 
 }
