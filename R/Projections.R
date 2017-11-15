@@ -75,7 +75,7 @@ generateProjections <- function(expr, weights, filterName="",
     inputProjections <- c(inputProjections, Projection("PCA: 1,3", t(pca_res[c(1,3),])))
     inputProjections <- c(inputProjections, Projection("PCA: 2,3", t(pca_res[c(2,3),])))
 
-    fullPCA <- t(pca_res[1:min(15,nrow(pca_res)),])
+    fullPCA <- t(pca_res[1:min(10,nrow(pca_res)),])
     fullPCA <- as.matrix(apply(fullPCA, 2, function(x) return( x - mean(x) )))
 
     r <- apply(fullPCA, 1, function(x) sum(x^2))^(0.5)

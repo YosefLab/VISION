@@ -56,7 +56,7 @@ $(window).resize(function()
 
     //Render
     drawChart();
-    drawHeat();
+    //drawHeat();
 
 
 });
@@ -335,6 +335,11 @@ window.onload = function()
         drawChart();
     });
 
+    $("#reload_heatmap").on("click", function() {
+        console.log('here');
+        drawHeat(); 
+    });
+
     //Enable Toggling of Lasso Select
     $("#lasso-select").on("click", function() {
 		var tog = document.getElementById("lasso-select").innerHTML;
@@ -417,6 +422,8 @@ window.onload = function()
         .then(function(){
         $("#filter_dropdown").change() // Change event updates the table
     });
+
+    drawHeat();
 
 };
 
@@ -713,7 +720,7 @@ function tableClickFunction(row_key, col_key)
 	}
 	$('#data-analysis-title').text(global_status.plotted_signature);
     drawChart();
-    drawHeat();
+    //drawHeat();
     drawTree();
 }
 
