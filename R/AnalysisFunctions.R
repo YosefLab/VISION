@@ -255,7 +255,8 @@ analyzeProjections <- function(object,
                                    keys = colnames(sigVProj$sigProjMatrix),
                                    sigProjMatrix = sigVProj$sigProjMatrix,
                                    pMatrix = sigVProj$pVals,
-                                   sigClusters = sigClusters)
+                                   sigClusters = sigClusters,
+                                   emp_pMatrix = sigVProj$emp_pVals)
 
         message("Fitting principle tree...")
         treeProjs <- generateTreeProjections(object@exprData, filter,

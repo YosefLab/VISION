@@ -80,7 +80,8 @@ ProjectionData <- setClass("ProjectionData",
     keys = "character", # names of projections
     sigProjMatrix = "matrix",
     pMatrix="matrix",
-    sigClusters = "list"
+    sigClusters = "list",
+    emp_pMatrix = "matrix"
 ))
 
 TreeProjectionData <- setClass("TreeProjectionData",

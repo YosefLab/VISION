@@ -250,6 +250,7 @@ sigsVsProjections <- function(projections, sigScoresData,
 
   sigProjMatrix <- data.frame()
   sigProjMatrix_P <- data.frame()
+  sigProjMatrix_Pemp <- data.frame()
 
   for (proj in projections) {
     weights <- computeKNNWeights(proj, K=round(sqrt(NCOL(proj@pData))), BPPARAM)
@@ -270,8 +271,15 @@ sigsVsProjections <- function(projections, sigScoresData,
               svp_pcn$pvals,
               svp_pcf$pvals)
 
+    emp_pvals = c(svp_n$empvals,
+                  svp_pcn$pvals,
+                  svp_pcf$pvals)
+
     pvals <- as.data.frame(pvals)
     colnames(pvals) <- c(proj@name)
+
+    emp_pvals <- as.data.frame(emp_pvals)
+    colnames(emp_pvals) <- c(proj@name)
 
     sigProjMatrix <- merge(sigProjMatrix, consistency,
                            by='row.names', all=TRUE)
@@ -282,8 +290,13 @@ sigsVsProjections <- function(projections, sigScoresData,
     sigProjMatrix_P <- merge(sigProjMatrix_P, pvals,
                              by='row.names', all=TRUE)
 
+    SigProjMatrix_Pemp <- merge(sigProjMatrix_Pemp, emp_pvals,
+                                by='row.names', all=T)
+
     rownames(sigProjMatrix_P) = sigProjMatrix_P$Row.names
+    rownames(sigProjMatrix_Pemp) = sigProjMatrix_Pemp$Row.names
     sigProjMatrix_P$Row.names <- NULL
+    sigProjMatrix_Pemp$Row.names <- NULL
 
   }
 
@@ -305,8 +318,22 @@ sigsVsProjections <- function(projections, sigScoresData,
   sigProjMatrix <- as.matrix(sigProjMatrix)
   sigProjMatrix_Padj <- as.matrix(log10(sigProjMatrix_Padj))
 
+  sigProjMatrix_Pempadj <- matrix(
+      p.adjust(
+          as.matrix(sigProjMatrix_Pemp),
+          method="BH"
+      ),
+    nrow=nrow(sigProjMatrix_Pemp),
+    ncol=ncol(sigProjMatrix_Pemp)
+  )
+  colnames(sigProjMatrix_Pempadj) <- colnames(sigProjMatrix_Pemp)
+  rownames(sigProjMatrix_Pempadj) <- rownames(sigProjMatrix_Pemp)
 
-  return(list(sigProjMatrix = sigProjMatrix, pVals = sigProjMatrix_Padj))
+  sigProjMatrix_Pempadj[sigProjMatrix_Pempadj == 0] <- 10^(-300)
+
+  sigProjMatrix_Pempadj <- as.matrix(log10(sigProjMatrix_Pempadj))
+
+  return(list(sigProjMatrix = sigProjMatrix, pVals = sigProjMatrix_Padj, emp_pVals = sigProjMatrix_Pempadj))
 }
 
 #' Evaluates the significance of each numeric signature vs. a

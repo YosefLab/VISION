@@ -339,6 +339,16 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
           out <- FastProjectR:::sigProjMatrixToJSON(object@filterModuleList[[filter]]@ProjectionData@pMatrix, sigs)
         return(out)
       }) %>%
+      get("/FilterGroup/(?<filter_name22>.*)/SigProjMatrix_Pemp/Normal", function(req, res, err) {
+        filter <- URLdecode(req$params$filter_name22)
+
+        signatures <- object@sigData
+        keys <- vapply(signatures, function(x) x@name, "")
+        vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
+        sigs <- keys[!vals]
+          out <- FastProjectR:::sigProjMatrixToJSON(object@filterModuleList[[filter]]@ProjectionData@emp_pMatrix, sigs)
+        return(out)
+      }) %>%
       get("/FilterGroup/(?<filter_name5>.*)/SigProjMatrix_P/Precomputed", function(req, res, err) {
         filter <- URLdecode(req$params$filter_name5)
 

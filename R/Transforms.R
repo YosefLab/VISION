@@ -13,9 +13,8 @@
 applyMicroClustering <- function(exprData, nomodel=TRUE, hkg=matrix(),
                                  cellsPerPartition=100, BPPARAM=BiocParallel::SerialParam(), random=F) {
 
-    #texpr <- filterGenesThreshold(exprData, 0.2*ncol(exprData))
-    #fexpr <- filterGenesFano(texpr)
-    fexpr <- exprData
+    texpr <- filterGenesThreshold(exprData, 0.2*ncol(exprData))
+    fexpr <- filterGenesFano(texpr)
 
     if (!nomodel) {
         falseneg_out <- createFalseNegativeMap(exprData, hkg)
