@@ -23,7 +23,6 @@ global_data.sigIsPrecomputed = {};
 
 var global_scatter = {};
 var global_heatmap = {};
-var global_gene_scatter = {};
 
 // Keys are cluster methods
 // Values are list of allowed method parameter
@@ -168,7 +167,6 @@ window.onload = function()
     //Define some globals
     global_scatter = new ColorScatter("#scatter_div", true, true);
     global_heatmap = new HeatMap("#heatmap_div");
-    global_gene_scatter = new ColorScatter("#gene_dist_div", false, false);
 
     //Link the scatter/heatmap
     global_scatter.hovered_links.push(global_heatmap);
@@ -722,53 +720,49 @@ function drawDistChart() {
     var selected_gene = global_status.selected_gene;
     var val_promise = api.expression.gene(selected_gene);
 
-    return $.when(val_promise
-        .then(function(values) {
+    return val_promise.then(function(values) {
 
-            var expr_data = _.values(values)
+        var expr_data = _.values(values)
 
-            expr_data = create_dist(expr_data);
-            var x_vals = _.range(expr_data.length).map(i => i * 0.05);
+        var hist = create_dist(expr_data);
 
-            expr_data = convert_to_range(expr_data, -1.75, 1.75);
-            x_vals = convert_to_range(x_vals, -1.75, 1.75);
+        var x_vals = hist['centers']
+        var counts = hist['counts']
 
-            var points = [];
-            for (var i = 0; i < expr_data.length; i++) {
-                var x = x_vals[i];
-                var y = expr_data[i];
-                var score = .01;
-                var sample_label = "";
-                points.push([x, y, score, sample_label]);
+        c3.generate({
+            bindto: '#gene_dist_div',
+            data: {
+                x: 'x',
+                columns: [
+                    ['x'].concat(x_vals),
+                    [selected_gene].concat(counts)
+                ],
+                type: 'bar'
+            },
+            bar: {
+                width: {
+                    ratio: 0.8
+                }
+            },
+            axis: {
+                x: {
+                    type: 'indexed',
+                    tick: {
+                        rotate: 75,
+                        format: d3.format('.2n')
+                    },
+                },
+                y: {
+                    type: 'indexed',
+                }
+            },
+            legend: {
+                show: false
             }
-
-            global_gene_scatter.setData(points, false);
-        }));
+        })
+    });
 }
 
-function convert_to_range(data, x, y) {
-    var min = Math.min.apply(Math, data);
-    var range = Math.max.apply(Math, data) - min;
-    var range2 = y - x
-
-    var cData = [];
-    console.log(data);
-    console.log(min);
-    console.log(range);
-
-    data.forEach(function(d) {
-        cData.push( (d-min) / range );
-    });
-
-    var newData = [];
-    cData.forEach(function(d) {
-        newData.push( (d * range2) + x);
-    });
-
-    console.log(newData);
-
-    return newData
-}
 
 // Draw the scatter plot
 function drawChart() {
@@ -926,28 +920,29 @@ function drawChart() {
 
 function create_dist(data) {
 
-    var num_values = Math.round((Math.max.apply(null, data) - Math.min.apply(null, data))/0.1);
-    var windows = Array.apply(Math, Array(num_values)).map(function(x,y) { return y*0.1 });
-    var intervals = Array.apply(Math, Array(num_values)).map(function() { return 0 });
+    var num_values = 10
+    var data_min = Math.min.apply(null, data)
+    var data_max = Math.max.apply(null, data)
 
-    for (var i=0; i < windows.length-1; i++) {
-        var low = windows[i];
-        var high = windows[i+1];
+    var bin_width = (data_max - data_min)/num_values
+
+    var counts = Array.apply(Math, Array(num_values)).map(function() { return 0 });
+    var centers = Array.apply(Math, Array(num_values)).map(function() { return 0 });
+
+    for (var i=0; i < num_values; i++) {
+        var low = bin_width*i
+        var high = bin_width*(i+1)
 
         data.forEach(function(d) {
             if (d >= low && d < high) {
-                intervals[i] += 1;
+                counts[i] += 1;
             }
         });
+
+        centers[i] = (high + low)/2
     }
 
-    data.forEach(function(d) {
-        if (d >= windows[num_values-1]) {
-            intervals[num_values-1] += 1;
-        }
-    });
-
-    return intervals;
+    return {'counts': counts, 'centers': centers}
 
 }
 
