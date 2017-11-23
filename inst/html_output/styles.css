@@ -384,7 +384,7 @@ div.panel {
 #table_div_container {
 	overflow: scroll;
 	margin: auto;
-	width: 95%;
+	width: 100%;
 	height: 100% !important;
 }
 
@@ -394,11 +394,11 @@ div.panel {
 }
 
 .table_div table{
-    margin-right: 50px; /* So the table div accounts for angled labels */
+    margin-right: 100px; /* So the table div accounts for angled labels */
     margin-top: 30px;
-    width: calc(100% - 10px);
+    width: calc(99%);
     table-layout: fixed;
-    overflow: scroll;
+    overflow: none;
     height: 100%;
 }
 
@@ -408,13 +408,13 @@ div.panel {
 
 .table_div table th:not(:first-child) div {
     transform-origin: left center 0;
-    transform: translate(15px,0.2em) rotate(-50deg);
+    transform: translate(15px,0.2em) rotate(-75deg);
     max-width: 35px !important;
     text-align: left;
 }
 
 .table_div table tbody {
-	overflow-x: scroll;
+	/*overflow-x: scroll;*/
 	width: 600px;
 }
 

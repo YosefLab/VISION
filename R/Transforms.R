@@ -11,10 +11,11 @@
 #'     \item pools - a list of data matrices of the original cells in each pool
 #' }
 applyMicroClustering <- function(exprData, nomodel=TRUE, hkg=matrix(),
-                                 cellsPerPartition=100, BPPARAM=bpparam()) {
+                                 cellsPerPartition=100, BPPARAM=BiocParallel::SerialParam(), random=F) {
 
-    texpr <- filterGenesThreshold(exprData, 0.2*ncol(exprData))
-    fexpr <- filterGenesFano(texpr)
+    #texpr <- filterGenesThreshold(exprData, 0.2*ncol(exprData))
+    #fexpr <- filterGenesFano(texpr)
+    fexpr <- exprData
 
     if (!nomodel) {
         falseneg_out <- createFalseNegativeMap(exprData, hkg)
@@ -33,17 +34,33 @@ applyMicroClustering <- function(exprData, nomodel=TRUE, hkg=matrix(),
     cl <- louvainCluster(kn, t(res))
     cl <- readjust_clusters(cl, t(res), cellsPerPartition=cellsPerPartition)
 
-    pooled_cells <- createPools(cl, exprData, weights)
+    if (random) {
+        message("random!")
+        rdata <- exprData
+        colnames(rdata) <- colnames(exprData)[sample(ncol(exprData), ncol(exprData))] 
+        pooled_cells <- createPools(cl, rdata, weights)
+        cn <- paste0("cluster ", 1:ncol(pooled_cells))
+        colnames(pooled_cells) <- cn
+        rownames(pooled_cells) <- rownames(rdata)
 
-    cn <- paste0("cluster ", 1:ncol(pooled_cells))
-    colnames(pooled_cells) <- cn
-    rownames(pooled_cells) <- rownames(exprData)
+        pools <- lapply(1:length(cl), function(i) {
+            clust_data <- rdata[,cl[[i]]]
+            cells <- colnames(clust_data)
+            return(cells)
+        })
+    } else {
+        pooled_cells <- createPools(cl, exprData, weights)
+        cn <- paste0("cluster ", 1:ncol(pooled_cells))
+        colnames(pooled_cells) <- cn
+        rownames(pooled_cells) <- rownames(exprData)
 
-    pools <- lapply(1:length(cl), function(i) {
-    clust_data <- exprData[,cl[[i]]]
-    cells <- colnames(clust_data)
-    return(cells)
-    })
+        pools <- lapply(1:length(cl), function(i) {
+            clust_data <- exprData[,cl[[i]]]
+            cells <- colnames(clust_data)
+            return(cells)
+        })
+    }
+
 
     names(pools) <- cn
 
