@@ -1,3 +1,15 @@
+#' Simulated bracnhing Trajectory.
+#'
+#' Based on LineagePulse (Fischer 2017) simulateContinuousDataSet()
+#'
+#' To be completed
+#'
+#' @return list:
+#' \itemize{
+#'     \item path i: a list containing the cells and pseudotime coordinates
+#'     for each path originating from root.
+#' }
+#' @export
 simBranchingDataSet <- function(
   scaNCellsPerEdge,
   scaNGroups,
@@ -399,7 +411,7 @@ genRandomSigs <- function(expr, nGroups, nGenesPerSig) {
   names = paste0('GROUP_', names)
   sign = rep('Plus', length(names))
   sigs = sample(rownames(expr), size=length(names), replace=TRUE)
-  
+
   return(cbind(names,
                sign,
                sigs))

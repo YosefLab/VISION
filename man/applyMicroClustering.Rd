@@ -6,7 +6,8 @@
 are reduce, using the louvain clustering algorithm}
 \usage{
 applyMicroClustering(exprData, nomodel = TRUE, hkg = matrix(),
-  cellsPerPartition = 100, BPPARAM = bpparam())
+  cellsPerPartition = 100, BPPARAM = BiocParallel::SerialParam(),
+  random = F)
 }
 \arguments{
 \item{exprData}{the expression data matrix}

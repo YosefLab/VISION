@@ -1,5 +1,5 @@
 ---
-title: "de_pt_test"
+title: "simulateBranchingTrajectory"
 author: "Connor Bybee"
 date: "November 27, 2017"
 output: html_document
@@ -8,12 +8,11 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(gam)
-setwd('c:/Users/Connor/FastProjectR/')
 library(FastProjectR)
 library(LineagePulse)
-source('simTree.R')
 library(slingshot)
 library(clusterExperiment)
+source('c:/Users/Connor/FastProjectR2/cb/getVerts.R')
 ```
 
 ## R Markdown
@@ -60,12 +59,12 @@ create FastProject Analysis
 
 ```{r fastproject, echo=FALSE}
 fp <- FastProject(expr, sigs, hkg, filters=c("novar"))
-fpo <- Analyze(fp)
+fpo <- analyze(fp)
 ```
 
 ```{r pseudotime, echo=FALSE }
 p = fpo@filterModuleList$novar@TreeProjectionData@projections$PPT
-root = 'CELL_12_1'
+root = 'CELL_13_1'
 pt = PseudotimeProjection(p, root)
 ```
 

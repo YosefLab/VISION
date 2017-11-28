@@ -4,11 +4,12 @@
 \alias{generateTreeProjections}
 \title{Genrate projections based on a tree structure learned in high dimensonal space}
 \usage{
-generateTreeProjections(expr, filterName = "", inputProjections,
+generateTreeProjections(data, filterName = "", inputProjections,
   permMats = NULL, BPPARAM = bpparam())
 }
 \arguments{
-\item{expr}{the expressionSet object}
+\item{data}{the data to fit the tree to. Should be lower dimensional than
+full data.}
 
 \item{filterName}{the filtered data to use}
 
