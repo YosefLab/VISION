@@ -1,0 +1,99 @@
+---
+title: "de_pt_test"
+author: "Connor Bybee"
+date: "November 27, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(gam)
+setwd('c:/Users/Connor/FastProjectR/')
+library(FastProjectR)
+library(LineagePulse)
+source('simTree.R')
+library(slingshot)
+library(clusterExperiment)
+```
+
+## R Markdown
+
+
+load data set
+```{r dataset, echo=FALSE}
+
+scaNCellsPerEdge = 100
+scaNGroups = 4
+scaNCells = scaNCellsPerEdge*(scaNGroups -1)
+scaNConst = 100
+scaNLin = 100
+scaNSigsPerGroup=5
+scaNGenes = scaNConst + scaNLin + scaNGroups*scaNSigsPerGroup
+lsSimulatedData <- simBranchingDataSet(
+  scaNCellsPerEdge = scaNCellsPerEdge,
+  scaNGroups = scaNGroups,
+  scaNConst = scaNConst,
+  scaNLin = scaNLin,
+  scaNSigsPerGroup=scaNSigsPerGroup,
+  scaMumax = 100,
+  scaSDMuAmplitude = 1,
+  vecNormConstExternal=NULL,
+  vecDispExternal=rep(15, scaNCells),
+  vecGeneWiseDropoutRates = rep(0.1, scaNGenes))
+
+# -- read in expression data set
+expr <- lsSimulatedData$counts
+hkg <- lsSimulatedData$housekeeping
+sigs = lsSimulatedData$sigs
+write.table(x = sigs,
+            file = 'simSigs1.txt',
+            sep='\t',
+            row.names = FALSE,
+            col.names = FALSE,
+            quote = FALSE)
+sigs = c("simSigs1.txt")
+print(lsSimulatedData$adjMat)
+```
+
+
+create FastProject Analysis
+
+```{r fastproject, echo=FALSE}
+fp <- FastProject(expr, sigs, hkg, filters=c("novar"))
+fpo <- Analyze(fp)
+```
+
+```{r pseudotime, echo=FALSE }
+p = fpo@filterModuleList$novar@TreeProjectionData@projections$PPT
+root = 'CELL_12_1'
+pt = PseudotimeProjection(p, root)
+```
+
+
+```{r slingshot, echo=FALSE }
+pca <- prcomp(t(log1p(expr)), scale. = FALSE)
+rd <- pca$x[,1:2]
+cl <- getVerts(p)
+
+rootVert = getRootVert(p, root)
+lin = getLineages(rd, cl, start.clus=rootVert)
+crv <- getCurves(lin)
+plot(rd, col = topo.colors(dim(rd)[1])[cl], pch=16, asp = 1)
+lines(crv, lwd=3)
+pt_s <- pseudotime(crv)
+```
+
+
+```{r de, echo=FALSE} 
+pt_p = pt_s[,1]
+heatdata1 <- expr[, order(pt_p, na.last = NA)]
+heatclus1 <- cl[order(pt_p, na.last = NA)]
+ce1 <- clusterExperiment(heatdata1, heatclus1, transformation=identity)
+plotHeatmap(ce1, clusterSamplesData="orderSamplesValue")
+```
+
+```{r lineageTest, echo=FALSE}
+slingPaths = ptSling.to.ptLin(pt_s)
+lp <- testPath(slingPaths[[1]], expr)
+
+```

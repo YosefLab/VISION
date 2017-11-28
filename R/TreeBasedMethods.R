@@ -254,31 +254,36 @@ projectOnTree <- function(data.pnts, V.pos, princAdj) {
     edges <- t(apply(cbind(major.ind[i], which(!is.na(distmat[i,]))), 1, sort))
 
     if(NROW(edges) > 1) { ## Not a leaf
-        edge.p1 <- V.pos[,edges[,1]]
-        edge.p2 <- V.pos[,edges[,2]]
+      edge.p1 <- V.pos[,edges[,1]]
+      edge.p2 <- V.pos[,edges[,2]]
 
-        line <- edge.p2 - edge.p1
+      line <- edge.p2 - edge.p1
+      unitVec<-line/sqrt(colSums(line^2))
+      proj = (data.pnts[,i] - edge.p1) * unitVec
+      ang <-colSums((data.pnts[,i] - edge.p1)*line)
+      pos <- sign(ang)*sqrt(colSums(proj^2))/sqrt(colSums(line^2))
+      rpos <- pmax(0, pmin(1, pos)) ## relative positin on the edge
+      spos <- edge.p1 + t(rpos * t(line)) ## spatial position of projected points
 
-        pos <- colSums((data.pnts[,i] - edge.p1) * line) / colSums(line ^ 2)
-        rpos <- pmax(0, pmin(1, pos)) ## relative positin on the edge
-        spos <- edge.p1 + t(rpos * t(line)) ## spatial position of projected points
+      # the best edge is the one with the shortest projection
+      best <- which.min(sqrt(colSums((data.pnts[,i] - spos) ^ 2)))
+      spos <- edge.p1 + t(pos * t(line))
 
-        # the best edge is the one with the shortest projection
-        best <- which.min(sqrt(colSums((data.pnts[,i] - spos) ^ 2)))
-
-        return(c(edges[best,], rpos[best], spos[,best]))
+      return(c(edges[best,], rpos[best], spos[,best]))
     } else { # closest node is a leaf, only one appropriate edge
 
-        edge.p1 <- V.pos[,edges[1]]
-        edge.p2 <- V.pos[,edges[2]]
+      edge.p1 <- V.pos[,edges[1]]
+      edge.p2 <- V.pos[,edges[2]]
 
-        line <- edge.p2 - edge.p1
+      line <- edge.p2 - edge.p1
+      unitVec = line/sqrt(sum(line^2))
+      proj<-sum((data.pnts[,i] - edge.p1) * unitVec)
+      ang<-sum((data.pnts[,i] - edge.p1)*line)
+      pos <- sign(ang)*sqrt(sum(proj^2))/sqrt(sum(line^2))
+      rpos <- pmax(0, pmin(1, pos))
+      spos <- edge.p1 + t(pos * t(line))
 
-        pos <- sum((data.pnts[,i] - edge.p1) * line) / sum(line ^ 2)
-        rpos <- pmax(0, pmin(1, pos))
-        spos <- edge.p1 + t(rpos * t(line))
-
-        return(c(edges, rpos, spos))
+      return(c(edges, rpos, spos))
     }
     }, as.double(1:(3+NROW(data.pnts))))
 
