@@ -116,6 +116,14 @@ setMethod("FastProject", signature(data = "matrix"),
             .Object@sig_score_method <- sig_score_method
             .Object@lean = lean
             .Object@perm_wPCA = perm_wPCA
+            if (ncol(getExprData(.Object@exprData)) > 15000 && !pool) {
+                message(paste(
+                      "Warning: Input data consists of",
+                      ncol(getExprData(.Object@exprData)),
+                      "cells and pool=FALSE.  It is recommend to set pool=TRUE when running on large numbers of cells"
+                      )
+                )
+            }
             .Object@pool = pool
             .Object@cellsPerPartition = cellsPerPartition
 
@@ -190,7 +198,7 @@ setMethod("analyze", signature(object="FastProject"),
         BPPARAM <- SerialParam()
     }
 
-    if (ncol(getExprData(object@exprData)) > 15000 || object@pool) {
+    if (object@pool) {
         object <- poolCells(object, BPPARAM = BPPARAM)
     }
 
