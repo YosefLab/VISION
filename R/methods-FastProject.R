@@ -36,7 +36,9 @@
 #' @param sig_norm_method Method to apply to normalize the expression matrix
 #' before calculating signature scores
 #' @param sig_score_method Method to apply when calculating signature scores
-#' @param pool a boolean value indicating whether or not to create supercells
+#' @param pool indicates whether or not to create supercells. Acceptable values
+#' are TRUE, FALSE, or 'auto', the last of which is the default and enables
+#' pooling if there are more than 15000 cells.
 #' @param cellsPerPartition the minimum number of cells to put into a cluster
 #' @return A FastProject object
 #' @rdname FastProject-class
@@ -65,7 +67,7 @@ setMethod("FastProject", signature(data = "matrix"),
                     filters=c("fano"), lean=FALSE, min_signature_genes=5,
                     weights=NULL, threshold=0, perm_wPCA=FALSE,
                     sig_norm_method="znorm_rows",
-                    sig_score_method="weighted_avg", pool=FALSE,
+                    sig_score_method="weighted_avg", pool="auto",
                     cellsPerPartition=100) {
 
             .Object <- new("FastProject")
@@ -118,7 +120,30 @@ setMethod("FastProject", signature(data = "matrix"),
             .Object@sig_score_method <- sig_score_method
             .Object@lean = lean
             .Object@perm_wPCA = perm_wPCA
-            if (ncol(getExprData(.Object@exprData)) > 15000 && !pool) {
+
+            LOTS_OF_CELLS <- ncol(getExprData(.Object@exprData)) > 15000
+
+            if (is.character(pool))
+            {
+                pool <- tolower(pool)
+                if (pool == 'auto')
+                {
+                    if(LOTS_OF_CELLS) {
+                        pool <- TRUE
+                        message(paste(
+                          "Over 15000 input cells detected.  Enabling micropooling with max",
+                          cellsPerPartition, "cells per pool."
+                          )
+                        )
+                    } else {
+                        pool <- FALSE
+                    }
+                } else {
+                    stop("Bad value for 'pool' argument")
+                }
+            }
+
+            if (LOTS_OF_CELLS && !pool) {
                 message(paste(
                       "Warning: Input data consists of",
                       ncol(getExprData(.Object@exprData)),
@@ -126,6 +151,7 @@ setMethod("FastProject", signature(data = "matrix"),
                       )
                 )
             }
+
             .Object@pool = pool
             .Object@cellsPerPartition = cellsPerPartition
 
