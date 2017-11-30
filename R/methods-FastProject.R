@@ -83,6 +83,8 @@ setMethod("FastProject", signature(data = "matrix"),
 
             if (is.list(signatures)) {
                 .Object@sigData <- signatures
+                names(.Obect@sigData) <- vapply(.Object@sigData,
+                                            function(x){x@name}, "")
             } else if (is.character(signatures)) {
                 .Object@sigData <- readSignaturesInput(signatures)
             } else {
