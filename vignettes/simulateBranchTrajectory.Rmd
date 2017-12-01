@@ -12,6 +12,8 @@ library(FastProjectR)
 library(LineagePulse)
 library(slingshot)
 library(clusterExperiment)
+library(wordspace)
+library(destiny)
 source('c:/Users/Connor/FastProjectR2/cb/getVerts.R')
 ```
 
@@ -63,8 +65,13 @@ fpo <- analyze(fp)
 ```
 
 ```{r pseudotime, echo=FALSE }
-p = fpo@filterModuleList$novar@TreeProjectionData@projections$PPT
+#p = fpo@filterModuleList$novar@TreeProjectionData@projections$PPT
 root = 'CELL_13_1'
+
+
+hdTree <- applySimplePPT(expr, nNodes_ = 4, ornNodes = TRUE)
+p <- TreeProjection(name = "PPT", pData = expr,
+                    vData = hdTree$princPnts, adjMat = hdTree$adjMat)
 pt = PseudotimeProjection(p, root)
 ```
 
@@ -77,8 +84,13 @@ cl <- getVerts(p)
 rootVert = getRootVert(p, root)
 lin = getLineages(rd, cl, start.clus=rootVert)
 crv <- getCurves(lin)
-plot(rd, col = topo.colors(dim(rd)[1])[cl], pch=16, asp = 1)
+plot(rd, col =  cl ,pch=16, asp = 1)
 lines(crv, lwd=3)
+legend("topright",
+       legend=1:length(unique(cl)),
+       fill=c(1:length(unique(cl))),
+       pch=15,
+       title = 'Vertex')
 pt_s <- pseudotime(crv)
 ```
 
@@ -89,6 +101,14 @@ heatdata1 <- expr[, order(pt_p, na.last = NA)]
 heatclus1 <- cl[order(pt_p, na.last = NA)]
 ce1 <- clusterExperiment(heatdata1, heatclus1, transformation=identity)
 plotHeatmap(ce1, clusterSamplesData="orderSamplesValue")
+```
+
+
+```{r diffusion map, echo=FALSE}
+dm=DiffusionMap(expr)
+dpt = DPT(dm)
+plot(dpt, pch=20)
+plot(dpt)
 ```
 
 ```{r lineageTest, echo=FALSE}

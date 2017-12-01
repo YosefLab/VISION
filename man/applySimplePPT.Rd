@@ -5,7 +5,8 @@
 \title{Applies the Simple PPT algorithm onto the expression data.}
 \usage{
 applySimplePPT(exprData, numCores, permExprData = NULL,
-  nNodes_ = round(sqrt(ncol(exprData))), sigma = 0, gamma = 0)
+  nNodes_ = round(sqrt(ncol(exprData))), sigma = 0, gamma = 0,
+  ornNodes = FALSE)
 }
 \arguments{
 \item{exprData}{Expression data -- Num_Genes x Num_Samples}
@@ -21,7 +22,9 @@ to use for significance estimation of the tree [default:NULL]}
 nodes, used as the variance
          of a guassian kernel. If 0, this is estimated automatically}
 
-\item{gamma}{graph-level regularization parameter, controlling the tradeoff
+\item{gamma}{graph-level regularization parameter, controlling the tradeoff}
+
+\item{ornNodes}{overrid min nodes and use specified number
 between the noise-levels
          in the data and the graph smoothness. If 0, this is estimated
          automatically.}

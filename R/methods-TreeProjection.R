@@ -13,7 +13,8 @@ TreeProjection <- function(pData, name, vData, adjMat) {
                             princAdj = adjMat)
     .Object <- new("TreeProjection", pData=pData, name=name,
                    vData=vData, adjMat=adjMat, edgeAssoc=proj$edges,
-                   edgePos=proj$edgePos, spatialPos=proj$spatial)
+                   edgePos=proj$edgePos, spatialPos=proj$spatial,
+                   pPoint=proj$pPoint)
     return(.Object)
     }
 

@@ -112,7 +112,8 @@ TreeProjection <- setClass("TreeProjection",
     adjMat = "matrix",
     edgeAssoc = "matrix",
     edgePos = "numeric",
-    spatialPos = "matrix"
+    spatialPos = "matrix",
+    pPoint = "numeric"
 ))
 
 FilterModuleData <- setClass("FilterModuleData",
