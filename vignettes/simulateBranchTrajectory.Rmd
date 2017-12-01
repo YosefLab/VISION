@@ -13,7 +13,7 @@ library(LineagePulse)
 library(slingshot)
 library(clusterExperiment)
 library(wordspace)
-library(destiny)
+#library(destiny)
 source('c:/Users/Connor/FastProjectR2/cb/getVerts.R')
 ```
 
@@ -47,12 +47,12 @@ expr <- lsSimulatedData$counts
 hkg <- lsSimulatedData$housekeeping
 sigs = lsSimulatedData$sigs
 write.table(x = sigs,
-            file = 'simSigs1.txt',
+            file = '../data/simSigs1.txt',
             sep='\t',
             row.names = FALSE,
             col.names = FALSE,
             quote = FALSE)
-sigs = c("simSigs1.txt")
+sigs = c("../data/simSigs1.txt")
 print(lsSimulatedData$adjMat)
 ```
 
@@ -69,7 +69,7 @@ fpo <- analyze(fp)
 root = 'CELL_13_1'
 
 
-hdTree <- applySimplePPT(expr, nNodes_ = 4, ornNodes = TRUE)
+hdTree <- applySimplePPT(expr)
 p <- TreeProjection(name = "PPT", pData = expr,
                     vData = hdTree$princPnts, adjMat = hdTree$adjMat)
 pt = PseudotimeProjection(p, root)

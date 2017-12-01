@@ -175,7 +175,7 @@ PseudotimeProjection <- function(projection, root) {
     pts <- (path$cellDist - minDist) / distRange
     df <- data.frame(cell = path$cells, continuous=pts)
     rownames(df) <- df$cell
-    pathReturn[paste('path', paste(path$verts, collapse = ""))] <- list(list(verts=path$verts, data=df))
+    pathReturn[paste('path', paste(path$verts, collapse = "_"))] <- list(list(verts=path$verts, data=df))
   }
   return(pathReturn)
 
