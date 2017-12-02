@@ -1,0 +1,86 @@
+
+#sigvp-scatter-div {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    height: 100%;
+}
+
+
+#plot-title-div{
+    flex-shrink: 0;
+    word-wrap: break-word;
+    font-size: 18px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    height: 73px;
+    margin-bottom: 10px;
+}
+
+#plot-title-div .titles{
+    width: 200px;
+}
+
+#plot-title-div .subtitle, #plot-title-div .title{
+    padding: 10px;
+    font-family: "Arial", Helvetica, sans-serif;
+}
+
+#plot-title-div .subtitle{
+    font-size: 13px;
+}
+
+#plot-title-div .color-options{
+	margin-left: 40px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: flex-end;
+    text-align: center;
+    max-width: 450px;
+}
+
+#plot-title-div .color-options label{
+    padding: 0 6px;
+}
+
+#plot-title-div .color-options .label{
+    font-size: .7em;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+#plot-title-div .color-options .btn-group{
+    vertical-align: bottom;
+}
+
+#plot-title-div button
+{
+    padding: 0 6px;
+    vertical-align: baseline;
+}
+
+#scatter-div {
+    flex-grow: 1;
+}
+
+#scatter-div svg {
+    font: 10px sans-serif;
+    shape-rendering: crispEdges;
+    background-color: rgba(255,255,255,0);
+}
+
+#scatter-div rect {
+    fill: #292928;
+}
+
+#scatter-div svg circle{
+    fill-opacity: 0.8;
+}
+
+#scatter-div .axis path,
+#scatter-div .axis line {
+    fill: none;
+}

@@ -309,6 +309,12 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         out <- FastProjectR:::coordinatesToJSON(object@filterModuleList[[filter]]@ProjectionData@projections[[proj]]@pData)
         return(out)
       }) %>%
+      get("/FilterGroup/(?<filter_name1p5>.*)/projections/list", function(req, res, err) {
+        filter <- URLdecode(req$params$filter_name1p5)
+        proj_names <- names(object@filterModuleList[[filter]]@ProjectionData@projections)
+        out <- toJSON(proj_names, auto_unbox=TRUE)
+        return(out)
+      }) %>%
       get("/FilterGroup/(?<filter_name2>.*)/SigProjMatrix/Normal", function(req, res, err) {
         filter <- URLdecode(req$params$filter_name2)
 

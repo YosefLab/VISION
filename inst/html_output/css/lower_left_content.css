@@ -1,0 +1,36 @@
+#lower-left-content {
+    display: flex;
+    flex-direction: column;
+    padding: 20px 20px 20px 20px;
+}
+
+#lower-left-content > div{
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+#cluster-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+#cluster-wrapper #cluster-controls {
+    margin-left: 20px;
+    margin-top: 5px;
+}
+
+#cluster-wrapper #heatmap-div {
+    flex-grow: 1;
+}
+
+.gene-cell {
+    cursor: pointer;
+}
+
+#cell-range-div {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;	
+}

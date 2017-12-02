@@ -381,7 +381,7 @@ div.panel {
     margin-top: 20px;
 }
 
-#table_div_container {
+#table-div-container {
 	overflow: scroll;
 	margin: auto;
 	width: 100%;
@@ -466,22 +466,22 @@ div.panel {
 	fill: #292928;
 }
 
-#scatter_div svg {
+#scatter-div svg {
     font: 10px sans-serif;
     shape-rendering: crispEdges;
     background-color: rgba(255,255,255,0);
 }
 
-#scatter_div rect {
+#scatter-div rect {
     fill: #292928;
 }
 
-#scatter_div svg circle{
+#scatter-div svg circle{
     fill-opacity: 0.8;
 }
 
-#scatter_div .axis path,
-#scatter_div .axis line {
+#scatter-div .axis path,
+#scatter-div .axis line {
     fill: none;
     /*stroke: #fff;*/
 }
@@ -510,10 +510,10 @@ div.panel {
 #sig_filt_input {
 }
 
-#heatmap_div{
+#heatmap-div{
 }
 
-#heatmap_div rect {
+#heatmap-div rect {
 }
 
 #title_div{;

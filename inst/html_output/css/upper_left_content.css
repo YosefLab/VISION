@@ -1,0 +1,131 @@
+#upper-left-content {
+    display: flex;
+    flex-direction: column;
+    padding: 10px 10px 10px 10px;
+}
+
+.upper-left-section-content {
+    flex-grow: 1;
+    min-height: 0; /* This prevents flex from growing to full size of children */
+    display: flex;
+    flex-direction: column;
+}
+
+.tab-content.upper-left-section-content > .active {
+    display: flex;  /* overrides bootstrap setting this to block */
+}
+
+.upper-left-section-content > div {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.upper-left-section-content #header-div{
+    margin-right: 20px; /* Account for scrollbar in div below it */
+    margin-top: 30px;
+    margin-bottom: 5px;
+}
+
+.upper-left-section-content #cluster-tables-div{
+    overflow-y: scroll;
+}
+
+.sig-table-div:not(:first-child){
+    margin-top: 30px;
+}
+
+.sig-table{
+    width: 100%;
+    table-layout: fixed;
+    height: 100%;
+}
+
+.sig-table th:first-child{
+    text-align:left;
+}
+
+.sig-table th:not(:first-child) div {
+    transform-origin: left center 0;
+    transform: translate(15px,0.2em) rotate(-75deg);
+    text-align: left;
+    width: 50px;
+    white-space: nowrap;
+}
+
+.sig-table tbody {
+	/*overflow-x: scroll;*/
+	width: 600px;
+}
+
+.sig-table td:first-child{
+	width: auto !important;
+	min-width: 300px !important;
+    font-size: 0.8em;
+    font-weight: bold;
+    -ms-word-wrap: break-word;
+    word-wrap: break-word;
+    cursor: pointer;
+    padding-left: 5px;
+    position: relative;
+}
+
+.sig-table td:not(:first-child), .sig-table th:not(:first-child){
+    text-align: center;
+    width: calc(450px / 15) !important; 
+    max-width: 35px !important;
+    cursor: pointer;
+    font-size: 0.8em;
+}
+
+.sig-table td:not(:first-child){
+    padding: 3px 0;
+    border: 1px solid black;
+}
+
+.filtered {
+    display: none;
+}
+
+.collapsed {
+    display: none;
+}
+
+#precomp-table-div{
+    padding-top: 60px;
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+
+#genes-table{
+    overflow-y: auto;
+}
+
+#genes-table > div:first-child{
+    margin-top: 50px;
+    align-self: center;
+    display: flex;
+    align-items: baseline;
+}
+
+#genes-table #recent-genes-div{
+    margin-top: 30px;
+    margin-left: 30px;
+    margin-right: 30px;
+}
+
+#genes-table #recent-genes-list{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+#genes-table #recent-genes-list > div{
+    flex-shrink: 0;
+    margin: 5px;
+    padding: 7px;
+    border-radius: 10px;
+    background-color: var(--primary);
+    color: white;
+    cursor: pointer;
+}

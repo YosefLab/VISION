@@ -68,6 +68,13 @@ var api = (function(){
 
     output.filterGroup = {}
 
+    output.filterGroup.listProjections = function(filter_group)
+    {
+        var query = "/FilterGroup/"
+        query = query.concat(encodeURI(filter_group), "/projections/list")
+        return $.ajax(query, {dataType: "json"}).then(x => x)
+    }
+
     output.filterGroup.sigProjMatrix = function(filter_group, precomputed)
     {
         var query = "/FilterGroup/"

@@ -90,7 +90,7 @@ function exportSigProj()
     }
    
     //Get the scatter plot and convert to a PNG
-    var svg = d3.select("#scatter_div").select("svg");
+    var svg = d3.select("#scatter-div").select("svg");
     svg.attr("version", 1.1)
        .attr("xmlns", "http://www.w3.org/2000/svg");
     var svg2 = svgCopy(svg.node());

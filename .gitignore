@@ -1,6 +1,7 @@
 .Rproj.user
 .Rhistory
 .RData
+.eslintrc.json
 inst/doc
 src/*
 src-x64/*

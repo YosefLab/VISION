@@ -33,13 +33,13 @@ var cluster_options = { // Note: param values should be strings
 
 $(window).resize(function()
 {
-    $('#scatter_div').children().remove();
-    global_scatter = new ColorScatter('#scatter_div', true, true);
+    $('#scatter-div').children().remove();
+    global_scatter = new ColorScatter('#scatter-div', true, true);
 
-    if($('#heatmap_div').is(":visible"))
+    if($('#heatmap-div').is(":visible"))
     {
-        $('#heatmap_div').find('svg').remove();
-        global_heatmap = new HeatMap('#heatmap_div');
+        $('#heatmap-div').find('svg').remove();
+        global_heatmap = new HeatMap('#heatmap-div');
     } 
 
     if ($('#tree_div').is(":visible"))
@@ -66,7 +66,7 @@ function doneTyping()
     vals = vals.map(function(str){return str.trim();})
         .filter(function(str){ return str.length > 0;});
 
-    var tablerows = $('#table_div_container table').find('tr');
+    var tablerows = $('#table-div-container table').find('tr');
     tablerows.removeClass('hidden');
 
     var posvals = vals.filter(function(str){ return str[0] != '!';});
@@ -165,8 +165,8 @@ window.onload = function()
 
 
     //Define some globals
-    global_scatter = new ColorScatter("#scatter_div", true, true);
-    global_heatmap = new HeatMap("#heatmap_div");
+    global_scatter = new ColorScatter("#scatter-div", true, true);
+    global_heatmap = new HeatMap("#heatmap-div");
 
     //Link the scatter/heatmap
     global_scatter.hovered_links.push(global_heatmap);
@@ -189,7 +189,7 @@ window.onload = function()
                 new_table_div.setAttribute("class", "table_div");
                 new_table_div.setAttribute("style", "overflow: hidden");
 
-                var table_div_container = document.getElementById("table_div_container");
+                var table_div_container = document.getElementById("table-div-container");
 
                 var new_table = document.createElement("table");
                 new_table.setAttribute("id", "table"+ curr_cl);
@@ -440,7 +440,7 @@ function addSigClusterDivs() {
         new_table_div.setAttribute("class", "table_div");
 
 
-        var table_div_container = document.getElementById("table_div_container");
+        var table_div_container = document.getElementById("table-div-container");
 
         var new_table = document.createElement("table");
         new_table.setAttribute("id", "precomp-table");
@@ -477,7 +477,7 @@ function addSigClusterDivs() {
                 new_table_div.setAttribute("class", "table_div");
 
 
-                var table_div_container = document.getElementById("table_div_container");
+                var table_div_container = document.getElementById("table-div-container");
 
                 var new_table = document.createElement("table");
                 new_table.setAttribute("id", "table"+ curr_cl);
@@ -1002,31 +1002,31 @@ function drawHeat(){
     var cluster_param = $('#cluster_select_param').val();
 
     if(sig_key.length == 0){
-        $('#heatmap_div').hide();
+        $('#heatmap-div').hide();
         return $().promise();
     } else if (global_status.main_vis == "pcannotator") {
-        $("#heatmap_div").hide();
+        $("#heatmap-div").hide();
         return $().promise();
     }
 
-    $("#heatmap_div rect").show();
+    $("#heatmap-div rect").show();
     return $.when(api.signature.info(sig_key),
         api.signature.expression(sig_key),
         api.projection.clusters(filter_group, proj_key, cluster_method, cluster_param))
         .then(function(sig_info, sig_expression, cluster){
 
             if(sig_info.isPrecomputed){
-                $('#heatmap_div').hide();
+                $('#heatmap-div').hide();
                 return
             }
 
             // Heatmap doesn't show for precomputed sigs
             // Need to recreate it if it isn't there
-            if( !$('#heatmap_div').is(":visible"))
+            if( !$('#heatmap-div').is(":visible"))
             {
-                $('#heatmap_div').find('svg').remove();
-                $('#heatmap_div').show();
-                global_heatmap = new HeatMap('#heatmap_div');
+                $('#heatmap-div').find('svg').remove();
+                $('#heatmap-div').show();
+                global_heatmap = new HeatMap('#heatmap-div');
                 global_scatter.hovered_links.push(global_heatmap);
                 global_heatmap.hovered_links.push(global_scatter);
             }
@@ -1197,7 +1197,7 @@ function createTableFromData()
             filterSig.detach();
 
             // (Re)Create filter signature box
-            var th = $('#filter_sigs_container');
+            var th = $('#filter-sigs-container');
             $(th).append(filterSig);
             filterSig.show();
             filterSig.trigger('input'); 

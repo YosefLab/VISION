@@ -20,7 +20,7 @@ function ColorScatter(parent, colorbar, legend)
     var xdomain = [-2, 2];
     var ydomain = [-2, 2];
 
-    this.margin = {top: 20, right: 20, bottom: 15, left: 40};
+    this.margin = {right: 20, left: 40};
     this.width = $(parent).width();
     this.height = $(parent).height();
 
@@ -63,7 +63,7 @@ function ColorScatter(parent, colorbar, legend)
 
 
     this.svg = d3.select(parent).append("svg")
-        .attr("height", self.height + self.margin.top + self.margin.bottom)
+        .attr("height", self.height)
         .attr("width", self.width)
         .append("g")
         .call(self.zoom)
