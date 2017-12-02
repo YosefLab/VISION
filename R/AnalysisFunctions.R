@@ -259,7 +259,7 @@ analyzeProjections <- function(object,
                                    emp_pMatrix = sigVProj$emp_pVals)
 
         message("Fitting principle tree...")
-        treeProjs <- generateTreeProjections(object@exprData, filter,
+        treeProjs <- generateTreeProjections(projectData$fullPCA, filter,
                                    inputProjections = projectData$projections,
                                    permMats = projectData$permMats,
                                    BPPARAM = BPPARAM)
