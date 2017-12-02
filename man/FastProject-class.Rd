@@ -16,7 +16,7 @@ FastProject(data, ...)
   nomodel = FALSE, filters = c("fano"), lean = FALSE,
   min_signature_genes = 5, weights = NULL, threshold = 0,
   perm_wPCA = FALSE, sig_norm_method = "znorm_rows",
-  sig_score_method = "weighted_avg", pool = FALSE,
+  sig_score_method = "weighted_avg", pool = "auto",
   cellsPerPartition = 100)
 
 \S4method{FastProject}{character}(data, ...)
@@ -74,7 +74,9 @@ before calculating signature scores}
 
 \item{sig_score_method}{Method to apply when calculating signature scores}
 
-\item{pool}{a boolean value indicating whether or not to create supercells}
+\item{pool}{indicates whether or not to create supercells. Acceptable values
+are TRUE, FALSE, or 'auto', the last of which is the default and enables
+pooling if there are more than 15000 cells.}
 
 \item{cellsPerPartition}{the minimum number of cells to put into a cluster}
 }

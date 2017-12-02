@@ -21,6 +21,7 @@ projectOnTree(data.pnts, V.pos, princAdj)
     represented as (node a, node b). For consistency and convenience, it is maintained that a < b}
     \item{"edgePos"}{an N-length numeric with values in [0,1], the relative position on the edge of the datapoint.
     0 is node a, 1 is node b, .5 is the exact middle of the edge, etc.}
+    \item{"pPoint"}{The closest principle point to each datapoint}
      }
 }
 \description{

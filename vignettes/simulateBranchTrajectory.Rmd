@@ -72,7 +72,7 @@ root = 'CELL_13_1'
 hdTree <- applySimplePPT(expr)
 p <- TreeProjection(name = "PPT", pData = expr,
                     vData = hdTree$princPnts, adjMat = hdTree$adjMat)
-pt = PseudotimeProjection(p, root)
+pt = pseudotimeProjection(p, root)
 ```
 
 
@@ -81,8 +81,8 @@ pca <- prcomp(t(log1p(expr)), scale. = FALSE)
 rd <- pca$x[,1:2]
 cl <- getVerts(p)
 
-rootVert = getRootVert(p, root)
-lin = getLineages(rd, cl, start.clus=rootVert)
+rootVert <- getRootVert(p, root)
+lin <- getLineages(rd, cl, start.clus=rootVert)
 crv <- getCurves(lin)
 plot(rd, col =  cl ,pch=16, asp = 1)
 lines(crv, lwd=3)
@@ -104,15 +104,14 @@ plotHeatmap(ce1, clusterSamplesData="orderSamplesValue")
 ```
 
 
-```{r diffusion map, echo=FALSE}
-dm=DiffusionMap(expr)
-dpt = DPT(dm)
-plot(dpt, pch=20)
-plot(dpt)
-```
-
 ```{r lineageTest, echo=FALSE}
 slingPaths = ptSling.to.ptLin(pt_s)
 lp <- testPath(slingPaths[[1]], expr)
 
+```
+
+```{r lineageTest, echo=FALSE}
+lsObjLP <- testProjectionLineages(p, root)
+lsSiGenes <- testSigGenes(lsObjLP)
+uGenes <- unique(unlist(lsSiGenes))
 ```

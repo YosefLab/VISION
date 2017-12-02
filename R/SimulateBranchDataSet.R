@@ -402,7 +402,19 @@ simBranchingDataSet <- function(
               sigs = sigs))
 }
 
-
+#' Utility function to generate random sigs. Allows use of FastProject projections
+#' with unknow signatures
+#'
+#' @param expr matrix numeric genes X cells
+#' @param nGroups numeric the number of groups to generate sigs
+#' @param nGenesPerSig numeric the number of genes per signature
+#'
+#' @return list:
+#' \itemize{
+#'     \item path i: a list containing the cells and pseudotime coordinates
+#'     for each path originating from root.
+#' }
+#' @export
 genRandomSigs <- function(expr, nGroups, nGenesPerSig) {
   names = rbind(unlist(sapply(1:nGroups, function(i) {
     rep(i, nGenesPerSig)

@@ -1,3 +1,57 @@
+#' Computes path statistics for a TreeProjection starting from a given
+#' root or search through all vertices
+#'
+#' @param projection TreeProjection object
+#' @param root cell to use for the beginning of the pseudotime projection
+#' default: NULL
+#' @param k numeric max number of vertices in path. k=0 => full paths
+#' default: 0
+#' @return list:
+#' \itemize{
+#'     \item path i: a list containing the cells and pseudotime coordinates
+#'     for each path originating from root.
+#' }
+#' @export
+testProjectionLineages <- function(projection, root=NULL, k=0) {
+  #Check to run from given root
+  if (is.null(root)) {
+    print("TBD finish unsupervised search")
+    return(NULL)
+  }
+
+
+  pt <- pseudotimeProjection(projection, root)
+
+  #test each path
+  lsObjLP <- lapply(pt, function(path) {
+    objLP <- testPath(path$data, projection@pData)
+
+  })
+
+
+
+
+  return(lsObjLP)
+}
+#' Filter Lineages
+#' @param lsObjLP list LineagePUlse objects
+#' @return list: containg the signifigant genes corresponding to LineagePulse obj
+#' \itemize{
+#'     \item sigGenes i
+#' }
+#' @export
+testSigGenes <- function(lsObjLP) {
+  #filter results
+  lsSigGenes <- lapply(lsObjLP, function(objLP) {
+    df <- objLP$dfResults
+    sigGenes <- row.names(df[which(df$padj <= 0.05),])
+    return(sigGenes)
+
+  })
+  return(lsSigGenes)
+}
+
+
 #' Computes pseudotime projection for a given TreeProjection and root.
 #'
 #' @param projection TreeProjection object
@@ -8,7 +62,7 @@
 #'     for each path originating from root.
 #' }
 #' @export
-PseudotimeProjection <- function(projection, root) {
+pseudotimeProjection <- function(projection, root) {
   # find root cell tree vertex
   rootIdx <- match(root, colnames(projection@pData))
   rootPos <- projection@edgePos[rootIdx]
@@ -178,6 +232,64 @@ PseudotimeProjection <- function(projection, root) {
     pathReturn[paste('path', paste(path$verts, collapse = "_"))] <- list(list(verts=path$verts, data=df))
   }
   return(pathReturn)
-
 }
 
+#' Utility function for computing the closest vertex for each cell in a projection
+#'
+#' @param projection TreeProjection object
+#' @return numeric: closest vertex for each cell in projection
+getVerts <- function(projection) {
+  assignments <- rep(1, length(projection@edgePos))
+  idx <- projection@edgePos >= 0.5
+  assignments[idx] <- 2
+  verts <- sapply(1:length(assignments), function(i) { projection@edgeAssoc[assignments[i],i]})
+  return(verts)
+}
+
+
+#' Utility function for finding the vertex for a given cell in a projection
+#'
+#' @param projection TreeProjection object
+#' @param cell character name of cell
+#' @return numeric: closest vertex for given cell in projection
+getCellVert <- function(projection, cell) {
+  cellIdx = match(cell, colnames(projection@pData))
+  verts = getVerts(projection)
+  return(verts[cellIdx])
+}
+
+
+#' Utility function for running LineagePulse with default arguments
+#'
+#' @param path data.frame containing cells names and continous pseudotime
+#' @param counts matrix genes X cells
+#' @return numeric: closest vertex for given cell in projection
+testPath <- function(path, counts) {
+  counts = counts[, levels(path$cell)]
+  objLP <- runLineagePulse(
+    counts = counts,
+    dfAnnotation = path,
+    strMuModel = "splines",
+    scaDFSplinesMu = 3)
+  return(objLP)
+}
+
+
+#' Utility function converting slingshot trajecories to LineagePulse input
+#' arguments.
+#'
+#' @param ptSLing matrix numeric cells X curves
+#' @return data.frame: index cells columns curves
+ptSling.to.ptLin <- function(ptSling) {
+  if (is.null(dim(ptSling))) {
+    idx = order(ptSling, na.last=NA)
+    return(data.frame(cells=names(ptSling[idx]),
+                      continuous=ptSling[idx]))
+  }
+
+  return(lapply(1:dim(ptSling)[2], function(i) {
+    idx = order(ptSling[, i], na.last = NA)
+    return(data.frame(cells= row.names(ptSling[idx,]),
+                      continuous=ptSling[idx, i]))
+  }))
+}
