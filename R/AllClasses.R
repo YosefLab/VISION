@@ -8,22 +8,23 @@
 # on the different types of data.
 
 setClassUnion('numericORNULL', members=c('numeric', 'NULL'))
+setClassUnion('matrixORSparse', members=c("matrix", "data.frame", "dgCMatrix", "dgTMatrix"))
 
 Cluster <- setClass("Cluster",
     slots = c(
     method = "character",
     param = "numeric",
     centers = "matrix",
-    data = "matrix"
+    data = "matrixORSparse"
     )
 )
 
 ExpressionData <- setClass("ExpressionData",
     slots = c(
-        data = "matrix",
-        fanoFilter = "matrix",
-        noVarFilter = "matrix",
-        thresholdFilter = "matrix"
+        data = "matrixORSparse",
+        fanoFilter = "matrixORSparse",
+        noVarFilter = "matrixORSparse",
+        thresholdFilter = "matrixORSparse"
 ))
 
 FastProject <- setClass("FastProject",
@@ -38,7 +39,7 @@ FastProject <- setClass("FastProject",
         sig_norm_method = "character",
         sig_score_method = "character",
         exprData = "ExpressionData",
-        allData = "matrix",
+        allData = "matrixORSparse",
         housekeepingData = "character",
         sigData = "list",
         precomputedData= "list",
