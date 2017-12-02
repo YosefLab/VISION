@@ -1,0 +1,59 @@
+---
+title: "oeHBCdiffAnalysis"
+author: "Connor Bybee"
+date: "December 1, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(gam)
+library(FastProjectR)
+library(LineagePulse)
+library(slingshot)
+library(clusterExperiment)
+library(wordspace)
+```
+
+## Load Data
+
+```{r ,echo=FALSE}
+#load('c:/Users/Connor/Downloads/oeHBCdiff_Data/oeHBCdiff_cmmerged.Rda')
+load('c:/Users/Connor/Downloads/oeHBCdiff_Data/oeHBCdiff_lineageData.Rda')
+load('c:/Users/Connor/Downloads/oeHBCdiff_Data/oeHBCdiff_slingshot.Rda')
+counts <- read.table('c:/Users/Connor/Downloads/oeHBCdiff_Data/oeHBCdiff_countsMatrix.txt', 
+                     header=TRUE,
+                     row.names=1)
+counts <- as.matrix(counts)
+counts <- exp(counts)
+sigs =
+```
+
+
+```{r genSigs, echo=FALSE} 
+sigs <- genRandomSigs(counts, 4, 10)
+write.table(x = sigs,
+            file = 'c:/Users/Connor/Downloads/oeHBCdiff_Data/randSigs.txt',
+            sep='\t',
+            row.names = FALSE,
+            col.names = FALSE,
+            quote = FALSE)
+sigs <- c("c:/Users/Connor/Downloads/oeHBCdiff_Data/randSigs.txt")
+hk <- row.names(counts)[1:10]
+fp <- FastProject(counts, sigs, hk, filters=c("novar"))
+fpo <- analyze(fp)
+```
+```{r, echo=FALSE}
+viewResults(fpo)
+```
+##
+```{r, echo=FALSE} 
+root = 'OEP01_N707_S504'
+
+
+hdTree <- applySimplePPT(counts)
+pca
+p <- TreeProjection(name = "PPT", pData = counts,
+                    vData = hdTree$princPnts, adjMat = hdTree$adjMat)
+pt = pseudotimeProjection(p, root)
+```
