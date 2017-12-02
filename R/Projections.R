@@ -232,7 +232,7 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
     }
 
     # Center data
-    wmean <- rowSums(multMat(projData, weights)) / rowSums(weights)
+    wmean <- rowSums(projData * weights) / rowSums(weights)
     dataCentered <- projData - wmean
 
     # Compute weighted data
@@ -240,10 +240,10 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
     wDataCentered <- dataCentered * weights
 
     # Weighted covariance / correlation matrices
-    W <- tcrossprod(wDataCentered)
-    Z <- tcrossprod(weights)
+    W <- Matrix::tcrossprod(wDataCentered)
+    Z <- Matrix::tcrossprod(weights)
 
-    wcov <- W / Z
+    wcov <- as.matrix(W / Z)
     wcov[is.na(wcov)] <- 0.0
     var <- diag(wcov)
 
@@ -254,7 +254,9 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
 
     # Project down using computed eigenvectors
     dataCentered <- dataCentered / sqrt(var)
-    wpcaData <- crossprod(t(evec), dataCentered)
+    print(dim(dataCentered))
+    wpcaData <- as.matrix(Matrix::crossprod(t(evec), dataCentered))
+    print(dim(wpcaData))
     #wpcaData <- wpcaData * (decomp$d*decomp$d)
     eval <- as.matrix(apply(wpcaData, 1, var))
     totalVar <- sum(apply(projData, 1, var))

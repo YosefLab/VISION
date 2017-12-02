@@ -59,7 +59,7 @@
 #' fp <- FastProject(data = expMat,
 #'                      signatures = sigs,
 #'                      housekeeping = hkg)
-setMethod("FastProject", signature(data = "matrix"),
+setMethod("FastProject", signature(data = "matrixORSparse"),
             function(data, signatures, housekeeping=NULL, norm_methods = NULL,
                     precomputed=NULL, nofilter=FALSE, nomodel=FALSE,
                     filters=c("fano"), lean=FALSE, min_signature_genes=5,
@@ -195,6 +195,7 @@ setMethod("analyze", signature(object="FastProject"),
     }
 
     object <- filterData(object)
+    object <- convertToDense(object)
 
     object <- calcWeights(object)
 
