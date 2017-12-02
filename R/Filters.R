@@ -79,8 +79,8 @@ filterGenesFano <- function(data, num_mad=2, plot=FALSE) {
     sub_data <- data[,sample(ncol(data), 50000)]
     }
 
-    mu <- matrixStats::rowMeans2(sub_data)
-    fano <- matrixStats::rowVars(sub_data) / mu
+    mu <- Matrix::rowMeans(sub_data)
+    fano <- rowVars(sub_data) / mu
 
 
     aa <- order(mu)
@@ -128,3 +128,6 @@ filterGenesFano <- function(data, num_mad=2, plot=FALSE) {
 
 }
 
+rowVars <- function(x) {
+    return (rowSums(( x - Matrix::rowMeans(x))^2) / (ncol(x) - 1))
+}
