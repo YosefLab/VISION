@@ -3,7 +3,7 @@
 \docType{methods}
 \name{FastProject}
 \alias{FastProject}
-\alias{FastProject,matrix-method}
+\alias{FastProject,matrixORSparse-method}
 \alias{FastProject,character-method}
 \alias{FastProject,ExpressionSet-method}
 \alias{FastProject,SummarizedExperiment-method}
@@ -11,7 +11,7 @@
 \usage{
 FastProject(data, ...)
 
-\S4method{FastProject}{matrix}(data, signatures, housekeeping = NULL,
+\S4method{FastProject}{matrixORSparse}(data, signatures, housekeeping = NULL,
   norm_methods = NULL, precomputed = NULL, nofilter = FALSE,
   nomodel = FALSE, filters = c("fano"), lean = FALSE,
   min_signature_genes = 5, weights = NULL, threshold = 0,

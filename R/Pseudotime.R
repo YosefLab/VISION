@@ -27,8 +27,21 @@ testProjectionLineages <- function(projection, root=NULL, k=0) {
     objLP <- testPath(path$data, projection@pData)
 
   })
+}
+
+testPathLineages <- function(projection, paths, root=NULL, k=0) {
+  #Check to run from given root
+  if (is.null(root)) {
+    print("TBD finish unsupervised search")
+    return(NULL)
+  }
 
 
+  #test each path
+  lsObjLP <- lapply(paths, function(path) {
+    objLP <- testPath(path$data, projection@pData)
+
+  })
 
 
   return(lsObjLP)

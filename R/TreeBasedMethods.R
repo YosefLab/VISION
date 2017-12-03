@@ -23,6 +23,7 @@
 #'     \item mse: the Mean-Squared-Error of the fitten tree
 #'     \item zscore: a significance score for the fitted tree
 #'      }
+#' @export
 
 applySimplePPT <- function(exprData, numCores, permExprData = NULL,
                             nNodes_ = round(sqrt(ncol(exprData))), sigma=0, gamma=0,

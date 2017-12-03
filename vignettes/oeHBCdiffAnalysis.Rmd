@@ -7,7 +7,6 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(gam)
 library(FastProjectR)
 library(LineagePulse)
 library(slingshot)
@@ -21,10 +20,8 @@ library(wordspace)
 #load('c:/Users/Connor/Downloads/oeHBCdiff_Data/oeHBCdiff_cmmerged.Rda')
 load('c:/Users/Connor/Downloads/oeHBCdiff_Data/oeHBCdiff_lineageData.Rda')
 load('c:/Users/Connor/Downloads/oeHBCdiff_Data/oeHBCdiff_slingshot.Rda')
-counts <- read.table('c:/Users/Connor/Downloads/oeHBCdiff_Data/oeHBCdiff_countsMatrix.txt', 
-                     header=TRUE,
-                     row.names=1)
-counts <- as.matrix(counts)
+clustLabels <- as.data.frame(read.table('c:/Users/Connor/Downloads/oeHBCdiff_Data/oeHBCdiff_clusterLabels.txt'))
+
 counts <- exp(counts)
 sigs =
 ```
@@ -43,8 +40,19 @@ hk <- row.names(counts)[1:10]
 fp <- FastProject(counts, sigs, hk, filters=c("novar"))
 fpo <- analyze(fp)
 ```
+
 ```{r, echo=FALSE}
 viewResults(fpo)
+```
+
+
+```{r load pre-computed}
+counts <- read.table('c:/Users/Connor/Downloads/oeHBCdiff_Data/oeHBCdiff_countsMatrix.txt', 
+                     header=TRUE,
+                     row.names=1)
+counts <- as.matrix(counts)
+load('data/oeHBCTree.Rdata')
+
 ```
 ##
 ```{r, echo=FALSE} 
@@ -52,8 +60,15 @@ root = 'OEP01_N707_S504'
 
 
 hdTree <- applySimplePPT(counts)
-pca
-p <- TreeProjection(name = "PPT", pData = counts,
-                    vData = hdTree$princPnts, adjMat = hdTree$adjMat)
+p <- TreeProjection(name = "PPT", pData = round(exp(counts)),
+                    vData = round(exp(hdTree$princPnts)), adjMat = hdTree$adjMat)
 pt = pseudotimeProjection(p, root)
+z <- zinbFit(round(exp(counts)))
+lsObjLP <- testProjectionLineages(p, root)
+lsObjLP <- testPathLineages(p, pt[1:5], root)
+lsSiGenes <- testSigGenes(lsObjLP)
+idx <-colnames(counts) %in% pt$`path 9_10_19_6`$data$cell
+objLp <- runLineagePulse(round(exp(counts[,idx])), dfAnnotation = pt$`path 9_10_19_6`$data)
+
+
 ```
