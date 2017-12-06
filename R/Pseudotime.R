@@ -256,6 +256,7 @@ getVerts <- function(projection) {
   idx <- projection@edgePos >= 0.5
   assignments[idx] <- 2
   verts <- sapply(1:length(assignments), function(i) { projection@edgeAssoc[assignments[i],i]})
+  names(verts) <- colnames(projection@pData)
   return(verts)
 }
 

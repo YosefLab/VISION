@@ -1,8 +1,34 @@
-#' Simulated bracnhing Trajectory.
+#' Simulated Branching Trajectory.
 #'
 #' Based on LineagePulse (Fischer 2017) simulateContinuousDataSet()
 #'
-#' To be completed
+#' @param scaNCellsPerEdge (scalar)
+#' Number of cells iper edge.
+#' @param scaNGroups (scalar)
+#' Number of groups or verticies
+#' @param scaNConst (scalar)
+#' Number of constant genes
+#' @param scaNLin (scalar) Number of linear expression
+#' profiles (genes) in data set
+#' @param scaMumax (scalar)
+#' Maximum expression mean parameter to be used.
+#' @param scaNSigsPerGroup (scalar)
+#' The number of unique identifier genes per group
+#' @param scaSDMuAmplitude (scalar) [Default 1]
+#' Standard deviation of normal distribution form which the
+#' amplitude change within an impulse trace is drawn.
+#' @param vecNormConstExternal (numeric vector number of cells)
+#' [Default NULL]
+#' Size factors for data set. Size factors are set to 1 if this is
+#' not specified (NULL).
+#' @param vecDispExternal (numeric vector number of genes)
+#' [Default NULL]
+#' Dispersion parameters per gene supplied by user.s
+#' @param vecGeneWiseDropoutRates (numeric vector number of cells)
+#' [Default NULL] One drop-out rate per gene.
+#' @param matDropoutModelExternal (numeric matrix cells x 2)
+#' [Default NULL] External drop-out model, has to have
+#' one row for each simulated cell.
 #'
 #' @return list:
 #' \itemize{
@@ -22,14 +48,6 @@ simBranchingDataSet <- function(
   vecDispExternal=NULL,
   vecGeneWiseDropoutRates=NULL,
   matDropoutModelExternal=NULL){
-
-  ####
-  # Internal functions
-  # Evalute impulse model at time points
-  evalImpulse <- function(t,beta,t1,t2,h0,h1,h2){
-    return(1/h1* (h0+(h1-h0)*1/(1+exp(-beta*(t-t1))))*
-             (h2+(h1-h2)*1/(1+exp(beta*(t-t2)))))
-  }
 
   SCA_MIN_MU <- 10^(-5)
   scaNCells = scaNCellsPerEdge*(scaNGroups-1)
@@ -52,7 +70,7 @@ simBranchingDataSet <- function(
       adjMat[parent,child] <- 1
       parents <- c(parents, child)
     }
-    child = children
+    child <- children
     parent <- sample(parents,1)
     adjMat[parent,child] <- 1
   }
@@ -65,21 +83,21 @@ simBranchingDataSet <- function(
   arrMuLinIdx <- array(rep(0, scaNGroups^2*scaNLin), c(scaNGroups, scaNGroups, scaNLin))
   scaNcellsPerEdge <- as.integer()
   genesPerEdge <- as.integer(scaNLin/scaNGroups) + 1
-  geneSet = c(1:scaNLin)
-  edgeMap = c()
-  j=1
+  geneSet <- c(1:scaNLin)
+  edgeMap <- c()
+  j <- 1
   for (i in 1:scaNGroups) {
     neighbors<-c(which(adjMat[i,]==1))
 
     for (neighbor in neighbors) {
       if (j == scaNGroups -1) {
         arrMuLinIdx[i, neighbor, ] <- 1:scaNLin %in% geneSet
-        edgeMap = rbind(edgeMap, cbind(rep(i, length(geneSet)), rep(neighbor, length(geneSet))))
+        edgeMap  <-  rbind(edgeMap, cbind(rep(i, length(geneSet)), rep(neighbor, length(geneSet))))
       }
       else {
         arrMuLinIdx[i, neighbor,] <- 1:scaNLin %in% geneSet[1:genesPerEdge]
         geneSet <- geneSet[-c(1:genesPerEdge)]
-        edgeMap = rbind(edgeMap, cbind(rep(i, genesPerEdge), rep(neighbor, genesPerEdge)))
+        edgeMap  <-  rbind(edgeMap, cbind(rep(i, genesPerEdge), rep(neighbor, genesPerEdge)))
       }
 
       j <- j + 1
@@ -87,9 +105,9 @@ simBranchingDataSet <- function(
   }
 
   dfAnnot <- data.frame(
-    cell = c(),
-    continuous = c(),
-    row.names = c(),
+    cell <- c(),
+    continuous <- c(),
+    row.names <- c(),
     stringsAsFactors = FALSE
   )
 
@@ -103,8 +121,8 @@ simBranchingDataSet <- function(
                        vecPTPrev,
                        dfAnnot){
     ## Find Neighbors
-    neighbors<-c(which(adjMat[curVert,]==1))
-    toVisit<-neighbors
+    neighbors <- c(which(adjMat[curVert,]==1))
+    toVisit <- neighbors
     curPath <- c(curPath, curVert)
 
 
@@ -113,7 +131,7 @@ simBranchingDataSet <- function(
     #check if end node
     if (length(toVisit) == 0) {
       #end of branch
-      i<-length(paths)+1
+      i <- length(paths)+1
       paths[paste('PATH', i)] <- list(curPath)
       return(list(paths=paths,
                   matMuLin=matMuLinPrev,
@@ -123,8 +141,8 @@ simBranchingDataSet <- function(
                                      stringsAsFactors = FALSE)))
     }
 
-    matMuLinAccum = c()
-    dfAnnotAccum = dfAnnot
+    matMuLinAccum <- c()
+    dfAnnotAccum <- dfAnnot
 
     while(length(toVisit) > 1) {
       newPath <- curPath
@@ -133,15 +151,15 @@ simBranchingDataSet <- function(
       ## Calculate end gene states
       vecMuLinStart[vecMuLinStart < SCA_MIN_MU] <- SCA_MIN_MU
       vecMuLinEnd <- vecMuLinStart
-      idx = which(arrMuLinIdx[curVert, nextVert,]==1)
+      idx <- which(arrMuLinIdx[curVert, nextVert,]==1)
       vecMuLinEnd[idx] <- vecMuLinStart[idx] * abs(1+rnorm(n=length(idx),
                                                            mean=1,sd=scaSDMuAmplitude))
       vecMuLinEnd[vecMuLinEnd < SCA_MIN_MU] <- SCA_MIN_MU
 
 
       vecPT <- seq(0, 1, by=1/(scaNCellsPerEdge-1))
-      pathName = paste(tail(c(curPath, nextVert),2), collapse = "")
-      cellNames = paste(paste0("CELL_", pathName),seq(1,scaNCellsPerEdge), sep="_")
+      pathName <- paste(tail(c(curPath, nextVert),2), collapse = "")
+      cellNames <- paste(paste0("CELL_", pathName),seq(1,scaNCellsPerEdge), sep="_")
 
       matMuLinEdge <- do.call(rbind, lapply(seq_len(scaNLin), function(i) {
         vecMuLinStart[i] + vecPT/max(vecPT)*(vecMuLinEnd[i] - vecMuLinStart[i])
@@ -162,13 +180,13 @@ simBranchingDataSet <- function(
                        dfAnnot)
 
 
-      paths = res$paths
-      matMuLinAccum = cbind(matMuLinAccum, res$matMuLin)
+      paths <- res$paths
+      matMuLinAccum <- cbind(matMuLinAccum, res$matMuLin)
 
       if (length(dfAnnotAccum) == 0) {
-        dfAnnotAccum = res$dfAnnot
+        dfAnnotAccum <- res$dfAnnot
       } else {
-        dfAnnotAccum = rbind(dfAnnotAccum, res$dfAnnot)
+        dfAnnotAccum <- rbind(dfAnnotAccum, res$dfAnnot)
       }
 
 
@@ -187,8 +205,8 @@ simBranchingDataSet <- function(
     vecMuLinEnd[vecMuLinEnd < SCA_MIN_MU] <- SCA_MIN_MU
 
     vecPT <- seq(0, 1, by=1/(scaNCellsPerEdge-1))
-    pathName = paste(tail(c(curPath, nextVert),2), collapse = "")
-    cellNames = paste(paste0("CELL_", pathName),seq(1,scaNCellsPerEdge), sep="_")
+    pathName <- paste(tail(c(curPath, nextVert),2), collapse = "")
+    cellNames <- paste(paste0("CELL_", pathName),seq(1,scaNCellsPerEdge), sep="_")
 
     matMuLinEdge <- do.call(rbind, lapply(seq_len(scaNLin), function(i) {
       vecMuLinStart[i] + vecPT/max(vecPT)*(vecMuLinEnd[i] - vecMuLinStart[i])
@@ -208,19 +226,19 @@ simBranchingDataSet <- function(
                       vecPT,
                       dfAnnot)
 
-    matMuLinAccum = cbind(matMuLinAccum,
+    matMuLinAccum <- cbind(matMuLinAccum,
                           res$matMuLin,
                           matMuLinPrev)
 
-    df =data.frame(cell=colnames(matMuLinPrev),
+    df <- data.frame(cell=colnames(matMuLinPrev),
                continuous=vecPTPrev,
                row.names = colnames(matMuLinPrev),
                stringsAsFactors = FALSE)
 
     if (length(dfAnnotAccum) == 0) {
-      dfAnnotAccum = rbind(res$dfAnnot, df)
+      dfAnnotAccum <- rbind(res$dfAnnot, df)
     } else {
-      dfAnnotAccum = rbind(dfAnnotAccum, res$dfAnnot, df)
+      dfAnnotAccum <- rbind(dfAnnotAccum, res$dfAnnot, df)
     }
 
 
@@ -279,20 +297,20 @@ simBranchingDataSet <- function(
                        return(edges[1])
                      }
                    })
-  matMuSigs = matrix(rep(0, scaNGroups*scaNCells), scaNGroups*scaNSigsPerGroup, scaNCells)
+  matMuSigs <- matrix(rep(0, scaNGroups*scaNCells), scaNGroups*scaNSigsPerGroup, scaNCells)
 
 
   res$dfAnnot$groups <- groups
-  sigs = c()
+  sigs <- c()
   for (group in 1:scaNGroups) {
-    idx = which(groups == group)
+    idx <- which(groups == group)
     matMuSigs[((group-1)*scaNSigsPerGroup + 1):((group-1)*scaNSigsPerGroup + scaNSigsPerGroup), idx] <- scaMumax/2
-    prefix = paste0('GENE_SIG_', group)
-    sigs = c(sigs,
+    prefix <- paste0('GENE_SIG_', group)
+    sigs <- c(sigs,
              paste(prefix, 1:scaNSigsPerGroup, sep='_'))
   }
   dfSigs <- data.frame(groups=1:scaNGroups, t(matrix(sigs, scaNSigsPerGroup, scaNGroups)))
-  rownames(matMuSigs) = sigs
+  rownames(matMuSigs) <- sigs
   matMuHidden <- do.call(rbind, list(matMuConstHidden,
                                      res$matMuLin,
                                      matMuSigs))
@@ -369,23 +387,23 @@ simBranchingDataSet <- function(
   matSampledCountsObserved <- round(matSampledDataObserved)
 
 
-  roots = res$dfAnnot$cell[which(res$dfAnnot$continuous == 1 & res$dfAnnot$groups == 1)]
+  roots <- res$dfAnnot$cell[which(res$dfAnnot$continuous == 1 & res$dfAnnot$groups == 1)]
 
-  scaNGroups = max(dfSigs$groups)
-  groups = 1:scaNGroups
-  nGenes = nrow(matMuHidden)
-  startGene = nGenes - scaNGroups*(dim(dfSigs)[2]-1)
+  scaNGroups <- max(dfSigs$groups)
+  groups <- 1:scaNGroups
+  nGenes <- nrow(matMuHidden)
+  startGene <- nGenes - scaNGroups*(dim(dfSigs)[2]-1)
 
-  names = rbind(unlist(sapply(1:scaNGroups, function(i) {
+  names <- rbind(unlist(sapply(1:scaNGroups, function(i) {
     rep(i, dim(dfSigs)[2] -1)
   },
   simplify = FALSE)))
 
 
-  names = paste0('GROUP_', names)
-  sign = rep('Plus', length(names))
+  names <- paste0('GROUP_', names)
+  sign <- rep('Plus', length(names))
 
-  sigs = cbind(names,
+  sigs <- cbind(names,
                 sign,
                 sigs)
 
@@ -416,13 +434,13 @@ simBranchingDataSet <- function(
 #' }
 #' @export
 genRandomSigs <- function(expr, nGroups, nGenesPerSig) {
-  names = rbind(unlist(sapply(1:nGroups, function(i) {
+  names <- rbind(unlist(sapply(1:nGroups, function(i) {
     rep(i, nGenesPerSig)
   },
   simplify = FALSE)))
-  names = paste0('GROUP_', names)
-  sign = rep('Plus', length(names))
-  sigs = sample(rownames(expr), size=length(names), replace=TRUE)
+  names <- paste0('GROUP_', names)
+  sign <- rep('Plus', length(names))
+  sigs <- sample(rownames(expr), size=length(names), replace=TRUE)
 
   return(cbind(names,
                sign,

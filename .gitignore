@@ -7,3 +7,4 @@ src-x64/*
 src-i386/*
 *RcppExports*
 vignettes/simSigs1.txt
+vignettes/data/obj*

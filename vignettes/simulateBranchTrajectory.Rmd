@@ -57,12 +57,14 @@ print(lsSimulatedData$adjMat)
 ```
 
 
-create FastProject Analysis
+Create FastProject Analysis
 
 ```{r fastproject, echo=FALSE}
 fp <- FastProject(expr, sigs, hkg, filters=c("novar"))
 fpo <- analyze(fp)
 ```
+
+
 
 ```{r pseudotime, echo=FALSE }
 #p = fpo@filterModuleList$novar@TreeProjectionData@projections$PPT
