@@ -12,7 +12,7 @@
 #'     for each path originating from root.
 #' }
 #' @export
-testProjectionLineages <- function(projection, root=NULL, k=0) {
+testProjectionLineages <- function(projection, fcounts, root=NULL, k=0) {
   #Check to run from given root
   if (is.null(root)) {
     print("TBD finish unsupervised search")
@@ -24,7 +24,7 @@ testProjectionLineages <- function(projection, root=NULL, k=0) {
 
   #test each path
   lsObjLP <- lapply(pt, function(path) {
-    objLP <- testPath(path$data, projection@pData)
+    objLP <- testPath(path$data, fcounts)
 
   })
 }
