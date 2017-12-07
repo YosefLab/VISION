@@ -16,9 +16,7 @@ global_status.plotted_item = "";  // name of signature, meta or gene that is plo
 global_status.plotted_item_type = ""; // either 'signature', 'meta', or 'gene'
 
 
-global_status.signature_filter = "";
 global_status.filter_group = "fano";
-global_status.filter_group_genes = []
 global_status.upper_range = "";
 global_status.lower_range = "";
 global_status.pc1 = "";
@@ -36,7 +34,6 @@ global_data.tree_projection_coordinates = [];
 global_data.plotted_values = []; // Holds gene expression, signature scores/ranks, etc...
 global_data.sig_info = {};  // Holds the information for the last plotted signature
 
-var global_heatmap;
 var lower_left_content;
 var upper_left_content;
 var right_content;
@@ -193,6 +190,7 @@ $(window).resize(function()
 {
     right_content.resize()
 
+    /*
     if($('#heatmap-div').is(":visible"))
     {
         $('#heatmap-div').find('svg').remove();
@@ -203,6 +201,7 @@ $(window).resize(function()
     { 
         $('#tree_div').find('svg').remove();
     }
+    */
 
     //Link the scatter/heatmap
     //global_scatter.hovered_links.push(global_heatmap);
@@ -328,22 +327,6 @@ window.onload = function()
         right_content.update()();
     });
 
-    $("#gene_tab").on("click", function() {
-        $('#gene-analysis-title').text("Gene Analysis");
-        addToGeneBox();
-
-        var filterGene = $('#gene_filt_input');
-        filterGene.detach();
-
-        // (Re)Create filter signature box
-        var th = $('#filter_genes_container');
-        $(th).append(filterGene);
-        filterGene.show();
-        filterGene.trigger('input'); 
-
-    });
-
-
     var criteriaList = ["Rank", "Value"];
     for (var i = 0; i < criteriaList.length; i++) {
         var criteria = criteriaList[i];
@@ -352,7 +335,6 @@ window.onload = function()
         $("#subset-criteria").append(option);
     }
 
-    drawHeat();
     */
 
 };

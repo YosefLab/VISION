@@ -11,7 +11,7 @@ body {
     height: 100%;
     width: 100%;
     color: #555;
-    background: #eee;
+    background: #fff;
     font: 14px/1 'Open Sans', sans-serif;
     display: flex;
     flex-direction: column;
@@ -22,10 +22,12 @@ body {
     padding: 10px 30px 10px 10px;
     display: flex;
     flex-direction: row;
-    align-items: baseline;
+    align-items: center;
     box-sizing: border-box;
     border: 1px solid #bbbbbb;
     flex-shrink: 0;
+    background-color: var(--primary);
+    color: white;
 }
 
 #nav-bar .logo{
@@ -37,6 +39,16 @@ body {
 #nav-bar .nav{
     flex-grow: 1;
     font-size: 1.2em;
+}
+
+.nav-pills.inv .nav-link.active{
+    background-color: #fff;
+    color: var(--primary);
+}
+
+.nav-pills.inv .nav-link:not(.active){
+    background-color: var(--primary);
+    color: white;
 }
 
 #main-content{

@@ -20,9 +20,9 @@ function ColorScatter(parent, colorbar, legend)
     var xdomain = [-2, 2];
     var ydomain = [-2, 2];
 
-    this.margin = {right: 20, left: 40};
-    this.width = $(parent).width();
-    this.height = $(parent).height();
+    var margin = {right: 20, left: 40, top: 20, bottom: 20};
+    this.width = $(parent).width() - margin.left - margin.right;
+    this.height = $(parent).height() - margin.top - margin.bottom;
 
     this.circle_radius = 4.0
 
@@ -63,9 +63,10 @@ function ColorScatter(parent, colorbar, legend)
 
 
     this.svg = d3.select(parent).append("svg")
-        .attr("height", self.height)
-        .attr("width", self.width)
+        .attr("height", self.height + margin.top + margin.bottom)
+        .attr("width", self.width + margin.right + margin.left)
         .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
         .call(self.zoom)
         .call(self.tip);
 
@@ -76,6 +77,7 @@ function ColorScatter(parent, colorbar, legend)
 
     this.svg.append("g")
         .attr("class", "x axis")
+        .attr("transform", "translate(0," + self.height + ")")
         .call(self.xAxis);
 
     this.svg.append("g")
@@ -84,12 +86,9 @@ function ColorScatter(parent, colorbar, legend)
     
 
     if(this.colorbar_enabled){
-        this.colorbar_svg = this.svg
-            .attr("width", this.width + this.margin.left + this.margin.right)
-            .attr("height", colorbar_height+20);
+        this.colorbar = this.svg.append("g")
 
-        this.colorbar = this.colorbar_svg.append("rect")
-            //.attr("x", this.width + this.margin.left + this.margin.right - colorbar_width - 120)
+        this.colorbar.append("rect")
             .attr("x", this.width - colorbar_width - 10)
             .attr("y", 10)
             .attr("width", colorbar_width)
@@ -97,16 +96,13 @@ function ColorScatter(parent, colorbar, legend)
     }
 
     if (this.legend_enabled) {
-		this.legend_svg = this.svg
-			.attr("width", this.width + this.margin.left + this.margin.right)
-			.attr("height", this.legend_height + 20);
 
-		this.legend = this.legend_svg.append("g")
-			.attr("x", this.width - this.legend_width - 10)
-			.attr("y", 10)
-			.attr("width", this.legend_width)
-			.attr("height", this.legend_height);
-	}
+        this.legend = this.svg.append("g")
+            .attr("x", this.width - this.legend_width - 10)
+            .attr("y", 10)
+            .attr("width", this.legend_width)
+            .attr("height", this.legend_height);
+    }
 
 
     this.points = [];
@@ -176,38 +172,6 @@ ColorScatter.prototype.setData = function(points, isFactor)
     this.redraw(true)();
 };
 
-ColorScatter.prototype.overlayGeneExpr = function(vals) {
-	
-	var cvals = [];
-	Object.keys(vals).forEach(function(k) {
-		cvals.push(vals[k])
-	});
-	
-	cvals.sort(d3.ascending);
-
-	var low = d3.quantile(cvals, 0.1);
-	var high = d3.quantile(cvals, 0.9);
-	var mid = d3.mean(cvals);
-	
-	this.colorScale = d3.scale.linear()
-		.domain([low, mid, high])
-        .range(["#48D1CC", "#7CFC00", "red"]);
-
-	var label_low = parseFloat(low.toFixed(2)).toString();
-	var label_high = parseFloat(high.toFixed(2)).toString();
-
-	this.setColorBar(this.colorScale.range(),
-			label_low,
-			label_high);
-	
-	var newpoints = []
-	this.points.forEach(function(p) {
-		newpoints.push([p[0], p[1], vals[p[3]], p[3]]);
-	});
-	this.points = newpoints;
-
-	this.redraw(true)();
-}
 
 ColorScatter.prototype.setLegend = function(colors, values) {
 	
@@ -216,8 +180,7 @@ ColorScatter.prototype.setLegend = function(colors, values) {
 	var self = this;
 
 	this.legend.style("display", "block");
-	this.legend_svg.selectAll("text").remove();
-	//this.legend_svg.selectAll("defs").remove();
+	this.legend.selectAll("text").remove();
 
 
 	if (colors == undefined) {
@@ -259,8 +222,8 @@ ColorScatter.prototype.setColorBar = function(colors, label_low, label_high)
 {
     if(!this.colorbar_enabled){ return; }
 
-    this.colorbar_svg.selectAll("text").remove();
-    this.colorbar_svg.select("defs").remove();
+    this.colorbar.selectAll("text").remove();
+    this.colorbar.select("defs").remove();
 
     if(colors === undefined){
         // Clear color bar - useful for factors
@@ -270,8 +233,8 @@ ColorScatter.prototype.setColorBar = function(colors, label_low, label_high)
     }
     else
     {
-        var gradient = this.colorbar_svg.append("svg:defs")
-          .append("svg:linearGradient")
+        var gradient = this.colorbar.append("svg:defs")
+            .append("svg:linearGradient")
             .attr("id", "gradient")
             .attr("x1", "0%")
             .attr("y1", "0%")
@@ -287,31 +250,32 @@ ColorScatter.prototype.setColorBar = function(colors, label_low, label_high)
                 .attr("stop-color", colors[i])
                 .attr("stop-opacity", 0.8);
         }
+        var colorbar_rect = this.colorbar.select('rect')
 
-        this.colorbar
+        colorbar_rect
             .style("fill", "url(#gradient)")
             .style("stroke", "black")
             .style("stroke-width", "1px");
 
-        var label_low_x = this.colorbar.attr("x");
-        var label_high_x = (parseInt(this.colorbar.attr("x")) +
-            parseInt(this.colorbar.attr("width")-10)).toString();
+        var label_low_x = parseInt(colorbar_rect.attr("x"))
+        var label_high_x = label_low_x +
+            parseInt(colorbar_rect.attr("width")) - 10
 
-        this.colorbar_svg.append("text")
+        this.colorbar.append("text")
             .attr("text-anchor", "middle")
             .attr("x", label_low_x)
             .attr("y", 40)
             .attr("font-size", "10px")
             .text(label_low)
-            .attr("fill", "white");
+            .attr("fill", "black");
 
-        this.colorbar_svg.append("text")
+        this.colorbar.append("text")
             .attr("text-anchor", "middle")
             .attr("x", label_high_x)
             .attr("y", 40)
             .attr("font-size", "10px")
             .text(label_high)
-            .attr("fill", "white");
+            .attr("fill", "black");
     }
 };
 
@@ -525,7 +489,6 @@ ColorScatter.prototype.redraw = function(performTransition) {
 
     }
 
-	self.svg.selectAll("line").remove();
     circles.exit().remove();
     };
 };

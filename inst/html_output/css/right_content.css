@@ -68,12 +68,11 @@
 
 #scatter-div svg {
     font: 10px sans-serif;
-    shape-rendering: crispEdges;
-    background-color: rgba(255,255,255,0);
+    /*background-color: rgba(255,255,255,0);*/
 }
 
 #scatter-div rect {
-    fill: #292928;
+    fill: #eee;
 }
 
 #scatter-div svg circle{
@@ -83,4 +82,5 @@
 #scatter-div .axis path,
 #scatter-div .axis line {
     fill: none;
+    stroke: #fff
 }
