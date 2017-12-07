@@ -92,3 +92,7 @@ table.label-table td{
     font-size: 1.2em;
 }
 
+.loading {
+    -webkit-filter: grayscale(100%) blur(5px);
+    filter: grayscale(100%) blur(5px);
+}

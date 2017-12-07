@@ -2,19 +2,22 @@
  * Created by David DeTomaso on 6/24/2015.
  */
 
-function HeatMap(parent)
+function HeatMap(parent, width, height)
 {
     var self = this;
     this.h = 1;  //height of row
 
-    this.width = $(parent).width();
-    this.height = $(parent).height();
+    if(width === undefined){
+        this.width = $(parent).width();
+    } else {
+        this.width = width;
+    }
 
-
-    var otherHeight = 0;
-    //Subtract height of anything else
-    $(parent).children().each(function(i,e){ otherHeight += $(e).outerHeight(true);});
-    this.height -= otherHeight;
+    if(height === undefined){
+        this.height = $(parent).height();
+    } else {
+        this.height = height;
+    }
 
     this.svg = d3.select(parent).append("svg")
         .attr("width", self.width)

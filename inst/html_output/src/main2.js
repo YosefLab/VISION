@@ -189,13 +189,6 @@ function set_global_status(update){
 
 }
 
-// Keys are cluster methods
-// Values are list of allowed method parameter
-var cluster_options = { // Note: param values should be strings
-    "KMeans": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"],
-    //"PAM": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
-}
-
 $(window).resize(function()
 {
     right_content.resize()
@@ -288,44 +281,6 @@ window.onload = function()
         global_status.pc2 = this.value;
     });
 
-    // Define cluster dropdown 
-    var clust_dropdown = $('#cluster_select_method');
-    clust_dropdown.empty();
-    $.each(cluster_options, function(name){
-        clust_dropdown.append($("<option />").val(name).text(name));
-    });
-    clust_dropdown[0].selectedIndex = 0; // Restore index on model change
-
-    var build_cluster_dropdown_param = function()
-    {
-        // Rebuild the 'param' if the first dropdown is changed
-        var vals = cluster_options[$('#cluster_select_method').val()]
-        var clust_dropdown_param = $('#cluster_select_param');
-        var old_val = clust_dropdown_param.val()
-
-        clust_dropdown_param.empty();
-        for(var i=0; i<vals.length; i++){
-            clust_dropdown_param.append($("<option />").val(vals[i]).text(vals[i]));
-        }
-
-        if(vals.indexOf(old_val) > -1){
-            clust_dropdown_param[0].selectedIndex = vals.indexOf(old_val)
-        }
-    }
-
-    build_cluster_dropdown_param() // Call it now to initially populate it
-
-    //Define cluster dropdown's change function
-    $('#cluster_select_method').change(function(){
-        build_cluster_dropdown_param()
-        drawHeat();
-
-    });
-
-    //Define cluster dropdown's change function
-    $('#cluster_select_param').change(function(){
-        drawHeat();
-    });
 
     //Define color option (for scatter) change function
     $('input[name=scatterColorButtons]').change(function(){

@@ -19,7 +19,7 @@
 }
 
 #plot-title-div .titles{
-    width: 200px;
+    max-width: 300px;
 }
 
 #plot-title-div .subtitle, #plot-title-div .title{

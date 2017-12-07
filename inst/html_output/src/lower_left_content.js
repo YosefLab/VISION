@@ -75,10 +75,27 @@ function Sig_Info()
     this.source = $(this.dom_node).find('#sig-source');
     this.content = $(this.dom_node).find('#sig-table-wrapper');
     this.bound_sig = ""
+    this.sig_info_default = $(this.dom_node).find('#sig-info-default')
+    this.sig_info_cluster = $(this.dom_node).find('#sig-info-cluster')
+
+    this.cluster_options = { // Note: param values should be strings
+        "KMeans": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"],
+        //"PAM": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+    }
+
+    this.heatmap = null
+    this.plotted_heatmap = {
+        'sig_key': '',
+        'proj_key': '',
+        'cluster_method': '',
+        'cluster_param': '',
+    }
+
 }
 
 Sig_Info.prototype.init = function()
 {
+    var self = this;
     var dt = $(this.content).find('#sig-info-table')
     dt.DataTable( {
         columns: [
@@ -95,6 +112,38 @@ Sig_Info.prototype.init = function()
         'scrollY': '22vh',
         'scrollCollapse': true,
     })
+
+    $(self.dom_node).find('#HeatmapButton').on('click', function()
+    {
+        self.drawHeat()
+    })
+
+    // Define cluster dropdown 
+    var clust_dropdown = $(self.dom_node).find('#cluster_select_method')
+    var clust_param = $(self.dom_node).find('#cluster_select_param')
+
+    clust_dropdown.empty();
+    $.each(self.cluster_options, function(name){
+        clust_dropdown.append($("<option />").val(name).text(name));
+    });
+    clust_dropdown[0].selectedIndex = 0;
+
+    // Call it now to initially populate second dropdown
+    self.build_cluster_dropdown_param()
+
+    //Define cluster dropdown's change function
+    clust_dropdown.change(function(){
+        self.build_cluster_dropdown_param()
+        self.drawHeat();
+
+    });
+
+    //Define cluster dropdown's change function
+    clust_param.change(function(){
+        self.drawHeat();
+    });
+
+
 }
 
 Sig_Info.prototype.update = function(updates)
@@ -103,8 +152,16 @@ Sig_Info.prototype.update = function(updates)
     var sig_info = get_global_data('sig_info');
     if(sig_info.name === this.bound_sig || sig_info.isPrecomputed)
     {
+        // Needed to switch to Signature view if we plot a new projection
+        // but stay on same signature
+        if('plotted_projection' in updates){
+            $(self.dom_node).find('#SigInfoButton').click();
+        }
+
         return;
     }
+
+    $(self.dom_node).find('#SigInfoButton').click();
 
     this.bound_sig = sig_info.name
 
@@ -140,6 +197,108 @@ Sig_Info.prototype.update = function(updates)
         .rows.add(dataSet)
         .draw()
 }
+
+Sig_Info.prototype.build_cluster_dropdown_param = function()
+{
+    // Rebuild the 'param' if the first dropdown is changed
+    var self = this;
+    var vals = self.cluster_options[$(self.dom_node).find('#cluster_select_method').val()]
+    var clust_dropdown_param = $(self.dom_node).find('#cluster_select_param');
+    var old_val = clust_dropdown_param.val()
+
+    clust_dropdown_param.empty();
+    for(var i=0; i<vals.length; i++){
+        clust_dropdown_param.append($("<option />").val(vals[i]).text(vals[i]));
+    }
+
+    if(vals.indexOf(old_val) > -1){
+        clust_dropdown_param[0].selectedIndex = vals.indexOf(old_val)
+    }
+}
+
+// Draw the heatmap
+Sig_Info.prototype.drawHeat = function(){
+
+    // Need to create it if it isn't there
+    var self = this;
+
+    var heatmap_div = $(self.dom_node).find('#heatmap-div')
+
+    if( heatmap_div.children('svg').length === 0)
+    {
+        var heatmap_width = heatmap_div.parent().parent().width();
+        var heatmap_height = heatmap_div.parent().parent().height()-40;
+
+        self.heatmap = new HeatMap('#heatmap-div', heatmap_width, heatmap_height);
+    }
+
+    var sig_key = get_global_status('plotted_item'); // assume it's a signature
+    var proj_key = get_global_status('plotted_projection');
+    var filter_group = get_global_status('filter_group');
+
+    var cluster_method = $(self.dom_node).find('#cluster_select_method').val();
+    var cluster_param = $(self.dom_node).find('#cluster_select_param').val();
+
+    var sig_info = get_global_data('sig_info');
+
+    // plotted heatmap is based on sig_key, proj_key, cluster_method, and cluster_param
+    // check if we are already showing the right heatmap and don't regenerate
+    var need_plot = false;
+
+    if (self.plotted_heatmap['sig_key'] !== sig_key){
+        self.plotted_heatmap['sig_key'] = sig_key
+        need_plot = true;
+    }
+    if (self.plotted_heatmap['proj_key'] !== proj_key){
+        self.plotted_heatmap['proj_key'] = proj_key
+        need_plot = true;
+    }
+    if (self.plotted_heatmap['cluster_method'] !== cluster_method){
+        self.plotted_heatmap['cluster_method'] = cluster_method
+        need_plot = true;
+    }
+    if (self.plotted_heatmap['cluster_param'] !== cluster_param){
+        self.plotted_heatmap['cluster_param'] = cluster_param
+        need_plot = true;
+    }
+
+    if(!need_plot){
+        return $.when(true);
+    }
+
+    heatmap_div.addClass('loading')
+
+    return $.when(
+        api.signature.expression(sig_key),
+        api.projection.clusters(filter_group, proj_key, cluster_method, cluster_param))
+        .then(function(sig_expression, cluster){
+
+
+            //Construct data matrix
+            // TODO: sort genes
+
+            var dataMat = sig_expression.data;
+            var gene_labels = sig_expression.gene_labels;
+            var sample_labels = sig_expression.sample_labels;
+
+            var gene_signs = gene_labels.map(function(e){
+                return sig_info.sigDict[e]
+            });
+
+            //var assignments = data.Clusters[proj_key][choice];
+            var assignments = sample_labels.map(sample => cluster['data'][sample]);
+
+            self.heatmap.setData(dataMat,
+                assignments,
+                gene_labels,
+                gene_signs,
+                sample_labels);
+
+        }).always(function() {
+            heatmap_div.removeClass('loading');
+        });
+}
+
 
 function Gene_Info()
 {
@@ -305,68 +464,6 @@ function create_dist(data) {
 
 }
 
-
-// Draw the heatmap
-function drawHeat(){
-    var sig_key = global_status.plotted_signature;
-    var proj_key = global_status.plotted_projection;
-    var filter_group = global_status.filter_group
-    var cluster_method = $('#cluster_select_method').val();
-    var cluster_param = $('#cluster_select_param').val();
-
-    if(sig_key.length == 0){
-        $('#heatmap-div').hide();
-        return $().promise();
-    } else if (global_status.main_vis == "pcannotator") {
-        $("#heatmap-div").hide();
-        return $().promise();
-    }
-
-    $("#heatmap-div rect").show();
-    return $.when(api.signature.info(sig_key),
-        api.signature.expression(sig_key),
-        api.projection.clusters(filter_group, proj_key, cluster_method, cluster_param))
-        .then(function(sig_info, sig_expression, cluster){
-
-            if(sig_info.isPrecomputed){
-                $('#heatmap-div').hide();
-                return
-            }
-
-            // Heatmap doesn't show for precomputed sigs
-            // Need to recreate it if it isn't there
-            if( !$('#heatmap-div').is(":visible"))
-            {
-                $('#heatmap-div').find('svg').remove();
-                $('#heatmap-div').show();
-                global_heatmap = new HeatMap('#heatmap-div');
-                global_scatter.hovered_links.push(global_heatmap);
-                global_heatmap.hovered_links.push(global_scatter);
-            }
-
-
-            //Construct data matrix
-            // TODO: sort genes
-
-            var dataMat = sig_expression.data;
-            var gene_labels = sig_expression.gene_labels;
-            var sample_labels = sig_expression.sample_labels;
-
-            var gene_signs = gene_labels.map(function(e){
-                return sig_info.sigDict[e]
-            });
-
-            //var assignments = data.Clusters[proj_key][choice];
-            var assignments = sample_labels.map(sample => cluster['data'][sample]);
-
-            global_heatmap.setData(dataMat,
-                assignments,
-                gene_labels,
-                gene_signs,
-                sample_labels);
-
-        });
-}
 
 function unselectRange() {
     global_scatter.unselect();
