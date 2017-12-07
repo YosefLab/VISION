@@ -2,6 +2,11 @@ var global_stack = [];
 
 var global_status = {};
 global_status.main_vis = "sigvp"; // Selected from 3 options on top
+/* Options are:
+    'sigvp'
+    'pcannotator'
+    'tree'
+*/
 
 // Determine the projected coordinates
 global_status.plotted_projection = "";
@@ -75,7 +80,8 @@ function set_global_status(update){
     var upper_left_content_promises = [];
 
     if('plotted_pc' in update ||
-        ('plotted_signature' in update && get_global_status('main_vis') === 'pcannotator'))
+        ('plotted_signature' in update && get_global_status('main_vis') === 'pcannotator') ||
+        ('main_vis' in update && get_global_status('main_vis') === 'pcannotator'))
     {
         var pc_key = get_global_status('plotted_pc').split(" ")[1];
         var sig_key = get_global_status('plotted_signature');
@@ -89,7 +95,9 @@ function set_global_status(update){
         right_content_promises.push(pc_promise);
     }
 
-    if('plotted_projection' in update && get_global_status('main_vis') === 'tree'){
+    if(('plotted_projection' in update && get_global_status('main_vis') === 'tree') ||
+       ('main_vis' in update && get_global_status('main_vis') === 'tree')
+    ){
         var proj_key = get_global_status('plotted_projection');
         var filter_group = get_global_status('filter_group');
         var proj_promise = api.tree.coordinates(filter_group, proj_key)
@@ -102,7 +110,9 @@ function set_global_status(update){
         upper_left_content_promises.push(proj_promise);
     }
 
-    if('plotted_projection' in update && get_global_status('main_vis') === 'sigvp'){
+    if(('plotted_projection' in update && get_global_status('main_vis') === 'sigvp') ||
+       ('main_vis' in update && get_global_status('main_vis') === 'sigvp')
+    ){
         var proj_key = get_global_status('plotted_projection');
         var filter_group = get_global_status('filter_group');
         var proj_promise = api.projection.coordinates(filter_group, proj_key)
@@ -248,6 +258,15 @@ window.onload = function()
         .then(function(){
             upper_left_content.select_default();
         });
+
+    // Enable the nav-bar functionality
+    $('#nav-bar').find('.nav-link').click(function(){
+        $('#nav-bar').find('.nav-link').removeClass('active')
+        $(this).addClass('active')
+        set_global_status({
+            'main_vis': $(this).data('main-vis')
+        })
+    });
 
     /*
     $("#subset-criteria").change(function() {

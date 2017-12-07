@@ -96,15 +96,24 @@ Right_Content.prototype.draw_sigvp = function() {
 Right_Content.prototype.draw_tree = function() {
 
     var self = this;
+
     var item_key = get_global_status('plotted_item');
+    var item_type = get_global_status('plotted_item_type');
     var proj_key = get_global_status('plotted_projection');
     var filter_group = get_global_status('filter_group');
 
     var tree_points = api.tree.tree_points(filter_group, proj_key);
     var tree_adjlist = api.tree.tree(filter_group)
 
-    var projection = get_global_data('sig_projection_coordinates')
+    var projection = get_global_data('tree_projection_coordinates')
     var values = get_global_data('plotted_values')
+
+    var isFactor;
+    if(item_type === "signature"){
+        isFactor = get_global_data('sigIsPrecomputed')[item_key];
+    } else {
+        isFactor = false;
+    }
 
     if(self.getScatterColorOption() == "rank" && !isFactor){
         values = self.rank_values(values)
@@ -121,7 +130,6 @@ Right_Content.prototype.draw_tree = function() {
             $('#plot-subtitle').text(item_key);
 
             var points = [];
-
             var sample_labels = Object.keys(values).sort()
 
             _.each(sample_labels, (sample_label) => {
@@ -131,15 +139,25 @@ Right_Content.prototype.draw_tree = function() {
                 points.push([x, y, sig_score, sample_label]);
             })
 
+            var tree_points = [];
             for (var i = 0; i < treep[0].length; i++) {
                 var x = treep[0][i];
                 var y = treep[1][i];
-                var score = 0
-                points.push([x, y, score, "Node " + i, "Tree"]);
+                tree_points.push([x, y, "Node " + i]);
             }
 
+            // Change tree adjacency list into a list of pairs
+            var tree_adj = []
 
-            self.scatter.addTree(points, treel);
+            for (var i = 0; i < treel.length; i++) {
+                for (var j = i+1; j < treel[i].length; j++) {
+                    if (treel[i][j] == 1) {
+                        tree_adj.push([i, j])
+                    }
+                }
+            }
+
+            self.scatter.setData(points, isFactor, tree_points, tree_adj);
 
         });
 }

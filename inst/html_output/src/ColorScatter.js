@@ -8,13 +8,13 @@ function ColorScatter(parent, colorbar, legend)
     else {this.colorbar_enabled = colorbar;}
 
     if (legend == undefined) { this.legend_enabled = false; }
-	else {this.legend_enabled = legend;}
+    else {this.legend_enabled = legend;}
 
     var colorbar_height = 20;
     var colorbar_width = 200;
 
-	this.legend_height = 20;
-	this.legend_width = 200;
+    this.legend_height = 20;
+    this.legend_width = 200;
 
     var self = this;
     var xdomain = [-2, 2];
@@ -116,12 +116,26 @@ function ColorScatter(parent, colorbar, legend)
 
     this.last_event = -1;
 
+    this.tree_points = [];
+    this.tree_adj = [];
     this.curr_tree_node = {};
 }
 
-ColorScatter.prototype.setData = function(points, isFactor)
+
+ColorScatter.prototype.setData = function(points, isFactor, tree_points, tree_adj)
 {
+    if(tree_points === undefined){
+        tree_points = []
+    }
+
+    if(tree_adj === undefined){
+        tree_adj = []
+    }
+
     this.points = points;
+    this.tree_points = tree_points
+    this.tree_adj = tree_adj
+
     var cvals = points.map(function(e){return e[2];}); //extract 3rd column
 
     //Adjust circle size based on number of points
@@ -145,13 +159,13 @@ ColorScatter.prototype.setData = function(points, isFactor)
         this.setColorBar();
 
 
-		this.setLegend(this.colorScale, unique);
+        this.setLegend(this.colorScale, unique);
     }
     else
     {
         cvals.sort(d3.ascending); // Needed for quantile
-        var low = d3.quantile(cvals, 0.1);
-        var high = d3.quantile(cvals, 0.9);
+        var low = d3.quantile(cvals, 0.02);
+        var high = d3.quantile(cvals, 0.98);
         var mid = d3.mean(cvals);
 
         this.colorScale = d3.scale.linear()
@@ -357,7 +371,7 @@ ColorScatter.prototype.setHovered = function(hovered_indices, event_id)
         this.last_event = event_id;
         this.hover_col = hovered_indices;
         if(hovered_indices.length === 1 && hovered_indices[0] === -1){
-             //Clear the hover
+            //Clear the hover
             this.svg.selectAll("circle")
                 .classed("point-faded", false)
                 .classed("point-hover", false);
@@ -454,105 +468,91 @@ ColorScatter.prototype.toggleLasso = function(enable) {
 ColorScatter.prototype.redraw = function(performTransition) {
     var self = this;
     return function(){
-    self.svg.select(".x.axis").call(self.xAxis);
-    self.svg.select(".y.axis").call(self.yAxis);
+        self.svg.select(".x.axis").call(self.xAxis);
+        self.svg.select(".y.axis").call(self.yAxis);
 
-	self.svg.call(self.tip);
+        self.svg.call(self.tip);
 
-    var circles = self.svg.selectAll("circle")
-        .data(self.points);
-
-
-    circles.enter().append("circle").attr("r", self.circle_radius);
-    circles.style("fill", function(d){return self.colorScale(d[2]);})
-        .on("click", function(d,i){self.setSelected(i);})
-        .attr("opacity", 1.0)
-        .on("mouseover", function(d,i){self.tip.show(d,i); self.setHovered(i);})
-        .on("mouseout", function(d,i){self.tip.hide(d,i); self.setHovered(-1);})
+        var circles = self.svg.selectAll("circle.scatter")
+            .data(self.points);
 
 
+        circles.enter().append("circle")
+            .attr("r", self.circle_radius)
+            .classed("scatter", true);
 
-    if(performTransition !== undefined && performTransition === true)
-    {
-        circles
-            .transition()
-            .duration(1000)
-            .attr("opacity", 1.0)
-            .attr("cx", function(d){return self.x(d[0]);})
-            .attr("cy", function(d){return self.y(d[1]);});
-    }
-    else
-    {
-        circles
-            .attr("cx", function(d){return self.x(d[0]);})
-            .attr("cy", function(d){return self.y(d[1]);});
+        circles.style("fill", function(d){return self.colorScale(d[2]);})
+            .on("click", function(d,i){self.setSelected(i);})
+            .on("mouseover", function(d,i){self.tip.show(d,i); self.setHovered(i);})
+            .on("mouseout", function(d,i){self.tip.hide(d,i); self.setHovered(-1);})
 
-    }
+        var tree_circles = self.svg.selectAll("circle.tree")
+            .data(self.tree_points);
 
-    circles.exit().remove();
+        tree_circles.enter().append("circle")
+            .attr("r", 5)
+            .style("fill", '#555555')
+            .classed("tree", true);
+
+        tree_circles
+            .on("click", function(d,i){self.setSelected(i);})
+
+        var tree_edges = self.svg.selectAll("line.tree")
+            .data(self.tree_adj);
+
+        tree_edges.enter().append("line")
+            .attr("stroke", "#555555")
+            .attr("stroke-width", 2)
+            .attr("fill", 'none')
+            .classed("tree", true);
+
+
+        if(performTransition !== undefined && performTransition === true)
+        {
+            circles
+                .transition()
+                .duration(1000)
+                .attr("cx", function(d){return self.x(d[0]);})
+                .attr("cy", function(d){return self.y(d[1]);});
+
+            tree_circles
+                .transition()
+                .duration(1000)
+                .attr("cx", function(d){return self.x(d[0]);})
+                .attr("cy", function(d){return self.y(d[1]);});
+
+            tree_edges
+                .transition()
+                .duration(1000)
+                .attr("x1", function(d){return self.x(self.tree_points[d[0]][0])})
+                .attr("y1", function(d){return self.y(self.tree_points[d[0]][1])})
+                .attr("x2", function(d){return self.x(self.tree_points[d[1]][0])})
+                .attr("y2", function(d){return self.y(self.tree_points[d[1]][1])})
+        }
+        else
+        {
+            circles
+                .attr("cx", function(d){return self.x(d[0]);})
+                .attr("cy", function(d){return self.y(d[1]);});
+
+            tree_circles
+                .attr("cx", function(d){return self.x(d[0]);})
+                .attr("cy", function(d){return self.y(d[1]);});
+
+            tree_edges
+                .attr("x1", function(d){return self.x(self.tree_points[d[0]][0])})
+                .attr("y1", function(d){return self.y(self.tree_points[d[0]][1])})
+                .attr("x2", function(d){return self.x(self.tree_points[d[1]][0])})
+                .attr("y2", function(d){return self.y(self.tree_points[d[1]][1])})
+
+        }
+
+        circles.exit().remove();
+        tree_circles.exit().remove();
+        tree_edges.exit().remove();
     };
 };
 
-ColorScatter.prototype.addTree = function(tpoints, tlist) {
-	
-	var self = this;
-
-	self.svg.selectAll("line").remove();
-
-	var circles = self.svg.selectAll("circle")
-		.data(tpoints);
-
-	circles.enter().append("circle").attr("r", self.circle_radius);
-	circles.style("fill", function(d, i) {
-		if (d[4] == "Tree") {
-			return "white"
-		}
-		return self.colorScale(d[2]);
-		})
-		.attr("opacity", function(d) {
-			if (d[4] == "Tree") {
-				return 1.0
-			}
-			return 0.4
-		})
-		.classed("tree-node", function(d, i) {
-			return d[4] == "Tree"
-		});
-
-	circles
-		.transition()
-		.duration(1000)
-		.attr("cx", function(d) { return self.x(d[0]);})
-		.attr("cy", function(d) { return self.y(d[1]);});
-
-	var valueline = d3.svg.line()
-		.x(function(d) { return self.x(d[0]); })
-		.y(function(d) { return self.y(d[1]); });
-
-	var treedata = tpoints.filter(function(d) { return d[4] == "Tree"; });
-	var tree_lines = [];
-
-	for (i = 0; i < tlist.length; i++) {
-		for (j = 0; j < tlist[i].length; j++) {
-			if (tlist[i][j] == 1) {
-				self.svg.append("line")
-					.transition()
-					.duration(1000)
-					.attr("stroke", "white")
-					.attr("stroke-width", 2)
-					.attr("fill", 'none')
-					.attr("x1", self.x(treedata[i][0]))
-					.attr("y1", self.y(treedata[i][1]))
-					.attr("x2", self.x(treedata[j][0]))
-					.attr("y2", self.y(treedata[j][1]));
-			}
-		}
-	}
-
-	circles.exit().remove();
-	
-
-}
 
 ColorScatter.prototype.selectCellRange = function(points, lower, upper) {
 	

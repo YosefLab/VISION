@@ -45,13 +45,13 @@
         </div>
         <ul class="nav nav-pills justify-content-end inv">
             <li class="nav-item">
-                <a class="nav-link active" href="#">Projections</a>
+                <a class="nav-link active" href="#" data-main-vis="sigvp">Projections</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#">PC Annotator</a>
+                <a class="nav-link" href="#" data-main-vis="pcannotator">PC Annotator</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#">Simple PPT Viewer</a>
+                <a class="nav-link" href="#" data-main-vis="tree">Simple PPT Viewer</a>
             </li>
         </ul>
     </div>
@@ -81,10 +81,10 @@
 
                 <div class="tab-content upper-left-section-content">
                     <div class="tab-pane show active" id="table-div-container" role="tabpanel" aria-labelledby="sig-table-tab">
-                        <div id="header-div">
+                        <div class="sig-tables-header">
                             <table class="sig-table">
                                 <thead>
-                                    <tr id="proj_row">
+                                    <tr class="proj-row">
                                         <th>
                                             <div class="form-inline">
                                             <input id="sig_filt_input" class="form-control"
@@ -96,15 +96,26 @@
                                 </thead>
                             </table>
                         </div>
-                        <div id="cluster-tables-div"></div>
+                        <div class="sig-tables-wrapper"></div>
                     </div>
                     <div class="tab-pane" id="precomp-table-div" role="tabpanel" aria-labelledby="precomputed-table-tab">
-                        <table id="precomp-table" class="sig-table">
-                            <thead>
-                                <tr id="proj_row"></tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
+                        <div class="sig-tables-header">
+                            <table class="sig-table">
+                                <thead>
+                                    <tr class="proj-row">
+                                        <th style="height: 40px"> <!-- Matches space of filter input on other pane -->
+                                        </th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <div class="sig-tables-wrapper">
+                            <div class="sig-table-div">
+                                <table id="precomp-table" class="sig-table">
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                     <div class="tab-pane" id="genes-table" role="tabpanel" aria-labelledby="genes-table-tab">
                         <div>

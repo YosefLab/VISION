@@ -101,7 +101,7 @@ Signature_Table.prototype.render = function()
     var clusmax = Math.max.apply(null, clusarr);
 
     // Create the Header row
-    var header_row = $(self.dom_node).children("#header-div").find("#proj_row");
+    var header_row = $(self.dom_node).children(".sig-tables-header").find(".proj-row");
     header_row.find("th:not(:first-child)").remove()
     _.each(matrix.proj_labels, function(proj_label){
         var new_cell = $("<th>")
@@ -116,7 +116,7 @@ Signature_Table.prototype.render = function()
         header_row.append(new_cell)
     });
 
-    var clusterTableDiv = $(self.dom_node).children('#cluster-tables-div').first()
+    var clusterTableDiv = $(self.dom_node).children('.sig-tables-wrapper').first()
 
     // Remove old tables
     clusterTableDiv.children('.sig-table-div').remove()
@@ -349,17 +349,21 @@ Precomputed_Table.prototype.render = function()
     var matrix = self.matrix;
     var main_vis = get_global_status('main_vis');
 
-    var header_row = d3.select(self.dom_node).select('#precomp-table').select("thead").select("#proj_row").selectAll("th")
-        .data([""].concat(matrix.proj_labels));
-
-    header_row.enter().append('th');
-    header_row.html(function(d){return "<div>" + d+"</div>";})
-        .filter(function(d,i) {return i > 0;})
-        .on("click", function(col_name) { 
-            self.sorted_column = col_name;
-            self.render();
+    // Create the Header row
+    var header_row = $(self.dom_node).children(".sig-tables-header").find(".proj-row");
+    header_row.find("th:not(:first-child)").remove()
+    _.each(matrix.proj_labels, function(proj_label){
+        var new_cell = $("<th>")
+        var new_item = $("<div>")
+        new_item.html(proj_label)
+        new_item.on("click", function() {
+            var col_name = $(this).html()
+            self.sorted_column = col_name
+            self.render()
         });
-    header_row.exit().remove();
+        new_cell.append(new_item)
+        header_row.append(new_cell)
+    });
 
 
     if (typeof(matrix.sig_labels) == "string") {
