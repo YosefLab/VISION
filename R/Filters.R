@@ -13,13 +13,21 @@
 applyFilters <- function(data, threshold, filterInput) {
     expr <- getExprData(data)
 
+    # If the filterInput is a list of items, assume it's a list
+    # of genes and just use that to filter the matrix
+    if(length(filterInput) > 1) {
+        f_expr = expr[filterInput, ];
+        data@fanoFilter = f_expr
+        return(data)
+    }
+
     for (filter in filterInput) {
         if (filter == "novar") {
             f_expr <- filterGenesNovar(expr)
-            data@noVarFilter <- f_expr
+            data@fanoFilter <- f_expr
         } else if (filter == "threshold") {
             f_expr <- filterGenesThreshold(expr, threshold)
-            data@thresholdFilter <- f_expr
+            data@fanoFilter <- f_expr
         } else if (filter == "fano") {
             t_expr <- filterGenesThreshold(expr, threshold)
             f_expr <- filterGenesFano(t_expr)

@@ -12,12 +12,11 @@
 FastProject(data, ...)
 
 \S4method{FastProject}{matrix}(data, signatures, housekeeping = NULL,
-  norm_methods = NULL, precomputed = NULL, nofilter = FALSE,
-  nomodel = FALSE, filters = c("fano"), lean = FALSE,
-  min_signature_genes = 5, weights = NULL, threshold = 0,
-  perm_wPCA = FALSE, sig_norm_method = "znorm_rows",
-  sig_score_method = "weighted_avg", pool = FALSE,
-  cellsPerPartition = 100)
+  norm_methods = NULL, precomputed = NULL, nomodel = FALSE,
+  projection_genes = c("fano"), lean = FALSE, min_signature_genes = 5,
+  weights = NULL, threshold = 0, perm_wPCA = FALSE,
+  sig_norm_method = "znorm_rows", sig_score_method = "weighted_avg",
+  pool = FALSE, cellsPerPartition = 100)
 
 \S4method{FastProject}{character}(data, ...)
 
@@ -47,13 +46,11 @@ object}
 data.frame with meta information. Note that rows should match samples in the
 data, and columns should either be factors or numerics.}
 
-\item{nofilter}{if TRUE, no filter applied; else filters applied.
-Default is FALSE}
-
 \item{nomodel}{if TRUE, no fnr curve calculated and all weights equal to 1.
 Else FNR and weights calculated. [Default:FALSE]}
 
-\item{filters}{list of filters to compute}
+\item{projection_genes}{name of method ('threshold' or 'fano') or list of 
+genes to use when computing projections.}
 
 \item{lean}{if TRUE run a lean simulation. Else more robust pipeline
 initiated. Default is FALSE}

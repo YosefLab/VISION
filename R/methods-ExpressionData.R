@@ -5,8 +5,7 @@
 #' @param ... additional arguments
 #' @return ExpressionData object
 ExpressionData <- function(data, ...) {
-            .Object <- new("ExpressionData", data=data, fanoFilter=matrix(NA),
-                           thresholdFilter=matrix(NA), noVarFilter=matrix(NA))
+            .Object <- new("ExpressionData", data=data, fanoFilter=matrix(NA))
             return(.Object)
             }
 

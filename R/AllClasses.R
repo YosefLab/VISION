@@ -21,16 +21,13 @@ Cluster <- setClass("Cluster",
 ExpressionData <- setClass("ExpressionData",
     slots = c(
         data = "matrix",
-        fanoFilter = "matrix",
-        noVarFilter = "matrix",
-        thresholdFilter = "matrix"
+        fanoFilter = "matrix"
 ))
 
 FastProject <- setClass("FastProject",
     slots = c(
-        nofilter = "logical",
         nomodel = "logical",
-        filters = "character",
+        projection_genes = "character",
         lean = "logical",
         min_signature_genes = "numeric",
         weights = "matrix",
@@ -51,7 +48,6 @@ FastProject <- setClass("FastProject",
         pools = "list",
         inputProjections = "list"),
     prototype = list(
-        nofilter = FALSE,
         nomodel = FALSE,
         pca_filter = FALSE,
         lean = FALSE,

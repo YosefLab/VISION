@@ -19,11 +19,10 @@
 #' @param precomputed data file with precomputed signature scores (.txt), or a
 #' data.frame with meta information. Note that rows should match samples in the
 #' data, and columns should either be factors or numerics.
-#' @param nofilter if TRUE, no filter applied; else filters applied.
-#' Default is FALSE
 #' @param nomodel if TRUE, no fnr curve calculated and all weights equal to 1.
 #' Else FNR and weights calculated. [Default:FALSE]
-#' @param filters list of filters to compute
+#' @param projection_genes name of method ('threshold' or 'fano') or list of 
+#' genes to use when computing projections.
 #' @param lean if TRUE run a lean simulation. Else more robust pipeline
 #' initiated. Default is FALSE
 #' @param min_signature_genes Minimum number of genes required to compute a
@@ -61,8 +60,8 @@
 #'                      housekeeping = hkg)
 setMethod("FastProject", signature(data = "matrix"),
             function(data, signatures, housekeeping=NULL, norm_methods = NULL,
-                    precomputed=NULL, nofilter=FALSE, nomodel=FALSE,
-                    filters=c("fano"), lean=FALSE, min_signature_genes=5,
+                    precomputed=NULL, nomodel=FALSE,
+                    projection_genes=c("fano"), lean=FALSE, min_signature_genes=5,
                     weights=NULL, threshold=0, perm_wPCA=FALSE,
                     sig_norm_method="znorm_rows",
                     sig_score_method="weighted_avg", pool=FALSE,
@@ -106,11 +105,10 @@ setMethod("FastProject", signature(data = "matrix"),
                 .Object@weights <- weights
             }
 
-            .Object@nofilter <- nofilter
             if (!.Object@nomodel) {
                 .Object@nomodel <- nomodel
             }
-            .Object@filters <- filters
+            .Object@projection_genes <- projection_genes
             .Object@threshold <- threshold
             .Object@sig_norm_method <- sig_norm_method
             .Object@sig_score_method <- sig_score_method
@@ -379,8 +377,7 @@ createNewFP <- function(fp, subset) {
     })
 
     .Object@weights <- fp@weights[,subset]
-    .Object@nofilter <- fp@nofilter
-    .Object@filters <- fp@filters
+    .Object@projection_genes <- fp@projection_genes
     .Object@threshold <- fp@threshold
     .Object@sig_norm_method <- fp@sig_norm_method
     .Object@sig_score_method <- fp@sig_score_method

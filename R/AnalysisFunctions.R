@@ -20,14 +20,17 @@ poolCells <- function(object,
 #' filter data accourding to the provided filters
 #' @param object the FastProject object
 #' @param threshold threshold to apply for the threshold filter
-#' @param filters list of filters to compute options are limited to
+#' @param projection_genes either a list of genes or a method to select genes
 #' @return the FastProject object, populated with filtered data
 filterData <- function(object,
                        threshold=object@threshold,
-                       filters=object@filters) {
-    object@filters <- filters
+                       projection_genes=object@projection_genes) {
+
+    object@projection_genes <- projection_genes
     object@threshold <- threshold
+
     message("filtering data...")
+
     if (object@threshold == 0) {
         num_samples <- ncol(getExprData(object@exprData))
         object@threshold <- round(0.2 * num_samples)
@@ -35,7 +38,7 @@ filterData <- function(object,
 
     object@exprData <- applyFilters(object@exprData,
                                     object@threshold,
-                                    object@filters)
+                                    object@projection_genes)
     return(object)
 }
 
@@ -227,7 +230,7 @@ analyzeProjections <- function(object,
   filterModuleList <- list()
 
   ## calculate projections - s
-    for (filter in object@filters) {
+    for (filter in c("fano")) {
         message("Filter: ", filter)
 
         message("Projecting data into 2 dimensions...")

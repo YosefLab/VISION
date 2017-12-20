@@ -44,16 +44,10 @@ generateProjections <- function(expr, weights, filterName="",
                                 inputProjections=c(), lean=FALSE,
                                 perm_wPCA=FALSE, BPPARAM = BiocParallel::bpparam()) {
 
-    if (filterName == "novar") {
-    exprData <- expr@noVarFilter
-    } else if (filterName == "threshold") {
-    exprData <- expr@thresholdFilter
-    } else if (filterName == "fano") {
-    exprData <- expr@fanoFilter
-    } else if (filterName == "") {
-    exprData <- expr@data
+    if (filterName == "fano") {
+        exprData <- expr@fanoFilter
     } else {
-    stop("FilterName not recognized: ", filterName)
+        stop("FilterName not recognized: ", filterName)
     }
 
     methodList = registerMethods(lean)
@@ -154,16 +148,10 @@ generateTreeProjections <- function(expr, filterName="",
                                     BPPARAM = bpparam()) {
 
 
-    if (filterName == "novar") {
-    exprData <- expr@noVarFilter
-    } else if (filterName == "threshold") {
-    exprData <- expr@thresholdFilter
-    } else if (filterName == "fano") {
-    exprData <- expr@fanoFilter
-    } else if (filterName == "") {
-    exprData <- expr@data
+    if (filterName == "fano") {
+        exprData <- expr@fanoFilter
     } else {
-    stop("FilterName not recognized: ", filterName)
+        stop("FilterName not recognized: ", filterName)
     }
 
     t <- Sys.time()
