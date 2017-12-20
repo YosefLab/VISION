@@ -10,11 +10,7 @@ global_status.main_vis = "sigvp"; // Selected from 3 options on top
 
 // Determine the projected coordinates
 global_status.plotted_projection = "";
-global_status.plotted_pc = "";
-
-// Determine projected values
-global_status.selected_gene = "";
-global_status.plotted_signature = "";
+global_status.plotted_pc = 1;
 
 // Determine projected values
 global_status.plotted_item = "";  // name of signature, meta or gene that is plotted
@@ -79,20 +75,18 @@ function set_global_status(update){
     var lower_left_content_promises = [];
     var upper_left_content_promises = [];
 
-    if('plotted_pc' in update ||
-        ('plotted_signature' in update && get_global_status('main_vis') === 'pcannotator') ||
-        ('main_vis' in update && get_global_status('main_vis') === 'pcannotator'))
+    // Just get all the PC's using one call
+    if('main_vis' in update && get_global_status('main_vis') === 'pcannotator')
     {
-        var pc_key = get_global_status('plotted_pc').split(" ")[1];
-        var sig_key = get_global_status('plotted_signature');
         var filter_group = get_global_status('filter_group');
-        var pc_promise = api.pc.coordinates(filter_group, sig_key, pc_key)
+        var pc_promise = api.pc.coordinates(filter_group)
             .then(function(projection){
                 global_data.pca_projection_coordinates = projection;
             });
 
         all_promises.push(pc_promise);
         right_content_promises.push(pc_promise);
+        lower_left_content_promises.push(pc_promise);
     }
 
     if(('plotted_projection' in update && get_global_status('main_vis') === 'tree') ||
@@ -126,6 +120,7 @@ function set_global_status(update){
     }
 
 
+    // Updates plotted item values
     if('plotted_item' in update || 'plotted_item_type' in update) {
 
         var type = get_global_status('plotted_item_type');
@@ -154,13 +149,14 @@ function set_global_status(update){
 
     }
 
+    // Updates signature info if we're plotting a new signature
     if('plotted_item' in update || 'plotted_item_type' in update) {
 
         var type = get_global_status('plotted_item_type');
         var new_sig = get_global_status('plotted_item');
         var sig_info = get_global_data('sig_info');
 
-        if(type === 'signature' &&
+        if((type === 'signature' || type === 'meta') &&
             (_.isEmpty(sig_info) || sig_info.name !== new_sig)
         )
         {
@@ -168,11 +164,13 @@ function set_global_status(update){
                 .then(new_info => {
                     global_data.sig_info = new_info;
                 })
+
+            all_promises.push(sig_info_promise);
+            right_content_promises.push(sig_info_promise);
+            lower_left_content_promises.push(sig_info_promise);
+
         }
 
-        all_promises.push(sig_info_promise);
-        right_content_promises.push(sig_info_promise);
-        lower_left_content_promises.push(sig_info_promise);
     }
 
     $.when.apply($, right_content_promises).then(
@@ -310,18 +308,6 @@ window.onload = function()
     $("#reload_heatmap").on("click", function() {
         console.log('here');
         drawHeat(); 
-    });
-
-    //Enable Toggling of Lasso Select
-    $("#lasso-select").on("click", function() {
-        var tog = document.getElementById("lasso-select").innerHTML;
-        if (tog == "Enable Lasso Select") {
-            global_scatter.toggleLasso(true);
-            document.getElementById("lasso-select").innerHTML = "Disable Lasso Select";
-        } else {
-            global_scatter.toggleLasso(false);
-            document.getElementById("lasso-select").innerHTML = "Enable Lasso Select";
-        }
     });
 
     // Create listeners for main visualization modes

@@ -116,6 +116,10 @@ Signature_Table.prototype.render = function()
         header_row.append(new_cell)
     });
 
+    // Add padding for scrollbar width of table below it
+    $(self.dom_node).children(".sig-tables-header")
+        .css("padding-right", detect_browser_scrollbar_width() + "px")
+
     var clusterTableDiv = $(self.dom_node).children('.sig-tables-wrapper').first()
 
     // Remove old tables
@@ -197,7 +201,7 @@ Signature_Table.prototype.render = function()
 
         if (main_vis == "pcannotator") {
             var colorScale = d3.scale.linear()
-                .domain([0,0.4,.8])
+                .domain([-1,0,1])
                 .range(["steelblue", "white", "lightcoral"])
                 .clamp(true);
         } else {
@@ -221,11 +225,6 @@ Signature_Table.prototype.render = function()
         if (main_vis == "pcannotator") {
             content_row
                 .filter(function(d,i) { return i > 0;})
-                .text(function(d){
-                    if(d.val > .8) { return "> .8";}
-                    else if(d.val < .8) { return d.val.toFixed(2);}
-                    else {return d.val.toPrecision(2);}
-                })
                 .style('background-color', function(d){return colorScale(d.val);})
                 .on("click", function(d){tableClickFunction_PC(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'signature')});
 
@@ -258,14 +257,14 @@ Signature_Table.prototype.render = function()
 
     }
 
+    // Apply compact styling for pcannotator
+    if(main_vis === "pcannotator"){
+        $(self.dom_node).find('table').addClass('compact')
+    } else {
+        $(self.dom_node).find('table').removeClass('compact')
+    }
 
-    $(".sigclust").on("mouseover", function(d) {
-        tooltip.showTooltip("Click To Toggle Cluster Display", d);
-    })
-        .on("mouseout", function() {
-            tooltip.hideTooltip();
-        });
-
+    // Trigger existinging filter
     self.filterSig.trigger('input'); 
 }
 
@@ -365,6 +364,10 @@ Precomputed_Table.prototype.render = function()
         header_row.append(new_cell)
     });
 
+    // Add padding for scrollbar width of table below it
+    $(self.dom_node).children(".sig-tables-header")
+        .css("padding-right", detect_browser_scrollbar_width() + "px")
+
 
     if (typeof(matrix.sig_labels) == "string") {
         matrix.sig_labels = [matrix.sig_labels];
@@ -413,7 +416,7 @@ Precomputed_Table.prototype.render = function()
 
     if (main_vis == "pcannotator") {
         var colorScale = d3.scale.linear()
-            .domain([0,0.2,0.5])
+            .domain([-1.0,0,1.0])
             .range(["steelblue", "white", "lightcoral"])
             .clamp(true);
     } else {
@@ -438,11 +441,6 @@ Precomputed_Table.prototype.render = function()
     if (main_vis == "pcannotator") {
         content_row
             .filter(function(d,i) { return i > 0;})
-            .text(function(d){
-                if(d.val > .5) { return "> .5";}
-                else if(d.val < .5) { return d.val.toFixed(2);}
-                else {return d.val.toPrecision(2);}
-            })
             .style('background-color', function(d){return colorScale(d.val);})
             .on("click", function(d){tableClickFunction_PC(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'meta')});
 
@@ -461,6 +459,14 @@ Precomputed_Table.prototype.render = function()
     // Make signature names 
     content_row.filter(function(d,i) { return i == 0;})
         .text(function(d){return d;});
+
+    // Apply compact styling for pcannotator
+    if(main_vis === "pcannotator"){
+        $(self.dom_node).find('table').addClass('compact')
+    } else {
+        $(self.dom_node).find('table').removeClass('compact')
+    }
+
 
 }
 
@@ -531,40 +537,85 @@ Gene_Select.prototype.init = function()
         });
 
 
-    // Get a list of the projection names
-    var proj_names_promise = api.filterGroup.listProjections("fano")
-        .then(function(proj_names) {
-
-            var projSelect = $('#SelectProj');
-
-            _.each(proj_names, function (proj) {
-                projSelect.append(
-                    $('<option>', {
-                        value: proj,
-                        text: proj
-                    }));
-            });
-
-            projSelect.chosen({
-                'width': '110px',
-                'disable_search_threshold': 99,
-            })
-                .on('change', function () {
-                    set_global_status({
-                        'plotted_projection':$(this).val(),
-                    });
-                });
-
-        });
-
     this.render_recent_genes()
 
-    return $.when(gene_promise, proj_names_promise);
+    return $.when(gene_promise);
 
 }
 
 Gene_Select.prototype.update = function(updates)
 {
+    if('main_vis' in updates || $('#SelectProj').children().length === 0)
+    {
+        var main_vis = get_global_status('main_vis')
+        var filter_group = get_global_status('filter_group')
+        // Get a list of the projection names
+        if(main_vis === 'pcannotator'){
+            api.filterGroup.listPCs(filter_group)
+                .then(function(proj_names) {
+
+                    var projSelect = $('#SelectProj')
+                    projSelect.children().remove()
+
+                    _.each(proj_names, function (proj) {
+                        projSelect.append(
+                            $('<option>', {
+                                value: proj,
+                                text: "PC: "+proj
+                            }));
+                    });
+
+                    projSelect.chosen({
+                        'width': '110px',
+                        'disable_search_threshold': 99,
+                    })
+                        .on('change', function () {
+                            var newGene = $('#SelectGene').val()
+
+                            set_global_status({
+                                'plotted_pc':parseInt($(this).val()),
+                                'plotted_item':newGene,
+                                'plotted_item_type': 'gene'
+                            });
+                        })
+                        .trigger('chosen:updated')
+
+                });
+        } else {
+            api.filterGroup.listProjections(filter_group)
+                .then(function(proj_names) {
+
+                    var projSelect = $('#SelectProj')
+                    projSelect.children().remove()
+
+                    _.each(proj_names, function (proj) {
+                        projSelect.append(
+                            $('<option>', {
+                                value: proj,
+                                text: proj
+                            }));
+                    });
+
+                    projSelect.chosen({
+                        'width': '110px',
+                        'disable_search_threshold': 99,
+                    })
+                        .on('change', function () {
+                            var newGene = $('#SelectGene').val()
+
+                            set_global_status({
+                                'plotted_projection':$(this).val(),
+                                'plotted_item':newGene,
+                                'plotted_item_type': 'gene'
+                            });
+                        })
+                        .trigger('chosen:updated')
+
+                });
+
+        }
+
+    }
     if('plotted_projection' in updates)
     {
         var plotted_projection = get_global_status('plotted_projection')
@@ -713,7 +764,7 @@ function tableClickFunction_PC(row_key, col_key, item_type)
     var update = {}
     update['plotted_item_type'] = item_type;
     update['plotted_item'] = row_key;
-    update['plotted_pc'] = col_key;
+    update['plotted_pc'] = parseInt(col_key.split(" ")[1])
 
     set_global_status(update);
 }

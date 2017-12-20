@@ -22,7 +22,7 @@
 }
 
 .upper-left-section-content .sig-tables-header{
-    margin-right: 30px; /* Account for scrollbar in div below it */
+    margin-right: 10px; /* Account for padding of div below it */
     margin-top: 30px;
     margin-bottom: 5px;
 }
@@ -47,10 +47,9 @@
 }
 
 .sig-table th:not(:first-child) div {
-    transform-origin: left center 0;
-    transform: translate(15px,0.2em) rotate(-75deg);
+    transform-origin: center center 0;
+    transform: translate(2px,0) rotate(-75deg);
     text-align: left;
-    width: 50px;
     white-space: nowrap;
 }
 
@@ -67,14 +66,17 @@
     -ms-word-wrap: break-word;
     word-wrap: break-word;
     cursor: pointer;
-    padding-left: 5px;
+    padding: 3px 10px 3px 5px;
     position: relative;
+}
+
+.sig-table tr:nth-child(even) td:first-child{
+    background-color: #eeeeee;
 }
 
 .sig-table td:not(:first-child), .sig-table th:not(:first-child){
     text-align: center;
-    width: calc(450px / 15) !important; 
-    max-width: 35px !important;
+    width: 30px; 
     cursor: pointer;
     font-size: 0.8em;
 }
@@ -83,6 +85,17 @@
     padding: 3px 0;
     border: 1px solid black;
 }
+
+.sig-table.compact td:not(:first-child){
+    width: 15px;
+    font-size: 0;
+    color: transparent;
+}
+
+.sig-table.compact th:not(:first-child){
+    width: 15px;
+}
+
 
 .filtered {
     display: none;

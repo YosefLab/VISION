@@ -13,9 +13,6 @@ function ColorScatter(parent, colorbar, legend)
     var colorbar_height = 20;
     var colorbar_width = 200;
 
-    this.legend_height = 20;
-    this.legend_width = 200;
-
     var self = this;
     var xdomain = [-2, 2];
     var ydomain = [-2, 2];
@@ -96,12 +93,9 @@ function ColorScatter(parent, colorbar, legend)
     }
 
     if (this.legend_enabled) {
-
         this.legend = this.svg.append("g")
-            .attr("x", this.width - this.legend_width - 10)
-            .attr("y", 10)
-            .attr("width", this.legend_width)
-            .attr("height", this.legend_height);
+            .style("stroke", "black")
+            .style("stroke-width", "1px")
     }
 
 
@@ -136,6 +130,8 @@ ColorScatter.prototype.setData = function(points, isFactor, tree_points, tree_ad
     this.tree_points = tree_points
     this.tree_adj = tree_adj
 
+    this.autoZoom() // Adjusts axes if necessary
+
     var cvals = points.map(function(e){return e[2];}); //extract 3rd column
 
     //Adjust circle size based on number of points
@@ -160,9 +156,9 @@ ColorScatter.prototype.setData = function(points, isFactor, tree_points, tree_ad
 
 
         this.setLegend(this.colorScale, unique);
-    }
-    else
-    {
+
+    } else if(cvals[0] !== null) {
+
         cvals.sort(d3.ascending); // Needed for quantile
         var low = d3.quantile(cvals, 0.02);
         var high = d3.quantile(cvals, 0.98);
@@ -170,7 +166,7 @@ ColorScatter.prototype.setData = function(points, isFactor, tree_points, tree_ad
 
         this.colorScale = d3.scale.linear()
             .domain([low, mid, high])
-            .range(["#48D1CC", "#7CFC00", "red"]);
+            .range(["blue", "green", "red"]);
 
         // Format the bound labels
         var label_low = parseFloat(low.toFixed(2)).toString();
@@ -178,57 +174,110 @@ ColorScatter.prototype.setData = function(points, isFactor, tree_points, tree_ad
 
         this.setLegend();
         this.setColorBar(this.colorScale.range(),
-               label_low,
-               label_high);
+            label_low,
+            label_high);
 
+    } else {
+
+        this.colorScale = function(){return "steelblue"}
+
+        this.setLegend();
+        this.setColorBar();
     }
 
     this.redraw(true)();
 };
 
+/*
+ * Automatically adjusts the scale if the points are too wide
+ * or too narrow
+ */
+ColorScatter.prototype.autoZoom = function() {
+    var self = this;
+    var xvals = self.points.map(function(e){return e[0];});
+    var yvals = self.points.map(function(e){return e[1];});
+
+    xvals.sort(d3.ascending); // Needed for quantile
+    yvals.sort(d3.ascending); // Needed for quantile
+
+    var xmax = d3.quantile(xvals, 0.99);
+    var ymax = d3.quantile(yvals, 0.99);
+
+    var xmin = d3.quantile(xvals, 0.01);
+    var ymin = d3.quantile(yvals, 0.01);
+
+    var current_x_range = self.x.domain()
+    var current_y_range = self.y.domain()
+
+    var do_x_rescale = false;
+    var do_y_rescale = false;
+
+    // These cover if more than X % of the data is outside the viewport on
+    // either side
+    if(xmin < current_x_range[0]) {do_x_rescale = true;}
+    if(xmax > current_x_range[1]) {do_x_rescale = true;}
+
+    if(ymin < current_y_range[0]) {do_y_rescale = true;}
+    if(ymax > current_y_range[1]) {do_y_rescale = true;}
+
+    // These cover if the data is too scrunched up
+    var x_coverage = (xmax-xmin) / (current_x_range[1] - current_x_range[0])
+    if(x_coverage < .20) {do_x_rescale = true;}
+
+    var y_coverage = (ymax-ymin) / (current_y_range[1] - current_y_range[0])
+    if(y_coverage < .20) {do_y_rescale = true;}
+
+    if(do_x_rescale || do_y_rescale){
+        var x_pad = (xmax-xmin)*0.30;
+        self.x.domain([xmin-x_pad, xmax+x_pad]);
+
+        self.zoom
+            .x(self.x)
+    }
+
+    if(do_y_rescale || do_x_rescale){
+        var y_pad = (ymax-ymin)*0.30;
+        self.y.domain([ymin-y_pad, ymax+y_pad]);
+
+        self.zoom
+            .y(self.y)
+    }
+
+}
 
 ColorScatter.prototype.setLegend = function(colors, values) {
 	
-	if (!this.legend_enabled) { return; } 
+    if (!this.legend_enabled) { return; }
 
-	var self = this;
+    var self = this;
 
-	this.legend.style("display", "block");
-	this.legend.selectAll("text").remove();
+    this.legend.selectAll("text").remove();
+    this.legend.selectAll("rect").remove();
 
+    if (colors !== undefined) {
 
-	if (colors == undefined) {
-		this.legend.style("display", "none");
-		this.legend
-			.style("fill", "rgba(0,0,0,0)")
-			.style("stroke", "none");
-	} else {
-        this.legend
-            .style("stroke", "black")
-            .style("stroke-width", "1px")
-
-		incr_x = self.legend_width / values.length;
-		l_x = self.width - self.legend_width - 10;
-		l_y = 10; 
-		i = 0;
-		values.forEach(function(n) {
-			curr_x = l_x + (i * incr_x);
-			self.legend.append("rect")
-				.attr("x", curr_x)
-				.attr("y", l_y)
-				.attr("width", incr_x)
-				.attr("height", self.legend_height)
-				.style("fill", colors(n));
-			self.legend.append("text")
-				.attr("x", curr_x + 3)
-				.attr("y", l_y + 15)
-				.attr("class", "legend-subs")
-				.text(n);
-			i += 1;
-		});
-	}
-
-
+        var square_size = 20
+        var l_x = self.width - square_size -10;
+        var l_y = 10;
+        var i = 0;
+        values.forEach(function(n) {
+            var curr_y = l_y + (i * (square_size+5));
+            self.legend.append("rect")
+                .attr("x", l_x)
+                .attr("y", curr_y)
+                .attr("width", square_size)
+                .attr("height", square_size)
+                .style("fill", colors(n));
+            self.legend.append("text")
+                .attr("x", l_x - 5)
+                .attr("y", curr_y + square_size/2)
+                .attr("class", "legend-subs")
+                .attr("text-anchor", "end")
+                .attr("alignment-baseline", "middle")
+                .text(n);
+            i += 1;
+        });
+    }
 	
 }	
 
@@ -241,9 +290,11 @@ ColorScatter.prototype.setColorBar = function(colors, label_low, label_high)
 
     if(colors === undefined){
         // Clear color bar - useful for factors
-        this.colorbar
-            .style("fill","rgba(0,0,0,0)")
-            .style("stroke","none");
+        var colorbar_rect = this.colorbar.select('rect')
+
+        colorbar_rect
+            .style("fill", "rgba(0,0,0,0)")
+            .style("stroke", "none")
     }
     else
     {
@@ -392,76 +443,76 @@ ColorScatter.prototype.setHovered = function(hovered_indices, event_id)
 
 ColorScatter.prototype.toggleLasso = function(enable) {
 
-	var self = this;
-	if (enable) { 
-		self.lasso_start = function() {
-			self.lasso.items()
-				.classed({"not_possible": true, "selected": false});
-		};
+    var self = this;
+    if (enable) { 
 
-		self.lasso_draw = function() {
-			// Style possible dots
-		
-	
-			self.lasso.items().filter(function(d) { return d.possible===true})
-				.classed({"not_possible":false, "possible":true});
+        var lasso_start = function() {
+            self.lasso.items()
+                .classed({"not_possible": true, "selected": false});
+        };
 
-			// Style not possible dots
-			self.lasso.items().filter(function(d) { return d.possible===false})
-				.classed({"not_possible": true, "possible": false});
-		};
-	
-		self.lasso_end = function() {
+        var lasso_draw = function() {
+            // Style possible dots
 
-			self.lasso.items().filter(function(d) { return d.selected===true})
-				.classed({"not_possible":false, "possible":false})
-				.classed("point-selected", true);
+            self.lasso.items().filter(function(d) { return d.possible===true})
+                .classed({"not_possible":false, "possible":true});
 
-			self.lasso.items().filter(function(d) { return d.selected===false })
-				.classed({"not_possible": false, "possible": false});
+            // Style not possible dots
+            self.lasso.items().filter(function(d) { return d.possible===false})
+                .classed({"not_possible": true, "possible": false});
+        };
 
-			var cellNames = self.points.map(function(e){return e[3];}); //extract 2nd and 3rd columns
+        var lasso_end = function() {
 
-			var selected = self.lasso.items().filter(function(d) { return d.selected === true });
-			selected[0].forEach(function(d) {
-				self.selectedPoints.push(cellNames.indexOf(d.__data__[3]));
-			});	
+            self.lasso.items().filter(function(d) { return d.selected===true})
+                .classed({"not_possible":false, "possible":false})
+                .classed("point-selected", true);
 
-			self.lasso.items()
-				.attr("opacity", function(d,i) {
-					if (self.selectedPoints.indexOf(i) == -1) {
-						return .4
-					}
-				});
+            self.lasso.items().filter(function(d) { return d.selected===false })
+                .classed({"not_possible": false, "possible": false});
 
-		};
+            var cellNames = self.points.map(function(e){return e[3];}); //extract 2nd and 3rd columns
 
-		self.lasso_area = self.svg.append("rect")
-				.attr("width", self.width)
-				.attr("height", self.height)
-				.style("opacity", 0);
+            var selected = self.lasso.items().filter(function(d) { return d.selected === true });
+            selected[0].forEach(function(d) {
+                self.selectedPoints.push(cellNames.indexOf(d.__data__[3]));
+            });	
 
-		self.lasso = d3.lasso()
-			.closePathDistance(75)
-			.closePathSelect(true)
-			.hoverSelect(true)
-			.area(self.lasso_area)
-			.on("start", self.lasso_start)
-			.on("draw", self.lasso_draw)
-			.on("end", self.lasso_end);
+            self.lasso.items()
+                .attr("opacity", function(d,i) {
+                    if (self.selectedPoints.indexOf(i) == -1) {
+                        return .4
+                    }
+                });
 
-		self.svg.call(self.lasso);
+        };
+
+        self.lasso_area = self.svg.append("rect")
+            .attr("width", self.width)
+            .attr("height", self.height)
+            .style("opacity", 0);
+
+        self.lasso = d3.lasso()
+            .closePathDistance(75)
+            .closePathSelect(true)
+            .hoverSelect(true)
+            .area(self.lasso_area)
+            .on("start", lasso_start)
+            .on("draw", lasso_draw)
+            .on("end", lasso_end);
+
+        self.svg.call(self.lasso);
         self.svg
             .on("mousedown.zoom", null)
-        .on("touchstart.zoom", null)
-        .on("touchmove.zoom", null)
-        .on("touchend.zoom", null)
+            .on("touchstart.zoom", null)
+            .on("touchmove.zoom", null)
+            .on("touchend.zoom", null)
 
-		self.lasso.items(self.svg.selectAll("circle"));
-	} else {
-		self.lasso_area.remove();
+        self.lasso.items(self.svg.selectAll("circle.scatter"));
+    } else {
+        self.lasso_area.remove();
         self.svg.call(self.zoom);
-	}
+    }
 
 }
 

@@ -14,13 +14,25 @@ Right_Content.prototype.init = function()
     $(self.scatterColorOptions).on('change', function(){
         self.update({ 'colorScatterOption': '' }) // No need to send value
     })
+
+    //Enable Toggling of Lasso Select
+    $(self.dom_node).find("#lasso-select").on("click", function() {
+        var tog = $(this).html();
+        if (tog == "Enable Lasso Select") {
+            self.scatter.toggleLasso(true);
+            $(this).html("Disable Lasso Select");
+        } else {
+            self.scatter.toggleLasso(false);
+            $(this).html("Enable Lasso Select");
+        }
+    });
+
+
 }
 
 Right_Content.prototype.update = function(updates)
 {
     var self = this;
-    var status_copy = $.extend({}, global_status);
-    global_stack.push(status_copy);
     
     var needsUpdate = ('main_vis' in updates) ||
         ('plotted_item' in updates) ||
@@ -28,7 +40,6 @@ Right_Content.prototype.update = function(updates)
         ('plotted_projection' in updates) ||
         ('filter_group' in updates) ||
         ('plotted_pc' in updates) ||
-        ('selected_gene' in updates) ||
         ('colorScatterOption' in updates);
 
     if (!needsUpdate) return;
@@ -53,8 +64,8 @@ Right_Content.prototype.update = function(updates)
 Right_Content.prototype.draw_sigvp = function() {
 
     var self = this;
-    var status_copy = $.extend({}, global_status);
-    global_stack.push(status_copy);
+
+    $(self.dom_node).find("#plotted-value-option").show()
 
     var item_key = get_global_status('plotted_item');
     var item_type = get_global_status('plotted_item_type');
@@ -64,8 +75,8 @@ Right_Content.prototype.draw_sigvp = function() {
     var values = get_global_data('plotted_values')
 
     var isFactor;
-    if(item_type === "signature"){
-        isFactor = get_global_data('sigIsPrecomputed')[item_key];
+    if(item_type !== "gene"){
+        isFactor = get_global_data('sig_info').isFactor
     } else {
         isFactor = false;
     }
@@ -97,6 +108,8 @@ Right_Content.prototype.draw_tree = function() {
 
     var self = this;
 
+    $(self.dom_node).find("#plotted-value-option").show()
+
     var item_key = get_global_status('plotted_item');
     var item_type = get_global_status('plotted_item_type');
     var proj_key = get_global_status('plotted_projection');
@@ -109,8 +122,8 @@ Right_Content.prototype.draw_tree = function() {
     var values = get_global_data('plotted_values')
 
     var isFactor;
-    if(item_type === "signature"){
-        isFactor = get_global_data('sigIsPrecomputed')[item_key];
+    if(item_type !== "gene"){
+        isFactor = get_global_data('sig_info').isFactor
     } else {
         isFactor = false;
     }
@@ -166,39 +179,33 @@ Right_Content.prototype.draw_pca = function() {
 
     var self = this;
 
-    var status_copy = $.extend({}, global_status);
-    global_stack.push(status_copy);
+    $(self.dom_node).find("#plotted-value-option").hide()
 
     var item_key = get_global_status('plotted_item');
     var item_type = get_global_status('plotted_item_type');
 
-    var pc_key = get_global_status('plotted_pc').split(" ")[1];
+    var pc_key = get_global_status('plotted_pc');
 
-    var projection = get_global_data('sig_projection_coordinates')
+    var pca = get_global_data('pca_projection_coordinates')
     var values = get_global_data('plotted_values')
 
     var isFactor;
-    if(item_type === "signature"){
+    if(item_type === "gene"){
         isFactor = get_global_data('sigIsPrecomputed')[item_key];
     } else {
         isFactor = false;
     }
 
-    if(self.getScatterColorOption() == "rank" && !isFactor){
-        values = self.rank_values(values)
-    }
-
-
-    $("#plot-title").text("Principal Component ".concat(pc_key));
+    $("#plot-title").text("PC: ".concat(pc_key));
     $("#plot-subtitle").text(item_key);
 
     var points = []
     var sample_labels = Object.keys(values).sort()
 
     _.each(sample_labels, (sample_label) => {
-        var x = projection[sample_label][0]
-        var y = projection[sample_label][1]
-        var sig_score = values[sample_label]
+        var x = pca[sample_label][pc_key-1]
+        var y = values[sample_label]
+        var sig_score = null
         points.push([x, y, sig_score, sample_label]);
     })
 

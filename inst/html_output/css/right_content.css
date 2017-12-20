@@ -84,3 +84,38 @@
     fill: none;
     stroke: #fff
 }
+
+/* Classes for the scatter plot lasso */
+
+.lasso path {
+	stroke: rgb(80, 80, 80);
+	stroke-width: 2px;
+}
+
+.lasso .drawn  {
+	fill-opacity: 0.5;
+}	
+
+.lasso .loop_close {
+	fill: none;
+	stroke-dasharray: 4,4;
+}
+
+.lasso .origin {
+	fill: #3399FF;
+	fill-opacity: .5;
+}
+
+.not_possible {
+	fill: rgb(200,200,200);
+}
+
+.possible {
+	fill: #EC888C;
+}
+
+.legend-subs {
+	font: 11px 'Open Sans', sans-serif;
+    stroke-width: 0;
+}
+

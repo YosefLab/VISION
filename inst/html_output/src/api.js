@@ -10,9 +10,12 @@ var api = (function(){
      */
 
     var fix_coordinates = function(x){
+
+        var ii = x[0].length - 1;
+
         var result =  _(x)
-            .keyBy(x => x[2])
-            .mapValues(x => x.slice(0, 2))
+            .keyBy(x => x[ii])
+            .mapValues(x => x.slice(0, ii))
             .value();
 
         return result;
@@ -131,6 +134,13 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
+    output.filterGroup.listPCs = function(filter_group)
+    {
+        var query = "/FilterGroup/"
+        query = query.concat(encodeURI(filter_group), "/PearsonCorr/list")
+        return $.ajax(query, {dataType: "json"}).then(x => x)
+    }
+
     output.filterGroup.loadings_pos = function(filter_group, pcnum) {
         var query = "/FilterGroup/";
         query = query.concat(encodeURI(filter_group), "/", encodeURI(pcnum), "/Loadings");
@@ -195,10 +205,10 @@ var api = (function(){
 
     output.pc = {}
 
-    output.pc.coordinates = function(filter_group, sig_name, pcnum) {
+    output.pc.coordinates = function(filter_group) {
         var query = "/FilterGroup/";
-        query = query.concat(encodeURI(filter_group), "/", encodeURI(sig_name), "/", encodeURI(pcnum), "/Coordinates");
-        return $.ajax(query, {dataType: "json"}).then(x => x)
+        query = query.concat(encodeURI(filter_group), "/PCA/Coordinates");
+        return $.ajax(query, {dataType: "json"}).then(x => fix_coordinates(x))
     }	
 
     output.pc.versus = function(filter_group, pc1, pc2) {

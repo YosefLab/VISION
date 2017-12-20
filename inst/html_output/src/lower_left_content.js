@@ -367,9 +367,32 @@ Precomp_Info.prototype.update = function(updates)
 function drawDistChart(parent_div, data, title) {
 
     var hist = create_dist(data)
+    var isFactor = typeof(data[0]) === "string"
 
     var x_vals = hist['centers']
     var counts = hist['counts']
+
+    var x_axis_params;
+    if(isFactor) {
+        x_axis_params = {
+            type: 'category',
+            categories: x_vals,
+            tick: {
+                rotate: 75,
+                width: 100,
+            },
+            height: 100,
+        }
+    } else {
+        x_axis_params = {
+            type: 'indexed',
+            tick: {
+                rotate: 75,
+                format: d3.format('.2n')
+            },
+            height: 100,
+        }
+    }
 
     var c3_params = {
         bindto: parent_div,
@@ -387,13 +410,7 @@ function drawDistChart(parent_div, data, title) {
             }
         },
         axis: {
-            x: {
-                type: 'indexed',
-                tick: {
-                    rotate: 75,
-                    format: d3.format('.2n')
-                },
-            },
+            x: x_axis_params,
             y: {
                 type: 'indexed',
             }
@@ -403,6 +420,9 @@ function drawDistChart(parent_div, data, title) {
         },
         size: {
             width: 400
+        },
+        padding: {
+            right: 30,
         },
     }
 

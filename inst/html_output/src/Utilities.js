@@ -202,3 +202,54 @@ Array.prototype.argSort = function()
     out.sort(function(a,b){return that[a] - that[b];});
     return out;
 };
+
+var detect_browser_scrollbar_width = (function()
+{
+    var _width = -1; // cache the value so its only calculated once
+
+    function inner()
+    {
+        if(_width > -1){
+            return _width;
+        }
+
+        var n = $('<div/>')
+            .css( {
+                top: 0,
+                left: $(window).scrollLeft()*-1,
+                height: 1,
+                width: 1,
+                position: 'fixed',
+                overflow: 'hidden'
+            } )
+            .append(
+                $('<div/>')
+                    .css( {
+                        top: 1,
+                        left: 1,
+                        width: 150,
+                        overflow: 'scroll',
+                        position: 'absolute'
+                    } )
+                    .append(
+                        $('<div/>')
+                            .css( {
+                                width: '100%',
+                                height: 20
+                            } )
+                    )
+            )
+            .appendTo( 'body' );
+
+        var child = n.children();
+
+        var width = child[0].offsetWidth - child[0].clientWidth;
+
+        n.remove()
+        _width = width;
+
+        return width
+    }
+
+    return inner;
+}());

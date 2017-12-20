@@ -465,6 +465,15 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         return(js2)
 
       }) %>%
+      get("/FilterGroup/(?<filter_name12>.*)/PCA/Coordinates", function(req, res, err) {
+        # projData <- object@projData
+        filter <- URLdecode(req$params$filter_name12)
+
+        pc <- object@filterModuleList[[filter]]@PCAnnotatorData@fullPCA
+        out <- FastProjectR:::coordinatesToJSON(pc)
+
+        return(out)
+      }) %>%
       get("/FilterGroup/(?<filter_name12>.*)/(?<sig_name5>.*)/(?<pc_num2>.*)/Coordinates", function(req, res, err) {
         # projData <- object@projData
         filter <- URLdecode(req$params$filter_name12)
@@ -500,30 +509,38 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         return(toJSON(coord, force=T, auto_unbox=T))
       }) %>%
       get("/FilterGroup/(?<filter_name14>.*)/PearsonCorr/Normal", function(req, res, err) {
-        # projData <- object@projData
           filter <- URLdecode(req$params$filter_name14)
 
-        signatures <- object@sigData
-        keys <- vapply(signatures, function(x) x@name, "")
-        vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
-        sigs <- keys[!vals]
+          signatures <- object@sigData
+          keys <- vapply(signatures, function(x) x@name, "")
+          vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
+          sigs <- keys[!vals]
           pc <- object@filterModuleList[[filter]]@PCAnnotatorData@pearsonCorr
-          # pc <- projData[[filter]]@pearsonCorr
 
         return(FastProjectR:::pearsonCorrToJSON(pc, sigs))
       }) %>%
       get("/FilterGroup/(?<filter_name15>.*)/PearsonCorr/Precomputed", function(req, res, err) {
-        # projData <- object@projData
           filter <- URLdecode(req$params$filter_name15)
 
-        signatures <- object@sigData
-        keys <- vapply(signatures, function(x) x@name, "")
-        vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
-        sigs <- keys[vals]
-        pc <- object@filterModuleList[[filter]]@PCAnnotatorData@pearsonCorr
-        # pc <- projData[[filter]]@pearsonCorr
+          signatures <- object@sigData
+          keys <- vapply(signatures, function(x) x@name, "")
+          vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
+          vals2 <- vapply(signatures, function(x) !x@isFactor, TRUE)
+          sigs <- keys[vals & vals2]
+          pc <- object@filterModuleList[[filter]]@PCAnnotatorData@pearsonCorr
 
         return(FastProjectR:::pearsonCorrToJSON(pc, sigs))
+      }) %>%
+      get("/FilterGroup/(?<filter_name17>.*)/PearsonCorr/list", function(req, res, err) {
+          filter <- URLdecode(req$params$filter_name17)
+
+          pc <- object@filterModuleList[[filter]]@PCAnnotatorData@pearsonCorr
+          pcnames <- seq(ncol(pc))
+          result <- toJSON(
+                           pcnames,
+                           force=TRUE, pretty=TRUE, auto_unbox=TRUE
+                           )
+          return(result)
       }) %>%
       get("/Expression/Genes/List", function(req, res, err) {
 
