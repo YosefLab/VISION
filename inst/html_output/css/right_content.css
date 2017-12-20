@@ -75,7 +75,7 @@
     fill: #eee;
 }
 
-#scatter-div svg circle{
+#scatter-div svg circle.scatter{
     fill-opacity: 0.8;
 }
 

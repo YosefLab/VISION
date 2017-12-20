@@ -529,10 +529,10 @@ ColorScatter.prototype.redraw = function(performTransition) {
 
 
         circles.enter().append("circle")
-            .attr("r", self.circle_radius)
             .classed("scatter", true);
 
         circles.style("fill", function(d){return self.colorScale(d[2]);})
+            .attr("r", self.circle_radius * Math.pow(self.zoom.scale(), .5))
             .on("click", function(d,i){self.setSelected(i);})
             .on("mouseover", function(d,i){self.tip.show(d,i); self.setHovered(i);})
             .on("mouseout", function(d,i){self.tip.hide(d,i); self.setHovered(-1);})
@@ -541,11 +541,11 @@ ColorScatter.prototype.redraw = function(performTransition) {
             .data(self.tree_points);
 
         tree_circles.enter().append("circle")
-            .attr("r", 5)
             .style("fill", '#555555')
             .classed("tree", true);
 
         tree_circles
+            .attr("r", 5 * Math.pow(self.zoom.scale(), .5))
             .on("click", function(d,i){self.setSelected(i);})
 
         var tree_edges = self.svg.selectAll("line.tree")
@@ -556,6 +556,9 @@ ColorScatter.prototype.redraw = function(performTransition) {
             .attr("stroke-width", 2)
             .attr("fill", 'none')
             .classed("tree", true);
+
+        tree_edges
+            .attr("stroke-width", 2 * Math.pow(self.zoom.scale(), .5))
 
 
         if(performTransition !== undefined && performTransition === true)
