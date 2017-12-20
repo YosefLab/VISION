@@ -79,6 +79,10 @@
     fill-opacity: 0.8;
 }
 
+#scatter-div svg circle.scatter.not-selected{
+    fill-opacity: 0.4;
+}
+
 #scatter-div .axis path,
 #scatter-div .axis line {
     fill: none;
@@ -106,12 +110,12 @@
 	fill-opacity: .5;
 }
 
-.not_possible {
-	fill: rgb(200,200,200);
+.not-possible {
+	fill: rgb(85,85,85);
 }
 
 .possible {
-	fill: #EC888C;
+	fill: black;
 }
 
 .legend-subs {

@@ -102,7 +102,7 @@ function ColorScatter(parent, colorbar, legend)
     this.points = [];
 
     this.selected = -1;
-    this.selectedPoints = [];
+    this.selectedPoints = {};
     this.selected_links = [];
 
     this.hovered = -1;
@@ -344,39 +344,32 @@ ColorScatter.prototype.setColorBar = function(colors, label_low, label_high)
     }
 };
 
-ColorScatter.prototype.setSelected = function(selected_index, event_id)
+ColorScatter.prototype.setSelected = function(selected_key, event_id)
 {
 
-	var self = this;
-    if(event_id === undefined){
-        event_id = Math.random();
+    var self = this;
+
+    if (typeof(selected_key) === "string"){
+        selected_key = [selected_key]
     }
 
-    //Needed to prevent infinite loops with linked hover and select events
-    if(this.last_event !== event_id) {
-        this.last_event = event_id;
-        this.selected = selected_index;
-        this.redraw()();
-        this.selected_links.forEach(function (e) {
-            e.setSelected(selected_index, event_id);
-        });
-	}
+    self.selectedPoints = _.keyBy(selected_key, x => x)
 
-	if (this.selectedPoints.indexOf(selected_index) == -1) {
-		this.selectedPoints.push(selected_index);
-	} else {
-		this.selectedPoints.splice(this.selectedPoints.indexOf(selected_index), 1);
-	}
+    var circles = self.svg.selectAll("circle")
+        .data(self.points);
 
-    var circles = this.svg.selectAll("circle")
-        .data(this.points);
-    circles
-		.classed("point-selected", function(d, i){return self.selectedPoints.indexOf(i) != -1;})
-		.attr("opacity", function(d,i) {
-			if (self.selectedPoints.indexOf(i) == -1) {
-				return .4
-			}
-		});
+    if(_.isEmpty(self.selectedPoints)){
+        circles
+            .classed("selected", false)
+            .classed("not-selected", false)
+
+    } else {
+
+        circles
+            .classed("selected", function(d){return self.selectedPoints[d[3]] !== undefined})
+            .classed("not-selected", function(d){return self.selectedPoints[d[3]] === undefined})
+    }
+
 };
 
 ColorScatter.prototype.setHovered_TreeNode = function(node, clusters, event_id) {
@@ -448,42 +441,35 @@ ColorScatter.prototype.toggleLasso = function(enable) {
 
         var lasso_start = function() {
             self.lasso.items()
-                .classed({"not_possible": true, "selected": false});
+                .classed({"not-possible": true})
+                .style("fill", null)
+
+            self.setSelected([])
         };
 
         var lasso_draw = function() {
             // Style possible dots
 
             self.lasso.items().filter(function(d) { return d.possible===true})
-                .classed({"not_possible":false, "possible":true});
+                .classed({"not-possible":false, "possible":true});
 
             // Style not possible dots
             self.lasso.items().filter(function(d) { return d.possible===false})
-                .classed({"not_possible": true, "possible": false});
+                .classed({"not-possible": true, "possible": false});
         };
 
         var lasso_end = function() {
 
-            self.lasso.items().filter(function(d) { return d.selected===true})
-                .classed({"not_possible":false, "possible":false})
-                .classed("point-selected", true);
-
-            self.lasso.items().filter(function(d) { return d.selected===false })
-                .classed({"not_possible": false, "possible": false});
-
-            var cellNames = self.points.map(function(e){return e[3];}); //extract 2nd and 3rd columns
-
-            var selected = self.lasso.items().filter(function(d) { return d.selected === true });
-            selected[0].forEach(function(d) {
-                self.selectedPoints.push(cellNames.indexOf(d.__data__[3]));
-            });	
-
             self.lasso.items()
-                .attr("opacity", function(d,i) {
-                    if (self.selectedPoints.indexOf(i) == -1) {
-                        return .4
-                    }
-                });
+                .classed({"not-possible":false, "possible":false})
+
+            var cellNames = self.lasso.items()
+                .filter(function(d) { return d.selected === true })
+                .data()
+                .map(d => d[3])
+
+            self.setSelected(cellNames)
+            self.redraw(false)();
 
         };
 
@@ -493,7 +479,7 @@ ColorScatter.prototype.toggleLasso = function(enable) {
             .style("opacity", 0);
 
         self.lasso = d3.lasso()
-            .closePathDistance(75)
+            .closePathDistance(100000)
             .closePathSelect(true)
             .hoverSelect(true)
             .area(self.lasso_area)
@@ -533,7 +519,7 @@ ColorScatter.prototype.redraw = function(performTransition) {
 
         circles.style("fill", function(d){return self.colorScale(d[2]);})
             .attr("r", self.circle_radius * Math.pow(self.zoom.scale(), .5))
-            .on("click", function(d,i){self.setSelected(i);})
+            .on("click", function(d){self.setSelected(d[3]);})
             .on("mouseover", function(d,i){self.tip.show(d,i); self.setHovered(i);})
             .on("mouseout", function(d,i){self.tip.hide(d,i); self.setHovered(-1);})
 
@@ -546,7 +532,6 @@ ColorScatter.prototype.redraw = function(performTransition) {
 
         tree_circles
             .attr("r", 5 * Math.pow(self.zoom.scale(), .5))
-            .on("click", function(d,i){self.setSelected(i);})
 
         var tree_edges = self.svg.selectAll("line.tree")
             .data(self.tree_adj);
