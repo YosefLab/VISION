@@ -27,6 +27,12 @@ Right_Content.prototype.init = function()
         }
     });
 
+    $(self.dom_node)
+        .find("#export-button")
+        .on("click", function () {
+            self.exportSigProj()
+        });
+
 
 }
 
@@ -217,7 +223,7 @@ Right_Content.prototype.draw_pca = function() {
 Right_Content.prototype.resize = function() {
 
     $('#scatter-div').children().remove();
-    this.init()
+    this.scatter = new ColorScatter("#scatter-div", true, true);
     this.update({'plotted_item': ''}) // Tricks into replotting
 
 }
@@ -266,4 +272,99 @@ Right_Content.prototype.rank_values = function(values)
     }
 
     return ranks
+}
+
+/*
+Exports a zip with data in it
+ */
+Right_Content.prototype.exportSigProj = function()
+{
+    var self = this;
+    var zip = new JSZip();
+
+    var main_vis = get_global_status('main_vis')
+
+    var type = get_global_status('plotted_item_type')
+    var plotted_item = get_global_status('plotted_item')
+    var values = get_global_data('plotted_values')
+
+    //Convert the data that's in the scatter plot to a tab-delimited table
+
+    var proj;
+    if (main_vis === 'sigvp') {
+        proj = get_global_data('sig_projection_coordinates')
+    } else if (main_vis ==='pcannotator') {
+        proj = get_global_data('pca_projection_coordinates')
+    } else if (main_vis ==='tree') {
+        proj = get_global_data('tree_projection_coordinates')
+    }
+
+    var table;
+    if (main_vis === 'sigvp' || main_vis === 'tree') {
+
+        table = _.map(proj, (value, key) => {
+            return [key, proj[key][0], proj[key][1], values[key]]
+        });
+
+        table = [["Cell", "X", "Y", plotted_item]].concat(table);
+
+    } else if (main_vis ==='pcannotator') {
+        var plotted_pc = get_global_status('plotted_pc')
+        table = _.map(proj, (value, key) => {
+            return [key, proj[key][plotted_pc-1], values[key]]
+        });
+
+        table = [["Cell", "PC: "+plotted_pc, plotted_item]].concat(table);
+    }
+
+    table = table.map(function(x){ return x.join("\t");});
+    var scatter_csv_str = table.join("\n");
+    zip.file("Scatter.txt", scatter_csv_str);
+
+    //Get the scatter plot and convert to a PNG
+    var svg = $(self.dom_node).find('#scatter-div').children('svg');
+    svg.attr("version", 1.1)
+        .attr("xmlns", "http://www.w3.org/2000/svg");
+    var svg2 = svgCopy(svg.get(0));
+
+    var html_data = svg2.parentNode.innerHTML;
+    zip.file("Scatter.svg", html_data);
+
+    var imgsrc = "data:image/svg+xml;base64," + btoa(html_data);
+
+    var image = new Image();
+    image.onload = function()
+    {
+        var canvas = document.createElement("canvas");
+        canvas.width = image.width;
+        canvas.height = image.height;
+        var context = canvas.getContext("2d");
+        context.drawImage(image, 0,0);
+
+        var canvasdata = canvas.toDataURL("image/png");
+        //Strip off the data URI portion
+        var scatter_png = canvasdata.substring(canvasdata.indexOf(",")+1);
+
+        //Take the result and stick it into a zip
+
+        zip.file("Scatter.png", scatter_png   , {base64: true});
+
+        var zip_uri = "data:application/zip;base64," + zip.generate({type:"base64"});
+
+        var a = document.createElement("a");
+        var proj_name;
+        if(main_vis === 'pcannotator'){
+            proj_name = 'PC' + get_global_status('plotted_pc')
+        } else {
+            proj_name = get_global_status('plotted_projection')
+        }
+
+        a.download = plotted_item+"_"+proj_name+".zip";
+        a.href = zip_uri;
+        a.click();
+
+    };
+
+    image.setAttribute("src", imgsrc)
+
 }

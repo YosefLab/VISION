@@ -29,10 +29,10 @@ global_status.subset_criteria = "Rank";
 var global_data = {};
 global_data.sigIsPrecomputed = {};
 
-global_data.sig_projection_coordinates = [];
-global_data.pca_projection_coordinates = [];
-global_data.tree_projection_coordinates = [];
-global_data.plotted_values = []; // Holds gene expression, signature scores/ranks, etc...
+global_data.sig_projection_coordinates = {};
+global_data.pca_projection_coordinates = {};
+global_data.tree_projection_coordinates = {};
+global_data.plotted_values = {}; // Holds gene expression, signature scores/ranks, etc...
 global_data.sig_info = {};  // Holds the information for the last plotted signature
 
 var lower_left_content;
@@ -76,7 +76,8 @@ function set_global_status(update){
     var upper_left_content_promises = [];
 
     // Just get all the PC's using one call
-    if('main_vis' in update && get_global_status('main_vis') === 'pcannotator')
+    if('main_vis' in update && get_global_status('main_vis') === 'pcannotator' &&
+        _.isEmpty(global_data.pca_projection_coordinates))
     {
         var filter_group = get_global_status('filter_group');
         var pc_promise = api.pc.coordinates(filter_group)
