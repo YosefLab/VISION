@@ -128,7 +128,8 @@ generateProjections <- function(expr, weights, filterName="",
 #' Genrate projections based on a tree structure learned in high dimensonal space
 #'
 #' @importFrom stats quantile
-#' @param expr the expressionSet object
+#' @param data the data to fit the tree to. Should be lower dimensional than
+#' full data.
 #' @param filterName the filtered data to use
 #' @param inputProjections a list of Projection objects. For each Projection, a
 #' corresponding TreeProjection will be created in which the scores are based
@@ -143,60 +144,29 @@ generateProjections <- function(expr, weights, filterName="",
 #'     \item treeScore a score representing the singificance of the fitten tree
 #'     return(list(projections = output, treeScore = hdTree$zscore))
 #' }
-generateTreeProjections <- function(expr, filterName="",
+generateTreeProjections <- function(data, filterName="",
                                     inputProjections, permMats = NULL,
                                     BPPARAM = bpparam()) {
 
-
-    if (filterName == "fano") {
-        exprData <- expr@fanoFilter
-    } else {
-        stop("FilterName not recognized: ", filterName)
-    }
-
-    t <- Sys.time()
-    timingList <- (t - t)
-    timingNames <- c("Start")
-
-    hdTree <- applySimplePPT(exprData, permExprData = permMats)
-    hdProj <- TreeProjection(name = "PPT", pData = exprData,
+    hdTree <- applySimplePPT(data, permExprData = permMats)
+    hdProj <- TreeProjection(name = "PPT", pData = data,
                                 vData = hdTree$princPnts, adjMat = hdTree$adjMat)
 
-    ncls <- apply(hdTree$distMat, 1, which.min)
-    pptNeighborhood <- findNeighbors(exprData, ##why was this fullPCA here?
-                                    hdTree$princPnts,
-                                    NCOL(exprData) / NCOL(hdTree$princPnts),
-                                    BPPARAM)
-
-    timingList <- rbind(timingList, c(difftime(Sys.time(), t, units="sec")))
-    timingNames <- c(timingNames, "PPT")
-    rownames(timingList) <- timingNames
-
-    # Readjust coordinates of PPT
-    c <- t(hdTree$princPnts[c(1,2),])
-    coord <- as.matrix(apply(c, 2, function(x) return(x - mean(x))))
-    r <- apply(coord, 1, function(x) sum(x^2))^(0.5)
-    r90 <- quantile(r, c(0.9))[[1]]
-    if (r90 > 0) {
-    coord <- coord / r90
-    }
-    coord <- t(coord)
-    hdTree$princPnts <- coord
+    pptNeighborhood <- findNeighbors(data, hdTree$princPnts, 5, BPPARAM)
 
     output <- list()
     output[[hdProj@name]] <- hdProj
 
-    # Reposition tree node coordinates in nondimensional space
     for (proj in inputProjections) {
-    new_coords <- vapply(pptNeighborhood, function(n)  {
-        centroid <- proj@pData[,n$index] %*% t(n$dist / sum(n$dist))
-        # n_vals <- proj@pData[,n$index] * rep(n$dist / sum(n$dist), rep(nrow(proj@pData), length(n$dist)))
-        # centroid <- apply(n_vals, 1, mean)
-        return(centroid)
-    }, c(0.0,0.0))
-    treeProj = TreeProjection(name = proj@name, pData = proj@pData,
-                                vData = new_coords, adjMat = hdTree$adjMat)
-    output[[treeProj@name]] = treeProj
+        new_coords <- vapply(pptNeighborhood,
+                             function(n)  {
+                                 centroid <- proj@pData[, n$index] %*% t(n$dist / sum(n$dist))
+                                 return(centroid)
+                             },
+                             c(0.0, 0.0))
+        treeProj <- TreeProjection(name = proj@name, pData = proj@pData,
+                                  vData = new_coords, adjMat = hdTree$adjMat)
+        output[[treeProj@name]] <- treeProj
     }
 
     return(list(projections = output, treeScore = hdTree$zscore))
@@ -220,7 +190,7 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
     }
 
     # Center data
-    wmean <- rowSums(multMat(projData, weights)) / rowSums(weights)
+    wmean <- rowSums(projData * weights) / rowSums(weights)
     dataCentered <- projData - wmean
 
     # Compute weighted data
@@ -228,10 +198,10 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
     wDataCentered <- dataCentered * weights
 
     # Weighted covariance / correlation matrices
-    W <- tcrossprod(wDataCentered)
-    Z <- tcrossprod(weights)
+    W <- Matrix::tcrossprod(wDataCentered)
+    Z <- Matrix::tcrossprod(weights)
 
-    wcov <- W / Z
+    wcov <- as.matrix(W / Z)
     wcov[is.na(wcov)] <- 0.0
     var <- diag(wcov)
 
@@ -242,7 +212,9 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
 
     # Project down using computed eigenvectors
     dataCentered <- dataCentered / sqrt(var)
-    wpcaData <- crossprod(t(evec), dataCentered)
+    print(dim(dataCentered))
+    wpcaData <- as.matrix(Matrix::crossprod(t(evec), dataCentered))
+    print(dim(wpcaData))
     #wpcaData <- wpcaData * (decomp$d*decomp$d)
     eval <- as.matrix(apply(wpcaData, 1, var))
     totalVar <- sum(apply(projData, 1, var))

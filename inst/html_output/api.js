@@ -89,13 +89,17 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.filterGroup.sigProjMatrixP = function(filter_group, precomputed)
+    output.filterGroup.sigProjMatrixP = function(filter_group, precomputed, pvalue)
     {
         var query = "/FilterGroup/"
         if (precomputed) {
             query = query.concat(encodeURI(filter_group), "/SigProjMatrix_P/Precomputed")
         } else {
-            query = query.concat(encodeURI(filter_group), "/SigProjMatrix_P/Normal")
+            if (pvalue == "nominal") {
+                query = query.concat(encodeURI(filter_group), "/SigProjMatrix_P/Normal")
+            } else {
+                query = query.concat(encodeURI(filter_group), "/SigProjMatrix_Pemp/Normal")
+            }
         }
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }

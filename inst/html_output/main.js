@@ -17,6 +17,7 @@ global_status.pc2 = "";
 global_status.subset = [];
 global_status.subset_criteria = "Rank";
 global_status.main_vis = "sigvp";
+global_status.pvalue = "nominal";
 
 var global_data = {};
 global_data.sigIsPrecomputed = {};
@@ -356,13 +357,25 @@ window.onload = function()
         drawChart();
     });
 
+
     $("#pc_tab").on("click", function() {
 
         global_status.main_vis = "pcannotator"
         createTableFromData();
         drawChart();
+    });
 
+    $("#pvalue_button").on("click", function() {
+        var tog = global_status.pvalue;
+        if (tog == "nominal") {
+            document.getElementById("pvalue_button").innerHTML = "Nominal pVals";
+            global_status.pvalue = "empirical";
+        } else {
+            document.getElementById("pvalue_button").innerHTML = "Empirical pVals";
+            global_status.pvalue = "nominal";
+        }
 
+        createTableFromData();
     });
 
     $("#tree_tab").on("click", function() {
@@ -1063,7 +1076,7 @@ function createTableFromData()
     addSigClusterDivs();
     var matrix_promise;
     if (global_status.main_vis == "sigvp") {
-        matrix_promise = api.filterGroup.sigProjMatrixP(global_status.filter_group, global_status.precomputed);
+		matrix_promise = api.filterGroup.sigProjMatrixP(global_status.filter_group, global_status.precomputed, global_status.pvalue);
     } else if (global_status.main_vis == "tree") {
         matrix_promise = api.filterGroup.treeSigProjMatrixP(global_status.filter_group, global_status.precomputed);
     } else {

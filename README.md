@@ -32,11 +32,11 @@ devtools::load_all()
 ```
 Note that if you are not running R from within the package directory, you must provide the path link as an argument to this function. This function will simulate loading in a package, as would happen if a package were being loaded in which was already installed on your computer. To run FastProjectR, a minimum of three files must be provided: an expression matrix (.txt), a list of housekeeping genes (.txt) , and list of signatures (.gmt or .txt). Refer to the packages wiki for more details on the input files. With these three files, a FastProjectR object can be created:
 ```r 
-fp <- FastProject(<expression file>, <housekeeping genes>, <list of signatures>)
+fp <- FastProject(<expression file>, <list of signatures or signature files>, <char vector of housekeeping genes>)
 ```
-Note that the signature files must be provided in a list structure (even if you are only inputting one file) -- this is to enable the user to provide multiple signature files without having to collate them all first. There are many other arguments that can be provided to the FastProjectR object upon initialization, all of which can be found in the wiki or documentation. With the FastProject object created, the analysis can be run with 
+There are many other arguments that can be provided to the FastProjectR object upon initialization, all of which can be found in the wiki or documentation. With the FastProject object created, the analysis can be run with 
 ``` r
-fpo <- Analyze(fp)
+fpo <- analyze(fp)
 ```
 
 This anlaysis will return a FastProjectOutput object which stores all relevant information for the visualization of the single cell data; this object can also be saved in an RDS file for future analysis. 
@@ -47,10 +47,7 @@ With the returned FastProjectOutput object, a dynamic report can be generated wi
 ```r 
 viewResults(fpo)
 ```
-Where **fpo** is the FastProjectOutput object generated from analysis. This will launch a local server on which the report will be shown; for best results, use Google Chrome. Alternatively, the FastProjectOutput object can be saved first as an RDS object and then analyzed via the online report:
-```r 
-saveFPOutAndViewResults(fpo)
-```
+Where **fpo** is the FastProjectOutput object generated from analysis. This will launch a local server on which the report will be shown; for best results, use Google Chrome. 
 
 Sample Output
 -------------

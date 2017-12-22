@@ -108,11 +108,11 @@ calcSignatureScores <- function(object,
     normExpr <- getNormalizedCopy(object@exprData, object@sig_norm_method)
 
 
-    sigScores <- bplapply(object@sigData, function(s) {
+    sigScores <- lapply(object@sigData, function(s) {
         singleSigEval(s, object@sig_score_method, normExpr,
                       object@weights,
                       object@min_signature_genes)
-    }, BPPARAM=BPPARAM)
+    })
 
     sigList <- object@sigData
     for (s in object@precomputedData) {
@@ -256,10 +256,11 @@ analyzeProjections <- function(object,
                                    keys = colnames(sigVProj$sigProjMatrix),
                                    sigProjMatrix = sigVProj$sigProjMatrix,
                                    pMatrix = sigVProj$pVals,
-                                   sigClusters = sigClusters)
+                                   sigClusters = sigClusters,
+                                   emp_pMatrix = sigVProj$emp_pVals)
 
         message("Fitting principle tree...")
-        treeProjs <- generateTreeProjections(object@exprData, filter,
+        treeProjs <- generateTreeProjections(projectData$fullPCA, filter,
                                    inputProjections = projectData$projections,
                                    permMats = projectData$permMats,
                                    BPPARAM = BPPARAM)
@@ -323,5 +324,16 @@ analyzeProjections <- function(object,
     }
 
     object@filterModuleList <- filterModuleList
+    return(object)
+}
+
+convertToDense <- function(object) {
+    
+    object@exprData@data <- as.matrix(object@exprData@data)
+    
+    object@exprData@fanoFilter <- as.matrix(object@exprData@fanoFilter)
+    object@exprData@noVarFilter <- as.matrix(object@exprData@noVarFilter)
+    object@exprData@thresholdFilter <- as.matrix(object@exprData@thresholdFilter)
+
     return(object)
 }
