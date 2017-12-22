@@ -328,12 +328,9 @@ analyzeProjections <- function(object,
 }
 
 convertToDense <- function(object) {
-    
+
     object@exprData@data <- as.matrix(object@exprData@data)
-    
     object@exprData@fanoFilter <- as.matrix(object@exprData@fanoFilter)
-    object@exprData@noVarFilter <- as.matrix(object@exprData@noVarFilter)
-    object@exprData@thresholdFilter <- as.matrix(object@exprData@thresholdFilter)
 
     return(object)
 }
