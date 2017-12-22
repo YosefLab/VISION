@@ -5,6 +5,9 @@
     <title>FastProject Viewer</title>
 
     <link rel="stylesheet" href="thirdparty/c3/c3.css">
+    <link rel="stylesheet" href="thirdparty/chosen/chosen.min.css">
+    <link rel="stylesheet" href="thirdparty/bootstrap/bootstrap.css">
+    <link rel="stylesheet" href="thirdparty/datatables/datatables.min.css">
 
     <script type="text/javascript" src="thirdparty/jquery/jquery-2.1.4.min.js"></script>
     <script type="text/javascript" src="thirdparty/d3/d3.min.js"></script>
@@ -12,268 +15,289 @@
     <script type="text/javascript" src="thirdparty/d3/d3tip.js"></script>
     <script type="text/javascript" src="thirdparty/jszip/jszip.min.js"></script>
     <script type="text/javascript" src="thirdparty/lodash/lodash.min.js"></script>
-	<script type="text/javascript" src="thirdparty/d3/D3-Lasso-Plugin/lasso.js"></script>
+    <script type="text/javascript" src="thirdparty/d3/D3-Lasso-Plugin/lasso.js"></script>
+    <script type="text/javascript" src="thirdparty/chosen/chosen.jquery.min.js"></script>
+    <script type="text/javascript" src="thirdparty/bootstrap/bootstrap.bundle.min.js"></script>
+    <script type="text/javascript" src="thirdparty/datatables/datatables.min.js"></script>
 
-    <!-- Bootstrap Stuff -->
-    <link rel="stylesheet" href="thirdparty/bootstrap/bootstrap.css">
-    <script src="thirdparty/bootstrap/bootstrap.bundle.min.js"></script>
+
 
     <script type="text/javascript" src="src/ColorScatter.js"></script>
     <script type="text/javascript" src="src/Clustered_HeatMap.js"></script>
     <script type="text/javascript" src="src/Utilities.js"></script>
     <script type="text/javascript" src="src/main.js"></script>
+    <script type="text/javascript" src="src/upper_left_content.js"></script>
+    <script type="text/javascript" src="src/lower_left_content.js"></script>
+    <script type="text/javascript" src="src/right_content.js"></script>
+    <script type="text/javascript" src="src/misc.js"></script>
     <script type="text/javascript" src="src/api.js"></script>
 
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/right_content.css">
+    <link rel="stylesheet" href="css/upper_left_content.css">
+    <link rel="stylesheet" href="css/lower_left_content.css">
 
 </head>
 <body>
-<div class="modal fade" id="geneModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title" id="myModalLabel">Genes Used for Projection</h4>
-            </div>
-            <div class="modal-body">
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            </div>
+    <div id="nav-bar">
+        <div class="logo">
+            FastProject 2.0
         </div>
+        <ul class="nav nav-pills justify-content-end inv">
+            <li class="nav-item">
+                <a class="nav-link active" href="#" data-main-vis="sigvp">Projections</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-main-vis="pcannotator">PC Annotator</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-main-vis="tree">Simple PPT Viewer</a>
+            </li>
+        </ul>
     </div>
-</div>
-<div id="content_wrapper" style="display: flex; height: 100%; flex-direction: row; justify-content: center;">
-    <div id="side-wrapper">
-		<div id="command-panel" class="color_panel" style="overflow: hidden; flex: 1 0 50%; max-height: 50%">
-			<div style="display: flex; flex-direction: row; justify-content: space-evenly">
-				<span style="margin-top:3px;">
-					<button id="back_button" type="button" class="btn btn-default" onclick=goBack()>Back</button>
-				</span>
-				<h4 class="command-title">FastProject Controls</h4> 
-			</div>
-			<div id="data_options_div" class="color_panel" style="">
-				<span>
-					<label for="filter_dropdown">Filter Level</label>
-					<select id="filter_dropdown">
-					</select>
-				</span>
-				<span>
-					<button id="show_genes_button" type="button" class="btn btn-default" onclick=createGeneModal()>
-						+Show Genes
-					</button>
-				</span>
-				<span>
-					<button id="precomputed_button" type="button" class="btn btn-default" onclick=changeTableView()>Show Precomputed</button>
-				</span>
-                <span>
-                    <button id="pvalue_button" type="button" class="btn btn-default">Empirical pVals</button>
-                </span>
-			</div>
-			<br>
-			<br>
-			<div id="table-div-container">
-				<div id="filter-sigs-container"></div>
-			</div>
-			<br>
+    <div id="main-content">
+        <div id="left-content">
+            <div id="upper-left-content">
 
-		</div>
-		<div id="bottom_visual_div" class="color_panel" style="flex: 1 0 50%; max-height: 50%">
-			<div style="height: 100%; margin-top: 5px; position: relative;">
+                <div class='section-nav'>
+                    <span style="display: none">
+                        <button id="show_genes_button" type="button" class="btn btn-default" onclick=createGeneModal()>
+                            +Show Genes
+                        </button>
+                    </span>
 
-				<input id="cluster_tab" type="radio" class="data-vis-tab" name="data_tabs" checked>
-				<label for="cluster_tab" onclick=drawHeat() class="data-labels">Cluster Analysis</label>
+                    <ul class="nav nav-pills justify-content-center">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="sig-table-tab" data-toggle="tab" href="#table-div-container" role="tab" aria-controls="sig-table" aria-selected="true">Signatures</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="precomputed-table-tab" data-toggle="tab" href="#precomp-table-div" role="tab" aria-controls="precomp-table" aria-selected="false">Precomputed</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="genes-table-tab" data-toggle="tab" href="#genes-table" role="tab" aria-controls="genes-table" aria-selected="false">Genes</a>
+                        </li>
+                    </ul>
+                </div>
 
-				<input id="info_tab" type="radio" class="data-vis-tab" name="data_tabs">
-				<label for="info_tab" class="data-labels">Sig Information</label>
+                <div class="tab-content upper-left-section-content">
+                    <div class="tab-pane show active" id="table-div-container" role="tabpanel" aria-labelledby="sig-table-tab">
+                        <div class="sig-tables-header">
+                            <table class="sig-table">
+                                <thead>
+                                    <tr class="proj-row">
+                                        <th>
+                                            <div class="form-inline">
+                                            <input id="sig_filt_input" class="form-control"
+                                                   type="text" placeholder="Filter Signatures...">
+                                            </input>
+                                            </div>
+                                        </th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <div class="sig-tables-wrapper"></div>
+                    </div>
+                    <div class="tab-pane" id="precomp-table-div" role="tabpanel" aria-labelledby="precomputed-table-tab">
+                        <div class="sig-tables-header">
+                            <table class="sig-table">
+                                <thead>
+                                    <tr class="proj-row">
+                                        <th style="height: 40px"> <!-- Matches space of filter input on other pane -->
+                                        </th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <div class="sig-tables-wrapper">
+                            <div class="sig-table-div">
+                                <table id="precomp-table" class="sig-table">
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane" id="genes-table" role="tabpanel" aria-labelledby="genes-table-tab">
+                        <div>
+                            <table class='label-table'>
+                                <tr>
+                                    <td style='font-size: 1.2em'>Gene:</td>
+                                    <td><select id="SelectGene" class="form-control"></select></td>
+                                </tr>
+                                <tr>
+                                    <td style='font-size: 1.2em'>Projection:</td>
+                                    <td><select id="SelectProj" class="form-control"></select></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div id='recent-genes-div'>
+                            <div class='label1'>Recent Genes:</div>
+                            <div id='recent-genes-list'>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-				<input id="cell_select_tab" type="radio" class="data-vis-tab" name="data_tabs">
-				<label for="cell_select_tab" class="data-labels">Subset Analysis</label>
+            </div> <!-- End of upper-left-content -->
+            <div id="lower-left-content">
+                <div id="sig-info">
+                    <div class="nav nav-pills justify-content-center">
+                        <a class="nav-link active" id="SigInfoButton" href="#sig-info-default" data-toggle="tab" aria-controls="sig-info-default" aria-selected="true">Signature</a>
+                        <a class="nav-link" id="HeatmapButton" href="#sig-info-cluster" data-toggle="tab" aria-controls="sig-info-cluster" aria-selected="false">Heatmap</a>
+                    </div>
+                    <div class="tab-content">
+                        <div id="sig-info-default" class="tab-pane show active" role="tabpanel" aria-labelledby="SigInfoButton">
+                            <table class='label-table' style='margin-left: 30px; margin-bottom: 20px; width: 250px;'>
+                                <tr style='font-size: 1.2em;'>
+                                    <td>Signature:</td>
+                                    <td><span id="data-analysis-title" style="display: inline-block; width: 300px; word-wrap: break-word;"></span></td>
+                                </tr>
+                                <tr>
+                                    <td>Source:</td>
+                                    <td><span id="sig-source"></span></td>
+                                </tr>
+                            </table>
+                            <div id="sig-table-wrapper" style="margin: 0 20px; display: flex; flex-direction: column;">
+                                <table id="sig-info-table" class="display" width="100%">
+                                </table>
+                            </div>
+                        </div>
+                        <div id="sig-info-cluster" class="tab-pane" role="tabpanel" aria-labelledby="HeatmapButton">
+                            <div id="clustering-controls" class="form-inline">
+                                <select id="cluster_select_method" class="form-control" style="width: 100px;"></select>
+                                <select id="cluster_select_param" class="form-control" style="width: 70px;"></select>
+                            </div>
+                            <div id="heatmap-div"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="gene-info" style="display: none">
 
-				<input id="pc_data_tab" type="radio" class="data-vis-tab" name="data_tabs">
-				<label for="pc_data_tab" class='data-labels'>Pr. Comp. Analysis</label>
+                    <table class='label-table' style='margin-left: 30px; margin-bottom: 20px;'>
+                        <tr style='font-size: 1.2em;'>
+                            <td>Gene:</td>
+                            <td><span id="gene-analysis-title"></span></td>
+                        </tr>
+                    </table>
 
-				<input id="gene_tab" type="radio" class="data-vis-tab" name="data_tabs">
-				<label for="gene_tab" class="data-labels">Genes</label>
-				<hr/>
+                    <div style='display: flex; flex-direction: column; justify-content: space-around; flex-grow: 1'>
+                        <div id="gene-dist-div" style="display: flex; flex-direction:column"></div>
+                    </div>
 
-				<div class="tab-content" id="cluster-wrapper" style="position: absolute; height: 90%; width: 100%">
-					<div id="clustering-controls" class="form-inline" style="margin-left: 20px; margin-top: 5px;">
-						<select id="cluster_select_method" class="form-control" style="width: 100px;"></select>
-						<select id="cluster_select_param" class="form-control" style="width: 70px;"></select>
-                        <button id="reload_heatmap" class="form-control" style="width: 100px;">Draw</button>
-					</div>
-					<div id="heatmap-div" class="color_panel" style="height: 80%; width: 100%;"></div>
-				</div>
-				<div class="tab-content" id="projection-content-wrapper" style="position: absolute; height: 90%; width: 100%">
-					<div id="projection-div">
-						<h4 id="data-analysis-title" style="font-size: 16px; text-align: center"></h4>
-						<p id="data-analysis-content" style="margin-left: 10px;"></p>
-					</div>
-				</div>
-				<div class="tab-content" id="gene-content-wrapper" style="position: absolute; height: 90%; width: 100%">
-					<div id="gene-div">
-						<h4 id="gene-analysis-title" style="font-size: 16px; text-align: center"></h4>
-						<h4 style="font-size: 14px; margin-left:5%;" id="selected-gene-title"></h4>
-						<h4 style="font-size: 14px; margin-left: 5%;" id="view-gene-card"></h4>
-						<div id="filter_genes_container" style="margin-left: 5%";></div>
-						<br>
-						<div id="gene-analysis-content-div" style="display: flex; flex-direction: row; justify-content: center; height: 100%; overflow:hidden">
-							<p id="gene-analysis-content" style="margin-left: 5%; flex: 1 1 50%; overflow:scroll"></p>
-							<div id="gene_dist_div" class="color_panel" style="flex: 1 1 50%; height:50%; "></div>
-						</div>
-					</div>
-				</div>
-				<div class="tab-content" id="pc-content-wrapper" style="position: absolute; height: 90%; width: 100%">
-					<div id="pc-div" style="width: 80%; margin-right: 10%; margin-left:10%;">
-						<h4 id="pc-analysis-title" style="font-size: 16px; text-align: center"></h4>
-						<div>
-							<form id="pc-range-container">
-								<div class="group" style="margin-left: 10px">
-									<input class="range-input" id="pc1-input" type="text" required>
-									<span class="highlight"></span>
-									<span class="bar"></span>
-									<label class="range-input-label">PC 1</label>
-								</div>
-								<div class="group" style="float: right; margin-right: 10px;">
-									<input class="range-input" id="pc2-input" type="text" required>
-									<span class="highlight"></span>
-									<span class="bar"></span>
-									<label class="range-input-label">PC 2</label>
-								</div>
-							</form>
-						</div>
-						<div style="margin-top: 30px; width: 100%;">		
-							<span>
-								<button style="align-items: center; width: 60%; margin-left:20%; margin-right:20%" id="analysis-button" type="button" class="btn btn-default" onclick=runPCAnalysis()>Run Analysis</button>
-							</span>
-						</div>
-						<br>
-						<p id="pc-analysis-content"></p>
-					</div>
-				</div>
-				<div class="tab-content" id="cell-selection-wrapper" style="position: absolute; height=90%; width: 100%">
-					<div id="cell-selection-div" style="width: 80%; margin-right: 10%; margin-left: 10%;">
-						<h4 style="text-align: center">Select Cells for Further Analysis</h4>
-						<div>
-							<span>
-								<label for="subset-criteria">Criteria</label>
-								<select id="subset-criteria">
-								</select>
-							</span>
-							<br>
-							<form id="cell-range-container">
-								<div class="group" style="margin-left: 10px">
-									<input class="range-input" id="lower-input" type="text" required>
-									<span class="highlight"></span>
-									<span class="bar"></span>
-									<label class="range-input-label">Lower</label>
-								</div>
-								<div class="group" style="float: right; margin-right: 10px;">
-									<input class="range-input" id="upper-input" type="text" required>
-									<span class="highlight"></span>
-									<span class="bar"></span>
-									<label class="range-input-label">Upper</label>
-								</div>
-							</form>
-						</div>
-						<div style="margin-top: 15px; margin-right:10px; width: 100%; min-height:20px;">
-							<span style="float: right; margin-right: 10px;">
-								<button id="unselct-button" type="button" class="btn btn-default" onclick=unselectRange()>Unselect Cells</button>
-							</span>
-							<span style="float:right; margin-right: 10px">
-								<button id="select-button" type="button" class="btn btn-default" onclick=selectRange()>Select Cells</button>
-							</span>
-						</div>
-						<div style="margin-top: 30px; width: 100%;">		
-							<span>
-								<button style="align-items: center; width: 60%; margin-left:20%; margin-right:20%" id="analysis-button" type="button" class="btn btn-default" onclick=runSubsetAnalysis()>Run Analysis</button>
-							</span>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
+                </div>
+                <div id="precomp-info" style="display: none">
+
+                    <table class='label-table' style='margin-left: 30px; margin-bottom: 20px;'>
+                        <tr style='font-size: 1.2em;'>
+                            <td>Value:</td>
+                            <td><span id="precomp-analysis-title"></span></td>
+                        </tr>
+                    </table>
+
+                    <div style='display: flex; flex-direction: column; justify-content: space-around; flex-grow: 1'>
+                        <div id="precomp-dist-div" style="display: flex; flex-direction:column"></div>
+                    </div>
+
+                </div>
+                <div id="pc-content-wrapper" style="display: none">
+                    <h4 id="pc-analysis-title" style="font-size: 16px; text-align: center"></h4>
+                    <div>
+                        <form id="pc-range-container">
+                            <div class="group" style="margin-left: 10px">
+                                <input class="range-input" id="pc1-input" type="text" required>
+                                <span class="highlight"></span>
+                                <span class="bar"></span>
+                                <label class="range-input-label">PC 1</label>
+                            </div>
+                            <div class="group" style="float: right; margin-right: 10px;">
+                                <input class="range-input" id="pc2-input" type="text" required>
+                                <span class="highlight"></span>
+                                <span class="bar"></span>
+                                <label class="range-input-label">PC 2</label>
+                            </div>
+                        </form>
+                    </div>
+                    <div style="margin-top: 30px">        
+                        <span>
+                            <button style="align-items: center; width: 60%; margin-left:20%; margin-right:20%" id="analysis-button" type="button" class="btn btn-default" onclick=runPCAnalysis()>Run Analysis</button>
+                        </span>
+                    </div>
+                    <p id="pc-analysis-content"></p>
+                </div>
+                <div id="cell-selection-wrapper" style="display: none">
+                    <div id="cell-selection-div" style="width: 80%; margin-right: 10%; margin-left: 10%;">
+                        <h4 style="text-align: center">Select Cells for Further Analysis</h4>
+                        <div>
+                            <span>
+                                <label for="subset-criteria">Criteria</label>
+                                <select id="subset-criteria">
+                                </select>
+                            </span>
+                            <br>
+                            <form id="cell-range-container">
+                                <div class="group" style="margin-left: 10px">
+                                    <input class="range-input" id="lower-input" type="text" required>
+                                    <span class="highlight"></span>
+                                    <span class="bar"></span>
+                                    <label class="range-input-label">Lower</label>
+                                </div>
+                                <div class="group" style="float: right; margin-right: 10px;">
+                                    <input class="range-input" id="upper-input" type="text" required>
+                                    <span class="highlight"></span>
+                                    <span class="bar"></span>
+                                    <label class="range-input-label">Upper</label>
+                                </div>
+                            </form>
+                        </div>
+                        <div style="margin-top: 15px; margin-right:10px; width: 100%; min-height:20px;">
+                            <span style="float: right; margin-right: 10px;">
+                                <button id="unselct-button" type="button" class="btn btn-default" onclick=unselectRange()>Unselect Cells</button>
+                            </span>
+                            <span style="float:right; margin-right: 10px">
+                                <button id="select-button" type="button" class="btn btn-default" onclick=selectRange()>Select Cells</button>
+                            </span>
+                        </div>
+                        <div style="margin-top: 30px; width: 100%;">        
+                            <span>
+                                <button style="align-items: center; width: 60%; margin-left:20%; margin-right:20%" id="analysis-button" type="button" class="btn btn-default" onclick=runSubsetAnalysis()>Run Analysis</button>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- End of lower-left-content -->
+        </div> <!-- End of left-content -->
+        <div id="right-content">
+
+            <div id="sigvp-scatter-div">
+                <div id="plot-title-div">
+                    <div class="titles">
+                        <div class="title" id="plot-title"></div>
+                        <div class="subtitle" id="plot-subtitle"></div>
+                    </div>
+                    <div class="color-options" >
+                        <div id="plotted-value-option">
+                            <div class="label">Plotted Value:</div>
+                            <div class="btn-group" data-toggle="buttons">
+                                <label class="btn btn-outline-secondary">
+                                    <input type="radio" name="scatterColorButtons" id="valueoption" value="value" autocomplete="off"> Value
+                                </label>
+                                <label class="btn btn-outline-secondary active">
+                                    <input type="radio" name="scatterColorButtons" id="rankoption" value="rank" autocomplete="off" checked> Rank
+                                </label>
+                            </div>
+                        </div>
+                        <div>
+                            <button id="lasso-select" type="button" class="btn btn-outline-secondary btn-bottom-margin">Enable Lasso Select</button>
+                        </div>
+                        <div>
+                            <button id="export-button" type="button" class="btn btn-outline-secondary btn-bottom-margin">Export</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="scatter-div"></div>
+            </div>
+
+        </div> <!-- End of right-content -->
     </div>
-    <div id="main-vis-wrapper">
-		<input id="proj_tab" type="radio" name="vis-tabs" checked>
-		<label for="proj_tab">Projections</label>
-
-		<input id="pc_tab" type="radio" name="vis-tabs">
-		<label for="pc_tab">Principal Component Annotator</label>
-
-		<input id="tree_tab" type="radio" name="vis-tabs">
-		<label for="tree_tab">Principle Tree Viewer</label>
-
-		<hr/>
-
-		<div class="tab-content" id="sigvp-scatter-wrapper" >
-			<div id="sigvp-scatter-div">
-				<div id="plot_title_div" class="color_panel" style="display: flex; justify-content: space-between; flex-direction: row; flex: 1 1 5%">
-					<div style="flex: 1 1 auto; padding-top: 10px;">
-						<div class="title" id="plot-title" style=""></div>
-						<div class="subtitle" id="plot-subtitle" style=""></div>
-					</div>
-					<div class="colorOptions" style="flex: 1 1 50%; align-self: flex-end; padding-bottom: 10px;">
-						<span>Signature Score Colors:</span>
-						<div class="btn-group" data-toggle="buttons">
-							<label class="btn btn-default">
-							<input type="radio" name="scatterColorButtons" id="valueoption" value="value" autocomplete="off"> Value
-							</label>
-							<label class="btn btn-default active">
-							<input type="radio" name="scatterColorButtons" id="rankoption" value="rank" autocomplete="off" checked> Rank
-							</label>
-						<span>
-							<button id="lasso-select" type="button" class="btn btn-default" style="margin-left: 40px; margin-right:40px;">Enable Lasso Select</button>
-						</span>
-							<!--<button type="button" style="flex: 1 0 auto" class="btn btn-default" id="export-button" onclick=exportSigProj()>&#x21e9; Export Projection CSV</button>
-							<button type="button" style="flex: 1 0 auto;" class="btn btn-default" id="export-button" onclick=exportSigProjPNG()>&#x21e9; Export Projection PNG</button> -->
-						<span>
-							<button type="button" style="flex: 1 0 auto" class="btn btn-default" id-"export-button">Export</button>
-						</span>
-						</div>
-					</div>
-				</div>
-				<div id="scatter-div" class="color_panel" style="flex: 4 0 70%; margin-right: 10px; overflow: hidden;"></div>
-			</div>
-		</div>
-
-
-		<div class="tab-content" id="pc-viewer-wrapper">
-			<div id="pc-viewer-div">
-				<div id="plot_title_div" class="color_panel" style="display: flex; justify-content: space-between; flex-direction: row; flex: 1 1 5%">
-					<div style="flex: 1 1 auto; padding-top: 10px;">
-						<div class="title" id="plot-title" style=""></div>
-						<div class="subtitle" id="plot-subtitle" style=""></div>
-					</div>
-					<div class="colorOptions" style="flex: 1 1 20%; align-self: flex-end; padding-bottom: 10px;">
-						<span>Signature Score Colors:</span>
-						<div class="btn-group" data-toggle="buttons">
-							<label class="btn btn-default">
-							<input type="radio" name="scatterColorButtons" id="valueoption" value="value" autocomplete="off"> Consistency
-							</label>
-							<label class="btn btn-default active">
-							<input type="radio" name="scatterColorButtons" id="rankoption" value="rank" autocomplete="off" checked> Rank
-							</label>
-						<span>
-							<button id="lasso-select" type="button" class="btn btn-default" style="margin-left: 40px;">Enable Lasso Select</button>
-						</span>
-						</div>
-					</div>
-				</div>
-				<div id="scatter-div" class="color_panel" style="flex: 4 0 70%; margin-right: 10px; overflow: hidden;"></div>
-			</div>
-		</div>
-
-		<div class='tab-content' id="ppt-wrapper">
-			<div id="ppt-div">
-				<h1>PPT Viewer</h1>
-			</div>
-		</div>
-
-	</div>
-</div>
-<input id="sig_filt_input" type="text" placeholder="Filter Signatures..." style="display: none;">
-<input id="gene_filt_input" type="text" placeholder="Filter Genes..." style="display: none;">
 </body>
 </html>

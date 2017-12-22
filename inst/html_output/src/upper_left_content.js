@@ -291,7 +291,7 @@ Signature_Table.prototype.update = function(updates)
         var filter_group = get_global_status('filter_group');
 
         if (main_vis == "sigvp") {
-            matrix_promise = api.filterGroup.sigProjMatrixP(filter_group, false);
+            matrix_promise = api.filterGroup.sigProjMatrixP(filter_group, false, "nominal");
         } else if (main_vis == "tree") {
             matrix_promise = api.filterGroup.treeSigProjMatrixP(filter_group, false);
         } else {
@@ -480,7 +480,7 @@ Precomputed_Table.prototype.update = function(updates)
         var main_vis = get_global_status('main_vis');
 
         if (main_vis === "sigvp") {
-            matrix_promise = api.filterGroup.sigProjMatrixP(filter_group, true);
+            matrix_promise = api.filterGroup.sigProjMatrixP(filter_group, true, "nominal");
         } else if (main_vis === "tree") {
             matrix_promise = api.filterGroup.treeSigProjMatrixP(filter_group, true);
         } else {
