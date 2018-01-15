@@ -39,6 +39,7 @@
 #' are TRUE, FALSE, or 'auto', the last of which is the default and enables
 #' pooling if there are more than 15000 cells.
 #' @param cellsPerPartition the minimum number of cells to put into a cluster
+#' @param name a name for the sample - shown on the output report
 #' @return A FastProject object
 #' @rdname FastProject-class
 #' @export
@@ -67,7 +68,7 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
                     weights=NULL, threshold=0, perm_wPCA=FALSE,
                     sig_norm_method="znorm_rows",
                     sig_score_method="weighted_avg", pool="auto",
-                    cellsPerPartition=100) {
+                    cellsPerPartition=100, name=NULL) {
 
             .Object <- new("FastProject")
 
@@ -152,6 +153,10 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
 
             .Object@pool = pool
             .Object@cellsPerPartition = cellsPerPartition
+
+            if (!is.null(name)) {
+                .Object@name <- name
+            }
 
             return(.Object)
             }
@@ -319,7 +324,7 @@ setMethod("addProjection", signature(object="FastProject"),
 #' saveAndViewResults(fp.out)
 #' }
 setMethod("saveAndViewResults", signature(fpout="FastProject"),
-          function(fpout, ofile=NULL, port=NULL, host=NULL, browser=TRUE) {
+          function(fpout, ofile=NULL, port=NULL, host=NULL, browser=TRUE, name=NULL) {
             if(is.null(ofile)) {
               i <- 1
               ofile <- paste0("./fpout", i, ".rds")
@@ -330,11 +335,11 @@ setMethod("saveAndViewResults", signature(fpout="FastProject"),
             }
 
             saveRDS(fpout, file=ofile)
-            viewResults(fpout, port, host, browser)
+            viewResults(fpout, port, host, browser, name)
             return(ofile)
           })
 
-#' View results of analysis without saving output object
+#' View results of analysis
 #'
 #' launch a local server to explore the results with a browser.
 #'
@@ -345,6 +350,7 @@ setMethod("saveAndViewResults", signature(fpout="FastProject"),
 #' @param host The host used to serve the output viewer. If omitted, "127.0.0.1"
 #' is used.
 #' @param browser Whether or not to launch the browser automatically (default=TRUE)
+#' @param name Name for the sample - is shown at the top of the output report
 #' @aliases viewResults
 #' @return None
 #' @export
@@ -374,7 +380,11 @@ setMethod("saveAndViewResults", signature(fpout="FastProject"),
 #' viewResults(fp.out)
 #' }
 setMethod("viewResults", signature(object="FastProject"),
-          function(object, port=NULL, host=NULL, browser=TRUE) {
+          function(object, port=NULL, host=NULL, browser=TRUE, name=NULL) {
+
+            if (!is.null(name)) {
+                object@name <- name
+            }
 
             message("Launching the server...")
             message("Press exit or ctrl c to exit")
@@ -384,12 +394,12 @@ setMethod("viewResults", signature(object="FastProject"),
 #' @rdname viewResults
 #' @export
 setMethod("viewResults", signature(object="character"),
-          function(object, port=NULL, host=NULL, browser=TRUE) {
+          function(object, port=NULL, host=NULL, browser=TRUE, name=NULL) {
             fpo <- readRDS(object)
             if(!is(fpo, "FastProject")){
               stop("loaded object not a valid FastProject object")
             }
-            viewResults(fpo, port, host, browser)
+            viewResults(fpo, port, host, browser, name)
           })
 
 #' create new FastProject object from a subset of the data in an existing one

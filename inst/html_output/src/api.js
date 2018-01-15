@@ -251,6 +251,13 @@ var api = (function(){
         }).done(alert("Running Subset Analysis"));	
     }
 
+    // Session Info Api
+
+    output.sessionInfo = function() {
+        var query = "/SessionInfo"
+        return $.ajax(query, {dataType: "json"}).then(x => x)
+    }
+
     return output;
 
 })();

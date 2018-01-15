@@ -267,6 +267,13 @@ window.onload = function()
         })
     });
 
+
+    api.sessionInfo().then(info => {
+        if(info.name.length > 0){
+            $('#SampleNameSpan').text(' - ' + info.name)
+        }
+    });
+
     /*
     $("#subset-criteria").change(function() {
         global_status.subset_criteria = $(this).val();

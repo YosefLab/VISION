@@ -47,7 +47,8 @@ FastProject <- setClass("FastProject",
         filterModuleList = "list",
         sigMatrix = "data.frame",
         pools = "list",
-        inputProjections = "list"),
+        inputProjections = "list",
+        name = "character"),
     prototype = list(
         nomodel = FALSE,
         pca_filter = FALSE,
@@ -68,7 +69,8 @@ FastProject <- setClass("FastProject",
         filterModuleList = NULL,
         sigMatrix = NULL,
         pools=NULL,
-        inputProjections=NULL
+        inputProjections=NULL,
+        name = ""
 ))
 
 ProjectionData <- setClass("ProjectionData",
