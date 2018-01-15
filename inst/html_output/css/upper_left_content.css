@@ -101,8 +101,35 @@
     display: none;
 }
 
-.collapsed {
+table.collapsed tr:not(:first-child){
     display: none;
+}
+
+table.collapsible tr > td:first-child > .sig-row-label {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+/* Wrap long signature names */
+table.collapsible tr > td:first-child > .sig-row-label > div {
+    word-break: break-word;
+}
+
+/* Add spacing for un-collapsed rows so they line up with the top row */
+table.collapsible tr > td:first-child > .sig-row-label::before {
+    content: "";
+    width: 16px;
+    flex-shrink: 0;
+}
+
+/* Add chevron on row that triggres collapsing */
+table.collapsible tr:first-child > td:first-child > .sig-row-label::before {
+    content: "\25BC ";
+}
+
+table.collapsible.collapsed tr:first-child > td:first-child > .sig-row-label::before {
+    content: "\25B6 ";
 }
 
 #precomp-table-div{

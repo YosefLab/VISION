@@ -72,6 +72,8 @@ function Signature_Table()
     this.clusters = {}
     this.sorted_column = 'PCA: 1,2'
     this.filterSig = $(this.dom_node).find('#sig_filt_input')
+    this.is_filtering = false
+    this.is_collapsed = {} // cluster -> boolean, holds whether a cluster is collapsed
 }
 
 
@@ -94,11 +96,13 @@ Signature_Table.prototype.render = function()
     var self = this;
     var matrix = self.matrix;
     var main_vis = get_global_status('main_vis');
-    var clusarr = Object.keys( self.clusters ).map(
-        function ( key ) {return self.clusters[key];}
-    );
 
-    var clusmax = Math.max.apply(null, clusarr);
+    var cluster_ids = _(self.clusters).values().uniq().sort(x => x).value()
+
+    // If the filtering is enabled, we're just going to put everything into one cluster
+    if (self.is_filtering){
+        cluster_ids = [1]
+    }
 
     // Create the Header row
     var header_row = $(self.dom_node).children(".sig-tables-header").find(".proj-row");
@@ -121,11 +125,19 @@ Signature_Table.prototype.render = function()
         .css("padding-right", detect_browser_scrollbar_width() + "px")
 
     var clusterTableDiv = $(self.dom_node).children('.sig-tables-wrapper').first()
+    var new_table_divs = []
 
     // Remove old tables
     clusterTableDiv.children('.sig-table-div').remove()
 
-    for (var curr_cl = 1; curr_cl <= clusmax; curr_cl++) {
+    var curr_cl;
+    for (var i = 0; i < cluster_ids.length; i++) {
+        curr_cl = cluster_ids[i];
+
+        if (!(curr_cl in self.is_collapsed)){
+            self.is_collapsed[curr_cl] = true;
+        }
+
         // Create new table and add to table_div
         var new_table_div = document.createElement("div");
         new_table_div.setAttribute("style", "height=calc((100vh - 88px) / 2)");
@@ -135,6 +147,7 @@ Signature_Table.prototype.render = function()
         var new_table = document.createElement("table");
         new_table.setAttribute("id", "table"+ curr_cl);
         new_table.setAttribute("class", "sig-table");
+        $(new_table).data("cluster", curr_cl)
 
         var thead = document.createElement("thead");
 
@@ -145,11 +158,7 @@ Signature_Table.prototype.render = function()
 
 
         new_table_div.appendChild(new_table);
-        clusterTableDiv.append(new_table_div);
-    }
-
-
-    for (var curr_cl = 1; curr_cl <= clusmax; curr_cl++) {
+        new_table_divs.push(new_table_div);
 
         if (typeof(matrix.sig_labels) == "string") {
             matrix.sig_labels = [matrix.sig_labels];
@@ -157,7 +166,7 @@ Signature_Table.prototype.render = function()
 
         // Format cell data for better d3 binding
         var sig_labels = matrix.sig_labels.filter(
-            function(x) { return self.clusters[x] == curr_cl; }
+            function(x) { return self.is_filtering || self.clusters[x] == curr_cl; }
         );
 
         var data = [];
@@ -184,19 +193,30 @@ Signature_Table.prototype.render = function()
         var sort_col = matrix.proj_labels.indexOf(self.sorted_column);
         if(sort_col > -1){
             var sortFun = function(a,b){
-                var a_precomp = global_data.sigIsPrecomputed[a[0]];
-                var b_precomp = global_data.sigIsPrecomputed[b[0]];
-                if(a_precomp && b_precomp || !a_precomp && !b_precomp){
-                    if (main_vis == "sigvp") {
-                        return a[1][sort_col].val - b[1][sort_col].val;
-                    } else {
-                        return b[1][sort_col].val - a[1][sort_col].val;
-                    }	
+                if (main_vis == "sigvp") {
+                    return a[1][sort_col].val - b[1][sort_col].val;
+                } else {
+                    return b[1][sort_col].val - a[1][sort_col].val;
                 }
-                else if (a_precomp) { return -1;}
-                else {return 1;}
             };
             formatted_data_w_row_labels.sort(sortFun);
+        }
+
+        $(new_table_div).data('table-sort-val', 0)
+        if (cluster_ids.length > 1) {
+            // Pull out the cluster leader and put it first
+            var row_vals = _.map(formatted_data_w_row_labels, x => {
+                return _(x[1]).map(y => y.val).sum()
+            })
+
+            var leader_row_i = row_vals.indexOf(_.min(row_vals))
+            var leader_row = formatted_data_w_row_labels[leader_row_i];
+            formatted_data_w_row_labels.splice(leader_row_i, 1);
+            formatted_data_w_row_labels.splice(0, 0, leader_row);
+
+            if (sort_col > -1) {
+                $(new_table_div).data('table-sort-val', leader_row[1][sort_col].val)
+            }
         }
 
         if (main_vis == "pcannotator") {
@@ -211,7 +231,7 @@ Signature_Table.prototype.render = function()
                 .clamp(true);
         }
 
-        var content_rows = d3.select('#table'+curr_cl).select('tbody').selectAll('tr')
+        var content_rows = d3.select(new_table).select('tbody').selectAll('tr')
             .data(formatted_data_w_row_labels);
         content_rows.enter().append('tr');
         content_rows.exit().remove();
@@ -240,22 +260,32 @@ Signature_Table.prototype.render = function()
                 .on("click", function(d){tableClickFunction(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'signature')});
         }
 
-        // Make signature names click-able
+        // Add text for signature names
         content_row.filter(function(d,i) { return i == 0;})
-            .text(function(d){return d;})
+            .html(function(d){return '<div class="sig-row-label"><div>'+d+'</div></div>';})
 
-        $('#table'+curr_cl).children('tbody').children("tr:not(:first-child)").addClass('collapsed')
-        $("#table"+curr_cl).children("tbody").children("tr:first-child").children("td:first-child").attr("id", "sigclust_" + curr_cl);
-        $("#table"+curr_cl).children('tbody').children('tr:first-child').children("td:first-child")
-            .on("click", function() { clickSummaryRow(this); });
+        // Add cluster expand/collapse behavior ONLY if more than one cluster
+        if (cluster_ids.length > 1) {
 
-        // Add '>' sign to top sig name to indiciate expandability
-        $("#table"+curr_cl).children("tbody").children("tr:first-child").children("td:first-child")
-            .text(function(i, origText) {
-                return origText + " \u25B6 ";
-            });
+            $(new_table).addClass('collapsible')
+
+            if (self.is_collapsed[curr_cl]){
+                $(new_table).addClass('collapsed')
+            }
+
+            $(new_table).children('tbody').children('tr:first-child').children("td:first-child")
+                .on("click", function() { self.clickSummaryRow(this); });
+        }
 
     }
+
+    new_table_divs = _.sortBy(new_table_divs, d => {
+        return $(d).data('table-sort-val')
+    });
+
+    _.forEach(new_table_divs, new_table_div => {
+        clusterTableDiv.append(new_table_div);
+    });
 
     // Apply compact styling for pcannotator
     if(main_vis === "pcannotator"){
@@ -265,8 +295,23 @@ Signature_Table.prototype.render = function()
     }
 
     // Trigger existinging filter
-    self.filterSig.trigger('input'); 
+    self.filterSig.trigger('input');
 }
+
+Signature_Table.prototype.clickSummaryRow = function(d){
+
+    var table_id = $(d).closest('table')
+    var cluster_id = table_id.data('cluster')
+
+    if (this.is_collapsed[cluster_id]){
+        this.is_collapsed[cluster_id] = false;
+        table_id.removeClass('collapsed')
+    } else {
+        this.is_collapsed[cluster_id] = true;
+        table_id.addClass('collapsed')
+    }
+}
+
 
 Signature_Table.prototype.update = function(updates)
 {
@@ -306,7 +351,7 @@ Signature_Table.prototype.update = function(updates)
     } else {
         matrix_promise = false
     }
-    
+
     return $.when(matrix_promise, clusters_promise)
         .then(function(matrix_update, clusters_update){
             if(matrix_update || clusters_update){
@@ -406,7 +451,7 @@ Precomputed_Table.prototype.render = function()
                     return a[1][sort_col].val - b[1][sort_col].val;
                 } else {
                     return b[1][sort_col].val - a[1][sort_col].val;
-                }	
+                }
             }
             else if (a_precomp) { return -1;}
             else {return 1;}
@@ -456,7 +501,7 @@ Precomputed_Table.prototype.render = function()
             .on("click", function(d){tableClickFunction(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'meta')});
     }
 
-    // Make signature names 
+    // Make signature names
     content_row.filter(function(d,i) { return i == 0;})
         .text(function(d){return d;});
 
@@ -676,11 +721,25 @@ Signature_Table.prototype.doneTyping = function()
     var self = this;
     var val = self.filterSig.val();
 
+    if (val.length > 0 && !self.is_filtering) {
+        // Just started filtering, need to re-render table
+        self.is_filtering = true
+        self.render()
+        return // No need to finish - this function is called at the end of render()
+    }
+
+    if (val.length == 0 && self.is_filtering) {
+        // Just ended filtering, need to re-render table
+        self.is_filtering = false
+        self.render()
+        return // No need to finish - this function is called at the end of render()
+    }
+
     var vals = val.split(",");
     vals = vals.map(function(str){return str.trim();})
         .filter(function(str){ return str.length > 0;});
 
-    var tablerows = $(self.dom_node).find('table').find('tr:not(:first-child)');
+    var tablerows = $(self.dom_node).find('.sig-table-div').find('tr')
     tablerows.removeClass('filtered');
 
     var posvals = vals.filter(function(str){ return str[0] != '!';});
@@ -690,7 +749,6 @@ Signature_Table.prototype.doneTyping = function()
 
     if(posvals.length > 0){
         tablerows.filter(function(i, element){
-            if(i == 0){return false;} // Don't filter out the header row
             var sig_text = $(element).children('td').first().html().toLowerCase();
             for(var j = 0; j < posvals.length; j++)
             {
@@ -705,7 +763,6 @@ Signature_Table.prototype.doneTyping = function()
 
     if(negvals.length > 0){
         tablerows.filter(function(i, element){
-            if(i == 0){return false;} // Don't filter out the header row
             var sig_text = $(element).children('td').first().html().toLowerCase();
             for(var j = 0; j < negvals.length; j++)
             {
@@ -717,35 +774,8 @@ Signature_Table.prototype.doneTyping = function()
             return false;
         }).addClass('filtered');
     }
-
-    /*tablerows.removeClass('altRow')
-            .not('.filtered').filter(':odd').addClass('altRow');
-            */
 }
 
-
-function clickSummaryRow(d) {
-    var clust = d.id.split("_")[1];
-
-    var table_id = $("#table"+clust).children("tbody");
-    if (!table_id.children("tr:not(:first-child)").hasClass('collapsed')) {
-        table_id.children("tr:not(:first-child)").addClass('collapsed');
-
-        table_id.children("tr:first-child").children("td:first-child")
-            .text(function(i, origText) {
-                origText = origText.split(" ")[0];
-                return origText + " \u25B6 ";
-            });
-    } else {
-        table_id.children("tr:not(:first-child)").removeClass('collapsed');
-
-        table_id.children("tr:first-child").children("td:first-child")
-            .text(function(i, origText) {
-                origText = origText.split(" ")[0];
-                return origText + " \u25BC";
-            });
-    }
-}
 
 // Function that's triggered when clicking on table cell
 function tableClickFunction(row_key, col_key, item_type)
