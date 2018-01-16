@@ -186,7 +186,7 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
 
     projData <- exprData
     if (nrow(projData) != nrow(weights) || ncol(projData) != ncol(weights)) {
-    weights <- weights[rownames(exprData), ]
+        weights <- weights[rownames(exprData), ]
     }
 
     # Center data
@@ -194,7 +194,6 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
     dataCentered <- projData - wmean
 
     # Compute weighted data
-    #wDataCentered <- multMat(dataCentered, weights)
     wDataCentered <- dataCentered * weights
 
     # Weighted covariance / correlation matrices
@@ -237,7 +236,6 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
 #' @param weights Weights to apply to each coordinate in data
 #' @param components Maximum components to calculate. Default is 50.
 #' @param p_threshold P Value to cutoff components at. Default is .05.
-#' @param verbose Logical value indicating whether or not a verbose session is being run.
 #' @return (list):
 #' \itemize{
 #'     \item wPCA: weighted PCA data
@@ -245,8 +243,7 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
 #'     \item evec: the eigenvectors of the weighted covariance matrix
 #'     \item permuteMatrices: the permuted matrices generated as the null distrbution
 #' }
-applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05, verbose=FALSE) {
-    if(verbose) message("Permutation WPCA")
+applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05) {
     comp <- min(components, nrow(expr), ncol(expr))
 
     NUM_REPEATS <- 20;

@@ -578,6 +578,24 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         return(result)
 
       }) %>%
+      get("/SessionInfo", function(req, res, err) {
+
+        info <- list()
+
+        if (.hasSlot(object, "name") && !is.null(object@name)) {
+            info["name"] <- object@name
+        } else {
+            info["name"] <- ""
+        }
+
+        result <- toJSON(
+                         info,
+                         force = TRUE, pretty = TRUE, auto_unbox = TRUE
+                         )
+
+        return(result)
+
+      }) %>%
       post("/Analysis/Run/", function(req, res, err) {
         subset <- fromJSON(req$body)
         subset <- subset[!is.na(subset)]

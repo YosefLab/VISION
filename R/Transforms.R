@@ -251,8 +251,6 @@ createPools <- function(cl, expr, weights) {
 #' @return Sample specific parameters to use with the fit function
 createFalseNegativeMap <- function(data, housekeeping_genes) {
 
-    message("Creating False Negative Map...")
-
     #subset of genes to be used,ie those included in the housekeeping genes set
     data_hk <- data[rownames(data) %in% housekeeping_genes,]
     # Filter out genes with no variance

@@ -71,7 +71,10 @@ weightedEvalSignature <- function(exprData, sig, weights, min_signature_genes) {
     pdata <- sigGenes * sigVector * weights
 
     sigScores <- colSums(pdata)
-    sigScores <- sigScores / colSums(abs(sigVector) * weights)
+    denom <- colSums(abs(sigVector) * weights)
+    denom[denom == 0] <- 1 # change 0/0 to 0/1
+
+    sigScores <- sigScores / denom
 
     sigObj <- SignatureScores(sigScores, sig@name, colnames(pdata),
                             isFactor=FALSE, isPrecomputed=FALSE, numGenes=length(sigVector))

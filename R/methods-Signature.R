@@ -99,7 +99,6 @@ calculateSignatureBackground <- function(object, num, BPPARAM=NULL) {
 
     if(is.null(BPPARAM)) BPPARAM <- SerialParam()
 
-    message("Computing background distribution for signature scores...")
     # Construct random signatures for background distribution
     randomSigs <- generatePermutationNull(num, object@exprData, object@sigData)
 
@@ -244,9 +243,6 @@ sigsVsProjections <- function(projections, sigScoresData,
   colnames(randomSigScoreMatrix) <- vapply(randomSigData,
                                            function(x) x@name, "")
   rownames(randomSigScoreMatrix) <- sampleLabels
-
-
-  message("Evaluating signatures against projections...")
 
   sigProjMatrix <- data.frame()
   sigProjMatrix_P <- data.frame()
@@ -613,7 +609,6 @@ clusterSignatures <- function(sigList, sigMatrix, pvals) {
             preserveShape=TRUE
         )
 
-    message("before mclust")
     compkm <- Mclust(t(r))
 
     compcls <- as.list(compkm$classification)

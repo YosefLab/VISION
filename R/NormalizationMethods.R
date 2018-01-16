@@ -23,8 +23,6 @@ noNormalization <- function(data) {
 #' @return Data matrix with same dimensions, with each column z-normalized.
 colNormalization <- function(data) {
 
-    message("Applying z-normalization on all columns...")
-
     mu <- colMeans2(data)
     sigma <- colSds(data)
     sigma[sigma == 0] <- 1.0
@@ -41,7 +39,6 @@ colNormalization <- function(data) {
 #' @return Data matrix with same dimensions, with each row z-normalized.
 rowNormalization <- function(data) {
 
-    message("Applying z-normalization on all rows...")
     mu <- rowMeans2(data)
     sigma <- rowSds(data)
     sigma[sigma == 0] <- 1.0
@@ -54,7 +51,6 @@ rowNormalization <- function(data) {
 #' @param data data matrix
 #' @return Data matrix with same dimensions, with each row and column z-normalized.
 rowAndColNormalization <- function(data) {
-    message("Applying row and column normalization...")
 
     data = rowNormalization(data)
     data = colNormalization(data)
@@ -67,8 +63,6 @@ rowAndColNormalization <- function(data) {
 #' @param data data matrix
 #' @return Data matrix with same dimensions, with each value representing its column-wise rank.
 colRankNormalization <- function(data) {
-
-    message("Applying column rank normalization...")
 
     rdata = colRanks(data, ties.method="min",  preserveShape=TRUE)
     rownames(rdata) <- rownames(data)

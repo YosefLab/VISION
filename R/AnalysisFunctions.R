@@ -29,7 +29,7 @@ filterData <- function(object,
     object@projection_genes <- projection_genes
     object@threshold <- threshold
 
-    message("filtering data...")
+    message("Determining Projection Genes...")
 
     if (object@threshold == 0) {
         num_samples <- ncol(getExprData(object@exprData))
@@ -53,7 +53,7 @@ calcWeights <- function(object,
     object@nomodel <- nomodel
     clustered <- (ncol(getExprData(object@exprData)) > 15000 || object@pool)
     if (!clustered && !object@nomodel) {
-        message("Computing weights from False Negative Function...")
+        message("Computing weights from False Negative Rate curves...")
         falseneg_out <- createFalseNegativeMap(getExprData(object@exprData),
                                                object@housekeepingData)
         object@weights <- computeWeights(falseneg_out[[1]], falseneg_out[[2]],
@@ -224,6 +224,7 @@ analyzeProjections <- function(object,
   object@lean <- lean
   object@perm_wPCA <- perm_wPCA
 
+  message("Computing background distribution for signature scores...")
   randomSigScores <- calculateSignatureBackground(object, num=3000, BPPARAM=BPPARAM)
 
   # Apply projections to filtered gene sets, create new projectionData object
@@ -231,8 +232,6 @@ analyzeProjections <- function(object,
 
   ## calculate projections - s
     for (filter in c("fano")) {
-        message("Filter: ", filter)
-
         message("Projecting data into 2 dimensions...")
 
         projectData <- generateProjections(object@exprData, object@weights,
@@ -242,7 +241,7 @@ analyzeProjections <- function(object,
                                            perm_wPCA=object@perm_wPCA,
                                            BPPARAM = BPPARAM)
 
-        message("Computing significance of signatures...")
+        message("Evaluating signatures against projections...")
         sigVProj <- sigsVsProjections(projectData$projections,
                                       object@sigScores,
                                       randomSigScores,
