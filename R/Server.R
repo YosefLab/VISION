@@ -201,12 +201,16 @@ newAnalysis <- function(nfp) {
 }
 
 #' Lanch the server
+#' @importFrom jsonlite fromJSON
+#' @importFrom utils browseURL URLdecode stack
+#' @importFrom SummarizedExperiment values
 #' @param object FastProject object or path to a file containing such an
 #' object (saved using saveAndViewResults, or directly using saveRDS)
 #' @param port The port on which to serve the output viewer.  If omitted, a
 #' random port between 8000 and 9999 is chosen.
 #' @param host The host used to serve the output viewer. If omitted, "127.0.0.1"
 #' is used.
+#' @return None
 launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
     if (is.null(port)) {
@@ -451,9 +455,9 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         sumposl <- sum(posl)
         nposl <- vapply(posl, function(x) x / sumposl, 1.0)
 
-        nposl <- sort(nposl, decreasing=T)
+        nposl <- sort(nposl, decreasing = TRUE)
 
-        js1 <- toJSON(with(stack(nposl), tapply(values, ind, c, simplify=F)))
+        js1 <- toJSON(with(stack(nposl), tapply(values, ind, c, simplify = FALSE)))
 
           return(js1)
 
@@ -468,9 +472,10 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         sumneg1 <- sum(negl)
         nnegl <- vapply(negl, function(x) x / sumneg1, 1.0)
 
-        nnegl <- sort(nnegl, decreasing=T)
+        nnegl <- sort(nnegl, decreasing = TRUE)
 
-        js2 <- toJSON(with(stack(nnegl), tapply(values, ind, c, simplify=F)))
+        js2 <- toJSON(with(stack(nnegl),
+                           tapply(values, ind, c, simplify = FALSE)))
 
         return(js2)
 
@@ -498,7 +503,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         coord <- apply(unname(ret), 1, as.list)
         names(coord) <- rownames(ret)
 
-        return(toJSON(coord, force=T, auto_unbox=T))
+        return(toJSON(coord, force = TRUE, auto_unbox = TRUE))
       }) %>%
       get("/FilterGroup/(?<filter_name13>.*)/PCVersus/(?<pc_num3>.*)/(?<pc_num4>.*)", function(req, res, err) {
         # projData <- object@projData
@@ -516,7 +521,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         coord <- apply(unname(ret), 1, as.list)
         names(coord) <- rownames(ret)
 
-        return(toJSON(coord, force=T, auto_unbox=T))
+        return(toJSON(coord, force = TRUE, auto_unbox = TRUE))
       }) %>%
       get("/FilterGroup/(?<filter_name14>.*)/PearsonCorr/Normal", function(req, res, err) {
           filter <- URLdecode(req$params$filter_name14)

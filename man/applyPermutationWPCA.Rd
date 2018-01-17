@@ -4,8 +4,7 @@
 \alias{applyPermutationWPCA}
 \title{Applies pemutation method to return the most significant components of weighted PCA data}
 \usage{
-applyPermutationWPCA(expr, weights, components = 50, p_threshold = 0.05,
-  verbose = FALSE)
+applyPermutationWPCA(expr, weights, components = 50, p_threshold = 0.05)
 }
 \arguments{
 \item{expr}{Expression data}
@@ -15,8 +14,6 @@ applyPermutationWPCA(expr, weights, components = 50, p_threshold = 0.05,
 \item{components}{Maximum components to calculate. Default is 50.}
 
 \item{p_threshold}{P Value to cutoff components at. Default is .05.}
-
-\item{verbose}{Logical value indicating whether or not a verbose session is being run.}
 }
 \value{
 (list):

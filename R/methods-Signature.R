@@ -287,7 +287,7 @@ sigsVsProjections <- function(projections, sigScoresData,
                              by='row.names', all=TRUE)
 
     SigProjMatrix_Pemp <- merge(sigProjMatrix_Pemp, emp_pvals,
-                                by='row.names', all=T)
+                                by='row.names', all=TRUE)
 
     rownames(sigProjMatrix_P) = sigProjMatrix_P$Row.names
     rownames(sigProjMatrix_Pemp) = sigProjMatrix_Pemp$Row.names

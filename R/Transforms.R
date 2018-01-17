@@ -11,7 +11,7 @@
 #'     \item pools - a list of data matrices of the original cells in each pool
 #' }
 applyMicroClustering <- function(exprData, nomodel=TRUE, hkg=matrix(),
-                                 cellsPerPartition=100, BPPARAM=BiocParallel::SerialParam(), random=F) {
+                                 cellsPerPartition=100, BPPARAM=BiocParallel::SerialParam(), random=FALSE) {
 
     texpr <- filterGenesThreshold(exprData, 0.2*ncol(exprData))
     fexpr <- filterGenesFano(texpr)

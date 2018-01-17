@@ -8,7 +8,7 @@
 localhost}
 \usage{
 \S4method{saveAndViewResults}{FastProject}(fpout, ofile = NULL, port = NULL,
-  host = NULL, browser = TRUE)
+  host = NULL, browser = TRUE, name = NULL)
 }
 \arguments{
 \item{fpout}{FastProject object}

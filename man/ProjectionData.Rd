@@ -4,7 +4,8 @@
 \alias{ProjectionData}
 \title{Wrapper for storing all relevant information for a given projection.}
 \usage{
-ProjectionData(projections = NULL, keys, sigProjMatrix, pMatrix, sigClusters)
+ProjectionData(projections = NULL, keys, sigProjMatrix, pMatrix, sigClusters,
+  emp_pMatrix)
 }
 \arguments{
 \item{projections}{List of Projection objects to be stored}
