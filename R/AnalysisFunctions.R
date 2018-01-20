@@ -229,101 +229,103 @@ analyzeProjections <- function(object,
 
   # Apply projections to filtered gene sets, create new projectionData object
   filterModuleList <- list()
+  filter <- "fano"
 
-  ## calculate projections - s
-    for (filter in c("fano")) {
-        message("Projecting data into 2 dimensions...")
+  message("Projecting data into 2 dimensions...")
 
-        projectData <- generateProjections(object@exprData, object@weights,
-                                           filter,
-                                           inputProjections=object@inputProjections,
-                                           lean=object@lean,
-                                           perm_wPCA=object@perm_wPCA,
-                                           BPPARAM = BPPARAM)
+  projectData <- generateProjections(object@exprData, object@weights,
+                                     filter,
+                                     inputProjections=object@inputProjections,
+                                     lean=object@lean,
+                                     perm_wPCA=object@perm_wPCA,
+                                     BPPARAM = BPPARAM)
 
-        message("Evaluating signatures against projections...")
-        sigVProj <- sigsVsProjections(projectData$projections,
-                                      object@sigScores,
-                                      randomSigScores,
-                                      BPPARAM=BPPARAM)
+  message("Evaluating signatures against projections...")
+  sigVProj <- sigsVsProjections(projectData$projections,
+                                object@sigScores,
+                                randomSigScores,
+                                BPPARAM=BPPARAM)
 
-        message("Clustering Signatures...")
-        sigClusters <- clusterSignatures(object@sigData, object@sigMatrix,
-                                         sigVProj$pVals)
+  message("Clustering Signatures...")
+  sigClusters <- clusterSignatures(object@sigData, object@sigMatrix,
+                                   sigVProj$pVals)
 
-        projData <- ProjectionData(projections = projectData$projections,
-                                   keys = colnames(sigVProj$sigProjMatrix),
-                                   sigProjMatrix = sigVProj$sigProjMatrix,
-                                   pMatrix = sigVProj$pVals,
-                                   sigClusters = sigClusters,
-                                   emp_pMatrix = sigVProj$emp_pVals)
+  projData <- ProjectionData(projections = projectData$projections,
+                             keys = colnames(sigVProj$sigProjMatrix),
+                             sigProjMatrix = sigVProj$sigProjMatrix,
+                             pMatrix = sigVProj$pVals,
+                             sigClusters = sigClusters,
+                             emp_pMatrix = sigVProj$emp_pVals)
 
-        message("Fitting principle tree...")
-        treeProjs <- generateTreeProjections(projectData$fullPCA, filter,
-                                   inputProjections = projectData$projections,
-                                   permMats = projectData$permMats,
-                                   BPPARAM = BPPARAM)
-        
-        message("Computing significance of signatures...")
-        sigVTreeProj <- sigsVsProjections(treeProjs$projections,
-                                          object@sigScores,
-                                          randomSigScores,
-                                          BPPARAM=BPPARAM)
+  if (tolower(object@trajectory_method) != "none") {
+      message("Fitting principle tree...")
+      treeProjs <- generateTreeProjections(projectData$fullPCA, filter,
+                                 inputProjections = projectData$projections,
+                                 permMats = projectData$permMats,
+                                 BPPARAM = BPPARAM)
 
-        message("Clustering Signatures...")
-        sigTreeClusters <- clusterSignatures(object@sigData, object@sigMatrix,
-                                             sigVTreeProj$pVals)
+      message("Computing significance of signatures...")
+      sigVTreeProj <- sigsVsProjections(treeProjs$projections,
+                                        object@sigScores,
+                                        randomSigScores,
+                                        BPPARAM=BPPARAM)
 
-        treeProjData <- TreeProjectionData(projections = treeProjs$projections,
-                                   keys = colnames(sigVTreeProj$sigProjMatrix),
-                                   sigProjMatrix = sigVTreeProj$sigProjMatrix,
-                                   pMatrix = sigVTreeProj$pVals,
-                                   sigClusters = sigTreeClusters,
-                                   treeScore = treeProjs$treeScore)
+      message("Clustering Signatures...")
+      sigTreeClusters <- clusterSignatures(object@sigData, object@sigMatrix,
+                                           sigVTreeProj$pVals)
 
-        ## remove the factors from the pearson correlation calculation
-        factor_precomp <- vapply(object@precomputedData,
-                                 function(x) x@isFactor, FUN.VALUE=TRUE)
-        precomp_names <- vapply(object@precomputedData,
-                                 function(x) x@name, FUN.VALUE="")
+      treeProjData <- TreeProjectionData(projections = treeProjs$projections,
+                                 keys = colnames(sigVTreeProj$sigProjMatrix),
+                                 sigProjMatrix = sigVTreeProj$sigProjMatrix,
+                                 pMatrix = sigVTreeProj$pVals,
+                                 sigClusters = sigTreeClusters,
+                                 treeScore = treeProjs$treeScore)
+  } else {
+      treeProjData <- NULL
+  }
 
-        precomp_names <- precomp_names[factor_precomp]
+  ## remove the factors from the pearson correlation calculation
+  factor_precomp <- vapply(object@precomputedData,
+                           function(x) x@isFactor, FUN.VALUE=TRUE)
+  precomp_names <- vapply(object@precomputedData,
+                           function(x) x@name, FUN.VALUE="")
 
-        computedSigMatrix <- object@sigMatrix[,setdiff(colnames(object@sigMatrix),
-                                                      precomp_names),drop=FALSE]
-        computedSigMatrix <- t(as.matrix(computedSigMatrix))
+  precomp_names <- precomp_names[factor_precomp]
+
+  computedSigMatrix <- object@sigMatrix[,setdiff(colnames(object@sigMatrix),
+                                                precomp_names),drop=FALSE]
+  computedSigMatrix <- t(as.matrix(computedSigMatrix))
 
 
-        pearsonCorr <- lapply(1:nrow(computedSigMatrix), function(i) {
-          lapply(1:nrow(projectData$fullPCA), function(j) {
-            return(calcPearsonCorrelation(computedSigMatrix[i,],
-                                          projectData$fullPCA[j,]))
-          })
-        })
+  pearsonCorr <- lapply(1:nrow(computedSigMatrix), function(i) {
+    lapply(1:nrow(projectData$fullPCA), function(j) {
+      return(calcPearsonCorrelation(computedSigMatrix[i,],
+                                    projectData$fullPCA[j,]))
+    })
+  })
 
-        pearsonCorr <- matrix(unlist(lapply(pearsonCorr, unlist)),
-                              nrow=nrow(computedSigMatrix),
-                              ncol=nrow(projectData$fullPCA), byrow=TRUE)
+  pearsonCorr <- matrix(unlist(lapply(pearsonCorr, unlist)),
+                        nrow=nrow(computedSigMatrix),
+                        ncol=nrow(projectData$fullPCA), byrow=TRUE)
 
-        rownames(pearsonCorr) <- rownames(computedSigMatrix)
-        colnames(pearsonCorr) <- rownames(projectData$fullPCA)
+  rownames(pearsonCorr) <- rownames(computedSigMatrix)
+  colnames(pearsonCorr) <- rownames(projectData$fullPCA)
 
-        pcaAnnotData <- PCAnnotatorData(fullPCA = projectData$fullPCA,
-                                        pearsonCorr = pearsonCorr,
-                                        loadings = projectData$loadings)
+  pcaAnnotData <- PCAnnotatorData(fullPCA = projectData$fullPCA,
+                                  pearsonCorr = pearsonCorr,
+                                  loadings = projectData$loadings)
 
-        filterModuleData <- FilterModuleData(filter = filter,
-                                             genes = projectData$geneNames,
-                                             ProjectionData = projData,
-                                             TreeProjectionData = treeProjData,
-                                             PCAnnotatorData = pcaAnnotData)
+  filterModuleData <- FilterModuleData(filter = filter,
+                                       genes = projectData$geneNames,
+                                       ProjectionData = projData,
+                                       TreeProjectionData = treeProjData,
+                                       PCAnnotatorData = pcaAnnotData)
 
-        filterModuleList[[filter]] <- filterModuleData
+  filterModuleList[[filter]] <- filterModuleData
 
-    }
 
-    object@filterModuleList <- filterModuleList
-    return(object)
+  object@filterModuleList <- filterModuleList
+  return(object)
 }
 
 convertToDense <- function(object) {

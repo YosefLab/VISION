@@ -51,6 +51,11 @@ body {
     color: white;
 }
 
+.nav-pills.inv .nav-link.disabled{
+    color: #aaaaaa;
+    cursor: default;
+}
+
 #main-content{
     flex-grow: 1;
     display: flex;

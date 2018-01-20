@@ -593,6 +593,11 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             info["name"] <- ""
         }
 
+        W <- object@filterModuleList[["fano"]]@TreeProjectionData
+        hasTree <- !is.null(W)
+
+        info["has_tree"] <- hasTree
+
         result <- toJSON(
                          info,
                          force = TRUE, pretty = TRUE, auto_unbox = TRUE

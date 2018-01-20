@@ -35,6 +35,7 @@ FastProject <- setClass("FastProject",
         threshold = "numeric",
         sig_norm_method = "character",
         sig_score_method = "character",
+        trajectory_method = "character",
         exprData = "ExpressionData",
         allData = "matrixORSparse",
         housekeepingData = "character",
@@ -57,7 +58,7 @@ FastProject <- setClass("FastProject",
         weights = NULL,
         threshold = 0,
         sig_norm_method = "znorm_rows",
-        sig_score_method ="weighted avg",
+        trajectory_method ="None",
         exprData = NULL,
         housekeepingData = NULL,
         sigData = NULL,
@@ -113,12 +114,13 @@ TreeProjection <- setClass("TreeProjection",
     edgePos = "numeric"
 ))
 
+setClassUnion('TreeProjDataORNULL', members=c('TreeProjectionData', 'NULL'))
 FilterModuleData <- setClass("FilterModuleData",
     slots = c(
     filter = "character",
     genes = "character",
     ProjectionData = "ProjectionData",
-    TreeProjectionData = "TreeProjectionData",
+    TreeProjectionData = "TreeProjDataORNULL",
     PCAnnotatorData = "PCAnnotatorData"
 ))
 

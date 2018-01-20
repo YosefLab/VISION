@@ -35,6 +35,8 @@
 #' @param sig_norm_method Method to apply to normalize the expression matrix
 #' before calculating signature scores
 #' @param sig_score_method Method to apply when calculating signature scores
+#' @param trajectory_method Method to use to infer a trajectory.  Either
+#' "None" (default) or "SimplePPT".
 #' @param pool indicates whether or not to create supercells. Acceptable values
 #' are TRUE, FALSE, or 'auto', the last of which is the default and enables
 #' pooling if there are more than 15000 cells.
@@ -67,8 +69,8 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
                     projection_genes=c("fano"), lean=FALSE, min_signature_genes=5,
                     weights=NULL, threshold=0, perm_wPCA=FALSE,
                     sig_norm_method="znorm_rows",
-                    sig_score_method="weighted_avg", pool="auto",
-                    cellsPerPartition=100, name=NULL) {
+                    sig_score_method="weighted_avg", trajectory_method="None",
+                    pool="auto", cellsPerPartition=100, name=NULL) {
 
             .Object <- new("FastProject")
 
@@ -117,8 +119,9 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
             .Object@threshold <- threshold
             .Object@sig_norm_method <- sig_norm_method
             .Object@sig_score_method <- sig_score_method
-            .Object@lean = lean
-            .Object@perm_wPCA = perm_wPCA
+            .Object@trajectory_method <- trajectory_method
+            .Object@lean <- lean
+            .Object@perm_wPCA <- perm_wPCA
 
             LOTS_OF_CELLS <- ncol(getExprData(.Object@exprData)) > 15000
 

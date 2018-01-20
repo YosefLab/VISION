@@ -260,6 +260,7 @@ window.onload = function()
 
     // Enable the nav-bar functionality
     $('#nav-bar').find('.nav-link').click(function(){
+        if( $(this).hasClass('disabled') ) { return; }
         $('#nav-bar').find('.nav-link').removeClass('active')
         $(this).addClass('active')
         set_global_status({
@@ -271,6 +272,12 @@ window.onload = function()
     api.sessionInfo().then(info => {
         if(info.name.length > 0){
             $('#SampleNameSpan').text(' - ' + info.name)
+        }
+
+        if(info.has_tree){
+            $('#nav-bar')
+                .find(".nav-link[data-main-vis='tree']")
+                .removeClass('disabled')
         }
     });
 
