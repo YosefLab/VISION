@@ -16,8 +16,8 @@
 naiveEvalSignature <- function(exprData, sig, weights, min_signature_genes) {
 
     # Select genes in signature that are in the expression matrix
-    sig_names <- toupper(names(sig@sigDict))
-    data_names <- toupper(rownames(exprData))
+    sig_names <- names(sig@sigDict)
+    data_names <- rownames(exprData)
     sigVector <- sig@sigDict[sig_names %in% data_names]
 
     if (length(sigVector) == 0) {
@@ -54,8 +54,8 @@ naiveEvalSignature <- function(exprData, sig, weights, min_signature_genes) {
 weightedEvalSignature <- function(exprData, sig, weights, min_signature_genes) {
 
     # Select genes in signature that are in the expression matrix
-    sig_names <- toupper(names(sig@sigDict))
-    data_names <- toupper(rownames(exprData))
+    sig_names <- names(sig@sigDict)
+    data_names <- rownames(exprData)
     sigVector <- (sig@sigDict)[sig_names %in% data_names]
 
     if (length(sigVector) == 0) {

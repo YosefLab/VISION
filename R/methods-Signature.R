@@ -23,6 +23,11 @@ Signature <- function(sigDict, name, source, metaData="",
     stop("Missing source file.")
   }
 
+  names(sigDict) <- vapply(
+                       names(sigDict), toupper,
+                       "", USE.NAMES = FALSE
+                       )
+
   .Object <- new("Signature", sigDict=sigDict, name=name, source=source,
                  metaData=metaData, isPrecomputed=isPrecomputed,
                  isFactor=isFactor, cluster=cluster)

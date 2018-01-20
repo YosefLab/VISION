@@ -82,7 +82,9 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
                 .Object@housekeepingData <- character()
                 .Object@nomodel = TRUE
             } else {
-                .Object@housekeepingData <- housekeeping
+                .Object@housekeepingData <- vapply(housekeeping,
+                                                   toupper, "",
+                                                   USE.NAMES = FALSE)
             }
 
             if (is.list(signatures)) {
@@ -115,7 +117,9 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
             if (!.Object@nomodel) {
                 .Object@nomodel <- nomodel
             }
-            .Object@projection_genes <- projection_genes
+            .Object@projection_genes <- vapply(projection_genes,
+                                               toupper, "",
+                                               USE.NAMES = FALSE)
             .Object@threshold <- threshold
             .Object@sig_norm_method <- sig_norm_method
             .Object@sig_score_method <- sig_score_method

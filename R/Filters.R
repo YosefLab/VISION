@@ -22,13 +22,13 @@ applyFilters <- function(data, threshold, filterInput) {
     }
 
     for (filter in filterInput) {
-        if (filter == "novar") {
+        if (tolower(filter) == "novar") {
             f_expr <- filterGenesNovar(expr)
             data@fanoFilter <- f_expr
-        } else if (filter == "threshold") {
+        } else if (tolower(filter) == "threshold") {
             f_expr <- filterGenesThreshold(expr, threshold)
             data@fanoFilter <- f_expr
-        } else if (filter == "fano") {
+        } else if (tolower(filter) == "fano") {
             t_expr <- filterGenesThreshold(expr, threshold)
             f_expr <- filterGenesFano(t_expr)
             data@fanoFilter <- f_expr
