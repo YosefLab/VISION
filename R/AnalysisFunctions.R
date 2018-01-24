@@ -123,10 +123,7 @@ calcSignatureScores <- function(object,
             if(s@isFactor){
                 ## Need to compute majority level in each group
                 N_MicroClusters <- ncol(normExpr)
-                newlevels <- union(
-                                   union("~", levels(s@scores)),
-                                   paste0("~", levels(s@scores))
-                                   )
+                newlevels <- union("~", levels(s@scores))
 
                 clustScores <- factor(integer(N_MicroClusters),
                                 levels=newlevels)
@@ -136,21 +133,19 @@ calcSignatureScores <- function(object,
                     pool <- object@pools[[clust]]
 
                     if(length(pool) == 0){ #TODO: This shouldn't happen
-                        clustScores[clust] = "~"
+                        clustScores[clust] <- "~"
                         next
                     }
 
                     vals <- s@scores[match(pool, s@sample_labels)]
                     freq <- table(vals) / length(vals)
                     maxval <- freq[which.max(freq)]
-                    if(maxval >= .9){
+                    if(maxval >= .5){
                         clust_val <- names(maxval)
-                    } else if (maxval > .5) {
-                        clust_val <- paste0("~",names(maxval))
                     } else {
-                        clust_val = "~"
+                        clust_val <- "~"
                     }
-                    clustScores[clust] = clust_val
+                    clustScores[clust] <- clust_val
                 }
             } else { # Then it must be numeric, just average
 
