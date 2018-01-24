@@ -567,8 +567,13 @@ sigsVsProjection_pcf <- function(sigScoresData, weights){
     if(length(krList) > 0){
         krTest <- kruskal.test(krList)
 
-        consistency[s@name] <- krTest$statistic
-        pvals[s@name] <- krTest$p.value
+        if (is.na(krTest$p.value)){
+            consistency[s@name] <- 0
+            pvals[s@name] <- 1.0
+        } else {
+            consistency[s@name] <- krTest$statistic
+            pvals[s@name] <- krTest$p.value
+        }
     } else {
         consistency[s@name] <- 0
         pvals[s@name] <- 1.0

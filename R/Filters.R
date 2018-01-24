@@ -60,8 +60,8 @@ filterGenesNovar <- function(data) {
 #' @param threshold (int) threshold value to filter by
 #' @return filtered expression matrix
 filterGenesThreshold <- function(data, threshold) {
-    message("Applying threshold filter...", appendLF=FALSE)
-    fdata <- data[rowSums(data > 0) > threshold,]
+    message("Applying threshold filter...", appendLF = FALSE)
+    fdata <- data[matrixStats::rowCounts(data > 0) > threshold, ]
     message(paste(nrow(fdata), "Genes Retained"))
     return(fdata)
 }

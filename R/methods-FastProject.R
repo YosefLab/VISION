@@ -74,6 +74,10 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
 
             .Object <- new("FastProject")
 
+            if (is.data.frame(data)){
+                data <- as.matrix(data)
+            }
+
             rownames(data) <- toupper(rownames(data))
             .Object@allData = data
             .Object@exprData <- ExpressionData(data)
@@ -99,6 +103,9 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
             }
 
             if (!is.null(precomputed)) {
+                if(is.matrix(precomputed)){
+                    precomputed <- as.data.frame(precomputed)
+                }
                 if(is.data.frame(precomputed)) {
                     .Object@precomputedData <- SigScoresFromDataframe(
                         precomputed, colnames(.Object@allData))

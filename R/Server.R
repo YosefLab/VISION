@@ -123,6 +123,11 @@ coordinatesToJSON <- function(p) {
 
     coord <- as.data.frame(t(p))
 
+    # This switching is needed because toJSON will drop row labels
+    # if they are integers for some reason
+    coord["sample_labels"] <- rownames(coord)
+    rownames(coord) <- NULL
+
     json <- toJSON(coord, force=TRUE, pretty=TRUE,
                    auto_unbox=TRUE, dataframe="values")
 
