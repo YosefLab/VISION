@@ -116,7 +116,7 @@ function ColorScatter(parent, colorbar, legend)
 }
 
 
-ColorScatter.prototype.setData = function(points, isFactor, tree_points, tree_adj)
+ColorScatter.prototype.setData = function(points, isFactor, tree_points, tree_adj, full_color_range)
 {
     if(tree_points === undefined){
         tree_points = []
@@ -124,6 +124,10 @@ ColorScatter.prototype.setData = function(points, isFactor, tree_points, tree_ad
 
     if(tree_adj === undefined){
         tree_adj = []
+    }
+
+    if(full_color_range === undefined){
+        full_color_range = false
     }
 
     this.points = points;
@@ -160,9 +164,16 @@ ColorScatter.prototype.setData = function(points, isFactor, tree_points, tree_ad
     } else if(cvals[0] !== null) {
 
         cvals.sort(d3.ascending); // Needed for quantile
-        var low = d3.quantile(cvals, 0.02);
-        var high = d3.quantile(cvals, 0.98);
-        var mid = d3.mean(cvals);
+        var low, high, mid;
+        if(full_color_range){
+            low = d3.min(cvals)
+            high = d3.max(cvals)
+            mid = (low + high)/2
+        } else {
+            low = d3.quantile(cvals, 0.02)
+            high = d3.quantile(cvals, 0.98)
+            mid = (low + high)/2
+        }
 
         this.colorScale = d3.scale.linear()
             .domain([low, mid, high])

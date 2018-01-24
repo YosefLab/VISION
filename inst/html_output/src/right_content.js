@@ -71,8 +71,6 @@ Right_Content.prototype.draw_sigvp = function() {
 
     var self = this;
 
-    $(self.dom_node).find("#plotted-value-option").show()
-
     var item_key = get_global_status('plotted_item');
     var item_type = get_global_status('plotted_item_type');
     var proj_key = get_global_status('plotted_projection');
@@ -87,7 +85,16 @@ Right_Content.prototype.draw_sigvp = function() {
         isFactor = false;
     }
 
-    if(self.getScatterColorOption() == "rank" && !isFactor){
+    var full_color_range
+    if(item_type === "gene"){
+        $(self.dom_node).find("#plotted-value-option").hide()
+        full_color_range = true
+    } else {
+        $(self.dom_node).find("#plotted-value-option").show()
+        full_color_range = false
+    }
+
+    if(self.getScatterColorOption() == "rank" && !isFactor && item_type !== "gene"){
         values = self.rank_values(values)
     }
 
@@ -105,7 +112,7 @@ Right_Content.prototype.draw_sigvp = function() {
         points.push([x, y, sig_score, sample_label]);
     })
 
-    self.scatter.setData(points, isFactor);
+    self.scatter.setData(points, isFactor, undefined, undefined, full_color_range);
 
 }
 
@@ -113,8 +120,6 @@ Right_Content.prototype.draw_sigvp = function() {
 Right_Content.prototype.draw_tree = function() {
 
     var self = this;
-
-    $(self.dom_node).find("#plotted-value-option").show()
 
     var item_key = get_global_status('plotted_item');
     var item_type = get_global_status('plotted_item_type');
@@ -134,7 +139,16 @@ Right_Content.prototype.draw_tree = function() {
         isFactor = false;
     }
 
-    if(self.getScatterColorOption() == "rank" && !isFactor){
+    var full_color_range
+    if(item_type === "gene"){
+        $(self.dom_node).find("#plotted-value-option").hide()
+        full_color_range = true
+    } else {
+        $(self.dom_node).find("#plotted-value-option").show()
+        full_color_range = false
+    }
+
+    if(self.getScatterColorOption() == "rank" && !isFactor && item_type !== "gene"){
         values = self.rank_values(values)
     }
 
@@ -176,7 +190,7 @@ Right_Content.prototype.draw_tree = function() {
                 }
             }
 
-            self.scatter.setData(points, isFactor, tree_points, tree_adj);
+            self.scatter.setData(points, isFactor, tree_points, tree_adj, full_color_range);
 
         });
 }
