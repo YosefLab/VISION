@@ -173,7 +173,6 @@ SignatureScores <- setClass("SignatureScores",
     slots = c(
     scores = "vector",
     name = "character",
-    sample_labels = "character",
     isFactor = "logical",
     isPrecomputed = "logical",
     numGenes = "numeric"

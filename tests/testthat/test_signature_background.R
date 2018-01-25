@@ -28,7 +28,7 @@ test_that("Can generate random background signatures", {
   expect_s4_class(sample_sig, "SignatureScores")
 
   expect_equal(length(sample_sig@scores), ncol(ed))
-  expect_equal(length(sample_sig@sample_labels), ncol(ed))
+  expect_equal(names(sample_sig@scores), colnames(ed))
 
   # Test this file too - has more signatures
   sig_file <- "test_data/published_signatures/h.all.v5.2.symbols.gmt"
@@ -44,6 +44,6 @@ test_that("Can generate random background signatures", {
   expect_s4_class(sample_sig, "SignatureScores")
 
   expect_equal(length(sample_sig@scores), ncol(ed))
-  expect_equal(length(sample_sig@sample_labels), ncol(ed))
+  expect_equal(names(sample_sig@scores), colnames(ed))
 
 })

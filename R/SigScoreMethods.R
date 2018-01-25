@@ -38,7 +38,7 @@ naiveEvalSignature <- function(exprData, sig, weights, min_signature_genes) {
 
     sigScores <- sigScores / length(sigVector)
 
-    sigObj <- SignatureScores(sigScores, sig@name, colnames(pdata),
+    sigObj <- SignatureScores(sigScores, sig@name,
                             isFactor=FALSE, isPrecomputed=FALSE, numGenes=length(sigVector))
 
     return(sigObj)
@@ -76,7 +76,7 @@ weightedEvalSignature <- function(exprData, sig, weights, min_signature_genes) {
 
     sigScores <- sigScores / denom
 
-    sigObj <- SignatureScores(sigScores, sig@name, colnames(pdata),
+    sigObj <- SignatureScores(sigScores, sig@name,
                             isFactor=FALSE, isPrecomputed=FALSE, numGenes=length(sigVector))
 
     return(sigObj)

@@ -151,7 +151,7 @@ readPrecomputed <- function(filename, sampleLabels, sep="\t") {
             First row should contain tab-separated list of samples")
     }
 
-    ## Make sure that l1 is in the same order as sample_labels; match indices
+    ## Make sure that l1 is in the same order as sampleLabels; match indices
     ## between signatrues in file & sampleLabels
     sampleLabels <- as.character(as.matrix(sampleLabels))
 
@@ -190,7 +190,8 @@ readPrecomputed <- function(filename, sampleLabels, sep="\t") {
         stop("Column 2 of precomputed signature file should specify either 'numerical' or 'factor'")
     }
 
-    sigScores <- c(sigScores, SignatureScores(sigVals, sigName, sampleLabels,
+    names(sigVals) <- sampleLabels
+    sigScores <- c(sigScores, SignatureScores(sigVals, sigName,
                                                 sigIsFactor, TRUE, 0))
     }
 

@@ -45,7 +45,7 @@ test_that("Naive Sig Scores computed correctly", {
   ss <- sigScores[[1]]
   expect_false(ss@isPrecomputed)
   expect_false(ss@isFactor)
-  expect_equal(ss@sample_labels, colnames(expr))
+  expect_equal(names(ss@scores), colnames(expr))
   expect_equal(length(ss@scores), ncol(expr))
 })
 

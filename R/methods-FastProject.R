@@ -433,7 +433,6 @@ createNewFP <- function(fp, subset) {
 
     .Object@precomputedData <- lapply(fp@precomputedData, function(sigscore) {
         sigscore@scores <- sigscore@scores[subset]
-        sigscore@sample_labels <- sigscore@sample_labels[subset]
         return(sigscore)
     })
 

@@ -4,16 +4,15 @@
 #'
 #' @param scores Signature scores
 #' @param name Name of signature
-#' @param sample_labels Sample names of expression matrix
 #' @param isFactor Indicates whether or not this is a factor signature
 #' @param isPrecomputed Indicates whether or not this score was precomputed
 #' @param numGenes The number of genes used to calculate the score
 #' @return New SignatureScores object
-SignatureScores <- function(scores, name, sample_labels,
+SignatureScores <- function(scores, name,
                     isFactor, isPrecomputed, numGenes) {
-    .Object <- new("SignatureScores", scores=scores, name=name,
-                   sample_labels=sample_labels, isFactor=isFactor,
-                   isPrecomputed=isPrecomputed, numGenes=numGenes)
+    .Object <- new("SignatureScores", scores = scores, name = name,
+                   isFactor = isFactor, isPrecomputed = isPrecomputed,
+                   numGenes = numGenes)
     return(.Object)
     }
 
@@ -39,21 +38,20 @@ SigScoresFromDataframe <- function(df, sampleLabels) {
         stop("Provided precomputed signature dataframe must have same sample labels as the expression matrix")
     }
 
-    df = df[sampleLabels, , drop=FALSE]
+    df <- df[sampleLabels, , drop = FALSE]
 
-    for(i in 1:NCOL(df)) {
+    for (i in 1:NCOL(df)) {
 
-    if (is.factor(df[,i])){
-        data <- as.factor(df[,i])
-    } else {
-        data <- as.numeric(df[,i])
-    }
+        if (is.factor(df[, i])){
+            data <- as.factor(df[, i])
+        } else {
+            data <- as.numeric(df[, i])
+        }
 
-    sigScores <- c(sigScores, SignatureScores(data,
-                                          colnames(df)[i],
-                                          rownames(df),
-                                          is.factor(data),
-                                          TRUE, 0))
+        sigScores <- c(sigScores, SignatureScores(data,
+                                                  colnames(df)[i],
+                                                  is.factor(data),
+                                                  TRUE, 0))
     }
     return(sigScores)
 }

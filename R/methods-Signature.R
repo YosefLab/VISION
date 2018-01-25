@@ -215,7 +215,7 @@ getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
 sigsVsProjections <- function(projections, sigScoresData,
                               randomSigData, BPPARAM=bpparam()) {
 
-  N_SAMPLES <- length(sigScoresData[[1]]@sample_labels)
+  N_SAMPLES <- length(sigScoresData[[1]]@scores)
 
   # Build a matrix of all non-precomputed signatures
   geneSigs <- sigScoresData[vapply(sigScoresData,

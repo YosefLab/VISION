@@ -137,7 +137,7 @@ calcSignatureScores <- function(object,
                         next
                     }
 
-                    vals <- s@scores[match(pool, s@sample_labels)]
+                    vals <- s@scores[match(pool, names(s@scores))]
                     freq <- table(vals) / length(vals)
                     maxval <- freq[which.max(freq)]
                     if(maxval >= .5){
@@ -163,15 +163,14 @@ calcSignatureScores <- function(object,
                         next
                     }
 
-                    vals <- s@scores[match(pool, s@sample_labels)]
+                    vals <- s@scores[match(pool, names(s@scores))]
                     clust_val = mean(vals)
                     clustScores[clust] = clust_val
                 }
             }
 
             sigScores[[s@name]] <- SignatureScores(
-                                       clustScores, s@name,
-                                       names(clustScores), s@isFactor,
+                                       clustScores, s@name, s@isFactor,
                                        s@isPrecomputed, 0)
         }
 
