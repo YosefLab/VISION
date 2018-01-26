@@ -126,48 +126,62 @@ calculateSignatureBackground <- function(object, num) {
 #' @return a vector of random Signature objects
 generatePermutationNull <- function(num, eData, sigData) {
 
+  exp_genes <- rownames(getExprData(eData))
+
   # Remove precomputed
   precomputed <- vapply(sigData, function(s) s@isPrecomputed, TRUE)
   sigData <- sigData[!precomputed]
 
-  sigSize <- vapply(sigData, function(s) length(s@sigDict), 1)
+  sigSize <- vapply(sigData, function(s) {
+                        sum(names(s@sigDict) %in% exp_genes)
+                    }
+                 , 1)
+
+  sigSize <- log10(sigSize)
   sigBalance <- vapply(sigData, function(s) {
-                           positive = sum(s@sigDict >= 0)
-                           balance = positive / length(s@sigDict)
+                           positive <- sum(s@sigDict >= 0)
+                           balance <- positive / length(s@sigDict)
                            return(balance)
     }, 1)
 
-  sigBalance[sigBalance < 0.5] = 1 - sigBalance[sigBalance < 0.5]
+  sigBalance[sigBalance < 0.5] <- 1 - sigBalance[sigBalance < 0.5]
 
   #sigVars = cbind(sigSize, sigBalance)
   sigVars <- cbind(sigSize) # TODO: incorporate the sigBalance here
 
-  n_components <- 5
-  if(dim(unique(sigVars))[1] <= n_components){
+  n_components <- 5 # TODO: choose number of components better
+  if (nrow(unique(sigVars)) <= n_components){
       centers <- unique(sigVars)
   } else {
-      km <- kmeans(sigVars, n_components) # TODO: choose number of components better
+      km <- kmeans(sigVars, n_components)
       centers <- km$centers
   }
 
+  message("Creating ", nrow(centers),
+          " background signature groups with the following parameters:")
+  centers[, "sigSize"] <- round(10 ** centers[, "sigSize"])
+  print(centers) # How do I do this with 'message'??
+  message("  signatures per group: ", num)
 
-  randomSigs <- c()
+  randomSigs <- list()
 
   for (i in seq(dim(centers)[1])) {
 
-    size <- centers[i,"sigSize"]
-    size <- round(size)
+    size <- centers[i, "sigSize"]
     #balance <- centers[i,"sigBalance"]
     balance <- 1
 
     for (j in 1:num) {
-      newSigGenes <- sample(rownames(getExprData(eData)), min(size, nrow(getExprData(eData))))
-      newSigSigns <- sample(c(1, -1), length(newSigGenes), replace=TRUE, prob=c(balance, 1-balance))
+      newSigGenes <- sample(exp_genes, min(size, length(exp_genes)))
+      newSigSigns <- sample(c(1, -1), length(newSigGenes),
+                            replace = TRUE, prob = c(balance, 1 - balance))
       names(newSigSigns) <- newSigGenes
-      newSig <- Signature(newSigSigns, paste0("RANDOM_BG_", size, "_", j), 'x')
-      randomSigs <- c(randomSigs, newSig)
+      newSig <- Signature(newSigSigns, paste0("RANDOM_BG_", size, "_", j), "x")
+      randomSigs[[newSig@name]] <- newSig
     }
   }
+
+  randomSigs <- sample(randomSigs) # Permute them for better distribution to batches
   return(randomSigs)
 }
 
