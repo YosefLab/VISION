@@ -203,17 +203,14 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
 
     # SVD of wieghted correlation matrix
     ncomp <- min(ncol(projData), nrow(projData), maxComponents)
-    decomp <- rsvd::rsvd(wcov, k=ncomp)
+    decomp <- rsvd::rsvd(wcov, k = ncomp)
     evec <- t(decomp$u)
 
     # Project down using computed eigenvectors
-    dataCentered <- dataCentered / sqrt(var)
-    print(dim(dataCentered))
-    wpcaData <- as.matrix(Matrix::crossprod(t(evec), dataCentered))
-    print(dim(wpcaData))
-    #wpcaData <- wpcaData * (decomp$d*decomp$d)
-    eval <- as.matrix(apply(wpcaData, 1, var))
-    totalVar <- sum(apply(projData, 1, var))
+    wpcaData <- evec %*% dataCentered
+
+    eval <- rowVars(wpcaData)
+    totalVar <- sum(rowVars(projData))
     eval <- eval / totalVar
 
     colnames(evec) <- rownames(exprData)
