@@ -101,9 +101,9 @@ to get a default backend.
 Here we provide a serial back-end since it's platform independent. For more details on setting up parallelization back-ends, see the [BiocParallel package page](http://bioconductor.org/packages/release/bioc/html/BiocParallel.html)
 
 ```{r, collapse=T, message=T}
-bp <- BiocParallel::SerialParam()
+BiocParallel::register(BiocParallel::SerialParam())
 
-fp <- analyze(fp, BPPARAM = bp)
+fp <- analyze(fp)
 ```
 
 With the FastProjectOutput object, a dynamic web report can be generated with the `viewResults` function or the `saveAndViewResults` function, which will both save the FastProjectOutput object as an .rds file and launch a web browser for the dynamic report.
