@@ -98,24 +98,17 @@ setMethod("addSigData", signature(object="Signature"),
 #'
 #' @param object the FastProject object
 #' @param num the number of signatures to generate
-#' @param BPPARAM the parallelization backend to use for these computations
 #' @return numeric matrix of random signature scores SIGNATURES x CELLS
-calculateSignatureBackground <- function(object, num, BPPARAM=NULL) {
-
-    if(is.null(BPPARAM)) BPPARAM <- SerialParam()
+calculateSignatureBackground <- function(object, num) {
 
     # Construct random signatures for background distribution
     randomSigs <- generatePermutationNull(num, object@exprData, object@sigData)
 
     normExpr <- getNormalizedCopy(object@exprData, object@sig_norm_method)
 
-    ## Compute signature scores for random signatures generated
-    randomSigScores <- bplapply(randomSigs, function(s) {
-        singleSigEval(s, object@sig_score_method, normExpr,
-                      object@weights,
-                      object@min_signature_genes)
-    } ,BPPARAM=BPPARAM)
-    names(randomSigScores) <- names(randomSigs)
+    randomSigScores <- batchSigEval(randomSigs, object@sig_score_method,
+                              normExpr, object@weights,
+                              object@min_signature_genes)
 
     ## Remove random signatures that didn't compute correctly
     toRemove <- vapply(randomSigScores, is.null, TRUE)
@@ -206,14 +199,13 @@ getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
 #' names to their value at each coordinate
 #' @param randomSigData List of SignatureScores Object, mapping randomly
 #' generated signatures to scores to be compared with the real signature scores.
-#' @param BPPARAM the parallelization backend to use
 #' @return list:
 #' \itemize{
 #'     \item sigProbMatrix: the matrix of signature-projection consistency scores
 #'     \item pVals: pvalues for the scores
 #' }
 sigsVsProjections <- function(projections, sigScoresData,
-                              randomSigData, BPPARAM=bpparam()) {
+                              randomSigData) {
 
   N_SAMPLES <- length(sigScoresData[[1]]@scores)
 
@@ -254,7 +246,7 @@ sigsVsProjections <- function(projections, sigScoresData,
   sigProjMatrix_Pemp <- data.frame()
 
   for (proj in projections) {
-    weights <- computeKNNWeights(proj, K=round(sqrt(NCOL(proj@pData))), BPPARAM)
+    weights <- computeKNNWeights(proj, K=round(sqrt(NCOL(proj@pData))))
 
     svp_n <- sigsVsProjection_n(geneSigs, sigScoreMatrix,
                                 randomSigData, randomSigScoreMatrix, weights)

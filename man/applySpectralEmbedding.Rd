@@ -4,12 +4,10 @@
 \alias{applySpectralEmbedding}
 \title{Performs Spectral Embedding  on data}
 \usage{
-applySpectralEmbedding(exprData, BPPARAM = bpparam())
+applySpectralEmbedding(exprData)
 }
 \arguments{
 \item{exprData}{Expression data, NUM_GENES x NUM_SAMPLES}
-
-\item{BPPARAM}{the parallelization backend to use}
 }
 \value{
 Reduced data NUM_SAMPLES x NUM_COMPONENTS

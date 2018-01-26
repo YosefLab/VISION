@@ -8,7 +8,7 @@ calcSignatureScores(object, sigData = object@sigData,
   precomputedData = object@precomputedData,
   sig_norm_method = object@sig_norm_method,
   sig_score_method = object@sig_score_method,
-  min_signature_genes = object@min_signature_genes, BPPARAM = NULL)
+  min_signature_genes = object@min_signature_genes)
 }
 \arguments{
 \item{object}{the FastProject object}
@@ -24,8 +24,6 @@ matrix before calculating signature scores}
 
 \item{min_signature_genes}{the minimal number of genes that must be present
 in both the data and the signature for the signature to be evaluated}
-
-\item{BPPARAM}{the parallelization backend to use for these computations}
 }
 \value{
 the FastProject object, with signature score slots populated

@@ -4,14 +4,12 @@
 \alias{calculateSignatureBackground}
 \title{calculate background signature scores}
 \usage{
-calculateSignatureBackground(object, num, BPPARAM = NULL)
+calculateSignatureBackground(object, num)
 }
 \arguments{
 \item{object}{the FastProject object}
 
 \item{num}{the number of signatures to generate}
-
-\item{BPPARAM}{the parallelization backend to use for these computations}
 }
 \value{
 numeric matrix of random signature scores SIGNATURES x CELLS

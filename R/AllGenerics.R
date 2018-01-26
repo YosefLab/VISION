@@ -48,6 +48,6 @@ setGeneric("viewResults", function(object, ...) {
     standardGeneric("viewResults")
 })
 
-setGeneric("computeKNNWeights", function(object, K, BPPARAM) {
+setGeneric("computeKNNWeights", function(object, K) {
     standardGeneric("computeKNNWeights")
 })

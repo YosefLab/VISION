@@ -5,7 +5,7 @@
 \title{Projects data into 2 dimensions using a variety of linear and non-linear methods.}
 \usage{
 generateProjections(expr, weights, filterName = "", inputProjections = c(),
-  lean = FALSE, perm_wPCA = FALSE, BPPARAM = BiocParallel::bpparam())
+  lean = FALSE, perm_wPCA = FALSE)
 }
 \arguments{
 \item{expr}{ExpressionData object}
@@ -21,8 +21,6 @@ if FALSE all algorithms applied. Default is FALSE}
 
 \item{perm_wPCA}{If TRUE, apply permutation wPCA to determine significant
 number of components. Default is FALSE.}
-
-\item{BPPARAM}{the backend to use for parallelization}
 }
 \value{
 list:

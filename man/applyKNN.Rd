@@ -4,12 +4,10 @@
 \alias{applyKNN}
 \title{create a Knearest neighbor graph from the data}
 \usage{
-applyKNN(exprData, BPPARAM = bpparam())
+applyKNN(exprData)
 }
 \arguments{
 \item{exprData}{the data to base the KNN graph on}
-
-\item{BPPARAM}{the parallelization backend to use for the computation}
 }
 \value{
 the weghted adjacency matrix of the KNN graph

@@ -5,14 +5,12 @@
 \title{Initializes a new SignatureScores object
 Should not be called directly, instead use the `new` syntax}
 \usage{
-SignatureScores(scores, name, sample_labels, isFactor, isPrecomputed, numGenes)
+SignatureScores(scores, name, isFactor, isPrecomputed, numGenes)
 }
 \arguments{
 \item{scores}{Signature scores}
 
 \item{name}{Name of signature}
-
-\item{sample_labels}{Sample names of expression matrix}
 
 \item{isFactor}{Indicates whether or not this is a factor signature}
 

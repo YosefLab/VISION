@@ -6,8 +6,7 @@
 are reduce, using the louvain clustering algorithm}
 \usage{
 applyMicroClustering(exprData, nomodel = TRUE, hkg = matrix(),
-  cellsPerPartition = 100, BPPARAM = BiocParallel::SerialParam(),
-  random = FALSE)
+  cellsPerPartition = 100, random = FALSE)
 }
 \arguments{
 \item{exprData}{the expression data matrix}
@@ -17,8 +16,6 @@ applyMicroClustering(exprData, nomodel = TRUE, hkg = matrix(),
 \item{hkg}{a matrix vector of house keeping genes to use as negative control}
 
 \item{cellsPerPartition}{control over the minimum number of cells to put into each supercell}
-
-\item{BPPARAM}{the parallelization backend to use}
 }
 \value{
 a list:

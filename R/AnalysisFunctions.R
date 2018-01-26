@@ -2,16 +2,13 @@
 #' the overall signal in the data
 #' @param object the FastProject object for which to cluster the cells
 #' @param cellsPerPartition the minimum number of cells to put into a cluster
-#' @param BPPARAM the parallelization backend to use
 #' @return the FastProject with pooled cells
 poolCells <- function(object,
-                      cellsPerPartition=object@cellsPerPartition,
-                      BPPARAM=SerialParam()) {
+                      cellsPerPartition=object@cellsPerPartition) {
     object@cellsPerPartition <- cellsPerPartition
     microclusters <- applyMicroClustering(getExprData(object@exprData),
                                           hkg=object@housekeepingData,
-                                          cellsPerPartition=object@cellsPerPartition,
-                                          BPPARAM=BPPARAM)
+                                          cellsPerPartition=object@cellsPerPartition)
     object@exprData <- ExpressionData(microclusters[[1]])
     object@pools <- microclusters[[2]]
     return(object)
@@ -85,18 +82,15 @@ calcWeights <- function(object,
 #' @param sig_score_method the scoring method to use
 #' @param min_signature_genes the minimal number of genes that must be present
 #' in both the data and the signature for the signature to be evaluated
-#' @param BPPARAM the parallelization backend to use for these computations
 #' @return the FastProject object, with signature score slots populated
 calcSignatureScores <- function(object,
                                 sigData=object@sigData,
                                 precomputedData=object@precomputedData,
                                 sig_norm_method=object@sig_norm_method,
                                 sig_score_method=object@sig_score_method,
-                                min_signature_genes=object@min_signature_genes,
-                                BPPARAM=NULL) {
+                                min_signature_genes=object@min_signature_genes) {
 
     message("Evaluating Signature Scores on Cells...")
-    if(is.null(BPPARAM)) BPPARAM <- SerialParam()
 
     ## override object parameters
     if(!is.null(sigData)) object@sigData <- sigData
@@ -107,12 +101,8 @@ calcSignatureScores <- function(object,
 
     normExpr <- getNormalizedCopy(object@exprData, object@sig_norm_method)
 
-
-    sigScores <- lapply(object@sigData, function(s) {
-        singleSigEval(s, object@sig_score_method, normExpr,
-                      object@weights,
-                      object@min_signature_genes)
-    })
+    sigScores <- batchSigEval(object@sigData, object@sig_score_method,
+                              normExpr, object@weights, object@min_signature_genes)
 
     sigList <- object@sigData
     for (s in object@precomputedData) {
@@ -206,20 +196,16 @@ calcSignatureScores <- function(object,
 #' initiated. Default is FALSE
 #' @param perm_wPCA If TRUE, apply permutation WPCA to calculate significant
 #' number of PCs. Else not. Default FALSE.
-#' @param BPPARAM the parallelization backend to use
 #' @return the FastProject object with values set for the analysis results
 analyzeProjections <- function(object,
                                lean=object@lean,
-                               perm_wPCA=object@perm_wPCA,
-                               BPPARAM=NULL) {
-
-  if(is.null(BPPARAM)) BPPARAM <- SerialParam()
+                               perm_wPCA=object@perm_wPCA) {
 
   object@lean <- lean
   object@perm_wPCA <- perm_wPCA
 
   message("Computing background distribution for signature scores...")
-  randomSigScores <- calculateSignatureBackground(object, num=3000, BPPARAM=BPPARAM)
+  randomSigScores <- calculateSignatureBackground(object, num=3000)
 
   # Apply projections to filtered gene sets, create new projectionData object
   filterModuleList <- list()
@@ -231,14 +217,12 @@ analyzeProjections <- function(object,
                                      filter,
                                      inputProjections=object@inputProjections,
                                      lean=object@lean,
-                                     perm_wPCA=object@perm_wPCA,
-                                     BPPARAM = BPPARAM)
+                                     perm_wPCA=object@perm_wPCA)
 
   message("Evaluating signatures against projections...")
   sigVProj <- sigsVsProjections(projectData$projections,
                                 object@sigScores,
-                                randomSigScores,
-                                BPPARAM=BPPARAM)
+                                randomSigScores)
 
   message("Clustering Signatures...")
   sigClusters <- clusterSignatures(object@sigData, object@sigMatrix,
@@ -255,14 +239,12 @@ analyzeProjections <- function(object,
       message("Fitting principle tree...")
       treeProjs <- generateTreeProjections(projectData$fullPCA, filter,
                                  inputProjections = projectData$projections,
-                                 permMats = projectData$permMats,
-                                 BPPARAM = BPPARAM)
+                                 permMats = projectData$permMats)
 
       message("Computing significance of signatures...")
       sigVTreeProj <- sigsVsProjections(treeProjs$projections,
                                         object@sigScores,
-                                        randomSigScores,
-                                        BPPARAM=BPPARAM)
+                                        randomSigScores)
 
       message("Clustering Signatures...")
       sigTreeClusters <- clusterSignatures(object@sigData, object@sigMatrix,

@@ -4,8 +4,7 @@
 \alias{analyzeProjections}
 \title{analyze projections}
 \usage{
-analyzeProjections(object, lean = object@lean, perm_wPCA = object@perm_wPCA,
-  BPPARAM = NULL)
+analyzeProjections(object, lean = object@lean, perm_wPCA = object@perm_wPCA)
 }
 \arguments{
 \item{object}{the FastProject object}
@@ -15,8 +14,6 @@ initiated. Default is FALSE}
 
 \item{perm_wPCA}{If TRUE, apply permutation WPCA to calculate significant
 number of PCs. Else not. Default FALSE.}
-
-\item{BPPARAM}{the parallelization backend to use}
 }
 \value{
 the FastProject object with values set for the analysis results

@@ -5,15 +5,12 @@
 \alias{computeKNNWeights,TreeProjection-method}
 \title{Compute KNN weights based on geodesic distances for TreeProjection objects}
 \usage{
-\S4method{computeKNNWeights}{TreeProjection}(object, K = 30,
-  BPPARAM = bpparam())
+\S4method{computeKNNWeights}{TreeProjection}(object, K = 30)
 }
 \arguments{
 \item{object}{a TreeProjection object}
 
 \item{K}{the number of nearest neighbors to look at}
-
-\item{BPPARAM}{the parallelization backen to use}
 }
 \value{
 an all-pars distance matrix

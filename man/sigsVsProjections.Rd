@@ -4,8 +4,7 @@
 \alias{sigsVsProjections}
 \title{Evaluates the significance of each signature vs. each projection.}
 \usage{
-sigsVsProjections(projections, sigScoresData, randomSigData,
-  BPPARAM = bpparam())
+sigsVsProjections(projections, sigScoresData, randomSigData)
 }
 \arguments{
 \item{projections}{Maps projections to their spatial coordinates for each
@@ -16,8 +15,6 @@ names to their value at each coordinate}
 
 \item{randomSigData}{List of SignatureScores Object, mapping randomly
 generated signatures to scores to be compared with the real signature scores.}
-
-\item{BPPARAM}{the parallelization backend to use}
 }
 \value{
 list:

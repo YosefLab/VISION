@@ -5,15 +5,12 @@
 \alias{computeKNNWeights,Projection-method}
 \title{compute for each vector the weights to apply to it's K nearest neighbors}
 \usage{
-\S4method{computeKNNWeights}{Projection}(object, K = 30,
-  BPPARAM = bpparam())
+\S4method{computeKNNWeights}{Projection}(object, K = 30)
 }
 \arguments{
 \item{object}{the Projecton object}
 
 \item{K}{number of neughbors to compute ths for}
-
-\item{BPPARAM}{the parallelizaton backend to use}
 }
 \value{
 a weights matrix

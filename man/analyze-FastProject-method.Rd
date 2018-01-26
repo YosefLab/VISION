@@ -6,12 +6,10 @@
 \alias{analyze}
 \title{Main entry point for running FastProject Analysis}
 \usage{
-\S4method{analyze}{FastProject}(object, BPPARAM = NULL)
+\S4method{analyze}{FastProject}(object)
 }
 \arguments{
 \item{object}{FastProject object}
-
-\item{BPPARAM}{a parallelization backend to use for the analysis}
 }
 \value{
 FastProject object
@@ -41,7 +39,6 @@ fp <- FastProject(data = expMat,
 
 ## analyze requires actual non-random data to run properly
 \dontrun{
-bp <- BiocParallel::SerialParam()
-fp.out <- analyze(fp, BPPARAM=bp)
+fp.out <- analyze(fp)
 }
 }

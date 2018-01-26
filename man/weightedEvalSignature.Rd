@@ -4,7 +4,7 @@
 \alias{weightedEvalSignature}
 \title{Evaluate signature with weights computed from FNR curve.}
 \usage{
-weightedEvalSignature(exprData, sig, weights, min_signature_genes)
+weightedEvalSignature(exprData, sig, weights)
 }
 \arguments{
 \item{exprData}{numeric Matrix Genes x Cells}
@@ -12,8 +12,6 @@ weightedEvalSignature(exprData, sig, weights, min_signature_genes)
 \item{sig}{Signature to be evalauting}
 
 \item{weights}{Weight matrix computed through FNR curve}
-
-\item{min_signature_genes}{Minimum number of genes to evaluate}
 }
 \value{
 SignatureScore object

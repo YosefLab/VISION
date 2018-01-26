@@ -380,12 +380,13 @@ calcInterEdgeDistMat <- function(v1.dist, v2.dist, path.length) {
 #' @param data the search-space to look for nearest neighbors
 #' @param query the points to find neighbors for (not necessarily in the data)
 #' @param k the number of neighbors to find for each vectors
-#' @param BPPARAM the parallelization backend to use
 #' @return a list of the k neughbors for each of the vectors in `query`
-findNeighbors <- function(data, query, k, BPPARAM=bpparam()) {
+findNeighbors <- function(data, query, k) {
+
+    n_workers <- getWorkerCount()
 
     neighborhood <- lapply(1:ncol(query), function(x) {
-    vkn <- ball_tree_vector_knn(t(data), query[,x], k, BPPARAM$workers)
+    vkn <- ball_tree_vector_knn(t(data), query[,x], k, n_workers)
     return(vkn)
     })
     return(neighborhood)

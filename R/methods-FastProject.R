@@ -209,7 +209,6 @@ setMethod("FastProject", signature(data = "SummarizedExperiment"),
 #' @export
 #' @aliases analyze
 #' @param object FastProject object
-#' @param BPPARAM a parallelization backend to use for the analysis
 #' @return FastProject object
 #'
 #' @examples
@@ -233,18 +232,14 @@ setMethod("FastProject", signature(data = "SummarizedExperiment"),
 #'
 #' ## analyze requires actual non-random data to run properly
 #' \dontrun{
-#' bp <- BiocParallel::SerialParam()
-#' fp.out <- analyze(fp, BPPARAM=bp)
+#' fp.out <- analyze(fp)
 #' }
 setMethod("analyze", signature(object="FastProject"),
-            function(object, BPPARAM = NULL) {
+            function(object) {
     message("Beginning Analysis")
-    if(is.null(BPPARAM)) {
-        BPPARAM <- SerialParam()
-    }
 
     if (object@pool) {
-        object <- poolCells(object, BPPARAM = BPPARAM)
+        object <- poolCells(object)
     }
 
     object <- filterData(object)
@@ -252,9 +247,9 @@ setMethod("analyze", signature(object="FastProject"),
 
     object <- calcWeights(object)
 
-    object <- calcSignatureScores(object, BPPARAM = BPPARAM)
+    object <- calcSignatureScores(object)
 
-    object <- analyzeProjections(object, BPPARAM = BPPARAM)
+    object <- analyzeProjections(object)
 
     message("Analysis Complete!")
 

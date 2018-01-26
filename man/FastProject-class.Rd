@@ -16,7 +16,8 @@ FastProject(data, ...)
   projection_genes = c("fano"), lean = FALSE, min_signature_genes = 5,
   weights = NULL, threshold = 0, perm_wPCA = FALSE,
   sig_norm_method = "znorm_rows", sig_score_method = "weighted_avg",
-  pool = "auto", cellsPerPartition = 100, name = NULL)
+  trajectory_method = "None", pool = "auto", cellsPerPartition = 100,
+  name = NULL)
 
 \S4method{FastProject}{character}(data, ...)
 
@@ -70,6 +71,9 @@ number of PCs. Else not. Default FALSE.}
 before calculating signature scores}
 
 \item{sig_score_method}{Method to apply when calculating signature scores}
+
+\item{trajectory_method}{Method to use to infer a trajectory.  Either
+"None" (default) or "SimplePPT".}
 
 \item{pool}{indicates whether or not to create supercells. Acceptable values
 are TRUE, FALSE, or 'auto', the last of which is the default and enables

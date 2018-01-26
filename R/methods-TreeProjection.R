@@ -23,10 +23,9 @@ TreeProjection <- function(pData, name, vData, adjMat) {
 #' @importFrom Matrix rowSums
 #' @param object a TreeProjection object
 #' @param K the number of nearest neighbors to look at
-#' @param BPPARAM the parallelization backen to use
 #' @return an all-pars distance matrix
 setMethod("computeKNNWeights", signature(object = "TreeProjection"),
-            function(object, K=30, BPPARAM=bpparam()) {
+            function(object, K=30) {
             distmat <- calculateTreeDistances(princPnts = object@vData,
                                                 princAdj = object@adjMat,
                                                 edgeAssoc = object@edgeAssoc,

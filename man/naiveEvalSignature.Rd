@@ -4,7 +4,7 @@
 \alias{naiveEvalSignature}
 \title{Different ways to evalutate the signature score}
 \usage{
-naiveEvalSignature(exprData, sig, weights, min_signature_genes)
+naiveEvalSignature(exprData, sig, weights)
 }
 \arguments{
 \item{exprData}{numeric Matrix Genes x Cells}
@@ -12,8 +12,6 @@ naiveEvalSignature(exprData, sig, weights, min_signature_genes)
 \item{sig}{Signature to be evalauting}
 
 \item{weights}{Weight matrix computed through FNR curve}
-
-\item{min_signature_genes}{Minimum number of genes to evaluate}
 }
 \value{
 SignatureScore object

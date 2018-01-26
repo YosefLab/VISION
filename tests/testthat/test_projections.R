@@ -8,7 +8,7 @@ test_that("KNN returns the same weights as computed in sigs vs projections", {
 
     knn <- applyKNN(res)
 
-    knn2 <- computeKNNWeights(proj, round(sqrt(ncol(res))), SerialParam())
+    knn2 <- computeKNNWeights(proj, round(sqrt(ncol(res))))
 
     expect_equal(knn, knn2)
 

@@ -30,16 +30,8 @@ test_that("Naive Sig Scores computed correctly", {
   weights <- matrix(1L, nrow=nrow(expr), ncol=ncol(expr))
   rownames(weights) <- rownames(expr)
   colnames(weights) <- colnames(expr)
-  min_signature_genes <- 0
   
-  sigScores <- c()
-  
-  for (sig in sigList) {
-    tryCatch({
-      sigScores <- c(sigScores, naiveEvalSignature(expr,
-                                                   sig, weights, min_signature_genes))
-    }, error=function(e){})
-  }
+  sigScores <- batchSigEval(sigList, "naive", expr, weights, 1)
   
   expect_equal(length(sigScores), length(sigList)-1)
   ss <- sigScores[[1]]
@@ -56,26 +48,12 @@ test_that("Naive Sig Eval is same as Weighted Sig Eval with all weights 1", {
   weights <- matrix(1L, nrow=nrow(expr), ncol=ncol(expr))
   rownames(weights) <- rownames(expr)
   colnames(weights) <- colnames(expr)
-  min_signature_genes <- 0
-  
-  sigScores <- c()
-  
-  for (sig in sigList) {
-    tryCatch({
-      sigScores <- c(sigScores, naiveEvalSignature(expr,
-                                                   sig, weights, min_signature_genes))
-    }, error=function(e){})
-  }
+
+  sigScores <- batchSigEval(sigList, "naive", expr, weights, 1)
   
   expect_equal(length(sigScores), length(sigList)-1)
   
-  sigScores2 <- c()
-  for (sig in sigList) {
-    tryCatch({
-      sigScores2 <- c(sigScores2, weightedEvalSignature(expr,
-                                                   sig, weights, min_signature_genes))
-    }, error=function(e){})
-  }
+  sigScores2 <- batchSigEval(sigList, "weighted_avg", expr, weights, 1)
   
   expect_equal(length(sigScores2), length(sigList)-1)
   
@@ -116,11 +94,13 @@ test_that("Weighted signature scores are correct", {
 
     sigs <- list(sig1 = sig1, sig2 = sig2)
 
-    sig1scores <- singleSigEval(sig1, "weighted_avg", expr,
-                  weights, 1)
+    scores <- batchSigEval(sigs, "weighted_avg", expr, weights, 1)
+    expect_equal(length(scores), 2)
 
-    sig2scores <- singleSigEval(sig2, "weighted_avg", expr,
-                  weights, 1)
+    sig1scores <- scores[["sig1"]]
+
+
+    sig2scores <- scores[["sig2"]]
 
     expected_sig1_scores <- c(s1 = (1 * .5 + 2 * .1) / (.5 + .1),
                               s2 = (2 * .3 + 2 * .5) / (.3 + .5))
@@ -158,11 +138,13 @@ test_that("Unweighted signature scores are correct", {
 
     sigs <- list(sig1 = sig1, sig2 = sig2)
 
-    sig1scores <- singleSigEval(sig1, "naive", expr,
-                  weights, 1)
+    scores <- batchSigEval(sigs, "naive", expr, weights, 1)
+    expect_equal(length(scores), 2)
 
-    sig2scores <- singleSigEval(sig2, "naive", expr,
-                  weights, 1)
+    sig1scores <- scores[["sig1"]]
+
+
+    sig2scores <- scores[["sig2"]]
 
     expected_sig1_scores <- c(s1 = 1.5, s2 = 2.0)
     expect_equal(sig1scores@scores, expected_sig1_scores)

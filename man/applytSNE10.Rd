@@ -4,12 +4,10 @@
 \alias{applytSNE10}
 \title{Performs tSNE with perplexity 10 on data}
 \usage{
-applytSNE10(exprData, BPPARAM = bpparam())
+applytSNE10(exprData)
 }
 \arguments{
 \item{exprData}{Expression data, NUM_GENES x NUM_SAMPLES}
-
-\item{BPPARAM}{the parallelization backend to use}
 }
 \value{
 Reduced data NUM_SAMPLES x NUM_COMPONENTS

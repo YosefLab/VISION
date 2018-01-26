@@ -5,7 +5,7 @@
 \title{Find K nearest neighbors for each vector in query among the vectors in the
 given data}
 \usage{
-findNeighbors(data, query, k, BPPARAM = bpparam())
+findNeighbors(data, query, k)
 }
 \arguments{
 \item{data}{the search-space to look for nearest neighbors}
@@ -13,8 +13,6 @@ findNeighbors(data, query, k, BPPARAM = bpparam())
 \item{query}{the points to find neighbors for (not necessarily in the data)}
 
 \item{k}{the number of neighbors to find for each vectors}
-
-\item{BPPARAM}{the parallelization backend to use}
 }
 \value{
 a list of the k neughbors for each of the vectors in `query`

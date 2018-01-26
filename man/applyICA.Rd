@@ -4,12 +4,10 @@
 \alias{applyICA}
 \title{Performs ICA on data}
 \usage{
-applyICA(exprData, BPPARAM = bpparam())
+applyICA(exprData)
 }
 \arguments{
 \item{exprData}{Expression data, NUM_GENES x NUM_SAMPLES}
-
-\item{BPPARAM}{the parallelization backend to use}
 }
 \value{
 Reduced data NUM_SAMPLES x NUM_COMPONENTS

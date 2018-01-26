@@ -58,17 +58,18 @@ setMethod("cluster", signature(object = "Projection"),
 #' @importFrom Matrix rowSums
 #' @param object the Projecton object
 #' @param K number of neughbors to compute ths for
-#' @param BPPARAM the parallelizaton backend to use
 #' @return a weights matrix
 setMethod("computeKNNWeights", signature(object = "Projection"),
-            function(object, K = 30, BPPARAM = bpparam()) {
+            function(object, K = 30) {
 
             if (!is.na(object@weights[1,1])) {
                 return(object@weights)
             }
 
+            n_workers <- getWorkerCount()
+
             weights <- matrix(0L, nrow=NCOL(object@pData), ncol=NCOL(object@pData))
-            k <- ball_tree_knn(t(object@pData), K, BPPARAM$workers)
+            k <- ball_tree_knn(t(object@pData), K, n_workers)
             nn <- k[[1]]
             d <- k[[2]]
 

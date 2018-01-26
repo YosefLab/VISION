@@ -4,14 +4,13 @@
 #' @param nomodel a boolean value indicating whether or not to apply FNR curve weight calculations
 #' @param hkg a matrix vector of house keeping genes to use as negative control
 #' @param cellsPerPartition control over the minimum number of cells to put into each supercell
-#' @param BPPARAM the parallelization backend to use
 #' @return a list:
 #' \itemize{
 #'     \item pooled cells - the super cells creates
 #'     \item pools - a list of data matrices of the original cells in each pool
 #' }
 applyMicroClustering <- function(exprData, nomodel=TRUE, hkg=matrix(),
-                                 cellsPerPartition=100, BPPARAM=BiocParallel::SerialParam(), random=FALSE) {
+                                 cellsPerPartition=100, random=FALSE) {
 
     texpr <- filterGenesThreshold(exprData, 0.2*ncol(exprData))
     fexpr <- filterGenesFano(texpr)
@@ -29,7 +28,10 @@ applyMicroClustering <- function(exprData, nomodel=TRUE, hkg=matrix(),
     colnames(weights) <- colnames(exprData)
 
     res <- applyWeightedPCA(fexpr, weights, maxComponents=10)[[1]]
-    kn <- ball_tree_knn(t(res), round(sqrt(ncol(res))), BPPARAM$workers)
+
+    n_workers <- getWorkerCount()
+    kn <- ball_tree_knn(t(res), round(sqrt(ncol(res))), n_workers)
+
     cl <- louvainCluster(kn, t(res))
     cl <- readjust_clusters(cl, t(res), cellsPerPartition=cellsPerPartition)
 
