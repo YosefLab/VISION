@@ -87,11 +87,19 @@ batchSigEval <- function(sigs, sig_score_method, eData, weights,
         weights <- NULL
     }
 
+    # Need to perform this multiply here so it doesn't occupy memory
+    # in all of the sub-processes
+    if( !is.null(weights) ) {
+        expr_weights <- eData * weights
+    } else {
+        expr_weights <- eData
+    }
+
     # Compute number of genes per signature that match and filter
     # the list of signatures
 
     numMatches <- vapply(sigs, function(sig){
-        gene_count <- sum(names(sig@sigDict) %in% rownames(eData))
+        gene_count <- sum(names(sig@sigDict) %in% rownames(expr_weights))
         return(gene_count)
     }, 1.0)
 
@@ -103,7 +111,7 @@ batchSigEval <- function(sigs, sig_score_method, eData, weights,
     sigBatches <- batchify(sigs, 1200, n_workers = availableCores)
 
     allScoresBatches <- parallel::mclapply(sigBatches, function(sigBatch) {
-        scores <- innerEvalSignatureBatch(eData, sigBatch, weights)
+        scores <- innerEvalSignatureBatch(expr_weights, sigBatch, weights)
         return(scores)
     }, mc.cores = min(availableCores, length(sigBatches)))
 
@@ -174,13 +182,7 @@ innerEvalSignatureBatch <- function(exprData, sigs, weights = NULL) {
 
     sigSparseMatrix <- sigsToSparseMatrix(sigs, exprData)
 
-    if( !is.null(weights) ) {
-        expr_weights <- exprData * weights
-    } else {
-        expr_weights <- exprData
-    }
-
-    sigScores <- sigSparseMatrix %*% expr_weights
+    sigScores <- sigSparseMatrix %*% exprData
     sigScores <- as.matrix(sigScores)
 
     if ( !is.null(weights) ) {
