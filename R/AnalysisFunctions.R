@@ -167,7 +167,7 @@ calcSignatureScores <- function(object,
 
         sigList[[s@name]] <- Signature(list(), s@name, "", "",
                                        isPrecomputed=TRUE,
-                                       isFactor=s@isFactor, cluster=0)
+                                       isFactor=s@isFactor)
     }
 
     # Remove any signatures that didn't compute correctly

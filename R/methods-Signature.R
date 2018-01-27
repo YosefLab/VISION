@@ -9,12 +9,10 @@
 #' Else not precomputed. Default is FALSE.
 #' @param isFactor If TRUE indicates that this signature is a Factor, else not
 #' a factor. Default is FALSE.
-#' @param cluster Number representing which cluster this signature is a part of.
-#' Default is 0.
 #' @return Signature object
 Signature <- function(sigDict, name, source, metaData="",
                       isPrecomputed=FALSE,
-                      isFactor=FALSE, cluster=0) {
+                      isFactor=FALSE) {
   if (missing(sigDict)) {
     stop("Missing sigDict information.")
   } else if (missing(name)) {
@@ -30,7 +28,7 @@ Signature <- function(sigDict, name, source, metaData="",
 
   .Object <- new("Signature", sigDict=sigDict, name=name, source=source,
                  metaData=metaData, isPrecomputed=isPrecomputed,
-                 isFactor=isFactor, cluster=cluster)
+                 isFactor=isFactor)
 
   return(.Object)
 }

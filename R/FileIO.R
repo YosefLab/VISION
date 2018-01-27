@@ -79,7 +79,7 @@ readSignaturesInput <- function(filenames) {
             existingSig@sigDict[names(values)] <- values
             sig_data[[sig_name]] <- existingSig
         } else {
-            newSig <- Signature(values, sig_name, filename, "", cluster=0)
+            newSig <- Signature(values, sig_name, filename, "")
             sig_data[[sig_name]] <- newSig
         }
         }
@@ -115,7 +115,7 @@ readSignaturesInput <- function(filenames) {
 
         for (sig in names(sigList)) {
         newSig <- Signature(sigList[[sig]], sig, filename, "", isPrecomputed=FALSE,
-                            isFactor=FALSE, cluster=0)
+                            isFactor=FALSE)
         sig_data[[sig]] <- newSig
         }
     }

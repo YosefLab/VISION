@@ -86,11 +86,11 @@ test_that("Weighted signature scores are correct", {
 
     sig1 <- Signature(sigDict = c("a" = 1, "b" = 1), name = "sig1",
                       source = "", metaData = "", isPrecomputed = FALSE,
-                      isFactor = FALSE, cluster = 0)
+                      isFactor = FALSE)
 
     sig2 <- Signature(sigDict = c("b" = 1, "c" = -1), name = "sig2",
                       source = "", metaData = "", isPrecomputed = FALSE,
-                      isFactor = FALSE, cluster = 0)
+                      isFactor = FALSE)
 
     sigs <- list(sig1 = sig1, sig2 = sig2)
 
@@ -130,11 +130,11 @@ test_that("Unweighted signature scores are correct", {
 
     sig1 <- Signature(sigDict = c("a" = 1, "b" = 1), name = "sig1",
                       source = "", metaData = "", isPrecomputed = FALSE,
-                      isFactor = FALSE, cluster = 0)
+                      isFactor = FALSE)
 
     sig2 <- Signature(sigDict = c("b" = 1, "c" = -1), name = "sig2",
                       source = "", metaData = "", isPrecomputed = FALSE,
-                      isFactor = FALSE, cluster = 0)
+                      isFactor = FALSE)
 
     sigs <- list(sig1 = sig1, sig2 = sig2)
 

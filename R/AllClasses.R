@@ -159,14 +159,12 @@ Signature <- setClass("Signature",
     source = "character",
     metaData = "character",
     isPrecomputed = "logical",
-    isFactor = "logical",
-    cluster = "numeric"
+    isFactor = "logical"
     ),
     prototype = list(
     metaData = "",
     isPrecomputed=FALSE,
-    isFactor=FALSE,
-    cluster=0
+    isFactor=FALSE
 ))
 
 SignatureScores <- setClass("SignatureScores",
