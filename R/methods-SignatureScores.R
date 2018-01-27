@@ -48,6 +48,8 @@ SigScoresFromDataframe <- function(df, sampleLabels) {
             data <- as.numeric(df[, i])
         }
 
+        names(data) <- rownames(df)
+
         sigScores <- c(sigScores, SignatureScores(data,
                                                   colnames(df)[i],
                                                   is.factor(data),
