@@ -645,16 +645,3 @@ clusterSignatures <- function(sigList, sigMatrix, pvals) {
 
   return(list(Computed = compcls, Precomputed = precompcls))
 }
-
-#' Compute pearson correlation between signature scores and principle components
-#' @importFrom Hmisc rcorr
-#' @param ss signature scores
-#' @param pc principle components
-#' @return pearson correlaton coeffcients
-calcPearsonCorrelation <- function(ss, pc) {
-
-  pc <- rcorr(ss, pc, type="pearson")
-
-  return(pc[[1]][1,2])
-
-}

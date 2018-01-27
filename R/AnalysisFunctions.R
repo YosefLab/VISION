@@ -260,32 +260,10 @@ analyzeProjections <- function(object,
       treeProjData <- NULL
   }
 
-  ## remove the factors from the pearson correlation calculation
-  factor_precomp <- vapply(object@precomputedData,
-                           function(x) x@isFactor, FUN.VALUE=TRUE)
-  precomp_names <- vapply(object@precomputedData,
-                           function(x) x@name, FUN.VALUE="")
+  message("Computing Correlations between Signatures and Expression PCs...")
+  pearsonCorr <- calculatePearsonCorr(object@sigData,
+                     object@sigMatrix, projectData$fullPCA)
 
-  precomp_names <- precomp_names[factor_precomp]
-
-  computedSigMatrix <- object@sigMatrix[,setdiff(colnames(object@sigMatrix),
-                                                precomp_names),drop=FALSE]
-  computedSigMatrix <- t(as.matrix(computedSigMatrix))
-
-
-  pearsonCorr <- lapply(1:nrow(computedSigMatrix), function(i) {
-    lapply(1:nrow(projectData$fullPCA), function(j) {
-      return(calcPearsonCorrelation(computedSigMatrix[i,],
-                                    projectData$fullPCA[j,]))
-    })
-  })
-
-  pearsonCorr <- matrix(unlist(lapply(pearsonCorr, unlist)),
-                        nrow=nrow(computedSigMatrix),
-                        ncol=nrow(projectData$fullPCA), byrow=TRUE)
-
-  rownames(pearsonCorr) <- rownames(computedSigMatrix)
-  colnames(pearsonCorr) <- rownames(projectData$fullPCA)
 
   pcaAnnotData <- PCAnnotatorData(fullPCA = projectData$fullPCA,
                                   pearsonCorr = pearsonCorr,
@@ -302,6 +280,44 @@ analyzeProjections <- function(object,
 
   object@filterModuleList <- filterModuleList
   return(object)
+}
+
+#' Compute pearson correlation between signature scores and principle components
+#'
+#' @importFrom Hmisc rcorr
+#' @param sigData List of Signature
+#' @param sigMatrix Signature scores dataframe
+#' @param fullPCA numeric matrix N_Cells x N_PCs
+#' @return pearsonCorr numeric matrix N_Signatures x N_PCs
+calculatePearsonCorr <- function(sigData, sigMatrix, fullPCA){
+
+  ## remove the factors from the pearson correlation calculation
+
+  non_factor_sigs <- vapply(colnames(sigMatrix),
+                            function(sigName) !sigData[[sigName]]@isFactor,
+                            FUN.VALUE = TRUE)
+
+
+  computedSigMatrix <- sigMatrix[, non_factor_sigs, drop=FALSE]
+
+
+  pearsonCorr <- lapply(1:ncol(computedSigMatrix), function(i) {
+    lapply(1:nrow(fullPCA), function(j) {
+               ss <- computedSigMatrix[, i];
+               pc <- fullPCA[j, ];
+               pc_result <- rcorr(ss, pc, type="pearson")
+               return(pc_result[[1]][1,2])
+    })
+  })
+
+  pearsonCorr <- matrix(unlist(lapply(pearsonCorr, unlist)),
+                        nrow=ncol(computedSigMatrix),
+                        ncol=nrow(fullPCA), byrow=TRUE)
+
+  rownames(pearsonCorr) <- colnames(computedSigMatrix)
+  colnames(pearsonCorr) <- rownames(fullPCA)
+
+  return(pearsonCorr)
 }
 
 convertToDense <- function(object) {
