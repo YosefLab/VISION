@@ -57,7 +57,7 @@ calcWeights <- function(object,
                                          object@exprData)
 
     } else if (all(is.na(object@weights)) ||
-               ncol(object@weights) != ncol(object@exprData)) {
+               ncol(object@weights) != ncol(getExprData(object@exprData))) {
         object@weights <- matrix(1L, nrow=nrow(getExprData(object@exprData)),
                                  ncol=ncol(getExprData(object@exprData)))
     }
