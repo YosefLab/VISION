@@ -6,7 +6,7 @@
 Should not be called directly, instead use the `new` syntax}
 \usage{
 Signature(sigDict, name, source, metaData = "", isPrecomputed = FALSE,
-  isFactor = FALSE, cluster = 0)
+  isFactor = FALSE)
 }
 \arguments{
 \item{sigDict}{Named list of signs for each gene in the signature}
@@ -22,9 +22,6 @@ Else not precomputed. Default is FALSE.}
 
 \item{isFactor}{If TRUE indicates that this signature is a Factor, else not
 a factor. Default is FALSE.}
-
-\item{cluster}{Number representing which cluster this signature is a part of.
-Default is 0.}
 }
 \value{
 Signature object
