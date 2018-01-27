@@ -600,7 +600,7 @@ sigsVsProjection_pcf <- function(sigScoresData, weights){
 #'     \item Computed: a list of clusters of computed signatures
 #'     \item Precomputed: a list of clusters of precomputed signatures
 #' }
-clusterSignatures <- function(sigList, sigMatrix, pvals) {
+clusterSignatures <- function(sigList, sigMatrix, pvals, clusterPrecomputed) {
 
   precomputed <- vapply(sigList, function(x) x@isPrecomputed, TRUE)
   significant <- apply(pvals, 1, function(x) min(x) < -1.3)
@@ -634,11 +634,29 @@ clusterSignatures <- function(sigList, sigMatrix, pvals) {
 
   compcls[names(signif_computed)[!signif_computed]] <- maxcls + 1
 
-  # Don't actually cluster Precomputed Signatures -- just return in a list.
+  # Cluster precomputed signatures by grouping % signatures with their
+  # factors if they exist
   precompcls <- list()
   if (any(precomputed)) {
-    precomputedSigsToCluster <- names(precomputed)[precomputed]
-    precompcls[precomputedSigsToCluster] <- 1
+      precomputedSigsToCluster <- names(precomputed)[precomputed]
+      precompcls[precomputedSigsToCluster] <- 1
+
+      if (clusterPrecomputed) {
+          pc_i <- 2
+          for (name in precomputedSigsToCluster) {
+              if (sigList[[name]]@isFactor) {
+                  precompcls[[name]] <- pc_i
+                  sigLevels <- levels(sigMatrix[, name])
+                  for (level in sigLevels) {
+                      key <- paste(name, level, sep = "_")
+                      if (key %in% names(precompcls)) {
+                          precompcls[[key]] <- pc_i
+                      }
+                  }
+                  pc_i <- pc_i + 1
+              }
+          }
+      }
   }
 
   return(list(Computed = compcls, Precomputed = precompcls))

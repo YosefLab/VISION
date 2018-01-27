@@ -115,9 +115,20 @@ calcSignatureScores <- function(object,
                 N_MicroClusters <- ncol(normExpr)
                 newlevels <- union("~", levels(s@scores))
 
+                # vector to store the final levels in
                 clustScores <- factor(integer(N_MicroClusters),
                                 levels=newlevels)
                 names(clustScores) <- colnames(normExpr)
+
+                # vectors for the proportion of each cluster level
+                clustScoresLevels = list()
+                for (level in levels(s@scores)) {
+                    clustScoresL <- numeric(N_MicroClusters)
+                    names(clustScoresL) <- colnames(normExpr)
+                    clustScoresLevels[[level]] <- clustScoresL
+                }
+
+
                 for(clust in names(clustScores)){
 
                     pool <- object@pools[[clust]]
@@ -136,6 +147,27 @@ calcSignatureScores <- function(object,
                         clust_val <- "~"
                     }
                     clustScores[clust] <- clust_val
+
+                    for (level in names(freq)){
+                        clustScoresLevels[[level]][clust] <- freq[level]
+                    }
+                }
+
+                for (level in names(clustScoresLevels)){
+                    newSig <- SignatureScores(
+                                  scores = clustScoresLevels[[level]],
+                                  name = paste(s@name, level, sep = "_"),
+                                  isFactor = FALSE, isPrecomputed = TRUE,
+                                  numGenes = 0)
+
+                    sigScores[[newSig@name]] <- newSig
+
+                    # Also have to add it to the list of signatures
+                    # to keep them in sync
+                    sigList[[newSig@name]] <- Signature(
+                                list(), newSig@name, "", "",
+                                isFactor = FALSE, isPrecomputed = TRUE)
+
                 }
             } else { # Then it must be numeric, just average
 
@@ -226,7 +258,8 @@ analyzeProjections <- function(object,
 
   message("Clustering Signatures...")
   sigClusters <- clusterSignatures(object@sigData, object@sigMatrix,
-                                   sigVProj$pVals)
+                                   sigVProj$pVals,
+                                   clusterPrecomputed = object@pool)
 
   projData <- ProjectionData(projections = projectData$projections,
                              keys = colnames(sigVProj$sigProjMatrix),
@@ -248,7 +281,8 @@ analyzeProjections <- function(object,
 
       message("Clustering Signatures...")
       sigTreeClusters <- clusterSignatures(object@sigData, object@sigMatrix,
-                                           sigVTreeProj$pVals)
+                                           sigVTreeProj$pVals,
+                                           clusterPrecomputed = object@pool)
 
       treeProjData <- TreeProjectionData(projections = treeProjs$projections,
                                  keys = colnames(sigVTreeProj$sigProjMatrix),
