@@ -12,10 +12,10 @@ test_that("All filters reduce rows, not columns", {
   data <- readExprAsMatrix("test_data/expression_matrix.txt")
   exprData <- ExpressionData(data)
   filters <- c("fano")
-  filteredData <- applyFilters(exprData, 20, filters)
+  filteredData <- applyFilters(getExprData(exprData), 20, filters)
   
-  expect_equal(ncol(filteredData@fanoFilter), ncol(data))
-  expect_true(nrow(filteredData@fanoFilter) <= nrow(data))
+  expect_equal(ncol(filteredData), ncol(data))
+  expect_true(nrow(filteredData) <= nrow(data))
   
 })
 

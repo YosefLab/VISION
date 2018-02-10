@@ -6,38 +6,33 @@
 
 #' Applies filters to the inputted expression data (may remove rows)
 #'
-#' @param data ExpressionData object
+#' @param expr a numeric expression matrix (genes x cells)
 #' @param threshold minimum number of samples gene must be detected in to pass
 #' @param filterInput list of filters to compute
-#' @return The updated ExpressionData object
-applyFilters <- function(data, threshold, filterInput) {
-    expr <- getExprData(data)
+#' @return The filtered expression matrix
+applyFilters <- function(expr, threshold, filterInput) {
 
     # If the filterInput is a list of items, assume it's a list
     # of genes and just use that to filter the matrix
     if(length(filterInput) > 1) {
-        f_expr = expr[filterInput, ];
-        data@fanoFilter = f_expr
-        return(data)
+        f_expr <- expr[filterInput, ];
+        return(f_expr)
     }
 
     for (filter in filterInput) {
         if (tolower(filter) == "novar") {
             f_expr <- filterGenesNovar(expr)
-            data@fanoFilter <- f_expr
         } else if (tolower(filter) == "threshold") {
             f_expr <- filterGenesThreshold(expr, threshold)
-            data@fanoFilter <- f_expr
         } else if (tolower(filter) == "fano") {
             t_expr <- filterGenesThreshold(expr, threshold)
             f_expr <- filterGenesFano(t_expr)
-            data@fanoFilter <- f_expr
         } else {
             stop("Filter not recognized")
         }
     }
 
-    return(data)
+    return(f_expr)
 
 }
 
@@ -61,7 +56,12 @@ filterGenesNovar <- function(data) {
 #' @return filtered expression matrix
 filterGenesThreshold <- function(data, threshold) {
     message("Applying threshold filter...", appendLF = FALSE)
-    fdata <- data[matrixStats::rowCounts(data > 0) > threshold, ]
+    if ( is(data, "sparseMatrix") ){
+        valid_rows <- rowSums(data > 0) > threshold
+        fdata <- data[valid_rows, ]
+    } else {
+        fdata <- data[matrixStats::rowCounts(data > 0) > threshold, ]
+    }
     message(paste(nrow(fdata), "Genes Retained"))
     return(fdata)
 }
@@ -81,10 +81,16 @@ filterGenesFano <- function(data, num_mad=2, plot=FALSE) {
     }
 
     message("Applying fano filter...", appendLF=FALSE)
+
     sub_data <- data
     # if too many samples, subsample for fano filter
     if (ncol(data) > 50000) {
-    sub_data <- data[,sample(ncol(data), 50000)]
+        # This is done using boolean indexing so it works on
+        # sparse matrices
+
+        selected_columns <- logical(ncol(data))
+        selected_columns[sample(ncol(data), 50000)] <- TRUE
+        sub_data <- data[,selected_columns]
     }
 
     mu <- Matrix::rowMeans(sub_data)

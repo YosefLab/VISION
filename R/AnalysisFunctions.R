@@ -7,8 +7,10 @@ poolCells <- function(object,
                       cellsPerPartition=object@cellsPerPartition) {
     object@cellsPerPartition <- cellsPerPartition
     microclusters <- applyMicroClustering(getExprData(object@exprData),
-                                          hkg=object@housekeepingData,
-                                          cellsPerPartition=object@cellsPerPartition)
+                                          cellsPerPartition = object@cellsPerPartition,
+                                          filterInput = object@projection_genes,
+                                          filterThreshold = object@threshold)
+
     object@exprData <- ExpressionData(microclusters[[1]])
     object@pools <- microclusters[[2]]
     return(object)
@@ -33,9 +35,11 @@ filterData <- function(object,
         object@threshold <- round(0.2 * num_samples)
     }
 
-    object@exprData <- applyFilters(object@exprData,
-                                    object@threshold,
-                                    object@projection_genes)
+    object@exprData@fanoFilter <- applyFilters(
+                getExprData(object@exprData),
+                object@threshold,
+                object@projection_genes)
+
     return(object)
 }
 

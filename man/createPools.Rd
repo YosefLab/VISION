@@ -4,17 +4,15 @@
 \alias{createPools}
 \title{create "super-cells" by pooling together single cells}
 \usage{
-createPools(cl, expr, weights)
+createPools(cl, expr)
 }
 \arguments{
-\item{cl}{cluster association of each cell}
+\item{cl}{cluster association of each cell (list of vector of column names)}
 
-\item{expr}{expression data}
-
-\item{weights}{the weight matrix computed from the FNR curve}
+\item{expr}{expression data (genes x cells matrix)}
 }
 \value{
-a matrx of expression data for the pooled cells
+a matrx of expression data for the pooled cells (genes x pools)
 }
 \description{
 create "super-cells" by pooling together single cells

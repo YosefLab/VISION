@@ -4,17 +4,17 @@
 \alias{applyFilters}
 \title{Applies filters to the inputted expression data (may remove rows)}
 \usage{
-applyFilters(data, threshold, filterInput)
+applyFilters(expr, threshold, filterInput)
 }
 \arguments{
-\item{data}{ExpressionData object}
+\item{expr}{a numeric expression matrix (genes x cells)}
 
 \item{threshold}{minimum number of samples gene must be detected in to pass}
 
 \item{filterInput}{list of filters to compute}
 }
 \value{
-The updated ExpressionData object
+The filtered expression matrix
 }
 \description{
 Applies filters to the inputted expression data (may remove rows)

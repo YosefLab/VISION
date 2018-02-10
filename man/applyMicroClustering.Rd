@@ -5,15 +5,12 @@
 \title{Cluster single cells so signal is maintained but the sample size and noise
 are reduce, using the louvain clustering algorithm}
 \usage{
-applyMicroClustering(exprData, nomodel = TRUE, hkg = matrix(),
-  cellsPerPartition = 100, random = FALSE)
+applyMicroClustering(exprData, cellsPerPartition = 100,
+  filterInput = "fano", filterThreshold = round(ncol(exprData) * 0.2),
+  random = FALSE)
 }
 \arguments{
 \item{exprData}{the expression data matrix}
-
-\item{nomodel}{a boolean value indicating whether or not to apply FNR curve weight calculations}
-
-\item{hkg}{a matrix vector of house keeping genes to use as negative control}
 
 \item{cellsPerPartition}{control over the minimum number of cells to put into each supercell}
 }

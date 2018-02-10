@@ -1,69 +1,63 @@
 #' Cluster single cells so signal is maintained but the sample size and noise
 #' are reduce, using the louvain clustering algorithm
 #' @param exprData the expression data matrix
-#' @param nomodel a boolean value indicating whether or not to apply FNR curve weight calculations
-#' @param hkg a matrix vector of house keeping genes to use as negative control
 #' @param cellsPerPartition control over the minimum number of cells to put into each supercell
 #' @return a list:
 #' \itemize{
 #'     \item pooled cells - the super cells creates
 #'     \item pools - a list of data matrices of the original cells in each pool
 #' }
-applyMicroClustering <- function(exprData, nomodel=TRUE, hkg=matrix(),
-                                 cellsPerPartition=100, random=FALSE) {
+applyMicroClustering <- function(
+                         exprData, cellsPerPartition=100,
+                         filterInput = "fano",
+                         filterThreshold = round(ncol(exprData)*0.2),
+                         random = FALSE) {
 
-    texpr <- filterGenesThreshold(exprData, 0.2*ncol(exprData))
-    fexpr <- filterGenesFano(texpr)
+    fexpr <- applyFilters(exprData, filterThreshold, filterInput)
 
-    if (!nomodel) {
-        falseneg_out <- createFalseNegativeMap(exprData, hkg)
-        func <- falseneg_out[[1]]
-        params <- falseneg_out[[2]]
+    # Compute wcov using matrix operations to avoid
+    # creating a large dense matrix
 
-        weights <- computeWeights(func, params, ExpressionData(exprData))
-    } else {
-        weights <- matrix(1L, nrow=nrow(exprData), ncol=ncol(exprData))
-    }
-    rownames(weights) <- rownames(exprData)
-    colnames(weights) <- colnames(exprData)
+    N <- ncol(fexpr)
+    wcov <- tcrossprod(fexpr) / N
 
-    res <- applyWeightedPCA(fexpr, weights, maxComponents=10)[[1]]
+    mu <- as.matrix(rowMeans(fexpr), ncol = 1)
+    mumu <- tcrossprod(mu)
+    wcov <- as.matrix(wcov - mumu)
+
+    # SVD of wieghted correlation matrix
+    ncomp <- min(ncol(fexpr), nrow(fexpr), 10)
+    decomp <- rsvd::rsvd(wcov, k = ncomp)
+    evec <- t(decomp$u)
+
+    # Project down using computed eigenvectors
+    res <- (evec %*% fexpr) - as.vector(evec %*% mu)
+    res <- as.matrix(res)
+    res <- t(res) # avoid transposing many times below
+
 
     n_workers <- getWorkerCount()
-    kn <- ball_tree_knn(t(res), round(sqrt(ncol(res))), n_workers)
+    kn <- ball_tree_knn(res,
+                        min(round(sqrt(nrow(res))), 30),
+                        n_workers)
 
-    cl <- louvainCluster(kn, t(res))
-    cl <- readjust_clusters(cl, t(res), cellsPerPartition=cellsPerPartition)
+    cl <- louvainCluster(kn, res)
+    cl <- readjust_clusters(cl, res, cellsPerPartition = cellsPerPartition)
 
     if (random) {
         message("random!")
         rdata <- exprData
-        colnames(rdata) <- colnames(exprData)[sample(ncol(exprData), ncol(exprData))] 
-        pooled_cells <- createPools(cl, rdata, weights)
-        cn <- paste0("cluster ", 1:ncol(pooled_cells))
-        colnames(pooled_cells) <- cn
-        rownames(pooled_cells) <- rownames(rdata)
-
-        pools <- lapply(1:length(cl), function(i) {
-            clust_data <- rdata[,cl[[i]]]
-            cells <- colnames(clust_data)
-            return(cells)
-        })
-    } else {
-        pooled_cells <- createPools(cl, exprData, weights)
-        cn <- paste0("cluster ", 1:ncol(pooled_cells))
-        colnames(pooled_cells) <- cn
-        rownames(pooled_cells) <- rownames(exprData)
-
-        pools <- lapply(1:length(cl), function(i) {
-            clust_data <- exprData[,cl[[i]]]
-            cells <- colnames(clust_data)
-            return(cells)
-        })
+        colnames(rdata) <- colnames(exprData)[sample(ncol(exprData), ncol(exprData))]
+        exprData <- rdata
     }
 
+    pooled_cells <- createPoolsBatch(cl, exprData)
 
-    names(pools) <- cn
+    # Rename clusters
+    cn <- paste0("cluster ", 1:ncol(pooled_cells))
+    colnames(pooled_cells) <- cn
+    names(cl) <- cn
+    pools <- cl
 
     return(list(pooled_cells, pools))
 }
@@ -214,33 +208,62 @@ merge_intervals <- function(intervals) {
 
 
 #' create "super-cells" by pooling together single cells
+#'
+#' This function calls createPools on batches of clusters in parallel
+#'
 #' @param cl cluster association of each cell
 #' @param expr expression data
-#' @param weights the weight matrix computed from the FNR curve
+#' @importFrom parallel mclapply
+#' @importFrom parallel detectCores
 #' @return a matrx of expression data for the pooled cells
-createPools <- function(cl, expr, weights) {
+createPoolsBatch <- function(cl, expr) {
 
+    availableCores <- max(parallel::detectCores() - 1, 1)
+    n_workers <- min(availableCores, 10)
 
-    pooled_cells <- matrix(unlist(lapply(cl, function(clust) {
+    cl_batches <- batchify(cl, 500, n_workers = n_workers)
 
-            clust_data <- expr[,clust]
-            clust_weights <- weights[,clust]
-            if (is.null(dim(clust_data))) {
-                return(clust_data)
-            }
-            if (ncol(clust_weights) > 0) {
-                p_cell <- as.matrix(apply(clust_data, 1, sum))
-                cell_norm <- as.matrix(apply(clust_weights, 1, sum))
+    pool_batches <- parallel::mclapply(cl_batches, function(cl_batch) {
+                       pool_expression <- createPools(cl_batch, expr)
+                       return(pool_expression)
+    }, mc.cores = min(n_workers, length(cl_batches)))
 
-                return(p_cell / cell_norm)
-            }
+    pool_data <- do.call(cbind, pool_batches)
 
-            p_cell <- as.matrix(apply(clust_data, 1, mean))
-            return(p_cell)
-        })), nrow=nrow(expr), ncol=length(cl))
+    return(pool_data)
+}
 
-    return(pooled_cells)
+#' create "super-cells" by pooling together single cells
+#' @param cl cluster association of each cell (list of vector of column names)
+#' @param expr expression data (genes x cells matrix)
+#' @return a matrx of expression data for the pooled cells (genes x pools)
+createPools <- function(cl, expr) {
 
+    # Need to construct a large cells x pools matrix
+    cl_data <- lapply(seq(length(cl)), function(i) {
+        cluster <- cl[[i]]
+        cell_indices <- match(cluster, colnames(expr))
+        pool_indices <- rep(i, length(cell_indices))
+        return(list(cell_indices, pool_indices))
+    })
+
+    i <- unlist(lapply(cl_data, function(x) x[[1]]))
+    j <- unlist(lapply(cl_data, function(x) x[[2]]))
+
+    dimnames <- list(
+                     colnames(expr),
+                     names(cl)
+                     )
+    dims <- c(ncol(expr), length(cl))
+
+    poolSparseMatrix <- sparseMatrix(i = i, j = j,
+                                    dims = dims,
+                                    dimnames = dimnames)
+    pool_data <- as.matrix(expr %*% poolSparseMatrix)
+    cl_sizes <- vapply(cl, length, FUN.VALUE = 1)
+    pool_data <- t(t(pool_data) / cl_sizes)  # BAH, maybe use sparse values here?
+
+    return(pool_data)
 }
 
 #' Uses gene names in the housekeeping genes file to create a mapping of false
