@@ -31,7 +31,7 @@ naiveEvalSignature <- function(exprData, sig, weights) {
     sigScores <- sigScores / length(sigVector)
 
     sigObj <- SignatureScores(sigScores, sig@name,
-                            isFactor=FALSE, isPrecomputed=FALSE, numGenes=length(sigVector))
+                            isFactor=FALSE, isMeta=FALSE, numGenes=length(sigVector))
 
     return(sigObj)
 }
@@ -61,7 +61,7 @@ weightedEvalSignature <- function(exprData, sig, weights) {
     sigScores <- sigScores / denom
 
     sigObj <- SignatureScores(sigScores, sig@name,
-                            isFactor=FALSE, isPrecomputed=FALSE, numGenes=length(sigVector))
+                            isFactor=FALSE, isMeta=FALSE, numGenes=length(sigVector))
 
     return(sigObj)
 
@@ -121,7 +121,7 @@ batchSigEval <- function(sigs, sig_score_method, eData, weights,
 
         sigScoresObj <- lapply(rownames(allScoresBatch), function(name) {
             sigObj <- SignatureScores(allScoresBatch[name, ], name,
-                                    isFactor = FALSE, isPrecomputed = FALSE,
+                                    isFactor = FALSE, isMeta = FALSE,
                                     numGenes = numMatches[name])
             return(sigObj)
         })

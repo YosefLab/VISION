@@ -5,7 +5,7 @@
 \title{Initializes a new SignatureScores object
 Should not be called directly, instead use the `new` syntax}
 \usage{
-SignatureScores(scores, name, isFactor, isPrecomputed, numGenes)
+SignatureScores(scores, name, isFactor, isMeta, numGenes)
 }
 \arguments{
 \item{scores}{Signature scores}
@@ -14,7 +14,7 @@ SignatureScores(scores, name, isFactor, isPrecomputed, numGenes)
 
 \item{isFactor}{Indicates whether or not this is a factor signature}
 
-\item{isPrecomputed}{Indicates whether or not this score was precomputed}
+\item{isMeta}{Indicates whether or not this score was derived from meta data}
 
 \item{numGenes}{The number of genes used to calculate the score}
 }

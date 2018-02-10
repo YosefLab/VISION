@@ -211,7 +211,7 @@ Right_Content.prototype.draw_pca = function() {
 
     var isFactor;
     if(item_type === "gene"){
-        isFactor = get_global_data('sigIsPrecomputed')[item_key];
+        isFactor = get_global_data('sigIsMeta')[item_key];
     } else {
         isFactor = false;
     }

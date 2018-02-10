@@ -114,7 +114,7 @@ readSignaturesInput <- function(filenames) {
         }
 
         for (sig in names(sigList)) {
-        newSig <- Signature(sigList[[sig]], sig, filename, "", isPrecomputed=FALSE,
+        newSig <- Signature(sigList[[sig]], sig, filename, "", isMeta=FALSE,
                             isFactor=FALSE)
         sig_data[[sig]] <- newSig
         }
@@ -123,79 +123,3 @@ readSignaturesInput <- function(filenames) {
 
     return (sig_data)
 }
-
-#' Reads precomputed signature values form a tab-delimited text file
-#'
-#' First row of file contains sample labels that the signatures correspond with
-#'
-#' Each subsequent row contains a signature name in the first column,
-#' followed by the signature type (either 'numerical' or 'factor')
-#' followed by the signature values, one for each sample label in the file
-#'
-#' @importFrom utils read.table
-#' @param filename Filename to read the precomputed signatures from
-#' @param sampleLabels List of labels for which we want the signature scores
-#' @param sep seperator to use when reading in file. Default is tab.
-#' @return List of Signature data types
-readPrecomputed <- function(filename, sampleLabels, sep="\t") {
-
-
-    message("Loading data from ", filename)
-
-    f <- as.matrix(read.table(filename, sep=sep))
-    l1 <- f[1,]
-    l2 <- f[2,]
-
-    if ( (length(l1) != length(l2)) && (length(l1) != length(l2)-2)) {
-    stop("Error in header line of precomputed signature file.\n
-            First row should contain tab-separated list of samples")
-    }
-
-    ## Make sure that l1 is in the same order as sampleLabels; match indices
-    ## between signatrues in file & sampleLabels
-    sampleLabels <- as.character(as.matrix(sampleLabels))
-
-    common <- intersect(l1[-c(1,2)], sampleLabels)
-    if (length(common) != length(sampleLabels)){
-        stop("Provided precomputed signature dataframe must have same sample labels as the expression matrix")
-    }
-
-    colnames(f) <- l1
-
-    f[,3:ncol(f)] <- f[,sampleLabels]
-    colnames(f) <- f[1,]
-
-    sigScores <- c()
-
-    for (s in 2:nrow(f)) {
-
-    sigName <- f[s,1]
-    sigType <- tolower(f[s,2])
-    sigVals <- f[s,3:ncol(f)]
-    if (sigType == "numerical") {
-        sigIsFactor <- FALSE
-        tryCatch(
-        sigVals <- as.numeric(as.matrix(sigVals))
-        , warning=function(w) {
-        message("Error in precomputed signature:", sigName)
-        ind <- which(is.na(sigVals))
-        stop("Error in sample ", sampleLabels[ind-2])
-        })
-
-    } else if (sigType == "factor") {
-        sigIsFactor <- TRUE
-        sigVals <- as.factor(as.matrix(sigVals))
-
-    } else {
-        stop("Column 2 of precomputed signature file should specify either 'numerical' or 'factor'")
-    }
-
-    names(sigVals) <- sampleLabels
-    sigScores <- c(sigScores, SignatureScores(sigVals, sigName,
-                                                sigIsFactor, TRUE, 0))
-    }
-
-    return(sigScores)
-
-}
-

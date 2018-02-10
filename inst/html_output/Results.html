@@ -71,7 +71,7 @@
                             <a class="nav-link active" id="sig-table-tab" data-toggle="tab" href="#table-div-container" role="tab" aria-controls="sig-table" aria-selected="true">Signatures</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" id="precomputed-table-tab" data-toggle="tab" href="#precomp-table-div" role="tab" aria-controls="precomp-table" aria-selected="false">Precomputed</a>
+                            <a class="nav-link" id="meta-table-tab" data-toggle="tab" href="#meta-table-div" role="tab" aria-controls="meta-table" aria-selected="false">Cell Meta</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" id="genes-table-tab" data-toggle="tab" href="#genes-table" role="tab" aria-controls="genes-table" aria-selected="false">Genes</a>
@@ -98,7 +98,7 @@
                         </div>
                         <div class="sig-tables-wrapper"></div>
                     </div>
-                    <div class="tab-pane" id="precomp-table-div" role="tabpanel" aria-labelledby="precomputed-table-tab">
+                    <div class="tab-pane" id="meta-table-div" role="tabpanel" aria-labelledby="meta-table-tab">
                         <div class="sig-tables-header">
                             <table class="sig-table">
                                 <thead>
@@ -111,7 +111,7 @@
                         </div>
                         <div class="sig-tables-wrapper">
                             <div class="sig-table-div">
-                                <table id="precomp-table" class="sig-table">
+                                <table id="meta-table" class="sig-table">
                                     <tbody></tbody>
                                 </table>
                             </div>
@@ -185,17 +185,17 @@
                     </div>
 
                 </div>
-                <div id="precomp-info" style="display: none">
+                <div id="meta-info" style="display: none">
 
                     <table class='label-table' style='margin-left: 30px; margin-bottom: 20px;'>
                         <tr style='font-size: 1.2em;'>
                             <td>Value:</td>
-                            <td><span id="precomp-analysis-title"></span></td>
+                            <td><span id="meta-analysis-title"></span></td>
                         </tr>
                     </table>
 
                     <div style='display: flex; flex-direction: column; justify-content: space-around; flex-grow: 1'>
-                        <div id="precomp-dist-div" style="display: flex; flex-direction:column"></div>
+                        <div id="meta-dist-div" style="display: flex; flex-direction:column"></div>
                     </div>
 
                 </div>

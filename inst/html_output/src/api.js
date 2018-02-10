@@ -33,8 +33,8 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.signature.listPrecomputed = function(){
-        var query = "/Signature/ListPrecomputed"
+    output.signature.listMeta = function(){
+        var query = "/Signature/ListMeta"
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
@@ -56,10 +56,10 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.signature.clusters = function(precomputed, filter) {
+    output.signature.clusters = function(meta, filter) {
         var query = ""
-        if (precomputed) {
-            query = query.concat("/FilterGroup/", filter, "/SigClusters/Precomputed");
+        if (meta) {
+            query = query.concat("/FilterGroup/", filter, "/SigClusters/Meta");
 
         } else {
             query = query.concat("/FilterGroup/", filter, "/SigClusters/Normal");
@@ -78,22 +78,22 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.filterGroup.sigProjMatrix = function(filter_group, precomputed)
+    output.filterGroup.sigProjMatrix = function(filter_group, meta)
     {
         var query = "/FilterGroup/"
-        if (precomputed) {
-            query = query.concat(encodeURI(filter_group), "/SigProjMatrix/Precomputed")
+        if (meta) {
+            query = query.concat(encodeURI(filter_group), "/SigProjMatrix/Meta")
         } else {
             query = query.concat(encodeURI(filter_group), "/SigProjMatrix/Normal")
         }
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.filterGroup.sigProjMatrixP = function(filter_group, precomputed, pvalue)
+    output.filterGroup.sigProjMatrixP = function(filter_group, meta, pvalue)
     {
         var query = "/FilterGroup/"
-        if (precomputed) {
-            query = query.concat(encodeURI(filter_group), "/SigProjMatrix_P/Precomputed")
+        if (meta) {
+            query = query.concat(encodeURI(filter_group), "/SigProjMatrix_P/Meta")
         } else {
             if (pvalue == "nominal") {
                 query = query.concat(encodeURI(filter_group), "/SigProjMatrix_P/Normal")
@@ -104,11 +104,11 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.filterGroup.treeSigProjMatrixP = function(filter_group, precomputed)
+    output.filterGroup.treeSigProjMatrixP = function(filter_group, meta)
     {
         var query = "/FilterGroup/"
-        if (precomputed) {
-            query = query.concat(encodeURI(filter_group), "/Tree/SigProjMatrix_P/Precomputed")
+        if (meta) {
+            query = query.concat(encodeURI(filter_group), "/Tree/SigProjMatrix_P/Meta")
         } else {
             query = query.concat(encodeURI(filter_group), "/Tree/SigProjMatrix_P/Normal")
         }
@@ -128,10 +128,10 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.filterGroup.pCorr = function(filter_group, precomputed) {
+    output.filterGroup.pCorr = function(filter_group, meta) {
         var query = "/FilterGroup/";
-        if (precomputed) {
-            query = query.concat(encodeURI(filter_group), "/PearsonCorr/Precomputed");
+        if (meta) {
+            query = query.concat(encodeURI(filter_group), "/PearsonCorr/Meta");
         } else {
             query = query.concat(encodeURI(filter_group), "/PearsonCorr/Normal");
         }

@@ -4,7 +4,7 @@
 \alias{clusterSignatures}
 \title{Clusters signatures according to the rank sum}
 \usage{
-clusterSignatures(sigList, sigMatrix, pvals)
+clusterSignatures(sigList, sigMatrix, pvals, clusterMeta)
 }
 \arguments{
 \item{sigList}{List of signatures}
@@ -18,7 +18,7 @@ NUM_SIGNATURES x NUM_SAMPLES}
 a list:
 \itemize{
     \item Computed: a list of clusters of computed signatures
-    \item Precomputed: a list of clusters of precomputed signatures
+    \item Meta: a list of clusters of meta data signatures
 }
 }
 \description{

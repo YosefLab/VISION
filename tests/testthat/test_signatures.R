@@ -35,7 +35,7 @@ test_that("Naive Sig Scores computed correctly", {
   
   expect_equal(length(sigScores), length(sigList)-1)
   ss <- sigScores[[1]]
-  expect_false(ss@isPrecomputed)
+  expect_false(ss@isMeta)
   expect_false(ss@isFactor)
   expect_equal(names(ss@scores), colnames(expr))
   expect_equal(length(ss@scores), ncol(expr))
@@ -85,11 +85,11 @@ test_that("Weighted signature scores are correct", {
     colnames(weights) <- colnames(expr)
 
     sig1 <- Signature(sigDict = c("a" = 1, "b" = 1), name = "sig1",
-                      source = "", metaData = "", isPrecomputed = FALSE,
+                      source = "", metaData = "", isMeta = FALSE,
                       isFactor = FALSE)
 
     sig2 <- Signature(sigDict = c("b" = 1, "c" = -1), name = "sig2",
-                      source = "", metaData = "", isPrecomputed = FALSE,
+                      source = "", metaData = "", isMeta = FALSE,
                       isFactor = FALSE)
 
     sigs <- list(sig1 = sig1, sig2 = sig2)
@@ -129,11 +129,11 @@ test_that("Unweighted signature scores are correct", {
     colnames(weights) <- colnames(expr)
 
     sig1 <- Signature(sigDict = c("a" = 1, "b" = 1), name = "sig1",
-                      source = "", metaData = "", isPrecomputed = FALSE,
+                      source = "", metaData = "", isMeta = FALSE,
                       isFactor = FALSE)
 
     sig2 <- Signature(sigDict = c("b" = 1, "c" = -1), name = "sig2",
-                      source = "", metaData = "", isPrecomputed = FALSE,
+                      source = "", metaData = "", isMeta = FALSE,
                       isFactor = FALSE)
 
     sigs <- list(sig1 = sig1, sig2 = sig2)

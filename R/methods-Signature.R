@@ -5,13 +5,13 @@
 #' @param name Name of the signature
 #' @param source File from which this signature was read from
 #' @param metaData Metadata pertinent to signature
-#' @param isPrecomputed If TRUE indicates that this signature was precomputed.
-#' Else not precomputed. Default is FALSE.
+#' @param isMeta If TRUE indicates that this signature was derived from
+#' meta data. Default is FALSE.
 #' @param isFactor If TRUE indicates that this signature is a Factor, else not
 #' a factor. Default is FALSE.
 #' @return Signature object
 Signature <- function(sigDict, name, source, metaData="",
-                      isPrecomputed=FALSE,
+                      isMeta=FALSE,
                       isFactor=FALSE) {
   if (missing(sigDict)) {
     stop("Missing sigDict information.")
@@ -27,7 +27,7 @@ Signature <- function(sigDict, name, source, metaData="",
                        )
 
   .Object <- new("Signature", sigDict=sigDict, name=name, source=source,
-                 metaData=metaData, isPrecomputed=isPrecomputed,
+                 metaData=metaData, isMeta=isMeta,
                  isFactor=isFactor)
 
   return(.Object)
@@ -126,9 +126,9 @@ generatePermutationNull <- function(num, eData, sigData) {
 
   exp_genes <- rownames(getExprData(eData))
 
-  # Remove precomputed
-  precomputed <- vapply(sigData, function(s) s@isPrecomputed, TRUE)
-  sigData <- sigData[!precomputed]
+  # Remove meta
+  meta <- vapply(sigData, function(s) s@isMeta, TRUE)
+  sigData <- sigData[!meta]
 
   sigSize <- vapply(sigData, function(s) {
                         sum(names(s@sigDict) %in% exp_genes)
@@ -221,9 +221,9 @@ sigsVsProjections <- function(projections, sigScoresData,
 
   N_SAMPLES <- length(sigScoresData[[1]]@scores)
 
-  # Build a matrix of all non-precomputed signatures
+  # Build a matrix of all non-meta signatures
   geneSigs <- sigScoresData[vapply(sigScoresData,
-                                   function(x) !x@isPrecomputed,
+                                   function(x) !x@isMeta,
                                    TRUE)]
 
   sigScoreMatrix <- do.call(
@@ -359,7 +359,7 @@ sigsVsProjections <- function(projections, sigScoresData,
 #' }
 sigsVsProjection_n <- function(sigData, sigScoreMatrix,
                                randomSigData, randomSigScoreMatrix, weights){
-  # Calculate significance for precomputed numerical signatures
+  # Calculate significance for meta data numerical signatures
   # This is done separately because there are likely to be many repeats (e.g. for a time coordinate)
 
   N_SAMPLES = nrow(weights)
@@ -439,7 +439,7 @@ sigsVsProjection_n <- function(sigData, sigScoreMatrix,
   return(list(consistency=consistency, pvals=pvals, empvals=pvals_emp))
 }
 
-#' Evaluates the significance of each precomputed numeric signature vs. a
+#' Evaluates the significance of each meta data numeric signature vs. a
 #' single projections weights
 #' @importFrom stats pnorm
 #' @param sigScoresData List of SignatureScores Object, mapping signature
@@ -451,7 +451,7 @@ sigsVsProjection_n <- function(sigData, sigScoreMatrix,
 #'     \item pvals: pvalues
 #' }
 sigsVsProjection_pcn <- function(sigScoresData, weights){
-  # Calculate significance for precomputed numerical signatures
+  # Calculate significance for meta data numerical signatures
   # This is done separately because there are likely to be many repeats (e.g. for a time coordinate)
 
   N_SAMPLES = nrow(weights)
@@ -461,7 +461,7 @@ sigsVsProjection_pcn <- function(sigScoresData, weights){
 
   for (s in sigScoresData) {
 
-    if( !s@isPrecomputed || s@isFactor) {
+    if( !s@isMeta || s@isFactor) {
       next
     }
 
@@ -502,7 +502,7 @@ sigsVsProjection_pcn <- function(sigScoresData, weights){
   return(list(consistency=consistency, pvals=pvals))
 }
 
-#' Evaluates the significance of each precomputed factor signature vs. a
+#' Evaluates the significance of each meta data factor signature vs. a
 #' single projections weights
 #' @importFrom stats kruskal.test
 #' @param sigScoresData List of SignatureScores Object, mapping signature
@@ -514,7 +514,7 @@ sigsVsProjection_pcn <- function(sigScoresData, weights){
 #'     \item pvals: pvalues
 #' }
 sigsVsProjection_pcf <- function(sigScoresData, weights){
-  # Calculate significance for precomputed numerical signatures
+  # Calculate significance for meta data factor signatures
   # This is done separately because there are likely to be many repeats (e.g. for a time coordinate)
 
   N_SAMPLES = nrow(weights)
@@ -524,7 +524,7 @@ sigsVsProjection_pcf <- function(sigScoresData, weights){
 
   for (s in sigScoresData) {
 
-    if( !s@isPrecomputed || !s@isFactor) {
+    if( !s@isMeta || !s@isFactor) {
       next
     }
 
@@ -559,7 +559,7 @@ sigsVsProjection_pcf <- function(sigScoresData, weights){
     preds_ii <- apply(factorPredictions, 1, which.max)
     preds <- factorPredictions[cbind(1:nrow(factorPredictions), preds_ii)]
 
-    # Calculate the p value for precomputed signature
+    # Calculate the p value for meta data signature
     krList <- list()
     for (k in 1:length(fLevels)) {
         group <- preds_ii[labels==k]
@@ -598,19 +598,19 @@ sigsVsProjection_pcf <- function(sigScoresData, weights){
 #' @return a list:
 #' \itemize{
 #'     \item Computed: a list of clusters of computed signatures
-#'     \item Precomputed: a list of clusters of precomputed signatures
+#'     \item Meta: a list of clusters of meta data signatures
 #' }
-clusterSignatures <- function(sigList, sigMatrix, pvals, clusterPrecomputed) {
+clusterSignatures <- function(sigList, sigMatrix, pvals, clusterMeta) {
 
-  precomputed <- vapply(sigList, function(x) x@isPrecomputed, TRUE)
+  meta <- vapply(sigList, function(x) x@isMeta, TRUE)
   significant <- apply(pvals, 1, function(x) min(x) < -1.3)
 
-  comp_names <- names(precomputed)[!precomputed]
+  comp_names <- names(meta)[!meta]
   signif_computed <- significant[comp_names]
 
   keep_computed = names(signif_computed)[signif_computed]
 
-  # Cluster computed signatures and precomputed signatures separately
+  # Cluster computed signatures and meta data signatures separately
   computedSigMatrix <- sigMatrix[, keep_computed,drop=FALSE]
 
   compcls <- list()
@@ -634,23 +634,23 @@ clusterSignatures <- function(sigList, sigMatrix, pvals, clusterPrecomputed) {
 
   compcls[names(signif_computed)[!signif_computed]] <- maxcls + 1
 
-  # Cluster precomputed signatures by grouping % signatures with their
+  # Cluster meta data signatures by grouping % signatures with their
   # factors if they exist
-  precompcls <- list()
-  if (any(precomputed)) {
-      precomputedSigsToCluster <- names(precomputed)[precomputed]
-      precompcls[precomputedSigsToCluster] <- 1
+  metacls <- list()
+  if (any(meta)) {
+      metaSigsToCluster <- names(meta)[meta]
+      metacls[metaSigsToCluster] <- 1
 
-      if (clusterPrecomputed) {
+      if (clusterMeta) {
           pc_i <- 2
-          for (name in precomputedSigsToCluster) {
+          for (name in metaSigsToCluster) {
               if (sigList[[name]]@isFactor) {
-                  precompcls[[name]] <- pc_i
+                  metacls[[name]] <- pc_i
                   sigLevels <- levels(sigMatrix[, name])
                   for (level in sigLevels) {
                       key <- paste(name, level, sep = "_")
-                      if (key %in% names(precompcls)) {
-                          precompcls[[key]] <- pc_i
+                      if (key %in% names(metacls)) {
+                          metacls[[key]] <- pc_i
                       }
                   }
                   pc_i <- pc_i + 1
@@ -659,5 +659,5 @@ clusterSignatures <- function(sigList, sigMatrix, pvals, clusterPrecomputed) {
       }
   }
 
-  return(list(Computed = compcls, Precomputed = precompcls))
+  return(list(Computed = compcls, Meta = metacls))
 }

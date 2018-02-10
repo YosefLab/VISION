@@ -243,10 +243,10 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         }
         return(out)
       }) %>%
-      get("/Signature/ListPrecomputed", function(req, res, err){
+      get("/Signature/ListMeta", function(req, res, err){
         signatures <- object@sigData
         keys <- lapply(signatures, function(x) x@name)
-        vals <- lapply(signatures, function(x) x@isPrecomputed)
+        vals <- lapply(signatures, function(x) x@isMeta)
         names(vals) <- keys
         out <- toJSON(vals, auto_unbox=TRUE)
         return(out)
@@ -279,8 +279,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         }
         else{
             sig = object@sigData[[index]]
-            if(sig@isPrecomputed) {
-                stop("Can't get expression for precomputed signature")
+            if(sig@isMeta) {
+                stop("Can't get expression for meta data signature")
             }
             genes = names(sig@sigDict)
             expMat = object@exprData@data
@@ -300,14 +300,14 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         out <- toJSON(cls, auto_unbox=TRUE)
         return(out)
       }) %>%
-      get("/FilterGroup/(?<filter_group2>.*)/SigClusters/Precomputed", function(req, res, err) {
+      get("/FilterGroup/(?<filter_group2>.*)/SigClusters/Meta", function(req, res, err) {
         filter <- URLdecode(req$params$filter_group2)
         if (filter == "1") {
           filter = 1
         }
         cls <- object@filterModuleList[[filter]]@ProjectionData@sigClusters
         # cls <- object@sigClusters[[filter]]
-        cls <- cls$Precomputed
+        cls <- cls$Meta
 
         out <- toJSON(cls, auto_unbox=TRUE)
         return(out)
@@ -329,17 +329,17 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         signatures <- object@sigData
         keys <- vapply(signatures, function(x) x@name, "")
-        vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
+        vals <- vapply(signatures, function(x) x@isMeta, TRUE)
           sigs <- keys[!vals]
         out <- FastProjectR:::sigProjMatrixToJSON(object@filterModuleList[[filter]]@ProjectionData@sigProjMatrix, sigs)
         return(out)
       }) %>%
-      get("/FilterGroup/(?<filter_name3>.*)/SigProjMatrix/Precomputed", function(req, res, err) {
+      get("/FilterGroup/(?<filter_name3>.*)/SigProjMatrix/Meta", function(req, res, err) {
         filter <- URLdecode(req$params$filter_name3)
 
         signatures <- object@sigData
         keys <- vapply(signatures, function(x) x@name, "")
-        vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
+        vals <- vapply(signatures, function(x) x@isMeta, TRUE)
         sigs <- keys[!vals]
           out <- FastProjectR:::sigProjMatrixToJSON(object@filterModuleList[[filter]]@ProjectionData@sigProjMatrix, sigs)
         return(out)
@@ -349,7 +349,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         signatures <- object@sigData
         keys <- vapply(signatures, function(x) x@name, "")
-        vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
+        vals <- vapply(signatures, function(x) x@isMeta, TRUE)
         sigs <- keys[!vals]
           out <- FastProjectR:::sigProjMatrixToJSON(object@filterModuleList[[filter]]@ProjectionData@pMatrix, sigs)
         return(out)
@@ -359,17 +359,17 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         signatures <- object@sigData
         keys <- vapply(signatures, function(x) x@name, "")
-        vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
+        vals <- vapply(signatures, function(x) x@isMeta, TRUE)
         sigs <- keys[!vals]
           out <- FastProjectR:::sigProjMatrixToJSON(object@filterModuleList[[filter]]@ProjectionData@emp_pMatrix, sigs)
         return(out)
       }) %>%
-      get("/FilterGroup/(?<filter_name5>.*)/SigProjMatrix_P/Precomputed", function(req, res, err) {
+      get("/FilterGroup/(?<filter_name5>.*)/SigProjMatrix_P/Meta", function(req, res, err) {
         filter <- URLdecode(req$params$filter_name5)
 
         signatures <- object@sigData
         keys <- vapply(signatures, function(x) x@name, "")
-        vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
+        vals <- vapply(signatures, function(x) x@isMeta, TRUE)
         sigs <- keys[vals]
 
           out <- FastProjectR:::sigProjMatrixToJSON(object@filterModuleList[[filter]]@ProjectionData@pMatrix, sigs)
@@ -381,18 +381,18 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         signatures <- object@sigData
         keys <- vapply(signatures, function(x) x@name, "")
-        vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
+        vals <- vapply(signatures, function(x) x@isMeta, TRUE)
         sigs <- keys[!vals]
           out <- FastProjectR:::sigProjMatrixToJSON(object@filterModuleList[[filter]]@TreeProjectionData@pMatrix, sigs)
         return(out)
       }) %>%
-      get("/FilterGroup/(?<filter_name21>.*)/Tree/SigProjMatrix_P/Precomputed", function(req, res, err) {
+      get("/FilterGroup/(?<filter_name21>.*)/Tree/SigProjMatrix_P/Meta", function(req, res, err) {
         # projData <- object@projData
         filter <- URLdecode(req$params$filter_name21)
 
         signatures <- object@sigData
         keys <- vapply(signatures, function(x) x@name, "")
-        vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
+        vals <- vapply(signatures, function(x) x@isMeta, TRUE)
         sigs <- keys[vals]
           out <- FastProjectR:::sigProjMatrixToJSON(object@filterModuleList[[filter]]@TreeProjectionData@pMatrix, sigs)
         # out <- sigProjMatrixPToJSON(projData[[filter]]@pMatrix, sigs)
@@ -533,18 +533,18 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
           signatures <- object@sigData
           keys <- vapply(signatures, function(x) x@name, "")
-          vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
+          vals <- vapply(signatures, function(x) x@isMeta, TRUE)
           sigs <- keys[!vals]
           pc <- object@filterModuleList[[filter]]@PCAnnotatorData@pearsonCorr
 
         return(FastProjectR:::pearsonCorrToJSON(pc, sigs))
       }) %>%
-      get("/FilterGroup/(?<filter_name15>.*)/PearsonCorr/Precomputed", function(req, res, err) {
+      get("/FilterGroup/(?<filter_name15>.*)/PearsonCorr/Meta", function(req, res, err) {
           filter <- URLdecode(req$params$filter_name15)
 
           signatures <- object@sigData
           keys <- vapply(signatures, function(x) x@name, "")
-          vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
+          vals <- vapply(signatures, function(x) x@isMeta, TRUE)
           vals2 <- vapply(signatures, function(x) !x@isFactor, TRUE)
           sigs <- keys[vals & vals2]
           pc <- object@filterModuleList[[filter]]@PCAnnotatorData@pearsonCorr

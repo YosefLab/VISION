@@ -12,7 +12,7 @@
 FastProject(data, ...)
 
 \S4method{FastProject}{matrixORSparse}(data, signatures, housekeeping = NULL,
-  norm_methods = NULL, precomputed = NULL, nomodel = FALSE,
+  norm_methods = NULL, meta = NULL, nomodel = FALSE,
   projection_genes = c("fano"), lean = FALSE, min_signature_genes = 5,
   weights = NULL, threshold = 0, perm_wPCA = FALSE,
   sig_norm_method = "znorm_rows", sig_score_method = "weighted_avg",
@@ -43,7 +43,7 @@ list of Signature objects}
 \item{norm_methods}{normalization methods to be extracted from the scone
 object}
 
-\item{precomputed}{data file with precomputed signature scores (.txt), or a
+\item{meta}{data file with cell meta data (.txt), or a
 data.frame with meta information. Note that rows should match samples in the
 data, and columns should either be factors or numerics.}
 

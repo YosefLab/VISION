@@ -2,7 +2,7 @@
 % Please edit documentation in R/methods-Signature.R
 \name{sigsVsProjection_pcn}
 \alias{sigsVsProjection_pcn}
-\title{Evaluates the significance of each precomputed numeric signature vs. a
+\title{Evaluates the significance of each meta data numeric signature vs. a
 single projections weights}
 \usage{
 sigsVsProjection_pcn(sigScoresData, weights)
@@ -21,6 +21,6 @@ list:
 }
 }
 \description{
-Evaluates the significance of each precomputed numeric signature vs. a
+Evaluates the significance of each meta data numeric signature vs. a
 single projections weights
 }

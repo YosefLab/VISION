@@ -5,13 +5,13 @@
 #' @param scores Signature scores
 #' @param name Name of signature
 #' @param isFactor Indicates whether or not this is a factor signature
-#' @param isPrecomputed Indicates whether or not this score was precomputed
+#' @param isMeta Indicates whether or not this score was derived from meta data
 #' @param numGenes The number of genes used to calculate the score
 #' @return New SignatureScores object
 SignatureScores <- function(scores, name,
-                    isFactor, isPrecomputed, numGenes) {
+                    isFactor, isMeta, numGenes) {
     .Object <- new("SignatureScores", scores = scores, name = name,
-                   isFactor = isFactor, isPrecomputed = isPrecomputed,
+                   isFactor = isFactor, isMeta = isMeta,
                    numGenes = numGenes)
     return(.Object)
     }
@@ -35,7 +35,7 @@ SigScoresFromDataframe <- function(df, sampleLabels) {
 
     common <- intersect(row.names(df), sampleLabels)
     if (length(common) != length(sampleLabels)){
-        stop("Provided precomputed signature dataframe must have same sample labels as the expression matrix")
+        stop("Provided meta data dataframe must have same sample labels as the expression matrix")
     }
 
     df <- df[sampleLabels, , drop = FALSE]

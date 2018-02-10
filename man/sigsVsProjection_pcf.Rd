@@ -2,7 +2,7 @@
 % Please edit documentation in R/methods-Signature.R
 \name{sigsVsProjection_pcf}
 \alias{sigsVsProjection_pcf}
-\title{Evaluates the significance of each precomputed factor signature vs. a
+\title{Evaluates the significance of each meta data factor signature vs. a
 single projections weights}
 \usage{
 sigsVsProjection_pcf(sigScoresData, weights)
@@ -21,6 +21,6 @@ list:
 }
 }
 \description{
-Evaluates the significance of each precomputed factor signature vs. a
+Evaluates the significance of each meta data factor signature vs. a
 single projections weights
 }

@@ -3,7 +3,7 @@
  *
  * Upper_Left_Content
  *    - Signature_Table
- *    - Precomputed_Table
+ *    - Meta_Table
  *    - Gene_Select
  *
  */
@@ -24,7 +24,7 @@ Upper_Left_Content.prototype.init = function()
 
     var sig_table_promise = sig_table.init();
 
-    var pc_table = new Precomputed_Table()
+    var pc_table = new Meta_Table()
     this.children.push(pc_table)
     this.pc_table = pc_table
 
@@ -371,15 +371,15 @@ Signature_Table.prototype.get_top_sig = function(projection)
 }
 
 
-function Precomputed_Table()
+function Meta_Table()
 {
-    this.dom_node = document.getElementById("precomp-table-div");
+    this.dom_node = document.getElementById("meta-table-div");
     this.matrix = {}
     this.sorted_column = 'PCA: 1,2'
     this.is_collapsed = {} // cluster -> boolean, holds whether a cluster is collapsed
 }
 
-Precomputed_Table.prototype.init = function()
+Meta_Table.prototype.init = function()
 {
     var self = this;
 
@@ -388,7 +388,7 @@ Precomputed_Table.prototype.init = function()
     return update_promise;
 }
 
-Precomputed_Table.prototype.update = function(updates)
+Meta_Table.prototype.update = function(updates)
 {
     var self = this;
     var matrix_promise;
@@ -434,7 +434,7 @@ Precomputed_Table.prototype.update = function(updates)
         });
 }
 
-Precomputed_Table.prototype.render = function()
+Meta_Table.prototype.render = function()
 {
     var self = this;
     var matrix = self.matrix;
@@ -634,7 +634,7 @@ Precomputed_Table.prototype.render = function()
 
 }
 
-Precomputed_Table.prototype.clickSummaryRow = function(d){
+Meta_Table.prototype.clickSummaryRow = function(d){
 
     var table_id = $(d).closest('table')
     var cluster_id = table_id.data('cluster')

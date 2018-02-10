@@ -27,7 +27,7 @@ global_status.subset_criteria = "Rank";
 
 
 var global_data = {};
-global_data.sigIsPrecomputed = {};
+global_data.sigIsMeta = {};
 
 global_data.sig_projection_coordinates = {};
 global_data.pca_projection_coordinates = {};
@@ -244,15 +244,15 @@ window.onload = function()
     var upper_left_promise = upper_left_content.init();
     var right_promise = right_content.init();
 
-    // Get the 'isPrecomputed' vector for signatures
-    var sigIsPrecomputedPromise = api.signature.listPrecomputed()
-        .then(function(sigIsPrecomputed) {
-            global_data.sigIsPrecomputed = sigIsPrecomputed;
+    // Get the 'isMeta' vector for signatures
+    var sigIsMetaPromise = api.signature.listMeta()
+        .then(function(sigIsMeta) {
+            global_data.sigIsMeta = sigIsMeta;
         });
 
     // When it's all done, run this
     $.when(upper_left_promise, right_promise,
-        sigIsPrecomputedPromise, lower_left_promise
+        sigIsMetaPromise, lower_left_promise
     )
         .then(function(){
             upper_left_content.select_default();

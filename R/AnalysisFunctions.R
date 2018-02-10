@@ -88,7 +88,7 @@ calcWeights <- function(object,
 #'
 #' @param object the FastProject object
 #' @param sigData a list of Signature objects for which to compute the scores
-#' @param precomputedData a list of existing cell-signatures
+#' @param metaData a list of existing cell-signatures
 #' @param sig_norm_method (optional) Method to apply to normalize the expression
 #' matrix before calculating signature scores
 #' @param sig_score_method the scoring method to use
@@ -97,7 +97,7 @@ calcWeights <- function(object,
 #' @return the FastProject object, with signature score slots populated
 calcSignatureScores <- function(object,
                                 sigData=object@sigData,
-                                precomputedData=object@precomputedData,
+                                metaData=object@metaData,
                                 sig_norm_method=object@sig_norm_method,
                                 sig_score_method=object@sig_score_method,
                                 min_signature_genes=object@min_signature_genes) {
@@ -106,7 +106,7 @@ calcSignatureScores <- function(object,
 
     ## override object parameters
     if(!is.null(sigData)) object@sigData <- sigData
-    if(!is.null(precomputedData)) object@precomputedData <- precomputedData
+    if(!is.null(metaData)) object@metaData <- metaData
     object@sig_norm_method <- sig_norm_method
     object@sig_score_method <- sig_score_method
     object@min_signature_genes <- min_signature_genes
@@ -117,7 +117,7 @@ calcSignatureScores <- function(object,
                               normExpr, object@weights, object@min_signature_genes)
 
     sigList <- object@sigData
-    for (s in object@precomputedData) {
+    for (s in object@metaData) {
 
         if(is.null(object@pools)){
             sigScores[[s@name]] <- s
@@ -169,7 +169,7 @@ calcSignatureScores <- function(object,
                     newSig <- SignatureScores(
                                   scores = clustScoresLevels[[level]],
                                   name = paste(s@name, level, sep = "_"),
-                                  isFactor = FALSE, isPrecomputed = TRUE,
+                                  isFactor = FALSE, isMeta = TRUE,
                                   numGenes = 0)
 
                     sigScores[[newSig@name]] <- newSig
@@ -178,7 +178,7 @@ calcSignatureScores <- function(object,
                     # to keep them in sync
                     sigList[[newSig@name]] <- Signature(
                                 list(), newSig@name, "", "",
-                                isFactor = FALSE, isPrecomputed = TRUE)
+                                isFactor = FALSE, isMeta = TRUE)
 
                 }
             } else { # Then it must be numeric, just average
@@ -205,12 +205,12 @@ calcSignatureScores <- function(object,
 
             sigScores[[s@name]] <- SignatureScores(
                                        clustScores, s@name, s@isFactor,
-                                       s@isPrecomputed, 0)
+                                       s@isMeta, 0)
         }
 
 
         sigList[[s@name]] <- Signature(list(), s@name, "", "",
-                                       isPrecomputed=TRUE,
+                                       isMeta=TRUE,
                                        isFactor=s@isFactor)
     }
 
@@ -271,7 +271,7 @@ analyzeProjections <- function(object,
   message("Clustering Signatures...")
   sigClusters <- clusterSignatures(object@sigData, object@sigMatrix,
                                    sigVProj$pVals,
-                                   clusterPrecomputed = object@pool)
+                                   clusterMeta = object@pool)
 
   projData <- ProjectionData(projections = projectData$projections,
                              keys = colnames(sigVProj$sigProjMatrix),
@@ -294,7 +294,7 @@ analyzeProjections <- function(object,
       message("Clustering Signatures...")
       sigTreeClusters <- clusterSignatures(object@sigData, object@sigMatrix,
                                            sigVTreeProj$pVals,
-                                           clusterPrecomputed = object@pool)
+                                           clusterMeta = object@pool)
 
       treeProjData <- TreeProjectionData(projections = treeProjs$projections,
                                  keys = colnames(sigVTreeProj$sigProjMatrix),

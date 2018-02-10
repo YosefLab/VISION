@@ -16,7 +16,7 @@
 #' @param housekeeping vector of gene names
 #' @param norm_methods normalization methods to be extracted from the scone
 #' object
-#' @param precomputed data file with precomputed signature scores (.txt), or a
+#' @param meta data file with cell meta data (.txt), or a
 #' data.frame with meta information. Note that rows should match samples in the
 #' data, and columns should either be factors or numerics.
 #' @param nomodel if TRUE, no fnr curve calculated and all weights equal to 1.
@@ -65,7 +65,7 @@
 #'                      housekeeping = hkg)
 setMethod("FastProject", signature(data = "matrixORSparse"),
             function(data, signatures, housekeeping=NULL, norm_methods = NULL,
-                    precomputed=NULL, nomodel=FALSE,
+                    meta=NULL, nomodel=FALSE,
                     projection_genes=c("fano"), lean=FALSE, min_signature_genes=5,
                     weights=NULL, threshold=0, perm_wPCA=FALSE,
                     sig_norm_method="znorm_rows",
@@ -102,16 +102,15 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
                     Signature objects")
             }
 
-            if (!is.null(precomputed)) {
-                if(is.matrix(precomputed)){
-                    precomputed <- as.data.frame(precomputed)
+            if (!is.null(meta)) {
+                if(is.matrix(meta)){
+                    meta <- as.data.frame(meta)
                 }
-                if(is.data.frame(precomputed)) {
-                    .Object@precomputedData <- SigScoresFromDataframe(
-                        precomputed, colnames(.Object@allData))
+                if(is.data.frame(meta)) {
+                    .Object@metaData <- SigScoresFromDataframe(
+                        meta, colnames(.Object@allData))
                 } else {
-                    .Object@precomputedData <- readPrecomputed(
-                        precomputed, colnames(.Object@allData))
+                    stop("meta input argument should be a matrix or dataframe")
                 }
             }
 
@@ -426,7 +425,7 @@ createNewFP <- function(fp, subset) {
     .Object@housekeepingData <- fp@housekeepingData
     .Object@sigData <- fp@sigData
 
-    .Object@precomputedData <- lapply(fp@precomputedData, function(sigscore) {
+    .Object@metaData <- lapply(fp@metaData, function(sigscore) {
         sigscore@scores <- sigscore@scores[subset]
         return(sigscore)
     })

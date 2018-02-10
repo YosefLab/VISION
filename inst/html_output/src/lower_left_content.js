@@ -5,7 +5,7 @@
  *    - Sig_Info
  *      - Sig_Heatmap
  *    - Gene_Info
- *    - Precomputed_Info
+ *    - Meta_Info
  *    - Cell_Info
  *
  */
@@ -15,7 +15,7 @@ function Lower_Left_Content()
     this.children = []
     this.sig_info = {}
     this.gene_info = {}
-    this.precomp_info = {}
+    this.meta_info = {}
 }
 
 Lower_Left_Content.prototype.init = function()
@@ -32,14 +32,14 @@ Lower_Left_Content.prototype.init = function()
 
     var gene_info_promise = gene_info.init();
 
-    var precomp_info = new Precomp_Info()
-    this.children.push(precomp_info)
-    this.precomp_info = precomp_info
+    var meta_info = new Meta_Info()
+    this.children.push(meta_info)
+    this.meta_info = meta_info
 
-    var precomp_info_promise = precomp_info.init();
+    var meta_info_promise = meta_info.init();
 
 
-    return $.when(sig_info_promise, gene_info_promise, precomp_info_promise);
+    return $.when(sig_info_promise, gene_info_promise, meta_info_promise);
 }
 
 Lower_Left_Content.prototype.update = function(updates)
@@ -53,16 +53,16 @@ Lower_Left_Content.prototype.update = function(updates)
         var item_type = get_global_status('plotted_item_type')
         if(item_type === 'gene'){
             $(this.sig_info.dom_node).hide()
-            $(this.precomp_info.dom_node).hide()
+            $(this.meta_info.dom_node).hide()
             $(this.gene_info.dom_node).show()
         } else if (item_type === 'signature') {
             $(this.gene_info.dom_node).hide()
-            $(this.precomp_info.dom_node).hide()
+            $(this.meta_info.dom_node).hide()
             $(this.sig_info.dom_node).show()
         } else if (item_type === 'meta') {
             $(this.sig_info.dom_node).hide()
             $(this.gene_info.dom_node).hide()
-            $(this.precomp_info.dom_node).show()
+            $(this.meta_info.dom_node).show()
         }
     }
 
@@ -150,7 +150,7 @@ Sig_Info.prototype.update = function(updates)
 {
 
     var sig_info = get_global_data('sig_info');
-    if(sig_info.name === this.bound_sig || sig_info.isPrecomputed)
+    if(sig_info.name === this.bound_sig || sig_info.isMeta)
     {
         // Needed to switch to Signature view if we plot a new projection
         // but stay on same signature
@@ -333,33 +333,33 @@ Gene_Info.prototype.update = function(updates)
 
 }
 
-function Precomp_Info()
+function Meta_Info()
 {
-    this.dom_node = document.getElementById("precomp-info");
-    this.title = $(this.dom_node).find('#precomp-analysis-title').get(0);
-    this.chart = $(this.dom_node).find('#precomp-dist-div').get(0);
-    this.bound_precomp = ""
+    this.dom_node = document.getElementById("meta-info");
+    this.title = $(this.dom_node).find('#meta-analysis-title').get(0);
+    this.chart = $(this.dom_node).find('#meta-dist-div').get(0);
+    this.bound_meta = ""
 }
 
-Precomp_Info.prototype.init = function()
+Meta_Info.prototype.init = function()
 {
 }
 
-Precomp_Info.prototype.update = function(updates)
+Meta_Info.prototype.update = function(updates)
 {
     var item_type = get_global_status('plotted_item_type')
-    var precomp = get_global_status('plotted_item')
-    if(item_type !== 'meta' || precomp === this.bound_gene){
+    var meta = get_global_status('plotted_item')
+    if(item_type !== 'meta' || meta === this.bound_gene){
         return;
     }
 
-    this.bound_precomp = precomp
+    this.bound_meta = meta
 
-    $(this.title).html(this.bound_precomp)
+    $(this.title).html(this.bound_meta)
 
-    var precomp_vals = _.values(get_global_data('plotted_values'))
+    var meta_vals = _.values(get_global_data('plotted_values'))
 
-    drawDistChart(this.chart, precomp_vals)
+    drawDistChart(this.chart, meta_vals)
 
 }
 
@@ -568,7 +568,7 @@ function selectRange() {
 
 function addToPCAnalysisBox(sig_info) {
     var dbid = "#pc-analysis-content";
-    if (sig_info.isPrecomputed) {
+    if (sig_info.isMeta) {
         $(dbid).html("");
         return;
     }

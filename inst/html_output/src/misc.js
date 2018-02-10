@@ -86,7 +86,7 @@ function exprotSigProj() {
     var proj_promise = api.projection.coordinates(filter_group, proj_key);
 
     var sig_promise;
-    if (global_status.scatterColorOption == "value" || global_data.sigIsPrecomputed[sig_key]) {
+    if (global_status.scatterColorOption == "value" || global_data.sigIsMeta[sig_key]) {
         sig_promise = api.signature.scores(sig_key)
     } else if (global_status.scatterColorOption == "rank") {
         sig_promise = api.signature.ranks(sig_key)

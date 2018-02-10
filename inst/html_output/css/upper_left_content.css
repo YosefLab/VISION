@@ -132,7 +132,7 @@ table.collapsible.collapsed tr:first-child > td:first-child > .sig-row-label::be
     content: "\25B6 ";
 }
 
-#precomp-table-div{
+#meta-table-div{
     overflow-x: hidden;
 }
 
