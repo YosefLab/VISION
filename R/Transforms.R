@@ -2,6 +2,8 @@
 #' are reduce, using the louvain clustering algorithm
 #' @param exprData the expression data matrix
 #' @param cellsPerPartition control over the minimum number of cells to put into each supercell
+#' @importFrom Matrix tcrossprod
+#' @importFrom Matrix rowMeans
 #' @return a list:
 #' \itemize{
 #'     \item pooled cells - the super cells creates

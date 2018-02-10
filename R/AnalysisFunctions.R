@@ -6,6 +6,14 @@
 poolCells <- function(object,
                       cellsPerPartition=object@cellsPerPartition) {
     object@cellsPerPartition <- cellsPerPartition
+
+    message(paste(
+      "Performing micro-pooling on",
+      ncol(getExprData(object@exprData)),
+      "cells with a target pool size of",
+      object@cellsPerPartition
+    ))
+
     microclusters <- applyMicroClustering(getExprData(object@exprData),
                                           cellsPerPartition = object@cellsPerPartition,
                                           filterInput = object@projection_genes,
