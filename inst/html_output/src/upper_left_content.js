@@ -64,6 +64,10 @@ Upper_Left_Content.prototype.select_default = function()
     set_global_status(update)
 }
 
+Upper_Left_Content.prototype.hover_cells = function()
+{
+}
+
 
 function Signature_Table()
 {

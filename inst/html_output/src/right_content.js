@@ -377,3 +377,8 @@ Right_Content.prototype.exportSigProj = function()
     image.setAttribute("src", imgsrc)
 
 }
+
+Right_Content.prototype.hover_cells = function(cell_ids)
+{
+    this.scatter.hover_cells(cell_ids);
+}

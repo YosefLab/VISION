@@ -276,6 +276,13 @@ window.onload = function()
         }
     });
 
+    window.addEventListener('hover-cells', function(e) {
+        var list_of_cell_ids = e.detail
+        right_content.hover_cells(list_of_cell_ids)
+        upper_left_content.hover_cells(list_of_cell_ids)
+        lower_left_content.hover_cells(list_of_cell_ids)
+    });
+
     /*
     $("#subset-criteria").change(function() {
         global_status.subset_criteria = $(this).val();

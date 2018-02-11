@@ -106,7 +106,6 @@ function ColorScatter(parent, colorbar, legend)
     this.selected_links = [];
 
     this.hovered = -1;
-    this.hovered_links = [];
 
     this.last_event = -1;
 
@@ -411,38 +410,24 @@ ColorScatter.prototype.setHovered_TreeNode = function(node, clusters, event_id) 
 
 }
 
-ColorScatter.prototype.setHovered = function(hovered_indices, event_id)
+ColorScatter.prototype.hover_cells = function(cell_ids)
 {
-    if(event_id === undefined){
-        event_id = Math.random();
-    }
-
-    //test for single index, and wrap in list
-    if(typeof(hovered_indices) === "number"){hovered_indices = [hovered_indices];}
-    if(hovered_indices.length === 0){hovered_indices = [-1];}
 
     //Needed to prevent infinite loops with linked hover and select events
-    if(this.last_event !== event_id) {
-        this.last_event = event_id;
-        this.hover_col = hovered_indices;
-        if(hovered_indices.length === 1 && hovered_indices[0] === -1){
-            //Clear the hover
-            this.svg.selectAll("circle")
-                .classed("point-faded", false)
-                .classed("point-hover", false);
-        }
-        else{
-            this.svg.selectAll("circle")
-                .classed("point-faded", true)
-                .classed("point-hover", function (d, i) {
-                    return hovered_indices.indexOf(i) > -1;
-                });
-        }
-
-        this.hovered_links.forEach(function (e) {
-            e.setHovered(hovered_indices, event_id);
-        });
+    if(_.isEmpty(cell_ids)){
+        //Clear the hover
+        this.svg.selectAll("circle")
+            .classed("point-faded", false)
+            .classed("point-hover", false);
     }
+    else{
+        this.svg.selectAll("circle")
+            .classed("point-faded", true)
+            .classed("point-hover", function (d) {
+                return cell_ids.indexOf(d[3]) > -1;
+            });
+    }
+
 };
 
 ColorScatter.prototype.toggleLasso = function(enable) {
@@ -531,8 +516,8 @@ ColorScatter.prototype.redraw = function(performTransition) {
         circles.style("fill", function(d){return self.colorScale(d[2]);})
             .attr("r", self.circle_radius * Math.pow(self.zoom.scale(), .5))
             .on("click", function(d){self.setSelected(d[3]);})
-            .on("mouseover", function(d,i){self.tip.show(d,i); self.setHovered(i);})
-            .on("mouseout", function(d,i){self.tip.hide(d,i); self.setHovered(-1);})
+            .on("mouseover", function(d,i){self.tip.show(d,i);})
+            .on("mouseout", function(d,i){self.tip.hide(d,i);})
 
         var tree_circles = self.svg.selectAll("circle.tree")
             .data(self.tree_points);

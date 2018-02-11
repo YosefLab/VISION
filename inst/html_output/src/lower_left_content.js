@@ -68,6 +68,10 @@ Lower_Left_Content.prototype.update = function(updates)
 
 }
 
+Lower_Left_Content.prototype.hover_cells = function()
+{
+}
+
 function Sig_Info()
 {
     this.dom_node = document.getElementById("sig-info");
@@ -196,6 +200,10 @@ Sig_Info.prototype.update = function(updates)
     dt.DataTable().clear()
         .rows.add(dataSet)
         .draw()
+
+    if(this.sig_info_cluster.hasClass('active') && 'plotted_item' in updates){
+        this.drawHeat();
+    }
 }
 
 Sig_Info.prototype.build_cluster_dropdown_param = function()

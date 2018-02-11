@@ -83,6 +83,14 @@
     fill-opacity: 0.4;
 }
 
+#scatter-div svg circle.scatter.point-faded{
+    fill-opacity: 0.3;
+}
+
+#scatter-div svg circle.scatter.point-hover{
+    fill-opacity: .8;
+}
+
 #scatter-div .axis path,
 #scatter-div .axis line {
     fill: none;
