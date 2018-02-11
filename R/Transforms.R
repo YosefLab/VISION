@@ -388,7 +388,7 @@ createFalseNegativeMap <- function(data, housekeeping_genes) {
 #' @return Weight matrix (NUM_GENES x NUM_SAMPLES) which includes the estimated
 #' weight for each data point in input matrix. Ranges form 0 to 1.
 computeWeights <- function(fit_func, params, exprData) {
-    expr <- getExprData(exprData);
+    expr <- exprData
 
     fnProb <- matrix(0L, nrow = nrow(expr), ncol = ncol(expr))
     countNonZero <- apply(expr, 1, function(c) sum(c!=0))

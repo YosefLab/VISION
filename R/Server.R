@@ -1,6 +1,6 @@
-#' Wrapper class for ExpressionData object for JSON.
+#' Wrapper class for gene expression object for JSON.
 #'
-#' @param data Expression data
+#' @param data numeric matrix
 #' @param sample_labels Labels of samples in expression data
 #' @param gene_labels Lables of genes in expression data
 #' @return ServerExpression object
@@ -283,7 +283,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
                 stop("Can't get expression for meta data signature")
             }
             genes = names(sig@sigDict)
-            expMat = object@exprData@data
+            expMat = object@exprData
             return(FastProjectR:::expressionToJSON(expMat, genes, zscore=TRUE))
         }
         return(out)
@@ -504,7 +504,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       }) %>%
       get("/Expression/Genes/List", function(req, res, err) {
 
-        data <- getExprData(object@exprData)
+        data <- object@exprData
         genes = rownames(data)
 
         result <- toJSON(
@@ -517,7 +517,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       }) %>%
       get("/Expression/Gene/(?<gene_name2>.*)", function(req, res, err) {
 
-        data <- getExprData(object@exprData)
+        data <- object@exprData
         gene_name <- URLdecode(req$params$gene_name2)
 
         result <- toJSON(

@@ -1,8 +1,6 @@
 ###
 # Wrapper classes for different types of data
 #
-# Wrapper classes for ExpressionData, ProbabilityData, and PCData
-#
 # This was created to organize nuances in how signature
 # scores, distance matrices, and anything else, is computed
 # on the different types of data.
@@ -18,60 +16,6 @@ Cluster <- setClass("Cluster",
     data = "matrixORSparse"
     )
 )
-
-ExpressionData <- setClass("ExpressionData",
-    slots = c(
-        data = "matrixORSparse"
-))
-
-FastProject <- setClass("FastProject",
-    slots = c(
-        nomodel = "logical",
-        projection_genes = "character",
-        lean = "logical",
-        min_signature_genes = "numeric",
-        weights = "matrix",
-        threshold = "numeric",
-        sig_norm_method = "character",
-        sig_score_method = "character",
-        trajectory_method = "character",
-        exprData = "ExpressionData",
-        allData = "matrixORSparse",
-        housekeepingData = "character",
-        sigData = "list",
-        metaData= "list",
-        perm_wPCA = "logical",
-        pool = "logical",
-        sigScores = "list",
-        cellsPerPartition= "numeric",
-        filterModuleData = "FilterModuleData",
-        sigMatrix = "data.frame",
-        pools = "list",
-        inputProjections = "list",
-        name = "character"),
-    prototype = list(
-        nomodel = FALSE,
-        pca_filter = FALSE,
-        lean = FALSE,
-        min_signature_genes = 5,
-        weights = NULL,
-        threshold = 0,
-        sig_norm_method = "znorm_rows",
-        trajectory_method ="None",
-        exprData = NULL,
-        housekeepingData = NULL,
-        sigData = NULL,
-        metaData = NULL,
-        perm_wPCA = FALSE,
-        pool = FALSE,
-        sigScores = NULL,
-        cellsPerPartition = 100,
-        filterModuleData = NULL,
-        sigMatrix = NULL,
-        pools=NULL,
-        inputProjections=NULL,
-        name = ""
-))
 
 ProjectionData <- setClass("ProjectionData",
     slots = c(
@@ -171,4 +115,53 @@ SignatureScores <- setClass("SignatureScores",
     isFactor = "logical",
     isMeta = "logical",
     numGenes = "numeric"
+))
+
+FastProject <- setClass("FastProject",
+    slots = c(
+        nomodel = "logical",
+        projection_genes = "character",
+        lean = "logical",
+        min_signature_genes = "numeric",
+        weights = "matrix",
+        threshold = "numeric",
+        sig_norm_method = "character",
+        sig_score_method = "character",
+        trajectory_method = "character",
+        exprData = "matrixORSparse",
+        allData = "matrixORSparse",
+        housekeepingData = "character",
+        sigData = "list",
+        metaData= "list",
+        perm_wPCA = "logical",
+        pool = "logical",
+        sigScores = "list",
+        cellsPerPartition= "numeric",
+        filterModuleData = "FilterModuleData",
+        sigMatrix = "data.frame",
+        pools = "list",
+        inputProjections = "list",
+        name = "character"),
+    prototype = list(
+        nomodel = FALSE,
+        pca_filter = FALSE,
+        lean = FALSE,
+        min_signature_genes = 5,
+        weights = NULL,
+        threshold = 0,
+        sig_norm_method = "znorm_rows",
+        trajectory_method ="None",
+        exprData = NULL,
+        housekeepingData = NULL,
+        sigData = NULL,
+        metaData = NULL,
+        perm_wPCA = FALSE,
+        pool = FALSE,
+        sigScores = NULL,
+        cellsPerPartition = 100,
+        filterModuleData = NULL,
+        sigMatrix = NULL,
+        pools=NULL,
+        inputProjections=NULL,
+        name = ""
 ))

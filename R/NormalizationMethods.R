@@ -69,3 +69,23 @@ colRankNormalization <- function(data) {
     colnames(rdata) <- colnames(data)
     return(rdata)
 }
+
+#' Calculates the specified normalized data matrix
+#' @param data numeric matrix
+#' @param func normalization method to apply
+#' @return Normalized data matrix according to function specified.
+getNormalizedCopy <- function(data, func) {
+
+    if (func == "none") {
+        return(noNormalization(data))
+    } else if (func == "znorm_columns") {
+        return(colNormalization(data))
+    } else if (func == "znorm_rows") {
+        return(rowNormalization(data))
+    } else if (func == "znorm_rows_then_columns") {
+        return(rowAndColNormalization(data))
+    } else if (func == "rank_norm_columns") {
+        return(colRankNormalization(data))
+    }
+    stop("Normalization method not recognized.")
+}

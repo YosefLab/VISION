@@ -22,7 +22,7 @@ registerMethods <- function(lean=FALSE) {
 #' Projects data into 2 dimensions using a variety of linear and non-linear methods.
 #'
 #' @importFrom stats quantile
-#' @param expr ExpressionData object
+#' @param expr numeric matrix of gene expression
 #' @param weights weights estimated from FNR curve
 #' @param projection_genes character vector of gene names to use for projections
 #' @param inputProjections Precomputed projections

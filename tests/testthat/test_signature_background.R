@@ -8,7 +8,7 @@ test_that("Can generate random background signatures", {
   object <- FastProject(data_file, sig_file)
 
   # Mock the weights
-  ed <- getExprData(object@exprData)
+  ed <- object@exprData
   weights <- matrix(
                     rep(1, length(ed)),
                     nrow=nrow(ed)

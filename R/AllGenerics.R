@@ -24,14 +24,6 @@ setGeneric("createOutputDirectory", function(object) {
     standardGeneric("createOutputDirectory")
 })
 
-setGeneric("getExprData", function(object) {
-    standardGeneric("getExprData")
-})
-
-setGeneric("getNormalizedCopy", function(object, func) {
-    standardGeneric("getNormalizedCopy")
-})
-
 setGeneric("saveAndViewResults", function(fpout, ...) {
     standardGeneric("saveAndViewResults")
 })

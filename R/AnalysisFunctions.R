@@ -9,17 +9,17 @@ poolCells <- function(object,
 
     message(paste(
       "Performing micro-pooling on",
-      ncol(getExprData(object@exprData)),
+      ncol(object@exprData),
       "cells with a target pool size of",
       object@cellsPerPartition
     ))
 
-    microclusters <- applyMicroClustering(getExprData(object@exprData),
+    microclusters <- applyMicroClustering(object@exprData,
                                           cellsPerPartition = object@cellsPerPartition,
                                           filterInput = object@projection_genes,
                                           filterThreshold = object@threshold)
 
-    object@exprData <- ExpressionData(microclusters[[1]])
+    object@exprData <- microclusters[[1]]
     object@pools <- microclusters[[2]]
     return(object)
 }
@@ -39,12 +39,12 @@ filterData <- function(object,
     message("Determining Projection Genes...")
 
     if (object@threshold == 0) {
-        num_samples <- ncol(getExprData(object@exprData))
+        num_samples <- ncol(object@exprData)
         object@threshold <- round(0.2 * num_samples)
     }
 
     object@projection_genes <- applyFilters(
-                getExprData(object@exprData),
+                object@exprData,
                 object@threshold,
                 object@projection_genes)
 
@@ -60,22 +60,22 @@ filterData <- function(object,
 calcWeights <- function(object,
                         nomodel=object@nomodel) {
     object@nomodel <- nomodel
-    clustered <- (ncol(getExprData(object@exprData)) > 15000 || object@pool)
+    clustered <- (ncol(object@exprData) > 15000 || object@pool)
     if (!clustered && !object@nomodel) {
         message("Computing weights from False Negative Rate curves...")
-        falseneg_out <- createFalseNegativeMap(getExprData(object@exprData),
+        falseneg_out <- createFalseNegativeMap(object@exprData,
                                                object@housekeepingData)
         object@weights <- computeWeights(falseneg_out[[1]], falseneg_out[[2]],
                                          object@exprData)
 
     } else if (all(is.na(object@weights)) ||
-               ncol(object@weights) != ncol(getExprData(object@exprData))) {
-        object@weights <- matrix(1L, nrow=nrow(getExprData(object@exprData)),
-                                 ncol=ncol(getExprData(object@exprData)))
+               ncol(object@weights) != ncol(object@exprData)) {
+        object@weights <- matrix(1L, nrow=nrow(object@exprData),
+                                 ncol=ncol(object@exprData))
     }
 
-    rownames(object@weights) <- rownames(getExprData(object@exprData))
-    colnames(object@weights) <- colnames(getExprData(object@exprData))
+    rownames(object@weights) <- rownames(object@exprData)
+    colnames(object@weights) <- colnames(object@exprData)
     return(object)
 }
 
@@ -359,7 +359,7 @@ calculatePearsonCorr <- function(sigData, sigMatrix, fullPCA){
 
 convertToDense <- function(object) {
 
-    object@exprData@data <- as.matrix(object@exprData@data)
+    object@exprData <- as.matrix(object@exprData)
 
     return(object)
 }

@@ -79,8 +79,8 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
             }
 
             rownames(data) <- toupper(rownames(data))
-            .Object@allData = data
-            .Object@exprData <- ExpressionData(data)
+            .Object@allData <- data
+            .Object@exprData <- data
 
             if (is.null(housekeeping)) {
                 .Object@housekeepingData <- character()
@@ -133,7 +133,7 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
             .Object@lean <- lean
             .Object@perm_wPCA <- perm_wPCA
 
-            LOTS_OF_CELLS <- ncol(getExprData(.Object@exprData)) > 15000
+            LOTS_OF_CELLS <- ncol(.Object@exprData) > 15000
 
             if (is.character(pool))
             {
@@ -158,7 +158,7 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
             if (LOTS_OF_CELLS && !pool) {
                 message(paste(
                       "Warning: Input data consists of",
-                      ncol(getExprData(.Object@exprData)),
+                      ncol(.Object@exprData),
                       "cells and pool=FALSE.  It is recommend to set pool=TRUE when running on large numbers of cells"
                       )
                 )
@@ -271,7 +271,7 @@ setMethod("addProjection", signature(object="FastProject"),
     }
 
     # Verify that projection coordinates are correct
-    samples = object@exprData@data
+    samples = object@exprData
     sample_names = colnames(samples)
 
     if(length(intersect(sample_names, rownames(coordinates))) != dim(coordinates)[1]){
@@ -419,8 +419,8 @@ createNewFP <- function(fp, subset) {
     .Object <- new("FastProject")
     nexpr <- fp@allData[,subset]
     rownames(nexpr) <- toupper(rownames(nexpr))
-    .Object@allData = nexpr
-    .Object@exprData <- ExpressionData(nexpr)
+    .Object@allData <- nexpr
+    .Object@exprData <- nexpr
 
     .Object@housekeepingData <- fp@housekeepingData
     .Object@sigData <- fp@sigData

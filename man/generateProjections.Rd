@@ -8,7 +8,7 @@ generateProjections(expr, weights, projection_genes = NULL,
   inputProjections = c(), lean = FALSE, perm_wPCA = FALSE)
 }
 \arguments{
-\item{expr}{ExpressionData object}
+\item{expr}{numeric matrix of gene expression}
 
 \item{weights}{weights estimated from FNR curve}
 

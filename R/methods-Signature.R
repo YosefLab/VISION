@@ -124,7 +124,7 @@ calculateSignatureBackground <- function(object, num) {
 #' @return a vector of random Signature objects
 generatePermutationNull <- function(num, eData, sigData) {
 
-  exp_genes <- rownames(getExprData(eData))
+  exp_genes <- rownames(eData)
 
   # Remove meta
   meta <- vapply(sigData, function(s) s@isMeta, TRUE)

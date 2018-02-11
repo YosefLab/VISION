@@ -2,12 +2,12 @@
 % Please edit documentation in R/Server.R
 \name{ServerExpression}
 \alias{ServerExpression}
-\title{Wrapper class for ExpressionData object for JSON.}
+\title{Wrapper class for gene expression object for JSON.}
 \usage{
 ServerExpression(data, sample_labels, gene_labels)
 }
 \arguments{
-\item{data}{Expression data}
+\item{data}{numeric matrix}
 
 \item{sample_labels}{Labels of samples in expression data}
 
@@ -17,5 +17,5 @@ ServerExpression(data, sample_labels, gene_labels)
 ServerExpression object
 }
 \description{
-Wrapper class for ExpressionData object for JSON.
+Wrapper class for gene expression object for JSON.
 }
