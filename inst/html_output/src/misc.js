@@ -33,48 +33,10 @@ function createSigModal(sig_key){
 }
 
 
-
-function createGeneModal()
-{
-    return api.filterGroup.genes(global_status.filter_group)
-        .then(function(genes){
-
-            //Calculate max width
-            var width_and_index = genes.map(function(e,i){return [e.length, i]});
-            width_and_index.sort(function(a,b){return Math.sign(b[0] - a[0]);});
-            var top10 = width_and_index.slice(0,10).map(function(e){return genes[e[1]];});
-            var widths = [];
-            for(var i = 0; i < top10.length; i++)
-            {
-                var div = document.createElement("div");
-                $(div).text(top10[i]).css("position","absolute").css("left", "-9999px");
-                $('body').append(div);
-                widths.push($(div).width());
-            }
-
-            var maxWidth = d3.max(widths);
-
-            /* var geneDivs = d3.select('#geneModal').select('.modal-body').selectAll('di
-                .data(genes.sort());
-                */
-
-            geneDivs.enter().append('div');
-            geneDivs.exit().remove();
-
-            geneDivs
-                .text(function(d){return d;})
-                .style("width", maxWidth + "px");
-
-            $('#geneModal').modal();
-        });
-}
-
-
 function exprotSigProj() {
 
     var sig_key = global_status.plotted_signature;
     var proj_key = global_status.plotted_projection;
-    var filter_group = global_status.filter_group;
 
     if (sig_key.length == 0 && proj_key.length == 0) {
         $("#plot_title_div").children().eq(0).text("");
@@ -83,7 +45,7 @@ function exprotSigProj() {
         return $().promise();
     }
 
-    var proj_promise = api.projection.coordinates(filter_group, proj_key);
+    var proj_promise = api.projection.coordinates(proj_key);
 
     var sig_promise;
     if (global_status.scatterColorOption == "value" || global_data.sigIsMeta[sig_key]) {

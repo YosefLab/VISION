@@ -44,7 +44,6 @@ Right_Content.prototype.update = function(updates)
         ('plotted_item' in updates) ||
         ('plotted_item_type' in updates) ||
         ('plotted_projection' in updates) ||
-        ('filter_group' in updates) ||
         ('plotted_pc' in updates) ||
         ('colorScatterOption' in updates);
 
@@ -124,10 +123,9 @@ Right_Content.prototype.draw_tree = function() {
     var item_key = get_global_status('plotted_item');
     var item_type = get_global_status('plotted_item_type');
     var proj_key = get_global_status('plotted_projection');
-    var filter_group = get_global_status('filter_group');
 
-    var tree_points = api.tree.tree_points(filter_group, proj_key);
-    var tree_adjlist = api.tree.tree(filter_group)
+    var tree_points = api.tree.tree_points(proj_key);
+    var tree_adjlist = api.tree.tree()
 
     var projection = get_global_data('tree_projection_coordinates')
     var values = get_global_data('plotted_values')

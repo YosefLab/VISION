@@ -320,7 +320,7 @@ Signature_Table.prototype.update = function(updates)
     var self = this;
     if (_.isEmpty(self.clusters)){
 
-        clusters_promise = api.signature.clusters(false, "1")
+        clusters_promise = api.signature.clusters(false)
             .then(function(cls){
                 self.clusters = cls;
                 return true;
@@ -330,17 +330,16 @@ Signature_Table.prototype.update = function(updates)
     }
 
     var matrix_promise;
-    if( 'main_vis' in updates || 'filter_group' in updates || _.isEmpty(self.matrix)){
+    if( 'main_vis' in updates || _.isEmpty(self.matrix)){
         var self = this;
         var main_vis = get_global_status('main_vis');
-        var filter_group = get_global_status('filter_group');
 
         if (main_vis == "sigvp") {
-            matrix_promise = api.filterGroup.sigProjMatrixP(filter_group, false, "nominal");
+            matrix_promise = api.filterGroup.sigProjMatrixP(false, "nominal");
         } else if (main_vis == "tree") {
-            matrix_promise = api.filterGroup.treeSigProjMatrixP(filter_group, false);
+            matrix_promise = api.filterGroup.treeSigProjMatrixP(false);
         } else {
-            matrix_promise = api.filterGroup.pCorr(filter_group, false);
+            matrix_promise = api.filterGroup.pCorr(false);
         }
 
         matrix_promise = matrix_promise
@@ -396,7 +395,7 @@ Meta_Table.prototype.update = function(updates)
     var clusters_promise;
     if (_.isEmpty(self.clusters)){
 
-        clusters_promise = api.signature.clusters(true, "1")
+        clusters_promise = api.signature.clusters(true)
             .then(function(cls){
                 self.clusters = cls;
                 return true;
@@ -405,16 +404,15 @@ Meta_Table.prototype.update = function(updates)
         clusters_promise = false
     }
 
-    if('main_vis' in updates || 'filter_group' in updates || _.isEmpty(self.matrix)){
-        var filter_group = get_global_status('filter_group');
+    if('main_vis' in updates || _.isEmpty(self.matrix)){
         var main_vis = get_global_status('main_vis');
 
         if (main_vis === "sigvp") {
-            matrix_promise = api.filterGroup.sigProjMatrixP(filter_group, true, "nominal");
+            matrix_promise = api.filterGroup.sigProjMatrixP(true, "nominal");
         } else if (main_vis === "tree") {
-            matrix_promise = api.filterGroup.treeSigProjMatrixP(filter_group, true);
+            matrix_promise = api.filterGroup.treeSigProjMatrixP(true);
         } else {
-            matrix_promise = api.filterGroup.pCorr(filter_group, true);
+            matrix_promise = api.filterGroup.pCorr(true);
         }
 
         matrix_promise = matrix_promise.then(
@@ -692,10 +690,9 @@ Gene_Select.prototype.update = function(updates)
     if('main_vis' in updates || $('#SelectProj').children().length === 0)
     {
         var main_vis = get_global_status('main_vis')
-        var filter_group = get_global_status('filter_group')
         // Get a list of the projection names
         if(main_vis === 'pcannotator'){
-            api.filterGroup.listPCs(filter_group)
+            api.filterGroup.listPCs()
                 .then(function(proj_names) {
 
                     var projSelect = $('#SelectProj')
@@ -726,7 +723,7 @@ Gene_Select.prototype.update = function(updates)
 
                 });
         } else {
-            api.filterGroup.listProjections(filter_group)
+            api.filterGroup.listProjections()
                 .then(function(proj_names) {
 
                     var projSelect = $('#SelectProj')

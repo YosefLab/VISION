@@ -17,7 +17,6 @@ global_status.plotted_item = "";  // name of signature, meta or gene that is plo
 global_status.plotted_item_type = ""; // either 'signature', 'meta', or 'gene'
 
 
-global_status.filter_group = "fano";
 global_status.upper_range = "";
 global_status.lower_range = "";
 global_status.pc1 = "";
@@ -79,8 +78,7 @@ function set_global_status(update){
     if('main_vis' in update && get_global_status('main_vis') === 'pcannotator' &&
         _.isEmpty(global_data.pca_projection_coordinates))
     {
-        var filter_group = get_global_status('filter_group');
-        var pc_promise = api.pc.coordinates(filter_group)
+        var pc_promise = api.pc.coordinates()
             .then(function(projection){
                 global_data.pca_projection_coordinates = projection;
             });
@@ -94,8 +92,7 @@ function set_global_status(update){
        ('main_vis' in update && get_global_status('main_vis') === 'tree')
     ){
         var proj_key = get_global_status('plotted_projection');
-        var filter_group = get_global_status('filter_group');
-        var proj_promise = api.tree.coordinates(filter_group, proj_key)
+        var proj_promise = api.tree.coordinates(proj_key)
             .then(function(projection){
                 global_data.tree_projection_coordinates = projection;
             });
@@ -109,8 +106,7 @@ function set_global_status(update){
        ('main_vis' in update && get_global_status('main_vis') === 'sigvp')
     ){
         var proj_key = get_global_status('plotted_projection');
-        var filter_group = get_global_status('filter_group');
-        var proj_promise = api.projection.coordinates(filter_group, proj_key)
+        var proj_promise = api.projection.coordinates(proj_key)
             .then(function(projection){
                 global_data.sig_projection_coordinates = projection;
             });

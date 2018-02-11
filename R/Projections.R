@@ -24,7 +24,6 @@ registerMethods <- function(lean=FALSE) {
 #' @importFrom stats quantile
 #' @param expr ExpressionData object
 #' @param weights weights estimated from FNR curve
-#' @param filterName name of filter, to extract correct data for projections
 #' @param inputProjections Precomputed projections
 #' @param lean If TRUE, diminished number of algorithms applied,
 #' if FALSE all algorithms applied. Default is FALSE
@@ -39,15 +38,11 @@ registerMethods <- function(lean=FALSE) {
 #'     \item permMats: a list of permuted and projected data matrices, used for
 #'     downstream permutation tests
 #' }
-generateProjections <- function(expr, weights, filterName="",
+generateProjections <- function(expr, weights,
                                 inputProjections=c(), lean=FALSE,
                                 perm_wPCA=FALSE) {
 
-    if (filterName == "fano") {
-        exprData <- expr@fanoFilter
-    } else {
-        stop("FilterName not recognized: ", filterName)
-    }
+    exprData <- expr@fanoFilter
 
     methodList = registerMethods(lean)
 
@@ -129,7 +124,6 @@ generateProjections <- function(expr, weights, filterName="",
 #' @importFrom stats quantile
 #' @param data the data to fit the tree to. Should be lower dimensional than
 #' full data.
-#' @param filterName the filtered data to use
 #' @param inputProjections a list of Projection objects. For each Projection, a
 #' corresponding TreeProjection will be created in which the scores are based
 #' on geodesic distances instead of euclidean one
@@ -142,7 +136,7 @@ generateProjections <- function(expr, weights, filterName="",
 #'     \item treeScore a score representing the singificance of the fitten tree
 #'     return(list(projections = output, treeScore = hdTree$zscore))
 #' }
-generateTreeProjections <- function(data, filterName="",
+generateTreeProjections <- function(data,
                                     inputProjections, permMats = NULL) {
 
     hdTree <- applySimplePPT(data, permExprData = permMats)

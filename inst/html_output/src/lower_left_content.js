@@ -234,7 +234,6 @@ Sig_Info.prototype.drawHeat = function(){
 
     var sig_key = get_global_status('plotted_item'); // assume it's a signature
     var proj_key = get_global_status('plotted_projection');
-    var filter_group = get_global_status('filter_group');
 
     var cluster_method = $(self.dom_node).find('#cluster_select_method').val();
     var cluster_param = $(self.dom_node).find('#cluster_select_param').val();
@@ -270,7 +269,7 @@ Sig_Info.prototype.drawHeat = function(){
 
     return $.when(
         api.signature.expression(sig_key),
-        api.projection.clusters(filter_group, proj_key, cluster_method, cluster_param))
+        api.projection.clusters(proj_key, cluster_method, cluster_param))
         .then(function(sig_expression, cluster){
 
 
@@ -503,7 +502,6 @@ function runSubsetAnalysis() {
 function runPCAnalysis() {
 
     var sig_key = global_status.plotted_signature;
-    var filter_group = global_status.filter_group;
     var pc1 = global_status.pc1;
     var pc2 = global_status.pc2;
 
@@ -514,7 +512,7 @@ function runPCAnalysis() {
     }
 
     var sig_info_promise = api.signature.info(sig_key);
-    var proj_promise = api.pc.versus(filter_group, pc1, pc2);
+    var proj_promise = api.pc.versus(pc1, pc2);
 
     return $.when(proj_promise, sig_promise, sig_info_promise)
         .then(function(projection, signature, sig_info) {
@@ -537,9 +535,8 @@ function runPCAnalysis() {
 function selectRange() {
     var sig_key = global_status.plotted_signature;
     var proj_key = global_status.plotted_projection;
-    var filter_group = global_status.filter_group;
 
-    var proj_promise = api.projection.coordinates(filter_group, proj_key);
+    var proj_promise = api.projection.coordinates(proj_key);
 
     if (global_status.subset_criteria == "Rank") {
         var sig_promise = api.signature.ranks(sig_key);
@@ -574,8 +571,8 @@ function addToPCAnalysisBox(sig_info) {
     }
 
     var pcnum = global_status.plotted_pc.split(" ")[1];
-    var loading_promise_pos = api.filterGroup.loadings_pos(global_status.filter_group, pcnum);
-    var loading_promise_neg = api.filterGroup.loadings_neg(global_status.filter_group, pcnum);
+    var loading_promise_pos = api.filterGroup.loadings_pos(pcnum);
+    var loading_promise_neg = api.filterGroup.loadings_neg(pcnum);
 
     return $.when(loading_promise_pos, loading_promise_neg)
         .then(function(pos_loadings, neg_loadings) {

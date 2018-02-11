@@ -56,13 +56,12 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.signature.clusters = function(meta, filter) {
+    output.signature.clusters = function(meta) {
         var query = ""
         if (meta) {
-            query = query.concat("/FilterGroup/", filter, "/SigClusters/Meta");
-
+            query = query.concat("/FilterGroup/SigClusters/Meta");
         } else {
-            query = query.concat("/FilterGroup/", filter, "/SigClusters/Normal");
+            query = query.concat("/FilterGroup/SigClusters/Normal");
         }
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
@@ -71,46 +70,45 @@ var api = (function(){
 
     output.filterGroup = {}
 
-    output.filterGroup.listProjections = function(filter_group)
+    output.filterGroup.listProjections = function()
     {
-        var query = "/FilterGroup/"
-        query = query.concat(encodeURI(filter_group), "/projections/list")
+        var query = "/FilterGroup/projections/list"
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.filterGroup.sigProjMatrix = function(filter_group, meta)
+    output.filterGroup.sigProjMatrix = function(meta)
     {
-        var query = "/FilterGroup/"
+        var query = "/FilterGroup"
         if (meta) {
-            query = query.concat(encodeURI(filter_group), "/SigProjMatrix/Meta")
+            query = query.concat("/SigProjMatrix/Meta")
         } else {
-            query = query.concat(encodeURI(filter_group), "/SigProjMatrix/Normal")
+            query = query.concat("/SigProjMatrix/Normal")
         }
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.filterGroup.sigProjMatrixP = function(filter_group, meta, pvalue)
+    output.filterGroup.sigProjMatrixP = function(meta, pvalue)
     {
-        var query = "/FilterGroup/"
+        var query = "/FilterGroup"
         if (meta) {
-            query = query.concat(encodeURI(filter_group), "/SigProjMatrix_P/Meta")
+            query = query.concat("/SigProjMatrix_P/Meta")
         } else {
             if (pvalue == "nominal") {
-                query = query.concat(encodeURI(filter_group), "/SigProjMatrix_P/Normal")
+                query = query.concat("/SigProjMatrix_P/Normal")
             } else {
-                query = query.concat(encodeURI(filter_group), "/SigProjMatrix_Pemp/Normal")
+                query = query.concat("/SigProjMatrix_Pemp/Normal")
             }
         }
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.filterGroup.treeSigProjMatrixP = function(filter_group, meta)
+    output.filterGroup.treeSigProjMatrixP = function(meta)
     {
-        var query = "/FilterGroup/"
+        var query = "/FilterGroup"
         if (meta) {
-            query = query.concat(encodeURI(filter_group), "/Tree/SigProjMatrix_P/Meta")
+            query = query.concat("/Tree/SigProjMatrix_P/Meta")
         } else {
-            query = query.concat(encodeURI(filter_group), "/Tree/SigProjMatrix_P/Normal")
+            query = query.concat("/Tree/SigProjMatrix_P/Normal")
         }
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
@@ -121,40 +119,32 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.filterGroup.genes = function(filter_group)
-    {
-        var query = "/FilterGroup/"
-        query = query.concat(encodeURI(filter_group), "/genes")
-        return $.ajax(query, {dataType: "json"}).then(x => x)
-    }
-
-    output.filterGroup.pCorr = function(filter_group, meta) {
-        var query = "/FilterGroup/";
+    output.filterGroup.pCorr = function(meta) {
+        var query = "/FilterGroup";
         if (meta) {
-            query = query.concat(encodeURI(filter_group), "/PearsonCorr/Meta");
+            query = query.concat("/PearsonCorr/Meta");
         } else {
-            query = query.concat(encodeURI(filter_group), "/PearsonCorr/Normal");
+            query = query.concat("/PearsonCorr/Normal");
         }
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.filterGroup.listPCs = function(filter_group)
+    output.filterGroup.listPCs = function()
     {
-        var query = "/FilterGroup/"
-        query = query.concat(encodeURI(filter_group), "/PearsonCorr/list")
+        var query = "/FilterGroup/PearsonCorr/list"
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.filterGroup.loadings_pos = function(filter_group, pcnum) {
+    output.filterGroup.loadings_pos = function(pcnum) {
         var query = "/FilterGroup/";
-        query = query.concat(encodeURI(filter_group), "/", encodeURI(pcnum), "/Loadings");
+        query = query.concat(encodeURI(pcnum), "/Loadings");
         query = query.concat("/Positive");
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.filterGroup.loadings_neg= function(filter_group, pcnum) {
+    output.filterGroup.loadings_neg= function(pcnum) {
         var query = "/FilterGroup/";
-        query = query.concat(encodeURI(filter_group), "/", encodeURI(pcnum), "/Loadings");
+        query = query.concat(encodeURI(pcnum), "/Loadings");
         query = query.concat("/Negative");
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
@@ -163,20 +153,19 @@ var api = (function(){
 
     output.projection = {}
      
-    output.projection.coordinates = function(filter_group, projection_name)
+    output.projection.coordinates = function(projection_name)
     {
         var query = "/FilterGroup/"
-        query = query.concat(encodeURI(filter_group), "/",
-            encodeURI(projection_name), "/coordinates")
+        query = query.concat(encodeURI(projection_name), "/coordinates")
         return $.ajax(query, {dataType: "json"}).then(x => fix_coordinates(x))
     }
 
-    output.projection.clusters = function(filter_group, projection_name,
+    output.projection.clusters = function(projection_name,
         cluster_method, parameter)
     {
         var query = "/FilterGroup/"
-        query = query.concat(encodeURI(filter_group), "/", encodeURI(projection_name),
-            "/clusters/", encodeURI(cluster_method), "/", encodeURI(parameter))
+        query = query.concat(encodeURI(projection_name), "/clusters/",
+            encodeURI(cluster_method), "/", encodeURI(parameter))
         return $.ajax(query, {dataType: "json"}).then(x => x)
 
     }
@@ -185,22 +174,21 @@ var api = (function(){
     
     output.tree = {}
 
-    output.tree.tree = function(filter_group) 
+    output.tree.tree = function() 
     {
-        var query = "/FilterGroup/";
-        query = query.concat(encodeURI(filter_group), "/Tree/List");
+        var query = "/FilterGroup/Tree/List"
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.tree.tree_points = function(filter_group, projection) {
+    output.tree.tree_points = function(projection) {
         var query = "/FilterGroup/";
-        query = query.concat(encodeURI(filter_group), "/", encodeURI(projection), "/Tree/Points");
+        query = query.concat(encodeURI(projection), "/Tree/Points");
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.tree.coordinates = function(filter_group, projection) {
+    output.tree.coordinates = function(projection) {
         var query = "/FilterGroup/";
-        query = query.concat(encodeURI(filter_group), "/", encodeURI(projection), "/Tree/Projection")
+        query = query.concat(encodeURI(projection), "/Tree/Projection")
         return $.ajax(query, {dataType: "json"}).then(x => fix_coordinates(x))
     }
 
@@ -209,15 +197,14 @@ var api = (function(){
 
     output.pc = {}
 
-    output.pc.coordinates = function(filter_group) {
-        var query = "/FilterGroup/";
-        query = query.concat(encodeURI(filter_group), "/PCA/Coordinates");
+    output.pc.coordinates = function() {
+        var query = "/FilterGroup/PCA/Coordinates"
         return $.ajax(query, {dataType: "json"}).then(x => fix_coordinates(x))
     }	
 
-    output.pc.versus = function(filter_group, pc1, pc2) {
-        var query = "/FilterGroup/";
-        query = query.concat(encodeURI(filter_group), "/PCVersus/", encodeURI(pc1), "/", encodeURI(pc2));
+    output.pc.versus = function(pc1, pc2) {
+        var query = "/FilterGroup";
+        query = query.concat("/PCVersus/", encodeURI(pc1), "/", encodeURI(pc2));
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 

@@ -251,14 +251,9 @@ analyzeProjections <- function(object,
   message("Computing background distribution for signature scores...")
   randomSigScores <- calculateSignatureBackground(object, num=3000)
 
-  # Apply projections to filtered gene sets, create new projectionData object
-  filterModuleList <- list()
-  filter <- "fano"
-
   message("Projecting data into 2 dimensions...")
 
   projectData <- generateProjections(object@exprData, object@weights,
-                                     filter,
                                      inputProjections=object@inputProjections,
                                      lean=object@lean,
                                      perm_wPCA=object@perm_wPCA)
@@ -282,7 +277,7 @@ analyzeProjections <- function(object,
 
   if (tolower(object@trajectory_method) != "none") {
       message("Fitting principle tree...")
-      treeProjs <- generateTreeProjections(projectData$fullPCA, filter,
+      treeProjs <- generateTreeProjections(projectData$fullPCA,
                                  inputProjections = projectData$projections,
                                  permMats = projectData$permMats)
 
@@ -315,16 +310,11 @@ analyzeProjections <- function(object,
                                   pearsonCorr = pearsonCorr,
                                   loadings = projectData$loadings)
 
-  filterModuleData <- FilterModuleData(filter = filter,
-                                       genes = projectData$geneNames,
-                                       ProjectionData = projData,
+  filterModuleData <- FilterModuleData(ProjectionData = projData,
                                        TreeProjectionData = treeProjData,
                                        PCAnnotatorData = pcaAnnotData)
 
-  filterModuleList[[filter]] <- filterModuleData
-
-
-  object@filterModuleList <- filterModuleList
+  object@filterModuleData <- filterModuleData
   return(object)
 }
 
