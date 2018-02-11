@@ -21,8 +21,7 @@ Cluster <- setClass("Cluster",
 
 ExpressionData <- setClass("ExpressionData",
     slots = c(
-        data = "matrixORSparse",
-        fanoFilter = "matrixORSparse"
+        data = "matrixORSparse"
 ))
 
 FastProject <- setClass("FastProject",

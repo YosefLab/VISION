@@ -4,15 +4,15 @@
 \alias{generateProjections}
 \title{Projects data into 2 dimensions using a variety of linear and non-linear methods.}
 \usage{
-generateProjections(expr, weights, filterName = "", inputProjections = c(),
-  lean = FALSE, perm_wPCA = FALSE)
+generateProjections(expr, weights, projection_genes = NULL,
+  inputProjections = c(), lean = FALSE, perm_wPCA = FALSE)
 }
 \arguments{
 \item{expr}{ExpressionData object}
 
 \item{weights}{weights estimated from FNR curve}
 
-\item{filterName}{name of filter, to extract correct data for projections}
+\item{projection_genes}{character vector of gene names to use for projections}
 
 \item{inputProjections}{Precomputed projections}
 

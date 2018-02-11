@@ -4,14 +4,11 @@
 \alias{generateTreeProjections}
 \title{Genrate projections based on a tree structure learned in high dimensonal space}
 \usage{
-generateTreeProjections(data, filterName = "", inputProjections,
-  permMats = NULL)
+generateTreeProjections(data, inputProjections, permMats = NULL)
 }
 \arguments{
 \item{data}{the data to fit the tree to. Should be lower dimensional than
 full data.}
-
-\item{filterName}{the filtered data to use}
 
 \item{inputProjections}{a list of Projection objects. For each Projection, a
 corresponding TreeProjection will be created in which the scores are based

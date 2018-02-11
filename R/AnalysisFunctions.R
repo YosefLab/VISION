@@ -43,7 +43,7 @@ filterData <- function(object,
         object@threshold <- round(0.2 * num_samples)
     }
 
-    object@exprData@fanoFilter <- applyFilters(
+    object@projection_genes <- applyFilters(
                 getExprData(object@exprData),
                 object@threshold,
                 object@projection_genes)
@@ -254,6 +254,7 @@ analyzeProjections <- function(object,
   message("Projecting data into 2 dimensions...")
 
   projectData <- generateProjections(object@exprData, object@weights,
+                                     projection_genes=object@projection_genes,
                                      inputProjections=object@inputProjections,
                                      lean=object@lean,
                                      perm_wPCA=object@perm_wPCA)
@@ -359,7 +360,6 @@ calculatePearsonCorr <- function(sigData, sigMatrix, fullPCA){
 convertToDense <- function(object) {
 
     object@exprData@data <- as.matrix(object@exprData@data)
-    object@exprData@fanoFilter <- as.matrix(object@exprData@fanoFilter)
 
     return(object)
 }

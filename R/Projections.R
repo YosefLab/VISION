@@ -24,6 +24,7 @@ registerMethods <- function(lean=FALSE) {
 #' @importFrom stats quantile
 #' @param expr ExpressionData object
 #' @param weights weights estimated from FNR curve
+#' @param projection_genes character vector of gene names to use for projections
 #' @param inputProjections Precomputed projections
 #' @param lean If TRUE, diminished number of algorithms applied,
 #' if FALSE all algorithms applied. Default is FALSE
@@ -38,13 +39,17 @@ registerMethods <- function(lean=FALSE) {
 #'     \item permMats: a list of permuted and projected data matrices, used for
 #'     downstream permutation tests
 #' }
-generateProjections <- function(expr, weights,
+generateProjections <- function(expr, weights, projection_genes=NULL,
                                 inputProjections=c(), lean=FALSE,
                                 perm_wPCA=FALSE) {
 
-    exprData <- expr@fanoFilter
+    if (!is.null(projection_genes)) {
+        exprData <- expr[projection_genes, ]
+    } else {
+        exprData <- expr
+    }
 
-    methodList = registerMethods(lean)
+    methodList <- registerMethods(lean)
 
     if (perm_wPCA) {
     res <- applyPermutationWPCA(exprData, weights, components=30)

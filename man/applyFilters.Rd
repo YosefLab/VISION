@@ -14,7 +14,7 @@ applyFilters(expr, threshold, filterInput)
 \item{filterInput}{list of filters to compute}
 }
 \value{
-The filtered expression matrix
+character vector of gene names passing filter
 }
 \description{
 Applies filters to the inputted expression data (may remove rows)

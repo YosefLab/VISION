@@ -12,7 +12,7 @@ filterGenesThreshold(data, threshold)
 \item{threshold}{(int) threshold value to filter by}
 }
 \value{
-filtered expression matrix
+character vector of gene names passing filter
 }
 \description{
 Filter genes whose values sum to less than some threshold value (may remove rows)

@@ -15,7 +15,8 @@ applyMicroClustering <- function(
                          filterThreshold = round(ncol(exprData)*0.2),
                          random = FALSE) {
 
-    fexpr <- applyFilters(exprData, filterThreshold, filterInput)
+    gene_passes <- applyFilters(exprData, filterThreshold, filterInput)
+    fexpr <- exprData[gene_passes, ]
 
     # Compute wcov using matrix operations to avoid
     # creating a large dense matrix
@@ -281,7 +282,7 @@ createFalseNegativeMap <- function(data, housekeeping_genes) {
     #subset of genes to be used,ie those included in the housekeeping genes set
     data_hk <- data[rownames(data) %in% housekeeping_genes,]
     # Filter out genes with no variance
-    data_hk <- filterGenesNovar(data_hk)
+    data_hk <- data_hk[filterGenesNovar(data_hk), ]
 
     # calculate the distributions for hk gene
     # Gamma is 1 for any non-zero data point

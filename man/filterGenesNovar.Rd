@@ -12,7 +12,7 @@ filterGenesNovar(data)
 \item{data}{expression matrix}
 }
 \value{
-filtered expression matrix
+character vector of gene names passing filter
 }
 \description{
 Eliminate genes whose sample variance is equal to 0 (may remove rows);

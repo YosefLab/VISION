@@ -9,30 +9,31 @@
 #' @param expr a numeric expression matrix (genes x cells)
 #' @param threshold minimum number of samples gene must be detected in to pass
 #' @param filterInput list of filters to compute
-#' @return The filtered expression matrix
+#' @return character vector of gene names passing filter
 applyFilters <- function(expr, threshold, filterInput) {
 
     # If the filterInput is a list of items, assume it's a list
     # of genes and just use that to filter the matrix
-    if(length(filterInput) > 1) {
-        f_expr <- expr[filterInput, ];
-        return(f_expr)
+    if (length(filterInput) > 1) {
+        gene_passes <- filterInput
+        return(filterInput)
     }
 
     for (filter in filterInput) {
         if (tolower(filter) == "novar") {
-            f_expr <- filterGenesNovar(expr)
+            gene_passes <- filterGenesNovar(expr)
         } else if (tolower(filter) == "threshold") {
-            f_expr <- filterGenesThreshold(expr, threshold)
+            gene_passes <- filterGenesThreshold(expr, threshold)
         } else if (tolower(filter) == "fano") {
-            t_expr <- filterGenesThreshold(expr, threshold)
-            f_expr <- filterGenesFano(t_expr)
+            gene_passes <- filterGenesThreshold(expr, threshold)
+            t_expr <- expr[gene_passes, ]
+            gene_passes <- filterGenesFano(t_expr)
         } else {
             stop("Filter not recognized")
         }
     }
 
-    return(f_expr)
+    return(gene_passes)
 
 }
 
@@ -41,29 +42,33 @@ applyFilters <- function(expr, threshold, filterInput) {
 #' is selected
 #' @importFrom stats var
 #' @param data expression matrix
-#' @return filtered expression matrix
+#' @return character vector of gene names passing filter
 filterGenesNovar <- function(data) {
-    message("Applying no variance filter...", appendLF=FALSE)
-    fdata <- data[apply(data, 1, var) != 0,]
-    message(paste(nrow(fdata), "Genes Retained"))
-    return(fdata)
+    message("Applying no variance filter...", appendLF = FALSE)
+    genes_passing <- rownames(data)[rowVars(data) != 0]
+    message(paste(length(genes_passing), "Genes Retained"))
+    return(genes_passing)
 }
 
 #' Filter genes whose values sum to less than some threshold value (may remove rows)
 #'
 #' @param data (data.frame) expression matrix
 #' @param threshold (int) threshold value to filter by
-#' @return filtered expression matrix
+#' @return character vector of gene names passing filter
 filterGenesThreshold <- function(data, threshold) {
     message("Applying threshold filter...", appendLF = FALSE)
+
     if ( is(data, "sparseMatrix") ){
         valid_rows <- rowSums(data > 0) > threshold
-        fdata <- data[valid_rows, ]
     } else {
-        fdata <- data[matrixStats::rowCounts(data > 0) > threshold, ]
+        valid_rows <- matrixStats::rowCounts(data > 0) > threshold
     }
-    message(paste(nrow(fdata), "Genes Retained"))
-    return(fdata)
+
+    genes_passing <- rownames(data)[valid_rows]
+
+    message(paste(length(genes_passing), "Genes Retained"))
+
+    return(genes_passing)
 }
 
 #' Applies the Fano filter to the input data (may remove rows)
@@ -71,7 +76,7 @@ filterGenesThreshold <- function(data, threshold) {
 #' @param data NUM_GENES x NUM_SAMPLES expression matrix
 #' @param num_mad number of median absolute deviations
 #' @param plot whether or not to generate a diagnostic plot
-#' @return NUM_GENES_PASSED_FANO_FILTER x NUM_SAMPLES filtered expression matrix
+#' @return character vector of gene names passing filter
 filterGenesFano <- function(data, num_mad=2, plot=FALSE) {
 
     if(plot){
@@ -127,8 +132,9 @@ filterGenesFano <- function(data, num_mad=2, plot=FALSE) {
 
     gene_passes[unlist(genePassList)] <- TRUE
     gene_passes <- gene_passes[order(aa)]
-    fdata <- data[gene_passes,]
-    message(paste(nrow(fdata), "Genes Retained"))
+
+    gene_pass_names <- names(unlist(genePassList))
+    message(paste(length(gene_pass_names), "Genes Retained"))
 
     if(plot) {
         g <- ggplot() + aes(x=mu, y=fano, color=gene_passes) +
@@ -138,7 +144,7 @@ filterGenesFano <- function(data, num_mad=2, plot=FALSE) {
             scale_color_manual(values=c("FALSE"="black", "TRUE"="darkcyan"))
         print(g)
     }
-    return(fdata)
+    return(gene_pass_names)
 
 }
 
