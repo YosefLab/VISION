@@ -26,12 +26,11 @@ SignatureScores <- function(scores, name,
 #' columns are signatue names. Rownames must correspond to appropriate samples
 #' @param sampleLabels a character vector representing sample names in
 #' the expression matrix
-#' @return a list of SignatureScore objects, one for each column in the
-#' data.frame
+#' @return a data.frame object where each column is a cell signature. Names of
+#' columns are signatue names. Rownames must correspond to appropriate samples
 #' @note Factor signatures and numeric signatures are treated differently. Make
 #' sure that the class of each input column is the correct one.
 SigScoresFromDataframe <- function(df, sampleLabels) {
-    sigScores <- c()
 
     common <- intersect(row.names(df), sampleLabels)
     if (length(common) != length(sampleLabels)){
@@ -40,20 +39,5 @@ SigScoresFromDataframe <- function(df, sampleLabels) {
 
     df <- df[sampleLabels, , drop = FALSE]
 
-    for (i in 1:NCOL(df)) {
-
-        if (is.factor(df[, i])){
-            data <- as.factor(df[, i])
-        } else {
-            data <- as.numeric(df[, i])
-        }
-
-        names(data) <- rownames(df)
-
-        sigScores <- c(sigScores, SignatureScores(data,
-                                                  colnames(df)[i],
-                                                  is.factor(data),
-                                                  TRUE, 0))
-    }
-    return(sigScores)
+    return(df)
 }

@@ -128,7 +128,7 @@ function set_global_status(update){
         if(type === 'signature'){
             val_promise = api.signature.scores(sig_key)
         } else if (type === 'meta') {
-            val_promise = api.signature.scores(sig_key)
+            val_promise = api.signature.meta(sig_key)
         } else if (type === 'gene') {
             val_promise = api.expression.gene(sig_key)
         } else {
@@ -153,7 +153,7 @@ function set_global_status(update){
         var new_sig = get_global_status('plotted_item');
         var sig_info = get_global_data('sig_info');
 
-        if((type === 'signature' || type === 'meta') &&
+        if((type === 'signature') &&
             (_.isEmpty(sig_info) || sig_info.name !== new_sig)
         )
         {
@@ -163,7 +163,6 @@ function set_global_status(update){
                 })
 
             all_promises.push(sig_info_promise);
-            right_content_promises.push(sig_info_promise);
             lower_left_content_promises.push(sig_info_promise);
 
         }

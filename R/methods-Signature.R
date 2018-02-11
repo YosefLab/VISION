@@ -209,6 +209,7 @@ getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
 #' sample
 #' @param sigScoresData List of SignatureScores Object, mapping signature
 #' names to their value at each coordinate
+#' @param metaData data.frame of meta-data for cells
 #' @param randomSigData List of SignatureScores Object, mapping randomly
 #' generated signatures to scores to be compared with the real signature scores.
 #' @return list:
@@ -216,25 +217,21 @@ getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
 #'     \item sigProbMatrix: the matrix of signature-projection consistency scores
 #'     \item pVals: pvalues for the scores
 #' }
-sigsVsProjections <- function(projections, sigScoresData,
+sigsVsProjections <- function(projections, sigScoresData, metaData,
                               randomSigData) {
 
   N_SAMPLES <- length(sigScoresData[[1]]@scores)
 
   # Build a matrix of all non-meta signatures
-  geneSigs <- sigScoresData[vapply(sigScoresData,
-                                   function(x) !x@isMeta,
-                                   TRUE)]
-
   sigScoreMatrix <- do.call(
                cbind,
-               lapply(geneSigs, function(sig) sig@scores)
+               lapply(sigScoresData, function(sig) sig@scores)
   )
   sampleLabels <- rownames(sigScoreMatrix)
   sigScoreMatrix <- matrixStats::colRanks(
              sigScoreMatrix, preserveShape=TRUE, ties.method="average"
   )
-  colnames(sigScoreMatrix) <- names(geneSigs)
+  colnames(sigScoreMatrix) <- names(sigScoresData)
   rownames(sigScoreMatrix) <- sampleLabels
 
 
@@ -260,12 +257,12 @@ sigsVsProjections <- function(projections, sigScoresData,
   for (proj in projections) {
     weights <- computeKNNWeights(proj, K=round(sqrt(NCOL(proj@pData))))
 
-    svp_n <- sigsVsProjection_n(geneSigs, sigScoreMatrix,
+    svp_n <- sigsVsProjection_n(sigScoresData, sigScoreMatrix,
                                 randomSigData, randomSigScoreMatrix, weights)
-    svp_pcn <- sigsVsProjection_pcn(sigScoresData, weights)
-    svp_pcf <- sigsVsProjection_pcf(sigScoresData, weights)
+    svp_pcn <- sigsVsProjection_pcn(metaData, weights)
+    svp_pcf <- sigsVsProjection_pcf(metaData, weights)
 
-    consistency = c(svp_n$consistency,
+    consistency <- c(svp_n$consistency,
                     svp_pcn$consistency,
                     svp_pcf$consistency)
 
@@ -359,8 +356,6 @@ sigsVsProjections <- function(projections, sigScoresData,
 #' }
 sigsVsProjection_n <- function(sigData, sigScoreMatrix,
                                randomSigData, randomSigScoreMatrix, weights){
-  # Calculate significance for meta data numerical signatures
-  # This is done separately because there are likely to be many repeats (e.g. for a time coordinate)
 
   N_SAMPLES = nrow(weights)
 
@@ -442,33 +437,35 @@ sigsVsProjection_n <- function(sigData, sigScoreMatrix,
 #' Evaluates the significance of each meta data numeric signature vs. a
 #' single projections weights
 #' @importFrom stats pnorm
-#' @param sigScoresData List of SignatureScores Object, mapping signature
-#' names to their value at each coordinate
+#' @param metaData data.frame of meta-data for cells
 #' @param weights numeric matrix of dimension N_SAMPLES x N_SAMPLES
 #' @return list:
 #' \itemize{
 #'     \item consistency: consistency scores
 #'     \item pvals: pvalues
 #' }
-sigsVsProjection_pcn <- function(sigScoresData, weights){
+sigsVsProjection_pcn <- function(metaData, weights){
   # Calculate significance for meta data numerical signatures
-  # This is done separately because there are likely to be many repeats (e.g. for a time coordinate)
+  # This is done separately because there are likely to be many repeats
+  # (e.g. for a time coordinate)
 
-  N_SAMPLES = nrow(weights)
+  N_SAMPLES <- nrow(weights)
 
   consistency <- numeric()
   pvals <- numeric()
 
-  for (s in sigScoresData) {
+  for (metaName in names(metaData)) {
 
-    if( !s@isMeta || s@isFactor) {
+    scores <- metaData[[metaName]]
+
+    if (is.factor(scores)) {
       next
     }
 
-    sigScores <- rank(s@scores, ties.method="average")
+    sigScores <- rank(scores, ties.method = "average")
     if (all(sigScores == sigScores[1])) {
-      consistency[s@name] <- 0
-      pvals[s@name] <- 1.0
+      consistency[metaName] <- 0
+      pvals[metaName] <- 1.0
       next
     }
 
@@ -489,65 +486,67 @@ sigsVsProjection_pcn <- function(sigScoresData, weights){
     sigma <- biasedVectorSD(randomScores)
 
     if (sigma != 0) {
-      p_value <- pnorm((medDissimilarity - mu) / sigma)
+      p_value <- pnorm( (medDissimilarity - mu) / sigma)
     } else {
       p_value <- 1.0
     }
 
-    consistency[s@name] <- 1 - (medDissimilarity / N_SAMPLES)
-    pvals[s@name] <- p_value
+    consistency[metaName] <- 1 - (medDissimilarity / N_SAMPLES)
+    pvals[metaName] <- p_value
 
   }
 
-  return(list(consistency=consistency, pvals=pvals))
+  return(list(consistency = consistency, pvals = pvals))
 }
 
 #' Evaluates the significance of each meta data factor signature vs. a
 #' single projections weights
 #' @importFrom stats kruskal.test
-#' @param sigScoresData List of SignatureScores Object, mapping signature
-#' names to their value at each coordinate
+#' @param metaData data.frame of meta-data for cells
 #' @param weights numeric matrix of dimension N_SAMPLES x N_SAMPLES
 #' @return list:
 #' \itemize{
 #'     \item consistency: consistency scores
 #'     \item pvals: pvalues
 #' }
-sigsVsProjection_pcf <- function(sigScoresData, weights){
+sigsVsProjection_pcf <- function(metaData, weights){
   # Calculate significance for meta data factor signatures
-  # This is done separately because there are likely to be many repeats (e.g. for a time coordinate)
+  # This is done separately because there are likely to be many repeats
+  # (e.g. for a time coordinate)
 
-  N_SAMPLES = nrow(weights)
+  N_SAMPLES <- nrow(weights)
 
   consistency <- numeric()
   pvals <- numeric()
 
-  for (s in sigScoresData) {
+  for (sigName in names(metaData)) {
 
-    if( !s@isMeta || !s@isFactor) {
+    scores <- metaData[[sigName]]
+
+    if (!is.factor(scores)) {
       next
     }
 
     ### build one hot matrix for factors
 
-    fValues <- s@scores
+    fValues <- scores
     fLevels <- levels(fValues)
-    factorFreq <- matrix(0L, ncol=length(fLevels))
-    factorMatrix <- matrix(0L, nrow=N_SAMPLES, ncol=length(fLevels))
+    factorFreq <- matrix(0L, ncol = length(fLevels))
+    factorMatrix <- matrix(0L, nrow = N_SAMPLES, ncol = length(fLevels))
 
     factList <- lapply(fLevels, function(fval) {
-      factorMatrixRow <- matrix(0L, nrow=N_SAMPLES, ncol=1)
+      factorMatrixRow <- matrix(0L, nrow = N_SAMPLES, ncol = 1)
       equal_ii <- fValues == fval
       factorMatrixRow[equal_ii] <- 1
       return(list(sum(equal_ii) / length(fValues), factorMatrixRow))
     })
     factorFreq <- lapply(factList, function(x) return(x[[1]]))
     factorMatrix <- matrix(unlist(lapply(factList, function(x) return(x[[2]]))),
-                           nrow=N_SAMPLES, ncol=length(fLevels))
+                           nrow = N_SAMPLES, ncol = length(fLevels))
 
     if (1 %in% factorFreq) {
-      consistency[s@name] <- 0.0
-      pvals[s@name] <- 1.0
+      consistency[sigName] <- 0.0
+      pvals[sigName] <- 1.0
       next
     }
 
@@ -557,42 +556,42 @@ sigsVsProjection_pcf <- function(sigScoresData, weights){
 
     # Get predicted index and corresponding probability
     preds_ii <- apply(factorPredictions, 1, which.max)
-    preds <- factorPredictions[cbind(1:nrow(factorPredictions), preds_ii)]
 
     # Calculate the p value for meta data signature
     krList <- list()
     for (k in 1:length(fLevels)) {
-        group <- preds_ii[labels==k]
-        if(length(group) > 0){
+        group <- preds_ii[labels == k]
+        if (length(group) > 0){
             krList <- c(krList, list(group))
         }
     }
 
-    if(length(krList) > 0){
+    if (length(krList) > 0){
         krTest <- kruskal.test(krList)
 
         if (is.na(krTest$p.value)){
-            consistency[s@name] <- 0
-            pvals[s@name] <- 1.0
+            consistency[sigName] <- 0
+            pvals[sigName] <- 1.0
         } else {
-            consistency[s@name] <- krTest$statistic
-            pvals[s@name] <- krTest$p.value
+            consistency[sigName] <- krTest$statistic
+            pvals[sigName] <- krTest$p.value
         }
     } else {
-        consistency[s@name] <- 0
-        pvals[s@name] <- 1.0
+        consistency[sigName] <- 0
+        pvals[sigName] <- 1.0
     }
 
   }
 
-  return(list(consistency=consistency, pvals=pvals))
+  return(list(consistency = consistency, pvals = pvals))
 }
 
 #' Clusters signatures according to the rank sum
 #' @importFrom mclust Mclust
 #' @importFrom mclust mclustBIC
-#' @param sigList List of signatures
+#' @importFrom rsvd rsvd
 #' @param sigMatrix data.frame of signatures scores, NUM_SAMPLES x NUM_SIGNATURES
+#' @param metaData data.frame of meta-data for cells
 #' @param pvals the corresponding P-values for each score,
 #' NUM_SIGNATURES x NUM_SAMPLES
 #' @return a list:
@@ -600,18 +599,17 @@ sigsVsProjection_pcf <- function(sigScoresData, weights){
 #'     \item Computed: a list of clusters of computed signatures
 #'     \item Meta: a list of clusters of meta data signatures
 #' }
-clusterSignatures <- function(sigList, sigMatrix, pvals, clusterMeta) {
+clusterSignatures <- function(sigMatrix, metaData, pvals, clusterMeta) {
 
-  meta <- vapply(sigList, function(x) x@isMeta, TRUE)
   significant <- apply(pvals, 1, function(x) min(x) < -1.3)
 
-  comp_names <- names(meta)[!meta]
+  comp_names <- colnames(sigMatrix)
   signif_computed <- significant[comp_names]
 
-  keep_computed = names(signif_computed)[signif_computed]
+  keep_significant <- names(signif_computed)[signif_computed]
 
-  # Cluster computed signatures and meta data signatures separately
-  computedSigMatrix <- sigMatrix[, keep_computed,drop=FALSE]
+  # Cluster computed signatures and precomputed signatures separately
+  computedSigMatrix <- sigMatrix[, keep_significant, drop = FALSE]
 
   compcls <- list()
   maxcls <- 1
@@ -619,15 +617,21 @@ clusterSignatures <- function(sigList, sigMatrix, pvals, clusterMeta) {
 
     r <- colRanks(
             as.matrix(computedSigMatrix),
-            ties.method="average",
-            preserveShape=TRUE
-        )
+            ties.method = "average",
+            preserveShape = TRUE
+         )
 
-    compkm <- Mclust(t(r))
+    r <- t(r)
+    r <- r - rowMeans(r)
+
+    svd <- rsvd(r, min(nrow(r), ncol(r), 40))
+    r_reduced <- r %*% svd$v
+
+    compkm <- Mclust(r_reduced)
 
     compcls <- as.list(compkm$classification)
-    names(compcls) = colnames(computedSigMatrix)
-    compcls <- compcls[order(unlist(compcls), decreasing=FALSE)]
+    names(compcls) <- colnames(computedSigMatrix)
+    compcls <- compcls[order(unlist(compcls), decreasing = FALSE)]
 
     maxcls <- max(unlist(compcls))
   }
@@ -637,16 +641,16 @@ clusterSignatures <- function(sigList, sigMatrix, pvals, clusterMeta) {
   # Cluster meta data signatures by grouping % signatures with their
   # factors if they exist
   metacls <- list()
-  if (any(meta)) {
-      metaSigsToCluster <- names(meta)[meta]
+  if (!is.null(metaData) && ncol(metaData) > 0) {
+      metaSigsToCluster <- colnames(metaData)
       metacls[metaSigsToCluster] <- 1
 
       if (clusterMeta) {
           pc_i <- 2
           for (name in metaSigsToCluster) {
-              if (sigList[[name]]@isFactor) {
+              if (is.factor(metaData[[name]])) {
                   metacls[[name]] <- pc_i
-                  sigLevels <- levels(sigMatrix[, name])
+                  sigLevels <- levels(metaData[[name]])
                   for (level in sigLevels) {
                       key <- paste(name, level, sep = "_")
                       if (key %in% names(metacls)) {

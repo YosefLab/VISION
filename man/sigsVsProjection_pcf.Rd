@@ -5,11 +5,10 @@
 \title{Evaluates the significance of each meta data factor signature vs. a
 single projections weights}
 \usage{
-sigsVsProjection_pcf(sigScoresData, weights)
+sigsVsProjection_pcf(metaData, weights)
 }
 \arguments{
-\item{sigScoresData}{List of SignatureScores Object, mapping signature
-names to their value at each coordinate}
+\item{metaData}{data.frame of meta-data for cells}
 
 \item{weights}{numeric matrix of dimension N_SAMPLES x N_SAMPLES}
 }

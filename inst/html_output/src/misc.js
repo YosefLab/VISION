@@ -51,7 +51,7 @@ function exprotSigProj() {
     if (global_status.scatterColorOption == "value" || global_data.sigIsMeta[sig_key]) {
         sig_promise = api.signature.scores(sig_key)
     } else if (global_status.scatterColorOption == "rank") {
-        sig_promise = api.signature.ranks(sig_key)
+        //sig_promise = api.signature.ranks(sig_key)
     }
 
     return $.when(proj_promise, sig_promise)

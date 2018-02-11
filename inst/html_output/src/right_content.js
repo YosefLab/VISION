@@ -39,7 +39,7 @@ Right_Content.prototype.init = function()
 Right_Content.prototype.update = function(updates)
 {
     var self = this;
-    
+
     var needsUpdate = ('main_vis' in updates) ||
         ('plotted_item' in updates) ||
         ('plotted_item_type' in updates) ||
@@ -77,24 +77,26 @@ Right_Content.prototype.draw_sigvp = function() {
     var projection = get_global_data('sig_projection_coordinates')
     var values = get_global_data('plotted_values')
 
-    var isFactor;
-    if(item_type !== "gene"){
-        isFactor = get_global_data('sig_info').isFactor
-    } else {
-        isFactor = false;
-    }
+    var isFactor = typeof(_.values(values)[0]) === 'string'
 
     var full_color_range
     if(item_type === "gene"){
         $(self.dom_node).find("#plotted-value-option").hide()
         full_color_range = true
+    } else if(item_type === "meta"){
+        $(self.dom_node).find("#plotted-value-option").hide()
+        full_color_range = false
     } else {
         $(self.dom_node).find("#plotted-value-option").show()
         full_color_range = false
     }
 
-    if(self.getScatterColorOption() == "rank" && !isFactor && item_type !== "gene"){
+    if(self.getScatterColorOption() == "rank"
+        && !isFactor && item_type !== "gene"
+        && item_type !== "meta") {
+
         values = self.rank_values(values)
+
     }
 
 
@@ -130,12 +132,7 @@ Right_Content.prototype.draw_tree = function() {
     var projection = get_global_data('tree_projection_coordinates')
     var values = get_global_data('plotted_values')
 
-    var isFactor;
-    if(item_type !== "gene"){
-        isFactor = get_global_data('sig_info').isFactor
-    } else {
-        isFactor = false;
-    }
+    var isFactor = typeof(_.values(values)[0]) === 'string'
 
     var full_color_range
     if(item_type === "gene"){

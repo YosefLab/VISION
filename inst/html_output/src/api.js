@@ -44,9 +44,9 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.signature.ranks = function(sig_name){
-        var query = "/Signature/Ranks/"
-        query = query.concat(encodeURI(sig_name))
+    output.signature.meta = function(meta_name){
+        var query = "/Signature/Meta/"
+        query = query.concat(encodeURI(meta_name))
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 

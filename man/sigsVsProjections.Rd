@@ -4,7 +4,7 @@
 \alias{sigsVsProjections}
 \title{Evaluates the significance of each signature vs. each projection.}
 \usage{
-sigsVsProjections(projections, sigScoresData, randomSigData)
+sigsVsProjections(projections, sigScoresData, metaData, randomSigData)
 }
 \arguments{
 \item{projections}{Maps projections to their spatial coordinates for each
@@ -12,6 +12,8 @@ sample}
 
 \item{sigScoresData}{List of SignatureScores Object, mapping signature
 names to their value at each coordinate}
+
+\item{metaData}{data.frame of meta-data for cells}
 
 \item{randomSigData}{List of SignatureScores Object, mapping randomly
 generated signatures to scores to be compared with the real signature scores.}

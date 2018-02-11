@@ -79,7 +79,7 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
             }
 
             rownames(data) <- toupper(rownames(data))
-            .Object@allData <- data
+            .Object@initialExprData <- data
             .Object@exprData <- data
 
             if (is.null(housekeeping)) {
@@ -108,7 +108,8 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
                 }
                 if(is.data.frame(meta)) {
                     .Object@metaData <- SigScoresFromDataframe(
-                        meta, colnames(.Object@allData))
+                        meta, colnames(.Object@exprData))
+                    .Object@initialMetaData <- .Object@metaData
                 } else {
                     stop("meta input argument should be a matrix or dataframe")
                 }
@@ -417,9 +418,9 @@ setMethod("viewResults", signature(object="character"),
 #' parameters
 createNewFP <- function(fp, subset) {
     .Object <- new("FastProject")
-    nexpr <- fp@allData[,subset]
+    nexpr <- fp@initialExprData[,subset]
     rownames(nexpr) <- toupper(rownames(nexpr))
-    .Object@allData <- nexpr
+    .Object@initialExprData <- nexpr
     .Object@exprData <- nexpr
 
     .Object@housekeepingData <- fp@housekeepingData

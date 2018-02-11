@@ -21,6 +21,10 @@ poolCells <- function(object,
 
     object@exprData <- microclusters[[1]]
     object@pools <- microclusters[[2]]
+
+    poolMeta <- createPooledMetaData(object@metaData, object@pools)
+    object@metaData <- poolMeta
+
     return(object)
 }
 
@@ -117,102 +121,6 @@ calcSignatureScores <- function(object,
                               normExpr, object@weights, object@min_signature_genes)
 
     sigList <- object@sigData
-    for (s in object@metaData) {
-
-        if(is.null(object@pools)){
-            sigScores[[s@name]] <- s
-        } else {
-            if(s@isFactor){
-                ## Need to compute majority level in each group
-                N_MicroClusters <- ncol(normExpr)
-                newlevels <- union("~", levels(s@scores))
-
-                # vector to store the final levels in
-                clustScores <- factor(integer(N_MicroClusters),
-                                levels=newlevels)
-                names(clustScores) <- colnames(normExpr)
-
-                # vectors for the proportion of each cluster level
-                clustScoresLevels = list()
-                for (level in levels(s@scores)) {
-                    clustScoresL <- numeric(N_MicroClusters)
-                    names(clustScoresL) <- colnames(normExpr)
-                    clustScoresLevels[[level]] <- clustScoresL
-                }
-
-
-                for(clust in names(clustScores)){
-
-                    pool <- object@pools[[clust]]
-
-                    if(length(pool) == 0){ #TODO: This shouldn't happen
-                        clustScores[clust] <- "~"
-                        next
-                    }
-
-                    vals <- s@scores[match(pool, names(s@scores))]
-                    freq <- table(vals) / length(vals)
-                    maxval <- freq[which.max(freq)]
-                    if(maxval >= .5){
-                        clust_val <- names(maxval)
-                    } else {
-                        clust_val <- "~"
-                    }
-                    clustScores[clust] <- clust_val
-
-                    for (level in names(freq)){
-                        clustScoresLevels[[level]][clust] <- freq[level]
-                    }
-                }
-
-                for (level in names(clustScoresLevels)){
-                    newSig <- SignatureScores(
-                                  scores = clustScoresLevels[[level]],
-                                  name = paste(s@name, level, sep = "_"),
-                                  isFactor = FALSE, isMeta = TRUE,
-                                  numGenes = 0)
-
-                    sigScores[[newSig@name]] <- newSig
-
-                    # Also have to add it to the list of signatures
-                    # to keep them in sync
-                    sigList[[newSig@name]] <- Signature(
-                                list(), newSig@name, "", "",
-                                isFactor = FALSE, isMeta = TRUE)
-
-                }
-            } else { # Then it must be numeric, just average
-
-                ## Need to compute majority level in each group
-                N_MicroClusters <- ncol(normExpr)
-
-                clustScores <- numeric(N_MicroClusters)
-                names(clustScores) <- colnames(normExpr)
-                for(clust in names(clustScores)){
-
-                    pool <- object@pools[[clust]]
-
-                    if(length(pool) == 0){ #TODO: This shouldn't happen
-                        clustScores[clust] = 0
-                        next
-                    }
-
-                    vals <- s@scores[match(pool, names(s@scores))]
-                    clust_val = mean(vals)
-                    clustScores[clust] = clust_val
-                }
-            }
-
-            sigScores[[s@name]] <- SignatureScores(
-                                       clustScores, s@name, s@isFactor,
-                                       s@isMeta, 0)
-        }
-
-
-        sigList[[s@name]] <- Signature(list(), s@name, "", "",
-                                       isMeta=TRUE,
-                                       isFactor=s@isFactor)
-    }
 
     # Remove any signatures that didn't compute correctly
     toRemove <- vapply(sigScores, is.null, TRUE)
@@ -221,8 +129,8 @@ calcSignatureScores <- function(object,
 
     ## Convert Sig Scores to matrix
     # Note: This needs to be a data frame because some scores are factors
-    object@sigMatrix = data.frame(lapply(sigScores, function(x) x@scores),
-                                  check.names=FALSE)
+    object@sigMatrix <- data.frame(lapply(sigScores, function(x) x@scores),
+                                  check.names = FALSE)
 
     object@sigData <- sigList[colnames(object@sigMatrix)]
 
@@ -262,10 +170,12 @@ analyzeProjections <- function(object,
   message("Evaluating signatures against projections...")
   sigVProj <- sigsVsProjections(projectData$projections,
                                 object@sigScores,
+                                object@metaData,
                                 randomSigScores)
 
   message("Clustering Signatures...")
-  sigClusters <- clusterSignatures(object@sigData, object@sigMatrix,
+  sigClusters <- clusterSignatures(object@sigMatrix,
+                                   object@metaData,
                                    sigVProj$pVals,
                                    clusterMeta = object@pool)
 
@@ -285,10 +195,12 @@ analyzeProjections <- function(object,
       message("Computing significance of signatures...")
       sigVTreeProj <- sigsVsProjections(treeProjs$projections,
                                         object@sigScores,
+                                        object@metaData,
                                         randomSigScores)
 
       message("Clustering Signatures...")
-      sigTreeClusters <- clusterSignatures(object@sigData, object@sigMatrix,
+      sigTreeClusters <- clusterSignatures(object@sigMatrix,
+                                           object@metaData,
                                            sigVTreeProj$pVals,
                                            clusterMeta = object@pool)
 
@@ -303,8 +215,8 @@ analyzeProjections <- function(object,
   }
 
   message("Computing Correlations between Signatures and Expression PCs...")
-  pearsonCorr <- calculatePearsonCorr(object@sigData,
-                     object@sigMatrix, projectData$fullPCA)
+  pearsonCorr <- calculatePearsonCorr(object@sigMatrix,
+                     object@metaData, projectData$fullPCA)
 
 
   pcaAnnotData <- PCAnnotatorData(fullPCA = projectData$fullPCA,
@@ -322,21 +234,23 @@ analyzeProjections <- function(object,
 #' Compute pearson correlation between signature scores and principle components
 #'
 #' @importFrom Hmisc rcorr
-#' @param sigData List of Signature
 #' @param sigMatrix Signature scores dataframe
+#' @param metaData data.frame of meta-data for cells
 #' @param fullPCA numeric matrix N_Cells x N_PCs
 #' @return pearsonCorr numeric matrix N_Signatures x N_PCs
-calculatePearsonCorr <- function(sigData, sigMatrix, fullPCA){
+calculatePearsonCorr <- function(sigMatrix, metaData, fullPCA){
 
-  ## remove the factors from the pearson correlation calculation
+  ## combined gene signs and numeric meta variables
 
-  non_factor_sigs <- vapply(colnames(sigMatrix),
-                            function(sigName) !sigData[[sigName]]@isFactor,
+  numericMetaVars <- vapply(colnames(metaData),
+                            function(x) is.numeric(metaData[[x]]),
                             FUN.VALUE = TRUE)
 
+  numericMeta <- metaData[, numericMetaVars]
+  numericMeta <- numericMeta[rownames(sigMatrix), ]
 
-  computedSigMatrix <- sigMatrix[, non_factor_sigs, drop=FALSE]
 
+  computedSigMatrix <- cbind(sigMatrix, numericMeta)
 
   pearsonCorr <- lapply(1:ncol(computedSigMatrix), function(i) {
     lapply(1:nrow(fullPCA), function(j) {

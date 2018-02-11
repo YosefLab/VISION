@@ -65,6 +65,102 @@ applyMicroClustering <- function(
     return(list(pooled_cells, pools))
 }
 
+#' Aggregate meta-data for cells in pools
+#'
+#' @param metaData data.frame of meta-data for cells
+#' @param pools named list of character vector describing cell ids
+#' in each pool
+#' @return a data.frame of new meta-data
+createPooledMetaData <- function(metaData, pools) {
+
+    poolMetaData <- data.frame(row.names = names(pools))
+
+    for (sigName in colnames(metaData)) {
+
+        scores <- metaData[[sigName]]
+        names(scores) <- rownames(metaData)
+
+        if (is.factor(scores)){
+            ## Need to compute majority level in each group
+            N_MicroClusters <- nrow(poolMetaData)
+            newlevels <- union("~", levels(scores))
+
+            # vector to store the final levels in
+            clustScores <- factor(integer(N_MicroClusters),
+                            levels = newlevels)
+            names(clustScores) <- rownames(poolMetaData)
+
+            # vectors for the proportion of each cluster level
+            clustScoresLevels <- list()
+            for (level in levels(scores)) {
+                clustScoresL <- numeric(N_MicroClusters)
+                names(clustScoresL) <- rownames(poolMetaData)
+                clustScoresLevels[[level]] <- clustScoresL
+            }
+
+            for (clust in names(pools)){
+
+                pool <- pools[[clust]]
+
+                if (length(pool) == 0){ #TODO: This shouldn't happen
+                    clustScores[clust] <- "~"
+                    next
+                }
+
+                vals <- scores[match(pool, names(scores))]
+                freq <- table(vals) / length(vals)
+                maxval <- freq[which.max(freq)]
+
+                if (maxval >= .5){
+                    clust_val <- names(maxval)
+                } else {
+                    clust_val <- "~"
+                }
+                clustScores[clust] <- clust_val
+
+                for (level in names(freq)){
+                    clustScoresLevels[[level]][clust] <- freq[level]
+                }
+            }
+
+            poolMetaData[[sigName]] <- clustScores
+
+            for (level in names(clustScoresLevels)){
+
+                newName <- paste(sigName, level, sep = "_")
+                poolMetaData[[newName]] <- clustScoresLevels[[level]]
+
+            }
+        } else { # Then it must be numeric, just average
+
+            ## Need to compute majority level in each group
+            N_MicroClusters <- nrow(poolMetaData)
+
+            clustScores <- numeric(N_MicroClusters)
+            names(clustScores) <- rownames(poolMetaData)
+
+            for (clust in names(clustScores)){
+
+                pool <- pools[[clust]]
+
+                if (length(pool) == 0){ #TODO: This shouldn't happen
+                    clustScores[clust] <- 0
+                    next
+                }
+
+                vals <- scores[match(pool, names(scores))]
+                clust_val <- mean(vals)
+                clustScores[clust] <- clust_val
+            }
+
+            poolMetaData[[sigName]] <- clustScores
+        }
+    }
+
+    return(poolMetaData)
+
+}
+
 #' Applies the Louvain algorithm to generate micro-clustered data
 #'
 #' @param kn List of nearest neighbor indices and euclidean distances to these

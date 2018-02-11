@@ -101,20 +101,6 @@ sigScoresToJSON <- function(ss) {
     return(json)
 }
 
-#' Converts list of signature ranks to JSON
-#' @importFrom jsonlite toJSON
-#' @param ss single-column dataframe with ranks for a single signature
-#' @return Signature ranks as JSON, with names of each entry that of list names
-sigRanksToJSON <- function(ss) {
-
-    s <- as.list(rank(ss[[1]]))
-    names(s) <- rownames(ss)
-    json <- toJSON(s, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
-
-    return(json)
-
-}
-
 #' Converts a projection into a JSON object mapping each sample to a projection coordinate.
 #' @importFrom jsonlite toJSON
 #' @param p Projection coordinate data (NUM_SAMPLES x NUM_COMPONENTS)
@@ -243,6 +229,15 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         }
         return(out)
       }) %>%
+      get("/Signature/Meta/(?<sig_name3>.*)", function(req, res, err) {
+        metaData <- object@metaData
+        name <- URLdecode(req$params$sig_name3)
+        out <- "Signature does not exist!"
+        if (name %in% colnames(metaData)) {
+          out <- FastProjectR:::sigScoresToJSON(metaData[name])
+        }
+        return(out)
+      }) %>%
       get("/Signature/ListMeta", function(req, res, err){
         signatures <- object@sigData
         keys <- lapply(signatures, function(x) x@name)
@@ -258,15 +253,6 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         if (name %in% names(signatures)) {
           sig <- signatures[[name]]
           out <- FastProjectR:::signatureToJSON(sig)
-        }
-        return(out)
-      }) %>%
-      get("/Signature/Ranks/(?<sig_name3>.*)", function(req, res, err) {
-        sigMatrix <- object@sigMatrix
-        name <- URLdecode(req$params$sig_name3)
-        out <- "Signature does not exist!"
-        if (name %in% colnames(sigMatrix)) {
-          out <- FastProjectR:::sigRanksToJSON(sigMatrix[name])
         }
         return(out)
       }) %>%
@@ -352,10 +338,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       }) %>%
       get("/FilterGroup/SigProjMatrix_P/Meta", function(req, res, err) {
 
-        signatures <- object@sigData
-        keys <- vapply(signatures, function(x) x@name, "")
-        vals <- vapply(signatures, function(x) x@isMeta, TRUE)
-        sigs <- keys[vals]
+        sigs <- colnames(object@metaData)
 
         out <- FastProjectR:::sigProjMatrixToJSON(object@filterModuleData@ProjectionData@pMatrix, sigs)
         return(out)
@@ -371,11 +354,9 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       }) %>%
       get("/FilterGroup/Tree/SigProjMatrix_P/Meta", function(req, res, err) {
 
-        signatures <- object@sigData
-        keys <- vapply(signatures, function(x) x@name, "")
-        vals <- vapply(signatures, function(x) x@isMeta, TRUE)
-        sigs <- keys[vals]
+        sigs <- colnames(object@metaData)
         out <- FastProjectR:::sigProjMatrixToJSON(object@filterModuleData@TreeProjectionData@pMatrix, sigs)
+
         return(out)
       }) %>%
       get("/FilterGroup/(?<proj_name2>.*)/clusters/(?<cluster_procedure>.*)/(?<param>.*)", function(req, res, err) {
@@ -483,11 +464,11 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       }) %>%
       get("/FilterGroup/PearsonCorr/Meta", function(req, res, err) {
 
-          signatures <- object@sigData
-          keys <- vapply(signatures, function(x) x@name, "")
-          vals <- vapply(signatures, function(x) x@isMeta, TRUE)
-          vals2 <- vapply(signatures, function(x) !x@isFactor, TRUE)
-          sigs <- keys[vals & vals2]
+          sigs <- colnames(object@metaData)
+          numericMeta <- vapply(sigs,
+                                function(x) is.numeric(object@metaData[[x]]),
+                                FUN.VALUE = TRUE)
+          sigs <- sigs[numericMeta]
           pc <- object@filterModuleData@PCAnnotatorData@pearsonCorr
 
         return(FastProjectR:::pearsonCorrToJSON(pc, sigs))

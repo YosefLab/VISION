@@ -506,9 +506,9 @@ function runPCAnalysis() {
     var pc2 = global_status.pc2;
 
     if (global_status.subset_criteria == "Rank") {
-        var sig_promise = api.signature.ranks(sig_key);
+        //var sig_promise = api.signature.ranks(sig_key);
     } else {
-        sig_promise = api.signature.scores(sig_key);
+        var sig_promise = api.signature.scores(sig_key);
     }
 
     var sig_info_promise = api.signature.info(sig_key);
@@ -539,9 +539,9 @@ function selectRange() {
     var proj_promise = api.projection.coordinates(proj_key);
 
     if (global_status.subset_criteria == "Rank") {
-        var sig_promise = api.signature.ranks(sig_key);
+        //var sig_promise = api.signature.ranks(sig_key);
     } else {
-        sig_promise = api.signature.scores(sig_key);
+        var sig_promise = api.signature.scores(sig_key);
     }
 
     return $.when(sig_promise, proj_promise)

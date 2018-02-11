@@ -4,12 +4,12 @@
 \alias{calculatePearsonCorr}
 \title{Compute pearson correlation between signature scores and principle components}
 \usage{
-calculatePearsonCorr(sigData, sigMatrix, fullPCA)
+calculatePearsonCorr(sigMatrix, metaData, fullPCA)
 }
 \arguments{
-\item{sigData}{List of Signature}
-
 \item{sigMatrix}{Signature scores dataframe}
+
+\item{metaData}{data.frame of meta-data for cells}
 
 \item{fullPCA}{numeric matrix N_Cells x N_PCs}
 }

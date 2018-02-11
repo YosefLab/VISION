@@ -14,8 +14,8 @@ columns are signatue names. Rownames must correspond to appropriate samples}
 the expression matrix}
 }
 \value{
-a list of SignatureScore objects, one for each column in the
-data.frame
+a data.frame object where each column is a cell signature. Names of
+columns are signatue names. Rownames must correspond to appropriate samples
 }
 \description{
 These are either factors or numeric values with known values for each sample
