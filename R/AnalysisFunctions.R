@@ -1,3 +1,67 @@
+#' Creates an initial clustering of the cells
+#'
+#' Results of this are stored as a new variabe in the object's metaData
+#' and 'cluster_variable' is populated with its name
+#'
+#' @param object the FastProject object for which to cluster the cells
+#' @return the FastProject object modifed as described above
+clusterCells <- function(object) {
+
+    exprData <- object@exprData
+    filterInput <- object@projection_genes
+    filterThreshold <- object@threshold
+
+    gene_passes <- applyFilters(exprData, filterThreshold, filterInput)
+    fexpr <- exprData[gene_passes, ]
+
+    # Compute wcov using matrix operations to avoid
+    # creating a large dense matrix
+
+    N <- ncol(fexpr)
+    wcov <- tcrossprod(fexpr) / N
+
+    mu <- as.matrix(rowMeans(fexpr), ncol = 1)
+    mumu <- tcrossprod(mu)
+    wcov <- as.matrix(wcov - mumu)
+
+    # SVD of wieghted correlation matrix
+    ncomp <- min(ncol(fexpr), nrow(fexpr), 10)
+    decomp <- rsvd::rsvd(wcov, k = ncomp)
+    evec <- t(decomp$u)
+
+    # Project down using computed eigenvectors
+    res <- (evec %*% fexpr) - as.vector(evec %*% mu)
+    res <- as.matrix(res)
+    res <- t(res) # avoid transposing many times below
+
+    n_workers <- getWorkerCount()
+
+    kn <- ball_tree_knn(res,
+                        min(round(sqrt(nrow(res))), 30),
+                        n_workers)
+
+    cl <- louvainCluster(kn, res)
+
+    names(cl) <- paste('Cluster', seq(length(cl)))
+
+    # cl is list of character vector
+    cluster_variable <- "FastProject_Clusters"
+    metaData <- object@metaData
+
+    metaData[cluster_variable] <- factor(levels = names(cl))
+
+    for (cluster in names(cl)) {
+        metaData[cl[[cluster]], cluster_variable] <- cluster
+    }
+
+    object@metaData <- metaData
+    object@cluster_variable <- cluster_variable
+
+    return(object)
+
+}
+
+
 #' create micro-clusters that reduce noise and complexity while maintaining
 #' the overall signal in the data
 #' @param object the FastProject object for which to cluster the cells
@@ -30,8 +94,8 @@ poolCells <- function(object,
     object@exprData <- microclusters[[1]]
     object@pools <- microclusters[[2]]
 
-    poolMeta <- createPooledMetaData(object@metaData, object@pools,
-                                     object@cluster_variable)
+    poolMeta <- createPooledMetaData(object@metaData, object@pools)
+
     object@metaData <- poolMeta
 
     return(object)

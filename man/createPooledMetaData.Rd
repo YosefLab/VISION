@@ -4,16 +4,13 @@
 \alias{createPooledMetaData}
 \title{Aggregate meta-data for cells in pools}
 \usage{
-createPooledMetaData(metaData, pools, cluster_variable = "")
+createPooledMetaData(metaData, pools)
 }
 \arguments{
 \item{metaData}{data.frame of meta-data for cells}
 
 \item{pools}{named list of character vector describing cell ids
 in each pool}
-
-\item{cluster_variable}{name of metaData variable that was used
-to pre-parition cells before micropooling}
 }
 \value{
 a data.frame of new meta-data

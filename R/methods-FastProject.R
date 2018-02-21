@@ -242,6 +242,10 @@ setMethod("analyze", signature(object="FastProject"),
             function(object) {
     message("Beginning Analysis")
 
+    if (object@cluster_variable == "") {
+        object <- clusterCells(object)
+    }
+
     if (object@pool) {
         object <- poolCells(object)
     }

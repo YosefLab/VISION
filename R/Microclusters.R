@@ -39,31 +39,26 @@ applyMicroClustering <- function(
     res <- as.matrix(res)
     res <- t(res) # avoid transposing many times below
 
-    n_workers <- getWorkerCount()
-
-    # Slice 'res' into sub-matrices corresponding to
-    #   levels in 'preserve_clusters'
+    # If 'preserve_clusters' is provided, use these as the pre-clustering
+    #   Otherwise, compute clusters using knn graph and louvain
     if (!is.null(preserve_clusters)) {
-        res_list <- list()
-        for (level in levels(preserve_clusters)){
+        cluster_names <- levels(preserve_clusters)
+        cl <- lapply(cluster_names, function(level){
             cells_at_level <- names(preserve_clusters)[preserve_clusters == level]
-            res_sub <- res[cells_at_level, ]
-            res_list[[level]] <- res_sub
-        }
-    } else {
-        res_list <- list(res)
-    }
+            return(cells_at_level)
+        })
+        names(cl) <- cluster_names
 
-    pools <- lapply(res_list, function(res){
+    } else {
+        n_workers <- getWorkerCount()
         kn <- ball_tree_knn(res,
                             min(round(sqrt(nrow(res))), 30),
                             n_workers)
 
         cl <- louvainCluster(kn, res)
-        cl <- readjust_clusters(cl, res, cellsPerPartition = cellsPerPartition)
-        return(cl)
-    })
-    pools <- do.call(c, pools)
+    }
+
+    pools <- readjust_clusters(cl, res, cellsPerPartition = cellsPerPartition)
 
     if (random) {
         message("random!")
@@ -75,7 +70,7 @@ applyMicroClustering <- function(
     pooled_cells <- createPoolsBatch(pools, exprData)
 
     # Rename clusters
-    cn <- paste0("cluster ", 1:ncol(pooled_cells))
+    cn <- paste0("microcluster ", 1:ncol(pooled_cells))
     colnames(pooled_cells) <- cn
     names(pools) <- cn
 
@@ -88,10 +83,8 @@ applyMicroClustering <- function(
 #' @param metaData data.frame of meta-data for cells
 #' @param pools named list of character vector describing cell ids
 #' in each pool
-#' @param cluster_variable name of metaData variable that was used
-#' to pre-parition cells before micropooling
 #' @return a data.frame of new meta-data
-createPooledMetaData <- function(metaData, pools, cluster_variable = "") {
+createPooledMetaData <- function(metaData, pools) {
 
     poolMetaData <- data.frame(row.names = names(pools))
 
@@ -145,13 +138,11 @@ createPooledMetaData <- function(metaData, pools, cluster_variable = "") {
 
             poolMetaData[[sigName]] <- clustScores
 
-            if (sigName != cluster_variable){
-                for (level in names(clustScoresLevels)){
+            for (level in names(clustScoresLevels)){
 
-                    newName <- paste(sigName, level, sep = "_")
-                    poolMetaData[[newName]] <- clustScoresLevels[[level]]
+                newName <- paste(sigName, level, sep = "_")
+                poolMetaData[[newName]] <- clustScoresLevels[[level]]
 
-                }
             }
         } else { # Then it must be numeric, just average
 
