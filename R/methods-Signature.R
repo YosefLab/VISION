@@ -615,19 +615,22 @@ clusterSignatures <- function(sigMatrix, metaData, pvals, clusterMeta) {
   maxcls <- 1
   if (ncol(computedSigMatrix) > 1) {
 
+    if (nrow(computedSigMatrix) > 5000) {
+        cSM_sub <- computedSigMatrix[sample(nrow(computedSigMatrix), 5000), ]
+    } else {
+        cSM_sub <- computedSigMatrix
+    }
+
     r <- colRanks(
-            as.matrix(computedSigMatrix),
+            as.matrix(cSM_sub),
             ties.method = "average",
             preserveShape = TRUE
          )
 
     r <- t(r)
-    r <- r - rowMeans(r)
 
-    svd <- rsvd(r, min(nrow(r), ncol(r), 40))
-    r_reduced <- r %*% svd$v
-
-    compkm <- Mclust(r_reduced)
+    mbic <- mclustBIC(r, modelNames = "VVI")
+    compkm <- Mclust(r, x = mbic)
 
     compcls <- as.list(compkm$classification)
     names(compcls) <- colnames(computedSigMatrix)
