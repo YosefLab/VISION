@@ -64,6 +64,10 @@ Right_Content.prototype.update = function(updates)
         throw "Bad main_vis value!";
     }
 
+    if('plotted_projection' in updates) {
+        self.scatter.autoZoom();
+    }
+
 }
 
 Right_Content.prototype.draw_sigvp = function() {

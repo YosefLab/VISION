@@ -115,7 +115,8 @@ function ColorScatter(parent, colorbar, legend)
 }
 
 
-ColorScatter.prototype.setData = function(points, isFactor, tree_points, tree_adj, full_color_range)
+ColorScatter.prototype.setData = function(points, isFactor, tree_points,
+    tree_adj, full_color_range)
 {
     if(tree_points === undefined){
         tree_points = []
@@ -132,8 +133,6 @@ ColorScatter.prototype.setData = function(points, isFactor, tree_points, tree_ad
     this.points = points;
     this.tree_points = tree_points
     this.tree_adj = tree_adj
-
-    this.autoZoom() // Adjusts axes if necessary
 
     var cvals = points.map(function(e){return e[2];}); //extract 3rd column
 
@@ -252,7 +251,7 @@ ColorScatter.prototype.autoZoom = function() {
         self.zoom
             .y(self.y)
     }
-
+    this.redraw(true)();
 }
 
 ColorScatter.prototype.setLegend = function(colors, values) {
