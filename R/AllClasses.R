@@ -142,7 +142,8 @@ FastProject <- setClass("FastProject",
         sigMatrix = "data.frame",
         pools = "list",
         inputProjections = "list",
-        name = "character"),
+        name = "character",
+        cluster_variable = "character"),
     prototype = list(
         nomodel = FALSE,
         pca_filter = FALSE,
@@ -165,5 +166,6 @@ FastProject <- setClass("FastProject",
         sigMatrix = NULL,
         pools = NULL,
         inputProjections = NULL,
-        name = ""
+        name = "",
+        cluster_variable = ""
 ))

@@ -14,15 +14,24 @@ poolCells <- function(object,
       object@cellsPerPartition
     ))
 
+    if (object@cluster_variable != "") {
+        preserve_clusters <- object@metaData[[object@cluster_variable]]
+        names(preserve_clusters) <- rownames(object@metaData)
+    } else {
+        preserve_clusters <- NULL
+    }
+
     microclusters <- applyMicroClustering(object@exprData,
                                           cellsPerPartition = object@cellsPerPartition,
                                           filterInput = object@projection_genes,
-                                          filterThreshold = object@threshold)
+                                          filterThreshold = object@threshold,
+                                          preserve_clusters = preserve_clusters)
 
     object@exprData <- microclusters[[1]]
     object@pools <- microclusters[[2]]
 
-    poolMeta <- createPooledMetaData(object@metaData, object@pools)
+    poolMeta <- createPooledMetaData(object@metaData, object@pools,
+                                     object@cluster_variable)
     object@metaData <- poolMeta
 
     return(object)

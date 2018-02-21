@@ -41,6 +41,7 @@
 #' are TRUE, FALSE, or 'auto', the last of which is the default and enables
 #' pooling if there are more than 15000 cells.
 #' @param cellsPerPartition the minimum number of cells to put into a cluster
+#' @param cluster_variable variable to use to denote clusters
 #' @param name a name for the sample - shown on the output report
 #' @return A FastProject object
 #' @rdname FastProject-class
@@ -70,7 +71,8 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
                     weights=NULL, threshold=0, perm_wPCA=FALSE,
                     sig_norm_method="znorm_rows",
                     sig_score_method="weighted_avg", trajectory_method="None",
-                    pool="auto", cellsPerPartition=100, name=NULL) {
+                    pool="auto", cellsPerPartition=100, name=NULL,
+                    cluster_variable = "") {
 
             .Object <- new("FastProject")
 
@@ -171,6 +173,8 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
             if (!is.null(name)) {
                 .Object@name <- name
             }
+
+            .Object@cluster_variable <- cluster_variable
 
             return(.Object)
             }

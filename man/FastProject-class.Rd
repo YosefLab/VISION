@@ -17,7 +17,7 @@ FastProject(data, ...)
   weights = NULL, threshold = 0, perm_wPCA = FALSE,
   sig_norm_method = "znorm_rows", sig_score_method = "weighted_avg",
   trajectory_method = "None", pool = "auto", cellsPerPartition = 100,
-  name = NULL)
+  name = NULL, cluster_variable = "")
 
 \S4method{FastProject}{character}(data, ...)
 
@@ -82,6 +82,8 @@ pooling if there are more than 15000 cells.}
 \item{cellsPerPartition}{the minimum number of cells to put into a cluster}
 
 \item{name}{a name for the sample - shown on the output report}
+
+\item{cluster_variable}{variable to use to denote clusters}
 }
 \value{
 A FastProject object
