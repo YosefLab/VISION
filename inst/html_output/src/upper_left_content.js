@@ -197,7 +197,7 @@ Signature_Table.prototype.render = function()
         var sort_col = matrix.proj_labels.indexOf(self.sorted_column);
         if(sort_col > -1){
             var sortFun = function(a,b){
-                if (main_vis == "sigvp") {
+                if (main_vis === "sigvp" || main_vis === "tree") {
                     return a[1][sort_col].val - b[1][sort_col].val;
                 } else {
                     return b[1][sort_col].val - a[1][sort_col].val;
@@ -460,6 +460,13 @@ Meta_Table.prototype.render = function()
         header_row.append(new_cell)
     });
 
+    header_row
+        .find("th:first-child")
+        .on("click", function() {
+            self.sorted_column = "Name"
+            self.render()
+        });
+
     // Add padding for scrollbar width of table below it
     $(self.dom_node).children(".sig-tables-header")
         .css("padding-right", detect_browser_scrollbar_width() + "px")
@@ -525,16 +532,26 @@ Meta_Table.prototype.render = function()
         var formatted_data_w_row_labels = d3.zip(sig_labels, formatted_data_matrix);
 
         // Sort data if necessary
-        var sort_col = matrix.proj_labels.indexOf(self.sorted_column);
-        if(sort_col > -1){
-            var sortFun = function(a,b){
-                if (main_vis == "sigvp") {
-                    return a[1][sort_col].val - b[1][sort_col].val;
-                } else {
-                    return b[1][sort_col].val - a[1][sort_col].val;
-                }
-            };
+        var sortFun;
+        if(self.sorted_column === "Name"){
+            sortFun = function(a, b){
+                if(a < b) { return -1; }
+                if(a > b) { return 1; }
+                return 0;
+            }
             formatted_data_w_row_labels.sort(sortFun);
+        } else {
+            var sort_col = matrix.proj_labels.indexOf(self.sorted_column);
+            if(sort_col > -1){
+                sortFun = function(a,b){
+                    if (main_vis == "sigvp") {
+                        return a[1][sort_col].val - b[1][sort_col].val;
+                    } else {
+                        return b[1][sort_col].val - a[1][sort_col].val;
+                    }
+                };
+                formatted_data_w_row_labels.sort(sortFun);
+            }
         }
 
 
