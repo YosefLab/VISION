@@ -1,13 +1,3 @@
-#' Computes the biased SD on a vector, correcting the denominator to n rather than (n-1)
-#' @importFrom stats sd
-#' @param data Vector of numbers
-#' @return Biased standard deviation of vector
-biasedVectorSD <- function(data) {
-    d <- length(data)
-    std <- sd(data) * sqrt((d-1)/d)
-    return(std)
-}
-
 #' Does nothing, just returns the original data
 #'
 #' @param data data matrix

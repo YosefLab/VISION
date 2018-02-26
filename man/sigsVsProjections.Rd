@@ -15,8 +15,13 @@ names to their value at each coordinate}
 
 \item{metaData}{data.frame of meta-data for cells}
 
-\item{randomSigData}{List of SignatureScores Object, mapping randomly
-generated signatures to scores to be compared with the real signature scores.}
+\item{randomSigData}{A list with two items:
+
+  randomSigs: a list of lists of SignatureScore objects.  Each sub-list
+    represents permutation signatures generated for a specific size/balance
+
+  sigAssignments: named factor vector assigning signatures to random background
+    groups}
 }
 \value{
 list:

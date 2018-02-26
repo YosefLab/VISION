@@ -56,6 +56,8 @@ setMethod("cluster", signature(object = "Projection"),
 
 #' compute for each vector the weights to apply to it's K nearest neighbors
 #' @importFrom Matrix rowSums
+#' @importFrom Matrix sparseMatrix
+#' @importFrom matrixStats rowMaxs
 #' @param object the Projecton object
 #' @param K number of neughbors to compute ths for
 #' @return a weights matrix
@@ -68,20 +70,27 @@ setMethod("computeKNNWeights", signature(object = "Projection"),
 
             n_workers <- getWorkerCount()
 
-            weights <- matrix(0L, nrow=NCOL(object@pData), ncol=NCOL(object@pData))
             k <- ball_tree_knn(t(object@pData), K, n_workers)
             nn <- k[[1]]
             d <- k[[2]]
 
-            sigma <- apply(d, 1, max)
-            sparse_weights <- exp(-1 * (d * d) / sigma^2)
+            sigma <- rowMaxs(d)
+            sparse_weights <- exp(-1 * (d * d) / sigma ^ 2)
 
-            weights <- load_in_knn(nn, sparse_weights)
-
-            weightsNormFactor <- rowSums(weights)
+            # Normalize row sums = 1
+            weightsNormFactor <- rowSums(sparse_weights)
             weightsNormFactor[weightsNormFactor == 0] <- 1.0
-            weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
-            weights <- weights / weightsNormFactor
+            sparse_weights <- sparse_weights / weightsNormFactor
+
+            # load into a sparse matrix
+            tnn <- t(nn)
+            j <- as.numeric(tnn)
+            i <- as.numeric(col(tnn))
+            vals <- as.numeric(t(sparse_weights))
+
+            weights <- sparseMatrix(i = i, j = j, x = vals,
+                                    dims = c(nrow(nn), nrow(nn))
+                                    )
 
             return(weights)
             }

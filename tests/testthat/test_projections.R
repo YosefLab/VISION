@@ -10,7 +10,8 @@ test_that("KNN returns the same weights as computed in sigs vs projections", {
 
     knn2 <- computeKNNWeights(proj, round(sqrt(ncol(res))))
 
-    expect_equal(knn, knn2)
+    total_diff <- sum(abs(knn - knn2))
+    expect_equal(total_diff, 0)
 
 })
 

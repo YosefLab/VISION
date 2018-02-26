@@ -230,7 +230,7 @@ analyzeProjections <- function(object,
   object@perm_wPCA <- perm_wPCA
 
   message("Computing background distribution for signature scores...")
-  randomSigScores <- calculateSignatureBackground(object, num=3000)
+  signatureBackground <- calculateSignatureBackground(object, num=3000)
 
   message("Projecting data into 2 dimensions...")
 
@@ -244,7 +244,7 @@ analyzeProjections <- function(object,
   sigVProj <- sigsVsProjections(projectData$projections,
                                 object@sigScores,
                                 object@metaData,
-                                randomSigScores)
+                                signatureBackground)
 
   message("Clustering Signatures...")
   sigClusters <- clusterSignatures(object@sigMatrix,
@@ -269,7 +269,7 @@ analyzeProjections <- function(object,
       sigVTreeProj <- sigsVsProjections(treeProjs$projections,
                                         object@sigScores,
                                         object@metaData,
-                                        randomSigScores)
+                                        signatureBackground)
 
       message("Clustering Signatures...")
       sigTreeClusters <- clusterSignatures(object@sigMatrix,

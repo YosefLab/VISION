@@ -96,32 +96,56 @@ setMethod("addSigData", signature(object="Signature"),
 #'
 #' @param object the FastProject object
 #' @param num the number of signatures to generate
-#' @return numeric matrix of random signature scores SIGNATURES x CELLS
+#' @return A list with two items:
+#'
+#'   randomSigs: a list of lists of SignatureScore objects.  Each sub-list
+#'     represents permutation signatures generated for a specific size/balance
+#'
+#'   sigAssignments: named factor vector assigning signatures to random background
+#'     groups
 calculateSignatureBackground <- function(object, num) {
 
     # Construct random signatures for background distribution
-    randomSigs <- generatePermutationNull(num, object@exprData, object@sigData)
+    out <- generatePermutationNull(num, object@exprData, object@sigData)
+    randomSigs <- out$randomSigs
+    sigAssignments <- out$sigAssignments
 
     normExpr <- getNormalizedCopy(object@exprData, object@sig_norm_method)
 
-    randomSigScores <- batchSigEval(randomSigs, object@sig_score_method,
-                              normExpr, object@weights,
-                              object@min_signature_genes)
+    randomSigScores <- batchSigEval(
+                            unlist(randomSigs, recursive = FALSE),
+                            object@sig_score_method,
+                            normExpr, object@weights,
+                            object@min_signature_genes)
 
-    ## Remove random signatures that didn't compute correctly
-    toRemove <- vapply(randomSigScores, is.null, TRUE)
-    randomSigScores <- randomSigScores[!toRemove]
+    # randomSigScores is list of SignatureScore
+    # need to make a list of lists of SignatureScores, grouping
+    # by background group number
+    randomSigScoresGroups <- list()
+    for (groupName in names(randomSigs)) {
+        sigsInGroup <- names(randomSigs[[groupName]])
+        randomSigScoresGroups[[groupName]] <- randomSigScores[sigsInGroup]
+    }
 
-    return(randomSigScores)
+    return(list(
+                randomSigs = randomSigScoresGroups,
+                sigAssignments = sigAssignments))
 
 }
 
 #' Generate random signatures for a null distribution by permuting the data
+#'
 #' @param num the number of signatures to generate
 #' @param eData the data to use for the permutations
 #' @param sigData list of signature objects
 #' random signature sizes
-#' @return a vector of random Signature objects
+#' @return A list with two items:
+#'
+#'   randomSigs: a list of lists of Signature objects.  Each sub-list represents
+#'     permutation signatures generated for a specific size/balance
+#'
+#'   sigAssignments: named factor vector assigning signatures to random background
+#'     groups
 generatePermutationNull <- function(num, eData, sigData) {
 
   exp_genes <- rownames(eData)
@@ -148,12 +172,13 @@ generatePermutationNull <- function(num, eData, sigData) {
   sigVars <- cbind(sigSize) # TODO: incorporate the sigBalance here
 
   n_components <- 5 # TODO: choose number of components better
-  if (nrow(unique(sigVars)) <= n_components){
-      centers <- unique(sigVars)
-  } else {
-      km <- kmeans(sigVars, n_components)
-      centers <- km$centers
+  if (nrow(unique(sigVars)) < n_components){
+      n_components <- nrow(unique(sigVars))
   }
+
+  km <- kmeans(sigVars, n_components)
+  centers <- km$centers
+  clusters <- as.factor(km$cluster)
 
   message("Creating ", nrow(centers),
           " background signature groups with the following parameters:")
@@ -163,10 +188,12 @@ generatePermutationNull <- function(num, eData, sigData) {
 
   randomSigs <- list()
 
-  for (i in seq(dim(centers)[1])) {
+  for (cluster_i in rownames(centers)) {
 
-    size <- centers[i, "sigSize"]
-    #balance <- centers[i,"sigBalance"]
+    clusterSigs <- list()
+
+    size <- centers[cluster_i, "sigSize"]
+    #balance <- centers[cluster_i,"sigBalance"]
     balance <- 1
 
     for (j in 1:num) {
@@ -175,12 +202,13 @@ generatePermutationNull <- function(num, eData, sigData) {
                             replace = TRUE, prob = c(balance, 1 - balance))
       names(newSigSigns) <- newSigGenes
       newSig <- Signature(newSigSigns, paste0("RANDOM_BG_", size, "_", j), "x")
-      randomSigs[[newSig@name]] <- newSig
+      clusterSigs[[newSig@name]] <- newSig
     }
+
+    randomSigs[[cluster_i]] <- clusterSigs
   }
 
-  randomSigs <- sample(randomSigs) # Permute them for better distribution to batches
-  return(randomSigs)
+  return(list(randomSigs = randomSigs, sigAssignments = clusters))
 }
 
 BG_DIST <- matrix(0L, nrow=0, ncol=0)
@@ -203,6 +231,7 @@ getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
 }
 
 #' Evaluates the significance of each signature vs. each projection.
+#'
 #' @importFrom entropy entropy.plugin
 #' @importFrom stats p.adjust
 #' @param projections Maps projections to their spatial coordinates for each
@@ -210,8 +239,13 @@ getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
 #' @param sigScoresData List of SignatureScores Object, mapping signature
 #' names to their value at each coordinate
 #' @param metaData data.frame of meta-data for cells
-#' @param randomSigData List of SignatureScores Object, mapping randomly
-#' generated signatures to scores to be compared with the real signature scores.
+#' @param randomSigData A list with two items:
+#'
+#'   randomSigs: a list of lists of SignatureScore objects.  Each sub-list
+#'     represents permutation signatures generated for a specific size/balance
+#'
+#'   sigAssignments: named factor vector assigning signatures to random background
+#'     groups
 #' @return list:
 #' \itemize{
 #'     \item sigProbMatrix: the matrix of signature-projection consistency scores
@@ -234,22 +268,6 @@ sigsVsProjections <- function(projections, sigScoresData, metaData,
   colnames(sigScoreMatrix) <- names(sigScoresData)
   rownames(sigScoreMatrix) <- sampleLabels
 
-
-  # Build a matrix of random background signatures
-  randomSigScoreMatrix <- do.call(
-               cbind,
-               lapply(randomSigData, function(rsig) rsig@scores)
-  )
-  sampleLabels <- rownames(randomSigScoreMatrix)
-  randomSigScoreMatrix <- matrixStats::colRanks(
-             randomSigScoreMatrix, preserveShape=TRUE, ties.method="average"
-  )
-
-  # TODO: Set names of randomSigData in analyze and use
-  colnames(randomSigScoreMatrix) <- vapply(randomSigData,
-                                           function(x) x@name, "")
-  rownames(randomSigScoreMatrix) <- sampleLabels
-
   sigProjMatrix <- data.frame()
   sigProjMatrix_P <- data.frame()
   sigProjMatrix_Pemp <- data.frame()
@@ -258,7 +276,7 @@ sigsVsProjections <- function(projections, sigScoresData, metaData,
     weights <- computeKNNWeights(proj, K=round(sqrt(NCOL(proj@pData))))
 
     svp_n <- sigsVsProjection_n(sigScoresData, sigScoreMatrix,
-                                randomSigData, randomSigScoreMatrix, weights)
+                                randomSigData, weights)
     svp_pcn <- sigsVsProjection_pcn(metaData, weights)
     svp_pcf <- sigsVsProjection_pcf(metaData, weights)
 
@@ -340,98 +358,106 @@ sigsVsProjections <- function(projections, sigScoresData, metaData,
 
 #' Evaluates the significance of each numeric signature vs. a
 #' single projections weights
+#'
+#' @importFrom matrixStats colMedians
 #' @param sigData a list of SignatureScores objects representing input user
 #' signatures
 #' @param sigScoreMatrix a numeric matrix (N_SAMPLES x N_SIGNATURES) containing
 #' the signature scores for every (signature, sample)
-#' @param randomSigData a list of SignatureScores objects representing a suitable
-#' background distribution to go with `sigData`
-#' @param randomSigScoreMatrix a numeric matrix (N_SAMPLES x N_SIGNATURES) containing
-#' the signature scores associated wiht signatures in randomSigData
+#' @param randomSigData A list with two items:
+#'
+#'   randomSigs: a list of lists of SignatureScore objects.  Each sub-list
+#'     represents permutation signatures generated for a specific size/balance
+#'
+#'   sigAssignments: named factor vector assigning signatures to random background
+#'     groups
+#'
 #' @param weights numeric matrix of dimension N_SAMPLES x N_SAMPLES
 #' @return list:
 #' \itemize{
 #'     \item consistency: consistency scores
 #'     \item pvals: pvalues
+#'     \item emppvals: empirical pvalues
 #' }
 sigsVsProjection_n <- function(sigData, sigScoreMatrix,
-                               randomSigData, randomSigScoreMatrix, weights){
+                               randomSigData, weights){
 
-  N_SAMPLES = nrow(weights)
+    N_SAMPLES <- nrow(weights)
 
-  neighborhoodPrediction <- weights %*% sigScoreMatrix
+    randomSigScores <- randomSigData$randomSigs
+    sigAssignments <- randomSigData$sigAssignments
 
-  ## Neighborhood dissimilatory score = |actual - predicted|
-  dissimilarity <- abs(sigScoreMatrix - neighborhoodPrediction)
-  medDissimilarity <- as.matrix(apply(dissimilarity, 2, median))
+    groupedResults <- lapply(names(randomSigScores), function(group) {
 
-  # Calculate scores for random signatures
-  randomNeighborhoodPrediction <- weights %*% randomSigScoreMatrix
-  randomDissimilarity <- abs(randomSigScoreMatrix -
-                               randomNeighborhoodPrediction)
-  randomMedDissimilarity <- as.matrix(apply(randomDissimilarity, 2,
-                                            median))
+        # Build a matrix of random background signatures
+        randomSigGroup <- randomSigScores[[group]]
+        randomSigScoreMatrix <- do.call(
+            cbind,
+            lapply(randomSigGroup, function(rsig) rsig@scores)
+        )
 
-  # Group by number of genes
-  backgrounds <- list()
-  k <- 1
-  for (rsig in randomSigData) {
-    numGenes <- as.character(rsig@numGenes)
+        sampleLabels <- rownames(randomSigScoreMatrix)
+        randomSigScoreMatrix <- matrixStats::colRanks(
+              randomSigScoreMatrix, preserveShape = TRUE,
+              ties.method = "average"
+        )
 
-    if (!(numGenes %in% names(backgrounds))) {
-      backgrounds[[numGenes]] <- c(randomMedDissimilarity[k])
-    } else {
-      backgrounds[[numGenes]] <- c(backgrounds[[numGenes]],
-                                   randomMedDissimilarity[k])
-    }
-    k <- k + 1
-  }
+        colnames(randomSigScoreMatrix) <- vapply(
+            randomSigGroup, function(x) x@name, ""
+        )
 
-  # TODO: Do the lookup here using the column names of randomSigScoreMatrix
-  bgStat <- matrix(unlist(lapply(names(backgrounds), function(x) {
-    mu_x <- mean(backgrounds[[x]])
-    std_x <- biasedVectorSD(as.matrix(backgrounds[[x]]))
-    return(list(as.numeric(x), mu_x, std_x))
-  })), nrow=length(names(backgrounds)),
-  ncol=3, byrow=TRUE)
+        rownames(randomSigScoreMatrix) <- sampleLabels
+
+        groupSigNames <- names(sigAssignments)[sigAssignments == group]
+
+        sigScoreMatrixGroup <- sigScoreMatrix[, groupSigNames]
+
+        # Calculate scores for actual signatures
+        neighborhoodPrediction <- as.matrix(weights %*% sigScoreMatrixGroup)
+        dissimilarity <- abs(sigScoreMatrixGroup -
+                             neighborhoodPrediction)
+        medDissimilarity <- colMedians(dissimilarity)
+        names(medDissimilarity) <- colnames(dissimilarity)
+
+        # Calculate scores for random signatures
+        randomNeighborhoodPrediction <- as.matrix(weights %*% randomSigScoreMatrix)
+        randomDissimilarity <- abs(randomSigScoreMatrix -
+                                   randomNeighborhoodPrediction)
+        randomMedDissimilarity <- colMedians(randomDissimilarity)
+        names(randomMedDissimilarity) <- colnames(randomDissimilarity)
+
+        mu <- mean(randomMedDissimilarity)
+        sigma <- sd(randomMedDissimilarity)
+
+        #Create CDF function for medDissmilarityPrime and apply CDF function to
+        pvals <- pnorm( (medDissimilarity - mu) / sigma)
+        consistency <- 1 - (medDissimilarity / N_SAMPLES)
+
+        orderedBg <- sort(randomMedDissimilarity)
+        empvals <- vapply(medDissimilarity, function(x) {
+                              N <- length(orderedBg)
+                              comp <- which(orderedBg < x)
+                              if (length(comp) == 0) {
+                                  p <- 1 / (N + 1)
+                              } else {
+                                  p <- (max(comp) + 1) / (N + 1)
+                              }
+                              return(p)
+       }, FUN.VALUE = 0.0)
 
 
-  mu <- matrix(unlist(lapply(colnames(sigScoreMatrix), function(x) {
-    numG <- sigData[[x]]@numGenes
-    row_i <- which.min(abs(numG - bgStat[,1]))
-    return(bgStat[row_i, 2])
-  })), nrow=nrow(medDissimilarity),
-  ncol=ncol(medDissimilarity))
-
-  sigma <- matrix(unlist(lapply(colnames(sigScoreMatrix), function(x) {
-    numG <- sigData[[x]]@numGenes
-    row_i <- which.min(abs(numG - bgStat[,1]))
-    return(bgStat[row_i,3])
-  })), nrow=nrow(medDissimilarity),
-  ncol=ncol(medDissimilarity))
+        return(list(consistency = consistency, pvals = pvals,
+                    empvals = empvals))
+    })
 
 
-  #Create CDF function for medDissmilarityPrime and apply CDF function to
-  #medDissimilarityPrime pointwise
-  pvals <- pnorm( ((medDissimilarity - mu) / sigma))
-  pvals_emp <- matrix(unlist(lapply(rownames(medDissimilarity), function(x) {
-        numG <- sigData[[x]]@numGenes
-        entry_i <- which.min(abs(numG - as.numeric(names(backgrounds))))
-        pv = lapply(medDissimilarity[x,], function(s) (length(which(s > backgrounds[[entry_i]]))) / (length(backgrounds[[entry_i]])))
-        return(unlist(pv))
-    })), nrow=nrow(medDissimilarity), ncol=ncol(medDissimilarity))
+    consistency <- do.call(c, lapply(groupedResults, function(x) x$consistency))
+    pvals <- do.call(c, lapply(groupedResults, function(x) x$pvals))
+    empvals <- do.call(c, lapply(groupedResults, function(x) x$empvals))
 
-  colnames(pvals_emp) <- colnames(medDissimilarity)
-  rownames(pvals_emp) <- rownames(medDissimilarity)
-  consistency <- 1 - (medDissimilarity / N_SAMPLES)
 
-  #Reduce from matrix col to char-vector
-  pvals <- pvals[,1]
-  pvals_emp <- pvals_emp[,1]
-  consistency <- consistency[,1]
-
-  #return(list(consistency=consistency, pvals=pvals, pvals_emp=pvals_emp))
-  return(list(consistency=consistency, pvals=pvals, empvals=pvals_emp))
+    return(list(consistency = consistency, pvals = pvals,
+                empvals = empvals))
 }
 
 #' Evaluates the significance of each meta data numeric signature vs. a
@@ -469,21 +495,21 @@ sigsVsProjection_pcn <- function(metaData, weights){
       next
     }
 
-    sigPredictions <- weights %*% sigScores
+    sigPredictions <- as.matrix(weights %*% sigScores)
     dissimilarity <- abs(sigScores - sigPredictions)
     medDissimilarity <- median(dissimilarity)
 
     #Compute a background for numerical signatures
     NUM_REPLICATES <- 3000
     bgValues <- replicate(NUM_REPLICATES, sample(sigScores))
-    randomPredictions <- weights %*% bgValues
+    randomPredictions <- as.matrix(weights %*% bgValues)
 
     rDissimilarity <- abs(bgValues - randomPredictions)
     randomScores <- as.matrix(apply(rDissimilarity, 2, median))
 
 
     mu <- mean(randomScores)
-    sigma <- biasedVectorSD(randomScores)
+    sigma <- sd(randomScores)
 
     if (sigma != 0) {
       p_value <- pnorm( (medDissimilarity - mu) / sigma)
@@ -550,7 +576,7 @@ sigsVsProjection_pcf <- function(metaData, weights){
       next
     }
 
-    factorPredictions <- weights %*% factorMatrix
+    factorPredictions <- as.matrix(weights %*% factorMatrix)
 
     labels <- apply(factorMatrix, 1, which.max)
 

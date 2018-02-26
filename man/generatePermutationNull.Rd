@@ -15,7 +15,13 @@ generatePermutationNull(num, eData, sigData)
 random signature sizes}
 }
 \value{
-a vector of random Signature objects
+A list with two items:
+
+  randomSigs: a list of lists of Signature objects.  Each sub-list represents
+    permutation signatures generated for a specific size/balance
+
+  sigAssignments: named factor vector assigning signatures to random background
+    groups
 }
 \description{
 Generate random signatures for a null distribution by permuting the data

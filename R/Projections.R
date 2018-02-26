@@ -267,7 +267,7 @@ applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05) 
     }
 
     mu <- as.matrix(apply(bg_vals, 2, mean))
-    sigma <- as.matrix(apply(bg_vals, 2, biasedVectorSD))
+    sigma <- as.matrix(apply(bg_vals, 2, sd))
     sigma[sigma==0] <- 1.0
 
     # Compute pvals from survival function & threshold components
@@ -398,15 +398,23 @@ applyKNN <- function(exprData) {
     nn <- k[[1]]
     d <- k[[2]]
 
-    sigma <- apply(d, 1, max)
+    sigma <- rowMaxs(d)
+    sparse_weights <- exp(-1 * (d * d) / sigma ^ 2)
 
-    sparse_weights <- exp(-1 * (d * d) / sigma^2)
-    weights <- load_in_knn(nn, sparse_weights)
-
-    weightsNormFactor <- rowSums(weights)
+    # Normalize row sums = 1
+    weightsNormFactor <- rowSums(sparse_weights)
     weightsNormFactor[weightsNormFactor == 0] <- 1.0
-    weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
-    weights <- weights / weightsNormFactor
+    sparse_weights <- sparse_weights / weightsNormFactor
+
+    # load into a sparse matrix
+    tnn <- t(nn)
+    j <- as.numeric(tnn)
+    i <- as.numeric(col(tnn))
+    vals <- as.numeric(t(sparse_weights))
+
+    weights <- sparseMatrix(i = i, j = j, x = vals,
+                            dims = c(nrow(nn), nrow(nn))
+                            )
 
     return(weights)
 }
