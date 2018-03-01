@@ -3,41 +3,43 @@
 #' @param exprData the expression data matrix
 #' @param cellsPerPartition control over the minimum number of cells to put into each supercell
 #' @param preserve_clusters named factor vector denoted cluster boundaries to preserve
+#' @param latentSpace numeric matrix cells x components
 #' @importFrom Matrix tcrossprod
 #' @importFrom Matrix rowMeans
-#' @return a list:
-#' \itemize{
-#'     \item pooled cells - the super cells creates
-#'     \item pools - a list of data matrices of the original cells in each pool
-#' }
+#' @return pooled cells - named list of vectors - cells in each supercell
 applyMicroClustering <- function(
                          exprData, cellsPerPartition=100,
                          filterInput = "fano",
                          filterThreshold = round(ncol(exprData)*0.2),
-                         random = FALSE, preserve_clusters = NULL) {
+                         preserve_clusters = NULL,
+                         latentSpace = NULL) {
 
-    gene_passes <- applyFilters(exprData, filterThreshold, filterInput)
-    fexpr <- exprData[gene_passes, ]
+    if (is.null(latentSpace)) {
+        gene_passes <- applyFilters(exprData, filterThreshold, filterInput)
+        fexpr <- exprData[gene_passes, ]
 
-    # Compute wcov using matrix operations to avoid
-    # creating a large dense matrix
+        # Compute wcov using matrix operations to avoid
+        # creating a large dense matrix
 
-    N <- ncol(fexpr)
-    wcov <- tcrossprod(fexpr) / N
+        N <- ncol(fexpr)
+        wcov <- tcrossprod(fexpr) / N
 
-    mu <- as.matrix(rowMeans(fexpr), ncol = 1)
-    mumu <- tcrossprod(mu)
-    wcov <- as.matrix(wcov - mumu)
+        mu <- as.matrix(rowMeans(fexpr), ncol = 1)
+        mumu <- tcrossprod(mu)
+        wcov <- as.matrix(wcov - mumu)
 
-    # SVD of wieghted correlation matrix
-    ncomp <- min(ncol(fexpr), nrow(fexpr), 10)
-    decomp <- rsvd::rsvd(wcov, k = ncomp)
-    evec <- t(decomp$u)
+        # SVD of wieghted correlation matrix
+        ncomp <- min(ncol(fexpr), nrow(fexpr), 10)
+        decomp <- rsvd::rsvd(wcov, k = ncomp)
+        evec <- t(decomp$u)
 
-    # Project down using computed eigenvectors
-    res <- (evec %*% fexpr) - as.vector(evec %*% mu)
-    res <- as.matrix(res)
-    res <- t(res) # avoid transposing many times below
+        # Project down using computed eigenvectors
+        res <- (evec %*% fexpr) - as.vector(evec %*% mu)
+        res <- as.matrix(res)
+        res <- t(res) # avoid transposing many times below
+    } else {
+        res <- latentSpace
+    }
 
     # If 'preserve_clusters' is provided, use these as the pre-clustering
     #   Otherwise, compute clusters using knn graph and louvain
@@ -60,21 +62,12 @@ applyMicroClustering <- function(
 
     pools <- readjust_clusters(cl, res, cellsPerPartition = cellsPerPartition)
 
-    if (random) {
-        message("random!")
-        rdata <- exprData
-        colnames(rdata) <- colnames(exprData)[sample(ncol(exprData), ncol(exprData))]
-        exprData <- rdata
-    }
-
-    pooled_cells <- createPoolsBatch(pools, exprData)
-
     # Rename clusters
-    cn <- paste0("microcluster ", 1:ncol(pooled_cells))
-    colnames(pooled_cells) <- cn
+    cn <- paste0("microcluster ", 1:length(pools))
     names(pools) <- cn
 
-    return(list(pooled_cells, pools))
+    return(pools)
+
 }
 
 

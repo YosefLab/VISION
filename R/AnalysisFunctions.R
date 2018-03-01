@@ -85,17 +85,24 @@ poolCells <- function(object,
         preserve_clusters <- NULL
     }
 
-    microclusters <- applyMicroClustering(object@exprData,
+    pools <- applyMicroClustering(object@exprData,
                                           cellsPerPartition = object@cellsPerPartition,
                                           filterInput = object@projection_genes,
                                           filterThreshold = object@threshold,
-                                          preserve_clusters = preserve_clusters)
+                                          preserve_clusters = preserve_clusters,
+                                          latentSpace = object@latentSpace)
 
-    object@exprData <- microclusters[[1]]
-    object@pools <- microclusters[[2]]
+    object@pools <- pools
+
+    pooled_cells <- createPoolsBatch(object@pools, object@exprData)
+    object@exprData <- pooled_cells
+
+    if (!is.null(object@latentSpace)){
+        pooled_latent <- t(createPoolsBatch(object@pools, t(object@latentSpace)))
+        object@latentSpace <- pooled_latent
+    }
 
     poolMeta <- createPooledMetaData(object@metaData, object@pools)
-
     object@metaData <- poolMeta
 
     return(object)
@@ -210,6 +217,44 @@ calcSignatureScores <- function(object,
     return(object)
 }
 
+#' Computes the latent space of the expression matrix using PCA
+#'
+#' @param object the FastProject object for which compute the latent space
+#' @param projection_genes character vector of gene names to use for projections
+#' @param perm_wPCA If TRUE, apply permutation wPCA to determine significant
+#' number of components. Default is FALSE.
+#' @return the FastProject with latentSpace populated
+computeLatentSpace <- function(object, projection_genes = NULL,
+                               perm_wPCA = NULL) {
+
+    message("Computing a latent space for expression data...")
+
+    if (!is.null(projection_genes)) object@projection_genes <- projection_genes
+    if (!is.null(perm_wPCA)) object@perm_wPCA <- perm_wPCA
+
+    expr <- object@exprData
+    weights <- object@weights
+    projection_genes <- object@projection_genes
+    perm_wPCA <- object@perm_wPCA
+
+    if (!is.null(projection_genes)) {
+        exprData <- expr[projection_genes, ]
+    } else {
+        exprData <- expr
+    }
+
+    if (perm_wPCA) {
+        res <- applyPermutationWPCA(exprData, weights, components = 30)
+        pca_res <- res[[1]]
+    } else {
+        res <- applyWeightedPCA(exprData, weights, maxComponents = 30)
+        pca_res <- res[[1]]
+    }
+
+    object@latentSpace <- t(pca_res)
+    return(object)
+}
+
 #' analyze projections
 #'
 #' This is the main analysis function. For each filtered dataset, a set of
@@ -230,18 +275,18 @@ analyzeProjections <- function(object,
   object@perm_wPCA <- perm_wPCA
 
   message("Computing background distribution for signature scores...")
-  signatureBackground <- calculateSignatureBackground(object, num=3000)
+  signatureBackground <- calculateSignatureBackground(object, num = 3000)
 
   message("Projecting data into 2 dimensions...")
 
   projectData <- generateProjections(object@exprData, object@weights,
-                                     projection_genes=object@projection_genes,
-                                     inputProjections=object@inputProjections,
-                                     lean=object@lean,
-                                     perm_wPCA=object@perm_wPCA)
+                                     object@latentSpace,
+                                     projection_genes = object@projection_genes,
+                                     inputProjections = object@inputProjections,
+                                     lean = object@lean)
 
   message("Evaluating signatures against projections...")
-  sigVProj <- sigsVsProjections(projectData$projections,
+  sigVProj <- sigsVsProjections(projectData,
                                 object@sigScores,
                                 object@metaData,
                                 signatureBackground)
@@ -252,7 +297,7 @@ analyzeProjections <- function(object,
                                    sigVProj$pVals,
                                    clusterMeta = object@pool)
 
-  projData <- ProjectionData(projections = projectData$projections,
+  projData <- ProjectionData(projections = projectData,
                              keys = colnames(sigVProj$sigProjMatrix),
                              sigProjMatrix = sigVProj$sigProjMatrix,
                              pMatrix = sigVProj$pVals,
@@ -261,9 +306,8 @@ analyzeProjections <- function(object,
 
   if (tolower(object@trajectory_method) != "none") {
       message("Fitting principle tree...")
-      treeProjs <- generateTreeProjections(projectData$fullPCA,
-                                 inputProjections = projectData$projections,
-                                 permMats = projectData$permMats)
+      treeProjs <- generateTreeProjections(t(object@latentSpace),
+                                 inputProjections = projectData)
 
       message("Computing significance of signatures...")
       sigVTreeProj <- sigsVsProjections(treeProjs$projections,
@@ -289,12 +333,10 @@ analyzeProjections <- function(object,
 
   message("Computing Correlations between Signatures and Expression PCs...")
   pearsonCorr <- calculatePearsonCorr(object@sigMatrix,
-                     object@metaData, projectData$fullPCA)
+                     object@metaData, object@latentSpace)
 
 
-  pcaAnnotData <- PCAnnotatorData(fullPCA = projectData$fullPCA,
-                                  pearsonCorr = pearsonCorr,
-                                  loadings = projectData$loadings)
+  pcaAnnotData <- PCAnnotatorData(pearsonCorr = pearsonCorr)
 
   filterModuleData <- FilterModuleData(ProjectionData = projData,
                                        TreeProjectionData = treeProjData,
@@ -309,9 +351,9 @@ analyzeProjections <- function(object,
 #' @importFrom Hmisc rcorr
 #' @param sigMatrix Signature scores dataframe
 #' @param metaData data.frame of meta-data for cells
-#' @param fullPCA numeric matrix N_Cells x N_PCs
+#' @param latentSpace numeric matrix N_Cells x N_PCs
 #' @return pearsonCorr numeric matrix N_Signatures x N_PCs
-calculatePearsonCorr <- function(sigMatrix, metaData, fullPCA){
+calculatePearsonCorr <- function(sigMatrix, metaData, latentSpace){
 
   ## combined gene signs and numeric meta variables
 
@@ -326,20 +368,20 @@ calculatePearsonCorr <- function(sigMatrix, metaData, fullPCA){
   computedSigMatrix <- cbind(sigMatrix, numericMeta)
 
   pearsonCorr <- lapply(1:ncol(computedSigMatrix), function(i) {
-    lapply(1:nrow(fullPCA), function(j) {
+    lapply(1:ncol(latentSpace), function(j) {
                ss <- computedSigMatrix[, i];
-               pc <- fullPCA[j, ];
-               pc_result <- rcorr(ss, pc, type="pearson")
-               return(pc_result[[1]][1,2])
+               pc <- latentSpace[, j];
+               pc_result <- rcorr(ss, pc, type = "pearson")
+               return(pc_result[[1]][1, 2])
     })
   })
 
   pearsonCorr <- matrix(unlist(lapply(pearsonCorr, unlist)),
                         nrow=ncol(computedSigMatrix),
-                        ncol=nrow(fullPCA), byrow=TRUE)
+                        ncol=ncol(latentSpace), byrow=TRUE)
 
   rownames(pearsonCorr) <- colnames(computedSigMatrix)
-  colnames(pearsonCorr) <- rownames(fullPCA)
+  colnames(pearsonCorr) <- colnames(latentSpace)
 
   return(pearsonCorr)
 }

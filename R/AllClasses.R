@@ -35,11 +35,8 @@ TreeProjectionData <- setClass("TreeProjectionData",
 ))
 
 PCAnnotatorData <- setClass("PCAnnotatorData",
-    slots = c(
-    fullPCA = "matrix",
-    pearsonCorr = "matrix",
-    loadings = "matrix"
-))
+    slots = c(pearsonCorr = "matrix")
+)
 
 Projection <- setClass("Projection",
     slots = c(
@@ -143,7 +140,9 @@ FastProject <- setClass("FastProject",
         pools = "list",
         inputProjections = "list",
         name = "character",
-        cluster_variable = "character"),
+        cluster_variable = "character",
+        latentSpace = "matrix",
+        initialLatentSpace = "matrix"),
     prototype = list(
         nomodel = FALSE,
         pca_filter = FALSE,
@@ -167,5 +166,7 @@ FastProject <- setClass("FastProject",
         pools = NULL,
         inputProjections = NULL,
         name = "",
-        cluster_variable = ""
+        cluster_variable = "",
+        latentSpace = NULL,
+        initialLatentSpace = NULL
 ))

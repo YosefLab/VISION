@@ -42,6 +42,8 @@
 #' pooling if there are more than 15000 cells.
 #' @param cellsPerPartition the minimum number of cells to put into a cluster
 #' @param cluster_variable variable to use to denote clusters
+#' @param latentSpace latent space for expression data. Numeric matrix or dataframe
+#' with dimensions CELLS x COMPONENTS
 #' @param name a name for the sample - shown on the output report
 #' @return A FastProject object
 #' @rdname FastProject-class
@@ -70,9 +72,10 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
                     projection_genes=c("fano"), lean=FALSE, min_signature_genes=5,
                     weights=NULL, threshold=0, perm_wPCA=FALSE,
                     sig_norm_method="znorm_rows",
-                    sig_score_method="weighted_avg", trajectory_method="None",
+                    sig_score_method="weighted_avg",
+                    trajectory_method=c("None", "SimplePPT"),
                     pool="auto", cellsPerPartition=100, name=NULL,
-                    cluster_variable = "") {
+                    cluster_variable = "", latentSpace = NULL) {
 
             .Object <- new("FastProject")
 
@@ -132,7 +135,7 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
             .Object@threshold <- threshold
             .Object@sig_norm_method <- sig_norm_method
             .Object@sig_score_method <- sig_score_method
-            .Object@trajectory_method <- trajectory_method
+            .Object@trajectory_method <- match.arg(trajectory_method)
             .Object@lean <- lean
             .Object@perm_wPCA <- perm_wPCA
 
@@ -172,6 +175,25 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
 
             if (!is.null(name)) {
                 .Object@name <- name
+            }
+
+            if (!is.null(latentSpace)) {
+                if (is.data.frame(latentSpace)){
+                    latentSpace <- data.matrix(latentSpace)
+                }
+
+                sample_names <- colnames(.Object@exprData)
+                common <- intersect(sample_names, rownames(latentSpace))
+
+                if (length(common) != nrow(latentSpace)){
+                    stop("Supplied coordinates for latentSpace must have rowlabels that match sample/cell names")
+                }
+
+                latentSpace <- latentSpace[colnames(.Object@exprData), ]
+                colnames(latentSpace) <- NULL
+
+                .Object@latentSpace <- latentSpace
+                .Object@initialLatentSpace <- latentSpace
             }
 
             .Object@cluster_variable <- cluster_variable
@@ -256,6 +278,10 @@ setMethod("analyze", signature(object="FastProject"),
     object <- calcWeights(object)
 
     object <- calcSignatureScores(object)
+
+    if (is.null(object@latentSpace)) {
+        object <- computeLatentSpace(object)
+    }
 
     object <- analyzeProjections(object)
 

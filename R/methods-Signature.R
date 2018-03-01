@@ -232,7 +232,6 @@ getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
 
 #' Evaluates the significance of each signature vs. each projection.
 #'
-#' @importFrom entropy entropy.plugin
 #' @importFrom stats p.adjust
 #' @param projections Maps projections to their spatial coordinates for each
 #' sample
@@ -253,8 +252,6 @@ getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
 #' }
 sigsVsProjections <- function(projections, sigScoresData, metaData,
                               randomSigData) {
-
-  N_SAMPLES <- length(sigScoresData[[1]]@scores)
 
   # Build a matrix of all non-meta signatures
   sigScoreMatrix <- do.call(
@@ -310,7 +307,7 @@ sigsVsProjections <- function(projections, sigScoresData, metaData,
     sigProjMatrix_P <- merge(sigProjMatrix_P, pvals,
                              by='row.names', all=TRUE)
 
-    SigProjMatrix_Pemp <- merge(sigProjMatrix_Pemp, emp_pvals,
+    sigProjMatrix_Pemp <- merge(sigProjMatrix_Pemp, emp_pvals,
                                 by='row.names', all=TRUE)
 
     rownames(sigProjMatrix_P) = sigProjMatrix_P$Row.names

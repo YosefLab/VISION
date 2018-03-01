@@ -7,7 +7,7 @@ are reduce, using the louvain clustering algorithm}
 \usage{
 applyMicroClustering(exprData, cellsPerPartition = 100,
   filterInput = "fano", filterThreshold = round(ncol(exprData) * 0.2),
-  random = FALSE, preserve_clusters = NULL)
+  preserve_clusters = NULL, latentSpace = NULL)
 }
 \arguments{
 \item{exprData}{the expression data matrix}
@@ -15,13 +15,11 @@ applyMicroClustering(exprData, cellsPerPartition = 100,
 \item{cellsPerPartition}{control over the minimum number of cells to put into each supercell}
 
 \item{preserve_clusters}{named factor vector denoted cluster boundaries to preserve}
+
+\item{latentSpace}{numeric matrix cells x components}
 }
 \value{
-a list:
-\itemize{
-    \item pooled cells - the super cells creates
-    \item pools - a list of data matrices of the original cells in each pool
-}
+pooled cells - named list of vectors - cells in each supercell
 }
 \description{
 Cluster single cells so signal is maintained but the sample size and noise

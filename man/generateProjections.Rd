@@ -4,13 +4,15 @@
 \alias{generateProjections}
 \title{Projects data into 2 dimensions using a variety of linear and non-linear methods.}
 \usage{
-generateProjections(expr, weights, projection_genes = NULL,
-  inputProjections = c(), lean = FALSE, perm_wPCA = FALSE)
+generateProjections(expr, weights, latentSpace, projection_genes = NULL,
+  inputProjections = c(), lean = FALSE)
 }
 \arguments{
 \item{expr}{numeric matrix of gene expression}
 
 \item{weights}{weights estimated from FNR curve}
+
+\item{latentSpace}{numeric matrix cells x components}
 
 \item{projection_genes}{character vector of gene names to use for projections}
 
@@ -18,20 +20,9 @@ generateProjections(expr, weights, projection_genes = NULL,
 
 \item{lean}{If TRUE, diminished number of algorithms applied,
 if FALSE all algorithms applied. Default is FALSE}
-
-\item{perm_wPCA}{If TRUE, apply permutation wPCA to determine significant
-number of components. Default is FALSE.}
 }
 \value{
-list:
-\itemize{
-    \item projections: a list of Projection objects
-    \item geneNames: a character vector of the genes involved in the analsis
-    \item fullPCA: the full PCA matrix of the data
-    \item loadings: the loading vectors for the fullPCA matrix
-    \item permMats: a list of permuted and projected data matrices, used for
-    downstream permutation tests
-}
+list of Projection objects
 }
 \description{
 Projects data into 2 dimensions using a variety of linear and non-linear methods.

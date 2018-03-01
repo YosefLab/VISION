@@ -24,24 +24,15 @@ registerMethods <- function(lean=FALSE) {
 #' @importFrom stats quantile
 #' @param expr numeric matrix of gene expression
 #' @param weights weights estimated from FNR curve
+#' @param latentSpace numeric matrix cells x components
 #' @param projection_genes character vector of gene names to use for projections
 #' @param inputProjections Precomputed projections
 #' @param lean If TRUE, diminished number of algorithms applied,
 #' if FALSE all algorithms applied. Default is FALSE
-#' @param perm_wPCA If TRUE, apply permutation wPCA to determine significant
-#' number of components. Default is FALSE.
-#' @return list:
-#' \itemize{
-#'     \item projections: a list of Projection objects
-#'     \item geneNames: a character vector of the genes involved in the analsis
-#'     \item fullPCA: the full PCA matrix of the data
-#'     \item loadings: the loading vectors for the fullPCA matrix
-#'     \item permMats: a list of permuted and projected data matrices, used for
-#'     downstream permutation tests
-#' }
-generateProjections <- function(expr, weights, projection_genes=NULL,
-                                inputProjections=c(), lean=FALSE,
-                                perm_wPCA=FALSE) {
+#' @return list of Projection objects
+generateProjections <- function(expr, weights, latentSpace,
+                                projection_genes=NULL,
+                                inputProjections=c(), lean=FALSE) {
 
     if (!is.null(projection_genes)) {
         exprData <- expr[projection_genes, ]
@@ -51,36 +42,14 @@ generateProjections <- function(expr, weights, projection_genes=NULL,
 
     methodList <- registerMethods(lean)
 
-    if (perm_wPCA) {
-    res <- applyPermutationWPCA(exprData, weights, components=30)
-    pca_res <- res[[1]]
-    loadings <- res[[3]]
-    permMats <- res$permuteMatrices
-    } else {
-    res <- applyWeightedPCA(exprData, weights, maxComponents = 30)
-    pca_res <- res[[1]]
-    loadings <- res[[3]]
-    permMats <- NULL
-    #m <- profmem(pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30)[[1]])
-    }
-
-    inputProjections <- c(inputProjections, Projection("PCA: 1,2", t(pca_res[c(1,2),])))
-    inputProjections <- c(inputProjections, Projection("PCA: 1,3", t(pca_res[c(1,3),])))
-    inputProjections <- c(inputProjections, Projection("PCA: 2,3", t(pca_res[c(2,3),])))
-
-    fullPCA <- t(pca_res[1:min(10,nrow(pca_res)),])
-    fullPCA <- as.matrix(apply(fullPCA, 2, function(x) return( x - mean(x) )))
-
-    r <- apply(fullPCA, 1, function(x) sum(x^2))^(0.5)
-    r90 <- quantile(r, c(.9))[[1]]
-
-    if (r90 > 0) {
-    fullPCA <- fullPCA / r90
-    }
-    fullPCA <- t(fullPCA)
+    inputProjections <- c(inputProjections,
+                          Projection("PCA: 1,2", latentSpace[, c(1, 2)]))
+    inputProjections <- c(inputProjections,
+                          Projection("PCA: 1,3", latentSpace[, c(1, 3)]))
+    inputProjections <- c(inputProjections,
+                          Projection("PCA: 2,3", latentSpace[, c(2, 3)]))
 
     for (method in names(methodList)){
-    gc()
     message(method)
     ## run on raw data
     if (method == "ICA" || method == "RBF Kernel PCA") {
@@ -88,11 +57,11 @@ generateProjections <- function(expr, weights, projection_genes=NULL,
         proj <- Projection(method, res)
         inputProjections <- c(inputProjections, proj)
     } else if (method == "KNN") {
-        res <- methodList[[method]](pca_res)
-        proj <- Projection(method, res, weights=res)
+        res <- methodList[[method]](t(latentSpace))
+        proj <- Projection(method, res, weights = res)
         inputProjections <- c(inputProjections, proj)
     } else { ## run on reduced data
-        res <- methodList[[method]](pca_res)
+        res <- methodList[[method]](t(latentSpace))
         proj <- Projection(method, res)
         inputProjections <- c(inputProjections, proj)
         }
@@ -113,15 +82,14 @@ generateProjections <- function(expr, weights, projection_genes=NULL,
         }
 
         coordinates <- t(coordinates)
-        p <- updateProjection(p, data=coordinates)
-        output[[p@name]] = p
+        p <- updateProjection(p, data = coordinates)
+        output[[p@name]] <- p
 
         }
 
     output[["KNN"]]@pData <- output[["tSNE30"]]@pData
 
-    return(list(projections = output, geneNames = rownames(exprData),
-                fullPCA = fullPCA, loadings = loadings, permMats = permMats))
+    return(output)
 }
 
 #' Genrate projections based on a tree structure learned in high dimensonal space

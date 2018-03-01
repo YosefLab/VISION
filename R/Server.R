@@ -400,31 +400,33 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       get("/FilterGroup/(?<pc_num1>.*)/Loadings/Positive", function(req, res, err) {
         pcnum <- as.numeric(URLdecode(req$params$pc_num1))
 
-        l <- object@filterModuleData@PCAnnotatorData@loadings[,pcnum]
+        c <- object@latentSpace[, pcnum, drop = FALSE] # cells x 1
+        edata <- object@exprData # genes x cells
+        l <- edata %*% c
+        names(l) <- rownames(edata)
+
+        l <- sqrt(sum(l ^ 2)) # normalize the vector
 
         posl <- l[l >= 0]
-        sumposl <- sum(posl)
-        nposl <- vapply(posl, function(x) x / sumposl, 1.0)
 
-        nposl <- sort(nposl, decreasing = TRUE)
+        js1 <- toJSON(with(stack(posl), tapply(values, ind, c, simplify = FALSE)))
 
-        js1 <- toJSON(with(stack(nposl), tapply(values, ind, c, simplify = FALSE)))
-
-          return(js1)
+        return(js1)
 
       }) %>%
       get("/FilterGroup/(?<pc_num6>.*)/Loadings/Negative", function(req, res, err) {
         pcnum <- as.numeric(URLdecode(req$params$pc_num6))
 
-        l <- object@filterModuleData@PCAnnotatorData@loadings[,pcnum]
+        c <- object@latentSpace[, pcnum, drop = FALSE] # cells x 1
+        edata <- object@exprData # genes x cells
+        l <- edata %*% c
+        names(l) <- rownames(edata)
+
+        l <- sqrt(sum(l ^ 2)) # normalize the vector
 
         negl <- l[l < 0]
-        sumneg1 <- sum(negl)
-        nnegl <- vapply(negl, function(x) x / sumneg1, 1.0)
 
-        nnegl <- sort(nnegl, decreasing = TRUE)
-
-        js2 <- toJSON(with(stack(nnegl),
+        js2 <- toJSON(with(stack(negl),
                            tapply(values, ind, c, simplify = FALSE)))
 
         return(js2)
@@ -432,8 +434,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       }) %>%
       get("/FilterGroup/PCA/Coordinates", function(req, res, err) {
 
-        pc <- object@filterModuleData@PCAnnotatorData@fullPCA
-        out <- FastProjectR:::coordinatesToJSON(pc)
+        pc <- object@latentSpace
+        out <- FastProjectR:::coordinatesToJSON(t(pc))
 
         return(out)
       }) %>%
@@ -442,8 +444,9 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         pc1 <- as.numeric(URLdecode(req$params$pc_num3))
         pc2 <- as.numeric(URLdecode(req$params$pc_num4))
 
-        pcdata1 <- object@filterModuleData@PCAnnotatorData@fullPCA[pc1, ]
-        pcdata2 <- object@filterModuleData@PCAnnotatorData@fullPCA[pc2, ]
+
+        pcdata1 <- object@latentSpace[, pc1]
+        pcdata2 <- object@latentSpace[, pc2]
 
 
         ret <- cbind(pcdata1, pcdata2)
@@ -459,6 +462,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
           vals <- vapply(signatures, function(x) x@isMeta, TRUE)
           sigs <- keys[!vals]
           pc <- object@filterModuleData@PCAnnotatorData@pearsonCorr
+          pc <- pc[, 1:10]
 
         return(FastProjectR:::pearsonCorrToJSON(pc, sigs))
       }) %>%
@@ -469,14 +473,14 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
                                 function(x) is.numeric(object@metaData[[x]]),
                                 FUN.VALUE = TRUE)
           sigs <- sigs[numericMeta]
-          pc <- object@filterModuleData@PCAnnotatorData@pearsonCorr
+          pc <- object@filterModuleData@PCAnnotatorData@pearsonCorr[, 1:10]
 
         return(FastProjectR:::pearsonCorrToJSON(pc, sigs))
       }) %>%
       get("/FilterGroup/PearsonCorr/list", function(req, res, err) {
 
           pc <- object@filterModuleData@PCAnnotatorData@pearsonCorr
-          pcnames <- seq(ncol(pc))
+          pcnames <- seq(ncol(pc))[1:10]
           result <- toJSON(
                            pcnames,
                            force=TRUE, pretty=TRUE, auto_unbox=TRUE
