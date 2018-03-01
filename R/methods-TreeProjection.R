@@ -50,6 +50,7 @@ setMethod("computeKNNWeights", signature(object = "TreeProjection"),
             d <- do.call(rbind, d)
 
             sigma <- rowMaxs(d)
+            sigma[sigma == 0] <- 1.0 # occurs if all nearest neighbors at same point
             sparse_weights <- exp(-1 * (d * d) / sigma ^ 2)
 
             # Normalize row sums = 1
