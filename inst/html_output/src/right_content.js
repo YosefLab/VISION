@@ -64,7 +64,9 @@ Right_Content.prototype.update = function(updates)
         throw "Bad main_vis value!";
     }
 
-    if('plotted_projection' in updates) {
+    if('plotted_projection' in updates ||
+       'main_vis' in updates ||
+       main_vis === 'pcannotator') {
         self.scatter.autoZoom();
     }
 

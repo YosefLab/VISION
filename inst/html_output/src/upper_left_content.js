@@ -731,6 +731,7 @@ Gene_Select.prototype.update = function(updates)
                         'width': '110px',
                         'disable_search_threshold': 99,
                     })
+                        .off('change')
                         .on('change', function () {
                             var newGene = $('#SelectGene').val()
 
@@ -762,6 +763,7 @@ Gene_Select.prototype.update = function(updates)
                         'width': '110px',
                         'disable_search_threshold': 99,
                     })
+                        .off('change')
                         .on('change', function () {
                             var newGene = $('#SelectGene').val()
 
