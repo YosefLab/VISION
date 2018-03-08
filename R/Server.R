@@ -211,6 +211,12 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         host <- "127.0.0.1"
     }
 
+    # Load the static file whitelist
+    whitelist_file <- system.file("html_output/whitelist.txt",
+                                  package = "FastProjectR")
+    static_whitelist <- scan(whitelist_file, what = "",
+                             quiet = TRUE)
+
     url <- paste0("http://", host, ":", port, "/Results.html")
     message(paste("Navigate to", url, "in a browser to interact with the app."))
 
@@ -549,10 +555,36 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         FastProjectR:::newAnalysis(nfp)
         return()
       }) %>%
-      serve_static_files(
-                         root_path=system.file("html_output", package="FastProjectR")
-                        ) %>%
+      get(path = NULL, function(req, res, err) {
+
+          if (req$path == "/") {
+              path <- "Results.html"
+          } else {
+              path <- substring(req$path, 2) # remove first / character
+          }
+          file_index <- match(path, static_whitelist)
+
+          if (is.na(file_index)) {
+              res$set_status(404)
+              return(NULL)
+          }
+
+          file_path <- system.file(
+                         paste0("inst/html_output/",
+                                static_whitelist[file_index]),
+                         package = "FastProjectR")
+
+          mime_type <- mime::guess_type(file_path)
+          res$content_type(mime_type)
+
+          data <- readBin(file_path, "raw", n = file.info(file_path)$size)
+
+          if (grepl("image|octet|pdf", mime_type)) {
+              return(data)
+          } else {
+              return(rawToChar(data))
+          }
+      }) %>%
       simple_error_handler_json() %>%
       serve_it(host=host, port=port)
-
 }
