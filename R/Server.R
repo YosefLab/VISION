@@ -638,6 +638,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
           } else {
               path <- substring(req$path, 2) # remove first / character
           }
+          path <- paste0("html_output/", path)
           file_index <- match(path, static_whitelist)
 
           if (is.na(file_index)) {
@@ -645,9 +646,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
               return(NULL)
           }
 
-          file_path <- system.file(
-                         paste0("inst/html_output/",
-                                static_whitelist[file_index]),
+          file_path <- system.file(static_whitelist[file_index],
                          package = "FastProjectR")
 
           mime_type <- mime::guess_type(file_path)
