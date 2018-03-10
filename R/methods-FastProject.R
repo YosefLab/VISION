@@ -21,7 +21,7 @@
 #' data, and columns should either be factors or numerics.
 #' @param nomodel if TRUE, no fnr curve calculated and all weights equal to 1.
 #' Else FNR and weights calculated. [Default:FALSE]
-#' @param projection_genes name of method ('threshold' or 'fano') or list of 
+#' @param projection_genes name of method ('threshold' or 'fano') or list of
 #' genes to use when computing projections.
 #' @param lean if TRUE run a lean simulation. Else more robust pipeline
 #' initiated. Default is FALSE
@@ -118,6 +118,10 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
                 } else {
                     stop("meta input argument should be a matrix or dataframe")
                 }
+            } else {
+                .Object@metaData <- data.frame(
+                                        row.names = colnames(.Object@exprData)
+                                    )
             }
 
             if (is.null(weights)) {

@@ -51,7 +51,7 @@ data, and columns should either be factors or numerics.}
 \item{nomodel}{if TRUE, no fnr curve calculated and all weights equal to 1.
 Else FNR and weights calculated. [Default:FALSE]}
 
-\item{projection_genes}{name of method ('threshold' or 'fano') or list of 
+\item{projection_genes}{name of method ('threshold' or 'fano') or list of
 genes to use when computing projections.}
 
 \item{lean}{if TRUE run a lean simulation. Else more robust pipeline
