@@ -62,37 +62,38 @@ setMethod("cluster", signature(object = "Projection"),
 #' @param K number of neughbors to compute ths for
 #' @return a weights matrix
 setMethod("computeKNNWeights", signature(object = "Projection"),
-            function(object, K = 30) {
+    function(object, K = 30) {
 
-            if (!is.na(object@weights[1,1])) {
-                return(object@weights)
-            }
+        if (!is.na(object@weights[1, 1])) {
+            return(object@weights)
+        }
 
-            n_workers <- getWorkerCount()
+        n_workers <- getWorkerCount()
 
-            k <- ball_tree_knn(t(object@pData), K, n_workers)
-            nn <- k[[1]]
-            d <- k[[2]]
+        k <- ball_tree_knn(t(object@pData), K, n_workers)
+        nn <- k[[1]]
+        d <- k[[2]]
 
-            sigma <- rowMaxs(d)
-            sparse_weights <- exp(-1 * (d * d) / sigma ^ 2)
+        sigma <- rowMaxs(d)
+        sparse_weights <- exp(-1 * (d * d) / sigma ^ 2)
 
-            # Normalize row sums = 1
-            weightsNormFactor <- rowSums(sparse_weights)
-            weightsNormFactor[weightsNormFactor == 0] <- 1.0
-            sparse_weights <- sparse_weights / weightsNormFactor
+        # Normalize row sums = 1
+        weightsNormFactor <- rowSums(sparse_weights)
+        weightsNormFactor[weightsNormFactor == 0] <- 1.0
+        sparse_weights <- sparse_weights / weightsNormFactor
 
-            # load into a sparse matrix
-            tnn <- t(nn)
-            j <- as.numeric(tnn)
-            i <- as.numeric(col(tnn))
-            vals <- as.numeric(t(sparse_weights))
+        # load into a sparse matrix
+        tnn <- t(nn)
+        j <- as.numeric(tnn)
+        i <- as.numeric(col(tnn))
+        vals <- as.numeric(t(sparse_weights))
+        dims <- c(nrow(nn), nrow(nn))
+        dimnames <- list(colnames(object@pData), colnames(object@pData))
 
-            weights <- sparseMatrix(i = i, j = j, x = vals,
-                                    dims = c(nrow(nn), nrow(nn))
-                                    )
+        weights <- sparseMatrix(i = i, j = j, x = vals,
+                                dims = dims, dimnames = dimnames
+                               )
 
-            return(weights)
-            }
+        return(weights)
+    }
 )
-
