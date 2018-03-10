@@ -230,6 +230,170 @@ getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
 
 }
 
+#' Evaluates the significance of each signature in each cluster
+#'
+#' @importFrom stats p.adjust
+#' @param latentSpace numeric matrix N_Cells x N_Components
+#' @param sigScoresData List of SignatureScores Object, mapping signature
+#' names to their value at each coordinate
+#' @param metaData data.frame of meta-data for cells
+#' @param randomSigData A list with two items:
+#'
+#'   randomSigs: a list of lists of SignatureScore objects.  Each sub-list
+#'     represents permutation signatures generated for a specific size/balance
+#'
+#'   sigAssignments: named factor vector assigning signatures to random background
+#'     groups
+#' @param clusters a factor vector denoting which cluster each cell belongs to
+#' @return list:
+#' \itemize{
+#'     \item sigProbMatrix: the matrix of signature-projection consistency scores
+#'     \item pVals: pvalues for the scores
+#' }
+sigsVsProjectionsClusters <- function(latentSpace, sigScoresData, metaData,
+                              randomSigData, clusters) {
+
+  sigProjMatrix <- data.frame()
+  sigProjMatrix_P <- data.frame()
+  sigProjMatrix_Pemp <- data.frame()
+
+  proj <- Projection("All", pData = t(latentSpace))
+
+  # First evaluate things for all clusters in the latent space
+  weights <- computeKNNWeights(proj, K = round(sqrt(NCOL(proj@pData))))
+
+  svp_n <- sigsVsProjection_n(sigScoresData,
+                              randomSigData, weights)
+  svp_pcn <- sigsVsProjection_pcn(metaData, weights)
+  svp_pcf <- sigsVsProjection_pcf(metaData, weights)
+
+  consistency <- c(svp_n$consistency,
+                  svp_pcn$consistency,
+                  svp_pcf$consistency)
+
+  consistency <- as.data.frame(consistency)
+  colnames(consistency) <- c(proj@name)
+
+  pvals <- c(svp_n$pvals,
+            svp_pcn$pvals,
+            svp_pcf$pvals)
+
+  emp_pvals <- c(svp_n$empvals,
+                svp_pcn$pvals,
+                svp_pcf$pvals)
+
+  pvals <- as.data.frame(pvals)
+  colnames(pvals) <- c(proj@name)
+
+  emp_pvals <- as.data.frame(emp_pvals)
+  colnames(emp_pvals) <- c(proj@name)
+
+  sigProjMatrix <- merge(sigProjMatrix, consistency,
+                         by = "row.names", all = TRUE)
+
+  rownames(sigProjMatrix) <- sigProjMatrix$Row.names
+  sigProjMatrix$Row.names <- NULL
+
+  sigProjMatrix_P <- merge(sigProjMatrix_P, pvals,
+                           by = "row.names", all = TRUE)
+
+  sigProjMatrix_Pemp <- merge(sigProjMatrix_Pemp, emp_pvals,
+                              by = "row.names", all = TRUE)
+
+  rownames(sigProjMatrix_P) <- sigProjMatrix_P$Row.names
+  rownames(sigProjMatrix_Pemp) <- sigProjMatrix_Pemp$Row.names
+  sigProjMatrix_P$Row.names <- NULL
+  sigProjMatrix_Pemp$Row.names <- NULL
+
+  for (cluster in unique(clusters)) {
+    cluster_cells <- names(clusters)[clusters == cluster]
+    proj <- Projection(as.character(cluster),
+                       pData = t(latentSpace[cluster_cells, ]))
+
+
+    weights <- computeKNNWeights(proj, K=round(sqrt(NCOL(proj@pData))))
+
+    svp_n <- sigsVsProjection_n(sigScoresData, randomSigData,
+                                weights, cells = cluster_cells)
+    svp_pcn <- sigsVsProjection_pcn(metaData, weights, cells = cluster_cells)
+    svp_pcf <- sigsVsProjection_pcf(metaData, weights, cells = cluster_cells)
+
+    consistency <- c(svp_n$consistency,
+                    svp_pcn$consistency,
+                    svp_pcf$consistency)
+
+    consistency <- as.data.frame(consistency)
+    colnames(consistency) <- c(proj@name)
+
+    pvals <- c(svp_n$pvals,
+              svp_pcn$pvals,
+              svp_pcf$pvals)
+
+    emp_pvals <- c(svp_n$empvals,
+                  svp_pcn$pvals,
+                  svp_pcf$pvals)
+
+    pvals <- as.data.frame(pvals)
+    colnames(pvals) <- c(proj@name)
+
+    emp_pvals <- as.data.frame(emp_pvals)
+    colnames(emp_pvals) <- c(proj@name)
+
+    sigProjMatrix <- merge(sigProjMatrix, consistency,
+                           by = "row.names", all = TRUE)
+
+    rownames(sigProjMatrix) <- sigProjMatrix$Row.names
+    sigProjMatrix$Row.names <- NULL
+
+    sigProjMatrix_P <- merge(sigProjMatrix_P, pvals,
+                             by = "row.names", all = TRUE)
+
+    sigProjMatrix_Pemp <- merge(sigProjMatrix_Pemp, emp_pvals,
+                                by = "row.names", all = TRUE)
+
+    rownames(sigProjMatrix_P) <- sigProjMatrix_P$Row.names
+    rownames(sigProjMatrix_Pemp) <- sigProjMatrix_Pemp$Row.names
+    sigProjMatrix_P$Row.names <- NULL
+    sigProjMatrix_Pemp$Row.names <- NULL
+
+  }
+
+  # FDR-correct
+
+  sigProjMatrix_Padj <- matrix(
+      p.adjust(
+          as.matrix(sigProjMatrix_P),
+          method="BH"
+      ),
+    nrow=nrow(sigProjMatrix_P),
+    ncol=ncol(sigProjMatrix_P)
+  )
+  colnames(sigProjMatrix_Padj) <- colnames(sigProjMatrix_P)
+  rownames(sigProjMatrix_Padj) <- rownames(sigProjMatrix_P)
+
+  sigProjMatrix_Padj[sigProjMatrix_Padj == 0] <- 10^(-300)
+
+  sigProjMatrix <- as.matrix(sigProjMatrix)
+  sigProjMatrix_Padj <- as.matrix(log10(sigProjMatrix_Padj))
+
+  sigProjMatrix_Pempadj <- matrix(
+      p.adjust(
+          as.matrix(sigProjMatrix_Pemp),
+          method="BH"
+      ),
+    nrow=nrow(sigProjMatrix_Pemp),
+    ncol=ncol(sigProjMatrix_Pemp)
+  )
+  colnames(sigProjMatrix_Pempadj) <- colnames(sigProjMatrix_Pemp)
+  rownames(sigProjMatrix_Pempadj) <- rownames(sigProjMatrix_Pemp)
+
+  sigProjMatrix_Pempadj[sigProjMatrix_Pempadj == 0] <- 10^(-300)
+
+  sigProjMatrix_Pempadj <- as.matrix(log10(sigProjMatrix_Pempadj))
+
+  return(list(sigProjMatrix = sigProjMatrix, pVals = sigProjMatrix_Padj, emp_pVals = sigProjMatrix_Pempadj))
+}
+
 #' Evaluates the significance of each signature vs. each projection.
 #'
 #' @importFrom stats p.adjust
@@ -253,18 +417,6 @@ getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
 sigsVsProjections <- function(projections, sigScoresData, metaData,
                               randomSigData) {
 
-  # Build a matrix of all non-meta signatures
-  sigScoreMatrix <- do.call(
-               cbind,
-               lapply(sigScoresData, function(sig) sig@scores)
-  )
-  sampleLabels <- rownames(sigScoreMatrix)
-  sigScoreMatrix <- matrixStats::colRanks(
-             sigScoreMatrix, preserveShape=TRUE, ties.method="average"
-  )
-  colnames(sigScoreMatrix) <- names(sigScoresData)
-  rownames(sigScoreMatrix) <- sampleLabels
-
   sigProjMatrix <- data.frame()
   sigProjMatrix_P <- data.frame()
   sigProjMatrix_Pemp <- data.frame()
@@ -272,8 +424,7 @@ sigsVsProjections <- function(projections, sigScoresData, metaData,
   for (proj in projections) {
     weights <- computeKNNWeights(proj, K=round(sqrt(NCOL(proj@pData))))
 
-    svp_n <- sigsVsProjection_n(sigScoresData, sigScoreMatrix,
-                                randomSigData, weights)
+    svp_n <- sigsVsProjection_n(sigScoresData, randomSigData, weights)
     svp_pcn <- sigsVsProjection_pcn(metaData, weights)
     svp_pcf <- sigsVsProjection_pcf(metaData, weights)
 
@@ -359,8 +510,6 @@ sigsVsProjections <- function(projections, sigScoresData, metaData,
 #' @importFrom matrixStats colMedians
 #' @param sigData a list of SignatureScores objects representing input user
 #' signatures
-#' @param sigScoreMatrix a numeric matrix (N_SAMPLES x N_SIGNATURES) containing
-#' the signature scores for every (signature, sample)
 #' @param randomSigData A list with two items:
 #'
 #'   randomSigs: a list of lists of SignatureScore objects.  Each sub-list
@@ -370,14 +519,37 @@ sigsVsProjections <- function(projections, sigScoresData, metaData,
 #'     groups
 #'
 #' @param weights numeric matrix of dimension N_SAMPLES x N_SAMPLES
+#' @param cells list of cell names.  Subsets anlysis to provided cells.
+#' If omitted, use all cells.
 #' @return list:
 #' \itemize{
 #'     \item consistency: consistency scores
 #'     \item pvals: pvalues
 #'     \item emppvals: empirical pvalues
 #' }
-sigsVsProjection_n <- function(sigData, sigScoreMatrix,
-                               randomSigData, weights){
+sigsVsProjection_n <- function(sigData, randomSigData,
+                               weights, cells = NULL){
+
+    # Build a matrix of all non-meta signatures
+    if (is.null(cells)){
+        extractedScores <- lapply(sigData,
+                                  function(sig) sig@scores)
+    } else {
+        extractedScores <- lapply(sigData,
+                                  function(sig) sig@scores[cells])
+    }
+    sigScoreMatrix <- do.call(cbind, extractedScores)
+    sampleLabels <- rownames(sigScoreMatrix)
+    sigScoreMatrix <- matrixStats::colRanks(
+               sigScoreMatrix, preserveShape = TRUE, ties.method = "average"
+    )
+    colnames(sigScoreMatrix) <- names(sigData)
+    rownames(sigScoreMatrix) <- sampleLabels
+
+
+    if (!is.null(cells)) {
+        weights <- weights[cells, cells]
+    }
 
     N_SAMPLES <- nrow(weights)
 
@@ -386,12 +558,18 @@ sigsVsProjection_n <- function(sigData, sigScoreMatrix,
 
     groupedResults <- lapply(names(randomSigScores), function(group) {
 
-        # Build a matrix of random background signatures
+        # Build a matrix of random background signatures for this group
         randomSigGroup <- randomSigScores[[group]]
-        randomSigScoreMatrix <- do.call(
-            cbind,
-            lapply(randomSigGroup, function(rsig) rsig@scores)
-        )
+
+        if (is.null(cells)){
+            extractedScores <- lapply(randomSigGroup,
+                                      function(rsig) rsig@scores)
+        } else {
+            extractedScores <- lapply(randomSigGroup,
+                                      function(rsig) rsig@scores[cells])
+        }
+
+        randomSigScoreMatrix <- do.call(cbind, extractedScores)
 
         sampleLabels <- rownames(randomSigScoreMatrix)
         randomSigScoreMatrix <- matrixStats::colRanks(
@@ -462,15 +640,22 @@ sigsVsProjection_n <- function(sigData, sigScoreMatrix,
 #' @importFrom stats pnorm
 #' @param metaData data.frame of meta-data for cells
 #' @param weights numeric matrix of dimension N_SAMPLES x N_SAMPLES
+#' @param cells list of cell names.  Subsets anlysis to provided cells.
+#' If omitted, use all cells.
 #' @return list:
 #' \itemize{
 #'     \item consistency: consistency scores
 #'     \item pvals: pvalues
 #' }
-sigsVsProjection_pcn <- function(metaData, weights){
+sigsVsProjection_pcn <- function(metaData, weights, cells = NULL){
   # Calculate significance for meta data numerical signatures
   # This is done separately because there are likely to be many repeats
   # (e.g. for a time coordinate)
+
+  if (!is.null(cells)) {
+      weights <- weights[cells, cells]
+      metaData <- metaData[cells, ]
+  }
 
   N_SAMPLES <- nrow(weights)
 
@@ -527,15 +712,22 @@ sigsVsProjection_pcn <- function(metaData, weights){
 #' @importFrom stats kruskal.test
 #' @param metaData data.frame of meta-data for cells
 #' @param weights numeric matrix of dimension N_SAMPLES x N_SAMPLES
+#' @param cells list of cell names.  Subsets anlysis to provided cells.
+#' If omitted, use all cells.
 #' @return list:
 #' \itemize{
 #'     \item consistency: consistency scores
 #'     \item pvals: pvalues
 #' }
-sigsVsProjection_pcf <- function(metaData, weights){
+sigsVsProjection_pcf <- function(metaData, weights, cells = NULL){
   # Calculate significance for meta data factor signatures
   # This is done separately because there are likely to be many repeats
   # (e.g. for a time coordinate)
+
+  if (!is.null(cells)) {
+      weights <- weights[cells, cells]
+      metaData <- metaData[cells, ]
+  }
 
   N_SAMPLES <- nrow(weights)
 

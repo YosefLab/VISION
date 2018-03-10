@@ -282,7 +282,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       }) %>%
       get("/FilterGroup/SigClusters/Normal", function(req, res, err) {
 
-        cls <- object@filterModuleData@ProjectionData@sigClusters
+        cls <- object@ProjectionData@sigClusters
         cls <- cls$Computed
 
         out <- toJSON(cls, auto_unbox=TRUE)
@@ -290,7 +290,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       }) %>%
       get("/FilterGroup/SigClusters/Meta", function(req, res, err) {
 
-        cls <- object@filterModuleData@ProjectionData@sigClusters
+        cls <- object@ProjectionData@sigClusters
         cls <- cls$Meta
 
         out <- toJSON(cls, auto_unbox=TRUE)
@@ -298,11 +298,11 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       }) %>%
       get("/FilterGroup/(?<proj_name1>.*)/coordinates", function(req, res, err) {
         proj <- URLdecode(req$params$proj_name1)
-        out <- FastProjectR:::coordinatesToJSON(object@filterModuleData@ProjectionData@projections[[proj]]@pData)
+        out <- FastProjectR:::coordinatesToJSON(object@ProjectionData@projections[[proj]]@pData)
         return(out)
       }) %>%
       get("/FilterGroup/projections/list", function(req, res, err) {
-        proj_names <- names(object@filterModuleData@ProjectionData@projections)
+        proj_names <- names(object@ProjectionData@projections)
         out <- toJSON(proj_names, auto_unbox=TRUE)
         return(out)
       }) %>%
@@ -312,7 +312,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         keys <- vapply(signatures, function(x) x@name, "")
         vals <- vapply(signatures, function(x) x@isMeta, TRUE)
         sigs <- keys[!vals]
-        out <- FastProjectR:::sigProjMatrixToJSON(object@filterModuleData@ProjectionData@sigProjMatrix, sigs)
+        out <- FastProjectR:::sigProjMatrixToJSON(object@ProjectionData@sigProjMatrix, sigs)
         return(out)
       }) %>%
       get("/FilterGroup/SigProjMatrix/Meta", function(req, res, err) {
@@ -321,7 +321,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         keys <- vapply(signatures, function(x) x@name, "")
         vals <- vapply(signatures, function(x) x@isMeta, TRUE)
         sigs <- keys[!vals]
-        out <- FastProjectR:::sigProjMatrixToJSON(object@filterModuleData@ProjectionData@sigProjMatrix, sigs)
+        out <- FastProjectR:::sigProjMatrixToJSON(object@ProjectionData@sigProjMatrix, sigs)
         return(out)
       }) %>%
       get("/FilterGroup/SigProjMatrix_P/Normal", function(req, res, err) {
@@ -330,7 +330,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         keys <- vapply(signatures, function(x) x@name, "")
         vals <- vapply(signatures, function(x) x@isMeta, TRUE)
         sigs <- keys[!vals]
-        out <- FastProjectR:::sigProjMatrixToJSON(object@filterModuleData@ProjectionData@pMatrix, sigs)
+        out <- FastProjectR:::sigProjMatrixToJSON(object@ProjectionData@pMatrix, sigs)
         return(out)
       }) %>%
       get("/FilterGroup/SigProjMatrix_Pemp/Normal", function(req, res, err) {
@@ -339,14 +339,39 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         keys <- vapply(signatures, function(x) x@name, "")
         vals <- vapply(signatures, function(x) x@isMeta, TRUE)
         sigs <- keys[!vals]
-        out <- FastProjectR:::sigProjMatrixToJSON(object@filterModuleData@ProjectionData@emp_pMatrix, sigs)
+        out <- FastProjectR:::sigProjMatrixToJSON(object@ProjectionData@emp_pMatrix, sigs)
         return(out)
       }) %>%
       get("/FilterGroup/SigProjMatrix_P/Meta", function(req, res, err) {
 
         sigs <- colnames(object@metaData)
 
-        out <- FastProjectR:::sigProjMatrixToJSON(object@filterModuleData@ProjectionData@pMatrix, sigs)
+        out <- FastProjectR:::sigProjMatrixToJSON(object@ProjectionData@pMatrix, sigs)
+        return(out)
+      }) %>%
+      get("/FilterGroup/SigProjMatrix_P_Clusters/Normal", function(req, res, err) {
+
+        signatures <- object@sigData
+        keys <- vapply(signatures, function(x) x@name, "")
+        vals <- vapply(signatures, function(x) x@isMeta, TRUE)
+        sigs <- keys[!vals]
+        out <- FastProjectR:::sigProjMatrixToJSON(object@ClusterProjectionData@pMatrix, sigs)
+        return(out)
+      }) %>%
+      get("/FilterGroup/SigProjMatrix_Pemp_Clusters/Normal", function(req, res, err) {
+
+        signatures <- object@sigData
+        keys <- vapply(signatures, function(x) x@name, "")
+        vals <- vapply(signatures, function(x) x@isMeta, TRUE)
+        sigs <- keys[!vals]
+        out <- FastProjectR:::sigProjMatrixToJSON(object@ClusterProjectionData@emp_pMatrix, sigs)
+        return(out)
+      }) %>%
+      get("/FilterGroup/SigProjMatrix_P_Clusters/Meta", function(req, res, err) {
+
+        sigs <- colnames(object@metaData)
+
+        out <- FastProjectR:::sigProjMatrixToJSON(object@ClusterProjectionData@pMatrix, sigs)
         return(out)
       }) %>%
       get("/FilterGroup/Tree/SigProjMatrix_P/Normal", function(req, res, err) {
@@ -355,13 +380,13 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         keys <- vapply(signatures, function(x) x@name, "")
         vals <- vapply(signatures, function(x) x@isMeta, TRUE)
         sigs <- keys[!vals]
-        out <- FastProjectR:::sigProjMatrixToJSON(object@filterModuleData@TreeProjectionData@pMatrix, sigs)
+        out <- FastProjectR:::sigProjMatrixToJSON(object@TreeProjectionData@pMatrix, sigs)
         return(out)
       }) %>%
       get("/FilterGroup/Tree/SigProjMatrix_P/Meta", function(req, res, err) {
 
         sigs <- colnames(object@metaData)
-        out <- FastProjectR:::sigProjMatrixToJSON(object@filterModuleData@TreeProjectionData@pMatrix, sigs)
+        out <- FastProjectR:::sigProjMatrixToJSON(object@TreeProjectionData@pMatrix, sigs)
 
         return(out)
       }) %>%
@@ -372,28 +397,28 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         method <- URLdecode(req$params$cluster_procedure)
         param <- as.numeric(URLdecode(req$params$param))
 
-        clust <- FastProjectR:::cluster(object@filterModuleData@ProjectionData@projections[[proj]], method, param)
+        clust <- FastProjectR:::cluster(object@ProjectionData@projections[[proj]], method, param)
         out <- FastProjectR:::clusterToJSON(clust)
         return(out)
       }) %>%
       get("/FilterGroup/Tree/List", function(req, res, err) {
 
         ## all Trees have the same adjacency matrix, so we can use the first one
-        W <- object@filterModuleData@TreeProjectionData@projections[[1]]@adjMat
+        W <- object@TreeProjectionData@projections[[1]]@adjMat
 
         return(toJSON(W))
       }) %>%
       get("/FilterGroup/(?<proj_name3>.*)/Tree/Points", function(req, res, err) {
         proj <- URLdecode(req$params$proj_name3)
 
-        C <- object@filterModuleData@TreeProjectionData@projections[[proj]]@vData
+        C <- object@TreeProjectionData@projections[[proj]]@vData
 
         return(toJSON(C))
       }) %>%
       get("/FilterGroup/(?<proj_name4>.*)/Tree/Projection", function(req, res, err) {
         proj <- URLdecode(req$params$proj_name4)
 
-        out <- FastProjectR:::coordinatesToJSON(object@filterModuleData@TreeProjectionData@projections[[proj]]@pData)
+        out <- FastProjectR:::coordinatesToJSON(object@TreeProjectionData@projections[[proj]]@pData)
 
         return(out)
       }) %>%
@@ -467,7 +492,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
           keys <- vapply(signatures, function(x) x@name, "")
           vals <- vapply(signatures, function(x) x@isMeta, TRUE)
           sigs <- keys[!vals]
-          pc <- object@filterModuleData@PCAnnotatorData@pearsonCorr
+          pc <- object@PCAnnotatorData@pearsonCorr
           pc <- pc[, 1:10]
 
         return(FastProjectR:::pearsonCorrToJSON(pc, sigs))
@@ -479,13 +504,13 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
                                 function(x) is.numeric(object@metaData[[x]]),
                                 FUN.VALUE = TRUE)
           sigs <- sigs[numericMeta]
-          pc <- object@filterModuleData@PCAnnotatorData@pearsonCorr[, 1:10]
+          pc <- object@PCAnnotatorData@pearsonCorr[, 1:10]
 
         return(FastProjectR:::pearsonCorrToJSON(pc, sigs))
       }) %>%
       get("/FilterGroup/PearsonCorr/list", function(req, res, err) {
 
-          pc <- object@filterModuleData@PCAnnotatorData@pearsonCorr
+          pc <- object@PCAnnotatorData@pearsonCorr
           pcnames <- seq(ncol(pc))[1:10]
           result <- toJSON(
                            pcnames,
@@ -519,6 +544,15 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         return(result)
 
       }) %>%
+      get("/Clusters", function(req, res, err) {
+        metaData <- object@metaData
+        name <- object@cluster_variable
+        out <- "No Clusters!"
+        if (name %in% colnames(metaData)) {
+          out <- FastProjectR:::sigScoresToJSON(metaData[name])
+        }
+        return(out)
+      }) %>%
       get("/SessionInfo", function(req, res, err) {
 
         info <- list()
@@ -529,7 +563,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             info["name"] <- ""
         }
 
-        W <- object@filterModuleData@TreeProjectionData
+        W <- object@TreeProjectionData
         hasTree <- !is.null(W)
 
         info["has_tree"] <- hasTree

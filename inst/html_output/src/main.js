@@ -1,8 +1,9 @@
 var global_stack = [];
 
 var global_status = {};
-global_status.main_vis = "sigvp"; // Selected from 3 options on top
+global_status.main_vis = "clusters"; // Selected from 4 options on top
 /* Options are:
+    'clusters'
     'sigvp'
     'pcannotator'
     'tree'
@@ -16,6 +17,7 @@ global_status.plotted_pc = 1;
 global_status.plotted_item = "";  // name of signature, meta or gene that is plotted
 global_status.plotted_item_type = ""; // either 'signature', 'meta', or 'gene'
 
+global_status.selected_cluster = ""; // which cell cluster should be clustered
 
 global_status.upper_range = "";
 global_status.lower_range = "";
@@ -33,6 +35,7 @@ global_data.pca_projection_coordinates = {};
 global_data.tree_projection_coordinates = {};
 global_data.plotted_values = {}; // Holds gene expression, signature scores/ranks, etc...
 global_data.sig_info = {};  // Holds the information for the last plotted signature
+global_data.clusters = {};  // Maps cell ID to cluster ID
 
 var lower_left_content;
 var upper_left_content;
@@ -74,6 +77,12 @@ function set_global_status(update){
     var lower_left_content_promises = [];
     var upper_left_content_promises = [];
 
+    // clear the selected cluster if we're changing main vis
+    if('main_vis' in update) {
+        global_status['selected_cluster'] = ''
+        update['selected_cluster'] = ''
+    }
+
     // Just get all the PC's using one call
     if('main_vis' in update && get_global_status('main_vis') === 'pcannotator' &&
         _.isEmpty(global_data.pca_projection_coordinates))
@@ -104,6 +113,20 @@ function set_global_status(update){
 
     if(('plotted_projection' in update && get_global_status('main_vis') === 'sigvp') ||
        ('main_vis' in update && get_global_status('main_vis') === 'sigvp')
+    ){
+        var proj_key = get_global_status('plotted_projection');
+        var proj_promise = api.projection.coordinates(proj_key)
+            .then(function(projection){
+                global_data.sig_projection_coordinates = projection;
+            });
+
+        all_promises.push(proj_promise);
+        right_content_promises.push(proj_promise);
+        upper_left_content_promises.push(proj_promise);
+    }
+
+    if(('plotted_projection' in update && get_global_status('main_vis') === 'clusters') ||
+       ('main_vis' in update && get_global_status('main_vis') === 'clusters')
     ){
         var proj_key = get_global_status('plotted_projection');
         var proj_promise = api.projection.coordinates(proj_key)
@@ -245,9 +268,16 @@ window.onload = function()
             global_data.sigIsMeta = sigIsMeta;
         });
 
+    // Get the cluster assignments for cells
+    var cellClustersPromise = api.cellClusters()
+        .then(function(data) {
+            global_data.clusters = data;
+        });
+
     // When it's all done, run this
     $.when(upper_left_promise, right_promise,
-        sigIsMetaPromise, lower_left_promise
+        sigIsMetaPromise, lower_left_promise,
+        cellClustersPromise
     )
         .then(function(){
             upper_left_content.select_default();

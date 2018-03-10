@@ -49,9 +49,7 @@ function ColorScatter(parent, colorbar, legend)
         .on("zoom", self.redraw());
 
     //This gets overwritten when you set data
-    this.colorScale = d3.scale.linear()
-        .domain([0,0.5,1])
-        .range(["blue", "green", "red"]);
+    this.colorScale = null
 
     this.tip = d3.tip()
         .attr('class', 'd3-tip')
@@ -114,27 +112,31 @@ function ColorScatter(parent, colorbar, legend)
     this.curr_tree_node = {};
 }
 
+ColorScatter.prototype.clearData = function() {
+    this.points = []
+    this.tree_points = []
+    this.tree_adj = []
+}
 
-ColorScatter.prototype.setData = function(points, isFactor, tree_points,
-    tree_adj, full_color_range)
+ColorScatter.prototype.setData = function(points, isFactor,
+    full_color_range, selected_cells)
 {
-    if(tree_points === undefined){
-        tree_points = []
-    }
-
-    if(tree_adj === undefined){
-        tree_adj = []
-    }
 
     if(full_color_range === undefined){
         full_color_range = false
     }
 
-    this.points = points;
-    this.tree_points = tree_points
-    this.tree_adj = tree_adj
+    if(selected_cells === undefined){
+        selected_cells = points.map(x => x[3]) //select all cells
+    }
 
-    var cvals = points.map(function(e){return e[2];}); //extract 3rd column
+    selected_cells = _.keyBy(selected_cells, x => x)
+
+    this.points = points;
+
+    var cvals = points
+        .filter(e => e[3] in selected_cells) // filter for selected cells
+        .map(e => e[2])                      // extract 3rd column
 
     //Adjust circle size based on number of points
     //Max is 5, Min is 2
@@ -194,8 +196,23 @@ ColorScatter.prototype.setData = function(points, isFactor, tree_points,
         this.setColorBar();
     }
 
-    this.redraw(true)();
-};
+    // Compute colors for all points, add to points[n][4]
+    var self = this
+    this.points.forEach(function(x) {
+        if (x[3] in selected_cells) {
+            x[4] = self.colorScale(x[2])
+        } else {
+            x[4] = "#777777"
+        }
+    })
+}
+
+ColorScatter.prototype.setTreeData = function(tree_points, tree_adj)
+{
+
+    this.tree_points = tree_points
+    this.tree_adj = tree_adj
+}
 
 /*
  * Automatically adjusts the scale if the points are too wide
@@ -512,7 +529,7 @@ ColorScatter.prototype.redraw = function(performTransition) {
         circles.enter().append("circle")
             .classed("scatter", true);
 
-        circles.style("fill", function(d){return self.colorScale(d[2]);})
+        circles.style("fill", function(d){return d[4];})
             .attr("r", self.circle_radius * Math.pow(self.zoom.scale(), .5))
             .on("click", function(d){self.setSelected(d[3]);})
             .on("mouseover", function(d,i){self.tip.show(d,i);})

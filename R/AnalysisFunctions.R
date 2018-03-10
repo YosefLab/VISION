@@ -7,6 +7,8 @@
 #' @return the FastProject object modifed as described above
 clusterCells <- function(object) {
 
+    message("Clustering cells...")
+
     exprData <- object@exprData
     filterInput <- object@projection_genes
     filterThreshold <- object@threshold
@@ -298,11 +300,32 @@ analyzeProjections <- function(object,
                                    clusterMeta = object@pool)
 
   projData <- ProjectionData(projections = projectData,
-                             keys = colnames(sigVProj$sigProjMatrix),
                              sigProjMatrix = sigVProj$sigProjMatrix,
                              pMatrix = sigVProj$pVals,
                              sigClusters = sigClusters,
                              emp_pMatrix = sigVProj$emp_pVals)
+
+  object@ProjectionData <- projData
+
+  message("Evaluating signatures against within clusters...")
+  clusters <- object@metaData[, object@cluster_variable]
+  names(clusters) <- rownames(object@metaData)
+
+  sigVProjClusters <- sigsVsProjectionsClusters(
+                                object@latentSpace,
+                                object@sigScores,
+                                object@metaData,
+                                signatureBackground,
+                                clusters)
+
+  projDataClusters <- ProjectionData(
+                             projections = projectData,
+                             sigProjMatrix = sigVProjClusters$sigProjMatrix,
+                             pMatrix = sigVProjClusters$pVals,
+                             sigClusters = sigClusters,
+                             emp_pMatrix = sigVProjClusters$emp_pVals)
+
+  object@ClusterProjectionData <- projDataClusters
 
   if (tolower(object@trajectory_method) != "none") {
       message("Fitting principle tree...")
@@ -322,13 +345,12 @@ analyzeProjections <- function(object,
                                            clusterMeta = object@pool)
 
       treeProjData <- TreeProjectionData(projections = treeProjs$projections,
-                                 keys = colnames(sigVTreeProj$sigProjMatrix),
                                  sigProjMatrix = sigVTreeProj$sigProjMatrix,
                                  pMatrix = sigVTreeProj$pVals,
                                  sigClusters = sigTreeClusters,
                                  treeScore = treeProjs$treeScore)
-  } else {
-      treeProjData <- NULL
+
+      object@TreeProjectionData <- treeProjData
   }
 
   message("Computing Correlations between Signatures and Expression PCs...")
@@ -337,12 +359,9 @@ analyzeProjections <- function(object,
 
 
   pcaAnnotData <- PCAnnotatorData(pearsonCorr = pearsonCorr)
+  object@PCAnnotatorData <- pcaAnnotData
 
-  filterModuleData <- FilterModuleData(ProjectionData = projData,
-                                       TreeProjectionData = treeProjData,
-                                       PCAnnotatorData = pcaAnnotData)
 
-  object@filterModuleData <- filterModuleData
   return(object)
 }
 
@@ -361,8 +380,8 @@ calculatePearsonCorr <- function(sigMatrix, metaData, latentSpace){
                             function(x) is.numeric(metaData[[x]]),
                             FUN.VALUE = TRUE)
 
-  numericMeta <- metaData[, numericMetaVars]
-  numericMeta <- numericMeta[rownames(sigMatrix), ]
+  numericMeta <- metaData[, numericMetaVars, drop = FALSE]
+  numericMeta <- numericMeta[rownames(sigMatrix), , drop = FALSE]
 
 
   computedSigMatrix <- cbind(sigMatrix, numericMeta)

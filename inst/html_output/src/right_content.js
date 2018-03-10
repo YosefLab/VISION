@@ -45,13 +45,14 @@ Right_Content.prototype.update = function(updates)
         ('plotted_item_type' in updates) ||
         ('plotted_projection' in updates) ||
         ('plotted_pc' in updates) ||
-        ('colorScatterOption' in updates);
+        ('colorScatterOption' in updates) ||
+        ('selected_cluster' in updates);
 
     if (!needsUpdate) return;
 
     var main_vis = get_global_status('main_vis');
 
-    if(main_vis === 'sigvp'){
+    if(main_vis === 'sigvp' || main_vis === 'clusters'){
         self.draw_sigvp();
 
     } else if (main_vis === "tree") {
@@ -119,7 +120,24 @@ Right_Content.prototype.draw_sigvp = function() {
         points.push([x, y, sig_score, sample_label]);
     })
 
-    self.scatter.setData(points, isFactor, undefined, undefined, full_color_range);
+    // Get selected cells
+    var selected_cluster = get_global_status('selected_cluster')
+    var clusters = get_global_data('clusters')
+
+    var selected_cells
+    if (selected_cluster !== ''){
+        selected_cells = _(clusters)
+            .toPairs(clusters)
+            .filter(x => x[1] === selected_cluster)
+            .map(x => x[0])
+            .value()
+    } else {
+        selected_cluster === undefined
+    }
+
+    self.scatter.clearData()
+    self.scatter.setData(points, isFactor, full_color_range, selected_cells);
+    self.scatter.redraw(true)();
 
 }
 
@@ -191,7 +209,10 @@ Right_Content.prototype.draw_tree = function() {
                 }
             }
 
-            self.scatter.setData(points, isFactor, tree_points, tree_adj, full_color_range);
+            self.scatter.clearData()
+            self.scatter.setData(points, isFactor, full_color_range)
+            self.scatter.setTreeData(tree_points, tree_adj)
+            self.scatter.redraw(true)()
 
         });
 }
@@ -230,7 +251,9 @@ Right_Content.prototype.draw_pca = function() {
         points.push([x, y, sig_score, sample_label]);
     })
 
+    self.scatter.clearData()
     self.scatter.setData(points, isFactor);
+    self.scatter.redraw(true)();
 
 }
 
@@ -306,16 +329,18 @@ Right_Content.prototype.exportSigProj = function()
     //Convert the data that's in the scatter plot to a tab-delimited table
 
     var proj;
-    if (main_vis === 'sigvp') {
+    if (main_vis === 'sigvp' || main_vis === 'clusters') {
         proj = get_global_data('sig_projection_coordinates')
     } else if (main_vis ==='pcannotator') {
         proj = get_global_data('pca_projection_coordinates')
     } else if (main_vis ==='tree') {
         proj = get_global_data('tree_projection_coordinates')
+    } else {
+        throw "Bad main_vis value!";
     }
 
     var table;
-    if (main_vis === 'sigvp' || main_vis === 'tree') {
+    if (main_vis === 'sigvp' || main_vis === 'tree' || main_vis === 'clusters') {
 
         table = _.map(proj, (value, key) => {
             return [key, proj[key][0], proj[key][1], values[key]]

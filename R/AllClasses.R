@@ -20,7 +20,6 @@ Cluster <- setClass("Cluster",
 ProjectionData <- setClass("ProjectionData",
     slots = c(
     projections = "list",
-    keys = "character", # names of projections
     sigProjMatrix = "matrix",
     pMatrix="matrix",
     sigClusters = "list",
@@ -52,14 +51,6 @@ TreeProjection <- setClass("TreeProjection",
     adjMat = "matrix",
     edgeAssoc = "matrix",
     edgePos = "numeric"
-))
-
-setClassUnion('TreeProjDataORNULL', members=c('TreeProjectionData', 'NULL'))
-FilterModuleData <- setClass("FilterModuleData",
-    slots = c(
-    ProjectionData = "ProjectionData",
-    TreeProjectionData = "TreeProjDataORNULL",
-    PCAnnotatorData = "PCAnnotatorData"
 ))
 
 ServerExpression <- setClass("ServerExpression",
@@ -135,7 +126,10 @@ FastProject <- setClass("FastProject",
         pool = "logical",
         sigScores = "list",
         cellsPerPartition = "numeric",
-        filterModuleData = "FilterModuleData",
+        ClusterProjectionData = "ProjectionData",
+        ProjectionData = "ProjectionData",
+        TreeProjectionData = "TreeProjectionData",
+        PCAnnotatorData = "PCAnnotatorData",
         sigMatrix = "data.frame",
         pools = "list",
         inputProjections = "list",
@@ -161,7 +155,10 @@ FastProject <- setClass("FastProject",
         pool = FALSE,
         sigScores = NULL,
         cellsPerPartition = 100,
-        filterModuleData = NULL,
+        ClusterProjectionData = NULL,
+        ProjectionData = NULL,
+        TreeProjectionData = NULL,
+        PCAnnotatorData = NULL,
         sigMatrix = NULL,
         pools = NULL,
         inputProjections = NULL,

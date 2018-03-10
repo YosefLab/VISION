@@ -5,12 +5,15 @@
 \title{Evaluates the significance of each meta data factor signature vs. a
 single projections weights}
 \usage{
-sigsVsProjection_pcf(metaData, weights)
+sigsVsProjection_pcf(metaData, weights, cells = NULL)
 }
 \arguments{
 \item{metaData}{data.frame of meta-data for cells}
 
 \item{weights}{numeric matrix of dimension N_SAMPLES x N_SAMPLES}
+
+\item{cells}{list of cell names.  Subsets anlysis to provided cells.
+If omitted, use all cells.}
 }
 \value{
 list:

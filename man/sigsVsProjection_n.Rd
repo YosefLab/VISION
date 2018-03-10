@@ -5,14 +5,11 @@
 \title{Evaluates the significance of each numeric signature vs. a
 single projections weights}
 \usage{
-sigsVsProjection_n(sigData, sigScoreMatrix, randomSigData, weights)
+sigsVsProjection_n(sigData, randomSigData, weights, cells = NULL)
 }
 \arguments{
 \item{sigData}{a list of SignatureScores objects representing input user
 signatures}
-
-\item{sigScoreMatrix}{a numeric matrix (N_SAMPLES x N_SIGNATURES) containing
-the signature scores for every (signature, sample)}
 
 \item{randomSigData}{A list with two items:
 
@@ -23,6 +20,9 @@ the signature scores for every (signature, sample)}
     groups}
 
 \item{weights}{numeric matrix of dimension N_SAMPLES x N_SAMPLES}
+
+\item{cells}{list of cell names.  Subsets anlysis to provided cells.
+If omitted, use all cells.}
 }
 \value{
 list:

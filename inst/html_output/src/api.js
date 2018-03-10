@@ -102,6 +102,21 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
+    output.filterGroup.sigProjMatrixPClusters = function(meta, pvalue)
+    {
+        var query = "/FilterGroup"
+        if (meta) {
+            query = query.concat("/SigProjMatrix_P_Clusters/Meta")
+        } else {
+            if (pvalue == "nominal") {
+                query = query.concat("/SigProjMatrix_P_Clusters/Normal")
+            } else {
+                query = query.concat("/SigProjMatrix_Pemp_Clusters/Normal")
+            }
+        }
+        return $.ajax(query, {dataType: "json"}).then(x => x)
+    }
+
     output.filterGroup.treeSigProjMatrixP = function(meta)
     {
         var query = "/FilterGroup"
@@ -242,6 +257,13 @@ var api = (function(){
 
     output.sessionInfo = function() {
         var query = "/SessionInfo"
+        return $.ajax(query, {dataType: "json"}).then(x => x)
+    }
+
+    // Misc
+
+    output.cellClusters = function() {
+        var query = "/Clusters"
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 

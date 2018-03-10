@@ -51,14 +51,11 @@ Upper_Left_Content.prototype.update = function(updates)
 
 Upper_Left_Content.prototype.select_default = function()
 {
-    var main_vis = get_global_status('main_vis');
-    var new_projection = 'PCA: 1,2'
+    var new_projection = 'tSNE30'
 
     var update = {}
     update['plotted_projection'] = new_projection
-    if(main_vis === 'sigvp'){
-        update['plotted_item'] = this.sig_table.get_top_sig(new_projection)
-    }
+    update['plotted_item'] = this.sig_table.get_top_sig(new_projection)
     update['plotted_item_type'] = 'signature'
 
     set_global_status(update)
@@ -197,10 +194,10 @@ Signature_Table.prototype.render = function()
         var sort_col = matrix.proj_labels.indexOf(self.sorted_column);
         if(sort_col > -1){
             var sortFun = function(a,b){
-                if (main_vis === "sigvp" || main_vis === "tree") {
-                    return a[1][sort_col].val - b[1][sort_col].val;
-                } else {
+                if (main_vis === 'pcannotator') {
                     return b[1][sort_col].val - a[1][sort_col].val;
+                } else {
+                    return a[1][sort_col].val - b[1][sort_col].val;
                 }
             };
             formatted_data_w_row_labels.sort(sortFun);
@@ -246,12 +243,22 @@ Signature_Table.prototype.render = function()
         content_row.enter().append('td');
         content_row.exit().remove();
 
-        if (main_vis == "pcannotator") {
+        if (main_vis === 'pcannotator') {
             content_row
                 .filter(function(d,i) { return i > 0;})
                 .style('background-color', function(d){return colorScale(d.val);})
                 .on("click", function(d){tableClickFunction_PC(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'signature')});
 
+        } else if (main_vis === 'clusters'){
+            content_row
+                .filter(function(d,i) { return i > 0;})
+                .text(function(d){
+                    if(d.val < -50) { return "< -50";}
+                    else if(d.val > -1) { return d.val.toFixed(2);}
+                    else {return d.val.toPrecision(2);}
+                })
+                .style('background-color', function(d){return colorScale(d.val);})
+                .on("click", function(d){tableClickFunction_clusters(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'signature')});
         } else {
             content_row
                 .filter(function(d,i) { return i > 0;})
@@ -292,7 +299,7 @@ Signature_Table.prototype.render = function()
     });
 
     // Apply compact styling for pcannotator
-    if(main_vis === "pcannotator"){
+    if(main_vis === "pcannotator" || main_vis === "clusters"){
         $(self.dom_node).find('table').addClass('compact')
     } else {
         $(self.dom_node).find('table').removeClass('compact')
@@ -338,7 +345,9 @@ Signature_Table.prototype.update = function(updates)
         var self = this;
         var main_vis = get_global_status('main_vis');
 
-        if (main_vis == "sigvp") {
+        if (main_vis == "clusters") {
+            matrix_promise = api.filterGroup.sigProjMatrixPClusters(false, "nominal");
+        } else if (main_vis == "sigvp") {
             matrix_promise = api.filterGroup.sigProjMatrixP(false, "nominal");
         } else if (main_vis == "tree") {
             matrix_promise = api.filterGroup.treeSigProjMatrixP(false);
@@ -411,7 +420,9 @@ Meta_Table.prototype.update = function(updates)
     if('main_vis' in updates || _.isEmpty(self.matrix)){
         var main_vis = get_global_status('main_vis');
 
-        if (main_vis === "sigvp") {
+        if (main_vis == "clusters") {
+            matrix_promise = api.filterGroup.sigProjMatrixPClusters(true, "nominal");
+        } else if (main_vis === "sigvp") {
             matrix_promise = api.filterGroup.sigProjMatrixP(true, "nominal");
         } else if (main_vis === "tree") {
             matrix_promise = api.filterGroup.treeSigProjMatrixP(true);
@@ -544,10 +555,10 @@ Meta_Table.prototype.render = function()
             var sort_col = matrix.proj_labels.indexOf(self.sorted_column);
             if(sort_col > -1){
                 sortFun = function(a,b){
-                    if (main_vis == "sigvp") {
-                        return a[1][sort_col].val - b[1][sort_col].val;
-                    } else {
+                    if (main_vis === 'pcannotator') {
                         return b[1][sort_col].val - a[1][sort_col].val;
+                    } else {
+                        return a[1][sort_col].val - b[1][sort_col].val;
                     }
                 };
                 formatted_data_w_row_labels.sort(sortFun);
@@ -599,12 +610,22 @@ Meta_Table.prototype.render = function()
         content_row.exit().remove();
 
 
-        if (main_vis == "pcannotator") {
+        if (main_vis === "pcannotator") {
             content_row
                 .filter(function(d,i) { return i > 0;})
                 .style('background-color', function(d){return colorScale(d.val);})
                 .on("click", function(d){tableClickFunction_PC(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'meta')});
 
+        } else if (main_vis === 'clusters'){
+            content_row
+                .filter(function(d,i) { return i > 0;})
+                .text(function(d){
+                    if(d.val < -50) { return "< -50";}
+                    else if(d.val > -1) { return d.val.toFixed(2);}
+                    else {return d.val.toPrecision(2);}
+                })
+                .style('background-color', function(d){return colorScale(d.val);})
+                .on("click", function(d){tableClickFunction_clusters(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'meta')});
         } else {
             content_row
                 .filter(function(d,i) { return i > 0;})
@@ -645,7 +666,7 @@ Meta_Table.prototype.render = function()
 
 
     // Apply compact styling for pcannotator
-    if(main_vis === "pcannotator"){
+    if(main_vis === "pcannotator" || main_vis === "clusters"){
         $(self.dom_node).find('table').addClass('compact')
     } else {
         $(self.dom_node).find('table').removeClass('compact')
@@ -914,6 +935,21 @@ function tableClickFunction_PC(row_key, col_key, item_type)
     update['plotted_item_type'] = item_type;
     update['plotted_item'] = row_key;
     update['plotted_pc'] = parseInt(col_key.split(" ")[1])
+
+    set_global_status(update);
+}
+
+function tableClickFunction_clusters(row_key, col_key, item_type)
+{
+    var update = {}
+    update['plotted_item_type'] = item_type;
+    update['plotted_item'] = row_key;
+
+    if (col_key === 'KNN' || col_key === 'All')
+    {
+        col_key = '' // This is used to indicate 'no cluster'
+    }
+    update['selected_cluster'] = col_key;
 
     set_global_status(update);
 }
