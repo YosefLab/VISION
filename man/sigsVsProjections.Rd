@@ -10,15 +10,16 @@ sigsVsProjections(projections, sigScoresData, metaData, randomSigData)
 \item{projections}{Maps projections to their spatial coordinates for each
 sample}
 
-\item{sigScoresData}{List of SignatureScores Object, mapping signature
-names to their value at each coordinate}
+\item{sigScoresData}{numeric matrix of signature scores
+size is cells x signatures}
 
 \item{metaData}{data.frame of meta-data for cells}
 
 \item{randomSigData}{A list with two items:
 
-  randomSigs: a list of lists of SignatureScore objects.  Each sub-list
-    represents permutation signatures generated for a specific size/balance
+  randomSigs: a list of signature score matrices.  Each list item
+    represents permutation signatures generated for a specific size/balance,
+    and is a numeric matrix of size cells X signatures
 
   sigAssignments: named factor vector assigning signatures to random background
     groups}

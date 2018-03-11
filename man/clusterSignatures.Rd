@@ -7,7 +7,7 @@
 clusterSignatures(sigMatrix, metaData, pvals, clusterMeta)
 }
 \arguments{
-\item{sigMatrix}{data.frame of signatures scores, NUM_SAMPLES x NUM_SIGNATURES}
+\item{sigMatrix}{matrix of signatures scores, NUM_SAMPLES x NUM_SIGNATURES}
 
 \item{metaData}{data.frame of meta-data for cells}
 

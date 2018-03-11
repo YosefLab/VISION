@@ -6,67 +6,6 @@
 #'
 #' Specified by FastProject argument (sig_score_method), default = naiveEvalSignature
 
-#' Naive eval Siganture, just sums the columns * sign, equivalent to all weights = 1
-#'
-#' @param exprData numeric Matrix Genes x Cells
-#' @param sig Signature to be evalauting
-#' @param weights Weight matrix computed through FNR curve
-#' @return SignatureScore object
-naiveEvalSignature <- function(exprData, sig, weights) {
-
-    # Select genes in signature that are in the expression matrix
-    sig_names <- names(sig@sigDict)
-    data_names <- rownames(exprData)
-    sigVector <- sig@sigDict[sig_names %in% data_names]
-
-    sigGenes <- exprData[names(sigVector),]
-
-    weights <- matrix(1, nrow=nrow(sigGenes), ncol=ncol(sigGenes))
-
-
-    pdata <- sigGenes * sigVector * weights;
-
-    sigScores <- colSums(pdata)
-
-    sigScores <- sigScores / length(sigVector)
-
-    sigObj <- SignatureScores(sigScores, sig@name,
-                            isFactor=FALSE, isMeta=FALSE, numGenes=length(sigVector))
-
-    return(sigObj)
-}
-
-#' Evaluate signature with weights computed from FNR curve.
-#'
-#' @param exprData numeric Matrix Genes x Cells
-#' @param sig Signature to be evalauting
-#' @param weights Weight matrix computed through FNR curve
-#' @return SignatureScore object
-weightedEvalSignature <- function(exprData, sig, weights) {
-
-    # Select genes in signature that are in the expression matrix
-    sig_names <- names(sig@sigDict)
-    data_names <- rownames(exprData)
-    sigVector <- (sig@sigDict)[sig_names %in% data_names]
-
-    sigGenes <- exprData[names(sigVector),]
-    weights <- weights[names(sigVector),]
-
-    pdata <- sigGenes * sigVector * weights
-
-    sigScores <- colSums(pdata)
-    denom <- colSums(abs(sigVector) * weights)
-    denom[denom == 0] <- 1 # change 0/0 to 0/1
-
-    sigScores <- sigScores / denom
-
-    sigObj <- SignatureScores(sigScores, sig@name,
-                            isFactor=FALSE, isMeta=FALSE, numGenes=length(sigVector))
-
-    return(sigObj)
-
-}
-
 #' Evaluate signature scores efficiently in batches
 #'
 #' @param sigs list of Signature(s) to be evalauting
@@ -77,7 +16,7 @@ weightedEvalSignature <- function(exprData, sig, weights) {
 #' this many genes in the expression matrix
 #' @importFrom parallel mclapply
 #' @importFrom parallel detectCores
-#' @return List of SignatureScore objects
+#' @return matrix of signature scores, cells X signatures
 batchSigEval <- function(sigs, sig_score_method, eData, weights,
                          min_signature_genes) {
 
@@ -116,25 +55,9 @@ batchSigEval <- function(sigs, sig_score_method, eData, weights,
     }, mc.cores = min(availableCores, length(sigBatches)))
 
     # allScoresBatches is list of sig x cell matrices
-
-    sigScoresObjBatches <- lapply(allScoresBatches, function(allScoresBatch) {
-
-        sigScoresObj <- lapply(rownames(allScoresBatch), function(name) {
-            sigObj <- SignatureScores(allScoresBatch[name, ], name,
-                                    isFactor = FALSE, isMeta = FALSE,
-                                    numGenes = numMatches[name])
-            return(sigObj)
-        })
-
-        return(sigScoresObj)
-    })
-
-    sigScores <- unlist(sigScoresObjBatches, recursive = FALSE, use.names = FALSE)
-
-    names(sigScores) <- vapply(sigScores, function(s) s@name, "")
+    sigScores <- t(do.call(rbind, allScoresBatches))
 
     return(sigScores)
-
 }
 
 #' Utility method to load signatures into a sparse matrix

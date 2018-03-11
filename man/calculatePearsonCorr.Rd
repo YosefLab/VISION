@@ -7,7 +7,7 @@
 calculatePearsonCorr(sigMatrix, metaData, latentSpace)
 }
 \arguments{
-\item{sigMatrix}{Signature scores dataframe}
+\item{sigMatrix}{Signature scores matrix cells x signatures}
 
 \item{metaData}{data.frame of meta-data for cells}
 

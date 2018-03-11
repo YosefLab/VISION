@@ -202,19 +202,7 @@ calcSignatureScores <- function(object,
     sigScores <- batchSigEval(object@sigData, object@sig_score_method,
                               normExpr, object@weights, object@min_signature_genes)
 
-    sigList <- object@sigData
-
-    # Remove any signatures that didn't compute correctly
-    toRemove <- vapply(sigScores, is.null, TRUE)
-    sigScores <- sigScores[!toRemove]
     object@sigScores <- sigScores
-
-    ## Convert Sig Scores to matrix
-    # Note: This needs to be a data frame because some scores are factors
-    object@sigMatrix <- data.frame(lapply(sigScores, function(x) x@scores),
-                                  check.names = FALSE)
-
-    object@sigData <- sigList[colnames(object@sigMatrix)]
 
     return(object)
 }
@@ -294,7 +282,7 @@ analyzeProjections <- function(object,
                                 signatureBackground)
 
   message("Clustering Signatures...")
-  sigClusters <- clusterSignatures(object@sigMatrix,
+  sigClusters <- clusterSignatures(object@sigScores,
                                    object@metaData,
                                    sigVProj$pVals,
                                    clusterMeta = object@pool)
@@ -339,7 +327,7 @@ analyzeProjections <- function(object,
                                         signatureBackground)
 
       message("Clustering Signatures...")
-      sigTreeClusters <- clusterSignatures(object@sigMatrix,
+      sigTreeClusters <- clusterSignatures(object@sigScores,
                                            object@metaData,
                                            sigVTreeProj$pVals,
                                            clusterMeta = object@pool)
@@ -354,7 +342,7 @@ analyzeProjections <- function(object,
   }
 
   message("Computing Correlations between Signatures and Expression PCs...")
-  pearsonCorr <- calculatePearsonCorr(object@sigMatrix,
+  pearsonCorr <- calculatePearsonCorr(object@sigScores,
                      object@metaData, object@latentSpace)
 
 
@@ -368,7 +356,7 @@ analyzeProjections <- function(object,
 #' Compute pearson correlation between signature scores and principle components
 #'
 #' @importFrom Hmisc rcorr
-#' @param sigMatrix Signature scores dataframe
+#' @param sigMatrix Signature scores matrix cells x signatures
 #' @param metaData data.frame of meta-data for cells
 #' @param latentSpace numeric matrix N_Cells x N_PCs
 #' @return pearsonCorr numeric matrix N_Signatures x N_PCs

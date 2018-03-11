@@ -118,13 +118,13 @@ calculateSignatureBackground <- function(object, num) {
                             normExpr, object@weights,
                             object@min_signature_genes)
 
-    # randomSigScores is list of SignatureScore
-    # need to make a list of lists of SignatureScores, grouping
+    # randomSigScores is matrix of cells x signatures
+    # need to make a list of matrices, one for each signature group
     # by background group number
     randomSigScoresGroups <- list()
     for (groupName in names(randomSigs)) {
         sigsInGroup <- names(randomSigs[[groupName]])
-        randomSigScoresGroups[[groupName]] <- randomSigScores[sigsInGroup]
+        randomSigScoresGroups[[groupName]] <- randomSigScores[, sigsInGroup]
     }
 
     return(list(
@@ -234,13 +234,14 @@ getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
 #'
 #' @importFrom stats p.adjust
 #' @param latentSpace numeric matrix N_Cells x N_Components
-#' @param sigScoresData List of SignatureScores Object, mapping signature
-#' names to their value at each coordinate
+#' @param sigScoresData numeric matrix of signature scores
+#' size is cells x signatures
 #' @param metaData data.frame of meta-data for cells
 #' @param randomSigData A list with two items:
 #'
-#'   randomSigs: a list of lists of SignatureScore objects.  Each sub-list
-#'     represents permutation signatures generated for a specific size/balance
+#'   randomSigs: a list of signature score matrices.  Each list item
+#'     represents permutation signatures generated for a specific size/balance,
+#'     and is a numeric matrix of size cells X signatures
 #'
 #'   sigAssignments: named factor vector assigning signatures to random background
 #'     groups
@@ -399,13 +400,14 @@ sigsVsProjectionsClusters <- function(latentSpace, sigScoresData, metaData,
 #' @importFrom stats p.adjust
 #' @param projections Maps projections to their spatial coordinates for each
 #' sample
-#' @param sigScoresData List of SignatureScores Object, mapping signature
-#' names to their value at each coordinate
+#' @param sigScoresData numeric matrix of signature scores
+#' size is cells x signatures
 #' @param metaData data.frame of meta-data for cells
 #' @param randomSigData A list with two items:
 #'
-#'   randomSigs: a list of lists of SignatureScore objects.  Each sub-list
-#'     represents permutation signatures generated for a specific size/balance
+#'   randomSigs: a list of signature score matrices.  Each list item
+#'     represents permutation signatures generated for a specific size/balance,
+#'     and is a numeric matrix of size cells X signatures
 #'
 #'   sigAssignments: named factor vector assigning signatures to random background
 #'     groups
@@ -508,16 +510,16 @@ sigsVsProjections <- function(projections, sigScoresData, metaData,
 #' single projections weights
 #'
 #' @importFrom matrixStats colMedians
-#' @param sigData a list of SignatureScores objects representing input user
-#' signatures
+#' @param sigData numeric matrix of signature scores
+#' size is cells x signatures
 #' @param randomSigData A list with two items:
 #'
-#'   randomSigs: a list of lists of SignatureScore objects.  Each sub-list
-#'     represents permutation signatures generated for a specific size/balance
+#'   randomSigs: a list of signature score matrices.  Each list item
+#'     represents permutation signatures generated for a specific size/balance,
+#'     and is a numeric matrix of size cells X signatures
 #'
 #'   sigAssignments: named factor vector assigning signatures to random background
 #'     groups
-#'
 #' @param weights numeric matrix of dimension N_SAMPLES x N_SAMPLES
 #' @param cells list of cell names.  Subsets anlysis to provided cells.
 #' If omitted, use all cells.
@@ -531,20 +533,18 @@ sigsVsProjection_n <- function(sigData, randomSigData,
                                weights, cells = NULL){
 
     # Build a matrix of all non-meta signatures
-    if (is.null(cells)){
-        extractedScores <- lapply(sigData,
-                                  function(sig) sig@scores)
-    } else {
-        extractedScores <- lapply(sigData,
-                                  function(sig) sig@scores[cells])
+    sigScoreMatrix <- sigData
+    if (!is.null(cells)){
+        sigScoreMatrix <- sigScoreMatrix[cells, ]
     }
-    sigScoreMatrix <- do.call(cbind, extractedScores)
-    sampleLabels <- rownames(sigScoreMatrix)
+
+    rowLabels <- rownames(sigScoreMatrix)
+    colLabels <- colnames(sigScoreMatrix)
     sigScoreMatrix <- matrixStats::colRanks(
                sigScoreMatrix, preserveShape = TRUE, ties.method = "average"
     )
-    colnames(sigScoreMatrix) <- names(sigData)
-    rownames(sigScoreMatrix) <- sampleLabels
+    colnames(sigScoreMatrix) <- colLabels
+    rownames(sigScoreMatrix) <- rowLabels
 
 
     if (!is.null(cells)) {
@@ -559,31 +559,24 @@ sigsVsProjection_n <- function(sigData, randomSigData,
     groupedResults <- lapply(names(randomSigScores), function(group) {
 
         # Build a matrix of random background signatures for this group
-        randomSigGroup <- randomSigScores[[group]]
+        randomSigScoreMatrix <- randomSigScores[[group]]
 
-        if (is.null(cells)){
-            extractedScores <- lapply(randomSigGroup,
-                                      function(rsig) rsig@scores)
-        } else {
-            extractedScores <- lapply(randomSigGroup,
-                                      function(rsig) rsig@scores[cells])
+        if (!is.null(cells)){
+            randomSigScoreMatrix <- randomSigScoreMatrix[cells, ]
         }
 
-        randomSigScoreMatrix <- do.call(cbind, extractedScores)
-
-        sampleLabels <- rownames(randomSigScoreMatrix)
+        rowLabels <- rownames(randomSigScoreMatrix)
+        colLabels <- colnames(randomSigScoreMatrix)
         randomSigScoreMatrix <- matrixStats::colRanks(
               randomSigScoreMatrix, preserveShape = TRUE,
               ties.method = "average"
         )
 
-        colnames(randomSigScoreMatrix) <- vapply(
-            randomSigGroup, function(x) x@name, ""
-        )
-
-        rownames(randomSigScoreMatrix) <- sampleLabels
+        colnames(randomSigScoreMatrix) <- colLabels
+        rownames(randomSigScoreMatrix) <- rowLabels
 
         groupSigNames <- names(sigAssignments)[sigAssignments == group]
+        groupSigNames <- intersect(groupSigNames, colnames(sigScoreMatrix))
 
         sigScoreMatrixGroup <- sigScoreMatrix[, groupSigNames]
 
@@ -805,7 +798,7 @@ sigsVsProjection_pcf <- function(metaData, weights, cells = NULL){
 #' @importFrom mclust Mclust
 #' @importFrom mclust mclustBIC
 #' @importFrom rsvd rsvd
-#' @param sigMatrix data.frame of signatures scores, NUM_SAMPLES x NUM_SIGNATURES
+#' @param sigMatrix matrix of signatures scores, NUM_SAMPLES x NUM_SIGNATURES
 #' @param metaData data.frame of meta-data for cells
 #' @param pvals the corresponding P-values for each score,
 #' NUM_SIGNATURES x NUM_SAMPLES

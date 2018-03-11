@@ -112,8 +112,14 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
                     meta <- as.data.frame(meta)
                 }
                 if(is.data.frame(meta)) {
-                    .Object@metaData <- SigScoresFromDataframe(
-                        meta, colnames(.Object@exprData))
+                    sampleLabels <- colnames(.Object@exprData)
+
+                    common <- intersect(row.names(meta), sampleLabels)
+                    if (length(common) != length(sampleLabels)){
+                        stop("Provided meta data dataframe must have same sample labels as the expression matrix")
+                    }
+
+                    .Object@metaData <- meta[sampleLabels, , drop = FALSE]
                     .Object@initialMetaData <- .Object@metaData
                 } else {
                     stop("meta input argument should be a matrix or dataframe")

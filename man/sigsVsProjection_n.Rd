@@ -8,13 +8,14 @@ single projections weights}
 sigsVsProjection_n(sigData, randomSigData, weights, cells = NULL)
 }
 \arguments{
-\item{sigData}{a list of SignatureScores objects representing input user
-signatures}
+\item{sigData}{numeric matrix of signature scores
+size is cells x signatures}
 
 \item{randomSigData}{A list with two items:
 
-  randomSigs: a list of lists of SignatureScore objects.  Each sub-list
-    represents permutation signatures generated for a specific size/balance
+  randomSigs: a list of signature score matrices.  Each list item
+    represents permutation signatures generated for a specific size/balance,
+    and is a numeric matrix of size cells X signatures
 
   sigAssignments: named factor vector assigning signatures to random background
     groups}

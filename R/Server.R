@@ -227,7 +227,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
     # Launch the server
     jug() %>%
       get("/Signature/Scores/(?<sig_name1>.*)", function(req, res, err) {
-        sigMatrix <- object@sigMatrix
+        sigMatrix <- object@sigScores
         name <- URLdecode(req$params$sig_name1)
         out <- "Signature does not exist!"
         if (name %in% colnames(sigMatrix)) {

@@ -96,15 +96,6 @@ Signature <- setClass("Signature",
     isFactor=FALSE
 ))
 
-SignatureScores <- setClass("SignatureScores",
-    slots = c(
-    scores = "vector",
-    name = "character",
-    isFactor = "logical",
-    isMeta = "logical",
-    numGenes = "numeric"
-))
-
 FastProject <- setClass("FastProject",
     slots = c(
         nomodel = "logical",
@@ -124,13 +115,12 @@ FastProject <- setClass("FastProject",
         initialMetaData = "data.frame",
         perm_wPCA = "logical",
         pool = "logical",
-        sigScores = "list",
+        sigScores = "matrix",
         cellsPerPartition = "numeric",
         ClusterProjectionData = "ProjectionData",
         ProjectionData = "ProjectionData",
         TreeProjectionData = "TreeProjectionData",
         PCAnnotatorData = "PCAnnotatorData",
-        sigMatrix = "data.frame",
         pools = "list",
         inputProjections = "list",
         name = "character",
@@ -159,7 +149,6 @@ FastProject <- setClass("FastProject",
         ProjectionData = NULL,
         TreeProjectionData = NULL,
         PCAnnotatorData = NULL,
-        sigMatrix = NULL,
         pools = NULL,
         inputProjections = NULL,
         name = "",
