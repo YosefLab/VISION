@@ -254,9 +254,10 @@ getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
 sigsVsProjectionsClusters <- function(latentSpace, sigScoresData, metaData,
                               randomSigData, clusters) {
 
-  sigProjMatrix <- data.frame()
-  sigProjMatrix_P <- data.frame()
-  sigProjMatrix_Pemp <- data.frame()
+  signatureNames <- c(colnames(sigScoresData), colnames(metaData))
+  sigProjMatrix <- data.frame(row.names = signatureNames)
+  sigProjMatrix_P <- data.frame(row.names = signatureNames)
+  sigProjMatrix_Pemp <- data.frame(row.names = signatureNames)
 
   proj <- Projection("All", pData = t(latentSpace))
 
@@ -272,9 +273,6 @@ sigsVsProjectionsClusters <- function(latentSpace, sigScoresData, metaData,
                   svp_pcn$consistency,
                   svp_pcf$consistency)
 
-  consistency <- as.data.frame(consistency)
-  colnames(consistency) <- c(proj@name)
-
   pvals <- c(svp_n$pvals,
             svp_pcn$pvals,
             svp_pcf$pvals)
@@ -283,28 +281,13 @@ sigsVsProjectionsClusters <- function(latentSpace, sigScoresData, metaData,
                 svp_pcn$pvals,
                 svp_pcf$pvals)
 
-  pvals <- as.data.frame(pvals)
-  colnames(pvals) <- c(proj@name)
+  consistency <- consistency[signatureNames]
+  pvals <- pvals[signatureNames]
+  emp_pvals <- emp_pvals[signatureNames]
 
-  emp_pvals <- as.data.frame(emp_pvals)
-  colnames(emp_pvals) <- c(proj@name)
-
-  sigProjMatrix <- merge(sigProjMatrix, consistency,
-                         by = "row.names", all = TRUE)
-
-  rownames(sigProjMatrix) <- sigProjMatrix$Row.names
-  sigProjMatrix$Row.names <- NULL
-
-  sigProjMatrix_P <- merge(sigProjMatrix_P, pvals,
-                           by = "row.names", all = TRUE)
-
-  sigProjMatrix_Pemp <- merge(sigProjMatrix_Pemp, emp_pvals,
-                              by = "row.names", all = TRUE)
-
-  rownames(sigProjMatrix_P) <- sigProjMatrix_P$Row.names
-  rownames(sigProjMatrix_Pemp) <- sigProjMatrix_Pemp$Row.names
-  sigProjMatrix_P$Row.names <- NULL
-  sigProjMatrix_Pemp$Row.names <- NULL
+  sigProjMatrix[proj@name] <- consistency
+  sigProjMatrix_P[proj@name] <- pvals
+  sigProjMatrix_Pemp[proj@name] <- emp_pvals
 
   for (cluster in unique(clusters)) {
     cluster_cells <- names(clusters)[clusters == cluster]
@@ -323,9 +306,6 @@ sigsVsProjectionsClusters <- function(latentSpace, sigScoresData, metaData,
                     svp_pcn$consistency,
                     svp_pcf$consistency)
 
-    consistency <- as.data.frame(consistency)
-    colnames(consistency) <- c(proj@name)
-
     pvals <- c(svp_n$pvals,
               svp_pcn$pvals,
               svp_pcf$pvals)
@@ -334,29 +314,13 @@ sigsVsProjectionsClusters <- function(latentSpace, sigScoresData, metaData,
                   svp_pcn$pvals,
                   svp_pcf$pvals)
 
-    pvals <- as.data.frame(pvals)
-    colnames(pvals) <- c(proj@name)
+    consistency <- consistency[signatureNames]
+    pvals <- pvals[signatureNames]
+    emp_pvals <- emp_pvals[signatureNames]
 
-    emp_pvals <- as.data.frame(emp_pvals)
-    colnames(emp_pvals) <- c(proj@name)
-
-    sigProjMatrix <- merge(sigProjMatrix, consistency,
-                           by = "row.names", all = TRUE)
-
-    rownames(sigProjMatrix) <- sigProjMatrix$Row.names
-    sigProjMatrix$Row.names <- NULL
-
-    sigProjMatrix_P <- merge(sigProjMatrix_P, pvals,
-                             by = "row.names", all = TRUE)
-
-    sigProjMatrix_Pemp <- merge(sigProjMatrix_Pemp, emp_pvals,
-                                by = "row.names", all = TRUE)
-
-    rownames(sigProjMatrix_P) <- sigProjMatrix_P$Row.names
-    rownames(sigProjMatrix_Pemp) <- sigProjMatrix_Pemp$Row.names
-    sigProjMatrix_P$Row.names <- NULL
-    sigProjMatrix_Pemp$Row.names <- NULL
-
+    sigProjMatrix[proj@name] <- consistency
+    sigProjMatrix_P[proj@name] <- pvals
+    sigProjMatrix_Pemp[proj@name] <- emp_pvals
   }
 
   # FDR-correct
@@ -419,54 +383,37 @@ sigsVsProjectionsClusters <- function(latentSpace, sigScoresData, metaData,
 sigsVsProjections <- function(projections, sigScoresData, metaData,
                               randomSigData) {
 
-  sigProjMatrix <- data.frame()
-  sigProjMatrix_P <- data.frame()
-  sigProjMatrix_Pemp <- data.frame()
+  signatureNames <- c(colnames(sigScoresData), colnames(metaData))
+  sigProjMatrix <- data.frame(row.names = signatureNames)
+  sigProjMatrix_P <- data.frame(row.names = signatureNames)
+  sigProjMatrix_Pemp <- data.frame(row.names = signatureNames)
 
   for (proj in projections) {
-    weights <- computeKNNWeights(proj, K=round(sqrt(NCOL(proj@pData))))
+    weights <- computeKNNWeights(proj, K = round(sqrt(NCOL(proj@pData))))
 
     svp_n <- sigsVsProjection_n(sigScoresData, randomSigData, weights)
     svp_pcn <- sigsVsProjection_pcn(metaData, weights)
     svp_pcf <- sigsVsProjection_pcf(metaData, weights)
 
     consistency <- c(svp_n$consistency,
-                    svp_pcn$consistency,
-                    svp_pcf$consistency)
+                     svp_pcn$consistency,
+                     svp_pcf$consistency)
 
-    consistency <- as.data.frame(consistency)
-    colnames(consistency) <- c(proj@name)
+    pvals <- c(svp_n$pvals,
+               svp_pcn$pvals,
+               svp_pcf$pvals)
 
-    pvals = c(svp_n$pvals,
-              svp_pcn$pvals,
-              svp_pcf$pvals)
+    emp_pvals <- c(svp_n$empvals,
+                   svp_pcn$pvals,
+                   svp_pcf$pvals)
 
-    emp_pvals = c(svp_n$empvals,
-                  svp_pcn$pvals,
-                  svp_pcf$pvals)
+    consistency <- consistency[signatureNames]
+    pvals <- pvals[signatureNames]
+    emp_pvals <- emp_pvals[signatureNames]
 
-    pvals <- as.data.frame(pvals)
-    colnames(pvals) <- c(proj@name)
-
-    emp_pvals <- as.data.frame(emp_pvals)
-    colnames(emp_pvals) <- c(proj@name)
-
-    sigProjMatrix <- merge(sigProjMatrix, consistency,
-                           by='row.names', all=TRUE)
-
-    rownames(sigProjMatrix) = sigProjMatrix$Row.names
-    sigProjMatrix$Row.names <- NULL
-
-    sigProjMatrix_P <- merge(sigProjMatrix_P, pvals,
-                             by='row.names', all=TRUE)
-
-    sigProjMatrix_Pemp <- merge(sigProjMatrix_Pemp, emp_pvals,
-                                by='row.names', all=TRUE)
-
-    rownames(sigProjMatrix_P) = sigProjMatrix_P$Row.names
-    rownames(sigProjMatrix_Pemp) = sigProjMatrix_Pemp$Row.names
-    sigProjMatrix_P$Row.names <- NULL
-    sigProjMatrix_Pemp$Row.names <- NULL
+    sigProjMatrix[proj@name] <- consistency
+    sigProjMatrix_P[proj@name] <- pvals
+    sigProjMatrix_Pemp[proj@name] <- emp_pvals
 
   }
 
