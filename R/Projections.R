@@ -13,7 +13,6 @@ registerMethods <- function(lean=FALSE) {
     }
 
     projMethods <- c(projMethods, "tSNE30" = applytSNE30)
-    projMethods <- c(projMethods, "KNN" = applyKNN)
     projMethods <- c(projMethods, "tSNE10" = applytSNE10)
 
     return(projMethods)
@@ -56,10 +55,6 @@ generateProjections <- function(expr, weights, latentSpace,
         res <- methodList[[method]](exprData)
         proj <- Projection(method, res)
         inputProjections <- c(inputProjections, proj)
-    } else if (method == "KNN") {
-        res <- methodList[[method]](t(latentSpace))
-        proj <- Projection(method, res, weights = res)
-        inputProjections <- c(inputProjections, proj)
     } else { ## run on reduced data
         res <- methodList[[method]](t(latentSpace))
         proj <- Projection(method, res)
@@ -86,8 +81,6 @@ generateProjections <- function(expr, weights, latentSpace,
         output[[p@name]] <- p
 
         }
-
-    output[["KNN"]]@pData <- output[["tSNE30"]]@pData
 
     return(output)
 }
@@ -350,41 +343,6 @@ applytSNE30 <- function(exprData) {
     rownames(res) <- colnames(exprData)
 
     return(res)
-}
-
-#' create a Knearest neighbor graph from the data
-#'
-#' @importFrom Matrix rowSums
-#' @param exprData the data to base the KNN graph on
-#'
-#' @return the weghted adjacency matrix of the KNN graph
-applyKNN <- function(exprData) {
-
-    n_workers <- getWorkerCount()
-    k <- ball_tree_knn(t(exprData), round(sqrt(ncol(exprData))), n_workers)
-
-    nn <- k[[1]]
-    d <- k[[2]]
-
-    sigma <- rowMaxs(d)
-    sparse_weights <- exp(-1 * (d * d) / sigma ^ 2)
-
-    # Normalize row sums = 1
-    weightsNormFactor <- rowSums(sparse_weights)
-    weightsNormFactor[weightsNormFactor == 0] <- 1.0
-    sparse_weights <- sparse_weights / weightsNormFactor
-
-    # load into a sparse matrix
-    tnn <- t(nn)
-    j <- as.numeric(tnn)
-    i <- as.numeric(col(tnn))
-    vals <- as.numeric(t(sparse_weights))
-
-    weights <- sparseMatrix(i = i, j = j, x = vals,
-                            dims = c(nrow(nn), nrow(nn))
-                            )
-
-    return(weights)
 }
 
 #' Performs ISOMap on data
