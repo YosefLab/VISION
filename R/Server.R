@@ -127,6 +127,7 @@ coordinatesToJSON <- function(p) {
 #' @return Subsetted sigProjMatirx converted to JSON
 sigProjMatrixToJSON <- function(sigpm, sigs) {
 
+    sigs <- intersect(sigs, rownames(sigpm))
     sigpm <- sigpm[sigs,, drop=FALSE]
     sSPM <- ServerSigProjMatrix(unname(sigpm), colnames(sigpm), sigs)
 
@@ -147,22 +148,6 @@ pearsonCorrToJSON <- function(pc, sigs) {
     sPC <- ServerPCorr(unname(pc), cn, sigs)
 
     json <- toJSON(sPC, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
-
-    return(json)
-
-}
-
-#' Converts the -log10(pvalues) of the consistency scores into a JSON object
-#' @importFrom jsonlite toJSON
-#' @param sigpmp SigProjMatrix p values
-#' @param sigs Signatrues to subset from sigpmp
-#' @return Subsetted sigProjMatrix_P converted to JSON
-sigProjMatrixPToJSON <- function(sigpmp, sigs) {
-
-    sigpmp <- as.matrix(sigpmp[sigs,, drop=FALSE])
-    sPM <- ServerPMatrix(unname(sigpmp), colnames(sigpmp), sigs)
-
-    json <- toJSON(sPM, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
 
     return(json)
 
@@ -231,7 +216,9 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         name <- URLdecode(req$params$sig_name1)
         out <- "Signature does not exist!"
         if (name %in% colnames(sigMatrix)) {
-          out <- FastProjectR:::sigScoresToJSON(sigMatrix[name])
+          ss <- sigMatrix[, name, drop = FALSE]
+          ss <- as.data.frame(ss)
+          out <- FastProjectR:::sigScoresToJSON(ss)
         }
         return(out)
       }) %>%
