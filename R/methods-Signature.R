@@ -457,6 +457,7 @@ sigsVsProjections <- function(projections, sigScoresData, metaData,
 #' single projections weights
 #'
 #' @importFrom matrixStats colMedians
+#' @importFrom parallel mclapply
 #' @param sigData numeric matrix of signature scores
 #' size is cells x signatures
 #' @param randomSigData A list with two items:
@@ -503,7 +504,8 @@ sigsVsProjection_n <- function(sigData, randomSigData,
     randomSigScores <- randomSigData$randomSigs
     sigAssignments <- randomSigData$sigAssignments
 
-    groupedResults <- lapply(names(randomSigScores), function(group) {
+    availableCores <- max(parallel::detectCores() - 1, 1)
+    groupedResults <- mclapply(names(randomSigScores), function(group) {
 
         # Build a matrix of random background signatures for this group
         randomSigScoreMatrix <- randomSigScores[[group]]
@@ -563,7 +565,8 @@ sigsVsProjection_n <- function(sigData, randomSigData,
 
         return(list(consistency = consistency, pvals = pvals,
                     empvals = empvals))
-    })
+
+    }, mc.cores = min(availableCores, length(randomSigScores)))
 
 
     consistency <- do.call(c, lapply(groupedResults, function(x) x$consistency))
@@ -578,6 +581,7 @@ sigsVsProjection_n <- function(sigData, randomSigData,
 #' Evaluates the significance of each meta data numeric signature vs. a
 #' single projections weights
 #' @importFrom stats pnorm
+#' @importFrom parallel mclapply
 #' @param metaData data.frame of meta-data for cells
 #' @param weights numeric matrix of dimension N_SAMPLES x N_SAMPLES
 #' @param cells list of cell names.  Subsets anlysis to provided cells.
@@ -599,22 +603,20 @@ sigsVsProjection_pcn <- function(metaData, weights, cells = NULL){
 
   N_SAMPLES <- nrow(weights)
 
-  consistency <- numeric()
-  pvals <- numeric()
+  numericMeta <- vapply(names(metaData),
+                         function(metaName) {
+                             is.numeric(metaData[, metaName])
+                         }, FUN.VALUE = TRUE)
 
-  for (metaName in names(metaData)) {
+  numericMeta <- names(numericMeta)[numericMeta]
+
+  results <- mclapply(numericMeta, function(metaName) {
 
     scores <- metaData[[metaName]]
 
-    if (is.factor(scores)) {
-      next
-    }
-
     sigScores <- rank(scores, ties.method = "average")
     if (all(sigScores == sigScores[1])) {
-      consistency[metaName] <- 0
-      pvals[metaName] <- 1.0
-      next
+      return(list(consistency = 0.0, pval = 1.0))
     }
 
     sigPredictions <- as.matrix(weights %*% sigScores)
@@ -639,10 +641,20 @@ sigsVsProjection_pcn <- function(metaData, weights, cells = NULL){
       p_value <- 1.0
     }
 
-    consistency[metaName] <- 1 - (medDissimilarity / N_SAMPLES)
-    pvals[metaName] <- p_value
+    c_score <- 1 - (medDissimilarity / N_SAMPLES)
+    pval <- p_value
 
-  }
+    return(list(consistency = c_score, pval = pval))
+
+  }, mc.cores = min(10, length(numericMeta)))
+
+  names(results) <- numericMeta
+
+  consistency <- vapply(results, function(x) x$consistency,
+                        FUN.VALUE = 0.0)
+
+  pvals <- vapply(results, function(x) x$pval,
+                        FUN.VALUE = 0.0)
 
   return(list(consistency = consistency, pvals = pvals))
 }
@@ -650,6 +662,7 @@ sigsVsProjection_pcn <- function(metaData, weights, cells = NULL){
 #' Evaluates the significance of each meta data factor signature vs. a
 #' single projections weights
 #' @importFrom stats kruskal.test
+#' @importFrom parallel mclapply
 #' @param metaData data.frame of meta-data for cells
 #' @param weights numeric matrix of dimension N_SAMPLES x N_SAMPLES
 #' @param cells list of cell names.  Subsets anlysis to provided cells.
@@ -671,16 +684,16 @@ sigsVsProjection_pcf <- function(metaData, weights, cells = NULL){
 
   N_SAMPLES <- nrow(weights)
 
-  consistency <- numeric()
-  pvals <- numeric()
+  factorMeta <- vapply(names(metaData),
+                         function(metaName) {
+                             is.factor(metaData[, metaName])
+                         }, FUN.VALUE = TRUE)
 
-  for (sigName in names(metaData)) {
+  factorMeta <- names(factorMeta)[factorMeta]
 
-    scores <- metaData[[sigName]]
+  results <- mclapply(factorMeta, function(metaName) {
 
-    if (!is.factor(scores)) {
-      next
-    }
+    scores <- metaData[[metaName]]
 
     ### build one hot matrix for factors
 
@@ -700,9 +713,7 @@ sigsVsProjection_pcf <- function(metaData, weights, cells = NULL){
                            nrow = N_SAMPLES, ncol = length(fLevels))
 
     if (1 %in% factorFreq) {
-      consistency[sigName] <- 0.0
-      pvals[sigName] <- 1.0
-      next
+        return(list(consistency = 0.0, pval = 1.0))
     }
 
     factorPredictions <- as.matrix(weights %*% factorMatrix)
@@ -725,18 +736,28 @@ sigsVsProjection_pcf <- function(metaData, weights, cells = NULL){
         krTest <- kruskal.test(krList)
 
         if (is.na(krTest$p.value)){
-            consistency[sigName] <- 0
-            pvals[sigName] <- 1.0
+            c_score <- 0
+            pval <- 1.0
         } else {
-            consistency[sigName] <- krTest$statistic
-            pvals[sigName] <- krTest$p.value
+            c_score <- krTest$statistic
+            pval <- krTest$p.value
         }
     } else {
-        consistency[sigName] <- 0
-        pvals[sigName] <- 1.0
+        c_score <- 0
+        pval <- 1.0
     }
 
-  }
+    return(list(consistency = c_score, pval = pval))
+
+  }, mc.cores = min(10, length(factorMeta)))
+
+  names(results) <- factorMeta
+
+  consistency <- vapply(results, function(x) x$consistency,
+                        FUN.VALUE = 0.0)
+
+  pvals <- vapply(results, function(x) x$pval,
+                        FUN.VALUE = 0.0)
 
   return(list(consistency = consistency, pvals = pvals))
 }
