@@ -54,39 +54,6 @@ createGeneSignature <- function(name, sigData, metadata="") {
              source="user-defined"))
 }
 
-#' Method for testing whether or not signatures are equal to one another
-#' (if all signs, genes and name are the same.)
-#'
-#' @param object Signature object
-#' @param compareSig Other signature to compare against
-#' @return TRUE if sigs are equal, else FALSE
-setMethod("sigEqual", signature(object="Signature"),
-          function(object, compareSig) {
-            if (class(compareSig) != "Signature") {
-              stop("Input compareSig is not a Signature data type.")
-            }
-
-            if (object@name != compareSig@name) {
-              return(FALSE)
-            }
-
-            return(object@sigDict == compareSig@sigDict)
-
-          }
-)
-
-#' Add signature data to the sigDict of this Signature Object
-#'
-#' @param object Signature object
-#' @param data Additional signature data, in the form of a named list
-#' @return Updated Signature object.
-setMethod("addSigData", signature(object="Signature"),
-          function(object, data) {
-            object@sigDict <- list(object@sigDict, data)
-            return(object)
-          })
-
-
 #' calculate background signature scores
 #'
 #' For each signature-cell pair, compute a score that captures the level of

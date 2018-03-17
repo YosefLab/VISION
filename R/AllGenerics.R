@@ -4,10 +4,6 @@ setGeneric("FastProject", function(data, ...) {
     standardGeneric("FastProject")
 })
 
-setGeneric("addSigData", function(object, data) {
-    standardGeneric("addSigData")
-})
-
 setGeneric("analyze", function(object, ...) {
     standardGeneric("analyze")
 })
@@ -20,16 +16,8 @@ setGeneric("cluster", function(object, method, param) {
     standardGeneric("cluster")
 })
 
-setGeneric("createOutputDirectory", function(object) {
-    standardGeneric("createOutputDirectory")
-})
-
 setGeneric("saveAndViewResults", function(fpout, ...) {
     standardGeneric("saveAndViewResults")
-})
-
-setGeneric("sigEqual", function(object, compareSig) {
-    standardGeneric("sigEqual")
 })
 
 setGeneric("updateProjection", function(object, name, data) {
