@@ -22,16 +22,15 @@ registerMethods <- function(lean=FALSE) {
 #'
 #' @importFrom stats quantile
 #' @param expr numeric matrix of gene expression
-#' @param weights weights estimated from FNR curve
 #' @param latentSpace numeric matrix cells x components
 #' @param projection_genes character vector of gene names to use for projections
 #' @param inputProjections Precomputed projections
 #' @param lean If TRUE, diminished number of algorithms applied,
 #' if FALSE all algorithms applied. Default is FALSE
 #' @return list of Projection objects
-generateProjections <- function(expr, weights, latentSpace,
+generateProjections <- function(expr, latentSpace,
                                 projection_genes=NULL,
-                                inputProjections=c(), lean=FALSE) {
+                                inputProjections=list(), lean=FALSE) {
 
     if (!is.null(projection_genes)) {
         exprData <- expr[projection_genes, ]

@@ -23,12 +23,12 @@ batchSigEval <- function(sigs, sig_score_method, eData, weights,
     workers <- BiocParallel::bpparam()$workers
 
     if (sig_score_method == "naive") {
-        weights <- NULL
+        weights <- matrix(NA, 1, 1)
     }
 
     # Need to perform this multiply here so it doesn't occupy memory
     # in all of the sub-processes
-    if( !is.null(weights) ) {
+    if (!all(dim(weights) == c(1, 1))) {
         expr_weights <- eData * weights
     } else {
         expr_weights <- eData
@@ -101,14 +101,14 @@ sigsToSparseMatrix <- function(sigs, expression) {
 #' @param sigs List of Signature to be evalauting
 #' @param weights numeric Matrix Genes x Cells
 #' @return matrix containing signature values (sigs x cells)
-innerEvalSignatureBatch <- function(exprData, sigs, weights = NULL) {
+innerEvalSignatureBatch <- function(exprData, sigs, weights = matrix(NA, 1, 1)) {
 
     sigSparseMatrix <- sigsToSparseMatrix(sigs, exprData)
 
     sigScores <- sigSparseMatrix %*% exprData
     sigScores <- as.matrix(sigScores)
 
-    if ( !is.null(weights) ) {
+    if (!all(dim(weights) == c(1, 1))) {
         denom <- abs(sigSparseMatrix) %*% weights # denom is N_sigs X N_cells
         denom <- as.matrix(denom)
         denom[denom == 0] <- 1

@@ -128,11 +128,10 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
                 .Object@metaData <- data.frame(
                                         row.names = colnames(.Object@exprData)
                                     )
+                .Object@initialMetaData <- .Object@metaData
             }
 
-            if (is.null(weights)) {
-                .Object@weights <- matrix(NA, nrow=10, ncol=0)
-            } else {
+            if (!is.null(weights)) {
                 .Object@weights <- weights
             }
 
@@ -289,7 +288,7 @@ setMethod("analyze", signature(object="FastProject"),
 
     object <- calcSignatureScores(object)
 
-    if (is.null(object@latentSpace)) {
+    if (all(dim(object@latentSpace) == c(1, 1))) {
         object <- computeLatentSpace(object)
     }
 
@@ -439,6 +438,8 @@ setMethod("viewResults", signature(object="FastProject"),
                 object@name <- name
             }
 
+            versionCheck(object)
+
             message("Launching the server...")
             message("Press exit or ctrl c to exit")
             launchServer(object, port, host, browser)
@@ -475,7 +476,9 @@ createNewFP <- function(fp, subset) {
         return(sigscore)
     })
 
-    .Object@weights <- fp@weights[,subset]
+    if (!all(dim(fp@weights) == c(1, 1))){
+        .Object@weights <- fp@weights[, subset]
+    }
     .Object@projection_genes <- fp@projection_genes
     .Object@threshold <- fp@threshold
     .Object@sig_norm_method <- fp@sig_norm_method

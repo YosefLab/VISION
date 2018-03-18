@@ -99,7 +99,7 @@ poolCells <- function(object,
     pooled_cells <- createPoolsBatch(object@pools, object@exprData)
     object@exprData <- pooled_cells
 
-    if (!is.null(object@latentSpace)){
+    if (all(dim(object@latentSpace) == c(1, 1))) {
         pooled_latent <- t(createPoolsBatch(object@pools, t(object@latentSpace)))
         object@latentSpace <- pooled_latent
     }
@@ -154,14 +154,11 @@ calcWeights <- function(object,
         object@weights <- computeWeights(falseneg_out[[1]], falseneg_out[[2]],
                                          object@exprData)
 
-    } else if (all(is.na(object@weights)) ||
-               ncol(object@weights) != ncol(object@exprData)) {
-        object@weights <- matrix(1L, nrow=nrow(object@exprData),
-                                 ncol=ncol(object@exprData))
+        rownames(object@weights) <- rownames(object@exprData)
+        colnames(object@weights) <- colnames(object@exprData)
+
     }
 
-    rownames(object@weights) <- rownames(object@exprData)
-    colnames(object@weights) <- colnames(object@exprData)
     return(object)
 }
 
@@ -233,6 +230,15 @@ computeLatentSpace <- function(object, projection_genes = NULL,
         exprData <- expr
     }
 
+    if (all(dim(weights) == c(1, 1))){
+        weights <- matrix(1, nrow = nrow(exprData), ncol = ncol(exprData),
+                          dimnames = list(
+                                          rownames(exprData),
+                                          colnames(exprData)
+                                         )
+                         )
+    }
+
     if (perm_wPCA) {
         res <- applyPermutationWPCA(exprData, weights, components = 30)
         pca_res <- res[[1]]
@@ -269,7 +275,7 @@ analyzeProjections <- function(object,
 
   message("Projecting data into 2 dimensions...")
 
-  projectData <- generateProjections(object@exprData, object@weights,
+  projectData <- generateProjections(object@exprData,
                                      object@latentSpace,
                                      projection_genes = object@projection_genes,
                                      inputProjections = object@inputProjections,
@@ -295,7 +301,7 @@ analyzeProjections <- function(object,
 
   object@ProjectionData <- projData
 
-  message("Evaluating signatures against within clusters...")
+  message("Evaluating signature consistency within clusters...")
   clusters <- object@metaData[, object@cluster_variable]
   names(clusters) <- rownames(object@metaData)
 
