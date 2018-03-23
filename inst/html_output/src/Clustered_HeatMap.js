@@ -76,7 +76,7 @@ function HeatMap(parent, width, height)
 
     this.grid_x_label = this.svg.append("text")
         .attr("text-anchor", "middle")
-        .attr("x", this.grid_xoffset+(this.width - this.grid_xoffsetr)/2)
+        .attr("x", this.width/2)
         .attr("y", this.grid_start + this.heat_height + this.xlabel_margin*.8)
         .attr("font-size", "25px")
         .text("Sample Clusters");
@@ -436,7 +436,7 @@ HeatMap.prototype.setData = function(data, cluster_assignments, gene_labels, gen
     for (var clust_i in clusters)
     {
         var clust = clusters[clust_i];
-        clust.index = parseInt(clust_i);
+        clust.index = clust_i;
         cluster_list.push(clust);
     }
 

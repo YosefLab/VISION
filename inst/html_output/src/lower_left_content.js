@@ -85,17 +85,10 @@ function Sig_Info()
     this.sig_info_default = $(this.dom_node).find('#sig-info-default')
     this.sig_info_cluster = $(this.dom_node).find('#sig-info-cluster')
 
-    this.cluster_options = { // Note: param values should be strings
-        "KMeans": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"],
-        //"PAM": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
-    }
-
     this.heatmap = null
     this.plotted_heatmap = {
         'sig_key': '',
         'proj_key': '',
-        'cluster_method': '',
-        'cluster_param': '',
     }
 
 }
@@ -116,7 +109,7 @@ Sig_Info.prototype.init = function()
             {'title': 'Sign', 'className': 'dt-center'}],
         'paging': false,
         'info': true,
-        'scrollY': '22vh',
+        'scrollY': '15vh',
         'scrollCollapse': true,
     })
 
@@ -124,32 +117,6 @@ Sig_Info.prototype.init = function()
     {
         self.drawHeat()
     })
-
-    // Define cluster dropdown 
-    var clust_dropdown = $(self.dom_node).find('#cluster_select_method')
-    var clust_param = $(self.dom_node).find('#cluster_select_param')
-
-    clust_dropdown.empty();
-    $.each(self.cluster_options, function(name){
-        clust_dropdown.append($("<option />").val(name).text(name));
-    });
-    clust_dropdown[0].selectedIndex = 0;
-
-    // Call it now to initially populate second dropdown
-    self.build_cluster_dropdown_param()
-
-    //Define cluster dropdown's change function
-    clust_dropdown.change(function(){
-        self.build_cluster_dropdown_param()
-        self.drawHeat();
-
-    });
-
-    //Define cluster dropdown's change function
-    clust_param.change(function(){
-        self.drawHeat();
-    });
-
 
 }
 
@@ -246,12 +213,9 @@ Sig_Info.prototype.drawHeat = function(){
     var sig_key = get_global_status('plotted_item'); // assume it's a signature
     var proj_key = get_global_status('plotted_projection');
 
-    var cluster_method = $(self.dom_node).find('#cluster_select_method').val();
-    var cluster_param = $(self.dom_node).find('#cluster_select_param').val();
-
     var sig_info = get_global_data('sig_info');
 
-    // plotted heatmap is based on sig_key, proj_key, cluster_method, and cluster_param
+    // plotted heatmap is based on sig_key, proj_key
     // check if we are already showing the right heatmap and don't regenerate
     var need_plot = false;
 
@@ -263,14 +227,6 @@ Sig_Info.prototype.drawHeat = function(){
         self.plotted_heatmap['proj_key'] = proj_key
         need_plot = true;
     }
-    if (self.plotted_heatmap['cluster_method'] !== cluster_method){
-        self.plotted_heatmap['cluster_method'] = cluster_method
-        need_plot = true;
-    }
-    if (self.plotted_heatmap['cluster_param'] !== cluster_param){
-        self.plotted_heatmap['cluster_param'] = cluster_param
-        need_plot = true;
-    }
 
     if(!need_plot){
         return $.when(true);
@@ -279,9 +235,8 @@ Sig_Info.prototype.drawHeat = function(){
     heatmap_div.addClass('loading')
 
     return $.when(
-        api.signature.expression(sig_key),
-        api.projection.clusters(proj_key, cluster_method, cluster_param))
-        .then(function(sig_expression, cluster){
+        api.signature.expression(sig_key))
+        .then(function(sig_expression){
 
 
             //Construct data matrix
@@ -290,13 +245,14 @@ Sig_Info.prototype.drawHeat = function(){
             var dataMat = sig_expression.data;
             var gene_labels = sig_expression.gene_labels;
             var sample_labels = sig_expression.sample_labels;
+            var clusters = get_global_data('clusters')
 
             var gene_signs = gene_labels.map(function(e){
                 return sig_info.sigDict[e]
             });
 
             //var assignments = data.Clusters[proj_key][choice];
-            var assignments = sample_labels.map(sample => cluster['data'][sample]);
+            var assignments = sample_labels.map(sample => clusters[sample]);
 
             self.heatmap.setData(dataMat,
                 assignments,
