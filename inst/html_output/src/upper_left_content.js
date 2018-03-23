@@ -75,6 +75,7 @@ function Signature_Table()
     this.filterSig = $(this.dom_node).find('#sig_filt_input')
     this.is_filtering = false
     this.is_collapsed = {} // cluster -> boolean, holds whether a cluster is collapsed
+    this.tooltip = {} // will contain a Popper.js object
 }
 
 
@@ -86,8 +87,28 @@ Signature_Table.prototype.init = function()
     var debounced = _.debounce(function(){self.doneTyping()}, 500)
     self.filterSig.on('input', debounced)
 
-    var update_promise = self.update({})
 
+    var popper = document.querySelector('body > #sig-tooltip')
+    var arrow = popper.querySelector('.arrow')
+    var initialNode = document.querySelector('body > #hidden-node')
+
+    var outPopper = new Popper(initialNode, popper, {placement: 'top',
+        modifiers: {
+            arrow: {
+                enabled: true,
+                element: arrow,
+            },
+            preventOverflow: {
+                enabled: false,
+            },
+            hide: {
+                enabled: false,
+            },
+        }
+    })
+
+    this.tooltip = outPopper;
+    var update_promise = self.update({})
     return update_promise;
 
 }
@@ -271,6 +292,25 @@ Signature_Table.prototype.render = function()
                 .on("click", function(d){tableClickFunction(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'signature')});
         }
 
+        // Hover actions
+        var rowHoverFunc = function(header_row){
+            return function(d){
+                createTooltip(self.tooltip, this, d.val.toFixed(3))
+                hoverRowCol(header_row, this, matrix.proj_labels[d.col])
+            }
+        }(header_row, new_table);
+        var rowUnHoverFunc = function(header_row){
+            return function(d){
+                destroyTooltip(self.tooltip)
+                unhoverRowCol(header_row, this, matrix.proj_labels[d.col])
+            }
+        }(header_row, new_table);
+
+        content_row
+            .filter(function(d,i) { return i > 0;})
+            .on("mouseenter", rowHoverFunc)
+            .on("mouseleave", rowUnHoverFunc)
+
         // Add text for signature names
         content_row.filter(function(d,i) { return i == 0;})
             .html(function(d){return '<div class="sig-row-label"><div>'+d+'</div></div>';})
@@ -389,12 +429,33 @@ function Meta_Table()
     this.matrix = {}
     this.sorted_column = 'PCA: 1,2'
     this.is_collapsed = {} // cluster -> boolean, holds whether a cluster is collapsed
+    this.tooltip = {} // will contain a Popper.js object
 }
 
 Meta_Table.prototype.init = function()
 {
     var self = this;
 
+    var popper = document.querySelector('body > #sig-tooltip')
+    var arrow = popper.querySelector('.arrow')
+    var initialNode = document.querySelector('body > #hidden-node')
+
+    var outPopper = new Popper(initialNode, popper, {placement: 'top',
+        modifiers: {
+            arrow: {
+                enabled: true,
+                element: arrow,
+            },
+            preventOverflow: {
+                enabled: false,
+            },
+            hide: {
+                enabled: false,
+            },
+        }
+    })
+
+    this.tooltip = outPopper;
     var update_promise = self.update({})
 
     return update_promise;
@@ -637,6 +698,25 @@ Meta_Table.prototype.render = function()
                 .style('background-color', function(d){return colorScale(d.val);})
                 .on("click", function(d){tableClickFunction(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'meta')});
         }
+
+        // Hover actions
+        var rowHoverFunc = function(header_row){
+            return function(d){
+                createTooltip(self.tooltip, this, d.val.toFixed(3))
+                hoverRowCol(header_row, this, matrix.proj_labels[d.col])
+            }
+        }(header_row, new_table);
+        var rowUnHoverFunc = function(header_row){
+            return function(d){
+                destroyTooltip(self.tooltip)
+                unhoverRowCol(header_row, this, matrix.proj_labels[d.col])
+            }
+        }(header_row, new_table);
+
+        content_row
+            .filter(function(d,i) { return i > 0;})
+            .on("mouseenter", rowHoverFunc)
+            .on("mouseleave", rowUnHoverFunc)
 
         // Add text for signature names
         content_row.filter(function(d,i) { return i == 0;})
@@ -952,4 +1032,53 @@ function tableClickFunction_clusters(row_key, col_key, item_type)
     update['selected_cluster'] = col_key;
 
     set_global_status(update);
+}
+
+
+function hoverRowCol(header_row, node, col){
+    $(header_row).find('th').filter((i, e) => $(e).text() == col).addClass('highlight')
+    $(node).siblings('td:first-child').addClass('highlight')
+
+
+    var hovered_cells;
+    if (col === 'KNN' || col === 'All'){
+        hovered_cells = [];
+    } else {
+        var clusters = get_global_data('clusters'); // clusters maps cell_id to cluster
+        hovered_cells = _(clusters)
+            .pickBy(val => val === col)
+            .keys()
+            .value();
+    }
+
+    var event = new CustomEvent('hover-cells',
+        { detail: hovered_cells, bubbles: true } )
+
+    node.dispatchEvent(event)
+}
+
+function unhoverRowCol(header_row, node, col){
+    $(header_row).find('th').filter((i, e) => $(e).text() == col).removeClass('highlight')
+    $(node).siblings('td:first-child').removeClass('highlight')
+
+    var hovered_cells = [];
+    var event = new CustomEvent('hover-cells',
+        { detail: hovered_cells, bubbles: true } )
+
+    node.dispatchEvent(event)
+}
+
+function createTooltip(popper, node, text) {
+    var popper_node = popper.popper
+    var inner_node = popper_node.querySelector('.inner')
+    inner_node.textContent = text
+
+    popper.reference = node;
+    popper.update();
+}
+
+function destroyTooltip(popper) {
+    var node = document.querySelector('body #hidden-node')
+    popper.reference = node;
+    popper.update();
 }
