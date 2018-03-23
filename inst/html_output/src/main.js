@@ -237,11 +237,6 @@ $(window).resize(function()
     }
     */
 
-    //Link the scatter/heatmap
-    //global_scatter.hovered_links.push(global_heatmap);
-    //global_heatmap.hovered_links.push(global_scatter);
-    //global_tree.hovered_links.push(global_tree);
-
     //Render
     //drawHeat();
 
@@ -250,15 +245,6 @@ $(window).resize(function()
 
 window.onload = function()
 {
-
-
-    //global_heatmap = new HeatMap("#heatmap-div");
-
-    //Link the scatter/heatmap
-    //global_scatter.hovered_links.push(global_heatmap);
-    //global_heatmap.hovered_links.push(global_scatter);
-    //global_tree.hovered_links.push(global_scatter);
-    
 
     lower_left_content = new Lower_Left_Content()
     upper_left_content = new Upper_Left_Content()
