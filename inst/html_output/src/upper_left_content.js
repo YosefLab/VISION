@@ -915,16 +915,15 @@ Gene_Select.prototype.update = function(updates)
         var gene = get_global_status('plotted_item')
         var plotted_item_type = get_global_status('plotted_item_type')
         if(plotted_item_type === 'gene'){
-            this.recent_genes = this.recent_genes.filter(function(e) {
-                return e !== gene;
-            })
-            this.recent_genes.unshift(gene)
+            if(this.recent_genes.indexOf(gene) === -1){
+                this.recent_genes.unshift(gene)
 
-            if(this.recent_genes.length > 10){
-                this.recent_genes.pop();
+                if(this.recent_genes.length > 10){
+                    this.recent_genes.pop();
+                }
+
+                this.render_recent_genes()
             }
-
-            this.render_recent_genes()
         }
     }
 }
