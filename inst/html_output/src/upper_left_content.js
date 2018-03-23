@@ -55,7 +55,7 @@ Upper_Left_Content.prototype.update = function(updates)
 
 Upper_Left_Content.prototype.select_default = function()
 {
-    var new_projection = 'tSNE30'
+    var new_projection = get_global_data('default_projection');
 
     var update = {}
     update['plotted_projection'] = new_projection

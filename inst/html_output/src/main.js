@@ -36,6 +36,7 @@ global_data.tree_projection_coordinates = {};
 global_data.plotted_values = {}; // Holds gene expression, signature scores/ranks, etc...
 global_data.sig_info = {};  // Holds the information for the last plotted signature
 global_data.clusters = {};  // Maps cell ID to cluster ID
+global_data.default_projection = 'tSNE30';
 
 var lower_left_content;
 var upper_left_content;
