@@ -33,6 +33,7 @@ Right_Content.prototype.init = function()
             self.exportSigProj()
         });
 
+    self.setLoadingStatus = createLoadingFunction(self.dom_node);
 
 }
 

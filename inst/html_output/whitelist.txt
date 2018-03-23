@@ -1,4 +1,5 @@
 html_output/Results.html
+html_output/css/loading.svg
 html_output/css/lower_left_content.css
 html_output/css/right_content.css
 html_output/css/styles.css

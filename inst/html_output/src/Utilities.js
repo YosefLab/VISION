@@ -126,3 +126,49 @@ var detect_browser_scrollbar_width = (function()
 
     return inner;
 }());
+
+
+/*
+ * Creates a stateful loading function
+ *
+ * Usage:
+ *
+ * var loadingFun = createLoadingFunction(my_div);
+ *
+ * loadingFun(true) // start loading after delay
+ * loadingFun(false) // stop loading
+ *
+ */
+function createLoadingFunction(node){
+    var timer = -1;
+    var loadingDiv;
+
+    var loadFun = function(loadState){
+
+        if(loadState === true){
+            timer = setTimeout(() => {
+                $(node).addClass('loading');
+                loadingDiv = document.createElement("div");
+                $(loadingDiv).height($(node).height());
+                $(loadingDiv).width($(node).width());
+                $(loadingDiv).offset($(node).offset());
+                $(loadingDiv).addClass('loadingSpinner');
+                var img = $('<img />', {
+                    src: 'css/loading.svg',
+                    alt: 'loading-spinner'
+                });
+                img.appendTo(loadingDiv);
+                $(node).parent().append(loadingDiv);
+            }, 1000);
+        } else {
+            if(timer !== -1){
+                clearTimeout(timer);
+                timer = -1;
+            }
+            $(node).removeClass('loading');
+            $(loadingDiv).remove();
+        }
+    }
+
+    return loadFun;
+}

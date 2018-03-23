@@ -38,6 +38,9 @@ Lower_Left_Content.prototype.init = function()
 
     var meta_info_promise = meta_info.init();
 
+    this.setLoadingStatus = createLoadingFunction(
+        document.getElementById("lower-left-content")
+    );
 
     return $.when(sig_info_promise, gene_info_promise, meta_info_promise);
 }

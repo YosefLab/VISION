@@ -36,6 +36,10 @@ Upper_Left_Content.prototype.init = function()
 
     var gene_select_promise = gene_select.init()
 
+    this.setLoadingStatus = createLoadingFunction(
+        document.getElementById("upper-left-content")
+    );
+
     return $.when(sig_table_promise, pc_table_promise, gene_select_promise);
 
 }

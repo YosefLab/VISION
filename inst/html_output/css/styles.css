@@ -114,6 +114,15 @@ table.label-table td{
     filter: grayscale(100%) blur(5px);
 }
 
+.loadingSpinner {
+    position: fixed;
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /*background:url("loading.gif") no-repeat center center;*/
+}
+
 /* Styles for hover tooltip */
 /* Initial position is weird because Popper will position them dynamically on hover */
 #sig-tooltip {

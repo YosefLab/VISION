@@ -83,6 +83,10 @@ function set_global_status(update){
         update['selected_cluster'] = ''
     }
 
+    right_content.setLoadingStatus(true);
+    lower_left_content.setLoadingStatus(true);
+    upper_left_content.setLoadingStatus(true);
+
     // Just get all the PC's using one call
     if('main_vis' in update && get_global_status('main_vis') === 'pcannotator' &&
         _.isEmpty(global_data.pca_projection_coordinates))
@@ -195,18 +199,21 @@ function set_global_status(update){
     $.when.apply($, right_content_promises).then(
         function() {
             right_content.update(update);
+            right_content.setLoadingStatus(false);
         }
     );
 
     $.when.apply($, lower_left_content_promises).then(
         function() {
             lower_left_content.update(update);
+            lower_left_content.setLoadingStatus(false);
         }
     );
 
     $.when.apply($, upper_left_content_promises).then(
         function() {
             upper_left_content.update(update);
+            upper_left_content.setLoadingStatus(false);
         }
     );
 
