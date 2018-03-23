@@ -112,6 +112,14 @@ Signature_Table.prototype.init = function()
     })
 
     this.tooltip = outPopper;
+
+    // Set up the scrolling behavior
+    var header_div = this.dom_node.querySelector('.sig-tables-header')
+    var tables_div = this.dom_node.querySelector('.sig-tables-wrapper')
+    $(tables_div).on('scroll', function() {
+        $(header_div).scrollLeft($(this).scrollLeft())
+    })
+
     var update_promise = self.update({})
     return update_promise;
 
@@ -136,9 +144,9 @@ Signature_Table.prototype.render = function()
     _.each(matrix.proj_labels, function(proj_label){
         var new_cell = $("<th>")
         var new_item = $("<div>")
-        new_item.html(proj_label)
-        new_item.on("click", function() {
-            var col_name = $(this).html()
+        new_item.html("<div>" + proj_label + "</div>")
+        new_cell.on("click", function() {
+            var col_name = $(this).text()
             self.sorted_column = col_name
             self.render()
         });
@@ -166,8 +174,6 @@ Signature_Table.prototype.render = function()
 
         // Create new table and add to table_div
         var new_table_div = document.createElement("div");
-        new_table_div.setAttribute("style", "height=calc((100vh - 88px) / 2)");
-        new_table_div.setAttribute("style", "overflow: hidden");
         new_table_div.setAttribute("class", "sig-table-div");
 
         var new_table = document.createElement("table");
@@ -272,28 +278,31 @@ Signature_Table.prototype.render = function()
             content_row
                 .filter(function(d,i) { return i > 0;})
                 .style('background-color', function(d){return colorScale(d.val);})
-                .on("click", function(d){tableClickFunction_PC(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'signature')});
+                .on("click", function(d){tableClickFunction_PC(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'signature')})
+                .append('div');
 
         } else if (main_vis === 'clusters'){
             content_row
                 .filter(function(d,i) { return i > 0;})
+                .style('background-color', function(d){return colorScale(d.val);})
+                .on("click", function(d){tableClickFunction_clusters(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'signature')})
+                .append('div')
                 .text(function(d){
                     if(d.val < -50) { return "< -50";}
                     else if(d.val > -1) { return d.val.toFixed(2);}
                     else {return d.val.toPrecision(2);}
-                })
-                .style('background-color', function(d){return colorScale(d.val);})
-                .on("click", function(d){tableClickFunction_clusters(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'signature')});
+                });
         } else {
             content_row
                 .filter(function(d,i) { return i > 0;})
+                .style('background-color', function(d){return colorScale(d.val);})
+                .on("click", function(d){tableClickFunction(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'signature')})
+                .append('div')
                 .text(function(d){
                     if(d.val < -50) { return "< -50";}
                     else if(d.val > -1) { return d.val.toFixed(2);}
                     else {return d.val.toPrecision(2);}
-                })
-                .style('background-color', function(d){return colorScale(d.val);})
-                .on("click", function(d){tableClickFunction(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'signature')});
+                });
         }
 
         // Hover actions
@@ -460,6 +469,14 @@ Meta_Table.prototype.init = function()
     })
 
     this.tooltip = outPopper;
+
+    // Set up the scrolling behavior
+    var header_div = this.dom_node.querySelector('.sig-tables-header')
+    var tables_div = this.dom_node.querySelector('.sig-tables-wrapper')
+    $(tables_div).on('scroll', function() {
+        $(header_div).scrollLeft($(this).scrollLeft())
+    })
+
     var update_promise = self.update({})
 
     return update_promise;
@@ -526,8 +543,8 @@ Meta_Table.prototype.render = function()
     _.each(matrix.proj_labels, function(proj_label){
         var new_cell = $("<th>")
         var new_item = $("<div>")
-        new_item.html(proj_label)
-        new_item.on("click", function() {
+        new_item.html("<div>" + proj_label + "</div>")
+        new_cell.on("click", function() {
             var col_name = $(this).html()
             self.sorted_column = col_name
             self.render()
@@ -567,8 +584,6 @@ Meta_Table.prototype.render = function()
 
         // Create new table and add to table_div
         var new_table_div = document.createElement("div");
-        new_table_div.setAttribute("style", "height=calc((100vh - 88px) / 2)");
-        new_table_div.setAttribute("style", "overflow: hidden");
         new_table_div.setAttribute("class", "sig-table-div");
 
         var new_table = document.createElement("table");
@@ -679,28 +694,31 @@ Meta_Table.prototype.render = function()
             content_row
                 .filter(function(d,i) { return i > 0;})
                 .style('background-color', function(d){return colorScale(d.val);})
-                .on("click", function(d){tableClickFunction_PC(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'meta')});
+                .on("click", function(d){tableClickFunction_PC(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'meta')})
+                .append('div');
 
         } else if (main_vis === 'clusters'){
             content_row
                 .filter(function(d,i) { return i > 0;})
+                .style('background-color', function(d){return colorScale(d.val);})
+                .on("click", function(d){tableClickFunction_clusters(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'meta')})
+                .append('div')
                 .text(function(d){
                     if(d.val < -50) { return "< -50";}
                     else if(d.val > -1) { return d.val.toFixed(2);}
                     else {return d.val.toPrecision(2);}
-                })
-                .style('background-color', function(d){return colorScale(d.val);})
-                .on("click", function(d){tableClickFunction_clusters(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'meta')});
+                });
         } else {
             content_row
                 .filter(function(d,i) { return i > 0;})
+                .style('background-color', function(d){return colorScale(d.val);})
+                .on("click", function(d){tableClickFunction(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'meta')})
+                .append('div')
                 .text(function(d){
                     if(d.val < -50) { return "< -50";}
                     else if(d.val > -1) { return d.val.toFixed(2);}
                     else {return d.val.toPrecision(2);}
-                })
-                .style('background-color', function(d){return colorScale(d.val);})
-                .on("click", function(d){tableClickFunction(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'meta')});
+                });
         }
 
         // Hover actions
