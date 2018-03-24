@@ -9,32 +9,37 @@ clusterCells <- function(object) {
 
     message("Clustering cells...")
 
-    exprData <- object@exprData
-    filterInput <- object@projection_genes
-    filterThreshold <- object@threshold
+    if (sum(dim(object@latentSpace)) == 2) { # No latent Space
 
-    gene_passes <- applyFilters(exprData, filterThreshold, filterInput)
-    fexpr <- exprData[gene_passes, ]
+        exprData <- object@exprData
+        filterInput <- object@projection_genes
+        filterThreshold <- object@threshold
 
-    # Compute wcov using matrix operations to avoid
-    # creating a large dense matrix
+        gene_passes <- applyFilters(exprData, filterThreshold, filterInput)
+        fexpr <- exprData[gene_passes, ]
 
-    N <- ncol(fexpr)
-    wcov <- tcrossprod(fexpr) / N
+        # Compute wcov using matrix operations to avoid
+        # creating a large dense matrix
 
-    mu <- as.matrix(rowMeans(fexpr), ncol = 1)
-    mumu <- tcrossprod(mu)
-    wcov <- as.matrix(wcov - mumu)
+        N <- ncol(fexpr)
+        wcov <- tcrossprod(fexpr) / N
 
-    # SVD of wieghted correlation matrix
-    ncomp <- min(ncol(fexpr), nrow(fexpr), 10)
-    decomp <- rsvd::rsvd(wcov, k = ncomp)
-    evec <- t(decomp$u)
+        mu <- as.matrix(rowMeans(fexpr), ncol = 1)
+        mumu <- tcrossprod(mu)
+        wcov <- as.matrix(wcov - mumu)
 
-    # Project down using computed eigenvectors
-    res <- (evec %*% fexpr) - as.vector(evec %*% mu)
-    res <- as.matrix(res)
-    res <- t(res) # avoid transposing many times below
+        # SVD of wieghted correlation matrix
+        ncomp <- min(ncol(fexpr), nrow(fexpr), 10)
+        decomp <- rsvd::rsvd(wcov, k = ncomp)
+        evec <- t(decomp$u)
+
+        # Project down using computed eigenvectors
+        res <- (evec %*% fexpr) - as.vector(evec %*% mu)
+        res <- as.matrix(res)
+        res <- t(res) # avoid transposing many times below
+    } else {
+        res <- object@latentSpace
+    }
 
     n_workers <- getWorkerCount()
 
@@ -99,7 +104,7 @@ poolCells <- function(object,
     pooled_cells <- createPoolsBatch(object@pools, object@exprData)
     object@exprData <- pooled_cells
 
-    if (all(dim(object@latentSpace) == c(1, 1))) {
+    if (!all(dim(object@latentSpace) == c(1, 1))) {
         pooled_latent <- t(createPoolsBatch(object@pools, t(object@latentSpace)))
         object@latentSpace <- pooled_latent
     }

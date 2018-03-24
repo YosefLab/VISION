@@ -461,8 +461,12 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
           keys <- vapply(signatures, function(x) x@name, "")
           vals <- vapply(signatures, function(x) x@isMeta, TRUE)
           sigs <- keys[!vals]
+
           pc <- object@PCAnnotatorData@pearsonCorr
           pc <- pc[, 1:10]
+
+          # some signatures are thrown out, too few genes
+          sigs <- intersect(sigs, rownames(pc))
 
         return(FastProjectR:::pearsonCorrToJSON(pc, sigs))
       }) %>%
