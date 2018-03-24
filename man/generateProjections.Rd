@@ -4,13 +4,11 @@
 \alias{generateProjections}
 \title{Projects data into 2 dimensions using a variety of linear and non-linear methods.}
 \usage{
-generateProjections(expr, weights, latentSpace, projection_genes = NULL,
-  inputProjections = c(), lean = FALSE)
+generateProjections(expr, latentSpace, projection_genes = NULL,
+  inputProjections = list(), lean = FALSE)
 }
 \arguments{
 \item{expr}{numeric matrix of gene expression}
-
-\item{weights}{weights estimated from FNR curve}
 
 \item{latentSpace}{numeric matrix cells x components}
 
