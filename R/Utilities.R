@@ -45,3 +45,30 @@ getWorkerCount <- function() {
     }
 
 }
+
+#' Check's the version of the FastProject object and displays error if necessary
+#'
+#' @param object FastProject object
+#' @return NULL
+versionCheck <- function(object) {
+
+    templateStr <- paste0(
+        "This FastProject object was created with an older version of the library.",
+        "  To view, either install an older version (commit #COMMIT) from GitHub (www.github.com/YosefLab/FastProjectR) or",
+        " recreate the object and re-run analyze"
+    )
+
+    if (!.hasSlot(object, "version")) {
+        msg <- gsub("#COMMIT", "0cd5268", templateStr)
+        stop(msg, call. = FALSE)
+    }
+
+    if(object@version < 1.0) {
+        msg <- gsub("#COMMIT", "0cd5268", templateStr)
+        stop(msg, call. = FALSE)
+    }
+
+    # Add new commit hashes here as version increases and breaks backward compatibility
+
+    return()
+}
