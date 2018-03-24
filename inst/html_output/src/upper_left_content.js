@@ -399,9 +399,9 @@ Signature_Table.prototype.update = function(updates)
         var main_vis = get_global_status('main_vis');
 
         if (main_vis == "clusters") {
-            matrix_promise = api.filterGroup.sigProjMatrixPClusters(false, "nominal");
+            matrix_promise = api.filterGroup.sigProjMatrixPClusters(false);
         } else if (main_vis == "sigvp") {
-            matrix_promise = api.filterGroup.sigProjMatrixP(false, "nominal");
+            matrix_promise = api.filterGroup.sigProjMatrixP(false);
         } else if (main_vis == "tree") {
             matrix_promise = api.filterGroup.treeSigProjMatrixP(false);
         } else {
@@ -503,9 +503,9 @@ Meta_Table.prototype.update = function(updates)
         var main_vis = get_global_status('main_vis');
 
         if (main_vis == "clusters") {
-            matrix_promise = api.filterGroup.sigProjMatrixPClusters(true, "nominal");
+            matrix_promise = api.filterGroup.sigProjMatrixPClusters(true);
         } else if (main_vis === "sigvp") {
-            matrix_promise = api.filterGroup.sigProjMatrixP(true, "nominal");
+            matrix_promise = api.filterGroup.sigProjMatrixP(true);
         } else if (main_vis === "tree") {
             matrix_promise = api.filterGroup.treeSigProjMatrixP(true);
         } else {

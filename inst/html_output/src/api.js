@@ -87,17 +87,13 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.filterGroup.sigProjMatrixP = function(meta, pvalue)
+    output.filterGroup.sigProjMatrixP = function(meta)
     {
         var query = "/FilterGroup"
         if (meta) {
             query = query.concat("/SigProjMatrix_P/Meta")
         } else {
-            if (pvalue == "nominal") {
-                query = query.concat("/SigProjMatrix_P/Normal")
-            } else {
-                query = query.concat("/SigProjMatrix_Pemp/Normal")
-            }
+            query = query.concat("/SigProjMatrix_P/Normal")
         }
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
@@ -108,11 +104,7 @@ var api = (function(){
         if (meta) {
             query = query.concat("/SigProjMatrix_P_Clusters/Meta")
         } else {
-            if (pvalue == "nominal") {
-                query = query.concat("/SigProjMatrix_P_Clusters/Normal")
-            } else {
-                query = query.concat("/SigProjMatrix_Pemp_Clusters/Normal")
-            }
+            query = query.concat("/SigProjMatrix_P_Clusters/Normal")
         }
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
