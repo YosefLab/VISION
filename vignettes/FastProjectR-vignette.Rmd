@@ -95,14 +95,7 @@ fp <- FastProject("data/expression_matrix.txt",
 
 Now, with a FastProject object, we can run `analyze` which will run the FastProject pipeline and return a FastProjectOutput object.
 
-FastProjectR supports parallelization with BiocParallel, so we highly recommend registering a parallelization
-backend and providing it to `analyze`. If one is not provided, FastProjectR will call BiocParallel::bpparam
-to get a default backend.
-Here we provide a serial back-end since it's platform independent. For more details on setting up parallelization back-ends, see the [BiocParallel package page](http://bioconductor.org/packages/release/bioc/html/BiocParallel.html)
-
 ```{r, collapse=T, message=T}
-BiocParallel::register(BiocParallel::SerialParam())
-
 fp <- analyze(fp)
 ```
 

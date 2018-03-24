@@ -83,7 +83,7 @@ calculateSignatureBackground <- function(object, num) {
                             unlist(randomSigs, recursive = FALSE),
                             object@sig_score_method,
                             normExpr, object@weights,
-                            object@min_signature_genes)
+                            min_signature_genes = 0) # Don't filter background signatures
 
     # randomSigScores is matrix of cells x signatures
     # need to make a list of matrices, one for each signature group
@@ -520,7 +520,7 @@ sigsVsProjection_n <- function(sigData, randomSigData,
         return(list(consistency = consistency, pvals = pvals,
                     empvals = empvals))
 
-    }, mc.cores = min(availableCores, length(randomSigScores)))
+    }, mc.cores = max(min(availableCores, length(randomSigScores)), 1))
 
 
     consistency <- do.call(c, lapply(groupedResults, function(x) x$consistency))
@@ -600,7 +600,7 @@ sigsVsProjection_pcn <- function(metaData, weights, cells = NULL){
 
     return(list(consistency = c_score, pval = pval))
 
-  }, mc.cores = min(10, length(numericMeta)))
+  }, mc.cores = max(min(10, length(numericMeta)), 1))
 
   names(results) <- numericMeta
 
@@ -703,7 +703,7 @@ sigsVsProjection_pcf <- function(metaData, weights, cells = NULL){
 
     return(list(consistency = c_score, pval = pval))
 
-  }, mc.cores = min(10, length(factorMeta)))
+  }, mc.cores = max(min(10, length(factorMeta)), 1))
 
   names(results) <- factorMeta
 
@@ -743,7 +743,7 @@ clusterSignatures <- function(sigMatrix, metaData, pvals, clusterMeta) {
 
   compcls <- list()
   maxcls <- 1
-  if (ncol(computedSigMatrix) > 1) {
+  if (ncol(computedSigMatrix) > 5) {
 
     if (nrow(computedSigMatrix) > 5000) {
         cSM_sub <- computedSigMatrix[sample(nrow(computedSigMatrix), 5000), ]
@@ -767,6 +767,9 @@ clusterSignatures <- function(sigMatrix, metaData, pvals, clusterMeta) {
     compcls <- compcls[order(unlist(compcls), decreasing = FALSE)]
 
     maxcls <- max(unlist(compcls))
+  } else {
+      compcls <- as.list(rep(maxcls, ncol(computedSigMatrix)))
+      names(compcls) <- colnames(computedSigMatrix)
   }
 
   compcls[names(signif_computed)[!signif_computed]] <- maxcls + 1
