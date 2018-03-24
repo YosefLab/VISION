@@ -290,38 +290,26 @@ sigsVsProjectionsClusters <- function(latentSpace, sigScoresData, metaData,
     sigProjMatrix_Pemp[proj@name] <- emp_pvals
   }
 
-  # FDR-correct
+  # Convert from dataframes to matrix
 
-  sigProjMatrix_Padj <- matrix(
-      p.adjust(
-          as.matrix(sigProjMatrix_P),
-          method="BH"
-      ),
-    nrow=nrow(sigProjMatrix_P),
-    ncol=ncol(sigProjMatrix_P)
-  )
-  colnames(sigProjMatrix_Padj) <- colnames(sigProjMatrix_P)
-  rownames(sigProjMatrix_Padj) <- rownames(sigProjMatrix_P)
+  sigProjMatrix <- as.matrix(sigProjMatrix)
+  sigProjMatrix_P <- as.matrix(sigProjMatrix_P)
+  sigProjMatrix_Pemp <- as.matrix(sigProjMatrix_Pemp)
+
+  # FDR-correct and log-transform p-values
+  sigProjMatrix_Padj <- apply(sigProjMatrix_P, MARGIN = 2,
+                              FUN = p.adjust, method = "BH")
 
   sigProjMatrix_Padj[sigProjMatrix_Padj == 0] <- 10^(-300)
 
-  sigProjMatrix <- as.matrix(sigProjMatrix)
-  sigProjMatrix_Padj <- as.matrix(log10(sigProjMatrix_Padj))
+  sigProjMatrix_Padj <- log10(sigProjMatrix_Padj)
 
-  sigProjMatrix_Pempadj <- matrix(
-      p.adjust(
-          as.matrix(sigProjMatrix_Pemp),
-          method="BH"
-      ),
-    nrow=nrow(sigProjMatrix_Pemp),
-    ncol=ncol(sigProjMatrix_Pemp)
-  )
-  colnames(sigProjMatrix_Pempadj) <- colnames(sigProjMatrix_Pemp)
-  rownames(sigProjMatrix_Pempadj) <- rownames(sigProjMatrix_Pemp)
+  sigProjMatrix_Pempadj <- apply(sigProjMatrix_Pemp, MARGIN = 2,
+                                 FUN = p.adjust, method = "BH")
 
   sigProjMatrix_Pempadj[sigProjMatrix_Pempadj == 0] <- 10^(-300)
 
-  sigProjMatrix_Pempadj <- as.matrix(log10(sigProjMatrix_Pempadj))
+  sigProjMatrix_Pempadj <- log10(sigProjMatrix_Pempadj)
 
   return(list(sigProjMatrix = sigProjMatrix, pVals = sigProjMatrix_Padj, emp_pVals = sigProjMatrix_Pempadj))
 }
@@ -384,38 +372,26 @@ sigsVsProjections <- function(projections, sigScoresData, metaData,
 
   }
 
-  # FDR-correct
+  # Convert from dataframes to matrix
 
-  sigProjMatrix_Padj <- matrix(
-      p.adjust(
-          as.matrix(sigProjMatrix_P),
-          method="BH"
-      ),
-    nrow=nrow(sigProjMatrix_P),
-    ncol=ncol(sigProjMatrix_P)
-  )
-  colnames(sigProjMatrix_Padj) <- colnames(sigProjMatrix_P)
-  rownames(sigProjMatrix_Padj) <- rownames(sigProjMatrix_P)
+  sigProjMatrix <- as.matrix(sigProjMatrix)
+  sigProjMatrix_P <- as.matrix(sigProjMatrix_P)
+  sigProjMatrix_Pemp <- as.matrix(sigProjMatrix_Pemp)
+
+  # FDR-correct and log-transform p-values
+  sigProjMatrix_Padj <- apply(sigProjMatrix_P, MARGIN = 2,
+                              FUN = p.adjust, method = "BH")
 
   sigProjMatrix_Padj[sigProjMatrix_Padj == 0] <- 10^(-300)
 
-  sigProjMatrix <- as.matrix(sigProjMatrix)
-  sigProjMatrix_Padj <- as.matrix(log10(sigProjMatrix_Padj))
+  sigProjMatrix_Padj <- log10(sigProjMatrix_Padj)
 
-  sigProjMatrix_Pempadj <- matrix(
-      p.adjust(
-          as.matrix(sigProjMatrix_Pemp),
-          method="BH"
-      ),
-    nrow=nrow(sigProjMatrix_Pemp),
-    ncol=ncol(sigProjMatrix_Pemp)
-  )
-  colnames(sigProjMatrix_Pempadj) <- colnames(sigProjMatrix_Pemp)
-  rownames(sigProjMatrix_Pempadj) <- rownames(sigProjMatrix_Pemp)
+  sigProjMatrix_Pempadj <- apply(sigProjMatrix_Pemp, MARGIN = 2,
+                                 FUN = p.adjust, method = "BH")
 
   sigProjMatrix_Pempadj[sigProjMatrix_Pempadj == 0] <- 10^(-300)
 
-  sigProjMatrix_Pempadj <- as.matrix(log10(sigProjMatrix_Pempadj))
+  sigProjMatrix_Pempadj <- log10(sigProjMatrix_Pempadj)
 
   return(list(sigProjMatrix = sigProjMatrix, pVals = sigProjMatrix_Padj, emp_pVals = sigProjMatrix_Pempadj))
 }
