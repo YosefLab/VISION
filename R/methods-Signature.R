@@ -145,11 +145,22 @@ generatePermutationNull <- function(num, eData, sigData) {
 
   km <- kmeans(sigVars, n_components)
   centers <- km$centers
-  clusters <- as.factor(km$cluster)
+
+  levels <- as.character(seq(n_components))
+  clusters <- factor(km$cluster, levels = levels)
+
+  # Re-order the centers
+  row_i <- order(centers[, "sigSize"])
+
+  centers <- centers[row_i, , drop = FALSE]
+  levels(clusters) <- as.character(order(row_i))
+  rownames(centers) <- as.character(seq(n_components))
+
+  # undo the log scaling
+  centers[, "sigSize"] <- round(10 ** centers[, "sigSize"])
 
   message("Creating ", nrow(centers),
           " background signature groups with the following parameters:")
-  centers[, "sigSize"] <- round(10 ** centers[, "sigSize"])
   print(centers) # How do I do this with 'message'??
   message("  signatures per group: ", num)
 
