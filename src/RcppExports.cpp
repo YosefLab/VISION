@@ -5,26 +5,66 @@
 
 using namespace Rcpp;
 
-// point_mult
-void point_mult(NumericMatrix& X, NumericVector& Y);
-RcppExport SEXP _FastProjectR_point_mult(SEXP XSEXP, SEXP YSEXP) {
+// geary
+double geary(NumericVector X, NumericMatrix W);
+RcppExport SEXP _FastProjectR_geary(SEXP XSEXP, SEXP WSEXP) {
 BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix& >::type X(XSEXP);
-    Rcpp::traits::input_parameter< NumericVector& >::type Y(YSEXP);
-    point_mult(X, Y);
-    return R_NilValue;
+    Rcpp::traits::input_parameter< NumericVector >::type X(XSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type W(WSEXP);
+    rcpp_result_gen = Rcpp::wrap(geary(X, W));
+    return rcpp_result_gen;
 END_RCPP
 }
-// multMat
-NumericVector multMat(NumericMatrix X, NumericMatrix Y);
-RcppExport SEXP _FastProjectR_multMat(SEXP XSEXP, SEXP YSEXP) {
+// geary_sparse
+double geary_sparse(NumericVector X, NumericMatrix ind, NumericMatrix W);
+RcppExport SEXP _FastProjectR_geary_sparse(SEXP XSEXP, SEXP indSEXP, SEXP WSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type X(XSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type ind(indSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type W(WSEXP);
+    rcpp_result_gen = Rcpp::wrap(geary_sparse(X, ind, W));
+    return rcpp_result_gen;
+END_RCPP
+}
+// geary_sparse_local
+NumericVector geary_sparse_local(NumericVector X, NumericMatrix ind, NumericMatrix W);
+RcppExport SEXP _FastProjectR_geary_sparse_local(SEXP XSEXP, SEXP indSEXP, SEXP WSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type X(XSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type ind(indSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type W(WSEXP);
+    rcpp_result_gen = Rcpp::wrap(geary_sparse_local(X, ind, W));
+    return rcpp_result_gen;
+END_RCPP
+}
+// geary_all
+NumericVector geary_all(NumericMatrix X, NumericMatrix W);
+RcppExport SEXP _FastProjectR_geary_all(SEXP XSEXP, SEXP WSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type Y(YSEXP);
-    rcpp_result_gen = Rcpp::wrap(multMat(X, Y));
+    Rcpp::traits::input_parameter< NumericMatrix >::type W(WSEXP);
+    rcpp_result_gen = Rcpp::wrap(geary_all(X, W));
+    return rcpp_result_gen;
+END_RCPP
+}
+// geary_sparse_all
+NumericVector geary_sparse_all(NumericMatrix X, NumericMatrix ind, NumericMatrix W);
+RcppExport SEXP _FastProjectR_geary_sparse_all(SEXP XSEXP, SEXP indSEXP, SEXP WSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type ind(indSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type W(WSEXP);
+    rcpp_result_gen = Rcpp::wrap(geary_sparse_all(X, ind, W));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -67,13 +107,41 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// point_mult
+void point_mult(NumericMatrix& X, NumericVector& Y);
+RcppExport SEXP _FastProjectR_point_mult(SEXP XSEXP, SEXP YSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< NumericVector& >::type Y(YSEXP);
+    point_mult(X, Y);
+    return R_NilValue;
+END_RCPP
+}
+// multMat
+NumericVector multMat(NumericMatrix X, NumericMatrix Y);
+RcppExport SEXP _FastProjectR_multMat(SEXP XSEXP, SEXP YSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type Y(YSEXP);
+    rcpp_result_gen = Rcpp::wrap(multMat(X, Y));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_FastProjectR_point_mult", (DL_FUNC) &_FastProjectR_point_mult, 2},
-    {"_FastProjectR_multMat", (DL_FUNC) &_FastProjectR_multMat, 2},
+    {"_FastProjectR_geary", (DL_FUNC) &_FastProjectR_geary, 2},
+    {"_FastProjectR_geary_sparse", (DL_FUNC) &_FastProjectR_geary_sparse, 3},
+    {"_FastProjectR_geary_sparse_local", (DL_FUNC) &_FastProjectR_geary_sparse_local, 3},
+    {"_FastProjectR_geary_all", (DL_FUNC) &_FastProjectR_geary_all, 2},
+    {"_FastProjectR_geary_sparse_all", (DL_FUNC) &_FastProjectR_geary_sparse_all, 3},
     {"_FastProjectR_ball_tree_vector_knn", (DL_FUNC) &_FastProjectR_ball_tree_vector_knn, 4},
     {"_FastProjectR_ball_tree_knn", (DL_FUNC) &_FastProjectR_ball_tree_knn, 3},
     {"_FastProjectR_load_in_knn", (DL_FUNC) &_FastProjectR_load_in_knn, 2},
+    {"_FastProjectR_point_mult", (DL_FUNC) &_FastProjectR_point_mult, 2},
+    {"_FastProjectR_multMat", (DL_FUNC) &_FastProjectR_multMat, 2},
     {NULL, NULL, 0}
 };
 
