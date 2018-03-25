@@ -1,15 +1,13 @@
 #' Initializes a new FastProject object.
 #'
-#' @import BiocParallel
 #' @importFrom Biobase ExpressionSet exprs
 #' @importFrom SummarizedExperiment SummarizedExperiment assay
 #' @import logging
 #'
 #' @param data expression data - can be one of these: \itemize{
 #' \item numeric matrix
-#' \item path of a file,
 #' \item ExpressionSet object
-#' \item SummerizedExperiment object (or extending classes)
+#' \item SummzrizedExperiment object (or extending classes)
 #' }
 #' @param signatures list of file paths to signature files (.gmt or .txt) or a
 #' list of Signature objects
@@ -208,15 +206,6 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
             .Object@cluster_variable <- cluster_variable
 
             return(.Object)
-            }
-)
-
-#' @param ... additional arguments
-#' @rdname FastProject-class
-#' @export
-setMethod("FastProject", signature(data = "character"),
-            function(data, ...) {
-            return(FastProject(readExprAsMatrix(data), ...))
             }
 )
 

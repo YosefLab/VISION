@@ -1,28 +1,3 @@
-#' Reads in an expression matrix from a file path to a matrix
-#' @param filename path to the file to be read in
-#' @param sep seperator to use while reading in the file. Default is "\\t"
-#'
-#' @return Matrix read in from filename.
-readExprAsMatrix <- function(filename, sep="\t") {
-
-    message("Loading data from ", filename, " ...")
-    f <- basename(filename)
-    fsplit <- unlist(strsplit(f, "[.]"))
-    if (fsplit[[length(fsplit)]] == "rds") {
-        return(readRDS(filename))
-    }
-    data <- as.matrix(read.table(filename, header = TRUE, sep=sep,
-                                 row.names = 1))
-
-    # make sure gene names are all upper case to facilitate easy matching later
-    rownames(data) <- toupper(rownames(data))
-
-    # check if there are any repeats in samples or genes
-    data <- data[unique(rownames(data)),]
-
-    return(data)
-}
-
 #' Reads in a list of signature input files.
 #' @importFrom utils read.table
 #' @importFrom cogena gmt2list
