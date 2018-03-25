@@ -13,6 +13,8 @@ createFalseNegativeMap <- function(data, housekeeping_genes) {
     # Filter out genes with no variance
     data_hk <- data_hk[filterGenesNovar(data_hk), ]
 
+    data_hk <- matLog2(data_hk)
+
     # calculate the distributions for hk gene
     # Gamma is 1 for any non-zero data point
     # Mu_h is the row (per gene) average of non zero points
@@ -117,7 +119,7 @@ createFalseNegativeMap <- function(data, housekeeping_genes) {
 #' @return Weight matrix (NUM_GENES x NUM_SAMPLES) which includes the estimated
 #' weight for each data point in input matrix. Ranges form 0 to 1.
 computeWeights <- function(fit_func, params, exprData) {
-    expr <- exprData
+    expr <- matLog2(exprData)
 
     fnProb <- matrix(0L, nrow = nrow(expr), ncol = ncol(expr))
     countNonZero <- apply(expr, 1, function(c) sum(c!=0))

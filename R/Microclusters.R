@@ -15,6 +15,7 @@ applyMicroClustering <- function(
                          latentSpace = NULL) {
 
     if (is.null(latentSpace)) {
+        exprData <- matLog2(exprData)
         gene_passes <- applyFilters(exprData, filterThreshold, filterInput)
         fexpr <- exprData[gene_passes, ]
 

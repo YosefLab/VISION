@@ -66,6 +66,8 @@ colRankNormalization <- function(data) {
 #' @return Normalized data matrix according to function specified.
 getNormalizedCopy <- function(data, func) {
 
+    data <- matLog2(data)
+
     if (func == "none") {
         return(noNormalization(data))
     } else if (func == "znorm_columns") {

@@ -506,7 +506,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       }) %>%
       get("/Expression/Gene/(?<gene_name2>.*)", function(req, res, err) {
 
-        data <- object@exprData
+        data <- log2(object@exprData + 1)
         gene_name <- URLdecode(req$params$gene_name2)
 
         result <- toJSON(

@@ -38,6 +38,8 @@ generateProjections <- function(expr, latentSpace,
         exprData <- expr
     }
 
+    exprData <- matLog2(exprData)
+
     methodList <- registerMethods(lean)
 
     inputProjections <- c(inputProjections,

@@ -11,7 +11,7 @@ clusterCells <- function(object) {
 
     if (sum(dim(object@latentSpace)) == 2) { # No latent Space
 
-        exprData <- object@exprData
+        exprData <- matLog2(object@exprData)
         filterInput <- object@projection_genes
         filterThreshold <- object@threshold
 
@@ -134,8 +134,10 @@ filterData <- function(object,
         object@threshold <- round(0.2 * num_samples)
     }
 
+    exprData <- matLog2(object@exprData)
+
     object@projection_genes <- applyFilters(
-                object@exprData,
+                exprData,
                 object@threshold,
                 object@projection_genes)
 
@@ -243,6 +245,8 @@ computeLatentSpace <- function(object, projection_genes = NULL,
                                          )
                          )
     }
+
+    exprData <- matLog2(exprData)
 
     if (perm_wPCA) {
         res <- applyPermutationWPCA(exprData, weights, components = 30)
