@@ -135,22 +135,30 @@ generatePermutationNull <- function(num, eData, sigData) {
 
   sigBalance[sigBalance < 0.5] <- 1 - sigBalance[sigBalance < 0.5]
 
-  #sigVars = cbind(sigSize, sigBalance)
-  sigVars <- cbind(sigSize) # TODO: incorporate the sigBalance here
+  sigVars <- cbind(sigSize, sigBalance)
 
   n_components <- 5 # TODO: choose number of components better
-  if (nrow(unique(sigVars)) < n_components){
-      n_components <- nrow(unique(sigVars))
+
+  if (nrow(sigVars) <= n_components){
+      n_components <- nrow(sigVars)
+      centers <- sigVars
+      clusters <- as.factor(seq(1:nrow(sigVars)))
+      names(clusters) <- rownames(sigVars)
+  } else {
+
+      if (nrow(unique(sigVars)) <= n_components){
+          n_components <- nrow(unique(sigVars))
+      }
+
+      km <- kmeans(sigVars, n_components)
+      centers <- km$centers
+
+      levels <- as.character(seq(n_components))
+      clusters <- factor(km$cluster, levels = levels)
   }
 
-  km <- kmeans(sigVars, n_components)
-  centers <- km$centers
-
-  levels <- as.character(seq(n_components))
-  clusters <- factor(km$cluster, levels = levels)
-
   # Re-order the centers
-  row_i <- order(centers[, "sigSize"])
+  row_i <- order(centers[, "sigSize"], centers[, "sigBalance"])
 
   centers <- centers[row_i, , drop = FALSE]
   levels(clusters) <- as.character(order(row_i))
