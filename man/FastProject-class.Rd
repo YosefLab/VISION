@@ -4,7 +4,6 @@
 \name{FastProject}
 \alias{FastProject}
 \alias{FastProject,matrixORSparse-method}
-\alias{FastProject,character-method}
 \alias{FastProject,ExpressionSet-method}
 \alias{FastProject,SummarizedExperiment-method}
 \title{Initializes a new FastProject object.}
@@ -20,8 +19,6 @@ FastProject(data, ...)
   cellsPerPartition = 100, name = NULL, cluster_variable = "",
   latentSpace = NULL)
 
-\S4method{FastProject}{character}(data, ...)
-
 \S4method{FastProject}{ExpressionSet}(data, ...)
 
 \S4method{FastProject}{SummarizedExperiment}(data, ...)
@@ -29,12 +26,9 @@ FastProject(data, ...)
 \arguments{
 \item{data}{expression data - can be one of these: \itemize{
 \item numeric matrix
-\item path of a file,
 \item ExpressionSet object
-\item SummerizedExperiment object (or extending classes)
+\item SummzrizedExperiment object (or extending classes)
 }}
-
-\item{...}{additional arguments}
 
 \item{signatures}{list of file paths to signature files (.gmt or .txt) or a
 list of Signature objects}
