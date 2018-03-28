@@ -112,6 +112,21 @@ poolCells <- function(object,
     poolMeta <- createPooledMetaData(object@metaData, object@pools)
     object@metaData <- poolMeta
 
+    if (length(object@inputProjections) > 0){
+
+        newInputProjections <- lapply(
+            object@inputProjections,
+            function(proj) {
+                new_coords <- t(createPoolsBatch(object@pools, t(proj@pData)))
+                return(Projection(proj@name, new_coords))
+            })
+
+        names(newInputProjections) <- names(object@inputProjections)
+
+        object@inputProjections <- newInputProjections
+
+    }
+
     return(object)
 }
 
