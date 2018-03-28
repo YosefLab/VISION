@@ -4,15 +4,17 @@
 \alias{sigProjMatrixToJSON}
 \title{Converts a sigProjMatrix from a FastProject Object to a JSON object}
 \usage{
-sigProjMatrixToJSON(sigpm, sigs)
+sigProjMatrixToJSON(sigzscores, sigpvals, sigs)
 }
 \arguments{
-\item{sigpm}{SigProjMatrix}
+\item{sigzscores}{Matrix of signature z-scores}
 
-\item{sigs}{Signatures to subset form sigpm}
+\item{sigpvals}{Matrix of signature p-values}
+
+\item{sigs}{Signatures to subset zscores/pvalues}
 }
 \value{
-Subsetted sigProjMatirx converted to JSON
+Subsetted sigProjMatrix converted to JSON
 }
 \description{
 Converts a sigProjMatrix from a FastProject Object to a JSON object

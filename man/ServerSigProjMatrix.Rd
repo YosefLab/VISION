@@ -4,10 +4,12 @@
 \alias{ServerSigProjMatrix}
 \title{Wrapper class for Signature Projection Matrix}
 \usage{
-ServerSigProjMatrix(data, proj_labels, sig_labels)
+ServerSigProjMatrix(zscores, pvals, proj_labels, sig_labels)
 }
 \arguments{
-\item{data}{Signatrue Projection matrix as obtained from sigsVsProjections}
+\item{zscores}{numeric matrix}
+
+\item{pvals}{numeric matrix}
 
 \item{proj_labels}{Projection names}
 

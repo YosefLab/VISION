@@ -7,7 +7,7 @@
 pearsonCorrToJSON(pc, sigs)
 }
 \arguments{
-\item{pc}{the pearson correlations matrx}
+\item{pc}{the pearson correlation coefficients matrix}
 
 \item{sigs}{the signatures of interest}
 }

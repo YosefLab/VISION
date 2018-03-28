@@ -7,7 +7,7 @@ are reduce, using the louvain clustering algorithm}
 \usage{
 applyMicroClustering(exprData, cellsPerPartition = 100,
   filterInput = "fano", filterThreshold = round(ncol(exprData) * 0.2),
-  preserve_clusters = NULL, latentSpace = NULL)
+  preserve_clusters = NULL, latentSpace = matrix(NA, 1, 1))
 }
 \arguments{
 \item{exprData}{the expression data matrix}
