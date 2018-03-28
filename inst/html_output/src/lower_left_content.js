@@ -503,7 +503,7 @@ function selectRange() {
     var sig_key = global_status.plotted_signature;
     var proj_key = global_status.plotted_projection;
 
-    var proj_promise = api.projection.coordinates(proj_key);
+    var proj_promise = api.projections.coordinates(proj_key);
 
     if (global_status.subset_criteria == "Rank") {
         //var sig_promise = api.signature.ranks(sig_key);

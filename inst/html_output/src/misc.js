@@ -45,7 +45,7 @@ function exprotSigProj() {
         return $().promise();
     }
 
-    var proj_promise = api.projection.coordinates(proj_key);
+    var proj_promise = api.projections.coordinates(proj_key);
 
     var sig_promise;
     if (global_status.scatterColorOption == "value" || global_data.sigIsMeta[sig_key]) {

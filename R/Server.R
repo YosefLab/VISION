@@ -13,13 +13,15 @@ ServerExpression <- function(data, sample_labels, gene_labels) {
 
 #' Wrapper class for Signature Projection Matrix
 #'
-#' @param data Signatrue Projection matrix as obtained from sigsVsProjections
+#' @param zscores numeric matrix
+#' @param pvals numeric matrix
 #' @param proj_labels Projection names
 #' @param sig_labels Names of signatures
 #' @return ServerSigProjMatrix object
-ServerSigProjMatrix <- function(data, proj_labels, sig_labels) {
-            .Object <- new("ServerSigProjMatrix", data=data,
-                           proj_labels=proj_labels, sig_labels=sig_labels)
+ServerSigProjMatrix <- function(zscores, pvals, proj_labels, sig_labels) {
+            .Object <- new("ServerSigProjMatrix",
+                           zscores = zscores, pvals = pvals,
+                           proj_labels = proj_labels, sig_labels = sig_labels)
             return(.Object)
             }
 
@@ -34,19 +36,6 @@ ServerPMatrix <- function(data, proj_labels, sig_labels) {
                            sig_labels=sig_labels)
             return(.Object)
             }
-
-#' Wrapper class for server Perason correlation data
-#'
-#' @param data pearson r correlation coefficients
-#' @param proj_labels the labels of the projections (columns) in the data
-#' @param sig_labels the labels of the signatures (rows) in the data
-#' @return a ServerPCorr object
-ServerPCorr <- function(data, proj_labels, sig_labels) {
-        .Object <- new("ServerPCorr", data=data, proj_labels=proj_labels,
-                       sig_labels=sig_labels)
-        return(.Object)
-        }
-
 
 #' Converts Signature object to JSON
 #' @importFrom jsonlite toJSON
@@ -122,14 +111,19 @@ coordinatesToJSON <- function(p) {
 
 #' Converts a sigProjMatrix from a FastProject Object to a JSON object
 #' @importFrom jsonlite toJSON
-#' @param sigpm SigProjMatrix
-#' @param sigs Signatures to subset form sigpm
-#' @return Subsetted sigProjMatirx converted to JSON
-sigProjMatrixToJSON <- function(sigpm, sigs) {
+#' @param sigzscores Matrix of signature z-scores
+#' @param sigpvals Matrix of signature p-values
+#' @param sigs Signatures to subset zscores/pvalues
+#' @return Subsetted sigProjMatrix converted to JSON
+sigProjMatrixToJSON <- function(sigzscores, sigpvals, sigs) {
 
-    sigs <- intersect(sigs, rownames(sigpm))
-    sigpm <- sigpm[sigs,, drop=FALSE]
-    sSPM <- ServerSigProjMatrix(unname(sigpm), colnames(sigpm), sigs)
+    sigs <- intersect(sigs, rownames(sigzscores))
+    sigpvals <- sigpvals[sigs, , drop = FALSE]
+
+    sigzscores <- sigzscores[rownames(sigpvals), , drop = FALSE]
+    sigzscores <- sigzscores[, colnames(sigpvals), drop = FALSE]
+
+    sSPM <- ServerSigProjMatrix(unname(sigzscores), unname(sigpvals), colnames(sigpvals), rownames(sigpvals))
 
     json <- toJSON(sSPM, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
 
@@ -137,17 +131,17 @@ sigProjMatrixToJSON <- function(sigpm, sigs) {
 }
 
 #' convert perason correlation coeffcients between PCs and sgnatures into a JSON object
-#' @param pc the pearson correlations matrx
+#' @param pc the pearson correlation coefficients matrix
 #' @param sigs the signatures of interest
 #' @return Subsetted pearson correlations converted to JSON
 pearsonCorrToJSON <- function(pc, sigs) {
 
-    pc <- pc[sigs,,drop=FALSE]
-    cn <- c()
-    for (i in 1:ncol(pc)) { cn <- c(cn, paste("PC", i)) }
-    sPC <- ServerPCorr(unname(pc), cn, sigs)
+    pc <- pc[sigs, ,drop = FALSE]
+    cn <- paste("PC", 1:ncol(pc))
 
-    json <- toJSON(sPC, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
+    sPC <- ServerSigProjMatrix(unname(pc), unname(pc), cn, sigs)
+
+    json <- toJSON(sPC, force = TRUE, pretty = TRUE, auto_unbox = TRUE)
 
     return(json)
 
@@ -288,75 +282,49 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         out <- FastProjectR:::coordinatesToJSON(object@ProjectionData@projections[[proj]]@pData)
         return(out)
       }) %>%
-      get("/FilterGroup/projections/list", function(req, res, err) {
+      get("/Projections/list", function(req, res, err) {
         proj_names <- names(object@ProjectionData@projections)
         out <- toJSON(proj_names, auto_unbox=TRUE)
         return(out)
       }) %>%
-      get("/FilterGroup/SigProjMatrix/Normal", function(req, res, err) {
+      get("/Projections/SigProjMatrix/Normal", function(req, res, err) {
 
-        signatures <- object@sigData
-        keys <- vapply(signatures, function(x) x@name, "")
-        vals <- vapply(signatures, function(x) x@isMeta, TRUE)
-        sigs <- keys[!vals]
-        out <- FastProjectR:::sigProjMatrixToJSON(object@ProjectionData@sigProjMatrix, sigs)
+        sigs <- colnames(object@sigScores)
+
+        out <- FastProjectR:::sigProjMatrixToJSON(
+                                  object@ProjectionData@sigProjMatrix,
+                                  object@ProjectionData@emp_pMatrix,
+                                  sigs)
         return(out)
       }) %>%
-      get("/FilterGroup/SigProjMatrix/Meta", function(req, res, err) {
-
-        signatures <- object@sigData
-        keys <- vapply(signatures, function(x) x@name, "")
-        vals <- vapply(signatures, function(x) x@isMeta, TRUE)
-        sigs <- keys[!vals]
-        out <- FastProjectR:::sigProjMatrixToJSON(object@ProjectionData@sigProjMatrix, sigs)
-        return(out)
-      }) %>%
-      get("/FilterGroup/SigProjMatrix_P/Normal", function(req, res, err) {
-
-        signatures <- object@sigData
-        keys <- vapply(signatures, function(x) x@name, "")
-        vals <- vapply(signatures, function(x) x@isMeta, TRUE)
-        sigs <- keys[!vals]
-        out <- FastProjectR:::sigProjMatrixToJSON(object@ProjectionData@emp_pMatrix, sigs)
-        return(out)
-      }) %>%
-      get("/FilterGroup/SigProjMatrix_P/Meta", function(req, res, err) {
+      get("/Projections/SigProjMatrix/Meta", function(req, res, err) {
 
         sigs <- colnames(object@metaData)
 
-        out <- FastProjectR:::sigProjMatrixToJSON(object@ProjectionData@emp_pMatrix, sigs)
+        out <- FastProjectR:::sigProjMatrixToJSON(
+                                  object@ProjectionData@sigProjMatrix,
+                                  object@ProjectionData@emp_pMatrix,
+                                  sigs)
         return(out)
       }) %>%
-      get("/FilterGroup/SigProjMatrix_P_Clusters/Normal", function(req, res, err) {
+      get("/Clusters/SigProjMatrix/Normal", function(req, res, err) {
 
-        signatures <- object@sigData
-        keys <- vapply(signatures, function(x) x@name, "")
-        vals <- vapply(signatures, function(x) x@isMeta, TRUE)
-        sigs <- keys[!vals]
-        out <- FastProjectR:::sigProjMatrixToJSON(object@ClusterProjectionData@emp_pMatrix, sigs)
+        sigs <- colnames(object@sigScores)
+
+        out <- FastProjectR:::sigProjMatrixToJSON(
+                                  object@ClusterProjectionData@sigProjMatrix,
+                                  object@ClusterProjectionData@emp_pMatrix,
+                                  sigs)
         return(out)
       }) %>%
-      get("/FilterGroup/SigProjMatrix_P_Clusters/Meta", function(req, res, err) {
+      get("/Clusters/SigProjMatrix/Meta", function(req, res, err) {
 
         sigs <- colnames(object@metaData)
 
-        out <- FastProjectR:::sigProjMatrixToJSON(object@ClusterProjectionData@emp_pMatrix, sigs)
-        return(out)
-      }) %>%
-      get("/FilterGroup/Tree/SigProjMatrix_P/Normal", function(req, res, err) {
-
-        signatures <- object@sigData
-        keys <- vapply(signatures, function(x) x@name, "")
-        vals <- vapply(signatures, function(x) x@isMeta, TRUE)
-        sigs <- keys[!vals]
-        out <- FastProjectR:::sigProjMatrixToJSON(object@TreeProjectionData@emp_pMatrix, sigs)
-        return(out)
-      }) %>%
-      get("/FilterGroup/Tree/SigProjMatrix_P/Meta", function(req, res, err) {
-
-        sigs <- colnames(object@metaData)
-        out <- FastProjectR:::sigProjMatrixToJSON(object@TreeProjectionData@emp_pMatrix, sigs)
-
+        out <- FastProjectR:::sigProjMatrixToJSON(
+                                  object@ClusterProjectionData@sigProjMatrix,
+                                  object@ClusterProjectionData@emp_pMatrix,
+                                  sigs)
         return(out)
       }) %>%
       get("/FilterGroup/(?<proj_name2>.*)/clusters/(?<cluster_procedure>.*)/(?<param>.*)", function(req, res, err) {
@@ -370,32 +338,44 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         out <- FastProjectR:::clusterToJSON(clust)
         return(out)
       }) %>%
-      get("/FilterGroup/Tree/List", function(req, res, err) {
+      get("/Tree/List", function(req, res, err) {
 
         ## all Trees have the same adjacency matrix, so we can use the first one
         W <- object@TreeProjectionData@projections[[1]]@adjMat
 
         return(toJSON(W))
       }) %>%
-      get("/FilterGroup/(?<proj_name3>.*)/Tree/Points", function(req, res, err) {
+      get("/Tree/(?<proj_name3>.*)/Points", function(req, res, err) {
         proj <- URLdecode(req$params$proj_name3)
 
         C <- object@TreeProjectionData@projections[[proj]]@vData
 
         return(toJSON(C))
       }) %>%
-      get("/FilterGroup/(?<proj_name4>.*)/Tree/Projection", function(req, res, err) {
+      get("/Tree/(?<proj_name4>.*)/Projection", function(req, res, err) {
         proj <- URLdecode(req$params$proj_name4)
 
         out <- FastProjectR:::coordinatesToJSON(object@TreeProjectionData@projections[[proj]]@pData)
 
         return(out)
       }) %>%
-      get("/FilterGroup/list", function(req, res, err) {
-        filters <- vapply(object@filterModuleList, function(x) {
-          return(x@filter)
-        }, "")
-        return(toJSON(filters))
+      get("/Tree/SigProjMatrix/Normal", function(req, res, err) {
+
+        sigs <- colnames(object@sigScores)
+        out <- FastProjectR:::sigProjMatrixToJSON(
+                                  object@TreeProjectionData@sigProjMatrix,
+                                  object@TreeProjectionData@emp_pMatrix,
+                                  sigs)
+        return(out)
+      }) %>%
+      get("/Tree/SigProjMatrix/Meta", function(req, res, err) {
+
+        sigs <- colnames(object@metaData)
+        out <- FastProjectR:::sigProjMatrixToJSON(
+                                  object@TreeProjectionData@sigProjMatrix,
+                                  object@TreeProjectionData@emp_pMatrix,
+                                  sigs)
+        return(out)
       }) %>%
       get("/FilterGroup/(?<pc_num1>.*)/Loadings/Positive", function(req, res, err) {
         pcnum <- as.numeric(URLdecode(req$params$pc_num1))
@@ -457,16 +437,9 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       }) %>%
       get("/FilterGroup/PearsonCorr/Normal", function(req, res, err) {
 
-          signatures <- object@sigData
-          keys <- vapply(signatures, function(x) x@name, "")
-          vals <- vapply(signatures, function(x) x@isMeta, TRUE)
-          sigs <- keys[!vals]
+          sigs <- colnames(object@sigScores)
 
-          pc <- object@PCAnnotatorData@pearsonCorr
-          pc <- pc[, 1:10]
-
-          # some signatures are thrown out, too few genes
-          sigs <- intersect(sigs, rownames(pc))
+          pc <- object@PCAnnotatorData@pearsonCorr[, 1:10]
 
         return(FastProjectR:::pearsonCorrToJSON(pc, sigs))
       }) %>%
@@ -477,6 +450,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
                                 function(x) is.numeric(object@metaData[[x]]),
                                 FUN.VALUE = TRUE)
           sigs <- sigs[numericMeta]
+
           pc <- object@PCAnnotatorData@pearsonCorr[, 1:10]
 
         return(FastProjectR:::pearsonCorrToJSON(pc, sigs))

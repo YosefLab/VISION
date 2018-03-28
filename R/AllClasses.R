@@ -60,16 +60,10 @@ ServerExpression <- setClass("ServerExpression",
     gene_labels = "character"
 ))
 
-ServerPCorr <- setClass("ServerPCorr",
-    slots = c(
-    data = "matrix",
-    proj_labels = "character",
-    sig_labels = "character"
-))
-
 ServerSigProjMatrix <- setClass("ServerSigProjMatrix",
     slots = c(
-    data = "matrix",
+    zscores = "matrix",
+    pvals = "matrix",
     proj_labels = "character",
     sig_labels = "character"
 ))

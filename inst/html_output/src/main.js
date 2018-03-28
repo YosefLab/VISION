@@ -120,7 +120,7 @@ function set_global_status(update){
        ('main_vis' in update && get_global_status('main_vis') === 'sigvp')
     ){
         var proj_key = get_global_status('plotted_projection');
-        var proj_promise = api.projection.coordinates(proj_key)
+        var proj_promise = api.projections.coordinates(proj_key)
             .then(function(projection){
                 global_data.sig_projection_coordinates = projection;
             });
@@ -134,7 +134,7 @@ function set_global_status(update){
        ('main_vis' in update && get_global_status('main_vis') === 'clusters')
     ){
         var proj_key = get_global_status('plotted_projection');
-        var proj_promise = api.projection.coordinates(proj_key)
+        var proj_promise = api.projections.coordinates(proj_key)
             .then(function(projection){
                 global_data.sig_projection_coordinates = projection;
             });
@@ -263,7 +263,7 @@ window.onload = function()
         });
 
     // Get the cluster assignments for cells
-    var cellClustersPromise = api.cellClusters()
+    var cellClustersPromise = api.clusters.cells()
         .then(function(data) {
             global_data.clusters = data;
         });

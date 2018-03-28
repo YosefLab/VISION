@@ -24,7 +24,7 @@ var api = (function(){
     var output = {};
 
     // Signature API
-    
+
     output.signature = {}
 
     output.signature.info = function(sig_name){
@@ -66,19 +66,13 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    // FilterGroup API
+    // Clusters API
 
-    output.filterGroup = {}
+    output.clusters = {}
 
-    output.filterGroup.listProjections = function()
+    output.clusters.sigProjMatrix = function(meta, pvalue)
     {
-        var query = "/FilterGroup/projections/list"
-        return $.ajax(query, {dataType: "json"}).then(x => x)
-    }
-
-    output.filterGroup.sigProjMatrix = function(meta)
-    {
-        var query = "/FilterGroup"
+        var query = "/Clusters"
         if (meta) {
             query = query.concat("/SigProjMatrix/Meta")
         } else {
@@ -87,44 +81,12 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.filterGroup.sigProjMatrixP = function(meta)
-    {
-        var query = "/FilterGroup"
-        if (meta) {
-            query = query.concat("/SigProjMatrix_P/Meta")
-        } else {
-            query = query.concat("/SigProjMatrix_P/Normal")
-        }
+    output.clusters.cells = function() {
+        var query = "/Clusters"
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.filterGroup.sigProjMatrixPClusters = function(meta, pvalue)
-    {
-        var query = "/FilterGroup"
-        if (meta) {
-            query = query.concat("/SigProjMatrix_P_Clusters/Meta")
-        } else {
-            query = query.concat("/SigProjMatrix_P_Clusters/Normal")
-        }
-        return $.ajax(query, {dataType: "json"}).then(x => x)
-    }
-
-    output.filterGroup.treeSigProjMatrixP = function(meta)
-    {
-        var query = "/FilterGroup"
-        if (meta) {
-            query = query.concat("/Tree/SigProjMatrix_P/Meta")
-        } else {
-            query = query.concat("/Tree/SigProjMatrix_P/Normal")
-        }
-        return $.ajax(query, {dataType: "json"}).then(x => x)
-    }
-
-    output.filterGroup.list = function()
-    {
-        var query = "/FilterGroup/list";
-        return $.ajax(query, {dataType: "json"}).then(x => x)
-    }
+    output.filterGroup = {}
 
     output.filterGroup.pCorr = function(meta) {
         var query = "/FilterGroup";
@@ -156,48 +118,68 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    // Projection API
+    // Projections API
 
-    output.projection = {}
-     
-    output.projection.coordinates = function(projection_name)
+    output.projections = {}
+
+    output.projections.coordinates = function(projection_name)
     {
         var query = "/FilterGroup/"
         query = query.concat(encodeURI(projection_name), "/coordinates")
         return $.ajax(query, {dataType: "json"}).then(x => fix_coordinates(x))
     }
 
-    output.projection.clusters = function(projection_name,
-        cluster_method, parameter)
+    output.projections.list = function()
     {
-        var query = "/FilterGroup/"
-        query = query.concat(encodeURI(projection_name), "/clusters/",
-            encodeURI(cluster_method), "/", encodeURI(parameter))
+        var query = "/Projections/list"
         return $.ajax(query, {dataType: "json"}).then(x => x)
-
     }
 
+    output.projections.sigProjMatrix = function(meta)
+    {
+        var query = "/Projections"
+        if (meta) {
+            query = query.concat("/SigProjMatrix/Meta")
+        } else {
+            query = query.concat("/SigProjMatrix/Normal")
+        }
+        return $.ajax(query, {dataType: "json"}).then(x => x)
+    }
+
+
     // Tree API
-    
+
     output.tree = {}
 
-    output.tree.tree = function() 
+    output.tree.tree = function()
     {
-        var query = "/FilterGroup/Tree/List"
+        var query = "/Tree/List"
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
     output.tree.tree_points = function(projection) {
-        var query = "/FilterGroup/";
-        query = query.concat(encodeURI(projection), "/Tree/Points");
+        var query = "/Tree/";
+        query = query.concat(encodeURI(projection), "/Points");
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
     output.tree.coordinates = function(projection) {
-        var query = "/FilterGroup/";
-        query = query.concat(encodeURI(projection), "/Tree/Projection")
+        var query = "/Tree/";
+        query = query.concat(encodeURI(projection), "/Projection")
         return $.ajax(query, {dataType: "json"}).then(x => fix_coordinates(x))
     }
+
+    output.tree.sigProjMatrix = function(meta)
+    {
+        var query = "/Tree"
+        if (meta) {
+            query = query.concat("/SigProjMatrix/Meta")
+        } else {
+            query = query.concat("/SigProjMatrix/Normal")
+        }
+        return $.ajax(query, {dataType: "json"}).then(x => x)
+    }
+
 
 
     // PC API
@@ -249,13 +231,6 @@ var api = (function(){
 
     output.sessionInfo = function() {
         var query = "/SessionInfo"
-        return $.ajax(query, {dataType: "json"}).then(x => x)
-    }
-
-    // Misc
-
-    output.cellClusters = function() {
-        var query = "/Clusters"
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 

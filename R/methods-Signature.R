@@ -510,7 +510,7 @@ sigsVsProjection_n <- function(sigData, randomSigData,
 
         #Create CDF function for medDissmilarityPrime and apply CDF function to
         pvals <- pnorm( (medDissimilarity - mu) / sigma)
-        consistency <- 1 - (medDissimilarity / N_SAMPLES)
+        consistency <- (medDissimilarity - mu) / sigma * -1 # Make z-score, higher better
 
         orderedBg <- sort(randomMedDissimilarity)
         empvals <- vapply(medDissimilarity, function(x) {
@@ -603,7 +603,7 @@ sigsVsProjection_pcn <- function(metaData, weights, cells = NULL){
       p_value <- 1.0
     }
 
-    c_score <- 1 - (medDissimilarity / N_SAMPLES)
+    c_score <- (medDissimilarity - mu) / sigma * -1 # make z-score, higher better
     pval <- p_value
 
     return(list(consistency = c_score, pval = pval))
@@ -701,7 +701,9 @@ sigsVsProjection_pcf <- function(metaData, weights, cells = NULL){
             c_score <- 0
             pval <- 1.0
         } else {
-            c_score <- krTest$statistic
+            # for the c_score, approximate the z-score using the chi-square dist
+            df <- length(krList) - 1
+            c_score <- (krTest$statistic - df ) / sqrt(2 * df)
             pval <- krTest$p.value
         }
     } else {
