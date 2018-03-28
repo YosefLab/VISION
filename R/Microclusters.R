@@ -12,9 +12,9 @@ applyMicroClustering <- function(
                          filterInput = "fano",
                          filterThreshold = round(ncol(exprData)*0.2),
                          preserve_clusters = NULL,
-                         latentSpace = NULL) {
+                         latentSpace = matrix(NA, 1, 1)) {
 
-    if (is.null(latentSpace)) {
+    if (all(dim(latentSpace) == c(1, 1))) {
         exprData <- matLog2(exprData)
         gene_passes <- applyFilters(exprData, filterThreshold, filterInput)
         fexpr <- exprData[gene_passes, ]
