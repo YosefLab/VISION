@@ -87,16 +87,19 @@ Right_Content.prototype.draw_sigvp = function() {
 
     var isFactor = typeof(_.values(values)[0]) === 'string'
 
-    var full_color_range
+    var full_color_range, min_color_value
     if(item_type === "gene"){
         $(self.dom_node).find("#plotted-value-option").hide()
         full_color_range = true
+        min_color_value = 0
     } else if(item_type === "meta"){
         $(self.dom_node).find("#plotted-value-option").hide()
         full_color_range = false
+        min_color_value = -1e99
     } else {
         $(self.dom_node).find("#plotted-value-option").show()
         full_color_range = false
+        min_color_value = -1e99
     }
 
     if(self.getScatterColorOption() == "rank"
@@ -137,7 +140,7 @@ Right_Content.prototype.draw_sigvp = function() {
     }
 
     self.scatter.clearData()
-    self.scatter.setData(points, isFactor, full_color_range, selected_cells);
+    self.scatter.setData(points, isFactor, full_color_range, selected_cells, min_color_value);
     self.scatter.redraw(true)();
 
 }
@@ -159,13 +162,15 @@ Right_Content.prototype.draw_tree = function() {
 
     var isFactor = typeof(_.values(values)[0]) === 'string'
 
-    var full_color_range
+    var full_color_range, min_color_value
     if(item_type === "gene"){
         $(self.dom_node).find("#plotted-value-option").hide()
         full_color_range = true
+        min_color_value = 0
     } else {
         $(self.dom_node).find("#plotted-value-option").show()
         full_color_range = false
+        min_color_value = -1e99
     }
 
     if(self.getScatterColorOption() == "rank" && !isFactor && item_type !== "gene"){
@@ -210,8 +215,23 @@ Right_Content.prototype.draw_tree = function() {
                 }
             }
 
+            // Get selected cells
+            var selected_cluster = get_global_status('selected_cluster')
+            var clusters = get_global_data('clusters')
+
+            var selected_cells
+            if (selected_cluster !== ''){
+                selected_cells = _(clusters)
+                    .toPairs(clusters)
+                    .filter(x => x[1] === selected_cluster)
+                    .map(x => x[0])
+                    .value()
+            } else {
+                selected_cluster === undefined
+            }
+
             self.scatter.clearData()
-            self.scatter.setData(points, isFactor, full_color_range)
+            self.scatter.setData(points, isFactor, full_color_range, selected_cluster, min_color_value)
             self.scatter.setTreeData(tree_points, tree_adj)
             self.scatter.redraw(true)()
 

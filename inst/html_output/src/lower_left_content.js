@@ -339,7 +339,7 @@ function drawDistChart(parent_div, data, title) {
     var counts = hist['counts']
 
     var x_axis_params;
-    if(isFactor) {
+    if(true) {
         x_axis_params = {
             type: 'category',
             categories: x_vals,
@@ -424,7 +424,8 @@ function create_dist(data) {
 
     } else {
         var num_values = 10
-        var data_min = Math.min.apply(null, data)
+        var data_true_min = Math.min.apply(null, data)
+        var data_min = Math.max(data_true_min, 0)
         var data_max = Math.max.apply(null, data)
 
         var bin_width = (data_max - data_min)/num_values
@@ -432,9 +433,11 @@ function create_dist(data) {
         counts = Array.apply(Math, Array(num_values)).map(function() { return 0 });
         centers = Array.apply(Math, Array(num_values)).map(function() { return 0 });
 
+        var low, high;
+        var formatFn = d3.format('.2n')
         for (var i=0; i < num_values; i++) {
-            var low = bin_width*i + data_min
-            var high = bin_width*(i+1) + data_min
+            low = bin_width*i + data_min
+            high = bin_width*(i+1) + data_min
 
             data.forEach(function(d) {
                 if (d >= low && d < high) {
@@ -442,7 +445,24 @@ function create_dist(data) {
                 }
             });
 
-            centers[i] = (high + low)/2
+            centers[i] = '[' + formatFn(low) + ', ' + formatFn(high) + ')';
+        }
+
+
+        if(data_true_min < 0){ // Add a "< 0" category
+            low = -1e99
+            high = -1e-10
+            i = 0
+            var lessThenZeroCounts = 0;
+
+            data.forEach(function(d) {
+                if (d >= low && d < high) {
+                    lessThenZeroCounts += 1;
+                }
+            });
+
+            counts = [lessThenZeroCounts].concat(counts)
+            centers = ["< 0"].concat(centers)
         }
     }
 
