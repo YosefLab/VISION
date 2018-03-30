@@ -9,14 +9,18 @@
 #' @param projections List of Projection objects to be stored
 #' @param sigProjMatrix Matrix storing the median consistency score per projection, signature pair
 #' @param pMatrix Matrix storing the p values for each projection, signature pair
+#' @param emp_pMatrix Matrix storing the empirical p values for each projection, signature pair
 #' @param sigClusters a list of signature clusters
 #' @param treeScore a significance score for the fitted tree
 #' @return ProjectionData object
 TreeProjectionData <- function(projections=NULL, sigProjMatrix,
-                               pMatrix, sigClusters, treeScore) {
-    .Object <- new("TreeProjectionData", projections=projections,
-                   sigProjMatrix=sigProjMatrix, pMatrix=pMatrix,
-                   sigClusters=sigClusters, treeScore=treeScore)
+                               pMatrix, sigClusters, treeScore, emp_pMatrix) {
+
+    .Object <- new("TreeProjectionData", projections = projections,
+                   sigProjMatrix = sigProjMatrix, pMatrix = pMatrix,
+                   sigClusters = sigClusters, treeScore = treeScore,
+                   emp_pMatrix = emp_pMatrix)
+
     return(.Object)
     }
 

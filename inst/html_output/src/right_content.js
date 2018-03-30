@@ -136,7 +136,7 @@ Right_Content.prototype.draw_sigvp = function() {
             .map(x => x[0])
             .value()
     } else {
-        selected_cluster === undefined
+        selected_cells === undefined
     }
 
     self.scatter.clearData()
@@ -227,11 +227,11 @@ Right_Content.prototype.draw_tree = function() {
                     .map(x => x[0])
                     .value()
             } else {
-                selected_cluster === undefined
+                selected_cells === undefined
             }
 
             self.scatter.clearData()
-            self.scatter.setData(points, isFactor, full_color_range, selected_cluster, min_color_value)
+            self.scatter.setData(points, isFactor, full_color_range, selected_cells, min_color_value)
             self.scatter.setTreeData(tree_points, tree_adj)
             self.scatter.redraw(true)()
 

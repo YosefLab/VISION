@@ -275,15 +275,29 @@ setMethod("analyze", signature(object="FastProject"),
 
     object <- calcWeights(object)
 
+    # Populates @sigScores
     object <- calcSignatureScores(object)
 
+    # Populates @latentSpace
     if (all(dim(object@latentSpace) == c(1, 1))) {
         object <- computeLatentSpace(object)
     }
 
+    # Populates @Projections
     object <- generateProjections(object)
 
-    object <- analyzeProjections(object)
+    message("Computing background distribution for signature scores...")
+    signatureBackground <- calculateSignatureBackground(object, num = 3000)
+
+    # Populates @ProjectionData and @ClusterProjectionData
+    object <- analyzeSpatialCorrelations(object, signatureBackground)
+
+    if (tolower(object@trajectory_method) != "none") {
+        object <- analyzeTrajectoryCorrelations(object, signatureBackground)
+    }
+
+    # Populates #PCAnnotatorData
+    object <- calculatePearsonCorr(object)
 
     message("Analysis Complete!")
 

@@ -305,18 +305,21 @@ generateProjections <- function(object, lean=object@lean) {
   return(object)
 }
 
-#' analyze projections
+#' Compute spatial correlations for all signatures
 #'
 #' This is the main analysis function. For each filtered dataset, a set of
 #' different projection onto low-dimensional space are computed, and the
 #' consistency of the resulting space with the signature scores is computed
 #' to find signals that are captured succesfully by the projections.
 #' @param object the FastProject object
+#' @param signatureBackground as returned by `calculateSignatureBackground`
 #' @return the FastProject object with values set for the analysis results
-analyzeProjections <- function(object) {
+analyzeSpatialCorrelations <- function(object, signatureBackground = NULL) {
 
-  message("Computing background distribution for signature scores...")
-  signatureBackground <- calculateSignatureBackground(object, num = 3000)
+  if (is.null(signatureBackground)){
+      message("Computing background distribution for signature scores...")
+      signatureBackground <- calculateSignatureBackground(object, num = 3000)
+  }
 
 
   message("Evaluating signatures against projections...")
@@ -357,6 +360,26 @@ analyzeProjections <- function(object) {
 
   object@ClusterProjectionData <- projDataClusters
 
+  return(object)
+}
+
+
+#' Compute trajectory correlations for all signatures
+#'
+#' This is the main analysis function. For each filtered dataset, a set of
+#' different projection onto low-dimensional space are computed, and the
+#' consistency of the resulting space with the signature scores is computed
+#' to find signals that are captured succesfully by the projections.
+#' @param object the FastProject object
+#' @param signatureBackground as returned by `calculateSignatureBackground`
+#' @return the FastProject object with values set for the analysis results
+analyzeTrajectoryCorrelations <- function(object, signatureBackground = NULL) {
+
+  if (is.null(signatureBackground)){
+      message("Computing background distribution for signature scores...")
+      signatureBackground <- calculateSignatureBackground(object, num = 3000)
+  }
+
   if (tolower(object@trajectory_method) != "none") {
       message("Fitting principle tree...")
       treeProjs <- generateTreeProjections(object@latentSpace,
@@ -378,31 +401,28 @@ analyzeProjections <- function(object) {
                                  sigProjMatrix = sigVTreeProj$sigProjMatrix,
                                  pMatrix = sigVTreeProj$pVals,
                                  sigClusters = sigTreeClusters,
-                                 treeScore = treeProjs$treeScore)
+                                 treeScore = treeProjs$treeScore,
+                                 emp_pMatrix = sigVTreeProj$emp_pVals)
 
       object@TreeProjectionData <- treeProjData
   }
-
-  message("Computing Correlations between Signatures and Expression PCs...")
-  pearsonCorr <- calculatePearsonCorr(object@sigScores,
-                     object@metaData, object@latentSpace)
-
-
-  pcaAnnotData <- PCAnnotatorData(pearsonCorr = pearsonCorr)
-  object@PCAnnotatorData <- pcaAnnotData
-
 
   return(object)
 }
 
 #' Compute pearson correlation between signature scores and principle components
 #'
+#' Populations the PCAnnotatorData slot of the FastProject object
+#'
 #' @importFrom Hmisc rcorr
-#' @param sigMatrix Signature scores matrix cells x signatures
-#' @param metaData data.frame of meta-data for cells
-#' @param latentSpace numeric matrix N_Cells x N_PCs
+#' @param object the FastProject object
 #' @return pearsonCorr numeric matrix N_Signatures x N_PCs
-calculatePearsonCorr <- function(sigMatrix, metaData, latentSpace){
+calculatePearsonCorr <- function(object){
+
+  message("Computing Correlations between Signatures and Expression PCs...")
+  sigMatrix <- object@sigScores
+  metaData <- object@metaData
+  latentSpace <- object@latentSpace
 
   ## combined gene signs and numeric meta variables
 
@@ -432,7 +452,10 @@ calculatePearsonCorr <- function(sigMatrix, metaData, latentSpace){
   rownames(pearsonCorr) <- colnames(computedSigMatrix)
   colnames(pearsonCorr) <- colnames(latentSpace)
 
-  return(pearsonCorr)
+  pcaAnnotData <- PCAnnotatorData(pearsonCorr = pearsonCorr)
+  object@PCAnnotatorData <- pcaAnnotData
+
+  return(object)
 }
 
 convertToDense <- function(object) {
