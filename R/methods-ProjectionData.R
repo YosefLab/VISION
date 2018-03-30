@@ -10,11 +10,11 @@
 #' @param pMatrix Matrix storing the p values for each projection, signature pair
 #' @param sigClusters the signature clusters
 #' @return ProjectionData object
-ProjectionData <- function(projections=NULL, sigProjMatrix,
-                           pMatrix, sigClusters, emp_pMatrix) {
-            .Object <- new("ProjectionData", projections=projections,
-                           sigProjMatrix=sigProjMatrix,
-                           pMatrix=pMatrix, sigClusters=sigClusters, emp_pMatrix=emp_pMatrix)
+ProjectionData <- function(sigProjMatrix, pMatrix, sigClusters, emp_pMatrix) {
+
+            .Object <- new("ProjectionData", sigProjMatrix = sigProjMatrix,
+                           pMatrix = pMatrix, sigClusters = sigClusters,
+                           emp_pMatrix = emp_pMatrix)
+
             return(.Object)
             }
-

@@ -117,8 +117,8 @@ poolCells <- function(object,
         newInputProjections <- lapply(
             object@inputProjections,
             function(proj) {
-                new_coords <- t(createPoolsBatch(object@pools, t(proj@pData)))
-                return(Projection(proj@name, new_coords))
+                new_coords <- t(createPoolsBatch(object@pools, t(proj)))
+                return(new_coords)
             })
 
         names(newInputProjections) <- names(object@inputProjections)
@@ -275,6 +275,36 @@ computeLatentSpace <- function(object, projection_genes = NULL,
     return(object)
 }
 
+#' generate projections
+#'
+#' Generates 2-dimensional representations of the expression matrix
+#' Populates the 'Projections' slot on the FastProject object
+#'
+#'
+#' @param object the FastProject object
+#' @param lean if TRUE run a lean simulation. Else more robust pipeline
+#' initiated. Default is FALSE
+#' @return the FastProject object with values set for the analysis results
+generateProjections <- function(object, lean=object@lean) {
+  message("Projecting data into 2 dimensions...")
+
+  object@lean <- lean
+
+  projections <- generateProjectionsInner(object@exprData,
+                                     object@latentSpace,
+                                     projection_genes = object@projection_genes,
+                                     lean = object@lean)
+
+  # Add inputProjections
+  for (proj in names(object@inputProjections)){
+      projections[[proj]] <- object@inputProjections[[proj]]
+  }
+
+  object@Projections <- projections
+
+  return(object)
+}
+
 #' analyze projections
 #'
 #' This is the main analysis function. For each filtered dataset, a set of
@@ -282,31 +312,15 @@ computeLatentSpace <- function(object, projection_genes = NULL,
 #' consistency of the resulting space with the signature scores is computed
 #' to find signals that are captured succesfully by the projections.
 #' @param object the FastProject object
-#' @param lean if TRUE run a lean simulation. Else more robust pipeline
-#' initiated. Default is FALSE
-#' @param perm_wPCA If TRUE, apply permutation WPCA to calculate significant
-#' number of PCs. Else not. Default FALSE.
 #' @return the FastProject object with values set for the analysis results
-analyzeProjections <- function(object,
-                               lean=object@lean,
-                               perm_wPCA=object@perm_wPCA) {
-
-  object@lean <- lean
-  object@perm_wPCA <- perm_wPCA
+analyzeProjections <- function(object) {
 
   message("Computing background distribution for signature scores...")
   signatureBackground <- calculateSignatureBackground(object, num = 3000)
 
-  message("Projecting data into 2 dimensions...")
-
-  projectData <- generateProjections(object@exprData,
-                                     object@latentSpace,
-                                     projection_genes = object@projection_genes,
-                                     inputProjections = object@inputProjections,
-                                     lean = object@lean)
 
   message("Evaluating signatures against projections...")
-  sigVProj <- sigsVsProjections(projectData,
+  sigVProj <- sigsVsProjections(object@Projections,
                                 object@sigScores,
                                 object@metaData,
                                 signatureBackground)
@@ -317,8 +331,7 @@ analyzeProjections <- function(object,
                                    sigVProj$pVals,
                                    clusterMeta = object@pool)
 
-  projData <- ProjectionData(projections = projectData,
-                             sigProjMatrix = sigVProj$sigProjMatrix,
+  projData <- ProjectionData(sigProjMatrix = sigVProj$sigProjMatrix,
                              pMatrix = sigVProj$pVals,
                              sigClusters = sigClusters,
                              emp_pMatrix = sigVProj$emp_pVals)
@@ -337,7 +350,6 @@ analyzeProjections <- function(object,
                                 clusters)
 
   projDataClusters <- ProjectionData(
-                             projections = projectData,
                              sigProjMatrix = sigVProjClusters$sigProjMatrix,
                              pMatrix = sigVProjClusters$pVals,
                              sigClusters = sigClusters,
@@ -347,8 +359,8 @@ analyzeProjections <- function(object,
 
   if (tolower(object@trajectory_method) != "none") {
       message("Fitting principle tree...")
-      treeProjs <- generateTreeProjections(t(object@latentSpace),
-                                 inputProjections = projectData)
+      treeProjs <- generateTreeProjections(object@latentSpace,
+                                 inputProjections = object@Projections)
 
       message("Computing significance of signatures...")
       sigVTreeProj <- sigsVsProjections(treeProjs$projections,

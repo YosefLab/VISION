@@ -19,9 +19,8 @@ Cluster <- setClass("Cluster",
 
 ProjectionData <- setClass("ProjectionData",
     slots = c(
-    projections = "list",
     sigProjMatrix = "matrix",
-    pMatrix="matrix",
+    pMatrix = "matrix",
     sigClusters = "list",
     emp_pMatrix = "matrix"
 ))
@@ -29,7 +28,8 @@ ProjectionData <- setClass("ProjectionData",
 TreeProjectionData <- setClass("TreeProjectionData",
     contains = c("ProjectionData"),
     slots = c(
-    treeScore = "numericORNULL"
+        projections = "list",
+        treeScore = "numericORNULL"
     # adjMat = "matrix"
 ))
 
@@ -37,16 +37,10 @@ PCAnnotatorData <- setClass("PCAnnotatorData",
     slots = c(pearsonCorr = "matrix")
 )
 
-Projection <- setClass("Projection",
-    slots = c(
-    name = "character",
-    pData = "matrixORSparse",
-    weights = "matrixORSparse"
-))
-
 TreeProjection <- setClass("TreeProjection",
-    contains = "Projection",
     slots = c(
+    pData = "matrix",
+    name = "character",
     vData = "matrix",
     adjMat = "matrix",
     edgeAssoc = "matrix",
@@ -119,6 +113,7 @@ FastProject <- setClass("FastProject",
         ProjectionData = "ProjectionDataOrNULL",
         TreeProjectionData = "TreeProjectionDataOrNULL",
         PCAnnotatorData = "PCAnnotatorDataOrNULL",
+        Projections = "list",
         pools = "list",
         inputProjections = "list",
         name = "character",
@@ -148,6 +143,7 @@ FastProject <- setClass("FastProject",
         ProjectionData = NULL,
         TreeProjectionData = NULL,
         PCAnnotatorData = NULL,
+        Projections = list(),
         pools = list(),
         inputProjections = list(),
         name = "",

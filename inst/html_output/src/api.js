@@ -124,7 +124,7 @@ var api = (function(){
 
     output.projections.coordinates = function(projection_name)
     {
-        var query = "/FilterGroup/"
+        var query = "/Projections/"
         query = query.concat(encodeURI(projection_name), "/coordinates")
         return $.ajax(query, {dataType: "json"}).then(x => fix_coordinates(x))
     }

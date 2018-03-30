@@ -24,7 +24,7 @@
 #'      }
 
 applySimplePPT <- function(exprData, numCores, permExprData = NULL,
-                            nNodes_ = round(sqrt(ncol(exprData))), sigma=0, gamma=0) {
+                            nNodes_ = round(sqrt(nrow(exprData))), sigma=0, gamma=0) {
     MIN_GAMMA <- 1e-5
     MAX_GAMMA <- 1e5
     DEF_TOL <- 1e-2
@@ -34,16 +34,16 @@ applySimplePPT <- function(exprData, numCores, permExprData = NULL,
     Wt <- NULL
 
     if (sigma == 0) {
-    km <- kmeans(t(exprData), centers=round(sqrt(ncol(exprData))),
+    km <- kmeans(exprData, centers=round(sqrt(nrow(exprData))),
                         nstart=1, iter.max=50)$centers
 
-    sigma <- mean(apply(as.matrix(sqdist(t(exprData), km)), 1, min))
+    sigma <- mean(apply(as.matrix(sqdist(exprData, km)), 1, min))
     }
 
     if (gamma == 0) {
 
     currGamma <- MIN_GAMMA
-    nNodes <- round(log(ncol(exprData)))
+    nNodes <- round(log(nrow(exprData)))
 
     prevMSE <- -Inf
     minMSE <- Inf
@@ -89,7 +89,7 @@ applySimplePPT <- function(exprData, numCores, permExprData = NULL,
         if (nNodes_ != 0) {
         nNodes <- nNodes_
         } else {
-        nNodes <- round(sqrt(ncol(exprData)))
+        nNodes <- round(sqrt(nrow(exprData)))
         }
 
         tr <- fitTree(exprData, nNodes, sigma, currGamma, DEF_TOL, DEF_MAX_ITER)
@@ -141,7 +141,7 @@ applySimplePPT <- function(exprData, numCores, permExprData = NULL,
     }
 
 
-    return(list(princPnts = tr$C, adjMat = tr$W, distMat = sqdist(t(exprData), t(C)),
+    return(list(princPnts = tr$C, adjMat = tr$W, distMat = sqdist(exprData, t(C)),
                 mse = tr$mse, zscore = zscore))
 }
 
@@ -165,9 +165,9 @@ applySimplePPT <- function(exprData, numCores, permExprData = NULL,
 #'      }
 
 fitTree <- function(expr, nNodes, sigma, gamma, tol, maxIter) {
-    km <- kmeans(t(expr), centers=nNodes, nstart=10, iter.max=100)$centers
+    km <- kmeans(expr, centers=nNodes, nstart=10, iter.max=100)$centers
     cc_dist <- as.matrix(sqdist(km, km))
-    cx_dist <- as.matrix(sqdist(t(expr), km))
+    cx_dist <- as.matrix(sqdist(expr, km))
     prevScore = Inf
     currScore = -Inf
     currIter = 0
@@ -187,19 +187,19 @@ fitTree <- function(expr, nNodes, sigma, gamma, tol, maxIter) {
 
     delta <- diag(colSums(P))
     L <- igraph::laplacian_matrix(W)
-    xp <- crossprod(t(expr), P)
+    xp <- crossprod(expr, P)
     invg <- as.matrix(solve( ((2 / gamma) * L) + delta))
     C <- tcrossprod(xp, invg)
 
     cc_dist <- as.matrix(dist.matrix(t(C)))
-    cx_dist <- as.matrix(sqdist(t(expr), t(C)))
+    cx_dist <- as.matrix(sqdist(expr, t(C)))
 
     P <- clipBottom(P, mi=min(P[P>0]))
     currScore <- sum(Wt * cc_dist) + (gamma * sum(P * ((cx_dist) + (sigma * log(P)))))
 
     }
 
-    return(list(C = C, W = Wt, mse = getMSE(C, expr)))
+    return(list(C = C, W = Wt, mse = getMSE(C, t(expr))))
 
 }
 
@@ -386,7 +386,7 @@ findNeighbors <- function(data, query, k) {
     n_workers <- getWorkerCount()
 
     neighborhood <- lapply(1:ncol(query), function(x) {
-    vkn <- ball_tree_vector_knn(t(data), query[,x], k, n_workers)
+    vkn <- ball_tree_vector_knn(data, query[,x], k, n_workers)
     return(vkn)
     })
     return(neighborhood)

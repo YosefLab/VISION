@@ -96,7 +96,7 @@ sigScoresToJSON <- function(ss) {
 #' @return JSON object mapping each sample to a projection coordinate.
 coordinatesToJSON <- function(p) {
 
-    coord <- as.data.frame(t(p))
+    coord <- as.data.frame(p)
 
     # This switching is needed because toJSON will drop row labels
     # if they are integers for some reason
@@ -277,13 +277,13 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         out <- toJSON(cls, auto_unbox=TRUE)
         return(out)
       }) %>%
-      get("/FilterGroup/(?<proj_name1>.*)/coordinates", function(req, res, err) {
+      get("/Projections/(?<proj_name1>.*)/coordinates", function(req, res, err) {
         proj <- URLdecode(req$params$proj_name1)
-        out <- FastProjectR:::coordinatesToJSON(object@ProjectionData@projections[[proj]]@pData)
+        out <- FastProjectR:::coordinatesToJSON(object@Projections[[proj]])
         return(out)
       }) %>%
       get("/Projections/list", function(req, res, err) {
-        proj_names <- names(object@ProjectionData@projections)
+        proj_names <- names(object@Projections)
         out <- toJSON(proj_names, auto_unbox=TRUE)
         return(out)
       }) %>%
@@ -415,7 +415,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       get("/FilterGroup/PCA/Coordinates", function(req, res, err) {
 
         pc <- object@latentSpace
-        out <- FastProjectR:::coordinatesToJSON(t(pc))
+        out <- FastProjectR:::coordinatesToJSON(pc)
 
         return(out)
       }) %>%

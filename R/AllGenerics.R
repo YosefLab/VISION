@@ -28,6 +28,6 @@ setGeneric("viewResults", function(object, ...) {
     standardGeneric("viewResults")
 })
 
-setGeneric("computeKNNWeights", function(object, K) {
+setGeneric("computeKNNWeights", function(object, ...) {
     standardGeneric("computeKNNWeights")
 })

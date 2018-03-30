@@ -245,10 +245,8 @@ sigsVsProjectionsClusters <- function(latentSpace, sigScoresData, metaData,
   sigProjMatrix_P <- data.frame(row.names = signatureNames)
   sigProjMatrix_Pemp <- data.frame(row.names = signatureNames)
 
-  proj <- Projection("All", pData = t(latentSpace))
-
   # First evaluate things for all clusters in the latent space
-  weights <- computeKNNWeights(proj, K = round(sqrt(NCOL(proj@pData))))
+  weights <- computeKNNWeights(latentSpace, K = round(sqrt(nrow(latentSpace))))
 
   svp_n <- sigsVsProjection_n(sigScoresData,
                               randomSigData, weights)
@@ -271,17 +269,16 @@ sigsVsProjectionsClusters <- function(latentSpace, sigScoresData, metaData,
   pvals <- pvals[signatureNames]
   emp_pvals <- emp_pvals[signatureNames]
 
-  sigProjMatrix[proj@name] <- consistency
-  sigProjMatrix_P[proj@name] <- pvals
-  sigProjMatrix_Pemp[proj@name] <- emp_pvals
+  sigProjMatrix["All"] <- consistency
+  sigProjMatrix_P["All"] <- pvals
+  sigProjMatrix_Pemp["All"] <- emp_pvals
 
   for (cluster in unique(clusters)) {
     cluster_cells <- names(clusters)[clusters == cluster]
-    proj <- Projection(as.character(cluster),
-                       pData = t(latentSpace[cluster_cells, ]))
+    proj <- latentSpace[cluster_cells, ]
 
 
-    weights <- computeKNNWeights(proj, K=round(sqrt(NCOL(proj@pData))))
+    weights <- computeKNNWeights(proj, K = round(sqrt(nrow(proj))))
 
     svp_n <- sigsVsProjection_n(sigScoresData, randomSigData,
                                 weights, cells = cluster_cells)
@@ -304,9 +301,10 @@ sigsVsProjectionsClusters <- function(latentSpace, sigScoresData, metaData,
     pvals <- pvals[signatureNames]
     emp_pvals <- emp_pvals[signatureNames]
 
-    sigProjMatrix[proj@name] <- consistency
-    sigProjMatrix_P[proj@name] <- pvals
-    sigProjMatrix_Pemp[proj@name] <- emp_pvals
+    name <- as.character(cluster)
+    sigProjMatrix[name] <- consistency
+    sigProjMatrix_P[name] <- pvals
+    sigProjMatrix_Pemp[name] <- emp_pvals
   }
 
   # Convert from dataframes to matrix
@@ -362,8 +360,9 @@ sigsVsProjections <- function(projections, sigScoresData, metaData,
   sigProjMatrix_P <- data.frame(row.names = signatureNames)
   sigProjMatrix_Pemp <- data.frame(row.names = signatureNames)
 
-  for (proj in projections) {
-    weights <- computeKNNWeights(proj, K = round(sqrt(NCOL(proj@pData))))
+  for (name in names(projections)) {
+    proj <- projections[[name]]
+    weights <- computeKNNWeights(proj)
 
     svp_n <- sigsVsProjection_n(sigScoresData, randomSigData, weights)
     svp_pcn <- sigsVsProjection_pcn(metaData, weights)
@@ -385,9 +384,9 @@ sigsVsProjections <- function(projections, sigScoresData, metaData,
     pvals <- pvals[signatureNames]
     emp_pvals <- emp_pvals[signatureNames]
 
-    sigProjMatrix[proj@name] <- consistency
-    sigProjMatrix_P[proj@name] <- pvals
-    sigProjMatrix_Pemp[proj@name] <- emp_pvals
+    sigProjMatrix[name] <- consistency
+    sigProjMatrix_P[name] <- pvals
+    sigProjMatrix_Pemp[name] <- emp_pvals
 
   }
 

@@ -281,6 +281,8 @@ setMethod("analyze", signature(object="FastProject"),
         object <- computeLatentSpace(object)
     }
 
+    object <- generateProjections(object)
+
     object <- analyzeProjections(object)
 
     message("Analysis Complete!")
@@ -296,30 +298,28 @@ setMethod("analyze", signature(object="FastProject"),
 #' @param coordinates numeric matrix or data.frame. Coordinates of each
 #' sample in the projection (NUM_SAMPLES x NUM_COMPONENTS)
 #' @return FastProject object
-setMethod("addProjection", signature(object="FastProject"),
+setMethod("addProjection", signature(object = "FastProject"),
             function(object, name, coordinates) {
 
-    if(is(coordinates, "data.frame")){
-        coordinates = as.matrix(coordinates)
+    if (is(coordinates, "data.frame")){
+        coordinates <- as.matrix(coordinates)
     }
 
     # Verify that projection coordinates are correct
-    samples = object@exprData
-    sample_names = colnames(samples)
+    samples <- object@exprData
 
-    if(length(intersect(sample_names, rownames(coordinates))) != dim(coordinates)[1]){
+    SAME_SIZE <- ncol(samples) == nrow(coordinates)
+    SAME_NAMES <- setequal(colnames(samples), rownames(coordinates))
+
+    if (!SAME_SIZE || !SAME_NAMES){
         stop("Supplied coordinates must have rowlabels that match sample/cell names")
     }
 
-    if(dim(coordinates)[2] != 2){
+    if (dim(coordinates)[2] != 2){
         stop("Projection must have exactly 2 components")
     }
 
-
-    # Add it to the object
-    proj = Projection(name, coordinates)
-
-    object@inputProjections = c(object@inputProjections, proj)
+    object@inputProjections[[name]] <- coordinates
 
     return(object)
 })
