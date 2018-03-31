@@ -283,7 +283,7 @@ Signature_Table.prototype.render = function()
             content_row
                 .filter(function(d,i) { return i > 0;})
                 .style('background-color', function(d){return colorScale(d.zscore);})
-                .on("click", function(d){tableClickFunction_PC(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'signature')})
+                .on("click", function(d){tableClickFunction_PC(matrix.sig_labels[d.row], 'signature')})
                 .append('div');
 
         } else if (main_vis === 'clusters'){
@@ -301,7 +301,7 @@ Signature_Table.prototype.render = function()
             content_row
                 .filter(function(d,i) { return i > 0;})
                 .style('background-color', function(d){return colorScale(d.zscore);})
-                .on("click", function(d){tableClickFunction(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'signature')})
+                .on("click", function(d){tableClickFunction(matrix.sig_labels[d.row], 'signature')})
                 .append('div')
                 .text(function(d){
                     if(d.pval < -50) { return "< -50";}
@@ -715,7 +715,7 @@ Meta_Table.prototype.render = function()
             content_row
                 .filter(function(d,i) { return i > 0;})
                 .style('background-color', function(d){return colorScale(d.zscore);})
-                .on("click", function(d){tableClickFunction_PC(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'meta')})
+                .on("click", function(d){tableClickFunction_PC(matrix.sig_labels[d.row], 'meta')})
                 .append('div');
 
         } else if (main_vis === 'clusters'){
@@ -733,7 +733,7 @@ Meta_Table.prototype.render = function()
             content_row
                 .filter(function(d,i) { return i > 0;})
                 .style('background-color', function(d){return colorScale(d.zscore);})
-                .on("click", function(d){tableClickFunction(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'meta')})
+                .on("click", function(d){tableClickFunction(matrix.sig_labels[d.row], 'meta')})
                 .append('div')
                 .text(function(d){
                     if(d.pval < -50) { return "< -50";}
@@ -858,85 +858,6 @@ Gene_Select.prototype.init = function()
 
 Gene_Select.prototype.update = function(updates)
 {
-    if('main_vis' in updates || $('#SelectProj').children().length === 0)
-    {
-        var main_vis = get_global_status('main_vis')
-        // Get a list of the projection names
-        if(main_vis === 'pcannotator'){
-            api.filterGroup.listPCs()
-                .then(function(proj_names) {
-
-                    var projSelect = $('#SelectProj')
-                    projSelect.children().remove()
-
-                    _.each(proj_names, function (proj) {
-                        projSelect.append(
-                            $('<option>', {
-                                value: proj,
-                                text: "PC: "+proj
-                            }));
-                    });
-
-                    projSelect.chosen({
-                        'width': '110px',
-                        'disable_search_threshold': 99,
-                    })
-                        .off('change')
-                        .on('change', function () {
-                            var newGene = $('#SelectGene').val()
-
-                            set_global_status({
-                                'plotted_pc':parseInt($(this).val()),
-                                'plotted_item':newGene,
-                                'plotted_item_type': 'gene'
-                            });
-                        })
-                        .trigger('chosen:updated')
-
-                });
-        } else {
-            api.projections.list()
-                .then(function(proj_names) {
-
-                    var projSelect = $('#SelectProj')
-                    projSelect.children().remove()
-
-                    _.each(proj_names, function (proj) {
-                        projSelect.append(
-                            $('<option>', {
-                                value: proj,
-                                text: proj
-                            }));
-                    });
-
-                    projSelect.chosen({
-                        'width': '110px',
-                        'disable_search_threshold': 99,
-                    })
-                        .off('change')
-                        .on('change', function () {
-                            var newGene = $('#SelectGene').val()
-
-                            set_global_status({
-                                'plotted_projection':$(this).val(),
-                                'plotted_item':newGene,
-                                'plotted_item_type': 'gene'
-                            });
-                        })
-                        .trigger('chosen:updated')
-
-                });
-
-        }
-
-    }
-    if('plotted_projection' in updates)
-    {
-        var plotted_projection = get_global_status('plotted_projection')
-        var projSelect = $('#SelectProj');
-        projSelect.val(plotted_projection).trigger('chosen:updated')
-    }
-
     // Update the 'recent-genes' list
     if('plotted_item' in updates){
         var gene = get_global_status('plotted_item')
@@ -1046,23 +967,21 @@ Signature_Table.prototype.doneTyping = function()
 
 
 // Function that's triggered when clicking on table cell
-function tableClickFunction(row_key, col_key, item_type)
+function tableClickFunction(row_key, item_type)
 {
 
     var update = {}
     update['plotted_item_type'] = item_type;
     update['plotted_item'] = row_key;
-    update['plotted_projection'] = col_key;
 
     set_global_status(update);
 }
 
-function tableClickFunction_PC(row_key, col_key, item_type)
+function tableClickFunction_PC(row_key, item_type)
 {
     var update = {}
     update['plotted_item_type'] = item_type;
     update['plotted_item'] = row_key;
-    update['plotted_pc'] = parseInt(col_key.split(" ")[1])
 
     set_global_status(update);
 }

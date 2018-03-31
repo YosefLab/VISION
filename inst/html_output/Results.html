@@ -123,10 +123,6 @@
                                     <td style='font-size: 1.2em'>Gene:</td>
                                     <td><select id="SelectGene" class="form-control"></select></td>
                                 </tr>
-                                <tr>
-                                    <td style='font-size: 1.2em'>Projection:</td>
-                                    <td><select id="SelectProj" class="form-control"></select></td>
-                                </tr>
                             </table>
                         </div>
                         <div id='recent-genes-div'>
@@ -267,11 +263,14 @@
                 <div id="plot-title-div">
                     <div class="titles">
                         <div class="title" id="plot-title"></div>
-                        <div class="subtitle" id="plot-subtitle"></div>
+                        <div class="subtitle" id="plot-subtitle">
+                            <span style="margin-right: 10px">Projection:</span>
+                            <select id="SelectProjScatter" class="form-control"></select>
+                        </div>
                     </div>
                     <div class="color-options" >
                         <div id="plotted-value-option">
-                            <div class="label">Plotted Value:</div>
+                            <div class="label">Plotted Value</div>
                             <div class="btn-group" data-toggle="buttons">
                                 <label class="btn btn-outline-secondary">
                                     <input type="radio" name="scatterColorButtons" id="valueoption" value="value" autocomplete="off"> Value

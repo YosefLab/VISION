@@ -19,7 +19,6 @@
 }
 
 #plot-title-div .titles{
-    max-width: 300px;
 }
 
 #plot-title-div .subtitle, #plot-title-div .title{
@@ -29,6 +28,8 @@
 
 #plot-title-div .subtitle{
     font-size: 13px;
+    display: flex;
+    align-items: baseline;
 }
 
 #plot-title-div .color-options{

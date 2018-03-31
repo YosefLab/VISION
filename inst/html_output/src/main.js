@@ -116,32 +116,21 @@ function set_global_status(update){
         upper_left_content_promises.push(proj_promise);
     }
 
-    if(('plotted_projection' in update && get_global_status('main_vis') === 'sigvp') ||
-       ('main_vis' in update && get_global_status('main_vis') === 'sigvp')
-    ){
-        var proj_key = get_global_status('plotted_projection');
-        var proj_promise = api.projections.coordinates(proj_key)
-            .then(function(projection){
-                global_data.sig_projection_coordinates = projection;
-            });
+    if('plotted_projection' in update || 'main_vis' in update){
+        if( get_global_status('main_vis') === 'clusters' ||
+            get_global_status('main_vis') === 'pcannotator'){
 
-        all_promises.push(proj_promise);
-        right_content_promises.push(proj_promise);
-        upper_left_content_promises.push(proj_promise);
-    }
+            var proj_key = get_global_status('plotted_projection');
+            var proj_promise = api.projections.coordinates(proj_key)
+                .then(function(projection){
+                    global_data.sig_projection_coordinates = projection;
+                });
 
-    if(('plotted_projection' in update && get_global_status('main_vis') === 'clusters') ||
-       ('main_vis' in update && get_global_status('main_vis') === 'clusters')
-    ){
-        var proj_key = get_global_status('plotted_projection');
-        var proj_promise = api.projections.coordinates(proj_key)
-            .then(function(projection){
-                global_data.sig_projection_coordinates = projection;
-            });
+            all_promises.push(proj_promise);
+            right_content_promises.push(proj_promise);
+            upper_left_content_promises.push(proj_promise);
 
-        all_promises.push(proj_promise);
-        right_content_promises.push(proj_promise);
-        upper_left_content_promises.push(proj_promise);
+        }
     }
 
 

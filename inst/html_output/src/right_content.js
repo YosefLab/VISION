@@ -35,6 +35,37 @@ Right_Content.prototype.init = function()
 
     self.setLoadingStatus = createLoadingFunction(self.dom_node);
 
+    var proj_promise = api.projections.list()
+        .then(function(proj_names) {
+
+            var projSelect = self.dom_node.find('#SelectProjScatter')
+            projSelect.children().remove()
+
+            _.each(proj_names, function (proj) {
+                projSelect.append(
+                    $('<option>', {
+                        value: proj,
+                        text: proj
+                    }));
+            });
+
+            projSelect.chosen({
+                'width': '110px',
+                'disable_search_threshold': 99,
+            })
+                .off('change')
+                .on('change', function () {
+                    set_global_status({
+                        'plotted_projection':$(this).val(),
+                    });
+                })
+                .trigger('chosen:updated')
+
+        });
+
+    return proj_promise
+
+
 }
 
 Right_Content.prototype.update = function(updates)
@@ -66,10 +97,16 @@ Right_Content.prototype.update = function(updates)
         throw "Bad main_vis value!";
     }
 
-    if('plotted_projection' in updates ||
-       'main_vis' in updates ||
-       main_vis === 'pcannotator') {
+    if('plotted_projection' in updates || 'main_vis' in updates) {
         self.scatter.autoZoom();
+    }
+
+    // Update the dropdown if plotted projection changes elsewhere
+    if('plotted_projection' in updates) {
+        var proj_key = get_global_status('plotted_projection');
+        var projSelect = self.dom_node.find('#SelectProjScatter')
+        projSelect.val(proj_key)
+        projSelect.trigger('chosen:updated') // Changes shown item, but doesn't fire update event
     }
 
 }
@@ -111,8 +148,7 @@ Right_Content.prototype.draw_sigvp = function() {
     }
 
 
-    $('#plot-title').text(proj_key);
-    $('#plot-subtitle').text(item_key);
+    $('#plot-title').text(item_key);
 
     var points = [];
     var sample_labels = Object.keys(values).sort()
@@ -184,8 +220,7 @@ Right_Content.prototype.draw_tree = function() {
 
             tree_points = []
 
-            $('#plot-title').text(proj_key);
-            $('#plot-subtitle').text(item_key);
+            $('#plot-title').text(item_key);
 
             var points = [];
             var sample_labels = Object.keys(values).sort()
@@ -259,8 +294,7 @@ Right_Content.prototype.draw_pca = function() {
         isFactor = false;
     }
 
-    $("#plot-title").text("PC: ".concat(pc_key));
-    $("#plot-subtitle").text(item_key);
+    $("#plot-title").text(item_key);
 
     var points = []
     var sample_labels = Object.keys(values).sort()
@@ -352,8 +386,6 @@ Right_Content.prototype.exportSigProj = function()
     var proj;
     if (main_vis === 'sigvp' || main_vis === 'clusters') {
         proj = get_global_data('sig_projection_coordinates')
-    } else if (main_vis ==='pcannotator') {
-        proj = get_global_data('pca_projection_coordinates')
     } else if (main_vis ==='tree') {
         proj = get_global_data('tree_projection_coordinates')
     } else {
@@ -369,13 +401,6 @@ Right_Content.prototype.exportSigProj = function()
 
         table = [["Cell", "X", "Y", plotted_item]].concat(table);
 
-    } else if (main_vis ==='pcannotator') {
-        var plotted_pc = get_global_status('plotted_pc')
-        table = _.map(proj, (value, key) => {
-            return [key, proj[key][plotted_pc-1], values[key]]
-        });
-
-        table = [["Cell", "PC: "+plotted_pc, plotted_item]].concat(table);
     }
 
     table = table.map(function(x){ return x.join("\t");});
@@ -413,12 +438,7 @@ Right_Content.prototype.exportSigProj = function()
         var zip_uri = "data:application/zip;base64," + zip.generate({type:"base64"});
 
         var a = document.createElement("a");
-        var proj_name;
-        if(main_vis === 'pcannotator'){
-            proj_name = 'PC' + get_global_status('plotted_pc')
-        } else {
-            proj_name = get_global_status('plotted_projection')
-        }
+        var proj_name = get_global_status('plotted_projection')
 
         a.download = plotted_item+"_"+proj_name+".zip";
         a.href = zip_uri;
