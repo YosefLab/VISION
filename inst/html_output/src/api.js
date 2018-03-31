@@ -135,18 +135,6 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.projections.sigProjMatrix = function(meta)
-    {
-        var query = "/Projections"
-        if (meta) {
-            query = query.concat("/SigProjMatrix/Meta")
-        } else {
-            query = query.concat("/SigProjMatrix/Normal")
-        }
-        return $.ajax(query, {dataType: "json"}).then(x => x)
-    }
-
-
     // Tree API
 
     output.tree = {}

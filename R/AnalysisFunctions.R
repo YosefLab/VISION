@@ -321,27 +321,8 @@ analyzeSpatialCorrelations <- function(object, signatureBackground = NULL) {
       signatureBackground <- calculateSignatureBackground(object, num = 3000)
   }
 
+  message("Evaluating spatial consistency of signatures...")
 
-  message("Evaluating signatures against projections...")
-  sigVProj <- sigsVsProjections(object@Projections,
-                                object@sigScores,
-                                object@metaData,
-                                signatureBackground)
-
-  message("Clustering Signatures...")
-  sigClusters <- clusterSignatures(object@sigScores,
-                                   object@metaData,
-                                   sigVProj$pVals,
-                                   clusterMeta = object@pool)
-
-  projData <- ProjectionData(sigProjMatrix = sigVProj$sigProjMatrix,
-                             pMatrix = sigVProj$pVals,
-                             sigClusters = sigClusters,
-                             emp_pMatrix = sigVProj$emp_pVals)
-
-  object@ProjectionData <- projData
-
-  message("Evaluating signature consistency within clusters...")
   clusters <- object@metaData[, object@cluster_variable]
   names(clusters) <- rownames(object@metaData)
 
@@ -351,6 +332,12 @@ analyzeSpatialCorrelations <- function(object, signatureBackground = NULL) {
                                 object@metaData,
                                 signatureBackground,
                                 clusters)
+
+  message("Clustering Signatures...")
+  sigClusters <- clusterSignatures(object@sigScores,
+                                   object@metaData,
+                                   sigVProjClusters$emp_pVals,
+                                   clusterMeta = object@pool)
 
   projDataClusters <- ProjectionData(
                              sigProjMatrix = sigVProjClusters$sigProjMatrix,

@@ -411,8 +411,6 @@ Signature_Table.prototype.update = function(updates)
 
         if (main_vis == "clusters") {
             matrix_promise = api.clusters.sigProjMatrix(false);
-        } else if (main_vis == "sigvp") {
-            matrix_promise = api.projections.sigProjMatrix(false);
         } else if (main_vis == "tree") {
             matrix_promise = api.tree.sigProjMatrix(false);
         } else {
@@ -515,8 +513,6 @@ Meta_Table.prototype.update = function(updates)
 
         if (main_vis == "clusters") {
             matrix_promise = api.clusters.sigProjMatrix(true);
-        } else if (main_vis === "sigvp") {
-            matrix_promise = api.projections.sigProjMatrix(true);
         } else if (main_vis === "tree") {
             matrix_promise = api.tree.sigProjMatrix(true);
         } else {

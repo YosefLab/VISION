@@ -289,7 +289,7 @@ setMethod("analyze", signature(object="FastProject"),
     message("Computing background distribution for signature scores...")
     signatureBackground <- calculateSignatureBackground(object, num = 3000)
 
-    # Populates @ProjectionData and @ClusterProjectionData
+    # Populates @ClusterProjectionData
     object <- analyzeSpatialCorrelations(object, signatureBackground)
 
     if (tolower(object@trajectory_method) != "none") {

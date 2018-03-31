@@ -84,14 +84,11 @@ Right_Content.prototype.update = function(updates)
 
     var main_vis = get_global_status('main_vis');
 
-    if(main_vis === 'sigvp' || main_vis === 'clusters'){
+    if(main_vis === 'clusters' || main_vis === "pcannotator"){
         self.draw_sigvp();
 
     } else if (main_vis === "tree") {
         self.draw_tree();
-
-    } else if (main_vis === "pcannotator") {
-        self.draw_pca();
 
     } else {
         throw "Bad main_vis value!";
@@ -384,7 +381,7 @@ Right_Content.prototype.exportSigProj = function()
     //Convert the data that's in the scatter plot to a tab-delimited table
 
     var proj;
-    if (main_vis === 'sigvp' || main_vis === 'clusters') {
+    if (main_vis === 'clusters' || main_vis === 'pcannotator') {
         proj = get_global_data('sig_projection_coordinates')
     } else if (main_vis ==='tree') {
         proj = get_global_data('tree_projection_coordinates')
@@ -393,7 +390,7 @@ Right_Content.prototype.exportSigProj = function()
     }
 
     var table;
-    if (main_vis === 'sigvp' || main_vis === 'tree' || main_vis === 'clusters') {
+    if (main_vis === 'tree' || main_vis === 'clusters') {
 
         table = _.map(proj, (value, key) => {
             return [key, proj[key][0], proj[key][1], values[key]]

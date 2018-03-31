@@ -4,7 +4,6 @@ var global_status = {};
 global_status.main_vis = "clusters"; // Selected from 4 options on top
 /* Options are:
     'clusters'
-    'sigvp'
     'pcannotator'
     'tree'
 */
