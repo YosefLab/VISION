@@ -117,6 +117,21 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
                         stop("Provided meta data dataframe must have same sample labels as the expression matrix")
                     }
 
+                    # Convert strings to factors if less than 20 unique
+                    metaVars <- colnames(meta)
+                    for(var in metaVars){
+                        vals <- meta[, var]
+                        if (is.character(vals)){
+                            n_unique <- length(unique(vals))
+                            if (n_unique <= 20){
+                                meta[, var] <- as.factor(vals)
+                            } else {
+                                meta[, var] <- NULL
+                                message(paste0("Dropping '", var, "' from meta data as it is of type 'character' and has more than 20 unique values.  If you want to include this meta data variable, convert it to a factor before providing the data frame to FastProject"))
+                            }
+                        }
+                    }
+
                     .Object@metaData <- meta[sampleLabels, , drop = FALSE]
                     .Object@initialMetaData <- .Object@metaData
                 } else {
