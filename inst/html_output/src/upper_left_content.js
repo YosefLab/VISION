@@ -922,7 +922,8 @@ Signature_Table.prototype.doneTyping = function()
 
     var vals = val.split(",");
     vals = vals.map(function(str){return str.trim();})
-        .filter(function(str){ return str.length > 0;});
+        .filter(function(str){ return str.length > 0;})
+        .map(function(str){ return str.toLowerCase();})
 
     var tablerows = $(self.dom_node).find('.sig-table-div').find('tr')
     tablerows.removeClass('filtered');
