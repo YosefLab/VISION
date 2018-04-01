@@ -4,17 +4,16 @@
 \alias{ProjectionData}
 \title{Wrapper for storing all relevant information for a given projection.}
 \usage{
-ProjectionData(projections = NULL, sigProjMatrix, pMatrix, sigClusters,
-  emp_pMatrix)
+ProjectionData(sigProjMatrix, pMatrix, sigClusters, emp_pMatrix)
 }
 \arguments{
-\item{projections}{List of Projection objects to be stored}
-
 \item{sigProjMatrix}{Matrix storing the median consistency score per projection, signature pair}
 
 \item{pMatrix}{Matrix storing the p values for each projection, signature pair}
 
 \item{sigClusters}{the signature clusters}
+
+\item{projections}{List of Projection objects to be stored}
 }
 \value{
 ProjectionData object

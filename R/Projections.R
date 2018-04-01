@@ -73,7 +73,9 @@ generateProjectionsInner <- function(expr, latentSpace, projection_genes=NULL, l
 #' permutation wPCA algorithm upstream
 #' @return a list:
 #' \itemize{
-#'     \item projections a list of TreeProjection objects
+#'     \item latentTree TreeProjection object for the main tree
+#'     \item projections a list of TreeProjection objects, mapping the latent
+#'           into the projection's 2d space for visualization purposes
 #'     \item treeScore a score representing the singificance of the fitten tree
 #'     return(list(projections = output, treeScore = hdTree$zscore))
 #' }
@@ -87,7 +89,6 @@ generateTreeProjections <- function(data,
     pptNeighborhood <- findNeighbors(data, hdTree$princPnts, 5)
 
     output <- list()
-    output[[hdProj@name]] <- hdProj
 
     for (name in names(inputProjections)) {
         proj <- inputProjections[[name]]
@@ -102,7 +103,8 @@ generateTreeProjections <- function(data,
         output[[treeProj@name]] <- treeProj
     }
 
-    return(list(projections = output, treeScore = hdTree$zscore))
+    return(list(latentTree = hdProj, projections = output,
+                treeScore = hdTree$zscore))
 }
 
 #' Performs weighted PCA on data
@@ -406,7 +408,7 @@ clipBottom <- function(x, mi) {
 #' @param K number of neighbors to compute this for
 #' @return a weights matrix
 setMethod("computeKNNWeights", signature(object = "matrix"),
-    function(object, K = 30) {
+    function(object, K = round(sqrt(nrow(object)))) {
 
         n_workers <- getWorkerCount()
 

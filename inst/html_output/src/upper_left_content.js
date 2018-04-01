@@ -14,6 +14,7 @@ function Upper_Left_Content()
     this.sig_table = {}
     this.pc_table = {}
     this.gene_select = {}
+    this.dom_node = document.getElementById("upper-left-content");
 }
 
 Upper_Left_Content.prototype.init = function()
@@ -39,6 +40,24 @@ Upper_Left_Content.prototype.init = function()
     this.setLoadingStatus = createLoadingFunction(
         document.getElementById("upper-left-content")
     );
+
+    // Initialize cluster dropdown in the top row
+    var clust_dropdown = $(this.dom_node).find('#cluster-group-select');
+    var cluster_variables = get_global_data('cluster_variables')
+
+    clust_dropdown.empty();
+    for(var i=0; i<cluster_variables.length; i++){
+        clust_dropdown.append($("<option />")
+            .val(cluster_variables[i])
+            .text(cluster_variables[i]));
+    }
+    clust_dropdown
+        .on('change', function () {
+            set_global_status({
+                'cluster_var':$(this).val(),
+            });
+        })
+
 
     return $.when(sig_table_promise, pc_table_promise, gene_select_promise);
 
@@ -75,7 +94,7 @@ function Signature_Table()
     this.dom_node = document.getElementById("table-div-container");
     this.matrix = {}
     this.clusters = {}
-    this.sorted_column = 'All'
+    this.sorted_column = 'Consistency'
     this.filterSig = $(this.dom_node).find('#sig_filt_input')
     this.is_filtering = false
     this.is_collapsed = {} // cluster -> boolean, holds whether a cluster is collapsed
@@ -234,7 +253,7 @@ Signature_Table.prototype.render = function()
         var sort_col = matrix.proj_labels.indexOf(self.sorted_column);
         if(sort_col > -1){
             var sortFun = function(a,b){
-                return b[1][sort_col].zscore - a[1][sort_col].zscore;
+                return b[1][sort_col].zscore - a[1][sort_col].zscore; // Descending order
             };
             formatted_data_w_row_labels.sort(sortFun);
         }
@@ -242,9 +261,17 @@ Signature_Table.prototype.render = function()
         $(new_table_div).data('table-sort-val', 0)
         if (cluster_ids.length > 1) {
             // Pull out the cluster leader and put it first
-            var row_vals = _.map(formatted_data_w_row_labels, x => {
-                return _(x[1]).map(y => y.pval).sum()
-            })
+
+            var row_vals;
+            if (main_vis === "pcannotator") {
+                row_vals = _.map(formatted_data_w_row_labels, x => {
+                    return _(x[1]).map(y => y.pval).sum()
+                })
+            } else {
+                row_vals = _.map(formatted_data_w_row_labels, x => {
+                    return (x[1][0].pval * 10000 + x[1][0].zscore*-1) // sort by pval, then zscore
+                })
+            }
 
             var leader_row_i = row_vals.indexOf(_.min(row_vals))
             var leader_row = formatted_data_w_row_labels[leader_row_i];
@@ -267,6 +294,10 @@ Signature_Table.prototype.render = function()
                 .range(["steelblue","white", "lightcoral"])
                 .clamp(true);
         }
+        var colorScaleCluster = d3.scale.linear()
+            .domain([-1,0,1])
+            .range(["steelblue","white", "lightcoral"])
+            .clamp(true);
 
         var content_rows = d3.select(new_table).select('tbody').selectAll('tr')
             .data(formatted_data_w_row_labels);
@@ -286,38 +317,35 @@ Signature_Table.prototype.render = function()
                 .on("click", function(d){tableClickFunction_PC(matrix.sig_labels[d.row], 'signature')})
                 .append('div');
 
-        } else if (main_vis === 'clusters'){
-            content_row
-                .filter(function(d,i) { return i > 0;})
-                .style('background-color', function(d){return colorScale(d.zscore);})
-                .on("click", function(d){tableClickFunction_clusters(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'signature')})
-                .append('div')
-                .text(function(d){
-                    if(d.pval < -50) { return "< -50";}
-                    else if(d.pval > -1) { return d.pval.toFixed(2);}
-                    else {return d.pval.toPrecision(2);}
-                });
         } else {
             content_row
                 .filter(function(d,i) { return i > 0;})
+                .on("click", function(d){tableClickFunction_clusters(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'signature')})
+
+            content_row
+                .filter(function(d,i) { return i == 1;})
                 .style('background-color', function(d){return colorScale(d.zscore);})
-                .on("click", function(d){tableClickFunction(matrix.sig_labels[d.row], 'signature')})
                 .append('div')
-                .text(function(d){
-                    if(d.pval < -50) { return "< -50";}
-                    else if(d.pval > -1) { return d.pval.toFixed(2);}
-                    else {return d.pval.toPrecision(2);}
-                });
+                .text(function(d){ return d.zscore.toPrecision(2);})
+
+            content_row
+                .filter(function(d,i) { return i > 1;})
+                .style('background-color', function(d){return colorScaleCluster(d.zscore);})
+                .append('div')
+                .text(function(d){ return d.pval < -1.301 ? '*' : '';})
         }
 
         // Hover actions
         var rowHoverFunc = function(header_row){
-            return function(d){
+            return function(d, i){
                 var tooltip_str;
                 if(main_vis === 'pcannotator'){
                     tooltip_str = "corr = " + d.zscore.toFixed(2)
                 } else {
-                    tooltip_str = "z=" + d.zscore.toFixed(2) + ", p<" + d.pval.toFixed(3)
+                    if(main_vis === 'clusters' && i > 0)
+                        tooltip_str = "p<" + d.pval.toFixed(3)
+                    else
+                        tooltip_str = "z=" + d.zscore.toFixed(2) + ", p<" + d.pval.toFixed(3)
                 }
                 createTooltip(self.tooltip, this, tooltip_str)
                 hoverRowCol(header_row, this, matrix.proj_labels[d.col])
@@ -363,10 +391,15 @@ Signature_Table.prototype.render = function()
     });
 
     // Apply compact styling for pcannotator
-    if(main_vis === "pcannotator" || main_vis === "clusters"){
+    if(main_vis === "pcannotator" || main_vis === "clusters" || main_vis === "tree"){
         $(self.dom_node).find('table').addClass('compact')
     } else {
         $(self.dom_node).find('table').removeClass('compact')
+    }
+    if(main_vis === "clusters" || main_vis === "tree"){
+        $(self.dom_node).find('table').addClass('first-col')
+    } else {
+        $(self.dom_node).find('table').removeClass('first-col')
     }
 
     // Trigger existinging filter
@@ -405,12 +438,13 @@ Signature_Table.prototype.update = function(updates)
     }
 
     var matrix_promise;
-    if( 'main_vis' in updates || _.isEmpty(self.matrix)){
+    if( 'main_vis' in updates || _.isEmpty(self.matrix) || 'cluster_var' in updates){
         var self = this;
         var main_vis = get_global_status('main_vis');
+        var cluster_var = get_global_status('cluster_var');
 
         if (main_vis == "clusters") {
-            matrix_promise = api.clusters.sigProjMatrix(false);
+            matrix_promise = api.clusters.sigProjMatrix(cluster_var, false);
         } else if (main_vis == "tree") {
             matrix_promise = api.tree.sigProjMatrix(false);
         } else {
@@ -508,11 +542,12 @@ Meta_Table.prototype.update = function(updates)
         clusters_promise = false
     }
 
-    if('main_vis' in updates || _.isEmpty(self.matrix)){
+    if('main_vis' in updates || _.isEmpty(self.matrix) || 'cluster_var' in updates){
         var main_vis = get_global_status('main_vis');
+        var cluster_var = get_global_status('cluster_var');
 
         if (main_vis == "clusters") {
-            matrix_promise = api.clusters.sigProjMatrix(true);
+            matrix_promise = api.clusters.sigProjMatrix(cluster_var, true);
         } else if (main_vis === "tree") {
             matrix_promise = api.tree.sigProjMatrix(true);
         } else {
@@ -655,8 +690,8 @@ Meta_Table.prototype.render = function()
         } else {
             var sort_col = matrix.proj_labels.indexOf(self.sorted_column);
             if(sort_col > -1){
-                sortFun = function(a,b){
-                    return b[1][sort_col].zscore - a[1][sort_col].zscore;
+                var sortFun = function(a,b){
+                    return b[1][sort_col].zscore - a[1][sort_col].zscore; // Descending order
                 };
                 formatted_data_w_row_labels.sort(sortFun);
             }
@@ -693,6 +728,10 @@ Meta_Table.prototype.render = function()
                 .range(["steelblue","white", "lightcoral"])
                 .clamp(true);
         }
+        var colorScaleCluster = d3.scale.linear()
+            .domain([-1,0,1])
+            .range(["steelblue","white", "lightcoral"])
+            .clamp(true);
 
 
         var content_rows = d3.select(new_table).select('tbody').selectAll('tr')
@@ -717,25 +756,19 @@ Meta_Table.prototype.render = function()
         } else if (main_vis === 'clusters'){
             content_row
                 .filter(function(d,i) { return i > 0;})
-                .style('background-color', function(d){return colorScale(d.zscore);})
                 .on("click", function(d){tableClickFunction_clusters(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'meta')})
-                .append('div')
-                .text(function(d){
-                    if(d.pval < -50) { return "< -50";}
-                    else if(d.pval > -1) { return d.pval.toFixed(2);}
-                    else {return d.pval.toPrecision(2);}
-                });
-        } else {
+
             content_row
-                .filter(function(d,i) { return i > 0;})
+                .filter(function(d,i) { return i == 1;})
                 .style('background-color', function(d){return colorScale(d.zscore);})
-                .on("click", function(d){tableClickFunction(matrix.sig_labels[d.row], 'meta')})
                 .append('div')
-                .text(function(d){
-                    if(d.pval < -50) { return "< -50";}
-                    else if(d.pval > -1) { return d.pval.toFixed(2);}
-                    else {return d.pval.toPrecision(2);}
-                });
+                .text(function(d){ return d.zscore.toPrecision(2);})
+
+            content_row
+                .filter(function(d,i) { return i > 1;})
+                .style('background-color', function(d){return colorScaleCluster(d.zscore);})
+                .append('div')
+                .text(function(d){ return d.pval < -1.301 ? '*' : '';})
         }
 
         // Hover actions
@@ -745,7 +778,10 @@ Meta_Table.prototype.render = function()
                 if(main_vis === 'pcannotator'){
                     tooltip_str = "corr = " + d.zscore.toFixed(2)
                 } else {
-                    tooltip_str = "z=" + d.zscore.toFixed(2) + ", p<" + d.pval.toFixed(3)
+                    if(main_vis === 'clusters' && i > 0)
+                        tooltip_str = "p<" + d.pval.toFixed(3)
+                    else
+                        tooltip_str = "z=" + d.zscore.toFixed(2) + ", p<" + d.pval.toFixed(3)
                 }
                 createTooltip(self.tooltip, this, tooltip_str)
                 hoverRowCol(header_row, this, matrix.proj_labels[d.col])
@@ -791,10 +827,15 @@ Meta_Table.prototype.render = function()
 
 
     // Apply compact styling for pcannotator
-    if(main_vis === "pcannotator" || main_vis === "clusters"){
+    if(main_vis === "pcannotator" || main_vis === "clusters" || main_vis === "tree"){
         $(self.dom_node).find('table').addClass('compact')
     } else {
         $(self.dom_node).find('table').removeClass('compact')
+    }
+    if(main_vis === "clusters" || main_vis === "tree"){
+        $(self.dom_node).find('table').addClass('first-col')
+    } else {
+        $(self.dom_node).find('table').removeClass('first-col')
     }
 
 }
@@ -989,7 +1030,9 @@ function tableClickFunction_clusters(row_key, col_key, item_type)
     update['plotted_item_type'] = item_type;
     update['plotted_item'] = row_key;
 
-    if (col_key === 'KNN' || col_key === 'All')
+    var clusters = get_global_data('clusters')
+
+    if (col_key === 'Consistency')
     {
         col_key = '' // This is used to indicate 'no cluster'
     }
@@ -1005,7 +1048,7 @@ function hoverRowCol(header_row, node, col){
 
 
     var hovered_cells;
-    if (col === 'KNN' || col === 'All'){
+    if (col === 'Consistency'){
         hovered_cells = [];
     } else {
         var clusters = get_global_data('clusters'); // clusters maps cell_id to cluster

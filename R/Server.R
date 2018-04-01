@@ -25,18 +25,6 @@ ServerSigProjMatrix <- function(zscores, pvals, proj_labels, sig_labels) {
             return(.Object)
             }
 
-#' Wrapper class for the P value matrix calculated during sigsVsProjections
-#'
-#' @param data P values for each signature, projection pair in the form of a matrix
-#' @param proj_labels Projection names
-#' @param sig_labels Names of signatures
-#' @return ServerPMatrix object
-ServerPMatrix <- function(data, proj_labels, sig_labels) {
-            .Object <- new("ServerPMatrix", data=data, proj_labels=proj_labels,
-                           sig_labels=sig_labels)
-            return(.Object)
-            }
-
 #' Converts Signature object to JSON
 #' @importFrom jsonlite toJSON
 #' @param sig Signature object
@@ -125,7 +113,7 @@ sigProjMatrixToJSON <- function(sigzscores, sigpvals, sigs) {
 
     sSPM <- ServerSigProjMatrix(unname(sigzscores), unname(sigpvals), colnames(sigpvals), rownames(sigpvals))
 
-    json <- toJSON(sSPM, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
+    json <- toJSON(sSPM, force=TRUE, pretty=TRUE)
 
     return(json)
 }
@@ -141,7 +129,7 @@ pearsonCorrToJSON <- function(pc, sigs) {
 
     sPC <- ServerSigProjMatrix(unname(pc), unname(pc), cn, sigs)
 
-    json <- toJSON(sPC, force = TRUE, pretty = TRUE, auto_unbox = TRUE)
+    json <- toJSON(sPC, force = TRUE, pretty = TRUE)
 
     return(json)
 
@@ -247,7 +235,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       }) %>%
       get("/FilterGroup/SigClusters/Normal", function(req, res, err) {
 
-        cls <- object@ClusterProjectionData@sigClusters
+        cls <- object@SigConsistencyScores@sigClusters
         cls <- cls$Computed
 
         out <- toJSON(cls, auto_unbox=TRUE)
@@ -255,7 +243,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       }) %>%
       get("/FilterGroup/SigClusters/Meta", function(req, res, err) {
 
-        cls <- object@ClusterProjectionData@sigClusters
+        cls <- object@SigConsistencyScores@sigClusters
         cls <- cls$Meta
 
         out <- toJSON(cls, auto_unbox=TRUE)
@@ -271,30 +259,9 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         out <- toJSON(proj_names, auto_unbox=TRUE)
         return(out)
       }) %>%
-      get("/Clusters/SigProjMatrix/Normal", function(req, res, err) {
-
-        sigs <- colnames(object@sigScores)
-
-        out <- FastProjectR:::sigProjMatrixToJSON(
-                                  object@ClusterProjectionData@sigProjMatrix,
-                                  object@ClusterProjectionData@emp_pMatrix,
-                                  sigs)
-        return(out)
-      }) %>%
-      get("/Clusters/SigProjMatrix/Meta", function(req, res, err) {
-
-        sigs <- colnames(object@metaData)
-
-        out <- FastProjectR:::sigProjMatrixToJSON(
-                                  object@ClusterProjectionData@sigProjMatrix,
-                                  object@ClusterProjectionData@emp_pMatrix,
-                                  sigs)
-        return(out)
-      }) %>%
       get("/Tree/List", function(req, res, err) {
 
-        ## all Trees have the same adjacency matrix, so we can use the first one
-        W <- object@TreeProjectionData@projections[[1]]@adjMat
+        W <- object@TreeProjectionData@latentTree@adjMat
 
         return(toJSON(W))
       }) %>%
@@ -444,13 +411,60 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         return(result)
 
       }) %>%
-      get("/Clusters", function(req, res, err) {
+      get("/Clusters/list", function(req, res, err) {
+        cluster_vars <- names(object@ClusterSigScores)
+        out <- toJSON(cluster_vars,
+                      force = TRUE, pretty = TRUE, auto_unbox = TRUE)
+        return(out)
+      }) %>%
+      get("/Clusters/(?<cluster_variable1>.*)/Cells", function(req, res, err) {
         metaData <- object@metaData
-        name <- object@cluster_variable
+        cluster_variable <- URLdecode(req$params$cluster_variable1)
         out <- "No Clusters!"
-        if (name %in% colnames(metaData)) {
-          out <- FastProjectR:::sigScoresToJSON(metaData[name])
+        if (cluster_variable %in% colnames(metaData)) {
+          out <- FastProjectR:::sigScoresToJSON(metaData[cluster_variable])
         }
+        return(out)
+      }) %>%
+      get("/Clusters/(?<cluster_variable2>.*)/SigProjMatrix/Normal", function(req, res, err) {
+
+        sigs <- colnames(object@sigScores)
+
+        cluster_variable <- URLdecode(req$params$cluster_variable2)
+        pvals <- fp@SigConsistencyScores@emp_pMatrix
+        zscores <- fp@SigConsistencyScores@sigProjMatrix
+
+        cluster_pvals <- fp@ClusterSigScores[[cluster_variable]]$pvals
+        cluster_zscores <- fp@ClusterSigScores[[cluster_variable]]$zscores
+
+        pvals <- pvals[rownames(cluster_pvals), , drop = F]
+        zscores <- zscores[rownames(cluster_zscores), , drop = F]
+
+        pvals <- cbind(pvals, cluster_pvals)
+        zscores <- cbind(zscores, cluster_zscores)
+
+        out <- FastProjectR:::sigProjMatrixToJSON(zscores, pvals, sigs)
+        return(out)
+      }) %>%
+      get("/Clusters/(?<cluster_variable3>.*)/SigProjMatrix/Meta", function(req, res, err) {
+
+        sigs <- colnames(object@metaData)
+
+        cluster_variable <- URLdecode(req$params$cluster_variable3)
+        pvals <- fp@SigConsistencyScores@emp_pMatrix
+        zscores <- fp@SigConsistencyScores@sigProjMatrix
+
+        cluster_pvals <- fp@ClusterSigScores[[cluster_variable]]$pvals
+        cluster_zscores <- fp@ClusterSigScores[[cluster_variable]]$zscores
+
+        pvals <- pvals[rownames(cluster_pvals), , drop = F]
+        zscores <- zscores[rownames(cluster_zscores), , drop = F]
+
+        pvals <- cbind(pvals, cluster_pvals)
+        zscores <- cbind(zscores, cluster_zscores)
+
+        out <- FastProjectR:::sigProjMatrixToJSON(zscores, pvals, sigs)
+
         return(out)
       }) %>%
       get("/SessionInfo", function(req, res, err) {

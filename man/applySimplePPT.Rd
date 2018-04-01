@@ -5,7 +5,7 @@
 \title{Applies the Simple PPT algorithm onto the expression data.}
 \usage{
 applySimplePPT(exprData, numCores, permExprData = NULL,
-  nNodes_ = round(sqrt(ncol(exprData))), sigma = 0, gamma = 0)
+  nNodes_ = round(sqrt(nrow(exprData))), sigma = 0, gamma = 0)
 }
 \arguments{
 \item{exprData}{Expression data -- Num_Genes x Num_Samples}

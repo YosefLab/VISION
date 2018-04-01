@@ -197,25 +197,6 @@ generatePermutationNull <- function(num, eData, sigData) {
   return(list(randomSigs = randomSigs, sigAssignments = clusters))
 }
 
-BG_DIST <- matrix(0L, nrow=0, ncol=0)
-
-#' Generates, or if already generated retrieves, a random Background Distribution
-#' @importFrom stats rnorm
-#' @param N_SAMPLES Number of samples to generate the distribution for
-#' @param NUM_REPLICATES Number of replicates to generate for the background distribution
-#' @return Random matrix with dimensions N_SAMPLES x NUM_REPLICATES with row ordered in ascending order
-getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
-
-  if (nrow(BG_DIST) != N_SAMPLES || ncol(BG_DIST) != NUM_REPLICATES) {
-    BG_DIST <- matrix(rnorm(N_SAMPLES*NUM_REPLICATES),
-                      nrow=N_SAMPLES, ncol=NUM_REPLICATES)
-    BG_DIST <- apply(BG_DIST, 2, order)
-  }
-
-  return(BG_DIST)
-
-}
-
 #' Evaluates the significance of each signature in each cluster
 #'
 #' @importFrom stats p.adjust
@@ -231,59 +212,23 @@ getBGDist <- function(N_SAMPLES, NUM_REPLICATES) {
 #'
 #'   sigAssignments: named factor vector assigning signatures to random background
 #'     groups
-#' @param clusters a factor vector denoting which cluster each cell belongs to
 #' @return list:
 #' \itemize{
-#'     \item sigProbMatrix: the matrix of signature-projection consistency scores
+#'     \item sigProbMatrix: the vector of consistency z-scores
 #'     \item pVals: pvalues for the scores
+#'     \item emp_pVals: pvalues for the scores
 #' }
-sigsVsProjectionsClusters <- function(latentSpace, sigScoresData, metaData,
-                              randomSigData, clusters) {
+sigConsistencyScores <- function(latentSpace, sigScoresData,
+                                      metaData, randomSigData) {
 
-  signatureNames <- c(colnames(sigScoresData), colnames(metaData))
-  sigProjMatrix <- data.frame(row.names = signatureNames)
-  sigProjMatrix_P <- data.frame(row.names = signatureNames)
-  sigProjMatrix_Pemp <- data.frame(row.names = signatureNames)
+    signatureNames <- c(colnames(sigScoresData), colnames(metaData))
 
-  # First evaluate things for all clusters in the latent space
-  weights <- computeKNNWeights(latentSpace, K = round(sqrt(nrow(latentSpace))))
+    weights <- computeKNNWeights(latentSpace)
 
-  svp_n <- sigsVsProjection_n(sigScoresData,
-                              randomSigData, weights)
-  svp_pcn <- sigsVsProjection_pcn(metaData, weights)
-  svp_pcf <- sigsVsProjection_pcf(metaData, weights)
-
-  consistency <- c(svp_n$consistency,
-                  svp_pcn$consistency,
-                  svp_pcf$consistency)
-
-  pvals <- c(svp_n$pvals,
-            svp_pcn$pvals,
-            svp_pcf$pvals)
-
-  emp_pvals <- c(svp_n$empvals,
-                svp_pcn$pvals,
-                svp_pcf$pvals)
-
-  consistency <- consistency[signatureNames]
-  pvals <- pvals[signatureNames]
-  emp_pvals <- emp_pvals[signatureNames]
-
-  sigProjMatrix["All"] <- consistency
-  sigProjMatrix_P["All"] <- pvals
-  sigProjMatrix_Pemp["All"] <- emp_pvals
-
-  for (cluster in unique(clusters)) {
-    cluster_cells <- names(clusters)[clusters == cluster]
-    proj <- latentSpace[cluster_cells, ]
-
-
-    weights <- computeKNNWeights(proj, K = round(sqrt(nrow(proj))))
-
-    svp_n <- sigsVsProjection_n(sigScoresData, randomSigData,
-                                weights, cells = cluster_cells)
-    svp_pcn <- sigsVsProjection_pcn(metaData, weights, cells = cluster_cells)
-    svp_pcf <- sigsVsProjection_pcf(metaData, weights, cells = cluster_cells)
+    svp_n <- sigsVsProjection_n(sigScoresData,
+                                randomSigData, weights)
+    svp_pcn <- sigsVsProjection_pcn(metaData, weights)
+    svp_pcf <- sigsVsProjection_pcf(metaData, weights)
 
     consistency <- c(svp_n$consistency,
                     svp_pcn$consistency,
@@ -301,118 +246,33 @@ sigsVsProjectionsClusters <- function(latentSpace, sigScoresData, metaData,
     pvals <- pvals[signatureNames]
     emp_pvals <- emp_pvals[signatureNames]
 
-    name <- as.character(cluster)
-    sigProjMatrix[name] <- consistency
-    sigProjMatrix_P[name] <- pvals
-    sigProjMatrix_Pemp[name] <- emp_pvals
-  }
+    consistency <- as.matrix(consistency)
+    pvals <- as.matrix(pvals)
+    emp_pvals <- as.matrix(emp_pvals)
 
-  # Convert from dataframes to matrix
+    colnames(consistency) <- c("Consistency")
+    colnames(pvals) <- c("Consistency")
+    colnames(emp_pvals) <- c("Consistency")
 
-  sigProjMatrix <- as.matrix(sigProjMatrix)
-  sigProjMatrix_P <- as.matrix(sigProjMatrix_P)
-  sigProjMatrix_Pemp <- as.matrix(sigProjMatrix_Pemp)
+    # Cast to 1-column matrices so its consistent with other ProjectionData outputs
 
-  # FDR-correct and log-transform p-values
-  sigProjMatrix_Padj <- apply(sigProjMatrix_P, MARGIN = 2,
-                              FUN = p.adjust, method = "BH")
+    # FDR-correct and log-transform p-values
+    sigProjMatrix_Padj <- apply(pvals, MARGIN = 2,
+                                FUN = p.adjust, method = "BH")
+    sigProjMatrix_Padj[sigProjMatrix_Padj == 0] <- 10 ^ (-300)
+    sigProjMatrix_Padj <- log10(sigProjMatrix_Padj)
 
-  sigProjMatrix_Padj[sigProjMatrix_Padj == 0] <- 10^(-300)
+    sigProjMatrix_Pempadj <- apply(emp_pvals, MARGIN = 2,
+                                   FUN = p.adjust, method = "BH")
+    sigProjMatrix_Pempadj[sigProjMatrix_Pempadj == 0] <- 10 ^ (-300)
+    sigProjMatrix_Pempadj <- log10(sigProjMatrix_Pempadj)
 
-  sigProjMatrix_Padj <- log10(sigProjMatrix_Padj)
-
-  sigProjMatrix_Pempadj <- apply(sigProjMatrix_Pemp, MARGIN = 2,
-                                 FUN = p.adjust, method = "BH")
-
-  sigProjMatrix_Pempadj[sigProjMatrix_Pempadj == 0] <- 10^(-300)
-
-  sigProjMatrix_Pempadj <- log10(sigProjMatrix_Pempadj)
-
-  return(list(sigProjMatrix = sigProjMatrix, pVals = sigProjMatrix_Padj, emp_pVals = sigProjMatrix_Pempadj))
+    return(list(sigProjMatrix = consistency,
+                pVals = sigProjMatrix_Padj,
+                emp_pVals = sigProjMatrix_Pempadj)
+    )
 }
 
-#' Evaluates the significance of each signature vs. each projection.
-#'
-#' @importFrom stats p.adjust
-#' @param projections Maps projections to their spatial coordinates for each
-#' sample
-#' @param sigScoresData numeric matrix of signature scores
-#' size is cells x signatures
-#' @param metaData data.frame of meta-data for cells
-#' @param randomSigData A list with two items:
-#'
-#'   randomSigs: a list of signature score matrices.  Each list item
-#'     represents permutation signatures generated for a specific size/balance,
-#'     and is a numeric matrix of size cells X signatures
-#'
-#'   sigAssignments: named factor vector assigning signatures to random background
-#'     groups
-#' @return list:
-#' \itemize{
-#'     \item sigProbMatrix: the matrix of signature-projection consistency scores
-#'     \item pVals: pvalues for the scores
-#' }
-sigsVsProjections <- function(projections, sigScoresData, metaData,
-                              randomSigData) {
-
-  signatureNames <- c(colnames(sigScoresData), colnames(metaData))
-  sigProjMatrix <- data.frame(row.names = signatureNames)
-  sigProjMatrix_P <- data.frame(row.names = signatureNames)
-  sigProjMatrix_Pemp <- data.frame(row.names = signatureNames)
-
-  for (name in names(projections)) {
-    proj <- projections[[name]]
-    weights <- computeKNNWeights(proj)
-
-    svp_n <- sigsVsProjection_n(sigScoresData, randomSigData, weights)
-    svp_pcn <- sigsVsProjection_pcn(metaData, weights)
-    svp_pcf <- sigsVsProjection_pcf(metaData, weights)
-
-    consistency <- c(svp_n$consistency,
-                     svp_pcn$consistency,
-                     svp_pcf$consistency)
-
-    pvals <- c(svp_n$pvals,
-               svp_pcn$pvals,
-               svp_pcf$pvals)
-
-    emp_pvals <- c(svp_n$empvals,
-                   svp_pcn$pvals,
-                   svp_pcf$pvals)
-
-    consistency <- consistency[signatureNames]
-    pvals <- pvals[signatureNames]
-    emp_pvals <- emp_pvals[signatureNames]
-
-    sigProjMatrix[name] <- consistency
-    sigProjMatrix_P[name] <- pvals
-    sigProjMatrix_Pemp[name] <- emp_pvals
-
-  }
-
-  # Convert from dataframes to matrix
-
-  sigProjMatrix <- as.matrix(sigProjMatrix)
-  sigProjMatrix_P <- as.matrix(sigProjMatrix_P)
-  sigProjMatrix_Pemp <- as.matrix(sigProjMatrix_Pemp)
-
-  # FDR-correct and log-transform p-values
-  sigProjMatrix_Padj <- apply(sigProjMatrix_P, MARGIN = 2,
-                              FUN = p.adjust, method = "BH")
-
-  sigProjMatrix_Padj[sigProjMatrix_Padj == 0] <- 10^(-300)
-
-  sigProjMatrix_Padj <- log10(sigProjMatrix_Padj)
-
-  sigProjMatrix_Pempadj <- apply(sigProjMatrix_Pemp, MARGIN = 2,
-                                 FUN = p.adjust, method = "BH")
-
-  sigProjMatrix_Pempadj[sigProjMatrix_Pempadj == 0] <- 10^(-300)
-
-  sigProjMatrix_Pempadj <- log10(sigProjMatrix_Pempadj)
-
-  return(list(sigProjMatrix = sigProjMatrix, pVals = sigProjMatrix_Padj, emp_pVals = sigProjMatrix_Pempadj))
-}
 
 #' Evaluates the significance of each numeric signature vs. a
 #' single projections weights
@@ -731,7 +591,7 @@ sigsVsProjection_pcf <- function(metaData, weights, cells = NULL){
 #' @importFrom rsvd rsvd
 #' @param sigMatrix matrix of signatures scores, NUM_SAMPLES x NUM_SIGNATURES
 #' @param metaData data.frame of meta-data for cells
-#' @param pvals the corresponding P-values for each score,
+#' @param pvals the corresponding P-values for each signature
 #' NUM_SIGNATURES x NUM_SAMPLES
 #' @return a list:
 #' \itemize{

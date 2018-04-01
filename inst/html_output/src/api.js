@@ -70,9 +70,10 @@ var api = (function(){
 
     output.clusters = {}
 
-    output.clusters.sigProjMatrix = function(meta, pvalue)
+    output.clusters.sigProjMatrix = function(cluster_variable, meta)
     {
-        var query = "/Clusters"
+        var query = "/Clusters/"
+        query = query.concat(cluster_variable)
         if (meta) {
             query = query.concat("/SigProjMatrix/Meta")
         } else {
@@ -81,8 +82,15 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.clusters.cells = function() {
-        var query = "/Clusters"
+    output.clusters.cells = function(cluster_variable) {
+        var query = "/Clusters/"
+        query = query.concat(cluster_variable)
+        query = query.concat("/Cells")
+        return $.ajax(query, {dataType: "json"}).then(x => x)
+    }
+
+    output.clusters.list = function() {
+        var query = "/Clusters/list"
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 

@@ -4,8 +4,8 @@
 \alias{TreeProjectionData}
 \title{Wrapper for storing all relevant information for a given projection.}
 \usage{
-TreeProjectionData(projections = NULL, sigProjMatrix, pMatrix, sigClusters,
-  treeScore)
+TreeProjectionData(latentTree, projections, sigProjMatrix, pMatrix, sigClusters,
+  treeScore, emp_pMatrix)
 }
 \arguments{
 \item{projections}{List of Projection objects to be stored}
@@ -17,6 +17,8 @@ TreeProjectionData(projections = NULL, sigProjMatrix, pMatrix, sigClusters,
 \item{sigClusters}{a list of signature clusters}
 
 \item{treeScore}{a significance score for the fitted tree}
+
+\item{emp_pMatrix}{Matrix storing the empirical p values for each projection, signature pair}
 }
 \value{
 ProjectionData object

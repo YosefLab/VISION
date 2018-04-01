@@ -13,13 +13,13 @@
 #' @param sigClusters a list of signature clusters
 #' @param treeScore a significance score for the fitted tree
 #' @return ProjectionData object
-TreeProjectionData <- function(projections=NULL, sigProjMatrix,
+TreeProjectionData <- function(latentTree, projections, sigProjMatrix,
                                pMatrix, sigClusters, treeScore, emp_pMatrix) {
 
-    .Object <- new("TreeProjectionData", projections = projections,
-                   sigProjMatrix = sigProjMatrix, pMatrix = pMatrix,
-                   sigClusters = sigClusters, treeScore = treeScore,
-                   emp_pMatrix = emp_pMatrix)
+    .Object <- new("TreeProjectionData", latentTree = latentTree,
+                   projections = projections, sigProjMatrix = sigProjMatrix,
+                   pMatrix = pMatrix, sigClusters = sigClusters,
+                   treeScore = treeScore, emp_pMatrix = emp_pMatrix)
 
     return(.Object)
     }

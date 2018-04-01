@@ -60,18 +60,24 @@
         <div id="left-content">
             <div id="upper-left-content">
 
-                <div class='section-nav'>
-                    <ul class="nav nav-pills justify-content-center">
-                        <li class="nav-item">
-                            <a class="nav-link active" id="sig-table-tab" data-toggle="tab" href="#table-div-container" role="tab" aria-controls="sig-table" aria-selected="true">Signatures</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" id="meta-table-tab" data-toggle="tab" href="#meta-table-div" role="tab" aria-controls="meta-table" aria-selected="false">Cell Meta</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" id="genes-table-tab" data-toggle="tab" href="#genes-table" role="tab" aria-controls="genes-table" aria-selected="false">Genes</a>
-                        </li>
-                    </ul>
+                <div style="display: flex; flex-direction: row; flex-shrink: 0;">
+                    <div>
+                        <select id="cluster-group-select" class="form-control form-control-sm" style="width: 150px;">
+                        </select>
+                    </div>
+                    <div class='section-nav' style="flex-grow: 1">
+                        <ul class="nav nav-pills justify-content-center">
+                            <li class="nav-item">
+                                <a class="nav-link active" id="sig-table-tab" data-toggle="tab" href="#table-div-container" role="tab" aria-controls="sig-table" aria-selected="true">Signatures</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="meta-table-tab" data-toggle="tab" href="#meta-table-div" role="tab" aria-controls="meta-table" aria-selected="false">Cell Meta</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="genes-table-tab" data-toggle="tab" href="#genes-table" role="tab" aria-controls="genes-table" aria-selected="false">Genes</a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
 
                 <div class="tab-content upper-left-section-content">

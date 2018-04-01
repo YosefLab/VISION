@@ -304,12 +304,15 @@ setMethod("analyze", signature(object="FastProject"),
     message("Computing background distribution for signature scores...")
     signatureBackground <- calculateSignatureBackground(object, num = 3000)
 
-    # Populates @ClusterProjectionData
+    # Populates @SigConsistencyScores
     object <- analyzeSpatialCorrelations(object, signatureBackground)
 
     if (tolower(object@trajectory_method) != "none") {
         object <- analyzeTrajectoryCorrelations(object, signatureBackground)
     }
+
+    # Populates @ClusterSigScores
+    object <- clusterSigScores(object)
 
     # Populates #PCAnnotatorData
     object <- calculatePearsonCorr(object)

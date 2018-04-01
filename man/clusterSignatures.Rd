@@ -11,7 +11,7 @@ clusterSignatures(sigMatrix, metaData, pvals, clusterMeta)
 
 \item{metaData}{data.frame of meta-data for cells}
 
-\item{pvals}{the corresponding P-values for each score,
+\item{pvals}{the corresponding P-values for each signature
 NUM_SIGNATURES x NUM_SAMPLES}
 }
 \value{

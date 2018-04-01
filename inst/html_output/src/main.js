@@ -16,6 +16,7 @@ global_status.plotted_pc = 1;
 global_status.plotted_item = "";  // name of signature, meta or gene that is plotted
 global_status.plotted_item_type = ""; // either 'signature', 'meta', or 'gene'
 
+global_status.cluster_var = ""; // which cluster variable are we using
 global_status.selected_cluster = ""; // which cell cluster should be clustered
 
 global_status.upper_range = "";
@@ -35,6 +36,7 @@ global_data.tree_projection_coordinates = {};
 global_data.plotted_values = {}; // Holds gene expression, signature scores/ranks, etc...
 global_data.sig_info = {};  // Holds the information for the last plotted signature
 global_data.clusters = {};  // Maps cell ID to cluster ID
+global_data.cluster_variables = [];
 global_data.default_projection = 'tSNE30';
 
 var lower_left_content;
@@ -77,8 +79,8 @@ function set_global_status(update){
     var lower_left_content_promises = [];
     var upper_left_content_promises = [];
 
-    // clear the selected cluster if we're changing main vis
-    if('main_vis' in update) {
+    // clear the selected cluster if we're changing main vis or changing cluster variables
+    if('main_vis' in update || 'cluster_var' in update) {
         global_status['selected_cluster'] = ''
         update['selected_cluster'] = ''
     }
@@ -185,6 +187,19 @@ function set_global_status(update){
 
     }
 
+    if('cluster_var' in update) {
+        var cluster_var = get_global_status('cluster_var')
+        var cell_clusters_promise = api.clusters.cells(cluster_var)
+            .then( data => {
+                global_data.clusters = data
+            })
+        all_promises.push(cell_clusters_promise);
+        right_content_promises.push(cell_clusters_promise);
+        lower_left_content_promises.push(cell_clusters_promise);
+        upper_left_content_promises.push(cell_clusters_promise);
+
+    }
+
     $.when.apply($, right_content_promises).then(
         function() {
             right_content.update(update);
@@ -241,7 +256,6 @@ window.onload = function()
 
 
     var lower_left_promise = lower_left_content.init();
-    var upper_left_promise = upper_left_content.init();
     var right_promise = right_content.init();
 
     // Get the 'isMeta' vector for signatures
@@ -251,15 +265,25 @@ window.onload = function()
         });
 
     // Get the cluster assignments for cells
-    var cellClustersPromise = api.clusters.cells()
+    var cellClustersPromise = api.clusters.list()
         .then(function(data) {
-            global_data.clusters = data;
-        });
+            global_data.cluster_variables = data;
+            global_status.cluster_var = global_data.cluster_variables[0];
+
+            return upper_left_content.init();
+        }).then(function() {
+
+            var cluster_var = get_global_status('cluster_var')
+            var cell_clusters_promise = api.clusters.cells(cluster_var)
+                .then( data => {
+                    global_data.clusters = data
+                })
+            return cell_clusters_promise
+        })
 
     // When it's all done, run this
-    $.when(upper_left_promise, right_promise,
-        sigIsMetaPromise, lower_left_promise,
-        cellClustersPromise
+    $.when(right_promise, sigIsMetaPromise,
+        lower_left_promise, cellClustersPromise
     )
         .then(function(){
             upper_left_content.select_default();

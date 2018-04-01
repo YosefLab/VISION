@@ -25,14 +25,6 @@ ProjectionData <- setClass("ProjectionData",
     emp_pMatrix = "matrix"
 ))
 
-TreeProjectionData <- setClass("TreeProjectionData",
-    contains = c("ProjectionData"),
-    slots = c(
-        projections = "list",
-        treeScore = "numericORNULL"
-    # adjMat = "matrix"
-))
-
 PCAnnotatorData <- setClass("PCAnnotatorData",
     slots = c(pearsonCorr = "matrix")
 )
@@ -47,6 +39,14 @@ TreeProjection <- setClass("TreeProjection",
     edgePos = "numeric"
 ))
 
+TreeProjectionData <- setClass("TreeProjectionData",
+    contains = c("ProjectionData"),
+    slots = c(
+        latentTree = "TreeProjection",
+        projections = "list",
+        treeScore = "numericORNULL"
+))
+
 ServerExpression <- setClass("ServerExpression",
     slots = c(
     data = "matrix",
@@ -58,13 +58,6 @@ ServerSigProjMatrix <- setClass("ServerSigProjMatrix",
     slots = c(
     zscores = "matrix",
     pvals = "matrix",
-    proj_labels = "character",
-    sig_labels = "character"
-))
-
-ServerPMatrix <- setClass("ServerPMatrix",
-    slots = c(
-    data = "matrix",
     proj_labels = "character",
     sig_labels = "character"
 ))
@@ -109,8 +102,8 @@ FastProject <- setClass("FastProject",
         pool = "logical",
         sigScores = "matrix",
         cellsPerPartition = "numeric",
-        ClusterProjectionData = "ProjectionDataOrNULL",
-        ProjectionData = "ProjectionDataOrNULL",
+        SigConsistencyScores = "ProjectionDataOrNULL",
+        ClusterSigScores = "list",
         TreeProjectionData = "TreeProjectionDataOrNULL",
         PCAnnotatorData = "PCAnnotatorDataOrNULL",
         Projections = "list",
@@ -139,8 +132,8 @@ FastProject <- setClass("FastProject",
         pool = FALSE,
         sigScores = matrix(NA, 1, 1),
         cellsPerPartition = 100,
-        ClusterProjectionData = NULL,
-        ProjectionData = NULL,
+        SigConsistencyScores = NULL,
+        ClusterSigScores = list(),
         TreeProjectionData = NULL,
         PCAnnotatorData = NULL,
         Projections = list(),

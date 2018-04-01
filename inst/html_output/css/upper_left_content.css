@@ -24,7 +24,7 @@
 .upper-left-section-content .sig-tables-header{
     margin-right: 15px; /* Account for padding of div below it */
     margin-bottom: 5px;
-    padding-top: 30px;
+    padding-top: 35px;
     overflow-x: hidden;
     overflow-y: hidden;
     flex-shrink: 0;
@@ -66,6 +66,13 @@
 .sig-table.compact th:not(:first-child) > div > div{
     transform-origin: left bottom 0;
     transform: translate(12px,-2px) rotate(-75deg);
+    text-align: left;
+    white-space: nowrap;
+}
+
+.sig-table.first-col th:nth-child(2) > div > div{
+    transform-origin: left bottom 0;
+    transform: translate(30px,-2px) rotate(-75deg);
     text-align: left;
     white-space: nowrap;
 }
@@ -117,13 +124,20 @@
 
 .sig-table.compact td:not(:first-child) > div{
     width: 15px;
-    font-size: 0;
-    color: transparent;
 }
 
 .sig-table.compact th:not(:first-child) > div{
     width: 15px;
 }
+
+.sig-table.first-col td:nth-child(2) > div{
+    width: 50px;
+}
+
+.sig-table.first-col th:nth-child(2) > div{
+    width: 50px;
+}
+
 
 table td.highlight, table th.highlight{
     color: #28a745;

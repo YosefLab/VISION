@@ -323,29 +323,25 @@ analyzeSpatialCorrelations <- function(object, signatureBackground = NULL) {
 
   message("Evaluating spatial consistency of signatures...")
 
-  clusters <- object@metaData[, object@cluster_variable]
-  names(clusters) <- rownames(object@metaData)
-
-  sigVProjClusters <- sigsVsProjectionsClusters(
+  sigConsistencyScores <- sigConsistencyScores(
                                 object@latentSpace,
                                 object@sigScores,
                                 object@metaData,
-                                signatureBackground,
-                                clusters)
+                                signatureBackground)
 
   message("Clustering Signatures...")
   sigClusters <- clusterSignatures(object@sigScores,
                                    object@metaData,
-                                   sigVProjClusters$emp_pVals,
+                                   sigConsistencyScores$emp_pVals,
                                    clusterMeta = object@pool)
 
-  projDataClusters <- ProjectionData(
-                             sigProjMatrix = sigVProjClusters$sigProjMatrix,
-                             pMatrix = sigVProjClusters$pVals,
+  sigConsistencyScoresData <- ProjectionData(
+                             sigProjMatrix = sigConsistencyScores$sigProjMatrix,
+                             pMatrix = sigConsistencyScores$pVals,
                              sigClusters = sigClusters,
-                             emp_pMatrix = sigVProjClusters$emp_pVals)
+                             emp_pMatrix = sigConsistencyScores$emp_pVals)
 
-  object@ClusterProjectionData <- projDataClusters
+  object@SigConsistencyScores <- sigConsistencyScoresData
 
   return(object)
 }
@@ -373,10 +369,10 @@ analyzeTrajectoryCorrelations <- function(object, signatureBackground = NULL) {
                                  inputProjections = object@Projections)
 
       message("Computing significance of signatures...")
-      sigVTreeProj <- sigsVsProjections(treeProjs$projections,
-                                        object@sigScores,
-                                        object@metaData,
-                                        signatureBackground)
+      sigVTreeProj <- sigConsistencyScores(treeProjs$latentTree,
+                                           object@sigScores,
+                                           object@metaData,
+                                           signatureBackground)
 
       message("Clustering Signatures...")
       sigTreeClusters <- clusterSignatures(object@sigScores,
@@ -384,17 +380,138 @@ analyzeTrajectoryCorrelations <- function(object, signatureBackground = NULL) {
                                            sigVTreeProj$pVals,
                                            clusterMeta = object@pool)
 
-      treeProjData <- TreeProjectionData(projections = treeProjs$projections,
+      treeProjData <- TreeProjectionData(
+                                 latentTree = treeProjs$latentTree,
+                                 projections = treeProjs$projections,
                                  sigProjMatrix = sigVTreeProj$sigProjMatrix,
                                  pMatrix = sigVTreeProj$pVals,
+                                 emp_pMatrix = sigVTreeProj$emp_pVals,
                                  sigClusters = sigTreeClusters,
-                                 treeScore = treeProjs$treeScore,
-                                 emp_pMatrix = sigVTreeProj$emp_pVals)
+                                 treeScore = treeProjs$treeScore)
 
       object@TreeProjectionData <- treeProjData
   }
 
   return(object)
+}
+
+#' Compute KS Test, for all factor meta data.  One level vs all others
+#'
+#' @param object the FastProject object
+#' @return the FastProject object with values set for the analysis results
+clusterSigScores <- function(object) {
+
+    sigScores <- object@sigScores
+    metaData <- object@metaData
+
+    metaData <- metaData[rownames(sigScores), ]
+
+    # Determine which metaData we can run on
+    # Must be a factor with at least 20 levels
+    clusterMeta <- vapply(colnames(metaData), function(x) {
+            scores <- metaData[[x]]
+            if (is.factor(scores) && length(levels(scores)) <= 20){
+                return(x)
+            } else {
+                return("")
+            }
+        }, FUN.VALUE = "")
+    clusterMeta <- clusterMeta[clusterMeta != ""]
+
+    clusterPVals <- function(sigScores, metaData, variable) {
+
+        values <- metaData[[variable]]
+        var_levels <- levels(values)
+
+        result <- lapply(var_levels, function(var_level){
+
+            cluster_ii <- which(values == var_level)
+            not_cluster_ii <- which(values != var_level)
+
+            # Process the gene signatures
+            pvals <- lapply(colnames(sigScores), function(sig){
+                suppressWarnings({
+                    out_l <- ks.test(sigScores[cluster_ii, sig],
+                                   sigScores[not_cluster_ii, sig],
+                                   alternative = "less", exact = FALSE)
+                    out_g <- ks.test(sigScores[cluster_ii, sig],
+                                   sigScores[not_cluster_ii, sig],
+                                   alternative = "greater", exact = FALSE)
+                })
+                if (out_l$p.value < out_g$p.value) {
+                    pval <- out_l$p.value
+                    stat <- out_l$statistic
+                } else {
+                    pval <- out_g$p.value
+                    stat <- out_g$statistic*-1
+                }
+                return(list(pval = pval, stat = stat))
+            })
+            names(pvals) <- colnames(sigScores)
+
+            # Process the metaData variables
+            meta_pvals <- lapply(colnames(metaData), function(sig){
+
+                if (is.numeric(metaData[, sig])) {
+                    suppressWarnings({
+
+                        out_l <- ks.test(metaData[cluster_ii, sig],
+                                       metaData[not_cluster_ii, sig],
+                                       alternative = "less", exact = FALSE)
+                        out_g <- ks.test(metaData[cluster_ii, sig],
+                                       metaData[not_cluster_ii, sig],
+                                       alternative = "greater", exact = FALSE)
+                    })
+                    if (out_l$p.value < out_g$p.value) {
+                        pval <- out_l$p.value
+                        stat <- out_l$statistic
+                    } else {
+                        pval <- out_g$p.value
+                        stat <- out_g$statistic*-1
+                    }
+
+                } else if (is.factor(metaData[, sig])) {
+                    sigvals <- metaData[, sig, drop = F]
+                    sigvals[, 2] <- 0
+                    sigvals[cluster_ii, 2] <- 1
+                    sigvals[, 2] <- as.factor(sigvals[, 2])
+                    M <- table(sigvals)
+                    suppressWarnings(
+                        out <- chisq.test(M)
+                    )
+                    pval <- out$p.value
+                    stat <- max(log10(out$p.value), -300)*-1 / 10
+                }
+                return(list(pval = pval, stat = stat))
+            })
+            names(meta_pvals) <- colnames(metaData)
+
+            all <- c(pvals, meta_pvals)
+            all_pvals <- vapply(all, function(x) x$pval, FUN.VALUE = 0.0)
+            all_zscores <- vapply(all, function(x) x$stat, FUN.VALUE = 0.0)
+
+            return(list(pvals = all_pvals, zscores = all_zscores))
+        })
+        names(result) <- var_levels
+        zscores <- do.call(cbind,
+                         lapply(result, function(x) x$zscores))
+        pvals <- do.call(cbind,
+                         lapply(result, function(x) x$pvals))
+
+        pvals_adj <- apply(pvals, MARGIN = 2, FUN = p.adjust, method = "BH")
+        pvals_adj[pvals_adj < 1e-300] <- 1e-300
+        pvals_adj <- log10(pvals_adj)
+        return(list(pvals = pvals_adj, zscores = zscores))
+    }
+
+    pvalsAndZscores <- lapply(clusterMeta, function(variable){
+        result <- clusterPVals(sigScores, metaData, variable)
+        return(result)
+    })
+
+    object@ClusterSigScores <- pvalsAndZscores
+    return(object)
+
 }
 
 #' Compute pearson correlation between signature scores and principle components
