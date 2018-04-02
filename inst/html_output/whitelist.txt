@@ -1,4 +1,5 @@
 html_output/Results.html
+html_output/css/loading.svg
 html_output/css/lower_left_content.css
 html_output/css/right_content.css
 html_output/css/styles.css
@@ -33,3 +34,4 @@ html_output/thirdparty/datatables/datatables.min.js
 html_output/thirdparty/jquery/jquery-2.1.4.min.js
 html_output/thirdparty/jszip/jszip.min.js
 html_output/thirdparty/lodash/lodash.min.js
+html_output/thirdparty/popper/popper.js/dist/umd/popper.min.js

@@ -24,7 +24,9 @@ test_that("Read in .txt and .gmt files together", {
 
 test_that("Naive Sig Scores computed correctly", {
   
-  expr <- readExprAsMatrix("test_data/expression_matrix.txt")
+  expr <- read.table("test_data/expression_matrix.txt",
+                     sep = "\t", header = TRUE)
+  expr <- data.matrix(expr)
   sigList <- readSignaturesInput(c("test_data/published_signatures/h.all.v5.2.symbols.gmt"))
   
   weights <- matrix(1L, nrow=nrow(expr), ncol=ncol(expr))
@@ -33,16 +35,14 @@ test_that("Naive Sig Scores computed correctly", {
   
   sigScores <- batchSigEval(sigList, "naive", expr, weights, 1)
   
-  expect_equal(length(sigScores), length(sigList)-1)
-  ss <- sigScores[[1]]
-  expect_false(ss@isPrecomputed)
-  expect_false(ss@isFactor)
-  expect_equal(names(ss@scores), colnames(expr))
-  expect_equal(length(ss@scores), ncol(expr))
+  expect_equal(ncol(sigScores), length(sigList)-1)
+  expect_equal(nrow(sigScores), ncol(expr))
 })
 
 test_that("Naive Sig Eval is same as Weighted Sig Eval with all weights 1", {
-  expr <- readExprAsMatrix("test_data/expression_matrix.txt")
+  expr <- read.table("test_data/expression_matrix.txt",
+                     sep = "\t", header = TRUE)
+  expr <- data.matrix(expr)
   sigList <- readSignaturesInput(c("test_data/published_signatures/h.all.v5.2.symbols.gmt"))
   
   weights <- matrix(1L, nrow=nrow(expr), ncol=ncol(expr))
@@ -51,17 +51,14 @@ test_that("Naive Sig Eval is same as Weighted Sig Eval with all weights 1", {
 
   sigScores <- batchSigEval(sigList, "naive", expr, weights, 1)
   
-  expect_equal(length(sigScores), length(sigList)-1)
+  expect_equal(ncol(sigScores), length(sigList)-1)
   
   sigScores2 <- batchSigEval(sigList, "weighted_avg", expr, weights, 1)
   
-  expect_equal(length(sigScores2), length(sigList)-1)
+  expect_equal(ncol(sigScores2), length(sigList)-1)
   
-  for (i in 1:length(sigScores2)) {
-    eq <- (sigScores[[i]]@scores == sigScores2[[i]]@scores)
-    
-    expect_false(FALSE %in% eq)
-  }
+  total_diff <- max(abs(sigScores - sigScores2))
+  expect_equal(total_diff, 0)
   
 })
 
@@ -85,32 +82,30 @@ test_that("Weighted signature scores are correct", {
     colnames(weights) <- colnames(expr)
 
     sig1 <- Signature(sigDict = c("a" = 1, "b" = 1), name = "sig1",
-                      source = "", metaData = "", isPrecomputed = FALSE,
+                      source = "", metaData = "", isMeta = FALSE,
                       isFactor = FALSE)
 
     sig2 <- Signature(sigDict = c("b" = 1, "c" = -1), name = "sig2",
-                      source = "", metaData = "", isPrecomputed = FALSE,
+                      source = "", metaData = "", isMeta = FALSE,
                       isFactor = FALSE)
 
     sigs <- list(sig1 = sig1, sig2 = sig2)
 
     scores <- batchSigEval(sigs, "weighted_avg", expr, weights, 1)
-    expect_equal(length(scores), 2)
+    expect_equal(ncol(scores), 2)
 
-    sig1scores <- scores[["sig1"]]
+    sig1scores <- scores[, "sig1"]
 
 
-    sig2scores <- scores[["sig2"]]
+    sig2scores <- scores[, "sig2"]
 
     expected_sig1_scores <- c(s1 = (1 * .5 + 2 * .1) / (.5 + .1),
                               s2 = (2 * .3 + 2 * .5) / (.3 + .5))
-    expect_equal(sig1scores@scores, expected_sig1_scores)
-    expect_equal(sig1scores@name, sig1@name)
+    expect_equal(sig1scores, expected_sig1_scores)
 
     expected_sig2_scores <- c(s1 = (2 * .1 - 5 * .3) / (.1 + .3),
                               s2 = (2 * .5 - 4 * .6) / (.5 + .6))
-    expect_equal(sig2scores@scores, expected_sig2_scores)
-    expect_equal(sig2scores@name, sig2@name)
+    expect_equal(sig2scores, expected_sig2_scores)
 
 })
 
@@ -129,29 +124,27 @@ test_that("Unweighted signature scores are correct", {
     colnames(weights) <- colnames(expr)
 
     sig1 <- Signature(sigDict = c("a" = 1, "b" = 1), name = "sig1",
-                      source = "", metaData = "", isPrecomputed = FALSE,
+                      source = "", metaData = "", isMeta = FALSE,
                       isFactor = FALSE)
 
     sig2 <- Signature(sigDict = c("b" = 1, "c" = -1), name = "sig2",
-                      source = "", metaData = "", isPrecomputed = FALSE,
+                      source = "", metaData = "", isMeta = FALSE,
                       isFactor = FALSE)
 
     sigs <- list(sig1 = sig1, sig2 = sig2)
 
     scores <- batchSigEval(sigs, "naive", expr, weights, 1)
-    expect_equal(length(scores), 2)
+    expect_equal(ncol(scores), 2)
 
-    sig1scores <- scores[["sig1"]]
+    sig1scores <- scores[, "sig1"]
 
 
-    sig2scores <- scores[["sig2"]]
+    sig2scores <- scores[, "sig2"]
 
     expected_sig1_scores <- c(s1 = 1.5, s2 = 2.0)
-    expect_equal(sig1scores@scores, expected_sig1_scores)
-    expect_equal(sig1scores@name, sig1@name)
+    expect_equal(sig1scores, expected_sig1_scores)
 
     expected_sig2_scores <- c(s1 = -3.0, s2 = -2.0) / 2
-    expect_equal(sig2scores@scores, expected_sig2_scores)
-    expect_equal(sig2scores@name, sig2@name)
+    expect_equal(sig2scores, expected_sig2_scores)
 
 })

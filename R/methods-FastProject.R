@@ -1,27 +1,25 @@
 #' Initializes a new FastProject object.
 #'
-#' @import BiocParallel
 #' @importFrom Biobase ExpressionSet exprs
 #' @importFrom SummarizedExperiment SummarizedExperiment assay
 #' @import logging
 #'
 #' @param data expression data - can be one of these: \itemize{
 #' \item numeric matrix
-#' \item path of a file,
 #' \item ExpressionSet object
-#' \item SummerizedExperiment object (or extending classes)
+#' \item SummzrizedExperiment object (or extending classes)
 #' }
 #' @param signatures list of file paths to signature files (.gmt or .txt) or a
 #' list of Signature objects
 #' @param housekeeping vector of gene names
 #' @param norm_methods normalization methods to be extracted from the scone
 #' object
-#' @param precomputed data file with precomputed signature scores (.txt), or a
+#' @param meta data file with cell meta data (.txt), or a
 #' data.frame with meta information. Note that rows should match samples in the
 #' data, and columns should either be factors or numerics.
 #' @param nomodel if TRUE, no fnr curve calculated and all weights equal to 1.
 #' Else FNR and weights calculated. [Default:FALSE]
-#' @param projection_genes name of method ('threshold' or 'fano') or list of 
+#' @param projection_genes name of method ('threshold' or 'fano') or list of
 #' genes to use when computing projections.
 #' @param lean if TRUE run a lean simulation. Else more robust pipeline
 #' initiated. Default is FALSE
@@ -41,6 +39,9 @@
 #' are TRUE, FALSE, or 'auto', the last of which is the default and enables
 #' pooling if there are more than 15000 cells.
 #' @param cellsPerPartition the minimum number of cells to put into a cluster
+#' @param cluster_variable variable to use to denote clusters
+#' @param latentSpace latent space for expression data. Numeric matrix or dataframe
+#' with dimensions CELLS x COMPONENTS
 #' @param name a name for the sample - shown on the output report
 #' @return A FastProject object
 #' @rdname FastProject-class
@@ -65,12 +66,14 @@
 #'                      housekeeping = hkg)
 setMethod("FastProject", signature(data = "matrixORSparse"),
             function(data, signatures, housekeeping=NULL, norm_methods = NULL,
-                    precomputed=NULL, nomodel=FALSE,
+                    meta=NULL, nomodel=FALSE,
                     projection_genes=c("fano"), lean=FALSE, min_signature_genes=5,
                     weights=NULL, threshold=0, perm_wPCA=FALSE,
                     sig_norm_method="znorm_rows",
-                    sig_score_method="weighted_avg", trajectory_method="None",
-                    pool="auto", cellsPerPartition=100, name=NULL) {
+                    sig_score_method="weighted_avg",
+                    trajectory_method=c("None", "SimplePPT"),
+                    pool="auto", cellsPerPartition=100, name=NULL,
+                    cluster_variable = "", latentSpace = NULL) {
 
             .Object <- new("FastProject")
 
@@ -79,8 +82,8 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
             }
 
             rownames(data) <- toupper(rownames(data))
-            .Object@allData = data
-            .Object@exprData <- ExpressionData(data)
+            .Object@initialExprData <- data
+            .Object@exprData <- data
 
             if (is.null(housekeeping)) {
                 .Object@housekeepingData <- character()
@@ -102,22 +105,46 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
                     Signature objects")
             }
 
-            if (!is.null(precomputed)) {
-                if(is.matrix(precomputed)){
-                    precomputed <- as.data.frame(precomputed)
+            if (!is.null(meta)) {
+                if(is.matrix(meta)){
+                    meta <- as.data.frame(meta)
                 }
-                if(is.data.frame(precomputed)) {
-                    .Object@precomputedData <- SigScoresFromDataframe(
-                        precomputed, colnames(.Object@allData))
+                if(is.data.frame(meta)) {
+                    sampleLabels <- colnames(.Object@exprData)
+
+                    common <- intersect(row.names(meta), sampleLabels)
+                    if (length(common) != length(sampleLabels)){
+                        stop("Provided meta data dataframe must have same sample labels as the expression matrix")
+                    }
+
+                    # Convert strings to factors if less than 20 unique
+                    metaVars <- colnames(meta)
+                    for(var in metaVars){
+                        vals <- meta[, var]
+                        if (is.character(vals)){
+                            n_unique <- length(unique(vals))
+                            if (n_unique <= 20){
+                                meta[, var] <- as.factor(vals)
+                            } else {
+                                meta[, var] <- NULL
+                                message(paste0("Dropping '", var, "' from meta data as it is of type 'character' and has more than 20 unique values.  If you want to include this meta data variable, convert it to a factor before providing the data frame to FastProject"))
+                            }
+                        }
+                    }
+
+                    .Object@metaData <- meta[sampleLabels, , drop = FALSE]
+                    .Object@initialMetaData <- .Object@metaData
                 } else {
-                    .Object@precomputedData <- readPrecomputed(
-                        precomputed, colnames(.Object@allData))
+                    stop("meta input argument should be a matrix or dataframe")
                 }
+            } else {
+                .Object@metaData <- data.frame(
+                                        row.names = colnames(.Object@exprData)
+                                    )
+                .Object@initialMetaData <- .Object@metaData
             }
 
-            if (is.null(weights)) {
-                .Object@weights <- matrix(NA, nrow=10, ncol=0)
-            } else {
+            if (!is.null(weights)) {
                 .Object@weights <- weights
             }
 
@@ -130,11 +157,11 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
             .Object@threshold <- threshold
             .Object@sig_norm_method <- sig_norm_method
             .Object@sig_score_method <- sig_score_method
-            .Object@trajectory_method <- trajectory_method
+            .Object@trajectory_method <- match.arg(trajectory_method)
             .Object@lean <- lean
             .Object@perm_wPCA <- perm_wPCA
 
-            LOTS_OF_CELLS <- ncol(getExprData(.Object@exprData)) > 15000
+            LOTS_OF_CELLS <- ncol(.Object@exprData) > 15000
 
             if (is.character(pool))
             {
@@ -159,7 +186,7 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
             if (LOTS_OF_CELLS && !pool) {
                 message(paste(
                       "Warning: Input data consists of",
-                      ncol(getExprData(.Object@exprData)),
+                      ncol(.Object@exprData),
                       "cells and pool=FALSE.  It is recommend to set pool=TRUE when running on large numbers of cells"
                       )
                 )
@@ -172,16 +199,28 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
                 .Object@name <- name
             }
 
-            return(.Object)
-            }
-)
+            if (!is.null(latentSpace)) {
+                if (is.data.frame(latentSpace)){
+                    latentSpace <- data.matrix(latentSpace)
+                }
 
-#' @param ... additional arguments
-#' @rdname FastProject-class
-#' @export
-setMethod("FastProject", signature(data = "character"),
-            function(data, ...) {
-            return(FastProject(readExprAsMatrix(data), ...))
+                sample_names <- colnames(.Object@exprData)
+                common <- intersect(sample_names, rownames(latentSpace))
+
+                if (length(common) != nrow(latentSpace)){
+                    stop("Supplied coordinates for latentSpace must have rowlabels that match sample/cell names")
+                }
+
+                latentSpace <- latentSpace[colnames(.Object@exprData), ]
+                colnames(latentSpace) <- NULL
+
+                .Object@latentSpace <- latentSpace
+                .Object@initialLatentSpace <- latentSpace
+            }
+
+            .Object@cluster_variable <- cluster_variable
+
+            return(.Object)
             }
 )
 
@@ -238,6 +277,10 @@ setMethod("analyze", signature(object="FastProject"),
             function(object) {
     message("Beginning Analysis")
 
+    if (object@cluster_variable == "") {
+        object <- clusterCells(object)
+    }
+
     if (object@pool) {
         object <- poolCells(object)
     }
@@ -247,9 +290,32 @@ setMethod("analyze", signature(object="FastProject"),
 
     object <- calcWeights(object)
 
+    # Populates @sigScores
     object <- calcSignatureScores(object)
 
-    object <- analyzeProjections(object)
+    # Populates @latentSpace
+    if (all(dim(object@latentSpace) == c(1, 1))) {
+        object <- computeLatentSpace(object)
+    }
+
+    # Populates @Projections
+    object <- generateProjections(object)
+
+    message("Computing background distribution for signature scores...")
+    signatureBackground <- calculateSignatureBackground(object, num = 3000)
+
+    # Populates @SigConsistencyScores
+    object <- analyzeSpatialCorrelations(object, signatureBackground)
+
+    if (tolower(object@trajectory_method) != "none") {
+        object <- analyzeTrajectoryCorrelations(object, signatureBackground)
+    }
+
+    # Populates @ClusterSigScores
+    object <- clusterSigScores(object)
+
+    # Populates #PCAnnotatorData
+    object <- calculatePearsonCorr(object)
 
     message("Analysis Complete!")
 
@@ -264,30 +330,28 @@ setMethod("analyze", signature(object="FastProject"),
 #' @param coordinates numeric matrix or data.frame. Coordinates of each
 #' sample in the projection (NUM_SAMPLES x NUM_COMPONENTS)
 #' @return FastProject object
-setMethod("addProjection", signature(object="FastProject"),
+setMethod("addProjection", signature(object = "FastProject"),
             function(object, name, coordinates) {
 
-    if(is(coordinates, "data.frame")){
-        coordinates = as.matrix(coordinates)
+    if (is(coordinates, "data.frame")){
+        coordinates <- as.matrix(coordinates)
     }
 
     # Verify that projection coordinates are correct
-    samples = object@exprData@data
-    sample_names = colnames(samples)
+    samples <- object@exprData
 
-    if(length(intersect(sample_names, rownames(coordinates))) != dim(coordinates)[1]){
+    SAME_SIZE <- ncol(samples) == nrow(coordinates)
+    SAME_NAMES <- setequal(colnames(samples), rownames(coordinates))
+
+    if (!SAME_SIZE || !SAME_NAMES){
         stop("Supplied coordinates must have rowlabels that match sample/cell names")
     }
 
-    if(dim(coordinates)[2] != 2){
+    if (dim(coordinates)[2] != 2){
         stop("Projection must have exactly 2 components")
     }
 
-
-    # Add it to the object
-    proj = Projection(name, coordinates)
-
-    object@inputProjections = c(object@inputProjections, proj)
+    object@inputProjections[[name]] <- coordinates
 
     return(object)
 })
@@ -395,6 +459,8 @@ setMethod("viewResults", signature(object="FastProject"),
                 object@name <- name
             }
 
+            versionCheck(object)
+
             message("Launching the server...")
             message("Press exit or ctrl c to exit")
             launchServer(object, port, host, browser)
@@ -418,20 +484,22 @@ setMethod("viewResults", signature(object="character"),
 #' parameters
 createNewFP <- function(fp, subset) {
     .Object <- new("FastProject")
-    nexpr <- fp@allData[,subset]
+    nexpr <- fp@initialExprData[,subset]
     rownames(nexpr) <- toupper(rownames(nexpr))
-    .Object@allData = nexpr
-    .Object@exprData <- ExpressionData(nexpr)
+    .Object@initialExprData <- nexpr
+    .Object@exprData <- nexpr
 
     .Object@housekeepingData <- fp@housekeepingData
     .Object@sigData <- fp@sigData
 
-    .Object@precomputedData <- lapply(fp@precomputedData, function(sigscore) {
+    .Object@metaData <- lapply(fp@metaData, function(sigscore) {
         sigscore@scores <- sigscore@scores[subset]
         return(sigscore)
     })
 
-    .Object@weights <- fp@weights[,subset]
+    if (!all(dim(fp@weights) == c(1, 1))){
+        .Object@weights <- fp@weights[, subset]
+    }
     .Object@projection_genes <- fp@projection_genes
     .Object@threshold <- fp@threshold
     .Object@sig_norm_method <- fp@sig_norm_method

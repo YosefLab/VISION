@@ -49,9 +49,7 @@ function ColorScatter(parent, colorbar, legend)
         .on("zoom", self.redraw());
 
     //This gets overwritten when you set data
-    this.colorScale = d3.scale.linear()
-        .domain([0,0.5,1])
-        .range(["blue", "green", "red"]);
+    this.colorScale = null
 
     this.tip = d3.tip()
         .attr('class', 'd3-tip')
@@ -106,7 +104,6 @@ function ColorScatter(parent, colorbar, legend)
     this.selected_links = [];
 
     this.hovered = -1;
-    this.hovered_links = [];
 
     this.last_event = -1;
 
@@ -115,28 +112,35 @@ function ColorScatter(parent, colorbar, legend)
     this.curr_tree_node = {};
 }
 
+ColorScatter.prototype.clearData = function() {
+    this.points = []
+    this.tree_points = []
+    this.tree_adj = []
+}
 
-ColorScatter.prototype.setData = function(points, isFactor, tree_points, tree_adj, full_color_range)
+ColorScatter.prototype.setData = function(points, isFactor,
+    full_color_range, selected_cells, min_color_value)
 {
-    if(tree_points === undefined){
-        tree_points = []
-    }
-
-    if(tree_adj === undefined){
-        tree_adj = []
-    }
 
     if(full_color_range === undefined){
         full_color_range = false
     }
 
+    if(selected_cells === undefined){
+        selected_cells = points.map(x => x[3]) //select all cells
+    }
+
+    if(min_color_value === undefined){
+        min_color_value = -1e99
+    }
+
+    selected_cells = _.keyBy(selected_cells, x => x)
+
     this.points = points;
-    this.tree_points = tree_points
-    this.tree_adj = tree_adj
 
-    this.autoZoom() // Adjusts axes if necessary
-
-    var cvals = points.map(function(e){return e[2];}); //extract 3rd column
+    var cvals = points
+        .filter(e => e[3] in selected_cells) // filter for selected cells
+        .map(e => e[2])                      // extract 3rd column
 
     //Adjust circle size based on number of points
     //Max is 5, Min is 2
@@ -163,10 +167,12 @@ ColorScatter.prototype.setData = function(points, isFactor, tree_points, tree_ad
 
     } else if(cvals[0] !== null) {
 
+        cvals = cvals.filter(e => e > min_color_value)
+
         cvals.sort(d3.ascending); // Needed for quantile
         var low, high, mid;
         if(full_color_range){
-            low = d3.min(cvals)
+            low = Math.max(d3.min(cvals), 0)
             high = d3.max(cvals)
             mid = (low + high)/2
         } else {
@@ -196,8 +202,23 @@ ColorScatter.prototype.setData = function(points, isFactor, tree_points, tree_ad
         this.setColorBar();
     }
 
-    this.redraw(true)();
-};
+    // Compute colors for all points, add to points[n][4]
+    var self = this
+    this.points.forEach(function(x) {
+        if (x[3] in selected_cells && (x[2] > min_color_value || isFactor)) {
+            x[4] = self.colorScale(x[2])
+        } else {
+            x[4] = "#777777"
+        }
+    })
+}
+
+ColorScatter.prototype.setTreeData = function(tree_points, tree_adj)
+{
+
+    this.tree_points = tree_points
+    this.tree_adj = tree_adj
+}
 
 /*
  * Automatically adjusts the scale if the points are too wide
@@ -253,7 +274,7 @@ ColorScatter.prototype.autoZoom = function() {
         self.zoom
             .y(self.y)
     }
-
+    this.redraw(true)();
 }
 
 ColorScatter.prototype.setLegend = function(colors, values) {
@@ -411,38 +432,24 @@ ColorScatter.prototype.setHovered_TreeNode = function(node, clusters, event_id) 
 
 }
 
-ColorScatter.prototype.setHovered = function(hovered_indices, event_id)
+ColorScatter.prototype.hover_cells = function(cell_ids)
 {
-    if(event_id === undefined){
-        event_id = Math.random();
-    }
-
-    //test for single index, and wrap in list
-    if(typeof(hovered_indices) === "number"){hovered_indices = [hovered_indices];}
-    if(hovered_indices.length === 0){hovered_indices = [-1];}
 
     //Needed to prevent infinite loops with linked hover and select events
-    if(this.last_event !== event_id) {
-        this.last_event = event_id;
-        this.hover_col = hovered_indices;
-        if(hovered_indices.length === 1 && hovered_indices[0] === -1){
-            //Clear the hover
-            this.svg.selectAll("circle")
-                .classed("point-faded", false)
-                .classed("point-hover", false);
-        }
-        else{
-            this.svg.selectAll("circle")
-                .classed("point-faded", true)
-                .classed("point-hover", function (d, i) {
-                    return hovered_indices.indexOf(i) > -1;
-                });
-        }
-
-        this.hovered_links.forEach(function (e) {
-            e.setHovered(hovered_indices, event_id);
-        });
+    if(_.isEmpty(cell_ids)){
+        //Clear the hover
+        this.svg.selectAll("circle")
+            .classed("point-faded", false)
+            .classed("point-hover", false);
     }
+    else{
+        this.svg.selectAll("circle")
+            .classed("point-faded", true)
+            .classed("point-hover", function (d) {
+                return cell_ids.indexOf(d[3]) > -1;
+            });
+    }
+
 };
 
 ColorScatter.prototype.toggleLasso = function(enable) {
@@ -528,11 +535,11 @@ ColorScatter.prototype.redraw = function(performTransition) {
         circles.enter().append("circle")
             .classed("scatter", true);
 
-        circles.style("fill", function(d){return self.colorScale(d[2]);})
+        circles.style("fill", function(d){return d[4];})
             .attr("r", self.circle_radius * Math.pow(self.zoom.scale(), .5))
             .on("click", function(d){self.setSelected(d[3]);})
-            .on("mouseover", function(d,i){self.tip.show(d,i); self.setHovered(i);})
-            .on("mouseout", function(d,i){self.tip.hide(d,i); self.setHovered(-1);})
+            .on("mouseover", function(d,i){self.tip.show(d,i);})
+            .on("mouseout", function(d,i){self.tip.hide(d,i);})
 
         var tree_circles = self.svg.selectAll("circle.tree")
             .data(self.tree_points);

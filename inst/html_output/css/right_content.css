@@ -13,33 +13,41 @@
     font-size: 18px;
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
     height: 73px;
     margin-bottom: 10px;
 }
 
 #plot-title-div .titles{
-    max-width: 300px;
+    flex-grow: 1;
 }
 
-#plot-title-div .subtitle, #plot-title-div .title{
-    padding: 10px;
+#plot-title-div .titles .subtitle, #plot-title-div .titles .title{
+    margin: 10px;
     font-family: "Arial", Helvetica, sans-serif;
 }
 
-#plot-title-div .subtitle{
+#plot-title-div .titles .title{
+    max-height: 2em;
+    overflow-y: hidden;
+}
+
+#plot-title-div .titles .subtitle{
     font-size: 13px;
+    display: flex;
+    align-items: baseline;
 }
 
 #plot-title-div .color-options{
-	margin-left: 40px;
-    flex-grow: 1;
     display: flex;
     flex-direction: row;
     justify-content: space-around;
     align-items: flex-end;
     text-align: center;
     max-width: 450px;
+}
+
+#plot-title-div .color-options > div {
+    margin-left: 20px;
 }
 
 #plot-title-div .color-options label{
@@ -81,6 +89,14 @@
 
 #scatter-div svg circle.scatter.not-selected{
     fill-opacity: 0.4;
+}
+
+#scatter-div svg circle.scatter.point-faded{
+    fill-opacity: 0.3;
+}
+
+#scatter-div svg circle.scatter.point-hover{
+    fill-opacity: .8;
 }
 
 #scatter-div .axis path,

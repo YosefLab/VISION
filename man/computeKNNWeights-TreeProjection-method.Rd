@@ -5,7 +5,8 @@
 \alias{computeKNNWeights,TreeProjection-method}
 \title{Compute KNN weights based on geodesic distances for TreeProjection objects}
 \usage{
-\S4method{computeKNNWeights}{TreeProjection}(object, K = 30)
+\S4method{computeKNNWeights}{TreeProjection}(object,
+  K = round(sqrt(nrow(object@pData))))
 }
 \arguments{
 \item{object}{a TreeProjection object}

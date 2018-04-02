@@ -2,16 +2,18 @@
 % Please edit documentation in R/methods-Signature.R
 \name{sigsVsProjection_pcn}
 \alias{sigsVsProjection_pcn}
-\title{Evaluates the significance of each precomputed numeric signature vs. a
+\title{Evaluates the significance of each meta data numeric signature vs. a
 single projections weights}
 \usage{
-sigsVsProjection_pcn(sigScoresData, weights)
+sigsVsProjection_pcn(metaData, weights, cells = NULL)
 }
 \arguments{
-\item{sigScoresData}{List of SignatureScores Object, mapping signature
-names to their value at each coordinate}
+\item{metaData}{data.frame of meta-data for cells}
 
 \item{weights}{numeric matrix of dimension N_SAMPLES x N_SAMPLES}
+
+\item{cells}{list of cell names.  Subsets anlysis to provided cells.
+If omitted, use all cells.}
 }
 \value{
 list:
@@ -21,6 +23,6 @@ list:
 }
 }
 \description{
-Evaluates the significance of each precomputed numeric signature vs. a
+Evaluates the significance of each meta data numeric signature vs. a
 single projections weights
 }

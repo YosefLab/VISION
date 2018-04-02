@@ -4,6 +4,6 @@
 
 git ls-files | \
     grep "inst/html_output" | \
-    egrep "(.js|.html|.css|.png|.jpg)$" | \
+    egrep "(.js|.html|.css|.png|.jpg|.gif|.svg)$" | \
     sed "s.inst/html_output/.html_output/." > \
     inst/html_output/whitelist.txt

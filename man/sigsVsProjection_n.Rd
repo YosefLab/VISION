@@ -5,29 +5,32 @@
 \title{Evaluates the significance of each numeric signature vs. a
 single projections weights}
 \usage{
-sigsVsProjection_n(sigData, sigScoreMatrix, randomSigData, randomSigScoreMatrix,
-  weights)
+sigsVsProjection_n(sigData, randomSigData, weights, cells = NULL)
 }
 \arguments{
-\item{sigData}{a list of SignatureScores objects representing input user
-signatures}
+\item{sigData}{numeric matrix of signature scores
+size is cells x signatures}
 
-\item{sigScoreMatrix}{a numeric matrix (N_SAMPLES x N_SIGNATURES) containing
-the signature scores for every (signature, sample)}
+\item{randomSigData}{A list with two items:
 
-\item{randomSigData}{a list of SignatureScores objects representing a suitable
-background distribution to go with `sigData`}
+  randomSigs: a list of signature score matrices.  Each list item
+    represents permutation signatures generated for a specific size/balance,
+    and is a numeric matrix of size cells X signatures
 
-\item{randomSigScoreMatrix}{a numeric matrix (N_SAMPLES x N_SIGNATURES) containing
-the signature scores associated wiht signatures in randomSigData}
+  sigAssignments: named factor vector assigning signatures to random background
+    groups}
 
 \item{weights}{numeric matrix of dimension N_SAMPLES x N_SAMPLES}
+
+\item{cells}{list of cell names.  Subsets anlysis to provided cells.
+If omitted, use all cells.}
 }
 \value{
 list:
 \itemize{
     \item consistency: consistency scores
     \item pvals: pvalues
+    \item emppvals: empirical pvalues
 }
 }
 \description{

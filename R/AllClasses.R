@@ -1,8 +1,6 @@
 ###
 # Wrapper classes for different types of data
 #
-# Wrapper classes for ExpressionData, ProbabilityData, and PCData
-#
 # This was created to organize nuances in how signature
 # scores, distance matrices, and anything else, is computed
 # on the different types of data.
@@ -19,11 +17,69 @@ Cluster <- setClass("Cluster",
     )
 )
 
-ExpressionData <- setClass("ExpressionData",
+ProjectionData <- setClass("ProjectionData",
     slots = c(
-        data = "matrixORSparse",
-        fanoFilter = "matrixORSparse"
+    sigProjMatrix = "matrix",
+    pMatrix = "matrix",
+    sigClusters = "list",
+    emp_pMatrix = "matrix"
 ))
+
+PCAnnotatorData <- setClass("PCAnnotatorData",
+    slots = c(pearsonCorr = "matrix")
+)
+
+TreeProjection <- setClass("TreeProjection",
+    slots = c(
+    pData = "matrix",
+    name = "character",
+    vData = "matrix",
+    adjMat = "matrix",
+    edgeAssoc = "matrix",
+    edgePos = "numeric"
+))
+
+TreeProjectionData <- setClass("TreeProjectionData",
+    contains = c("ProjectionData"),
+    slots = c(
+        latentTree = "TreeProjection",
+        projections = "list",
+        treeScore = "numericORNULL"
+))
+
+ServerExpression <- setClass("ServerExpression",
+    slots = c(
+    data = "matrix",
+    sample_labels = "character",
+    gene_labels = "character"
+))
+
+ServerSigProjMatrix <- setClass("ServerSigProjMatrix",
+    slots = c(
+    zscores = "matrix",
+    pvals = "matrix",
+    proj_labels = "character",
+    sig_labels = "character"
+))
+
+Signature <- setClass("Signature",
+    slots = c(
+    sigDict = "vector",
+    name = "character",
+    source = "character",
+    metaData = "character",
+    isMeta = "logical",
+    isFactor = "logical"
+    ),
+    prototype = list(
+    metaData = "",
+    isMeta=FALSE,
+    isFactor=FALSE
+))
+
+setClassUnion("ProjectionDataOrNULL", members=c("ProjectionData", "NULL"))
+setClassUnion("TreeProjectionDataOrNULL", members=c("TreeProjectionData", "NULL"))
+setClassUnion("PCAnnotatorDataOrNULL", members=c("PCAnnotatorData", "NULL"))
 
 FastProject <- setClass("FastProject",
     slots = c(
@@ -36,142 +92,56 @@ FastProject <- setClass("FastProject",
         sig_norm_method = "character",
         sig_score_method = "character",
         trajectory_method = "character",
-        exprData = "ExpressionData",
-        allData = "matrixORSparse",
+        exprData = "matrixORSparse",
+        initialExprData = "matrixORSparse",
         housekeepingData = "character",
         sigData = "list",
-        precomputedData= "list",
+        metaData = "data.frame",
+        initialMetaData = "data.frame",
         perm_wPCA = "logical",
         pool = "logical",
-        sigScores = "list",
-        cellsPerPartition= "numeric",
-        filterModuleList = "list",
-        sigMatrix = "data.frame",
+        sigScores = "matrix",
+        cellsPerPartition = "numeric",
+        SigConsistencyScores = "ProjectionDataOrNULL",
+        ClusterSigScores = "list",
+        TreeProjectionData = "TreeProjectionDataOrNULL",
+        PCAnnotatorData = "PCAnnotatorDataOrNULL",
+        Projections = "list",
         pools = "list",
         inputProjections = "list",
-        name = "character"),
+        name = "character",
+        cluster_variable = "character",
+        latentSpace = "matrix",
+        initialLatentSpace = "matrix",
+        version = "numeric"),
     prototype = list(
         nomodel = FALSE,
-        pca_filter = FALSE,
         lean = FALSE,
         min_signature_genes = 5,
-        weights = NULL,
+        weights = matrix(NA, 1, 1),
         threshold = 0,
         sig_norm_method = "znorm_rows",
-        trajectory_method ="None",
-        exprData = NULL,
-        housekeepingData = NULL,
-        sigData = NULL,
-        precomputedData = NULL,
+        trajectory_method = "None",
+        exprData = matrix(NA, 1, 1),
+        initialExprData = matrix(NA, 1, 1),
+        housekeepingData = character(),
+        sigData = list(),
+        metaData = data.frame(),
+        initialMetaData = data.frame(),
         perm_wPCA = FALSE,
         pool = FALSE,
-        sigScores = NULL,
+        sigScores = matrix(NA, 1, 1),
         cellsPerPartition = 100,
-        filterModuleList = NULL,
-        sigMatrix = NULL,
-        pools=NULL,
-        inputProjections=NULL,
-        name = ""
-))
-
-ProjectionData <- setClass("ProjectionData",
-    slots = c(
-    projections = "list",
-    keys = "character", # names of projections
-    sigProjMatrix = "matrix",
-    pMatrix="matrix",
-    sigClusters = "list",
-    emp_pMatrix = "matrix"
-))
-
-TreeProjectionData <- setClass("TreeProjectionData",
-    contains = c("ProjectionData"),
-    slots = c(
-    treeScore = "numericORNULL"
-    # adjMat = "matrix"
-))
-
-PCAnnotatorData <- setClass("PCAnnotatorData",
-    slots = c(
-    fullPCA = "matrix",
-    pearsonCorr = "matrix",
-    loadings = "matrix"
-))
-
-Projection <- setClass("Projection",
-    slots = c(
-    name = "character",
-    pData = "matrix",
-    weights = "matrix"
-))
-
-TreeProjection <- setClass("TreeProjection",
-    contains = "Projection",
-    slots = c(
-    vData = "matrix",
-    adjMat = "matrix",
-    edgeAssoc = "matrix",
-    edgePos = "numeric"
-))
-
-setClassUnion('TreeProjDataORNULL', members=c('TreeProjectionData', 'NULL'))
-FilterModuleData <- setClass("FilterModuleData",
-    slots = c(
-    filter = "character",
-    genes = "character",
-    ProjectionData = "ProjectionData",
-    TreeProjectionData = "TreeProjDataORNULL",
-    PCAnnotatorData = "PCAnnotatorData"
-))
-
-ServerExpression <- setClass("ServerExpression",
-    slots = c(
-    data = "matrix",
-    sample_labels = "character",
-    gene_labels = "character"
-))
-
-ServerPCorr <- setClass("ServerPCorr",
-    slots = c(
-    data = "matrix",
-    proj_labels = "character",
-    sig_labels = "character"
-))
-
-ServerSigProjMatrix <- setClass("ServerSigProjMatrix",
-    slots = c(
-    data = "matrix",
-    proj_labels = "character",
-    sig_labels = "character"
-))
-
-ServerPMatrix <- setClass("ServerPMatrix",
-    slots = c(
-    data = "matrix",
-    proj_labels = "character",
-    sig_labels = "character"
-))
-
-Signature <- setClass("Signature",
-    slots = c(
-    sigDict = "vector",
-    name = "character",
-    source = "character",
-    metaData = "character",
-    isPrecomputed = "logical",
-    isFactor = "logical"
-    ),
-    prototype = list(
-    metaData = "",
-    isPrecomputed=FALSE,
-    isFactor=FALSE
-))
-
-SignatureScores <- setClass("SignatureScores",
-    slots = c(
-    scores = "vector",
-    name = "character",
-    isFactor = "logical",
-    isPrecomputed = "logical",
-    numGenes = "numeric"
+        SigConsistencyScores = NULL,
+        ClusterSigScores = list(),
+        TreeProjectionData = NULL,
+        PCAnnotatorData = NULL,
+        Projections = list(),
+        pools = list(),
+        inputProjections = list(),
+        name = "",
+        cluster_variable = "",
+        latentSpace = matrix(NA, 1, 1),
+        initialLatentSpace = matrix(NA, 1, 1),
+        version = 1.0
 ))

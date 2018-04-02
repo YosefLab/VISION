@@ -4,7 +4,6 @@
 \name{FastProject}
 \alias{FastProject}
 \alias{FastProject,matrixORSparse-method}
-\alias{FastProject,character-method}
 \alias{FastProject,ExpressionSet-method}
 \alias{FastProject,SummarizedExperiment-method}
 \title{Initializes a new FastProject object.}
@@ -12,14 +11,13 @@
 FastProject(data, ...)
 
 \S4method{FastProject}{matrixORSparse}(data, signatures, housekeeping = NULL,
-  norm_methods = NULL, precomputed = NULL, nomodel = FALSE,
+  norm_methods = NULL, meta = NULL, nomodel = FALSE,
   projection_genes = c("fano"), lean = FALSE, min_signature_genes = 5,
   weights = NULL, threshold = 0, perm_wPCA = FALSE,
   sig_norm_method = "znorm_rows", sig_score_method = "weighted_avg",
-  trajectory_method = "None", pool = "auto", cellsPerPartition = 100,
-  name = NULL)
-
-\S4method{FastProject}{character}(data, ...)
+  trajectory_method = c("None", "SimplePPT"), pool = "auto",
+  cellsPerPartition = 100, name = NULL, cluster_variable = "",
+  latentSpace = NULL)
 
 \S4method{FastProject}{ExpressionSet}(data, ...)
 
@@ -28,12 +26,9 @@ FastProject(data, ...)
 \arguments{
 \item{data}{expression data - can be one of these: \itemize{
 \item numeric matrix
-\item path of a file,
 \item ExpressionSet object
-\item SummerizedExperiment object (or extending classes)
+\item SummzrizedExperiment object (or extending classes)
 }}
-
-\item{...}{additional arguments}
 
 \item{signatures}{list of file paths to signature files (.gmt or .txt) or a
 list of Signature objects}
@@ -43,14 +38,14 @@ list of Signature objects}
 \item{norm_methods}{normalization methods to be extracted from the scone
 object}
 
-\item{precomputed}{data file with precomputed signature scores (.txt), or a
+\item{meta}{data file with cell meta data (.txt), or a
 data.frame with meta information. Note that rows should match samples in the
 data, and columns should either be factors or numerics.}
 
 \item{nomodel}{if TRUE, no fnr curve calculated and all weights equal to 1.
 Else FNR and weights calculated. [Default:FALSE]}
 
-\item{projection_genes}{name of method ('threshold' or 'fano') or list of 
+\item{projection_genes}{name of method ('threshold' or 'fano') or list of
 genes to use when computing projections.}
 
 \item{lean}{if TRUE run a lean simulation. Else more robust pipeline
@@ -82,6 +77,11 @@ pooling if there are more than 15000 cells.}
 \item{cellsPerPartition}{the minimum number of cells to put into a cluster}
 
 \item{name}{a name for the sample - shown on the output report}
+
+\item{cluster_variable}{variable to use to denote clusters}
+
+\item{latentSpace}{latent space for expression data. Numeric matrix or dataframe
+with dimensions CELLS x COMPONENTS}
 }
 \value{
 A FastProject object

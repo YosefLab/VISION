@@ -5,7 +5,7 @@
  *    - Sig_Info
  *      - Sig_Heatmap
  *    - Gene_Info
- *    - Precomputed_Info
+ *    - Meta_Info
  *    - Cell_Info
  *
  */
@@ -15,7 +15,7 @@ function Lower_Left_Content()
     this.children = []
     this.sig_info = {}
     this.gene_info = {}
-    this.precomp_info = {}
+    this.meta_info = {}
 }
 
 Lower_Left_Content.prototype.init = function()
@@ -32,14 +32,17 @@ Lower_Left_Content.prototype.init = function()
 
     var gene_info_promise = gene_info.init();
 
-    var precomp_info = new Precomp_Info()
-    this.children.push(precomp_info)
-    this.precomp_info = precomp_info
+    var meta_info = new Meta_Info()
+    this.children.push(meta_info)
+    this.meta_info = meta_info
 
-    var precomp_info_promise = precomp_info.init();
+    var meta_info_promise = meta_info.init();
 
+    this.setLoadingStatus = createLoadingFunction(
+        document.getElementById("lower-left-content")
+    );
 
-    return $.when(sig_info_promise, gene_info_promise, precomp_info_promise);
+    return $.when(sig_info_promise, gene_info_promise, meta_info_promise);
 }
 
 Lower_Left_Content.prototype.update = function(updates)
@@ -53,19 +56,23 @@ Lower_Left_Content.prototype.update = function(updates)
         var item_type = get_global_status('plotted_item_type')
         if(item_type === 'gene'){
             $(this.sig_info.dom_node).hide()
-            $(this.precomp_info.dom_node).hide()
+            $(this.meta_info.dom_node).hide()
             $(this.gene_info.dom_node).show()
         } else if (item_type === 'signature') {
             $(this.gene_info.dom_node).hide()
-            $(this.precomp_info.dom_node).hide()
+            $(this.meta_info.dom_node).hide()
             $(this.sig_info.dom_node).show()
         } else if (item_type === 'meta') {
             $(this.sig_info.dom_node).hide()
             $(this.gene_info.dom_node).hide()
-            $(this.precomp_info.dom_node).show()
+            $(this.meta_info.dom_node).show()
         }
     }
 
+}
+
+Lower_Left_Content.prototype.hover_cells = function()
+{
 }
 
 function Sig_Info()
@@ -78,17 +85,10 @@ function Sig_Info()
     this.sig_info_default = $(this.dom_node).find('#sig-info-default')
     this.sig_info_cluster = $(this.dom_node).find('#sig-info-cluster')
 
-    this.cluster_options = { // Note: param values should be strings
-        "KMeans": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"],
-        //"PAM": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
-    }
-
     this.heatmap = null
     this.plotted_heatmap = {
         'sig_key': '',
         'proj_key': '',
-        'cluster_method': '',
-        'cluster_param': '',
     }
 
 }
@@ -109,7 +109,7 @@ Sig_Info.prototype.init = function()
             {'title': 'Sign', 'className': 'dt-center'}],
         'paging': false,
         'info': true,
-        'scrollY': '22vh',
+        'scrollY': '15vh',
         'scrollCollapse': true,
     })
 
@@ -118,39 +118,13 @@ Sig_Info.prototype.init = function()
         self.drawHeat()
     })
 
-    // Define cluster dropdown 
-    var clust_dropdown = $(self.dom_node).find('#cluster_select_method')
-    var clust_param = $(self.dom_node).find('#cluster_select_param')
-
-    clust_dropdown.empty();
-    $.each(self.cluster_options, function(name){
-        clust_dropdown.append($("<option />").val(name).text(name));
-    });
-    clust_dropdown[0].selectedIndex = 0;
-
-    // Call it now to initially populate second dropdown
-    self.build_cluster_dropdown_param()
-
-    //Define cluster dropdown's change function
-    clust_dropdown.change(function(){
-        self.build_cluster_dropdown_param()
-        self.drawHeat();
-
-    });
-
-    //Define cluster dropdown's change function
-    clust_param.change(function(){
-        self.drawHeat();
-    });
-
-
 }
 
 Sig_Info.prototype.update = function(updates)
 {
 
     var sig_info = get_global_data('sig_info');
-    if(sig_info.name === this.bound_sig || sig_info.isPrecomputed)
+    if(sig_info.name === this.bound_sig || sig_info.isMeta)
     {
         // Needed to switch to Signature view if we plot a new projection
         // but stay on same signature
@@ -196,6 +170,10 @@ Sig_Info.prototype.update = function(updates)
     dt.DataTable().clear()
         .rows.add(dataSet)
         .draw()
+
+    if(this.sig_info_cluster.hasClass('active') && 'plotted_item' in updates){
+        this.drawHeat();
+    }
 }
 
 Sig_Info.prototype.build_cluster_dropdown_param = function()
@@ -234,14 +212,10 @@ Sig_Info.prototype.drawHeat = function(){
 
     var sig_key = get_global_status('plotted_item'); // assume it's a signature
     var proj_key = get_global_status('plotted_projection');
-    var filter_group = get_global_status('filter_group');
-
-    var cluster_method = $(self.dom_node).find('#cluster_select_method').val();
-    var cluster_param = $(self.dom_node).find('#cluster_select_param').val();
 
     var sig_info = get_global_data('sig_info');
 
-    // plotted heatmap is based on sig_key, proj_key, cluster_method, and cluster_param
+    // plotted heatmap is based on sig_key, proj_key
     // check if we are already showing the right heatmap and don't regenerate
     var need_plot = false;
 
@@ -253,14 +227,6 @@ Sig_Info.prototype.drawHeat = function(){
         self.plotted_heatmap['proj_key'] = proj_key
         need_plot = true;
     }
-    if (self.plotted_heatmap['cluster_method'] !== cluster_method){
-        self.plotted_heatmap['cluster_method'] = cluster_method
-        need_plot = true;
-    }
-    if (self.plotted_heatmap['cluster_param'] !== cluster_param){
-        self.plotted_heatmap['cluster_param'] = cluster_param
-        need_plot = true;
-    }
 
     if(!need_plot){
         return $.when(true);
@@ -269,9 +235,8 @@ Sig_Info.prototype.drawHeat = function(){
     heatmap_div.addClass('loading')
 
     return $.when(
-        api.signature.expression(sig_key),
-        api.projection.clusters(filter_group, proj_key, cluster_method, cluster_param))
-        .then(function(sig_expression, cluster){
+        api.signature.expression(sig_key))
+        .then(function(sig_expression){
 
 
             //Construct data matrix
@@ -280,13 +245,14 @@ Sig_Info.prototype.drawHeat = function(){
             var dataMat = sig_expression.data;
             var gene_labels = sig_expression.gene_labels;
             var sample_labels = sig_expression.sample_labels;
+            var clusters = get_global_data('clusters')
 
             var gene_signs = gene_labels.map(function(e){
                 return sig_info.sigDict[e]
             });
 
             //var assignments = data.Clusters[proj_key][choice];
-            var assignments = sample_labels.map(sample => cluster['data'][sample]);
+            var assignments = sample_labels.map(sample => clusters[sample]);
 
             self.heatmap.setData(dataMat,
                 assignments,
@@ -333,33 +299,33 @@ Gene_Info.prototype.update = function(updates)
 
 }
 
-function Precomp_Info()
+function Meta_Info()
 {
-    this.dom_node = document.getElementById("precomp-info");
-    this.title = $(this.dom_node).find('#precomp-analysis-title').get(0);
-    this.chart = $(this.dom_node).find('#precomp-dist-div').get(0);
-    this.bound_precomp = ""
+    this.dom_node = document.getElementById("meta-info");
+    this.title = $(this.dom_node).find('#meta-analysis-title').get(0);
+    this.chart = $(this.dom_node).find('#meta-dist-div').get(0);
+    this.bound_meta = ""
 }
 
-Precomp_Info.prototype.init = function()
+Meta_Info.prototype.init = function()
 {
 }
 
-Precomp_Info.prototype.update = function(updates)
+Meta_Info.prototype.update = function(updates)
 {
     var item_type = get_global_status('plotted_item_type')
-    var precomp = get_global_status('plotted_item')
-    if(item_type !== 'meta' || precomp === this.bound_gene){
+    var meta = get_global_status('plotted_item')
+    if(item_type !== 'meta' || meta === this.bound_gene){
         return;
     }
 
-    this.bound_precomp = precomp
+    this.bound_meta = meta
 
-    $(this.title).html(this.bound_precomp)
+    $(this.title).html(this.bound_meta)
 
-    var precomp_vals = _.values(get_global_data('plotted_values'))
+    var meta_vals = _.values(get_global_data('plotted_values'))
 
-    drawDistChart(this.chart, precomp_vals)
+    drawDistChart(this.chart, meta_vals)
 
 }
 
@@ -373,7 +339,7 @@ function drawDistChart(parent_div, data, title) {
     var counts = hist['counts']
 
     var x_axis_params;
-    if(isFactor) {
+    if(true) {
         x_axis_params = {
             type: 'category',
             categories: x_vals,
@@ -458,7 +424,8 @@ function create_dist(data) {
 
     } else {
         var num_values = 10
-        var data_min = Math.min.apply(null, data)
+        var data_true_min = Math.min.apply(null, data)
+        var data_min = Math.max(data_true_min, 0)
         var data_max = Math.max.apply(null, data)
 
         var bin_width = (data_max - data_min)/num_values
@@ -466,9 +433,11 @@ function create_dist(data) {
         counts = Array.apply(Math, Array(num_values)).map(function() { return 0 });
         centers = Array.apply(Math, Array(num_values)).map(function() { return 0 });
 
+        var low, high;
+        var formatFn = d3.format('.2n')
         for (var i=0; i < num_values; i++) {
-            var low = bin_width*i + data_min
-            var high = bin_width*(i+1) + data_min
+            low = bin_width*i + data_min
+            high = bin_width*(i+1) + data_min
 
             data.forEach(function(d) {
                 if (d >= low && d < high) {
@@ -476,7 +445,24 @@ function create_dist(data) {
                 }
             });
 
-            centers[i] = (high + low)/2
+            centers[i] = '[' + formatFn(low) + ', ' + formatFn(high) + ')';
+        }
+
+
+        if(data_true_min < 0){ // Add a "< 0" category
+            low = -1e99
+            high = -1e-10
+            i = 0
+            var lessThenZeroCounts = 0;
+
+            data.forEach(function(d) {
+                if (d >= low && d < high) {
+                    lessThenZeroCounts += 1;
+                }
+            });
+
+            counts = [lessThenZeroCounts].concat(counts)
+            centers = ["< 0"].concat(centers)
         }
     }
 
@@ -503,18 +489,17 @@ function runSubsetAnalysis() {
 function runPCAnalysis() {
 
     var sig_key = global_status.plotted_signature;
-    var filter_group = global_status.filter_group;
     var pc1 = global_status.pc1;
     var pc2 = global_status.pc2;
 
     if (global_status.subset_criteria == "Rank") {
-        var sig_promise = api.signature.ranks(sig_key);
+        //var sig_promise = api.signature.ranks(sig_key);
     } else {
-        sig_promise = api.signature.scores(sig_key);
+        var sig_promise = api.signature.scores(sig_key);
     }
 
     var sig_info_promise = api.signature.info(sig_key);
-    var proj_promise = api.pc.versus(filter_group, pc1, pc2);
+    var proj_promise = api.pc.versus(pc1, pc2);
 
     return $.when(proj_promise, sig_promise, sig_info_promise)
         .then(function(projection, signature, sig_info) {
@@ -537,14 +522,13 @@ function runPCAnalysis() {
 function selectRange() {
     var sig_key = global_status.plotted_signature;
     var proj_key = global_status.plotted_projection;
-    var filter_group = global_status.filter_group;
 
-    var proj_promise = api.projection.coordinates(filter_group, proj_key);
+    var proj_promise = api.projections.coordinates(proj_key);
 
     if (global_status.subset_criteria == "Rank") {
-        var sig_promise = api.signature.ranks(sig_key);
+        //var sig_promise = api.signature.ranks(sig_key);
     } else {
-        sig_promise = api.signature.scores(sig_key);
+        var sig_promise = api.signature.scores(sig_key);
     }
 
     return $.when(sig_promise, proj_promise)
@@ -568,14 +552,14 @@ function selectRange() {
 
 function addToPCAnalysisBox(sig_info) {
     var dbid = "#pc-analysis-content";
-    if (sig_info.isPrecomputed) {
+    if (sig_info.isMeta) {
         $(dbid).html("");
         return;
     }
 
     var pcnum = global_status.plotted_pc.split(" ")[1];
-    var loading_promise_pos = api.filterGroup.loadings_pos(global_status.filter_group, pcnum);
-    var loading_promise_neg = api.filterGroup.loadings_neg(global_status.filter_group, pcnum);
+    var loading_promise_pos = api.filterGroup.loadings_pos(pcnum);
+    var loading_promise_neg = api.filterGroup.loadings_neg(pcnum);
 
     return $.when(loading_promise_pos, loading_promise_neg)
         .then(function(pos_loadings, neg_loadings) {

@@ -4,7 +4,7 @@
 \alias{innerEvalSignatureBatch}
 \title{Used in inner loop of batchSigEval}
 \usage{
-innerEvalSignatureBatch(exprData, sigs, weights = NULL)
+innerEvalSignatureBatch(exprData, sigs, weights = matrix(NA, 1, 1))
 }
 \arguments{
 \item{exprData}{numeric Matrix Genes x Cells}

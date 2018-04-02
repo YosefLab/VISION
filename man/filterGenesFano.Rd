@@ -14,7 +14,7 @@ filterGenesFano(data, num_mad = 2, plot = FALSE)
 \item{plot}{whether or not to generate a diagnostic plot}
 }
 \value{
-NUM_GENES_PASSED_FANO_FILTER x NUM_SAMPLES filtered expression matrix
+character vector of gene names passing filter
 }
 \description{
 Applies the Fano filter to the input data (may remove rows)

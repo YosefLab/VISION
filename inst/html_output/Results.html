@@ -19,6 +19,7 @@
     <script type="text/javascript" src="thirdparty/chosen/chosen.jquery.min.js"></script>
     <script type="text/javascript" src="thirdparty/bootstrap/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="thirdparty/datatables/datatables.min.js"></script>
+    <script type="text/javascript" src="thirdparty/popper/popper.js/dist/umd/popper.min.js"></script>
 
 
 
@@ -45,7 +46,7 @@
         </div>
         <ul class="nav nav-pills justify-content-end inv">
             <li class="nav-item">
-                <a class="nav-link active" href="#" data-main-vis="sigvp">Projections</a>
+                <a class="nav-link active" href="#" data-main-vis="clusters">Spatial Consistency</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="#" data-main-vis="pcannotator">PC Annotator</a>
@@ -59,24 +60,24 @@
         <div id="left-content">
             <div id="upper-left-content">
 
-                <div class='section-nav'>
-                    <span style="display: none">
-                        <button id="show_genes_button" type="button" class="btn btn-default" onclick=createGeneModal()>
-                            +Show Genes
-                        </button>
-                    </span>
-
-                    <ul class="nav nav-pills justify-content-center">
-                        <li class="nav-item">
-                            <a class="nav-link active" id="sig-table-tab" data-toggle="tab" href="#table-div-container" role="tab" aria-controls="sig-table" aria-selected="true">Signatures</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" id="precomputed-table-tab" data-toggle="tab" href="#precomp-table-div" role="tab" aria-controls="precomp-table" aria-selected="false">Precomputed</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" id="genes-table-tab" data-toggle="tab" href="#genes-table" role="tab" aria-controls="genes-table" aria-selected="false">Genes</a>
-                        </li>
-                    </ul>
+                <div style="display: flex; flex-direction: row; flex-shrink: 0;">
+                    <div>
+                        <select id="cluster-group-select" class="form-control form-control-sm" style="width: 150px;">
+                        </select>
+                    </div>
+                    <div class='section-nav' style="flex-grow: 1">
+                        <ul class="nav nav-pills justify-content-center">
+                            <li class="nav-item">
+                                <a class="nav-link active" id="sig-table-tab" data-toggle="tab" href="#table-div-container" role="tab" aria-controls="sig-table" aria-selected="true">Signatures</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="meta-table-tab" data-toggle="tab" href="#meta-table-div" role="tab" aria-controls="meta-table" aria-selected="false">Cell Meta</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="genes-table-tab" data-toggle="tab" href="#genes-table" role="tab" aria-controls="genes-table" aria-selected="false">Genes</a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
 
                 <div class="tab-content upper-left-section-content">
@@ -86,7 +87,7 @@
                                 <thead>
                                     <tr class="proj-row">
                                         <th>
-                                            <div class="form-inline">
+                                            <div>
                                             <input id="sig_filt_input" class="form-control"
                                                    type="text" placeholder="Filter Signatures...">
                                             </input>
@@ -98,12 +99,13 @@
                         </div>
                         <div class="sig-tables-wrapper"></div>
                     </div>
-                    <div class="tab-pane" id="precomp-table-div" role="tabpanel" aria-labelledby="precomputed-table-tab">
+                    <div class="tab-pane" id="meta-table-div" role="tabpanel" aria-labelledby="meta-table-tab">
                         <div class="sig-tables-header">
                             <table class="sig-table">
                                 <thead>
                                     <tr class="proj-row">
-                                        <th style="height: 40px"> <!-- Matches space of filter input on other pane -->
+                                        <th style="height: 38px"> <!-- Height matches space of filter input on other pane -->
+                                            <div>Variable Name</div>
                                         </th>
                                     </tr>
                                 </thead>
@@ -111,7 +113,7 @@
                         </div>
                         <div class="sig-tables-wrapper">
                             <div class="sig-table-div">
-                                <table id="precomp-table" class="sig-table">
+                                <table id="meta-table" class="sig-table">
                                     <tbody></tbody>
                                 </table>
                             </div>
@@ -123,10 +125,6 @@
                                 <tr>
                                     <td style='font-size: 1.2em'>Gene:</td>
                                     <td><select id="SelectGene" class="form-control"></select></td>
-                                </tr>
-                                <tr>
-                                    <td style='font-size: 1.2em'>Projection:</td>
-                                    <td><select id="SelectProj" class="form-control"></select></td>
                                 </tr>
                             </table>
                         </div>
@@ -163,10 +161,6 @@
                             </div>
                         </div>
                         <div id="sig-info-cluster" class="tab-pane" role="tabpanel" aria-labelledby="HeatmapButton">
-                            <div id="clustering-controls" class="form-inline">
-                                <select id="cluster_select_method" class="form-control" style="width: 100px;"></select>
-                                <select id="cluster_select_param" class="form-control" style="width: 70px;"></select>
-                            </div>
                             <div id="heatmap-div"></div>
                         </div>
                     </div>
@@ -176,7 +170,7 @@
                     <table class='label-table' style='margin-left: 30px; margin-bottom: 20px;'>
                         <tr style='font-size: 1.2em;'>
                             <td>Gene:</td>
-                            <td><span id="gene-analysis-title"></span></td>
+                            <td style="width: 100%;"><span id="gene-analysis-title"></span></td>
                         </tr>
                     </table>
 
@@ -185,17 +179,17 @@
                     </div>
 
                 </div>
-                <div id="precomp-info" style="display: none">
+                <div id="meta-info" style="display: none">
 
                     <table class='label-table' style='margin-left: 30px; margin-bottom: 20px;'>
                         <tr style='font-size: 1.2em;'>
                             <td>Value:</td>
-                            <td><span id="precomp-analysis-title"></span></td>
+                            <td style="width: 100%;"><span id="meta-analysis-title"></span></td>
                         </tr>
                     </table>
 
                     <div style='display: flex; flex-direction: column; justify-content: space-around; flex-grow: 1'>
-                        <div id="precomp-dist-div" style="display: flex; flex-direction:column"></div>
+                        <div id="meta-dist-div" style="display: flex; flex-direction:column"></div>
                     </div>
 
                 </div>
@@ -272,11 +266,14 @@
                 <div id="plot-title-div">
                     <div class="titles">
                         <div class="title" id="plot-title"></div>
-                        <div class="subtitle" id="plot-subtitle"></div>
+                        <div class="subtitle" id="plot-subtitle">
+                            <span style="margin-right: 10px">Projection:</span>
+                            <select id="SelectProjScatter" class="form-control"></select>
+                        </div>
                     </div>
                     <div class="color-options" >
                         <div id="plotted-value-option">
-                            <div class="label">Plotted Value:</div>
+                            <div class="label">Plotted Value</div>
                             <div class="btn-group" data-toggle="buttons">
                                 <label class="btn btn-outline-secondary">
                                     <input type="radio" name="scatterColorButtons" id="valueoption" value="value" autocomplete="off"> Value
@@ -299,5 +296,12 @@
 
         </div> <!-- End of right-content -->
     </div>
+    <div id="sig-tooltip">
+        <div class="inner">
+            Test!
+        </div>
+        <div class="arrow"></div>
+    </div>
+    <div id="hidden-node" style="position: absolute; left: -10000px; top: 10000px;"></div>
 </body>
 </html>

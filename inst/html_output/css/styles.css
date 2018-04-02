@@ -113,3 +113,37 @@ table.label-table td{
     -webkit-filter: grayscale(100%) blur(5px);
     filter: grayscale(100%) blur(5px);
 }
+
+.loadingSpinner {
+    position: fixed;
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /*background:url("loading.gif") no-repeat center center;*/
+}
+
+/* Styles for hover tooltip */
+/* Initial position is weird because Popper will position them dynamically on hover */
+#sig-tooltip {
+    position: absolute;
+    left: -10000px;
+    top: 10000px;
+}
+
+#sig-tooltip > .inner{
+    padding: 5px;
+    background-color: black;
+    color: #cccccc;
+    border-radius: 3px;
+}
+
+#sig-tooltip > .arrow {
+    width:0;
+    height:0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid black;
+    margin-left: auto;
+    margin-right: auto;
+}

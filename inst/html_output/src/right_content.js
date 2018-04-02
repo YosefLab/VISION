@@ -33,36 +33,77 @@ Right_Content.prototype.init = function()
             self.exportSigProj()
         });
 
+    self.setLoadingStatus = createLoadingFunction(self.dom_node);
+
+    var proj_promise = api.projections.list()
+        .then(function(proj_names) {
+
+            var projSelect = self.dom_node.find('#SelectProjScatter')
+            projSelect.children().remove()
+
+            _.each(proj_names, function (proj) {
+                projSelect.append(
+                    $('<option>', {
+                        value: proj,
+                        text: proj
+                    }));
+            });
+
+            projSelect.chosen({
+                'width': '110px',
+                'disable_search_threshold': 99,
+            })
+                .off('change')
+                .on('change', function () {
+                    set_global_status({
+                        'plotted_projection':$(this).val(),
+                    });
+                })
+                .trigger('chosen:updated')
+
+        });
+
+    return proj_promise
+
 
 }
 
 Right_Content.prototype.update = function(updates)
 {
     var self = this;
-    
+
     var needsUpdate = ('main_vis' in updates) ||
         ('plotted_item' in updates) ||
         ('plotted_item_type' in updates) ||
         ('plotted_projection' in updates) ||
-        ('filter_group' in updates) ||
         ('plotted_pc' in updates) ||
-        ('colorScatterOption' in updates);
+        ('colorScatterOption' in updates) ||
+        ('selected_cluster' in updates);
 
     if (!needsUpdate) return;
 
     var main_vis = get_global_status('main_vis');
 
-    if(main_vis === 'sigvp'){
+    if(main_vis === 'clusters' || main_vis === "pcannotator"){
         self.draw_sigvp();
 
     } else if (main_vis === "tree") {
         self.draw_tree();
 
-    } else if (main_vis === "pcannotator") {
-        self.draw_pca();
-
     } else {
         throw "Bad main_vis value!";
+    }
+
+    if('plotted_projection' in updates || 'main_vis' in updates) {
+        self.scatter.autoZoom();
+    }
+
+    // Update the dropdown if plotted projection changes elsewhere
+    if('plotted_projection' in updates) {
+        var proj_key = get_global_status('plotted_projection');
+        var projSelect = self.dom_node.find('#SelectProjScatter')
+        projSelect.val(proj_key)
+        projSelect.trigger('chosen:updated') // Changes shown item, but doesn't fire update event
     }
 
 }
@@ -78,29 +119,33 @@ Right_Content.prototype.draw_sigvp = function() {
     var projection = get_global_data('sig_projection_coordinates')
     var values = get_global_data('plotted_values')
 
-    var isFactor;
-    if(item_type !== "gene"){
-        isFactor = get_global_data('sig_info').isFactor
-    } else {
-        isFactor = false;
-    }
+    var isFactor = typeof(_.values(values)[0]) === 'string'
 
-    var full_color_range
+    var full_color_range, min_color_value
     if(item_type === "gene"){
         $(self.dom_node).find("#plotted-value-option").hide()
         full_color_range = true
+        min_color_value = 0
+    } else if(item_type === "meta"){
+        $(self.dom_node).find("#plotted-value-option").hide()
+        full_color_range = false
+        min_color_value = -1e99
     } else {
         $(self.dom_node).find("#plotted-value-option").show()
         full_color_range = false
+        min_color_value = -1e99
     }
 
-    if(self.getScatterColorOption() == "rank" && !isFactor && item_type !== "gene"){
+    if(self.getScatterColorOption() == "rank"
+        && !isFactor && item_type !== "gene"
+        && item_type !== "meta") {
+
         values = self.rank_values(values)
+
     }
 
 
-    $('#plot-title').text(proj_key);
-    $('#plot-subtitle').text(item_key);
+    $('#plot-title').text(item_key);
 
     var points = [];
     var sample_labels = Object.keys(values).sort()
@@ -112,7 +157,24 @@ Right_Content.prototype.draw_sigvp = function() {
         points.push([x, y, sig_score, sample_label]);
     })
 
-    self.scatter.setData(points, isFactor, undefined, undefined, full_color_range);
+    // Get selected cells
+    var selected_cluster = get_global_status('selected_cluster')
+    var clusters = get_global_data('clusters')
+
+    var selected_cells
+    if (selected_cluster !== ''){
+        selected_cells = _(clusters)
+            .toPairs(clusters)
+            .filter(x => x[1] === selected_cluster)
+            .map(x => x[0])
+            .value()
+    } else {
+        selected_cells === undefined
+    }
+
+    self.scatter.clearData()
+    self.scatter.setData(points, isFactor, full_color_range, selected_cells, min_color_value);
+    self.scatter.redraw(true)();
 
 }
 
@@ -124,28 +186,24 @@ Right_Content.prototype.draw_tree = function() {
     var item_key = get_global_status('plotted_item');
     var item_type = get_global_status('plotted_item_type');
     var proj_key = get_global_status('plotted_projection');
-    var filter_group = get_global_status('filter_group');
 
-    var tree_points = api.tree.tree_points(filter_group, proj_key);
-    var tree_adjlist = api.tree.tree(filter_group)
+    var tree_points = api.tree.tree_points(proj_key);
+    var tree_adjlist = api.tree.tree()
 
     var projection = get_global_data('tree_projection_coordinates')
     var values = get_global_data('plotted_values')
 
-    var isFactor;
-    if(item_type !== "gene"){
-        isFactor = get_global_data('sig_info').isFactor
-    } else {
-        isFactor = false;
-    }
+    var isFactor = typeof(_.values(values)[0]) === 'string'
 
-    var full_color_range
+    var full_color_range, min_color_value
     if(item_type === "gene"){
         $(self.dom_node).find("#plotted-value-option").hide()
         full_color_range = true
+        min_color_value = 0
     } else {
         $(self.dom_node).find("#plotted-value-option").show()
         full_color_range = false
+        min_color_value = -1e99
     }
 
     if(self.getScatterColorOption() == "rank" && !isFactor && item_type !== "gene"){
@@ -159,8 +217,7 @@ Right_Content.prototype.draw_tree = function() {
 
             tree_points = []
 
-            $('#plot-title').text(proj_key);
-            $('#plot-subtitle').text(item_key);
+            $('#plot-title').text(item_key);
 
             var points = [];
             var sample_labels = Object.keys(values).sort()
@@ -190,7 +247,25 @@ Right_Content.prototype.draw_tree = function() {
                 }
             }
 
-            self.scatter.setData(points, isFactor, tree_points, tree_adj, full_color_range);
+            // Get selected cells
+            var selected_cluster = get_global_status('selected_cluster')
+            var clusters = get_global_data('clusters')
+
+            var selected_cells
+            if (selected_cluster !== ''){
+                selected_cells = _(clusters)
+                    .toPairs(clusters)
+                    .filter(x => x[1] === selected_cluster)
+                    .map(x => x[0])
+                    .value()
+            } else {
+                selected_cells === undefined
+            }
+
+            self.scatter.clearData()
+            self.scatter.setData(points, isFactor, full_color_range, selected_cells, min_color_value)
+            self.scatter.setTreeData(tree_points, tree_adj)
+            self.scatter.redraw(true)()
 
         });
 }
@@ -211,13 +286,12 @@ Right_Content.prototype.draw_pca = function() {
 
     var isFactor;
     if(item_type === "gene"){
-        isFactor = get_global_data('sigIsPrecomputed')[item_key];
+        isFactor = get_global_data('sigIsMeta')[item_key];
     } else {
         isFactor = false;
     }
 
-    $("#plot-title").text("PC: ".concat(pc_key));
-    $("#plot-subtitle").text(item_key);
+    $("#plot-title").text(item_key);
 
     var points = []
     var sample_labels = Object.keys(values).sort()
@@ -229,7 +303,9 @@ Right_Content.prototype.draw_pca = function() {
         points.push([x, y, sig_score, sample_label]);
     })
 
+    self.scatter.clearData()
     self.scatter.setData(points, isFactor);
+    self.scatter.redraw(true)();
 
 }
 
@@ -305,16 +381,16 @@ Right_Content.prototype.exportSigProj = function()
     //Convert the data that's in the scatter plot to a tab-delimited table
 
     var proj;
-    if (main_vis === 'sigvp') {
+    if (main_vis === 'clusters' || main_vis === 'pcannotator') {
         proj = get_global_data('sig_projection_coordinates')
-    } else if (main_vis ==='pcannotator') {
-        proj = get_global_data('pca_projection_coordinates')
     } else if (main_vis ==='tree') {
         proj = get_global_data('tree_projection_coordinates')
+    } else {
+        throw "Bad main_vis value!";
     }
 
     var table;
-    if (main_vis === 'sigvp' || main_vis === 'tree') {
+    if (main_vis === 'tree' || main_vis === 'clusters') {
 
         table = _.map(proj, (value, key) => {
             return [key, proj[key][0], proj[key][1], values[key]]
@@ -322,13 +398,6 @@ Right_Content.prototype.exportSigProj = function()
 
         table = [["Cell", "X", "Y", plotted_item]].concat(table);
 
-    } else if (main_vis ==='pcannotator') {
-        var plotted_pc = get_global_status('plotted_pc')
-        table = _.map(proj, (value, key) => {
-            return [key, proj[key][plotted_pc-1], values[key]]
-        });
-
-        table = [["Cell", "PC: "+plotted_pc, plotted_item]].concat(table);
     }
 
     table = table.map(function(x){ return x.join("\t");});
@@ -366,12 +435,7 @@ Right_Content.prototype.exportSigProj = function()
         var zip_uri = "data:application/zip;base64," + zip.generate({type:"base64"});
 
         var a = document.createElement("a");
-        var proj_name;
-        if(main_vis === 'pcannotator'){
-            proj_name = 'PC' + get_global_status('plotted_pc')
-        } else {
-            proj_name = get_global_status('plotted_projection')
-        }
+        var proj_name = get_global_status('plotted_projection')
 
         a.download = plotted_item+"_"+proj_name+".zip";
         a.href = zip_uri;
@@ -381,4 +445,9 @@ Right_Content.prototype.exportSigProj = function()
 
     image.setAttribute("src", imgsrc)
 
+}
+
+Right_Content.prototype.hover_cells = function(cell_ids)
+{
+    this.scatter.hover_cells(cell_ids);
 }

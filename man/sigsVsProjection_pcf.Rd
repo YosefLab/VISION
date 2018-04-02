@@ -2,16 +2,18 @@
 % Please edit documentation in R/methods-Signature.R
 \name{sigsVsProjection_pcf}
 \alias{sigsVsProjection_pcf}
-\title{Evaluates the significance of each precomputed factor signature vs. a
+\title{Evaluates the significance of each meta data factor signature vs. a
 single projections weights}
 \usage{
-sigsVsProjection_pcf(sigScoresData, weights)
+sigsVsProjection_pcf(metaData, weights, cells = NULL)
 }
 \arguments{
-\item{sigScoresData}{List of SignatureScores Object, mapping signature
-names to their value at each coordinate}
+\item{metaData}{data.frame of meta-data for cells}
 
 \item{weights}{numeric matrix of dimension N_SAMPLES x N_SAMPLES}
+
+\item{cells}{list of cell names.  Subsets anlysis to provided cells.
+If omitted, use all cells.}
 }
 \value{
 list:
@@ -21,6 +23,6 @@ list:
 }
 }
 \description{
-Evaluates the significance of each precomputed factor signature vs. a
+Evaluates the significance of each meta data factor signature vs. a
 single projections weights
 }

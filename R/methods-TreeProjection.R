@@ -8,9 +8,9 @@
 #' @param adjMat the adjacency matrix of the tree
 #' @return a TreeProjection object
 TreeProjection <- function(pData, name, vData, adjMat) {
-    proj <- projectOnTree(data.pnts = pData,
-                            V.pos = vData,
-                            princAdj = adjMat)
+
+    proj <- projectOnTree(data.pnts = t(pData), V.pos = vData, princAdj = adjMat)
+
     .Object <- new("TreeProjection", pData=pData, name=name,
                    vData=vData, adjMat=adjMat, edgeAssoc=proj$edges,
                    edgePos=proj$edgePos)
@@ -21,32 +21,52 @@ TreeProjection <- function(pData, name, vData, adjMat) {
 #' Compute KNN weights based on geodesic distances for TreeProjection objects
 #' @importFrom stats quantile
 #' @importFrom Matrix rowSums
+#' @importFrom Matrix sparseMatrix
+#' @importFrom matrixStats rowMaxs
 #' @param object a TreeProjection object
 #' @param K the number of nearest neighbors to look at
 #' @return an all-pars distance matrix
 setMethod("computeKNNWeights", signature(object = "TreeProjection"),
-            function(object, K=30) {
+            function(object, K = round(sqrt(nrow(object@pData))) ) {
             distmat <- calculateTreeDistances(princPnts = object@vData,
                                                 princAdj = object@adjMat,
                                                 edgeAssoc = object@edgeAssoc,
                                                 edgePos = object@edgePos)
 
-            kQuantile <- K / NCOL(object@pData)
+            kQuantile <- K / nrow(object@pData)
             knnmat <- apply(distmat, 1, function(d) {
                 partition <- quantile(d, kQuantile)
                 d[d > partition] <- Inf
                 return(d)
             })
 
-            sigma <- apply(knnmat, 1, max)
-            weights <- exp(-1 * (knnmat * knnmat) / sigma^2)
+            nn <- t(apply(distmat, 1, function(r) {
+                            order(r)[1:K]
+            }))
 
-            weights[is.na(weights)] <- 0.0
+            d <- lapply(seq(nrow(nn)), function(i) {
+                            distmat[i, nn[i, ]]
+            })
+            d <- do.call(rbind, d)
 
-            weightsNormFactor <- rowSums(weights)
+            sigma <- rowMaxs(d)
+            sigma[sigma == 0] <- 1.0 # occurs if all nearest neighbors at same point
+            sparse_weights <- exp(-1 * (d * d) / sigma ^ 2)
+
+            # Normalize row sums = 1
+            weightsNormFactor <- rowSums(sparse_weights)
             weightsNormFactor[weightsNormFactor == 0] <- 1.0
-            weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
-            weights <- weights / weightsNormFactor
+            sparse_weights <- sparse_weights / weightsNormFactor
+
+            # load into a sparse matrix
+            tnn <- t(nn)
+            j <- as.numeric(tnn)
+            i <- as.numeric(col(tnn))
+            vals <- as.numeric(t(sparse_weights))
+
+            weights <- sparseMatrix(i = i, j = j, x = vals,
+                                    dims = c(nrow(nn), nrow(nn))
+                                    )
 
             return(weights)
 

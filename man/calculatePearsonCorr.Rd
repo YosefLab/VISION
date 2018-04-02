@@ -4,18 +4,14 @@
 \alias{calculatePearsonCorr}
 \title{Compute pearson correlation between signature scores and principle components}
 \usage{
-calculatePearsonCorr(sigData, sigMatrix, fullPCA)
+calculatePearsonCorr(object)
 }
 \arguments{
-\item{sigData}{List of Signature}
-
-\item{sigMatrix}{Signature scores dataframe}
-
-\item{fullPCA}{numeric matrix N_Cells x N_PCs}
+\item{object}{the FastProject object}
 }
 \value{
 pearsonCorr numeric matrix N_Signatures x N_PCs
 }
 \description{
-Compute pearson correlation between signature scores and principle components
+Populations the PCAnnotatorData slot of the FastProject object
 }

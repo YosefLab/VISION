@@ -4,13 +4,11 @@
 \alias{TreeProjectionData}
 \title{Wrapper for storing all relevant information for a given projection.}
 \usage{
-TreeProjectionData(projections = NULL, keys, sigProjMatrix, pMatrix,
-  sigClusters, treeScore)
+TreeProjectionData(latentTree, projections, sigProjMatrix, pMatrix, sigClusters,
+  treeScore, emp_pMatrix)
 }
 \arguments{
 \item{projections}{List of Projection objects to be stored}
-
-\item{keys}{Sample names of expression data}
 
 \item{sigProjMatrix}{Matrix storing the median consistency score per projection, signature pair}
 
@@ -19,14 +17,15 @@ TreeProjectionData(projections = NULL, keys, sigProjMatrix, pMatrix,
 \item{sigClusters}{a list of signature clusters}
 
 \item{treeScore}{a significance score for the fitted tree}
+
+\item{emp_pMatrix}{Matrix storing the empirical p values for each projection, signature pair}
 }
 \value{
 ProjectionData object
 }
 \description{
-Stores a list of Projection objects, filter name, and a logical value indicating whether or not
-PCA was performed. Also stores clusters, a signature to projection matrix, and relevant gene names
-and signature / projection keys.
+Stores a list of Projection objects.
+Also stores clusters, a signature to projection matrix
 Initializes a ProjectionData object for neatly storing all relevant data to a given projection section
 Should not be called directly, instead use the `new` syntax
 }

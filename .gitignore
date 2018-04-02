@@ -7,3 +7,4 @@ src/*
 src-x64/*
 src-i386/*
 *RcppExports*
+inst/html_output/thirdparty/*

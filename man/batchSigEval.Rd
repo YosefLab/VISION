@@ -2,7 +2,7 @@
 % Please edit documentation in R/SigScoreMethods.R
 \name{batchSigEval}
 \alias{batchSigEval}
-\title{Evaluate signature scores efficiently in batches}
+\title{Different ways to evalutate the signature score}
 \usage{
 batchSigEval(sigs, sig_score_method, eData, weights, min_signature_genes)
 }
@@ -19,8 +19,14 @@ batchSigEval(sigs, sig_score_method, eData, weights, min_signature_genes)
 this many genes in the expression matrix}
 }
 \value{
-List of SignatureScore objects
+matrix of signature scores, cells X signatures
 }
 \description{
+EAch method should have the same signature so they can be swapped
+}
+\details{
+Right now, each takes in a wrapped data object and signature object
+
+Specified by FastProject argument (sig_score_method), default = naiveEvalSignature
 Evaluate signature scores efficiently in batches
 }

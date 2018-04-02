@@ -5,7 +5,7 @@
 \title{Initialize a new Signature object.
 Should not be called directly, instead use the `new` syntax}
 \usage{
-Signature(sigDict, name, source, metaData = "", isPrecomputed = FALSE,
+Signature(sigDict, name, source, metaData = "", isMeta = FALSE,
   isFactor = FALSE)
 }
 \arguments{
@@ -17,8 +17,8 @@ Signature(sigDict, name, source, metaData = "", isPrecomputed = FALSE,
 
 \item{metaData}{Metadata pertinent to signature}
 
-\item{isPrecomputed}{If TRUE indicates that this signature was precomputed.
-Else not precomputed. Default is FALSE.}
+\item{isMeta}{If TRUE indicates that this signature was derived from
+meta data. Default is FALSE.}
 
 \item{isFactor}{If TRUE indicates that this signature is a Factor, else not
 a factor. Default is FALSE.}

@@ -22,14 +22,23 @@
 }
 
 .upper-left-section-content .sig-tables-header{
-    margin-right: 10px; /* Account for padding of div below it */
-    margin-top: 30px;
+    margin-right: 15px; /* Account for padding of div below it */
     margin-bottom: 5px;
+    padding-top: 35px;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    flex-shrink: 0;
 }
 
 .upper-left-section-content .sig-tables-wrapper{
     overflow-y: scroll;
+    overflow-x: auto;
     padding-right: 10px;
+}
+
+.sig-table-div{
+    display: table;
+    padding-right: 12px;
 }
 
 .sig-table-div:not(:first-child){
@@ -37,30 +46,69 @@
 }
 
 .sig-table{
-    width: 100%;
     table-layout: fixed;
     height: 100%;
 }
 
-.sig-table th:first-child{
+.sig-table th:first-child > div{
     text-align:left;
+    width: 200px;
+    padding-right: 10px;
 }
 
-.sig-table th:not(:first-child) div {
-    transform-origin: center center 0;
-    transform: translate(2px,0) rotate(-75deg);
+.sig-table th:not(:first-child) > div > div{
+    transform-origin: left bottom 0;
+    transform: translate(20px,-2px) rotate(-75deg);
     text-align: left;
     white-space: nowrap;
 }
 
-.sig-table tbody {
-	/*overflow-x: scroll;*/
-	width: 600px;
+.sig-table.compact th:not(:first-child) > div > div{
+    transform-origin: left bottom 0;
+    transform: translate(12px,-2px) rotate(-75deg);
+    text-align: left;
+    white-space: nowrap;
+}
+
+.sig-table.first-col th:nth-child(2) > div > div{
+    transform-origin: left bottom 0;
+    transform: translate(30px,-2px) rotate(-75deg);
+    text-align: left;
+    white-space: nowrap;
+}
+
+.sig-table td, .sig-table th{
+    padding: 0;
 }
 
 .sig-table td:first-child{
-	width: auto !important;
-	min-width: 300px !important;
+}
+
+.sig-table tr:nth-child(even) td:first-child{
+    background-color: #eeeeee;
+}
+
+.sig-table td:not(:first-child), .sig-table th:not(:first-child){
+    cursor: pointer;
+}
+
+.sig-table td:not(:first-child) > div, .sig-table th:not(:first-child) > div{
+    width: 30px;
+    font-size: 0.8em;
+    text-align: center;
+}
+
+.sig-table td:not(:first-child){
+    border: 1px solid black;
+}
+
+.sig-table th:not(:first-child){
+    border: 1px solid transparent;
+    vertical-align: bottom;
+}
+
+.sig-table td:first-child > div{
+    width: 200px;
     font-size: 0.8em;
     font-weight: bold;
     -ms-word-wrap: break-word;
@@ -70,30 +118,29 @@
     position: relative;
 }
 
-.sig-table tr:nth-child(even) td:first-child{
-    background-color: #eeeeee;
+.sig-table td:not(:first-child):hover{
+    filter: brightness(0.9);
 }
 
-.sig-table td:not(:first-child), .sig-table th:not(:first-child){
-    text-align: center;
-    width: 30px; 
-    cursor: pointer;
-    font-size: 0.8em;
-}
-
-.sig-table td:not(:first-child){
-    padding: 3px 0;
-    border: 1px solid black;
-}
-
-.sig-table.compact td:not(:first-child){
+.sig-table.compact td:not(:first-child) > div{
     width: 15px;
-    font-size: 0;
-    color: transparent;
 }
 
-.sig-table.compact th:not(:first-child){
+.sig-table.compact th:not(:first-child) > div{
     width: 15px;
+}
+
+.sig-table.first-col td:nth-child(2) > div{
+    width: 50px;
+}
+
+.sig-table.first-col th:nth-child(2) > div{
+    width: 50px;
+}
+
+
+table td.highlight, table th.highlight{
+    color: #28a745;
 }
 
 
@@ -132,7 +179,7 @@ table.collapsible.collapsed tr:first-child > td:first-child > .sig-row-label::be
     content: "\25B6 ";
 }
 
-#precomp-table-div{
+#meta-table-div{
     overflow-x: hidden;
 }
 

@@ -1,13 +1,3 @@
-#' Computes the biased SD on a vector, correcting the denominator to n rather than (n-1)
-#' @importFrom stats sd
-#' @param data Vector of numbers
-#' @return Biased standard deviation of vector
-biasedVectorSD <- function(data) {
-    d <- length(data)
-    std <- sd(data) * sqrt((d-1)/d)
-    return(std)
-}
-
 #' Does nothing, just returns the original data
 #'
 #' @param data data matrix
@@ -68,4 +58,26 @@ colRankNormalization <- function(data) {
     rownames(rdata) <- rownames(data)
     colnames(rdata) <- colnames(data)
     return(rdata)
+}
+
+#' Calculates the specified normalized data matrix
+#' @param data numeric matrix
+#' @param func normalization method to apply
+#' @return Normalized data matrix according to function specified.
+getNormalizedCopy <- function(data, func) {
+
+    data <- matLog2(data)
+
+    if (func == "none") {
+        return(noNormalization(data))
+    } else if (func == "znorm_columns") {
+        return(colNormalization(data))
+    } else if (func == "znorm_rows") {
+        return(rowNormalization(data))
+    } else if (func == "znorm_rows_then_columns") {
+        return(rowAndColNormalization(data))
+    } else if (func == "rank_norm_columns") {
+        return(colRankNormalization(data))
+    }
+    stop("Normalization method not recognized.")
 }

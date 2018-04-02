@@ -5,29 +5,6 @@
 
 using namespace Rcpp;
 
-// point_mult
-void point_mult(NumericMatrix& X, NumericVector& Y);
-RcppExport SEXP _FastProjectR_point_mult(SEXP XSEXP, SEXP YSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix& >::type X(XSEXP);
-    Rcpp::traits::input_parameter< NumericVector& >::type Y(YSEXP);
-    point_mult(X, Y);
-    return R_NilValue;
-END_RCPP
-}
-// multMat
-NumericVector multMat(NumericMatrix X, NumericMatrix Y);
-RcppExport SEXP _FastProjectR_multMat(SEXP XSEXP, SEXP YSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type Y(YSEXP);
-    rcpp_result_gen = Rcpp::wrap(multMat(X, Y));
-    return rcpp_result_gen;
-END_RCPP
-}
 // ball_tree_vector_knn
 List ball_tree_vector_knn(NumericMatrix X, NumericVector Y, int K, int n_threads);
 RcppExport SEXP _FastProjectR_ball_tree_vector_knn(SEXP XSEXP, SEXP YSEXP, SEXP KSEXP, SEXP n_threadsSEXP) {
@@ -67,13 +44,36 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// point_mult
+void point_mult(NumericMatrix& X, NumericVector& Y);
+RcppExport SEXP _FastProjectR_point_mult(SEXP XSEXP, SEXP YSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< NumericVector& >::type Y(YSEXP);
+    point_mult(X, Y);
+    return R_NilValue;
+END_RCPP
+}
+// multMat
+NumericVector multMat(NumericMatrix X, NumericMatrix Y);
+RcppExport SEXP _FastProjectR_multMat(SEXP XSEXP, SEXP YSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type Y(YSEXP);
+    rcpp_result_gen = Rcpp::wrap(multMat(X, Y));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_FastProjectR_point_mult", (DL_FUNC) &_FastProjectR_point_mult, 2},
-    {"_FastProjectR_multMat", (DL_FUNC) &_FastProjectR_multMat, 2},
     {"_FastProjectR_ball_tree_vector_knn", (DL_FUNC) &_FastProjectR_ball_tree_vector_knn, 4},
     {"_FastProjectR_ball_tree_knn", (DL_FUNC) &_FastProjectR_ball_tree_knn, 3},
     {"_FastProjectR_load_in_knn", (DL_FUNC) &_FastProjectR_load_in_knn, 2},
+    {"_FastProjectR_point_mult", (DL_FUNC) &_FastProjectR_point_mult, 2},
+    {"_FastProjectR_multMat", (DL_FUNC) &_FastProjectR_multMat, 2},
     {NULL, NULL, 0}
 };
 

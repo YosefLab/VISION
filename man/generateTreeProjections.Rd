@@ -4,17 +4,14 @@
 \alias{generateTreeProjections}
 \title{Genrate projections based on a tree structure learned in high dimensonal space}
 \usage{
-generateTreeProjections(data, filterName = "", inputProjections,
-  permMats = NULL)
+generateTreeProjections(data, inputProjections, permMats = NULL)
 }
 \arguments{
 \item{data}{the data to fit the tree to. Should be lower dimensional than
 full data.}
 
-\item{filterName}{the filtered data to use}
-
-\item{inputProjections}{a list of Projection objects. For each Projection, a
-corresponding TreeProjection will be created in which the scores are based
+\item{inputProjections}{a list of matrices, cells X 2
+corresponding TreeProjection will be created. The scores are based
 on geodesic distances instead of euclidean one}
 
 \item{permMats}{a list of matrices to use as a null distribution for
@@ -24,7 +21,9 @@ permutation wPCA algorithm upstream}
 \value{
 a list:
 \itemize{
-    \item projections a list of TreeProjection objects
+    \item latentTree TreeProjection object for the main tree
+    \item projections a list of TreeProjection objects, mapping the latent
+          into the projection's 2d space for visualization purposes
     \item treeScore a score representing the singificance of the fitten tree
     return(list(projections = output, treeScore = hdTree$zscore))
 }

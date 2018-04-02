@@ -1,6 +1,6 @@
-#' Wrapper class for ExpressionData object for JSON.
+#' Wrapper class for gene expression object for JSON.
 #'
-#' @param data Expression data
+#' @param data numeric matrix
 #' @param sample_labels Labels of samples in expression data
 #' @param gene_labels Lables of genes in expression data
 #' @return ServerExpression object
@@ -13,40 +13,17 @@ ServerExpression <- function(data, sample_labels, gene_labels) {
 
 #' Wrapper class for Signature Projection Matrix
 #'
-#' @param data Signatrue Projection matrix as obtained from sigsVsProjections
+#' @param zscores numeric matrix
+#' @param pvals numeric matrix
 #' @param proj_labels Projection names
 #' @param sig_labels Names of signatures
 #' @return ServerSigProjMatrix object
-ServerSigProjMatrix <- function(data, proj_labels, sig_labels) {
-            .Object <- new("ServerSigProjMatrix", data=data,
-                           proj_labels=proj_labels, sig_labels=sig_labels)
+ServerSigProjMatrix <- function(zscores, pvals, proj_labels, sig_labels) {
+            .Object <- new("ServerSigProjMatrix",
+                           zscores = zscores, pvals = pvals,
+                           proj_labels = proj_labels, sig_labels = sig_labels)
             return(.Object)
             }
-
-#' Wrapper class for the P value matrix calculated during sigsVsProjections
-#'
-#' @param data P values for each signature, projection pair in the form of a matrix
-#' @param proj_labels Projection names
-#' @param sig_labels Names of signatures
-#' @return ServerPMatrix object
-ServerPMatrix <- function(data, proj_labels, sig_labels) {
-            .Object <- new("ServerPMatrix", data=data, proj_labels=proj_labels,
-                           sig_labels=sig_labels)
-            return(.Object)
-            }
-
-#' Wrapper class for server Perason correlation data
-#'
-#' @param data pearson r correlation coefficients
-#' @param proj_labels the labels of the projections (columns) in the data
-#' @param sig_labels the labels of the signatures (rows) in the data
-#' @return a ServerPCorr object
-ServerPCorr <- function(data, proj_labels, sig_labels) {
-        .Object <- new("ServerPCorr", data=data, proj_labels=proj_labels,
-                       sig_labels=sig_labels)
-        return(.Object)
-        }
-
 
 #' Converts Signature object to JSON
 #' @importFrom jsonlite toJSON
@@ -101,27 +78,13 @@ sigScoresToJSON <- function(ss) {
     return(json)
 }
 
-#' Converts list of signature ranks to JSON
-#' @importFrom jsonlite toJSON
-#' @param ss single-column dataframe with ranks for a single signature
-#' @return Signature ranks as JSON, with names of each entry that of list names
-sigRanksToJSON <- function(ss) {
-
-    s <- as.list(rank(ss[[1]]))
-    names(s) <- rownames(ss)
-    json <- toJSON(s, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
-
-    return(json)
-
-}
-
 #' Converts a projection into a JSON object mapping each sample to a projection coordinate.
 #' @importFrom jsonlite toJSON
 #' @param p Projection coordinate data (NUM_SAMPLES x NUM_COMPONENTS)
 #' @return JSON object mapping each sample to a projection coordinate.
 coordinatesToJSON <- function(p) {
 
-    coord <- as.data.frame(t(p))
+    coord <- as.data.frame(p)
 
     # This switching is needed because toJSON will drop row labels
     # if they are integers for some reason
@@ -136,66 +99,40 @@ coordinatesToJSON <- function(p) {
 
 #' Converts a sigProjMatrix from a FastProject Object to a JSON object
 #' @importFrom jsonlite toJSON
-#' @param sigpm SigProjMatrix
-#' @param sigs Signatures to subset form sigpm
-#' @return Subsetted sigProjMatirx converted to JSON
-sigProjMatrixToJSON <- function(sigpm, sigs) {
+#' @param sigzscores Matrix of signature z-scores
+#' @param sigpvals Matrix of signature p-values
+#' @param sigs Signatures to subset zscores/pvalues
+#' @return Subsetted sigProjMatrix converted to JSON
+sigProjMatrixToJSON <- function(sigzscores, sigpvals, sigs) {
 
-    sigpm <- sigpm[sigs,, drop=FALSE]
-    sSPM <- ServerSigProjMatrix(unname(sigpm), colnames(sigpm), sigs)
+    sigs <- intersect(sigs, rownames(sigzscores))
+    sigpvals <- sigpvals[sigs, , drop = FALSE]
 
-    json <- toJSON(sSPM, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
+    sigzscores <- sigzscores[rownames(sigpvals), , drop = FALSE]
+    sigzscores <- sigzscores[, colnames(sigpvals), drop = FALSE]
+
+    sSPM <- ServerSigProjMatrix(unname(sigzscores), unname(sigpvals), colnames(sigpvals), rownames(sigpvals))
+
+    json <- toJSON(sSPM, force=TRUE, pretty=TRUE)
 
     return(json)
 }
 
 #' convert perason correlation coeffcients between PCs and sgnatures into a JSON object
-#' @param pc the pearson correlations matrx
+#' @param pc the pearson correlation coefficients matrix
 #' @param sigs the signatures of interest
 #' @return Subsetted pearson correlations converted to JSON
 pearsonCorrToJSON <- function(pc, sigs) {
 
-    pc <- pc[sigs,,drop=FALSE]
-    cn <- c()
-    for (i in 1:ncol(pc)) { cn <- c(cn, paste("PC", i)) }
-    sPC <- ServerPCorr(unname(pc), cn, sigs)
+    pc <- pc[sigs, ,drop = FALSE]
+    cn <- paste("PC", 1:ncol(pc))
 
-    json <- toJSON(sPC, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
+    sPC <- ServerSigProjMatrix(unname(pc), unname(pc), cn, sigs)
 
-    return(json)
-
-}
-
-#' Converts the -log10(pvalues) of the consistency scores into a JSON object
-#' @importFrom jsonlite toJSON
-#' @param sigpmp SigProjMatrix p values
-#' @param sigs Signatrues to subset from sigpmp
-#' @return Subsetted sigProjMatrix_P converted to JSON
-sigProjMatrixPToJSON <- function(sigpmp, sigs) {
-
-    sigpmp <- as.matrix(sigpmp[sigs,, drop=FALSE])
-    sPM <- ServerPMatrix(unname(sigpmp), colnames(sigpmp), sigs)
-
-    json <- toJSON(sPM, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
+    json <- toJSON(sPC, force = TRUE, pretty = TRUE)
 
     return(json)
 
-}
-
-#' Convert a Cluster object to JSON
-#' @importFrom jsonlite toJSON
-#' @param cluster Cluster object
-#' @return Cluster object converted to JSON
-clusterToJSON <- function(cluster) {
-
-    out <- list()
-    out[['method']] <- cluster@method
-    out[['param']] <- cluster@param
-    out[['centers']] <- cluster@centers
-    out[['data']] <- as.list(cluster@data[1,])
-    json <- toJSON(out, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
-
-    return(json)
 }
 
 #' Run the analysis again wth user-defined subsets or confguration
@@ -241,18 +178,29 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
     # Launch the server
     jug() %>%
       get("/Signature/Scores/(?<sig_name1>.*)", function(req, res, err) {
-        sigMatrix <- object@sigMatrix
+        sigMatrix <- object@sigScores
         name <- URLdecode(req$params$sig_name1)
         out <- "Signature does not exist!"
         if (name %in% colnames(sigMatrix)) {
-          out <- FastProjectR:::sigScoresToJSON(sigMatrix[name])
+          ss <- sigMatrix[, name, drop = FALSE]
+          ss <- as.data.frame(ss)
+          out <- FastProjectR:::sigScoresToJSON(ss)
         }
         return(out)
       }) %>%
-      get("/Signature/ListPrecomputed", function(req, res, err){
+      get("/Signature/Meta/(?<sig_name3>.*)", function(req, res, err) {
+        metaData <- object@metaData
+        name <- URLdecode(req$params$sig_name3)
+        out <- "Signature does not exist!"
+        if (name %in% colnames(metaData)) {
+          out <- FastProjectR:::sigScoresToJSON(metaData[name])
+        }
+        return(out)
+      }) %>%
+      get("/Signature/ListMeta", function(req, res, err){
         signatures <- object@sigData
         keys <- lapply(signatures, function(x) x@name)
-        vals <- lapply(signatures, function(x) x@isPrecomputed)
+        vals <- lapply(signatures, function(x) x@isMeta)
         names(vals) <- keys
         out <- toJSON(vals, auto_unbox=TRUE)
         return(out)
@@ -267,15 +215,6 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         }
         return(out)
       }) %>%
-      get("/Signature/Ranks/(?<sig_name3>.*)", function(req, res, err) {
-        sigMatrix <- object@sigMatrix
-        name <- URLdecode(req$params$sig_name3)
-        out <- "Signature does not exist!"
-        if (name %in% colnames(sigMatrix)) {
-          out <- FastProjectR:::sigRanksToJSON(sigMatrix[name])
-        }
-        return(out)
-      }) %>%
       get("/Signature/Expression/(?<sig_name4>.*)", function(req, res, err) {
         all_names = vapply(object@sigData, function(x){ return(x@name) }, "")
         name <- URLdecode(req$params$sig_name4)
@@ -285,247 +224,129 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         }
         else{
             sig = object@sigData[[index]]
-            if(sig@isPrecomputed) {
-                stop("Can't get expression for precomputed signature")
+            if(sig@isMeta) {
+                stop("Can't get expression for meta data signature")
             }
             genes = names(sig@sigDict)
-            expMat = object@exprData@data
+            expMat = object@exprData
             return(FastProjectR:::expressionToJSON(expMat, genes, zscore=TRUE))
         }
         return(out)
       }) %>%
-      get("/FilterGroup/(?<filter_group1>.*)/SigClusters/Normal", function(req, res, err) {
-        filter <- URLdecode(req$params$filter_group1)
-        if (filter == "1") {
-          filter = 1
-        }
-        cls <- object@filterModuleList[[filter]]@ProjectionData@sigClusters
-        # cls <- object@sigClusters[[filter]]
+      get("/FilterGroup/SigClusters/Normal", function(req, res, err) {
+
+        cls <- object@SigConsistencyScores@sigClusters
         cls <- cls$Computed
 
         out <- toJSON(cls, auto_unbox=TRUE)
         return(out)
       }) %>%
-      get("/FilterGroup/(?<filter_group2>.*)/SigClusters/Precomputed", function(req, res, err) {
-        filter <- URLdecode(req$params$filter_group2)
-        if (filter == "1") {
-          filter = 1
-        }
-        cls <- object@filterModuleList[[filter]]@ProjectionData@sigClusters
-        # cls <- object@sigClusters[[filter]]
-        cls <- cls$Precomputed
+      get("/FilterGroup/SigClusters/Meta", function(req, res, err) {
+
+        cls <- object@SigConsistencyScores@sigClusters
+        cls <- cls$Meta
 
         out <- toJSON(cls, auto_unbox=TRUE)
         return(out)
       }) %>%
-      get("/FilterGroup/(?<filter_name1>.*)/(?<proj_name1>.*)/coordinates", function(req, res, err) {
-        filter <- URLdecode(req$params$filter_name1)
+      get("/Projections/(?<proj_name1>.*)/coordinates", function(req, res, err) {
         proj <- URLdecode(req$params$proj_name1)
-        out <- FastProjectR:::coordinatesToJSON(object@filterModuleList[[filter]]@ProjectionData@projections[[proj]]@pData)
+        out <- FastProjectR:::coordinatesToJSON(object@Projections[[proj]])
         return(out)
       }) %>%
-      get("/FilterGroup/(?<filter_name1p5>.*)/projections/list", function(req, res, err) {
-        filter <- URLdecode(req$params$filter_name1p5)
-        proj_names <- names(object@filterModuleList[[filter]]@ProjectionData@projections)
+      get("/Projections/list", function(req, res, err) {
+        proj_names <- names(object@Projections)
         out <- toJSON(proj_names, auto_unbox=TRUE)
         return(out)
       }) %>%
-      get("/FilterGroup/(?<filter_name2>.*)/SigProjMatrix/Normal", function(req, res, err) {
-        filter <- URLdecode(req$params$filter_name2)
+      get("/Tree/List", function(req, res, err) {
 
-        signatures <- object@sigData
-        keys <- vapply(signatures, function(x) x@name, "")
-        vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
-          sigs <- keys[!vals]
-        out <- FastProjectR:::sigProjMatrixToJSON(object@filterModuleList[[filter]]@ProjectionData@sigProjMatrix, sigs)
-        return(out)
-      }) %>%
-      get("/FilterGroup/(?<filter_name3>.*)/SigProjMatrix/Precomputed", function(req, res, err) {
-        filter <- URLdecode(req$params$filter_name3)
-
-        signatures <- object@sigData
-        keys <- vapply(signatures, function(x) x@name, "")
-        vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
-        sigs <- keys[!vals]
-          out <- FastProjectR:::sigProjMatrixToJSON(object@filterModuleList[[filter]]@ProjectionData@sigProjMatrix, sigs)
-        return(out)
-      }) %>%
-      get("/FilterGroup/(?<filter_name4>.*)/SigProjMatrix_P/Normal", function(req, res, err) {
-        filter <- URLdecode(req$params$filter_name4)
-
-        signatures <- object@sigData
-        keys <- vapply(signatures, function(x) x@name, "")
-        vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
-        sigs <- keys[!vals]
-          out <- FastProjectR:::sigProjMatrixToJSON(object@filterModuleList[[filter]]@ProjectionData@pMatrix, sigs)
-        return(out)
-      }) %>%
-      get("/FilterGroup/(?<filter_name22>.*)/SigProjMatrix_Pemp/Normal", function(req, res, err) {
-        filter <- URLdecode(req$params$filter_name22)
-
-        signatures <- object@sigData
-        keys <- vapply(signatures, function(x) x@name, "")
-        vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
-        sigs <- keys[!vals]
-          out <- FastProjectR:::sigProjMatrixToJSON(object@filterModuleList[[filter]]@ProjectionData@emp_pMatrix, sigs)
-        return(out)
-      }) %>%
-      get("/FilterGroup/(?<filter_name5>.*)/SigProjMatrix_P/Precomputed", function(req, res, err) {
-        filter <- URLdecode(req$params$filter_name5)
-
-        signatures <- object@sigData
-        keys <- vapply(signatures, function(x) x@name, "")
-        vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
-        sigs <- keys[vals]
-
-          out <- FastProjectR:::sigProjMatrixToJSON(object@filterModuleList[[filter]]@ProjectionData@pMatrix, sigs)
-        return(out)
-      }) %>%
-      get("/FilterGroup/(?<filter_name20>.*)/Tree/SigProjMatrix_P/Normal", function(req, res, err) {
-        # projData <- object@projData
-        filter <- URLdecode(req$params$filter_name20)
-
-        signatures <- object@sigData
-        keys <- vapply(signatures, function(x) x@name, "")
-        vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
-        sigs <- keys[!vals]
-          out <- FastProjectR:::sigProjMatrixToJSON(object@filterModuleList[[filter]]@TreeProjectionData@pMatrix, sigs)
-        return(out)
-      }) %>%
-      get("/FilterGroup/(?<filter_name21>.*)/Tree/SigProjMatrix_P/Precomputed", function(req, res, err) {
-        # projData <- object@projData
-        filter <- URLdecode(req$params$filter_name21)
-
-        signatures <- object@sigData
-        keys <- vapply(signatures, function(x) x@name, "")
-        vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
-        sigs <- keys[vals]
-          out <- FastProjectR:::sigProjMatrixToJSON(object@filterModuleList[[filter]]@TreeProjectionData@pMatrix, sigs)
-        # out <- sigProjMatrixPToJSON(projData[[filter]]@pMatrix, sigs)
-        return(out)
-      }) %>%
-      get("/FilterGroup/(?<filter_name6>.*)/(?<proj_name2>.*)/clusters/(?<cluster_procedure>.*)/(?<param>.*)", function(req, res, err) {
-        # projData <- object@projData
-
-        filter <- URLdecode(req$params$filter_name6)
-        proj <- URLdecode(req$params$proj_name2)
-        method <- URLdecode(req$params$cluster_procedure)
-        param <- as.numeric(URLdecode(req$params$param))
-
-        clust <- FastProjectR:::cluster(object@filterModuleList[[filter]]@ProjectionData@projections[[proj]], method, param)
-          # clust = cluster(projData[[filter]]@projections[[proj]], method, param)
-        out <- FastProjectR:::clusterToJSON(clust)
-        return(out)
-      }) %>%
-      get("/FilterGroup/(?<filter_name7>.*)/genes", function(req, res, err) {
-        # projData <- object@projData
-        filter <- URLdecode(req$params$filter_name7)
-
-        out <- toJSON(object@filterModuleList[[filter]]@genes)
-        # out <- toJSON(projData[[filter]]@genes)
-
-        return(out)
-      }) %>%
-      get("/FilterGroup/(?<filter_name8>.*)/Tree/List", function(req, res, err) {
-        filter <- URLdecode(req$params$filter_name8)
-
-        ## all Trees have the same adjacency matrix, so we can use the first one
-        W <- object@filterModuleList[[filter]]@TreeProjectionData@projections[[1]]@adjMat
+        W <- object@TreeProjectionData@latentTree@adjMat
 
         return(toJSON(W))
       }) %>%
-      get("/FilterGroup/(?<filter_name18>.*)/(?<proj_name3>.*)/Tree/Points", function(req, res, err) {
+      get("/Tree/(?<proj_name3>.*)/Points", function(req, res, err) {
         proj <- URLdecode(req$params$proj_name3)
-        filter <- URLdecode(req$params$filter_name18)
 
-        C <- object@filterModuleList[[filter]]@TreeProjectionData@projections[[proj]]@vData
+        C <- object@TreeProjectionData@projections[[proj]]@vData
 
         return(toJSON(C))
       }) %>%
-      get("/FilterGroup/(?<filter_name19>.*)/(?<proj_name4>.*)/Tree/Projection", function(req, res, err) {
+      get("/Tree/(?<proj_name4>.*)/Projection", function(req, res, err) {
         proj <- URLdecode(req$params$proj_name4)
-        filter <- URLdecode(req$params$filter_name19)
 
-        out <- FastProjectR:::coordinatesToJSON(object@filterModuleList[[filter]]@TreeProjectionData@projections[[proj]]@pData)
+        out <- FastProjectR:::coordinatesToJSON(object@TreeProjectionData@projections[[proj]]@pData)
 
         return(out)
       }) %>%
-      get("/FilterGroup/list", function(req, res, err) {
-        filters <- vapply(object@filterModuleList, function(x) {
-          return(x@filter)
-        }, "")
-        return(toJSON(filters))
+      get("/Tree/SigProjMatrix/Normal", function(req, res, err) {
+
+        sigs <- colnames(object@sigScores)
+        out <- FastProjectR:::sigProjMatrixToJSON(
+                                  object@TreeProjectionData@sigProjMatrix,
+                                  object@TreeProjectionData@emp_pMatrix,
+                                  sigs)
+        return(out)
       }) %>%
-      get("/FilterGroup/(?<filter_name10>.*)/(?<pc_num1>.*)/Loadings/Positive", function(req, res, err) {
-        filter <- URLdecode(req$params$filter_name10)
+      get("/Tree/SigProjMatrix/Meta", function(req, res, err) {
+
+        sigs <- colnames(object@metaData)
+        out <- FastProjectR:::sigProjMatrixToJSON(
+                                  object@TreeProjectionData@sigProjMatrix,
+                                  object@TreeProjectionData@emp_pMatrix,
+                                  sigs)
+        return(out)
+      }) %>%
+      get("/FilterGroup/(?<pc_num1>.*)/Loadings/Positive", function(req, res, err) {
         pcnum <- as.numeric(URLdecode(req$params$pc_num1))
 
-        l <- object@filterModuleList[[filter]]@PCAnnotatorData@loadings[,pcnum]
+        c <- object@latentSpace[, pcnum, drop = FALSE] # cells x 1
+        edata <- object@exprData # genes x cells
+        l <- edata %*% c
+        names(l) <- rownames(edata)
+
+        l <- sqrt(sum(l ^ 2)) # normalize the vector
 
         posl <- l[l >= 0]
-        sumposl <- sum(posl)
-        nposl <- vapply(posl, function(x) x / sumposl, 1.0)
 
-        nposl <- sort(nposl, decreasing = TRUE)
+        js1 <- toJSON(with(stack(posl), tapply(values, ind, c, simplify = FALSE)))
 
-        js1 <- toJSON(with(stack(nposl), tapply(values, ind, c, simplify = FALSE)))
-
-          return(js1)
+        return(js1)
 
       }) %>%
-      get("/FilterGroup/(?<filter_name16>.*)/(?<pc_num6>.*)/Loadings/Negative", function(req, res, err) {
-        filter <- URLdecode(req$params$filter_name16)
+      get("/FilterGroup/(?<pc_num6>.*)/Loadings/Negative", function(req, res, err) {
         pcnum <- as.numeric(URLdecode(req$params$pc_num6))
 
-        l <- object@filterModuleList[[filter]]@PCAnnotatorData@loadings[,pcnum]
+        c <- object@latentSpace[, pcnum, drop = FALSE] # cells x 1
+        edata <- object@exprData # genes x cells
+        l <- edata %*% c
+        names(l) <- rownames(edata)
+
+        l <- sqrt(sum(l ^ 2)) # normalize the vector
 
         negl <- l[l < 0]
-        sumneg1 <- sum(negl)
-        nnegl <- vapply(negl, function(x) x / sumneg1, 1.0)
 
-        nnegl <- sort(nnegl, decreasing = TRUE)
-
-        js2 <- toJSON(with(stack(nnegl),
+        js2 <- toJSON(with(stack(negl),
                            tapply(values, ind, c, simplify = FALSE)))
 
         return(js2)
 
       }) %>%
-      get("/FilterGroup/(?<filter_name12>.*)/PCA/Coordinates", function(req, res, err) {
-        # projData <- object@projData
-        filter <- URLdecode(req$params$filter_name12)
+      get("/FilterGroup/PCA/Coordinates", function(req, res, err) {
 
-        pc <- object@filterModuleList[[filter]]@PCAnnotatorData@fullPCA
+        pc <- object@latentSpace
         out <- FastProjectR:::coordinatesToJSON(pc)
 
         return(out)
       }) %>%
-      get("/FilterGroup/(?<filter_name12>.*)/(?<sig_name5>.*)/(?<pc_num2>.*)/Coordinates", function(req, res, err) {
-        # projData <- object@projData
-        filter <- URLdecode(req$params$filter_name12)
-        pcnum <- as.numeric(URLdecode(req$params$pc_num2))
-        signame <- URLdecode(req$params$sig_name5)
+      get("/FilterGroup/PCVersus/(?<pc_num3>.*)/(?<pc_num4>.*)", function(req, res, err) {
 
-        pc <- object@filterModuleList[[filter]]@PCAnnotatorData@fullPCA[pcnum,]
-        # pc <- projData[[filter]]@fullPCA[pcnum,]
-        ss <- object@sigMatrix[,signame]
-
-        ret <- cbind(pc, ss)
-        coord <- apply(unname(ret), 1, as.list)
-        names(coord) <- rownames(ret)
-
-        return(toJSON(coord, force = TRUE, auto_unbox = TRUE))
-      }) %>%
-      get("/FilterGroup/(?<filter_name13>.*)/PCVersus/(?<pc_num3>.*)/(?<pc_num4>.*)", function(req, res, err) {
-        # projData <- object@projData
-        filter <- URLdecode(req$params$filter_name13)
         pc1 <- as.numeric(URLdecode(req$params$pc_num3))
         pc2 <- as.numeric(URLdecode(req$params$pc_num4))
 
-        pcdata1 <- object@filterModuleList[[filter]]@PCAnnotatorData@fullPCA[pc1,]
-        # pcdata1 <- projData[[filter]]@fullPCA[pc1,]
-        pcdata2 <- object@filterModuleList[[filter]]@PCAnnotatorData@fullPCA[pc2,]
-        # pcdata2 <- projData[[filter]]@fullPCA[pc2,]
+
+        pcdata1 <- object@latentSpace[, pc1]
+        pcdata2 <- object@latentSpace[, pc2]
 
 
         ret <- cbind(pcdata1, pcdata2)
@@ -534,34 +355,30 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         return(toJSON(coord, force = TRUE, auto_unbox = TRUE))
       }) %>%
-      get("/FilterGroup/(?<filter_name14>.*)/PearsonCorr/Normal", function(req, res, err) {
-          filter <- URLdecode(req$params$filter_name14)
+      get("/FilterGroup/PearsonCorr/Normal", function(req, res, err) {
 
-          signatures <- object@sigData
-          keys <- vapply(signatures, function(x) x@name, "")
-          vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
-          sigs <- keys[!vals]
-          pc <- object@filterModuleList[[filter]]@PCAnnotatorData@pearsonCorr
+          sigs <- colnames(object@sigScores)
+
+          pc <- object@PCAnnotatorData@pearsonCorr[, 1:10]
 
         return(FastProjectR:::pearsonCorrToJSON(pc, sigs))
       }) %>%
-      get("/FilterGroup/(?<filter_name15>.*)/PearsonCorr/Precomputed", function(req, res, err) {
-          filter <- URLdecode(req$params$filter_name15)
+      get("/FilterGroup/PearsonCorr/Meta", function(req, res, err) {
 
-          signatures <- object@sigData
-          keys <- vapply(signatures, function(x) x@name, "")
-          vals <- vapply(signatures, function(x) x@isPrecomputed, TRUE)
-          vals2 <- vapply(signatures, function(x) !x@isFactor, TRUE)
-          sigs <- keys[vals & vals2]
-          pc <- object@filterModuleList[[filter]]@PCAnnotatorData@pearsonCorr
+          sigs <- colnames(object@metaData)
+          numericMeta <- vapply(sigs,
+                                function(x) is.numeric(object@metaData[[x]]),
+                                FUN.VALUE = TRUE)
+          sigs <- sigs[numericMeta]
+
+          pc <- object@PCAnnotatorData@pearsonCorr[, 1:10]
 
         return(FastProjectR:::pearsonCorrToJSON(pc, sigs))
       }) %>%
-      get("/FilterGroup/(?<filter_name17>.*)/PearsonCorr/list", function(req, res, err) {
-          filter <- URLdecode(req$params$filter_name17)
+      get("/FilterGroup/PearsonCorr/list", function(req, res, err) {
 
-          pc <- object@filterModuleList[[filter]]@PCAnnotatorData@pearsonCorr
-          pcnames <- seq(ncol(pc))
+          pc <- object@PCAnnotatorData@pearsonCorr
+          pcnames <- seq(ncol(pc))[1:10]
           result <- toJSON(
                            pcnames,
                            force=TRUE, pretty=TRUE, auto_unbox=TRUE
@@ -570,7 +387,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       }) %>%
       get("/Expression/Genes/List", function(req, res, err) {
 
-        data <- getExprData(object@exprData)
+        data <- object@exprData
         genes = rownames(data)
 
         result <- toJSON(
@@ -583,7 +400,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       }) %>%
       get("/Expression/Gene/(?<gene_name2>.*)", function(req, res, err) {
 
-        data <- getExprData(object@exprData)
+        data <- log2(object@exprData + 1)
         gene_name <- URLdecode(req$params$gene_name2)
 
         result <- toJSON(
@@ -593,6 +410,62 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         return(result)
 
+      }) %>%
+      get("/Clusters/list", function(req, res, err) {
+        cluster_vars <- names(object@ClusterSigScores)
+        out <- toJSON(cluster_vars,
+                      force = TRUE, pretty = TRUE, auto_unbox = TRUE)
+        return(out)
+      }) %>%
+      get("/Clusters/(?<cluster_variable1>.*)/Cells", function(req, res, err) {
+        metaData <- object@metaData
+        cluster_variable <- URLdecode(req$params$cluster_variable1)
+        out <- "No Clusters!"
+        if (cluster_variable %in% colnames(metaData)) {
+          out <- FastProjectR:::sigScoresToJSON(metaData[cluster_variable])
+        }
+        return(out)
+      }) %>%
+      get("/Clusters/(?<cluster_variable2>.*)/SigProjMatrix/Normal", function(req, res, err) {
+
+        sigs <- colnames(object@sigScores)
+
+        cluster_variable <- URLdecode(req$params$cluster_variable2)
+        pvals <- fp@SigConsistencyScores@emp_pMatrix
+        zscores <- fp@SigConsistencyScores@sigProjMatrix
+
+        cluster_pvals <- fp@ClusterSigScores[[cluster_variable]]$pvals
+        cluster_zscores <- fp@ClusterSigScores[[cluster_variable]]$zscores
+
+        pvals <- pvals[rownames(cluster_pvals), , drop = F]
+        zscores <- zscores[rownames(cluster_zscores), , drop = F]
+
+        pvals <- cbind(pvals, cluster_pvals)
+        zscores <- cbind(zscores, cluster_zscores)
+
+        out <- FastProjectR:::sigProjMatrixToJSON(zscores, pvals, sigs)
+        return(out)
+      }) %>%
+      get("/Clusters/(?<cluster_variable3>.*)/SigProjMatrix/Meta", function(req, res, err) {
+
+        sigs <- colnames(object@metaData)
+
+        cluster_variable <- URLdecode(req$params$cluster_variable3)
+        pvals <- fp@SigConsistencyScores@emp_pMatrix
+        zscores <- fp@SigConsistencyScores@sigProjMatrix
+
+        cluster_pvals <- fp@ClusterSigScores[[cluster_variable]]$pvals
+        cluster_zscores <- fp@ClusterSigScores[[cluster_variable]]$zscores
+
+        pvals <- pvals[rownames(cluster_pvals), , drop = F]
+        zscores <- zscores[rownames(cluster_zscores), , drop = F]
+
+        pvals <- cbind(pvals, cluster_pvals)
+        zscores <- cbind(zscores, cluster_zscores)
+
+        out <- FastProjectR:::sigProjMatrixToJSON(zscores, pvals, sigs)
+
+        return(out)
       }) %>%
       get("/SessionInfo", function(req, res, err) {
 
@@ -604,7 +477,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             info["name"] <- ""
         }
 
-        W <- object@filterModuleList[["fano"]]@TreeProjectionData
+        W <- object@TreeProjectionData
         hasTree <- !is.null(W)
 
         info["has_tree"] <- hasTree
@@ -620,7 +493,6 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       post("/Analysis/Run/", function(req, res, err) {
         subset <- fromJSON(req$body)
         subset <- subset[!is.na(subset)]
-        allData <- object@allData
 
         if (length(object@pools) > 0) {
             clust <- object@pools[subset]

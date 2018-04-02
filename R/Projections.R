@@ -13,7 +13,6 @@ registerMethods <- function(lean=FALSE) {
     }
 
     projMethods <- c(projMethods, "tSNE30" = applytSNE30)
-    projMethods <- c(projMethods, "KNN" = applyKNN)
     projMethods <- c(projMethods, "tSNE10" = applytSNE10)
 
     return(projMethods)
@@ -22,106 +21,43 @@ registerMethods <- function(lean=FALSE) {
 #' Projects data into 2 dimensions using a variety of linear and non-linear methods.
 #'
 #' @importFrom stats quantile
-#' @param expr ExpressionData object
-#' @param weights weights estimated from FNR curve
-#' @param filterName name of filter, to extract correct data for projections
-#' @param inputProjections Precomputed projections
+#' @param expr numeric matrix of gene expression
+#' @param latentSpace numeric matrix cells x components
+#' @param projection_genes character vector of gene names to use for projections
 #' @param lean If TRUE, diminished number of algorithms applied,
 #' if FALSE all algorithms applied. Default is FALSE
-#' @param perm_wPCA If TRUE, apply permutation wPCA to determine significant
-#' number of components. Default is FALSE.
-#' @return list:
-#' \itemize{
-#'     \item projections: a list of Projection objects
-#'     \item geneNames: a character vector of the genes involved in the analsis
-#'     \item fullPCA: the full PCA matrix of the data
-#'     \item loadings: the loading vectors for the fullPCA matrix
-#'     \item permMats: a list of permuted and projected data matrices, used for
-#'     downstream permutation tests
-#' }
-generateProjections <- function(expr, weights, filterName="",
-                                inputProjections=c(), lean=FALSE,
-                                perm_wPCA=FALSE) {
+#' @return list of Projection objects
+generateProjectionsInner <- function(expr, latentSpace, projection_genes=NULL, lean=FALSE) {
 
-    if (filterName == "fano") {
-        exprData <- expr@fanoFilter
+    if (!is.null(projection_genes)) {
+        exprData <- expr[projection_genes, ]
     } else {
-        stop("FilterName not recognized: ", filterName)
+        exprData <- expr
     }
 
-    methodList = registerMethods(lean)
+    exprData <- matLog2(exprData)
 
-    if (perm_wPCA) {
-    res <- applyPermutationWPCA(exprData, weights, components=30)
-    pca_res <- res[[1]]
-    loadings <- res[[3]]
-    permMats <- res$permuteMatrices
-    } else {
-    res <- applyWeightedPCA(exprData, weights, maxComponents = 30)
-    pca_res <- res[[1]]
-    loadings <- res[[3]]
-    permMats <- NULL
-    #m <- profmem(pca_res <- applyWeightedPCA(exprData, weights, maxComponents = 30)[[1]])
-    }
+    methodList <- registerMethods(lean)
 
-    inputProjections <- c(inputProjections, Projection("PCA: 1,2", t(pca_res[c(1,2),])))
-    inputProjections <- c(inputProjections, Projection("PCA: 1,3", t(pca_res[c(1,3),])))
-    inputProjections <- c(inputProjections, Projection("PCA: 2,3", t(pca_res[c(2,3),])))
+    projections <- list()
 
-    fullPCA <- t(pca_res[1:min(10,nrow(pca_res)),])
-    fullPCA <- as.matrix(apply(fullPCA, 2, function(x) return( x - mean(x) )))
-
-    r <- apply(fullPCA, 1, function(x) sum(x^2))^(0.5)
-    r90 <- quantile(r, c(.9))[[1]]
-
-    if (r90 > 0) {
-    fullPCA <- fullPCA / r90
-    }
-    fullPCA <- t(fullPCA)
+    projections[["PCA: 1,2"]] <- latentSpace[, c(1, 2)]
+    projections[["PCA: 1,3"]] <- latentSpace[, c(1, 3)]
+    projections[["PCA: 2,3"]] <- latentSpace[, c(2, 3)]
 
     for (method in names(methodList)){
-    gc()
     message(method)
     ## run on raw data
     if (method == "ICA" || method == "RBF Kernel PCA") {
         res <- methodList[[method]](exprData)
-        proj <- Projection(method, res)
-        inputProjections <- c(inputProjections, proj)
-    } else if (method == "KNN") {
-        res <- methodList[[method]](pca_res)
-        proj <- Projection(method, res, weights=res)
-        inputProjections <- c(inputProjections, proj)
+        projections[[method]] <- res
     } else { ## run on reduced data
-        res <- methodList[[method]](pca_res)
-        proj <- Projection(method, res)
-        inputProjections <- c(inputProjections, proj)
+        res <- methodList[[method]](t(latentSpace))
+        projections[[method]] <- res
         }
     }
 
-    output <- list()
-
-    for (p in inputProjections) {
-        coordinates <- p@pData
-
-        coordinates <- as.matrix(apply(coordinates, 2, function(x) return( x - mean(x) )))
-
-        r <- apply(coordinates, 1, function(x) sum(x^2))^(0.5)
-        r90 <- quantile(r, c(.9))[[1]]
-
-        if (r90 > 0) {
-        coordinates <- coordinates / r90
-        }
-
-        coordinates <- t(coordinates)
-        p <- updateProjection(p, data=coordinates)
-        output[[p@name]] = p
-
-        }
-
-    output[["KNN"]]@pData <- output[["tSNE30"]]@pData
-
-    return(list(projections = output, geneNames = rownames(exprData),
-                fullPCA = fullPCA, loadings = loadings, permMats = permMats))
+    return(projections)
 }
 
 #' Genrate projections based on a tree structure learned in high dimensonal space
@@ -129,20 +65,21 @@ generateProjections <- function(expr, weights, filterName="",
 #' @importFrom stats quantile
 #' @param data the data to fit the tree to. Should be lower dimensional than
 #' full data.
-#' @param filterName the filtered data to use
-#' @param inputProjections a list of Projection objects. For each Projection, a
-#' corresponding TreeProjection will be created in which the scores are based
+#' @param inputProjections a list of matrices, cells X 2
+#' corresponding TreeProjection will be created. The scores are based
 #' on geodesic distances instead of euclidean one
 #' @param permMats a list of matrices to use as a null distribution for
 #' estimating the significance of the fitted tree. These are generated by the
 #' permutation wPCA algorithm upstream
 #' @return a list:
 #' \itemize{
-#'     \item projections a list of TreeProjection objects
+#'     \item latentTree TreeProjection object for the main tree
+#'     \item projections a list of TreeProjection objects, mapping the latent
+#'           into the projection's 2d space for visualization purposes
 #'     \item treeScore a score representing the singificance of the fitten tree
 #'     return(list(projections = output, treeScore = hdTree$zscore))
 #' }
-generateTreeProjections <- function(data, filterName="",
+generateTreeProjections <- function(data,
                                     inputProjections, permMats = NULL) {
 
     hdTree <- applySimplePPT(data, permExprData = permMats)
@@ -152,21 +89,22 @@ generateTreeProjections <- function(data, filterName="",
     pptNeighborhood <- findNeighbors(data, hdTree$princPnts, 5)
 
     output <- list()
-    output[[hdProj@name]] <- hdProj
 
-    for (proj in inputProjections) {
+    for (name in names(inputProjections)) {
+        proj <- inputProjections[[name]]
         new_coords <- vapply(pptNeighborhood,
                              function(n)  {
-                                 centroid <- proj@pData[, n$index] %*% t(n$dist / sum(n$dist))
+                                 centroid <- t((n$dist / sum(n$dist)) %*% proj[n$index, ])
                                  return(centroid)
                              },
                              c(0.0, 0.0))
-        treeProj <- TreeProjection(name = proj@name, pData = proj@pData,
+        treeProj <- TreeProjection(name = name, pData = proj,
                                   vData = new_coords, adjMat = hdTree$adjMat)
         output[[treeProj@name]] <- treeProj
     }
 
-    return(list(projections = output, treeScore = hdTree$zscore))
+    return(list(latentTree = hdProj, projections = output,
+                treeScore = hdTree$zscore))
 }
 
 #' Performs weighted PCA on data
@@ -268,7 +206,7 @@ applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05) 
     }
 
     mu <- as.matrix(apply(bg_vals, 2, mean))
-    sigma <- as.matrix(apply(bg_vals, 2, biasedVectorSD))
+    sigma <- as.matrix(apply(bg_vals, 2, sd))
     sigma[sigma==0] <- 1.0
 
     # Compute pvals from survival function & threshold components
@@ -385,33 +323,6 @@ applytSNE30 <- function(exprData) {
     return(res)
 }
 
-#' create a Knearest neighbor graph from the data
-#'
-#' @importFrom Matrix rowSums
-#' @param exprData the data to base the KNN graph on
-#'
-#' @return the weghted adjacency matrix of the KNN graph
-applyKNN <- function(exprData) {
-
-    n_workers <- getWorkerCount()
-    k <- ball_tree_knn(t(exprData), round(sqrt(ncol(exprData))), n_workers)
-
-    nn <- k[[1]]
-    d <- k[[2]]
-
-    sigma <- apply(d, 1, max)
-
-    sparse_weights <- exp(-1 * (d * d) / sigma^2)
-    weights <- load_in_knn(nn, sparse_weights)
-
-    weightsNormFactor <- rowSums(weights)
-    weightsNormFactor[weightsNormFactor == 0] <- 1.0
-    weightsNormFactor[is.na(weightsNormFactor)] <- 1.0
-    weights <- weights / weightsNormFactor
-
-    return(weights)
-}
-
 #' Performs ISOMap on data
 #'
 #' @importFrom RDRToolbox Isomap
@@ -488,3 +399,43 @@ clipBottom <- function(x, mi) {
     x[x < mi] <- mi
     return(x)
 }
+
+#' compute for each vector the weights to apply to it's K nearest neighbors
+#' @importFrom Matrix rowSums
+#' @importFrom Matrix sparseMatrix
+#' @importFrom matrixStats rowMaxs
+#' @param object matrix to use for KNN
+#' @param K number of neighbors to compute this for
+#' @return a weights matrix
+setMethod("computeKNNWeights", signature(object = "matrix"),
+    function(object, K = round(sqrt(nrow(object)))) {
+
+        n_workers <- getWorkerCount()
+
+        k <- ball_tree_knn(object, K, n_workers)
+        nn <- k[[1]]
+        d <- k[[2]]
+
+        sigma <- rowMaxs(d)
+        sparse_weights <- exp(-1 * (d * d) / sigma ^ 2)
+
+        # Normalize row sums = 1
+        weightsNormFactor <- rowSums(sparse_weights)
+        weightsNormFactor[weightsNormFactor == 0] <- 1.0
+        sparse_weights <- sparse_weights / weightsNormFactor
+
+        # load into a sparse matrix
+        tnn <- t(nn)
+        j <- as.numeric(tnn)
+        i <- as.numeric(col(tnn))
+        vals <- as.numeric(t(sparse_weights))
+        dims <- c(nrow(nn), nrow(nn))
+        dimnames <- list(rownames(object), rownames(object))
+
+        weights <- sparseMatrix(i = i, j = j, x = vals,
+                                dims = dims, dimnames = dimnames
+                               )
+
+        return(weights)
+    }
+)

@@ -3,19 +3,19 @@ context("Filter Expression Data")
 test_that("Threshold filter returns null on test matrix", {
 
   data <- matrix(c(c(1,0,0), c(0,0,1), c(0,0,0)), nrow=3, ncol=3, byrow=T)
-  tdata <- filterGenesThreshold(data, 3)
-  expect_equal(nrow(tdata), 0)
-  expect_equal(ncol(tdata), 3)
+  genes_passing <- filterGenesThreshold(data, 3)
+  expect_equal(length(genes_passing), 0)
 })
 
 test_that("All filters reduce rows, not columns", {
-  data <- readExprAsMatrix("test_data/expression_matrix.txt")
-  exprData <- ExpressionData(data)
-  filters <- c("fano")
-  filteredData <- applyFilters(getExprData(exprData), 20, filters)
-  
-  expect_equal(ncol(filteredData), ncol(data))
-  expect_true(nrow(filteredData) <= nrow(data))
-  
-})
+  data <- read.table("test_data/expression_matrix.txt",
+                    sep = "\t", header = TRUE)
 
+  filters <- c("fano")
+  genes_passing <- applyFilters(data, 20, filters)
+
+  expect_true(length(genes_passing) <= nrow(data))
+  expect_true(
+      length(intersect(genes_passing, rownames(data))) ==
+          length(genes_passing))
+})

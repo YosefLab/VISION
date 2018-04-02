@@ -4,21 +4,21 @@
 \alias{clusterSignatures}
 \title{Clusters signatures according to the rank sum}
 \usage{
-clusterSignatures(sigList, sigMatrix, pvals)
+clusterSignatures(sigMatrix, metaData, pvals, clusterMeta)
 }
 \arguments{
-\item{sigList}{List of signatures}
+\item{sigMatrix}{matrix of signatures scores, NUM_SAMPLES x NUM_SIGNATURES}
 
-\item{sigMatrix}{data.frame of signatures scores, NUM_SAMPLES x NUM_SIGNATURES}
+\item{metaData}{data.frame of meta-data for cells}
 
-\item{pvals}{the corresponding P-values for each score,
+\item{pvals}{the corresponding P-values for each signature
 NUM_SIGNATURES x NUM_SAMPLES}
 }
 \value{
 a list:
 \itemize{
     \item Computed: a list of clusters of computed signatures
-    \item Precomputed: a list of clusters of precomputed signatures
+    \item Meta: a list of clusters of meta data signatures
 }
 }
 \description{

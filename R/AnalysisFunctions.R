@@ -1,3 +1,74 @@
+#' Creates an initial clustering of the cells
+#'
+#' Results of this are stored as a new variabe in the object's metaData
+#' and 'cluster_variable' is populated with its name
+#'
+#' @param object the FastProject object for which to cluster the cells
+#' @return the FastProject object modifed as described above
+clusterCells <- function(object) {
+
+    message("Clustering cells...")
+
+    if (sum(dim(object@latentSpace)) == 2) { # No latent Space
+
+        exprData <- matLog2(object@exprData)
+        filterInput <- object@projection_genes
+        filterThreshold <- object@threshold
+
+        gene_passes <- applyFilters(exprData, filterThreshold, filterInput)
+        fexpr <- exprData[gene_passes, ]
+
+        # Compute wcov using matrix operations to avoid
+        # creating a large dense matrix
+
+        N <- ncol(fexpr)
+        wcov <- tcrossprod(fexpr) / N
+
+        mu <- as.matrix(rowMeans(fexpr), ncol = 1)
+        mumu <- tcrossprod(mu)
+        wcov <- as.matrix(wcov - mumu)
+
+        # SVD of wieghted correlation matrix
+        ncomp <- min(ncol(fexpr), nrow(fexpr), 10)
+        decomp <- rsvd::rsvd(wcov, k = ncomp)
+        evec <- t(decomp$u)
+
+        # Project down using computed eigenvectors
+        res <- (evec %*% fexpr) - as.vector(evec %*% mu)
+        res <- as.matrix(res)
+        res <- t(res) # avoid transposing many times below
+    } else {
+        res <- object@latentSpace
+    }
+
+    n_workers <- getWorkerCount()
+
+    kn <- ball_tree_knn(res,
+                        min(round(sqrt(nrow(res))), 30),
+                        n_workers)
+
+    cl <- louvainCluster(kn, res)
+
+    names(cl) <- paste('Cluster', seq(length(cl)))
+
+    # cl is list of character vector
+    cluster_variable <- "FastProject_Clusters"
+    metaData <- object@metaData
+
+    metaData[cluster_variable] <- factor(levels = names(cl))
+
+    for (cluster in names(cl)) {
+        metaData[cl[[cluster]], cluster_variable] <- cluster
+    }
+
+    object@metaData <- metaData
+    object@cluster_variable <- cluster_variable
+
+    return(object)
+
+}
+
+
 #' create micro-clusters that reduce noise and complexity while maintaining
 #' the overall signal in the data
 #' @param object the FastProject object for which to cluster the cells
@@ -6,13 +77,56 @@
 poolCells <- function(object,
                       cellsPerPartition=object@cellsPerPartition) {
     object@cellsPerPartition <- cellsPerPartition
-    microclusters <- applyMicroClustering(getExprData(object@exprData),
+
+    message(paste(
+      "Performing micro-pooling on",
+      ncol(object@exprData),
+      "cells with a target pool size of",
+      object@cellsPerPartition
+    ))
+
+    if (object@cluster_variable != "") {
+        preserve_clusters <- object@metaData[[object@cluster_variable]]
+        names(preserve_clusters) <- rownames(object@metaData)
+    } else {
+        preserve_clusters <- NULL
+    }
+
+    pools <- applyMicroClustering(object@exprData,
                                           cellsPerPartition = object@cellsPerPartition,
                                           filterInput = object@projection_genes,
-                                          filterThreshold = object@threshold)
+                                          filterThreshold = object@threshold,
+                                          preserve_clusters = preserve_clusters,
+                                          latentSpace = object@latentSpace)
 
-    object@exprData <- ExpressionData(microclusters[[1]])
-    object@pools <- microclusters[[2]]
+    object@pools <- pools
+
+    pooled_cells <- createPoolsBatch(object@pools, object@exprData)
+    object@exprData <- pooled_cells
+
+    if (!all(dim(object@latentSpace) == c(1, 1))) {
+        pooled_latent <- t(createPoolsBatch(object@pools, t(object@latentSpace)))
+        object@latentSpace <- pooled_latent
+    }
+
+    poolMeta <- createPooledMetaData(object@metaData, object@pools)
+    object@metaData <- poolMeta
+
+    if (length(object@inputProjections) > 0){
+
+        newInputProjections <- lapply(
+            object@inputProjections,
+            function(proj) {
+                new_coords <- t(createPoolsBatch(object@pools, t(proj)))
+                return(new_coords)
+            })
+
+        names(newInputProjections) <- names(object@inputProjections)
+
+        object@inputProjections <- newInputProjections
+
+    }
+
     return(object)
 }
 
@@ -31,12 +145,14 @@ filterData <- function(object,
     message("Determining Projection Genes...")
 
     if (object@threshold == 0) {
-        num_samples <- ncol(getExprData(object@exprData))
+        num_samples <- ncol(object@exprData)
         object@threshold <- round(0.2 * num_samples)
     }
 
-    object@exprData@fanoFilter <- applyFilters(
-                getExprData(object@exprData),
+    exprData <- matLog2(object@exprData)
+
+    object@projection_genes <- applyFilters(
+                exprData,
                 object@threshold,
                 object@projection_genes)
 
@@ -52,22 +168,19 @@ filterData <- function(object,
 calcWeights <- function(object,
                         nomodel=object@nomodel) {
     object@nomodel <- nomodel
-    clustered <- (ncol(getExprData(object@exprData)) > 15000 || object@pool)
+    clustered <- (ncol(object@exprData) > 15000 || object@pool)
     if (!clustered && !object@nomodel) {
         message("Computing weights from False Negative Rate curves...")
-        falseneg_out <- createFalseNegativeMap(getExprData(object@exprData),
+        falseneg_out <- createFalseNegativeMap(object@exprData,
                                                object@housekeepingData)
         object@weights <- computeWeights(falseneg_out[[1]], falseneg_out[[2]],
                                          object@exprData)
 
-    } else if (all(is.na(object@weights)) ||
-               ncol(object@weights) != ncol(getExprData(object@exprData))) {
-        object@weights <- matrix(1L, nrow=nrow(getExprData(object@exprData)),
-                                 ncol=ncol(getExprData(object@exprData)))
+        rownames(object@weights) <- rownames(object@exprData)
+        colnames(object@weights) <- colnames(object@exprData)
+
     }
 
-    rownames(object@weights) <- rownames(getExprData(object@exprData))
-    colnames(object@weights) <- colnames(getExprData(object@exprData))
     return(object)
 }
 
@@ -80,7 +193,7 @@ calcWeights <- function(object,
 #'
 #' @param object the FastProject object
 #' @param sigData a list of Signature objects for which to compute the scores
-#' @param precomputedData a list of existing cell-signatures
+#' @param metaData a list of existing cell-signatures
 #' @param sig_norm_method (optional) Method to apply to normalize the expression
 #' matrix before calculating signature scores
 #' @param sig_score_method the scoring method to use
@@ -89,7 +202,7 @@ calcWeights <- function(object,
 #' @return the FastProject object, with signature score slots populated
 calcSignatureScores <- function(object,
                                 sigData=object@sigData,
-                                precomputedData=object@precomputedData,
+                                metaData=object@metaData,
                                 sig_norm_method=object@sig_norm_method,
                                 sig_score_method=object@sig_score_method,
                                 min_signature_genes=object@min_signature_genes) {
@@ -98,7 +211,7 @@ calcSignatureScores <- function(object,
 
     ## override object parameters
     if(!is.null(sigData)) object@sigData <- sigData
-    if(!is.null(precomputedData)) object@precomputedData <- precomputedData
+    if(!is.null(metaData)) object@metaData <- metaData
     object@sig_norm_method <- sig_norm_method
     object@sig_score_method <- sig_score_method
     object@min_signature_genes <- min_signature_genes
@@ -108,260 +221,350 @@ calcSignatureScores <- function(object,
     sigScores <- batchSigEval(object@sigData, object@sig_score_method,
                               normExpr, object@weights, object@min_signature_genes)
 
-    sigList <- object@sigData
-    for (s in object@precomputedData) {
-
-        if(is.null(object@pools)){
-            sigScores[[s@name]] <- s
-        } else {
-            if(s@isFactor){
-                ## Need to compute majority level in each group
-                N_MicroClusters <- ncol(normExpr)
-                newlevels <- union("~", levels(s@scores))
-
-                # vector to store the final levels in
-                clustScores <- factor(integer(N_MicroClusters),
-                                levels=newlevels)
-                names(clustScores) <- colnames(normExpr)
-
-                # vectors for the proportion of each cluster level
-                clustScoresLevels = list()
-                for (level in levels(s@scores)) {
-                    clustScoresL <- numeric(N_MicroClusters)
-                    names(clustScoresL) <- colnames(normExpr)
-                    clustScoresLevels[[level]] <- clustScoresL
-                }
-
-
-                for(clust in names(clustScores)){
-
-                    pool <- object@pools[[clust]]
-
-                    if(length(pool) == 0){ #TODO: This shouldn't happen
-                        clustScores[clust] <- "~"
-                        next
-                    }
-
-                    vals <- s@scores[match(pool, names(s@scores))]
-                    freq <- table(vals) / length(vals)
-                    maxval <- freq[which.max(freq)]
-                    if(maxval >= .5){
-                        clust_val <- names(maxval)
-                    } else {
-                        clust_val <- "~"
-                    }
-                    clustScores[clust] <- clust_val
-
-                    for (level in names(freq)){
-                        clustScoresLevels[[level]][clust] <- freq[level]
-                    }
-                }
-
-                for (level in names(clustScoresLevels)){
-                    newSig <- SignatureScores(
-                                  scores = clustScoresLevels[[level]],
-                                  name = paste(s@name, level, sep = "_"),
-                                  isFactor = FALSE, isPrecomputed = TRUE,
-                                  numGenes = 0)
-
-                    sigScores[[newSig@name]] <- newSig
-
-                    # Also have to add it to the list of signatures
-                    # to keep them in sync
-                    sigList[[newSig@name]] <- Signature(
-                                list(), newSig@name, "", "",
-                                isFactor = FALSE, isPrecomputed = TRUE)
-
-                }
-            } else { # Then it must be numeric, just average
-
-                ## Need to compute majority level in each group
-                N_MicroClusters <- ncol(normExpr)
-
-                clustScores <- numeric(N_MicroClusters)
-                names(clustScores) <- colnames(normExpr)
-                for(clust in names(clustScores)){
-
-                    pool <- object@pools[[clust]]
-
-                    if(length(pool) == 0){ #TODO: This shouldn't happen
-                        clustScores[clust] = 0
-                        next
-                    }
-
-                    vals <- s@scores[match(pool, names(s@scores))]
-                    clust_val = mean(vals)
-                    clustScores[clust] = clust_val
-                }
-            }
-
-            sigScores[[s@name]] <- SignatureScores(
-                                       clustScores, s@name, s@isFactor,
-                                       s@isPrecomputed, 0)
-        }
-
-
-        sigList[[s@name]] <- Signature(list(), s@name, "", "",
-                                       isPrecomputed=TRUE,
-                                       isFactor=s@isFactor)
-    }
-
-    # Remove any signatures that didn't compute correctly
-    toRemove <- vapply(sigScores, is.null, TRUE)
-    sigScores <- sigScores[!toRemove]
     object@sigScores <- sigScores
-
-    ## Convert Sig Scores to matrix
-    # Note: This needs to be a data frame because some scores are factors
-    object@sigMatrix = data.frame(lapply(sigScores, function(x) x@scores),
-                                  check.names=FALSE)
-
-    object@sigData <- sigList[colnames(object@sigMatrix)]
 
     return(object)
 }
 
-#' analyze projections
+#' Computes the latent space of the expression matrix using PCA
+#'
+#' @param object the FastProject object for which compute the latent space
+#' @param projection_genes character vector of gene names to use for projections
+#' @param perm_wPCA If TRUE, apply permutation wPCA to determine significant
+#' number of components. Default is FALSE.
+#' @return the FastProject with latentSpace populated
+computeLatentSpace <- function(object, projection_genes = NULL,
+                               perm_wPCA = NULL) {
+
+    message("Computing a latent space for expression data...")
+
+    if (!is.null(projection_genes)) object@projection_genes <- projection_genes
+    if (!is.null(perm_wPCA)) object@perm_wPCA <- perm_wPCA
+
+    expr <- object@exprData
+    weights <- object@weights
+    projection_genes <- object@projection_genes
+    perm_wPCA <- object@perm_wPCA
+
+    if (!is.null(projection_genes)) {
+        exprData <- expr[projection_genes, ]
+    } else {
+        exprData <- expr
+    }
+
+    if (all(dim(weights) == c(1, 1))){
+        weights <- matrix(1, nrow = nrow(exprData), ncol = ncol(exprData),
+                          dimnames = list(
+                                          rownames(exprData),
+                                          colnames(exprData)
+                                         )
+                         )
+    }
+
+    exprData <- matLog2(exprData)
+
+    if (perm_wPCA) {
+        res <- applyPermutationWPCA(exprData, weights, components = 30)
+        pca_res <- res[[1]]
+    } else {
+        res <- applyWeightedPCA(exprData, weights, maxComponents = 30)
+        pca_res <- res[[1]]
+    }
+
+    object@latentSpace <- t(pca_res)
+    return(object)
+}
+
+#' generate projections
+#'
+#' Generates 2-dimensional representations of the expression matrix
+#' Populates the 'Projections' slot on the FastProject object
+#'
+#'
+#' @param object the FastProject object
+#' @param lean if TRUE run a lean simulation. Else more robust pipeline
+#' initiated. Default is FALSE
+#' @return the FastProject object with values set for the analysis results
+generateProjections <- function(object, lean=object@lean) {
+  message("Projecting data into 2 dimensions...")
+
+  object@lean <- lean
+
+  projections <- generateProjectionsInner(object@exprData,
+                                     object@latentSpace,
+                                     projection_genes = object@projection_genes,
+                                     lean = object@lean)
+
+  # Add inputProjections
+  for (proj in names(object@inputProjections)){
+      projections[[proj]] <- object@inputProjections[[proj]]
+  }
+
+  object@Projections <- projections
+
+  return(object)
+}
+
+#' Compute spatial correlations for all signatures
 #'
 #' This is the main analysis function. For each filtered dataset, a set of
 #' different projection onto low-dimensional space are computed, and the
 #' consistency of the resulting space with the signature scores is computed
 #' to find signals that are captured succesfully by the projections.
 #' @param object the FastProject object
-#' @param lean if TRUE run a lean simulation. Else more robust pipeline
-#' initiated. Default is FALSE
-#' @param perm_wPCA If TRUE, apply permutation WPCA to calculate significant
-#' number of PCs. Else not. Default FALSE.
+#' @param signatureBackground as returned by `calculateSignatureBackground`
 #' @return the FastProject object with values set for the analysis results
-analyzeProjections <- function(object,
-                               lean=object@lean,
-                               perm_wPCA=object@perm_wPCA) {
+analyzeSpatialCorrelations <- function(object, signatureBackground = NULL) {
 
-  object@lean <- lean
-  object@perm_wPCA <- perm_wPCA
+  if (is.null(signatureBackground)){
+      message("Computing background distribution for signature scores...")
+      signatureBackground <- calculateSignatureBackground(object, num = 3000)
+  }
 
-  message("Computing background distribution for signature scores...")
-  randomSigScores <- calculateSignatureBackground(object, num=3000)
+  message("Evaluating spatial consistency of signatures...")
 
-  # Apply projections to filtered gene sets, create new projectionData object
-  filterModuleList <- list()
-  filter <- "fano"
-
-  message("Projecting data into 2 dimensions...")
-
-  projectData <- generateProjections(object@exprData, object@weights,
-                                     filter,
-                                     inputProjections=object@inputProjections,
-                                     lean=object@lean,
-                                     perm_wPCA=object@perm_wPCA)
-
-  message("Evaluating signatures against projections...")
-  sigVProj <- sigsVsProjections(projectData$projections,
+  sigConsistencyScores <- sigConsistencyScores(
+                                object@latentSpace,
                                 object@sigScores,
-                                randomSigScores)
+                                object@metaData,
+                                signatureBackground)
 
   message("Clustering Signatures...")
-  sigClusters <- clusterSignatures(object@sigData, object@sigMatrix,
-                                   sigVProj$pVals,
-                                   clusterPrecomputed = object@pool)
+  sigClusters <- clusterSignatures(object@sigScores,
+                                   object@metaData,
+                                   sigConsistencyScores$emp_pVals,
+                                   clusterMeta = object@pool)
 
-  projData <- ProjectionData(projections = projectData$projections,
-                             keys = colnames(sigVProj$sigProjMatrix),
-                             sigProjMatrix = sigVProj$sigProjMatrix,
-                             pMatrix = sigVProj$pVals,
+  sigConsistencyScoresData <- ProjectionData(
+                             sigProjMatrix = sigConsistencyScores$sigProjMatrix,
+                             pMatrix = sigConsistencyScores$pVals,
                              sigClusters = sigClusters,
-                             emp_pMatrix = sigVProj$emp_pVals)
+                             emp_pMatrix = sigConsistencyScores$emp_pVals)
+
+  object@SigConsistencyScores <- sigConsistencyScoresData
+
+  return(object)
+}
+
+
+#' Compute trajectory correlations for all signatures
+#'
+#' This is the main analysis function. For each filtered dataset, a set of
+#' different projection onto low-dimensional space are computed, and the
+#' consistency of the resulting space with the signature scores is computed
+#' to find signals that are captured succesfully by the projections.
+#' @param object the FastProject object
+#' @param signatureBackground as returned by `calculateSignatureBackground`
+#' @return the FastProject object with values set for the analysis results
+analyzeTrajectoryCorrelations <- function(object, signatureBackground = NULL) {
+
+  if (is.null(signatureBackground)){
+      message("Computing background distribution for signature scores...")
+      signatureBackground <- calculateSignatureBackground(object, num = 3000)
+  }
 
   if (tolower(object@trajectory_method) != "none") {
       message("Fitting principle tree...")
-      treeProjs <- generateTreeProjections(projectData$fullPCA, filter,
-                                 inputProjections = projectData$projections,
-                                 permMats = projectData$permMats)
+      treeProjs <- generateTreeProjections(object@latentSpace,
+                                 inputProjections = object@Projections)
 
       message("Computing significance of signatures...")
-      sigVTreeProj <- sigsVsProjections(treeProjs$projections,
-                                        object@sigScores,
-                                        randomSigScores)
+      sigVTreeProj <- sigConsistencyScores(treeProjs$latentTree,
+                                           object@sigScores,
+                                           object@metaData,
+                                           signatureBackground)
 
       message("Clustering Signatures...")
-      sigTreeClusters <- clusterSignatures(object@sigData, object@sigMatrix,
+      sigTreeClusters <- clusterSignatures(object@sigScores,
+                                           object@metaData,
                                            sigVTreeProj$pVals,
-                                           clusterPrecomputed = object@pool)
+                                           clusterMeta = object@pool)
 
-      treeProjData <- TreeProjectionData(projections = treeProjs$projections,
-                                 keys = colnames(sigVTreeProj$sigProjMatrix),
+      treeProjData <- TreeProjectionData(
+                                 latentTree = treeProjs$latentTree,
+                                 projections = treeProjs$projections,
                                  sigProjMatrix = sigVTreeProj$sigProjMatrix,
                                  pMatrix = sigVTreeProj$pVals,
+                                 emp_pMatrix = sigVTreeProj$emp_pVals,
                                  sigClusters = sigTreeClusters,
                                  treeScore = treeProjs$treeScore)
-  } else {
-      treeProjData <- NULL
+
+      object@TreeProjectionData <- treeProjData
   }
 
-  message("Computing Correlations between Signatures and Expression PCs...")
-  pearsonCorr <- calculatePearsonCorr(object@sigData,
-                     object@sigMatrix, projectData$fullPCA)
-
-
-  pcaAnnotData <- PCAnnotatorData(fullPCA = projectData$fullPCA,
-                                  pearsonCorr = pearsonCorr,
-                                  loadings = projectData$loadings)
-
-  filterModuleData <- FilterModuleData(filter = filter,
-                                       genes = projectData$geneNames,
-                                       ProjectionData = projData,
-                                       TreeProjectionData = treeProjData,
-                                       PCAnnotatorData = pcaAnnotData)
-
-  filterModuleList[[filter]] <- filterModuleData
-
-
-  object@filterModuleList <- filterModuleList
   return(object)
+}
+
+#' Compute KS Test, for all factor meta data.  One level vs all others
+#'
+#' @param object the FastProject object
+#' @return the FastProject object with values set for the analysis results
+clusterSigScores <- function(object) {
+
+    sigScores <- object@sigScores
+    metaData <- object@metaData
+
+    metaData <- metaData[rownames(sigScores), ]
+
+    # Determine which metaData we can run on
+    # Must be a factor with at least 20 levels
+    clusterMeta <- vapply(colnames(metaData), function(x) {
+            scores <- metaData[[x]]
+            if (is.factor(scores) && length(levels(scores)) <= 20){
+                return(x)
+            } else {
+                return("")
+            }
+        }, FUN.VALUE = "")
+    clusterMeta <- clusterMeta[clusterMeta != ""]
+
+    clusterPVals <- function(sigScores, metaData, variable) {
+
+        values <- metaData[[variable]]
+        var_levels <- levels(values)
+
+        result <- lapply(var_levels, function(var_level){
+
+            cluster_ii <- which(values == var_level)
+            not_cluster_ii <- which(values != var_level)
+
+            # Process the gene signatures
+            pvals <- lapply(colnames(sigScores), function(sig){
+                suppressWarnings({
+                    out_l <- ks.test(sigScores[cluster_ii, sig],
+                                   sigScores[not_cluster_ii, sig],
+                                   alternative = "less", exact = FALSE)
+                    out_g <- ks.test(sigScores[cluster_ii, sig],
+                                   sigScores[not_cluster_ii, sig],
+                                   alternative = "greater", exact = FALSE)
+                })
+                if (out_l$p.value < out_g$p.value) {
+                    pval <- out_l$p.value
+                    stat <- out_l$statistic
+                } else {
+                    pval <- out_g$p.value
+                    stat <- out_g$statistic*-1
+                }
+                return(list(pval = pval, stat = stat))
+            })
+            names(pvals) <- colnames(sigScores)
+
+            # Process the metaData variables
+            meta_pvals <- lapply(colnames(metaData), function(sig){
+
+                if (is.numeric(metaData[, sig])) {
+                    suppressWarnings({
+
+                        out_l <- ks.test(metaData[cluster_ii, sig],
+                                       metaData[not_cluster_ii, sig],
+                                       alternative = "less", exact = FALSE)
+                        out_g <- ks.test(metaData[cluster_ii, sig],
+                                       metaData[not_cluster_ii, sig],
+                                       alternative = "greater", exact = FALSE)
+                    })
+                    if (out_l$p.value < out_g$p.value) {
+                        pval <- out_l$p.value
+                        stat <- out_l$statistic
+                    } else {
+                        pval <- out_g$p.value
+                        stat <- out_g$statistic*-1
+                    }
+
+                } else if (is.factor(metaData[, sig])) {
+                    sigvals <- metaData[, sig, drop = F]
+                    sigvals[, 2] <- 0
+                    sigvals[cluster_ii, 2] <- 1
+                    sigvals[, 2] <- as.factor(sigvals[, 2])
+                    M <- table(sigvals)
+                    suppressWarnings(
+                        out <- chisq.test(M)
+                    )
+                    pval <- out$p.value
+                    stat <- max(log10(out$p.value), -300)*-1 / 10
+                }
+                return(list(pval = pval, stat = stat))
+            })
+            names(meta_pvals) <- colnames(metaData)
+
+            all <- c(pvals, meta_pvals)
+            all_pvals <- vapply(all, function(x) x$pval, FUN.VALUE = 0.0)
+            all_zscores <- vapply(all, function(x) x$stat, FUN.VALUE = 0.0)
+
+            return(list(pvals = all_pvals, zscores = all_zscores))
+        })
+        names(result) <- var_levels
+        zscores <- do.call(cbind,
+                         lapply(result, function(x) x$zscores))
+        pvals <- do.call(cbind,
+                         lapply(result, function(x) x$pvals))
+
+        pvals_adj <- apply(pvals, MARGIN = 2, FUN = p.adjust, method = "BH")
+        pvals_adj[pvals_adj < 1e-300] <- 1e-300
+        pvals_adj <- log10(pvals_adj)
+        return(list(pvals = pvals_adj, zscores = zscores))
+    }
+
+    pvalsAndZscores <- lapply(clusterMeta, function(variable){
+        result <- clusterPVals(sigScores, metaData, variable)
+        return(result)
+    })
+
+    object@ClusterSigScores <- pvalsAndZscores
+    return(object)
+
 }
 
 #' Compute pearson correlation between signature scores and principle components
 #'
+#' Populations the PCAnnotatorData slot of the FastProject object
+#'
 #' @importFrom Hmisc rcorr
-#' @param sigData List of Signature
-#' @param sigMatrix Signature scores dataframe
-#' @param fullPCA numeric matrix N_Cells x N_PCs
+#' @param object the FastProject object
 #' @return pearsonCorr numeric matrix N_Signatures x N_PCs
-calculatePearsonCorr <- function(sigData, sigMatrix, fullPCA){
+calculatePearsonCorr <- function(object){
 
-  ## remove the factors from the pearson correlation calculation
+  message("Computing Correlations between Signatures and Expression PCs...")
+  sigMatrix <- object@sigScores
+  metaData <- object@metaData
+  latentSpace <- object@latentSpace
 
-  non_factor_sigs <- vapply(colnames(sigMatrix),
-                            function(sigName) !sigData[[sigName]]@isFactor,
+  ## combined gene signs and numeric meta variables
+
+  numericMetaVars <- vapply(colnames(metaData),
+                            function(x) is.numeric(metaData[[x]]),
                             FUN.VALUE = TRUE)
 
+  numericMeta <- metaData[, numericMetaVars, drop = FALSE]
+  numericMeta <- numericMeta[rownames(sigMatrix), , drop = FALSE]
 
-  computedSigMatrix <- sigMatrix[, non_factor_sigs, drop=FALSE]
 
+  computedSigMatrix <- cbind(sigMatrix, numericMeta)
 
   pearsonCorr <- lapply(1:ncol(computedSigMatrix), function(i) {
-    lapply(1:nrow(fullPCA), function(j) {
+    lapply(1:ncol(latentSpace), function(j) {
                ss <- computedSigMatrix[, i];
-               pc <- fullPCA[j, ];
-               pc_result <- rcorr(ss, pc, type="pearson")
-               return(pc_result[[1]][1,2])
+               pc <- latentSpace[, j];
+               pc_result <- rcorr(ss, pc, type = "pearson")
+               return(pc_result[[1]][1, 2])
     })
   })
 
   pearsonCorr <- matrix(unlist(lapply(pearsonCorr, unlist)),
                         nrow=ncol(computedSigMatrix),
-                        ncol=nrow(fullPCA), byrow=TRUE)
+                        ncol=ncol(latentSpace), byrow=TRUE)
 
   rownames(pearsonCorr) <- colnames(computedSigMatrix)
-  colnames(pearsonCorr) <- rownames(fullPCA)
+  colnames(pearsonCorr) <- colnames(latentSpace)
 
-  return(pearsonCorr)
+  pcaAnnotData <- PCAnnotatorData(pearsonCorr = pearsonCorr)
+  object@PCAnnotatorData <- pcaAnnotData
+
+  return(object)
 }
 
 convertToDense <- function(object) {
 
-    object@exprData@data <- as.matrix(object@exprData@data)
-    object@exprData@fanoFilter <- as.matrix(object@exprData@fanoFilter)
+    object@exprData <- as.matrix(object@exprData)
 
     return(object)
 }

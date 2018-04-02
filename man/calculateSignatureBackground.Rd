@@ -12,7 +12,13 @@ calculateSignatureBackground(object, num)
 \item{num}{the number of signatures to generate}
 }
 \value{
-numeric matrix of random signature scores SIGNATURES x CELLS
+A list with two items:
+
+  randomSigs: a list of lists of SignatureScore objects.  Each sub-list
+    represents permutation signatures generated for a specific size/balance
+
+  sigAssignments: named factor vector assigning signatures to random background
+    groups
 }
 \description{
 For each signature-cell pair, compute a score that captures the level of
