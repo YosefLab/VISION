@@ -431,6 +431,9 @@ clusterSigScores <- function(object) {
             # Process the gene signatures
             pvals <- lapply(colnames(sigScores), function(sig){
                 suppressWarnings({
+                    if(length(cluster_ii) == 0 || length(not_cluster_ii) == 0){
+                        return(list(pval = 1.0, stat = 0))
+                    }
                     out_l <- ks.test(sigScores[cluster_ii, sig],
                                    sigScores[not_cluster_ii, sig],
                                    alternative = "less", exact = FALSE)
@@ -451,6 +454,10 @@ clusterSigScores <- function(object) {
 
             # Process the metaData variables
             meta_pvals <- lapply(colnames(metaData), function(sig){
+
+                if(length(cluster_ii) == 0 || length(not_cluster_ii) == 0){
+                    return(list(pval = 1.0, stat = 0))
+                }
 
                 if (is.numeric(metaData[, sig])) {
                     suppressWarnings({

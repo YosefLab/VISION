@@ -19,6 +19,8 @@
 
 #plot-title-div .titles{
     flex-grow: 1;
+    flex-basis: 0;
+    min-width: 0;
 }
 
 #plot-title-div .titles .subtitle, #plot-title-div .titles .title{
