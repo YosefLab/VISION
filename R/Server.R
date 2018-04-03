@@ -256,7 +256,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       }) %>%
       get("/Projections/list", function(req, res, err) {
         proj_names <- names(object@Projections)
-        out <- toJSON(proj_names, auto_unbox=TRUE)
+        out <- toJSON(proj_names)
         return(out)
       }) %>%
       get("/Tree/List", function(req, res, err) {
@@ -381,18 +381,18 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
           pcnames <- seq(ncol(pc))[1:10]
           result <- toJSON(
                            pcnames,
-                           force=TRUE, pretty=TRUE, auto_unbox=TRUE
+                           force=TRUE, pretty=TRUE
                            )
           return(result)
       }) %>%
       get("/Expression/Genes/List", function(req, res, err) {
 
         data <- object@exprData
-        genes = rownames(data)
+        genes <- rownames(data)
 
         result <- toJSON(
                          genes,
-                         force=TRUE, pretty=TRUE, auto_unbox=TRUE
+                         force=TRUE, pretty=TRUE
                          )
 
         return(result)
@@ -414,7 +414,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       get("/Clusters/list", function(req, res, err) {
         cluster_vars <- names(object@ClusterSigScores)
         out <- toJSON(cluster_vars,
-                      force = TRUE, pretty = TRUE, auto_unbox = TRUE)
+                      force = TRUE, pretty = TRUE)
         return(out)
       }) %>%
       get("/Clusters/(?<cluster_variable1>.*)/Cells", function(req, res, err) {
