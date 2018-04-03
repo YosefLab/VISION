@@ -404,7 +404,7 @@ clusterSigScores <- function(object) {
     sigScores <- object@sigScores
     metaData <- object@metaData
 
-    metaData <- metaData[rownames(sigScores), ]
+    metaData <- metaData[rownames(sigScores), , drop = FALSE]
 
     # Determine which metaData we can run on
     # Must be a factor with at least 20 levels
