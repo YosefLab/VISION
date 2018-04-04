@@ -4,6 +4,7 @@
 \name{FastProject}
 \alias{FastProject}
 \alias{FastProject,matrixORSparse-method}
+\alias{FastProject,data.frame-method}
 \alias{FastProject,ExpressionSet-method}
 \alias{FastProject,SummarizedExperiment-method}
 \title{Initializes a new FastProject object.}
@@ -18,6 +19,8 @@ FastProject(data, ...)
   trajectory_method = c("None", "SimplePPT"), pool = "auto",
   cellsPerPartition = 100, name = NULL, cluster_variable = "",
   latentSpace = NULL)
+
+\S4method{FastProject}{data.frame}(data, ...)
 
 \S4method{FastProject}{ExpressionSet}(data, ...)
 

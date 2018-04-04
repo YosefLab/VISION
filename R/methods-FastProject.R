@@ -226,6 +226,15 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
 
 #' @rdname FastProject-class
 #' @export
+setMethod("FastProject", signature(data = "data.frame"),
+            function(data, ...) {
+                data <- data.matrix(data)
+            return(FastProject(data, ...))
+            }
+)
+
+#' @rdname FastProject-class
+#' @export
 setMethod("FastProject", signature(data = "ExpressionSet"),
             function(data, ...) {
             return(FastProject(Biobase::exprs(data), ...))
