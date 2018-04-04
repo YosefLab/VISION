@@ -12,13 +12,13 @@
 FastProject(data, ...)
 
 \S4method{FastProject}{matrixORSparse}(data, signatures, housekeeping = NULL,
-  norm_methods = NULL, meta = NULL, nomodel = FALSE,
-  projection_genes = c("fano"), lean = FALSE, min_signature_genes = 5,
-  weights = NULL, threshold = 0, perm_wPCA = FALSE,
-  sig_norm_method = "znorm_rows", sig_score_method = "weighted_avg",
-  trajectory_method = c("None", "SimplePPT"), pool = "auto",
-  cellsPerPartition = 100, name = NULL, cluster_variable = "",
-  latentSpace = NULL)
+  norm_methods = NULL, unnormalizedData = NULL, meta = NULL,
+  nomodel = FALSE, projection_genes = c("fano"), lean = FALSE,
+  min_signature_genes = 5, weights = NULL, threshold = 0,
+  perm_wPCA = FALSE, sig_norm_method = "znorm_rows",
+  sig_score_method = "weighted_avg", trajectory_method = c("None",
+  "SimplePPT"), pool = "auto", cellsPerPartition = 100, name = NULL,
+  cluster_variable = "", latentSpace = NULL)
 
 \S4method{FastProject}{data.frame}(data, ...)
 
