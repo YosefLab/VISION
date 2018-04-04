@@ -28,7 +28,6 @@ global_status.subset_criteria = "Rank";
 
 
 var global_data = {};
-global_data.sigIsMeta = {};
 
 global_data.sig_projection_coordinates = {};
 global_data.pca_projection_coordinates = {};
@@ -258,12 +257,6 @@ window.onload = function()
     var lower_left_promise = lower_left_content.init();
     var right_promise = right_content.init();
 
-    // Get the 'isMeta' vector for signatures
-    var sigIsMetaPromise = api.signature.listMeta()
-        .then(function(sigIsMeta) {
-            global_data.sigIsMeta = sigIsMeta;
-        });
-
     // Get the cluster assignments for cells
     var cellClustersPromise = api.clusters.list()
         .then(function(data) {
@@ -282,8 +275,7 @@ window.onload = function()
         })
 
     // When it's all done, run this
-    $.when(right_promise, sigIsMetaPromise,
-        lower_left_promise, cellClustersPromise
+    $.when(right_promise, lower_left_promise, cellClustersPromise
     )
         .then(function(){
             upper_left_content.select_default();

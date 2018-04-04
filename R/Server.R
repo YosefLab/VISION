@@ -197,14 +197,6 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         }
         return(out)
       }) %>%
-      get("/Signature/ListMeta", function(req, res, err){
-        signatures <- object@sigData
-        keys <- lapply(signatures, function(x) x@name)
-        vals <- lapply(signatures, function(x) x@isMeta)
-        names(vals) <- keys
-        out <- toJSON(vals, auto_unbox=TRUE)
-        return(out)
-      }) %>%
       get("/Signature/Info/(?<sig_name2>.*)", function(req, res, err){
         signatures <- object@sigData
         name <- URLdecode(req$params$sig_name2)
