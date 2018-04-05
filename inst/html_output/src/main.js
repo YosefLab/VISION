@@ -19,6 +19,8 @@ global_status.plotted_item_type = ""; // either 'signature', 'meta', or 'gene'
 global_status.cluster_var = ""; // which cluster variable are we using
 global_status.selected_cluster = ""; // which cell cluster should be clustered
 
+global_status.selected_cells = []; // which cell(s) is/are currently selected
+
 global_status.upper_range = "";
 global_status.lower_range = "";
 global_status.pc1 = "";
@@ -317,6 +319,12 @@ window.onload = function()
         right_content.hover_cells(list_of_cell_ids)
         upper_left_content.hover_cells(list_of_cell_ids)
         lower_left_content.hover_cells(list_of_cell_ids)
+    });
+
+    window.addEventListener("select-cells", function(e) { 
+	
+	global_status.selected_cells = Object.keys(e.detail);
+
     });
 
     /*
