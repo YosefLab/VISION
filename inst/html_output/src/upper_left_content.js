@@ -326,7 +326,7 @@ Signature_Table.prototype.render = function()
                 .filter(function(d,i) { return i == 1;})
                 .style('background-color', function(d){return colorScale(d.zscore);})
                 .append('div')
-                .text(function(d){ return d.zscore.toPrecision(2);})
+                .text(function(d){ return d.zscore.toPrecision ? d.zscore.toPrecision(2) : d.zscore;})
 
             content_row
                 .filter(function(d,i) { return i > 1;})
@@ -762,7 +762,7 @@ Meta_Table.prototype.render = function()
                 .filter(function(d,i) { return i == 1;})
                 .style('background-color', function(d){return colorScale(d.zscore);})
                 .append('div')
-                .text(function(d){ return d.zscore.toPrecision(2);})
+                .text(function(d){ return d.zscore.toPrecision ? d.zscore.toPrecision(2) : d.zscore;})
 
             content_row
                 .filter(function(d,i) { return i > 1;})

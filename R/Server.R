@@ -431,11 +431,11 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         sigs <- colnames(object@sigScores)
 
         cluster_variable <- URLdecode(req$params$cluster_variable2)
-        pvals <- fp@SigConsistencyScores@emp_pMatrix
-        zscores <- fp@SigConsistencyScores@sigProjMatrix
+        pvals <- object@SigConsistencyScores@emp_pMatrix
+        zscores <- object@SigConsistencyScores@sigProjMatrix
 
-        cluster_pvals <- fp@ClusterSigScores[[cluster_variable]]$pvals
-        cluster_zscores <- fp@ClusterSigScores[[cluster_variable]]$zscores
+        cluster_pvals <- object@ClusterSigScores[[cluster_variable]]$pvals
+        cluster_zscores <- object@ClusterSigScores[[cluster_variable]]$zscores
 
         pvals <- pvals[rownames(cluster_pvals), , drop = F]
         zscores <- zscores[rownames(cluster_zscores), , drop = F]
@@ -451,11 +451,11 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         sigs <- colnames(object@metaData)
 
         cluster_variable <- URLdecode(req$params$cluster_variable3)
-        pvals <- fp@SigConsistencyScores@emp_pMatrix
-        zscores <- fp@SigConsistencyScores@sigProjMatrix
+        pvals <- object@SigConsistencyScores@emp_pMatrix
+        zscores <- object@SigConsistencyScores@sigProjMatrix
 
-        cluster_pvals <- fp@ClusterSigScores[[cluster_variable]]$pvals
-        cluster_zscores <- fp@ClusterSigScores[[cluster_variable]]$zscores
+        cluster_pvals <- object@ClusterSigScores[[cluster_variable]]$pvals
+        cluster_zscores <- object@ClusterSigScores[[cluster_variable]]$zscores
 
         pvals <- pvals[rownames(cluster_pvals), , drop = F]
         zscores <- zscores[rownames(cluster_zscores), , drop = F]
