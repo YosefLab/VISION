@@ -104,6 +104,9 @@ poolCells <- function(object,
     pooled_cells <- createPoolsBatch(object@pools, object@exprData)
     object@exprData <- pooled_cells
 
+    pooled_unnorm <- createPoolsBatch(object@pools, object@unnormalizedData)
+    object@unnormalizedData <- pooled_unnorm
+
     if (!all(dim(object@latentSpace) == c(1, 1))) {
         pooled_latent <- t(createPoolsBatch(object@pools, t(object@latentSpace)))
         object@latentSpace <- pooled_latent

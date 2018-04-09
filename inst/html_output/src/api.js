@@ -33,11 +33,6 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.signature.listMeta = function(){
-        var query = "/Signature/ListMeta"
-        return $.ajax(query, {dataType: "json"}).then(x => x)
-    }
-
     output.signature.scores = function(sig_name){
         var query = "/Signature/Scores/"
         query = query.concat(encodeURI(sig_name))

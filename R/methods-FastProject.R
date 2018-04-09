@@ -66,7 +66,7 @@
 #'                      housekeeping = hkg)
 setMethod("FastProject", signature(data = "matrixORSparse"),
             function(data, signatures, housekeeping=NULL, norm_methods = NULL,
-                    meta=NULL, nomodel=FALSE,
+                    unnormalizedData = NULL, meta=NULL, nomodel=FALSE,
                     projection_genes=c("fano"), lean=FALSE, min_signature_genes=5,
                     weights=NULL, threshold=0, perm_wPCA=FALSE,
                     sig_norm_method="znorm_rows",
@@ -77,13 +77,45 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
 
             .Object <- new("FastProject")
 
-            if (is.data.frame(data)){
-                data <- as.matrix(data)
-            }
-
             rownames(data) <- toupper(rownames(data))
             .Object@initialExprData <- data
             .Object@exprData <- data
+
+            if (!is.null(unnormalizedData)){
+
+                if (is.data.frame(unnormalizedData)){
+                    unnormalizedData <- data.matrix(unnormalizedData)
+                }
+                # unnormalizedData might have more genes than exprData
+                # and it might have more cells than exprData
+                rownames(unnormalizedData) <- toupper(rownames(unnormalizedData))
+                HAS_CORRECT_CELLS <- length(setdiff(
+                                           colnames(.Object@exprData),
+                                           colnames(unnormalizedData)
+                                           )) == 0
+                if (!HAS_CORRECT_CELLS) {
+                    stop("unnormalizedData must have a column for all cells in data. colnames(unnormalizedData) must contain all labels in colnames(data)")
+                }
+
+                HAS_CORRECT_GENES <- length(setdiff(
+                                           rownames(.Object@exprData),
+                                           rownames(unnormalizedData)
+                                           )) == 0
+                if (!HAS_CORRECT_GENES) {
+                    stop("unnormalizedData must have a row for all genes in data. rownames(unnormalizedData) must contain all labels in rownames(data)")
+                }
+
+                if (any(unnormalizedData < 0)) {
+                    stop("Negative values in unnormalizedData. unnormalizedData should be either counts or scaled counts and should therefore have no negative values")
+                }
+
+                .Object@unnormalizedData <- unnormalizedData
+                .Object@initialUnnormalizedData <- unnormalizedData
+
+            } else {
+                .Object@unnormalizedData <- .Object@exprData
+                .Object@initialUnnormalizedData <- .Object@initialExprData
+            }
 
             if (is.null(housekeeping)) {
                 .Object@housekeepingData <- character()
@@ -221,6 +253,15 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
             .Object@cluster_variable <- cluster_variable
 
             return(.Object)
+            }
+)
+
+#' @rdname FastProject-class
+#' @export
+setMethod("FastProject", signature(data = "data.frame"),
+            function(data, ...) {
+                data <- data.matrix(data)
+            return(FastProject(data, ...))
             }
 )
 

@@ -6,7 +6,7 @@
 # on the different types of data.
 
 setClassUnion('numericORNULL', members=c('numeric', 'NULL'))
-setClassUnion('matrixORSparse', members=c("matrix", "data.frame", "dgCMatrix", "dgTMatrix"))
+setClassUnion('matrixORSparse', members=c("matrix", "dgCMatrix", "dgTMatrix"))
 
 Cluster <- setClass("Cluster",
     slots = c(
@@ -90,6 +90,8 @@ FastProject <- setClass("FastProject",
         trajectory_method = "character",
         exprData = "matrixORSparse",
         initialExprData = "matrixORSparse",
+        unnormalizedData = "matrixORSparse",
+        initialUnnormalizedData = "matrixORSparse",
         housekeepingData = "character",
         sigData = "list",
         metaData = "data.frame",
@@ -120,6 +122,8 @@ FastProject <- setClass("FastProject",
         trajectory_method = "None",
         exprData = matrix(NA, 1, 1),
         initialExprData = matrix(NA, 1, 1),
+        unnormalizedData = matrix(NA, 1, 1),
+        initialUnnormalizedData = matrix(NA, 1, 1),
         housekeepingData = character(),
         sigData = list(),
         metaData = data.frame(),

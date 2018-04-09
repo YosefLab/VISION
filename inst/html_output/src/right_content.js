@@ -286,7 +286,7 @@ Right_Content.prototype.draw_pca = function() {
 
     var isFactor;
     if(item_type === "gene"){
-        isFactor = get_global_data('sigIsMeta')[item_key];
+        isFactor = typeof(Object.values(values)[0]) === "string"
     } else {
         isFactor = false;
     }
