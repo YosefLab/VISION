@@ -67,14 +67,10 @@ Signature <- setClass("Signature",
     sigDict = "vector",
     name = "character",
     source = "character",
-    metaData = "character",
-    isMeta = "logical",
-    isFactor = "logical"
+    metaData = "character"
     ),
     prototype = list(
-    metaData = "",
-    isMeta=FALSE,
-    isFactor=FALSE
+    metaData = ""
 ))
 
 setClassUnion("ProjectionDataOrNULL", members=c("ProjectionData", "NULL"))
