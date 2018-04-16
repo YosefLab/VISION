@@ -4,7 +4,7 @@
 \alias{batchSigEval}
 \title{Different ways to evalutate the signature score}
 \usage{
-batchSigEval(sigs, sig_score_method, eData, weights, min_signature_genes)
+batchSigEval(sigs, sig_score_method, eData, weights)
 }
 \arguments{
 \item{sigs}{list of Signature(s) to be evalauting}
@@ -14,9 +14,6 @@ batchSigEval(sigs, sig_score_method, eData, weights, min_signature_genes)
 \item{eData}{numeric Matrix Genes x Cells}
 
 \item{weights}{Weight matrix computed through FNR curve}
-
-\item{min_signature_genes}{signatures are discarded which do not match at least
-this many genes in the expression matrix}
 }
 \value{
 matrix of signature scores, cells X signatures

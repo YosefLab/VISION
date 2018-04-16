@@ -12,13 +12,10 @@
 #' @param sig_score_method either "naive" or "weighted_avg"
 #' @param eData numeric Matrix Genes x Cells
 #' @param weights Weight matrix computed through FNR curve
-#' @param min_signature_genes signatures are discarded which do not match at least
-#' this many genes in the expression matrix
 #' @importFrom parallel mclapply
 #' @importFrom parallel detectCores
 #' @return matrix of signature scores, cells X signatures
-batchSigEval <- function(sigs, sig_score_method, eData, weights,
-                         min_signature_genes) {
+batchSigEval <- function(sigs, sig_score_method, eData, weights) {
 
     workers <- BiocParallel::bpparam()$workers
 
@@ -33,16 +30,6 @@ batchSigEval <- function(sigs, sig_score_method, eData, weights,
     } else {
         expr_weights <- eData
     }
-
-    # Compute number of genes per signature that match and filter
-    # the list of signatures
-
-    numMatches <- vapply(sigs, function(sig){
-        gene_count <- sum(names(sig@sigDict) %in% rownames(expr_weights))
-        return(gene_count)
-    }, 1.0)
-
-    sigs <- sigs[numMatches >= min_signature_genes]
 
     # Partition signatures into batches
     # 1200 seems to be an ok batch size goal

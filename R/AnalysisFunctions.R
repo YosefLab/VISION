@@ -200,15 +200,12 @@ calcWeights <- function(object,
 #' @param sig_norm_method (optional) Method to apply to normalize the expression
 #' matrix before calculating signature scores
 #' @param sig_score_method the scoring method to use
-#' @param min_signature_genes the minimal number of genes that must be present
-#' in both the data and the signature for the signature to be evaluated
 #' @return the FastProject object, with signature score slots populated
 calcSignatureScores <- function(object,
                                 sigData=object@sigData,
                                 metaData=object@metaData,
                                 sig_norm_method=object@sig_norm_method,
-                                sig_score_method=object@sig_score_method,
-                                min_signature_genes=object@min_signature_genes) {
+                                sig_score_method=object@sig_score_method) {
 
     message("Evaluating Signature Scores on Cells...")
 
@@ -217,12 +214,11 @@ calcSignatureScores <- function(object,
     if(!is.null(metaData)) object@metaData <- metaData
     object@sig_norm_method <- sig_norm_method
     object@sig_score_method <- sig_score_method
-    object@min_signature_genes <- min_signature_genes
 
     normExpr <- getNormalizedCopy(object@exprData, object@sig_norm_method)
 
     sigScores <- batchSigEval(object@sigData, object@sig_score_method,
-                              normExpr, object@weights, object@min_signature_genes)
+                              normExpr, object@weights)
 
     object@sigScores <- sigScores
 

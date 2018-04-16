@@ -137,6 +137,8 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
                     Signature objects")
             }
 
+            .Object@sigData <- processSignatures(.Object@sigData, rownames(.Object@exprData), min_signature_genes)
+
             if (!is.null(meta)) {
                 if(is.matrix(meta)){
                     meta <- as.data.frame(meta)

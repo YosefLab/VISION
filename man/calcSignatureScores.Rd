@@ -6,8 +6,7 @@
 \usage{
 calcSignatureScores(object, sigData = object@sigData,
   metaData = object@metaData, sig_norm_method = object@sig_norm_method,
-  sig_score_method = object@sig_score_method,
-  min_signature_genes = object@min_signature_genes)
+  sig_score_method = object@sig_score_method)
 }
 \arguments{
 \item{object}{the FastProject object}
@@ -20,9 +19,6 @@ calcSignatureScores(object, sigData = object@sigData,
 matrix before calculating signature scores}
 
 \item{sig_score_method}{the scoring method to use}
-
-\item{min_signature_genes}{the minimal number of genes that must be present
-in both the data and the signature for the signature to be evaluated}
 }
 \value{
 the FastProject object, with signature score slots populated

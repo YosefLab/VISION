@@ -1,3 +1,26 @@
+#' Processes signatures filtering unmatched genes
+#'
+#' @param sigData list of signature objects
+#' @param expressionGenes list of gene identifiers in the expression matrix
+#' @param processedSigData resulting signature objects
+#' @param minSignatureGenes
+processSignatures <- function(sigData, expressionGenes, minSignatureGenes){
+    out <- lapply(sigData, function(sig){
+        validGenes <- names(sig@sigDict) %in% expressionGenes
+        sig@sigDict <- sig@sigDict[validGenes]
+        return(sig)
+    })
+
+    names(out) <- names(sigData)
+
+    validSigs <- vapply(out,
+                        function(sig) length(sig@sigDict) >= minSignatureGenes,
+                        FUN.VALUE = FALSE)
+
+    out <- out[validSigs]
+    return(out)
+}
+
 #' Initialize a new Signature object.
 #' Should not be called directly, instead use the `new` syntax
 #'
@@ -82,8 +105,7 @@ calculateSignatureBackground <- function(object, num) {
     randomSigScores <- batchSigEval(
                             unlist(randomSigs, recursive = FALSE),
                             object@sig_score_method,
-                            normExpr, object@weights,
-                            min_signature_genes = 0) # Don't filter background signatures
+                            normExpr, object@weights)
 
     # randomSigScores is matrix of cells x signatures
     # need to make a list of matrices, one for each signature group
@@ -122,7 +144,7 @@ generatePermutationNull <- function(num, eData, sigData) {
   sigData <- sigData[!meta]
 
   sigSize <- vapply(sigData, function(s) {
-                        sum(names(s@sigDict) %in% exp_genes)
+                        return(length(s@sigDict))
                     }
                  , 1)
 
