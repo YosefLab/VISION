@@ -12,6 +12,9 @@ global_status.main_vis = "clusters"; // Selected from 4 options on top
 global_status.plotted_projection = "";
 global_status.plotted_pc = 1;
 
+// Indicate whether or not we have pooled data
+global_status.pooled = false;
+
 // Determine projected values
 global_status.plotted_item = "";  // name of signature, meta or gene that is plotted
 global_status.plotted_item_type = ""; // either 'signature', 'meta', or 'gene'
@@ -313,6 +316,14 @@ window.onload = function()
                 .removeClass('disabled')
         }
     });
+
+    // get pool information
+    var getPoolStatus = api.pool.stat()
+	.then(function(stat) { 
+	    if (stat) {
+		global_status.pooled = true;
+	    }
+	});
 
     window.addEventListener('hover-cells', function(e) {
         var list_of_cell_ids = e.detail

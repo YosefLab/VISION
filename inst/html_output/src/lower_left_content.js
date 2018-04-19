@@ -472,6 +472,8 @@ Cell_Info.prototype.init = function()
 
 Cell_Info.prototype.update = function()
 {
+
+    var self = this;
     if (this.data_type == "signature") { 
 
 	var name = get_global_data('sig_info').name;
@@ -500,15 +502,44 @@ Cell_Info.prototype.update = function()
 
     var exp = get_global_data('plotted_values')
 
+    var poolstatus = get_global_status("pooled")
+
     f_exp = []
-    exp = Object.keys(exp).forEach(function(k) {
-	if (cells.indexOf(k) > -1) {
-	    f_exp.push(exp[k]);
-	} 
-    })
+
+    if (poolstatus && (this.data_type == "meta" || this.data_type == "gene")) { 
+	var promises = [];
+	exp = Object.keys(exp).forEach(function(k) { 
+	    if (cells.indexOf(k) > -1) {
+		var vals_promise = api.pool.values(k, self.data_type, name);
+		promises.push(vals_promise);
+	    }
+	});
+	
+	return Promise.all(promises).then(function(vs) { 
+	    console.log(vs);
+	    for (var i = 0; i < vs.length; i++) {
+		for (var j = 0; j < vs[i].length; j++) { 
+		    f_exp.push(vs[i][j]);
+		}
+	    }
+	    
+	    console.log(f_exp);
+
+	    drawDistChart(self.chart, f_exp, "Values")
+	});
+    } else {
+	exp = Object.keys(exp).forEach(function(k) {
+	    if (cells.indexOf(k) > -1) {
+		f_exp.push(exp[k]);
+	   } 
+	})
+	console.log(f_exp);
 
 
-    drawDistChart(this.chart, f_exp, 'Values')
+
+        drawDistChart(this.chart, f_exp, 'Values')
+    }
+
 
 }
 
@@ -577,7 +608,6 @@ Meta_Info.prototype.addCellInfo = function() {
 
     // Need to create it if it isn't there
     var self = this;
-    console.log('here');
 
     var cellinfo_div = $(self.dom_node).find('#cell-dist-div')
     cellinfo_div.show()
@@ -593,8 +623,6 @@ Meta_Info.prototype.addCellInfo = function() {
     // plotted heatmap is based on sig_key, proj_key
     // check if we are already showing the right heatmap and don't regenerate
     var need_plot = false;
-    console.log(meta_key);
-    console.log(cells);
 
     if (self.plotted_cellinfo['meta_key'] !== meta_key){
         self.plotted_cellinfo['meta_key'] = meta_key
