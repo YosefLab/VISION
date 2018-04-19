@@ -1,9 +1,13 @@
-#' Processes signatures filtering unmatched genes
+#' Processes signatures on input
+#'
+#' Removes genes that don't match a gene in the expression matrix
+#' Drops signatures with less than `minSignatureGenes` matching genes
 #'
 #' @param sigData list of signature objects
 #' @param expressionGenes list of gene identifiers in the expression matrix
-#' @param processedSigData resulting signature objects
-#' @param minSignatureGenes
+#' @param minSignatureGenes minimum number of genes a signature must match
+#' in the expression matrix in order to be retained
+#' @return processedSigData list of signature objects
 processSignatures <- function(sigData, expressionGenes, minSignatureGenes){
     out <- lapply(sigData, function(sig){
         validGenes <- names(sig@sigDict) %in% expressionGenes

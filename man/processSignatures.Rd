@@ -2,7 +2,7 @@
 % Please edit documentation in R/methods-Signature.R
 \name{processSignatures}
 \alias{processSignatures}
-\title{Processes signatures filtering unmatched genes}
+\title{Processes signatures on input}
 \usage{
 processSignatures(sigData, expressionGenes, minSignatureGenes)
 }
@@ -11,8 +11,13 @@ processSignatures(sigData, expressionGenes, minSignatureGenes)
 
 \item{expressionGenes}{list of gene identifiers in the expression matrix}
 
-\item{processedSigData}{resulting signature objects}
+\item{minSignatureGenes}{minimum number of genes a signature must match
+in the expression matrix in order to be retained}
+}
+\value{
+processedSigData list of signature objects
 }
 \description{
-Processes signatures filtering unmatched genes
+Removes genes that don't match a gene in the expression matrix
+Drops signatures with less than `minSignatureGenes` matching genes
 }
