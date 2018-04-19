@@ -406,7 +406,11 @@ clipBottom <- function(x, mi) {
 #' @importFrom matrixStats rowMaxs
 #' @param object matrix to use for KNN
 #' @param K number of neighbors to compute this for
-#' @return a weights matrix
+#' @return a list of two items:
+#'          indices: matrix, cells X neighbors
+#'              Each row specifies indices of nearest neighbors
+#'          weights: matrix, cells X neighbors
+#'              Corresponding weights to nearest neighbors
 setMethod("computeKNNWeights", signature(object = "matrix"),
     function(object, K = round(sqrt(nrow(object)))) {
 
@@ -424,18 +428,9 @@ setMethod("computeKNNWeights", signature(object = "matrix"),
         weightsNormFactor[weightsNormFactor == 0] <- 1.0
         sparse_weights <- sparse_weights / weightsNormFactor
 
-        # load into a sparse matrix
-        tnn <- t(nn)
-        j <- as.numeric(tnn)
-        i <- as.numeric(col(tnn))
-        vals <- as.numeric(t(sparse_weights))
-        dims <- c(nrow(nn), nrow(nn))
-        dimnames <- list(rownames(object), rownames(object))
+        rownames(nn) <- rownames(object)
+        rownames(d) <- rownames(object)
 
-        weights <- sparseMatrix(i = i, j = j, x = vals,
-                                dims = dims, dimnames = dimnames
-                               )
-
-        return(weights)
+        return(list(indices = nn, weights = sparse_weights))
     }
 )

@@ -25,7 +25,11 @@ TreeProjection <- function(pData, name, vData, adjMat) {
 #' @importFrom matrixStats rowMaxs
 #' @param object a TreeProjection object
 #' @param K the number of nearest neighbors to look at
-#' @return an all-pars distance matrix
+#' @return a list of two items:
+#'          indices: matrix, cells X neighbors
+#'              Each row specifies indices of nearest neighbors
+#'          weights: matrix, cells X neighbors
+#'              Corresponding weights to nearest neighbors
 setMethod("computeKNNWeights", signature(object = "TreeProjection"),
             function(object, K = round(sqrt(nrow(object@pData))) ) {
             distmat <- calculateTreeDistances(princPnts = object@vData,
@@ -58,16 +62,9 @@ setMethod("computeKNNWeights", signature(object = "TreeProjection"),
             weightsNormFactor[weightsNormFactor == 0] <- 1.0
             sparse_weights <- sparse_weights / weightsNormFactor
 
-            # load into a sparse matrix
-            tnn <- t(nn)
-            j <- as.numeric(tnn)
-            i <- as.numeric(col(tnn))
-            vals <- as.numeric(t(sparse_weights))
+            rownames(nn) <- rownames(object)
+            rownames(d) <- rownames(object)
 
-            weights <- sparseMatrix(i = i, j = j, x = vals,
-                                    dims = c(nrow(nn), nrow(nn))
-                                    )
-
-            return(weights)
+            return(list(indices = nn, weights = sparse_weights))
 
             })

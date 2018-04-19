@@ -13,7 +13,11 @@
 \item{K}{number of neighbors to compute this for}
 }
 \value{
-a weights matrix
+a list of two items:
+         indices: matrix, cells X neighbors
+             Each row specifies indices of nearest neighbors
+         weights: matrix, cells X neighbors
+             Corresponding weights to nearest neighbors
 }
 \description{
 compute for each vector the weights to apply to it's K nearest neighbors

@@ -14,7 +14,11 @@
 \item{K}{the number of nearest neighbors to look at}
 }
 \value{
-an all-pars distance matrix
+a list of two items:
+         indices: matrix, cells X neighbors
+             Each row specifies indices of nearest neighbors
+         weights: matrix, cells X neighbors
+             Corresponding weights to nearest neighbors
 }
 \description{
 Compute KNN weights based on geodesic distances for TreeProjection objects
