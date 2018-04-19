@@ -32,14 +32,8 @@ processSignatures <- function(sigData, expressionGenes, minSignatureGenes){
 #' @param name Name of the signature
 #' @param source File from which this signature was read from
 #' @param metaData Metadata pertinent to signature
-#' @param isMeta If TRUE indicates that this signature was derived from
-#' meta data. Default is FALSE.
-#' @param isFactor If TRUE indicates that this signature is a Factor, else not
-#' a factor. Default is FALSE.
 #' @return Signature object
-Signature <- function(sigDict, name, source, metaData="",
-                      isMeta=FALSE,
-                      isFactor=FALSE) {
+Signature <- function(sigDict, name, source, metaData="") {
   if (missing(sigDict)) {
     stop("Missing sigDict information.")
   } else if (missing(name)) {
@@ -53,9 +47,8 @@ Signature <- function(sigDict, name, source, metaData="",
                        "", USE.NAMES = FALSE
                        )
 
-  .Object <- new("Signature", sigDict=sigDict, name=name, source=source,
-                 metaData=metaData, isMeta=isMeta,
-                 isFactor=isFactor)
+  .Object <- new("Signature", sigDict=sigDict, name=name,
+                 source=source, metaData=metaData)
 
   return(.Object)
 }
@@ -142,10 +135,6 @@ calculateSignatureBackground <- function(object, num) {
 generatePermutationNull <- function(num, eData, sigData) {
 
   exp_genes <- rownames(eData)
-
-  # Remove meta
-  meta <- vapply(sigData, function(s) s@isMeta, TRUE)
-  sigData <- sigData[!meta]
 
   sigSize <- vapply(sigData, function(s) {
                         return(length(s@sigDict))

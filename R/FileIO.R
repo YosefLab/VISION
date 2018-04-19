@@ -1,6 +1,4 @@
 #' Reads in a list of signature input files.
-#' @importFrom utils read.table
-#' @importFrom cogena gmt2list
 #' @param filenames a list of paths to signature input files
 #' @return List of Signature Objects
 readSignaturesInput <- function(filenames) {
@@ -16,47 +14,72 @@ readSignaturesInput <- function(filenames) {
     for (filename in filenames) {
     message("Loading data from ", filename, " ...")
 
+    if (!file.exists(filename)) {
+        stop(paste0("Cannot find file: ", filename))
+    }
+
     fsplit <- strsplit(basename(filename), "\\.")[[1]]
     file_ext <- fsplit[length(fsplit)]
 
     if (file_ext == "gmt") {
-        inp <- gmt2list(filename)
 
-        for (sig in names(inp)) {
-        genes <- c()
-        values <- c()
+        conn <- file(filename, open="r")
+        lines <-readLines(conn)
+        close(conn)
 
-        sig_parts = unlist(strsplit(sig, "_"))
-        key <- "none"
+        lines <- strsplit(lines, '\t')
 
-        if (is.element(tolower(sig_parts[[length(sig_parts)]]), names(keys))) {
+        # Remove invalid lines
+        lines <- lines[vapply(lines,
+                              function(x) length(x) >= 3, TRUE)]
+
+        for (line in lines) {
+
+            genes <- c()
+            values <- c()
+
+            sig <- line[1]
+            description <- line[2]
+            gene_fields <- line[3:length(line)]
+
+            sig_parts <- unlist(strsplit(sig, "_"))
             key <- tolower(sig_parts[[length(sig_parts)]])
-            sig_name <- paste(sig_parts[1:length(sig_parts)-1], collapse="_")
-        } else {
-            sig_name <- sig
-        }
 
-
-        for (k in inp[[sig]]) {
-            elem <- strsplit(k, ",")
-            if (length(elem[[1]]) > 1) {
-            genes <- c(genes, elem[[1]][1])
-            values <- c(values, as.numeric(elem[[1]][2])*keys[key])
+            if (is.element(key, names(keys))) {
+                sig_name <- paste(sig_parts[1:length(sig_parts)-1],
+                                  collapse="_")
             } else {
-            genes <- c(genes, elem[[1]][1])
-            values <- c(values, 1.0 * keys[key])
+                key <- "none"
+                sig_name <- sig
             }
-        }
 
-        names(values) <- genes
-        if (sig_name %in% names(sig_data)) {
-            existingSig <- sig_data[[sig_name]]
-            existingSig@sigDict[names(values)] <- values
-            sig_data[[sig_name]] <- existingSig
-        } else {
-            newSig <- Signature(values, sig_name, filename, "")
-            sig_data[[sig_name]] <- newSig
-        }
+
+            for (k in gene_fields) {
+                elem <- strsplit(k, ",")[[1]]
+
+                if (length(elem) > 1) { # if the format is gene,value
+                    gene <- elem[1]
+                    value <- as.numeric(elem[2])
+                } else {
+                    gene <- elem[1]
+                    value <- keys[key]
+                }
+
+                genes <- c(genes, gene)
+                values <- c(values, value)
+            }
+
+            names(values) <- genes
+
+            if (sig_name %in% names(sig_data)) {
+                existingSig <- sig_data[[sig_name]]
+                existingSig@sigDict[names(values)] <- values
+                sig_data[[sig_name]] <- existingSig
+            } else {
+                newSig <- Signature(values, sig_name,
+                                    filename, metaData=description)
+                sig_data[[sig_name]] <- newSig
+            }
         }
 
     } else if (file_ext == "txt") {
@@ -89,8 +112,7 @@ readSignaturesInput <- function(filenames) {
         }
 
         for (sig in names(sigList)) {
-        newSig <- Signature(sigList[[sig]], sig, filename, "", isMeta=FALSE,
-                            isFactor=FALSE)
+        newSig <- Signature(sigList[[sig]], sig, filename, "")
         sig_data[[sig]] <- newSig
         }
     }
