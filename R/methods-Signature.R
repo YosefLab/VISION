@@ -194,13 +194,18 @@ generatePermutationNull <- function(num, eData, sigData) {
     clusterSigs <- list()
 
     size <- centers[cluster_i, "sigSize"]
-    #balance <- centers[cluster_i,"sigBalance"]
-    balance <- 1
+    balance <- centers[cluster_i, "sigBalance"]
 
     for (j in 1:num) {
       newSigGenes <- sample(exp_genes, min(size, length(exp_genes)))
-      newSigSigns <- sample(c(1, -1), length(newSigGenes),
-                            replace = TRUE, prob = c(balance, 1 - balance))
+
+      upGenes <- floor(balance * size)
+      remainder <- (balance * size) %% 1
+      if (runif(1, 0, 1) < remainder){
+          upGenes <- upGenes + 1
+      }
+      newSigSigns <- c(rep(1, upGenes), rep(-1, size - upGenes))
+
       names(newSigSigns) <- newSigGenes
       newSig <- Signature(newSigSigns, paste0("RANDOM_BG_", size, "_", j), "x")
       clusterSigs[[newSig@name]] <- newSig
