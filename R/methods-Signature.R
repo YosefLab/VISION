@@ -238,6 +238,7 @@ generatePermutationNull <- function(num, eData, sigData) {
 #'
 #'   sigAssignments: named factor vector assigning signatures to random background
 #'     groups
+#' @param fdrCorrect logical, whether or not to FDR correct p-values
 #' @return list:
 #' \itemize{
 #'     \item sigProbMatrix: the vector of consistency z-scores
@@ -245,7 +246,8 @@ generatePermutationNull <- function(num, eData, sigData) {
 #'     \item emp_pVals: pvalues for the scores
 #' }
 sigConsistencyScores <- function(latentSpace, sigScoresData,
-                                      metaData, randomSigData) {
+                                      metaData, randomSigData,
+                                      fdrCorrect = TRUE) {
 
     signatureNames <- c(colnames(sigScoresData), colnames(metaData))
 
@@ -283,19 +285,21 @@ sigConsistencyScores <- function(latentSpace, sigScoresData,
     # Cast to 1-column matrices so its consistent with other ProjectionData outputs
 
     # FDR-correct and log-transform p-values
-    sigProjMatrix_Padj <- apply(pvals, MARGIN = 2,
-                                FUN = p.adjust, method = "BH")
-    sigProjMatrix_Padj[sigProjMatrix_Padj == 0] <- 10 ^ (-300)
-    sigProjMatrix_Padj <- log10(sigProjMatrix_Padj)
+    if (fdrCorrect){
+        pvals <- apply(pvals, MARGIN = 2,
+                                    FUN = p.adjust, method = "BH")
+        pvals[pvals == 0] <- 10 ^ (-300)
+        pvals <- log10(pvals)
 
-    sigProjMatrix_Pempadj <- apply(emp_pvals, MARGIN = 2,
-                                   FUN = p.adjust, method = "BH")
-    sigProjMatrix_Pempadj[sigProjMatrix_Pempadj == 0] <- 10 ^ (-300)
-    sigProjMatrix_Pempadj <- log10(sigProjMatrix_Pempadj)
+        emp_pvals <- apply(emp_pvals, MARGIN = 2,
+                                       FUN = p.adjust, method = "BH")
+        emp_pvals[emp_pvals == 0] <- 10 ^ (-300)
+        emp_pvals <- log10(emp_pvals)
+    }
 
     return(list(sigProjMatrix = consistency,
-                pVals = sigProjMatrix_Padj,
-                emp_pVals = sigProjMatrix_Pempadj)
+                pVals = pvals,
+                emp_pVals = emp_pvals)
     )
 }
 
