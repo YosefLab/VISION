@@ -5,8 +5,7 @@
 \title{Initialize a new Signature object.
 Should not be called directly, instead use the `new` syntax}
 \usage{
-Signature(sigDict, name, source, metaData = "", isMeta = FALSE,
-  isFactor = FALSE)
+Signature(sigDict, name, source, metaData = "")
 }
 \arguments{
 \item{sigDict}{Named list of signs for each gene in the signature}
@@ -16,12 +15,6 @@ Signature(sigDict, name, source, metaData = "", isMeta = FALSE,
 \item{source}{File from which this signature was read from}
 
 \item{metaData}{Metadata pertinent to signature}
-
-\item{isMeta}{If TRUE indicates that this signature was derived from
-meta data. Default is FALSE.}
-
-\item{isFactor}{If TRUE indicates that this signature is a Factor, else not
-a factor. Default is FALSE.}
 }
 \value{
 Signature object

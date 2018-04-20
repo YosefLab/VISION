@@ -3,7 +3,8 @@
 .RData
 .eslintrc.json
 inst/doc
-src/*
+src/*.o
+src/*.so
 src-x64/*
 src-i386/*
 *RcppExports*
