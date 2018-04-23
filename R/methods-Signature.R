@@ -110,7 +110,7 @@ calculateSignatureBackground <- function(object, num) {
     randomSigScoresGroups <- list()
     for (groupName in names(randomSigs)) {
         sigsInGroup <- names(randomSigs[[groupName]])
-        randomSigScoresGroups[[groupName]] <- randomSigScores[, sigsInGroup]
+        randomSigScoresGroups[[groupName]] <- randomSigScores[, sigsInGroup, drop = FALSE]
     }
 
     return(list(
@@ -232,6 +232,7 @@ generatePermutationNull <- function(num, eData, sigData) {
 #'
 #'   sigAssignments: named factor vector assigning signatures to random background
 #'     groups
+#' @param fdrCorrect logical, whether or not to FDR correct p-values
 #' @return list:
 #' \itemize{
 #'     \item sigProbMatrix: the vector of consistency z-scores
@@ -239,7 +240,8 @@ generatePermutationNull <- function(num, eData, sigData) {
 #'     \item emp_pVals: pvalues for the scores
 #' }
 sigConsistencyScores <- function(latentSpace, sigScoresData,
-                                      metaData, randomSigData) {
+                                      metaData, randomSigData,
+                                      fdrCorrect = TRUE) {
 
     signatureNames <- c(colnames(sigScoresData), colnames(metaData))
 
@@ -277,19 +279,21 @@ sigConsistencyScores <- function(latentSpace, sigScoresData,
     # Cast to 1-column matrices so its consistent with other ProjectionData outputs
 
     # FDR-correct and log-transform p-values
-    sigProjMatrix_Padj <- apply(pvals, MARGIN = 2,
-                                FUN = p.adjust, method = "BH")
-    sigProjMatrix_Padj[sigProjMatrix_Padj == 0] <- 10 ^ (-300)
-    sigProjMatrix_Padj <- log10(sigProjMatrix_Padj)
+    if (fdrCorrect){
+        pvals <- apply(pvals, MARGIN = 2,
+                                    FUN = p.adjust, method = "BH")
+        pvals[pvals == 0] <- 10 ^ (-300)
+        pvals <- log10(pvals)
 
-    sigProjMatrix_Pempadj <- apply(emp_pvals, MARGIN = 2,
-                                   FUN = p.adjust, method = "BH")
-    sigProjMatrix_Pempadj[sigProjMatrix_Pempadj == 0] <- 10 ^ (-300)
-    sigProjMatrix_Pempadj <- log10(sigProjMatrix_Pempadj)
+        emp_pvals <- apply(emp_pvals, MARGIN = 2,
+                                       FUN = p.adjust, method = "BH")
+        emp_pvals[emp_pvals == 0] <- 10 ^ (-300)
+        emp_pvals <- log10(emp_pvals)
+    }
 
     return(list(sigProjMatrix = consistency,
-                pVals = sigProjMatrix_Padj,
-                emp_pVals = sigProjMatrix_Pempadj)
+                pVals = pvals,
+                emp_pVals = emp_pvals)
     )
 }
 
@@ -324,7 +328,7 @@ sigsVsProjection_n <- function(sigData, randomSigData,
     # Build a matrix of all non-meta signatures
     sigScoreMatrix <- sigData
     if (!is.null(cells)){
-        sigScoreMatrix <- sigScoreMatrix[cells, ]
+        sigScoreMatrix <- sigScoreMatrix[cells, , drop = FALSE]
     }
 
     rowLabels <- rownames(sigScoreMatrix)
@@ -337,10 +341,11 @@ sigsVsProjection_n <- function(sigData, randomSigData,
 
 
     if (!is.null(cells)) {
-        weights <- weights[cells, cells]
+        weights$indices <- weights$indices[cells, , drop = FALSE]
+        weights$weights <- weights$weights[cells, , drop = FALSE]
     }
 
-    N_SAMPLES <- nrow(weights)
+    N_SAMPLES <- nrow(weights$indices)
 
     randomSigScores <- randomSigData$randomSigs
     sigAssignments <- randomSigData$sigAssignments
@@ -352,7 +357,7 @@ sigsVsProjection_n <- function(sigData, randomSigData,
         randomSigScoreMatrix <- randomSigScores[[group]]
 
         if (!is.null(cells)){
-            randomSigScoreMatrix <- randomSigScoreMatrix[cells, ]
+            randomSigScoreMatrix <- randomSigScoreMatrix[cells, , drop = FALSE]
         }
 
         rowLabels <- rownames(randomSigScoreMatrix)
@@ -368,21 +373,13 @@ sigsVsProjection_n <- function(sigData, randomSigData,
         groupSigNames <- names(sigAssignments)[sigAssignments == group]
         groupSigNames <- intersect(groupSigNames, colnames(sigScoreMatrix))
 
-        sigScoreMatrixGroup <- sigScoreMatrix[, groupSigNames]
+        sigScoreMatrixGroup <- sigScoreMatrix[, groupSigNames, drop = FALSE]
 
         # Calculate scores for actual signatures
-        neighborhoodPrediction <- as.matrix(weights %*% sigScoreMatrixGroup)
-        dissimilarity <- abs(sigScoreMatrixGroup -
-                             neighborhoodPrediction)
-        medDissimilarity <- colMedians(dissimilarity)
-        names(medDissimilarity) <- colnames(dissimilarity)
+        medDissimilarity <- geary_sig_v_proj(sigScoreMatrixGroup, weights$indices, weights$weights)
 
         # Calculate scores for random signatures
-        randomNeighborhoodPrediction <- as.matrix(weights %*% randomSigScoreMatrix)
-        randomDissimilarity <- abs(randomSigScoreMatrix -
-                                   randomNeighborhoodPrediction)
-        randomMedDissimilarity <- colMedians(randomDissimilarity)
-        names(randomMedDissimilarity) <- colnames(randomDissimilarity)
+        randomMedDissimilarity <- geary_sig_v_proj(randomSigScoreMatrix, weights$indices, weights$weights)
 
         mu <- mean(randomMedDissimilarity)
         sigma <- sd(randomMedDissimilarity)
@@ -438,11 +435,12 @@ sigsVsProjection_pcn <- function(metaData, weights, cells = NULL){
   # (e.g. for a time coordinate)
 
   if (!is.null(cells)) {
-      weights <- weights[cells, cells]
-      metaData <- metaData[cells, ]
+      weights$indices <- weights$indices[cells, , drop = FALSE]
+      weights$weights <- weights$weights[cells, , drop = FALSE]
+      metaData <- metaData[cells, , drop = FALSE]
   }
 
-  N_SAMPLES <- nrow(weights)
+  N_SAMPLES <- nrow(weights$indices)
 
   numericMeta <- vapply(names(metaData),
                          function(metaName) {
@@ -460,30 +458,36 @@ sigsVsProjection_pcn <- function(metaData, weights, cells = NULL){
       return(list(consistency = 0.0, pval = 1.0))
     }
 
-    sigPredictions <- as.matrix(weights %*% sigScores)
-    dissimilarity <- abs(sigScores - sigPredictions)
-    medDissimilarity <- median(dissimilarity)
+    sigScores <- matrix(sigScores, ncol=1)
+    rownames(sigScores) <- rownames(metaData)
+    colnames(sigScores) <- metaName
+
+    medDissimilarity <- geary_sig_v_proj(sigScores,
+                                         weights$indices,
+                                         weights$weights)
 
     #Compute a background for numerical signatures
     NUM_REPLICATES <- 3000
     bgValues <- replicate(NUM_REPLICATES, sample(sigScores))
-    randomPredictions <- as.matrix(weights %*% bgValues)
-
-    rDissimilarity <- abs(bgValues - randomPredictions)
-    randomScores <- as.matrix(apply(rDissimilarity, 2, median))
-
+    rownames(bgValues) <- rownames(sigScores)
+    randomScores <- geary_sig_v_proj(bgValues,
+                                         weights$indices,
+                                         weights$weights)
 
     mu <- mean(randomScores)
     sigma <- sd(randomScores)
 
-    if (sigma != 0) {
-      p_value <- pnorm( (medDissimilarity - mu) / sigma)
+    orderedBg <- sort(as.numeric(randomScores))
+    N <- length(orderedBg)
+    comp <- which(orderedBg < medDissimilarity)
+
+    if (length(comp) == 0) {
+        pval <- 1 / (N + 1)
     } else {
-      p_value <- 1.0
+        pval <- (max(comp) + 1) / (N + 1)
     }
 
     c_score <- (medDissimilarity - mu) / sigma * -1 # make z-score, higher better
-    pval <- p_value
 
     return(list(consistency = c_score, pval = pval))
 
@@ -518,9 +522,21 @@ sigsVsProjection_pcf <- function(metaData, weights, cells = NULL){
   # This is done separately because there are likely to be many repeats
   # (e.g. for a time coordinate)
 
+  # load weights into a sparse matrix
+  tnn <- t(weights$indices)
+  j <- as.numeric(tnn)
+  i <- as.numeric(col(tnn))
+  vals <- as.numeric(t(weights$weights))
+  dims <- c(nrow(weights$indices), nrow(weights$indices))
+  dimnames <- list(rownames(weights$indices), rownames(weights$indices))
+
+  weights <- sparseMatrix(i = i, j = j, x = vals,
+                          dims = dims, dimnames = dimnames)
+
+
   if (!is.null(cells)) {
       weights <- weights[cells, cells]
-      metaData <- metaData[cells, ]
+      metaData <- metaData[cells, , drop = FALSE]
   }
 
   N_SAMPLES <- nrow(weights)
@@ -603,6 +619,33 @@ sigsVsProjection_pcf <- function(metaData, weights, cells = NULL){
                         FUN.VALUE = 0.0)
 
   return(list(consistency = consistency, pvals = pvals))
+}
+
+
+#' Evaluates values vs coordinates using the Geary C
+#'
+#' @param values numeric matrix of dimension N_SAMPLES x N_SIGNATURES
+#' @param indices numeric matrix of dimension N_SAMPLES x N_NEIGHBORS
+#' @param weights numeric matrix of dimension N_SAMPLES x N_NEIGHBORS
+#' @return gearyC test statistic values for each signature.  Numeric vector
+#' of length N_SIGNATURES
+geary_sig_v_proj <- function(values, indices, weights){
+
+    if (nrow(values) != nrow(indices)){
+        stop("`values` and `indices` must have same row count")
+    }
+
+    if (nrow(weights) != nrow(indices)){
+        stop("`weights` and `indices` must have same row count")
+    }
+
+    if (ncol(weights) != ncol(indices)){
+        stop("`weights` and `indices` must have same column count")
+    }
+
+    result <- geary_sparse_all(t(values), indices, weights)
+    names(result) <- colnames(values)
+    return(result)
 }
 
 #' Clusters signatures according to the rank sum
