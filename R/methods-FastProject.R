@@ -1,7 +1,5 @@
 #' Initializes a new FastProject object.
 #'
-#' @importFrom Biobase ExpressionSet exprs
-#' @importFrom SummarizedExperiment SummarizedExperiment assay
 #' @import logging
 #'
 #' @param data expression data - can be one of these: \itemize{
@@ -287,6 +285,10 @@ setMethod("FastProject", signature(data = "data.frame"),
 #' @export
 setMethod("FastProject", signature(data = "ExpressionSet"),
             function(data, ...) {
+              if (!requireNamespace("Biobase", quietly = TRUE)){
+                  stop("Package \"Biobase\" needed to load this data object.  Please install it.",
+                       call. = FALSE)
+              }
             return(FastProject(Biobase::exprs(data), ...))
             }
 )
@@ -295,6 +297,11 @@ setMethod("FastProject", signature(data = "ExpressionSet"),
 #' @export
 setMethod("FastProject", signature(data = "SummarizedExperiment"),
           function(data, ...) {
+
+              if (!requireNamespace("SummarizedExperiment", quietly = TRUE)){
+                  stop("Package \"SummarizedExperiment\" needed to load this data object.  Please install it.",
+                       call. = FALSE)
+              }
             return(FastProject(SummarizedExperiment::assay(data), ...))
           }
 )

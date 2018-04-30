@@ -145,7 +145,6 @@ newAnalysis <- function(nfp) {
 #' Lanch the server
 #' @importFrom jsonlite fromJSON
 #' @importFrom utils browseURL URLdecode stack
-#' @importFrom SummarizedExperiment values
 #' @param object FastProject object or path to a file containing such an
 #' object (saved using saveAndViewResults, or directly using saveRDS)
 #' @param port The port on which to serve the output viewer.  If omitted, a
