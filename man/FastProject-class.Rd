@@ -12,13 +12,15 @@
 FastProject(data, ...)
 
 \S4method{FastProject}{matrixORSparse}(data, signatures, housekeeping = NULL,
-  norm_methods = NULL, unnormalizedData = NULL, meta = NULL,
-  nomodel = FALSE, projection_genes = c("fano"), lean = FALSE,
-  min_signature_genes = 5, weights = NULL, threshold = 0,
-  perm_wPCA = FALSE, sig_norm_method = "znorm_rows",
-  sig_score_method = "weighted_avg", trajectory_method = c("None",
-  "SimplePPT"), pool = "auto", cellsPerPartition = 100, name = NULL,
-  cluster_variable = "", latentSpace = NULL)
+  unnormalizedData = NULL, meta = NULL, nomodel = TRUE,
+  projection_genes = c("fano"), lean = "auto", min_signature_genes = 5,
+  weights = NULL, threshold = 0, perm_wPCA = FALSE,
+  sig_norm_method = c("znorm_columns", "none", "znorm_rows",
+  "znorm_rows_then_columns", "rank_norm_columns"),
+  sig_score_method = c("naive", "weighted_avg"),
+  trajectory_method = c("None", "SimplePPT"), pool = "auto",
+  cellsPerPartition = 100, name = NULL, cluster_variable = "",
+  latentSpace = NULL)
 
 \S4method{FastProject}{data.frame}(data, ...)
 
@@ -38,21 +40,19 @@ list of Signature objects}
 
 \item{housekeeping}{vector of gene names}
 
-\item{norm_methods}{normalization methods to be extracted from the scone
-object}
-
 \item{meta}{data file with cell meta data (.txt), or a
 data.frame with meta information. Note that rows should match samples in the
 data, and columns should either be factors or numerics.}
 
 \item{nomodel}{if TRUE, no fnr curve calculated and all weights equal to 1.
-Else FNR and weights calculated. [Default:FALSE]}
+Else FNR and weights calculated. [Default:TRUE]}
 
 \item{projection_genes}{name of method ('threshold' or 'fano') or list of
 genes to use when computing projections.}
 
-\item{lean}{if TRUE run a lean simulation. Else more robust pipeline
-initiated. Default is FALSE}
+\item{lean}{if TRUE omit some projection methods with poor scaling.
+Default is 'auto' which enables additional methods if the number of cells
+is less than 500.}
 
 \item{min_signature_genes}{Minimum number of genes required to compute a
 signature}
@@ -66,9 +66,12 @@ from the FNR curve.}
 number of PCs. Else not. Default FALSE.}
 
 \item{sig_norm_method}{Method to apply to normalize the expression matrix
-before calculating signature scores}
+before calculating signature scores. Valid options are:
+"znorm_columns" (default), "none", "znorm_rows", "znorm_rows_then_columns",
+or "rank_norm_columns"}
 
-\item{sig_score_method}{Method to apply when calculating signature scores}
+\item{sig_score_method}{Method to apply when calculating signature scores.
+Either "naive" (default) or "weighted_avg"}
 
 \item{trajectory_method}{Method to use to infer a trajectory.  Either
 "None" (default) or "SimplePPT".}

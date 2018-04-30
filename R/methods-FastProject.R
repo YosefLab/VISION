@@ -12,17 +12,16 @@
 #' @param signatures list of file paths to signature files (.gmt or .txt) or a
 #' list of Signature objects
 #' @param housekeeping vector of gene names
-#' @param norm_methods normalization methods to be extracted from the scone
-#' object
 #' @param meta data file with cell meta data (.txt), or a
 #' data.frame with meta information. Note that rows should match samples in the
 #' data, and columns should either be factors or numerics.
 #' @param nomodel if TRUE, no fnr curve calculated and all weights equal to 1.
-#' Else FNR and weights calculated. [Default:FALSE]
+#' Else FNR and weights calculated. [Default:TRUE]
 #' @param projection_genes name of method ('threshold' or 'fano') or list of
 #' genes to use when computing projections.
-#' @param lean if TRUE run a lean simulation. Else more robust pipeline
-#' initiated. Default is FALSE
+#' @param lean if TRUE omit some projection methods with poor scaling.
+#' Default is 'auto' which enables additional methods if the number of cells
+#' is less than 500.
 #' @param min_signature_genes Minimum number of genes required to compute a
 #' signature
 #' @param weights Precomputed weights for each coordinate. Normally computed
@@ -31,8 +30,11 @@
 #' @param perm_wPCA If TRUE, apply permutation WPCA to calculate significant
 #' number of PCs. Else not. Default FALSE.
 #' @param sig_norm_method Method to apply to normalize the expression matrix
-#' before calculating signature scores
-#' @param sig_score_method Method to apply when calculating signature scores
+#' before calculating signature scores. Valid options are:
+#' "znorm_columns" (default), "none", "znorm_rows", "znorm_rows_then_columns",
+#' or "rank_norm_columns"
+#' @param sig_score_method Method to apply when calculating signature scores.
+#' Either "naive" (default) or "weighted_avg"
 #' @param trajectory_method Method to use to infer a trajectory.  Either
 #' "None" (default) or "SimplePPT".
 #' @param pool indicates whether or not to create supercells. Acceptable values
@@ -65,12 +67,14 @@
 #'                      signatures = sigs,
 #'                      housekeeping = hkg)
 setMethod("FastProject", signature(data = "matrixORSparse"),
-            function(data, signatures, housekeeping=NULL, norm_methods = NULL,
-                    unnormalizedData = NULL, meta=NULL, nomodel=FALSE,
-                    projection_genes=c("fano"), lean=FALSE, min_signature_genes=5,
+            function(data, signatures, housekeeping=NULL,
+                    unnormalizedData = NULL, meta=NULL, nomodel=TRUE,
+                    projection_genes=c("fano"), lean="auto", min_signature_genes=5,
                     weights=NULL, threshold=0, perm_wPCA=FALSE,
-                    sig_norm_method="znorm_rows",
-                    sig_score_method="weighted_avg",
+                    sig_norm_method = c("znorm_columns", "none", "znorm_rows",
+                                        "znorm_rows_then_columns",
+                                        "rank_norm_columns"),
+                    sig_score_method=c("naive", "weighted_avg"),
                     trajectory_method=c("None", "SimplePPT"),
                     pool="auto", cellsPerPartition=100, name=NULL,
                     cluster_variable = "", latentSpace = NULL) {
@@ -189,11 +193,23 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
                                                toupper, "",
                                                USE.NAMES = FALSE)
             .Object@threshold <- threshold
-            .Object@sig_norm_method <- sig_norm_method
-            .Object@sig_score_method <- sig_score_method
+            .Object@sig_norm_method <- match.arg(sig_norm_method)
+            .Object@sig_score_method <- match.arg(sig_score_method)
             .Object@trajectory_method <- match.arg(trajectory_method)
-            .Object@lean <- lean
             .Object@perm_wPCA <- perm_wPCA
+
+            if (is.character(lean)){
+                if (tolower(lean) == "auto"){
+                    if (ncol(.Object@exprData) < 500){
+                        lean <- FALSE
+                    } else {
+                        lean <- TRUE
+                    }
+                } else {
+                    stop("Bad value for 'lean' argument")
+                }
+            }
+            .Object@lean <- lean
 
             LOTS_OF_CELLS <- ncol(.Object@exprData) > 15000
 
