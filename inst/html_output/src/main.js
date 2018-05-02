@@ -12,12 +12,17 @@ global_status.main_vis = "clusters"; // Selected from 4 options on top
 global_status.plotted_projection = "";
 global_status.plotted_pc = 1;
 
+// Indicate whether or not we have pooled data
+global_status.pooled = false;
+
 // Determine projected values
 global_status.plotted_item = "";  // name of signature, meta or gene that is plotted
 global_status.plotted_item_type = ""; // either 'signature', 'meta', or 'gene'
 
 global_status.cluster_var = ""; // which cluster variable are we using
 global_status.selected_cluster = ""; // which cell cluster should be clustered
+
+global_status.selected_cells = []; // which cell(s) is/are currently selected
 
 global_status.upper_range = "";
 global_status.lower_range = "";
@@ -304,11 +309,25 @@ window.onload = function()
         }
     });
 
+    // get pool information
+    var getPoolStatus = api.pool.stat()
+	.then(function(stat) { 
+	    if (stat) {
+		global_status.pooled = true;
+	    }
+	});
+
     window.addEventListener('hover-cells', function(e) {
         var list_of_cell_ids = e.detail
         right_content.hover_cells(list_of_cell_ids)
         upper_left_content.hover_cells(list_of_cell_ids)
         lower_left_content.hover_cells(list_of_cell_ids)
+    });
+
+    window.addEventListener("select-cells", function(e) { 
+	
+	global_status.selected_cells = Object.keys(e.detail);
+
     });
 
     /*

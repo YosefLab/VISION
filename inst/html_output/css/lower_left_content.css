@@ -24,6 +24,10 @@
     flex-grow: 1;
 }
 
+#cluster-wrapper #cellinfo-div {
+    flex-grow: 1;
+}
+
 .gene-cell {
     cursor: pointer;
 }

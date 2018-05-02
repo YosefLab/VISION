@@ -61,6 +61,28 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
+    // Pools API
+    
+    output.pool = {}
+
+    output.pool.stat = function() {
+	var query = "/Pool/Status";
+
+	return $.ajax(query, {dataType: "json"}).then(x => x)
+    }
+
+    output.pool.values = function(pool, data_type, key) {
+	query = "/Pool/";
+
+	if (data_type == "meta") { 
+	    query = query.concat(pool, "/Meta/", key);
+	}  else if (data_type == "gene") { 
+	    query = query.concat(pool, "/Gene/", key);
+	} 
+	
+	return $.ajax(query, {dataType: "json"}).then(x => x);
+    }
+
     // Clusters API
 
     output.clusters = {}

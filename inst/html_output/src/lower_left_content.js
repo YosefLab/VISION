@@ -4,7 +4,9 @@
  * Lower_Left_Content
  *    - Sig_Info
  *      - Sig_Heatmap
+ *      - Cell_SigInfo
  *    - Gene_Info
+ *    	- 
  *    - Meta_Info
  *    - Cell_Info
  *
@@ -38,6 +40,12 @@ Lower_Left_Content.prototype.init = function()
 
     var meta_info_promise = meta_info.init();
 
+    //var cell_info = new Cell_Info();
+    //this.children.push(cell_info);
+    //this.cell_info = cell_info
+
+    //var cell_info_promise = cell_info.init();
+
     this.setLoadingStatus = createLoadingFunction(
         document.getElementById("lower-left-content")
     );
@@ -66,7 +74,11 @@ Lower_Left_Content.prototype.update = function(updates)
             $(this.sig_info.dom_node).hide()
             $(this.gene_info.dom_node).hide()
             $(this.meta_info.dom_node).show()
-        }
+        } else if (item_type == "cell") {
+	    $(this.sig_info.dom_node).hide()
+	    $(this.gene_info.dom_node).hide()
+	    $(this.meta_info.dom_node).hide()
+	}
     }
 
 }
@@ -84,6 +96,7 @@ function Sig_Info()
     this.bound_sig = ""
     this.sig_info_default = $(this.dom_node).find('#sig-info-default')
     this.sig_info_cluster = $(this.dom_node).find('#sig-info-cluster')
+    this.sig_info_cell = $(this.dom_node).find("#sig-info-cell")
 
     this.heatmap = null
     this.plotted_heatmap = {
@@ -91,6 +104,13 @@ function Sig_Info()
         'proj_key': '',
     }
 
+    this.cell_info = null
+    this.plotted_cellinfo = {
+	'sig_key': '',
+	'cells': [], 
+    }
+
+    this.CellInfo = null;
 }
 
 Sig_Info.prototype.init = function()
@@ -117,6 +137,11 @@ Sig_Info.prototype.init = function()
     {
         self.drawHeat()
     })
+
+    $(self.dom_node).find("#CellInfoButton").on('click', function()
+    {
+	self.addCellInfo()
+    });
 
 }
 
@@ -174,6 +199,10 @@ Sig_Info.prototype.update = function(updates)
     if(this.sig_info_cluster.hasClass('active') && 'plotted_item' in updates){
         this.drawHeat();
     }
+
+    if (this.sig_info_cell.hasClass("active")) {
+	this.addCellInfo();
+    }	
 }
 
 Sig_Info.prototype.build_cluster_dropdown_param = function()
@@ -265,28 +294,103 @@ Sig_Info.prototype.drawHeat = function(){
         });
 }
 
+// Add Cell info for signature data
+Sig_Info.prototype.addCellInfo = function(){
+
+    // Need to create it if it isn't there
+    var self = this;
+
+    var cellinfo_div = $(self.dom_node).find('#cell-dist-div')
+    cellinfo_div.show()
+
+    if (self.CellInfo == null) { 
+
+	self.CellInfo = new Cell_Info("signature");
+    } 
+
+    var sig_key = get_global_status('plotted_item'); // assume it's a signature
+    var cells = get_global_status("selected_cells");
+
+    // plotted heatmap is based on sig_key, proj_key
+    // check if we are already showing the right heatmap and don't regenerate
+    var need_plot = false;
+
+    if (self.plotted_cellinfo['sig_key'] !== sig_key){
+        self.plotted_cellinfo['sig_key'] = sig_key
+        need_plot = true;
+    }
+
+    if (self.plotted_cellinfo['cells'] !== cells) { 
+	self.plotted_cellinfo['cells'] = cells;
+	need_plot = true;
+    }
+
+    if(!need_plot){
+        return $.when(true);
+    }
+
+    cellinfo_div.addClass('loading')
+
+    self.CellInfo.update()
+
+    cellinfo_div.removeClass("loading");
+
+}
 
 function Gene_Info()
 {
     this.dom_node = document.getElementById("gene-info");
     this.title = $(this.dom_node).find('#gene-analysis-title').get(0);
     this.chart = $(this.dom_node).find('#gene-dist-div').get(0);
+    this.gene_info_default = $(this.dom_node).find('#gene-info-default');
+    this.gene_info_cell = $(this.dom_node).find("#gene-info-cell");
     this.bound_gene = ""
+
+    this.cell_info = null
+    this.plotted_cellinfo = {
+	'gene_key': '',
+	'cells': [], 
+    }
+
+    this.CellInfo = null;
 }
 
 Gene_Info.prototype.init = function()
 {
+
+    var self = this;
+
+    $(self.dom_node).find("#Gene-CellInfoButton").on('click', function()
+    {
+	self.addCellInfo()
+    });
+
+
+
 }
 
 Gene_Info.prototype.update = function(updates)
 {
     var item_type = get_global_status('plotted_item_type')
     var gene = get_global_status('plotted_item')
+
     if(item_type !== 'gene' || gene === this.bound_gene){
         return;
     }
 
     this.bound_gene = gene
+
+    if (gene == this.bound_gene) {
+	if ('plotted_projection' in updates) { 
+	    $(self.dom_node).find('#GeneInfoButton').click()
+	}
+    }
+
+    $(self.dom_node).find("GeneInfoButton").click();
+
+    this.bound_gene = gene
+
+    $(this.title).html(this.bound_gene)
 
     var urllink = "http://www.genecards.org/cgi-bin/carddisp.pl?gene=" + this.bound_gene;
     $(this.title).html(
@@ -297,6 +401,146 @@ Gene_Info.prototype.update = function(updates)
 
     drawDistChart(this.chart, gene_exp, 'Expression')
 
+    if (this.gene_info_cell.hasClass('active')) { 
+	this.addCellInfo();
+    }
+
+}
+
+Gene_Info.prototype.addCellInfo = function() {
+
+    // Need to create it if it isn't there
+    var self = this;
+
+    var cellinfo_div = $(self.dom_node).find('#cell-dist-div')
+    cellinfo_div.show()
+
+    if (self.CellInfo == null) { 
+
+	self.CellInfo = new Cell_Info("gene");
+    } 
+
+    var gene_key = get_global_status('plotted_item'); // assume it's a gene
+    var cells = get_global_status("selected_cells");
+
+    // plotted heatmap is based on sig_key, proj_key
+    // check if we are already showing the right heatmap and don't regenerate
+    var need_plot = false;
+
+    if (self.plotted_cellinfo['gene_key'] !== gene_key){
+        self.plotted_cellinfo['gene_key'] = gene_key
+        need_plot = true;
+    }
+
+    if (self.plotted_cellinfo['cells'] !== cells) { 
+	self.plotted_cellinfo['cells'] = cells;
+	need_plot = true;
+    }
+
+    if(!need_plot){
+        return $.when(true);
+    }
+
+    cellinfo_div.addClass('loading')
+
+    self.CellInfo.update()
+
+    cellinfo_div.removeClass("loading");
+
+}
+
+function Cell_Info(data_type)
+{
+    if (data_type == "signature") {
+	this.dom_node = document.getElementById("sig-info");
+    } else if (data_type == "meta") { 
+	this.dom_node = document.getElementById("meta-info");
+    } else if (data_type == "gene") { 
+	this.dom_node = document.getElementById("gene-info");
+    }
+
+    this.data_type = data_type;
+    this.title = $(this.dom_node).find("#cell-analysis-title");
+    this.source = $(this.dom_node).find('#cell-source');
+    this.chart = $(this.dom_node).find('#cell-dist-div').get(0);
+    this.bound_cell = ""
+}
+
+Cell_Info.prototype.init = function()
+{
+}
+
+Cell_Info.prototype.update = function()
+{
+
+    var self = this;
+    if (this.data_type == "signature") { 
+
+	var name = get_global_data('sig_info').name;
+
+    } else if (this.data_type == "meta") { 
+
+	var name = get_global_status('plotted_item')
+
+    } else if (this.data_type == "gene") { 
+	
+	var name = get_global_status('plotted_item')
+
+    } 
+	
+    var item_type = get_global_status('plotted_item_type')
+    var cells = get_global_status('selected_cells')
+    
+     if (Object.keys(cells).length > 1) { 
+	this.bound_cell = "Selected Subset";
+    } else {
+	this.bound_cell = cells[0]
+    }
+
+    $(this.title).text(name)
+    $(this.source).text(this.bound_cell);
+
+    var exp = get_global_data('plotted_values')
+
+    var poolstatus = get_global_status("pooled")
+
+    f_exp = []
+
+    if (poolstatus && (this.data_type == "meta" || this.data_type == "gene")) { 
+	var promises = [];
+	exp = Object.keys(exp).forEach(function(k) { 
+	    if (cells.indexOf(k) > -1) {
+		var vals_promise = api.pool.values(k, self.data_type, name);
+		promises.push(vals_promise);
+	    }
+	});
+	
+	return Promise.all(promises).then(function(vs) { 
+	    console.log(vs);
+	    for (var i = 0; i < vs.length; i++) {
+		for (var j = 0; j < vs[i].length; j++) { 
+		    f_exp.push(vs[i][j]);
+		}
+	    }
+	    
+	    console.log(f_exp);
+
+	    drawDistChart(self.chart, f_exp, "Values")
+	});
+    } else {
+	exp = Object.keys(exp).forEach(function(k) {
+	    if (cells.indexOf(k) > -1) {
+		f_exp.push(exp[k]);
+	   } 
+	})
+	console.log(f_exp);
+
+
+
+        drawDistChart(this.chart, f_exp, 'Values')
+    }
+
+
 }
 
 function Meta_Info()
@@ -304,20 +548,47 @@ function Meta_Info()
     this.dom_node = document.getElementById("meta-info");
     this.title = $(this.dom_node).find('#meta-analysis-title').get(0);
     this.chart = $(this.dom_node).find('#meta-dist-div').get(0);
+    this.meta_info_default = $(this.dom_node).find('#meta-info-default');
+    this.meta_info_cell = $(this.dom_node).find("#meta-info-cell");
     this.bound_meta = ""
+
+    this.cell_info = null
+    this.plotted_cellinfo = {
+	'meta_key': '',
+	'cells': [], 
+    }
+
+    this.CellInfo = null;
 }
 
 Meta_Info.prototype.init = function()
 {
+    var self = this;
+
+    $(self.dom_node).find("#Meta-CellInfoButton").on('click', function()
+    {
+	self.addCellInfo()
+    });
+
+
 }
 
 Meta_Info.prototype.update = function(updates)
 {
     var item_type = get_global_status('plotted_item_type')
     var meta = get_global_status('plotted_item')
+
     if(item_type !== 'meta' || meta === this.bound_gene){
         return;
     }
+
+    if (meta == this.bound_meta) {
+	if ('plotted_projection' in updates) { 
+	    $(self.dom_node).find('#MetaInfoButton').click()
+	}
+    }
+
+    $(self.dom_node).find("MetaInfoButton").click();
 
     this.bound_meta = meta
 
@@ -327,6 +598,51 @@ Meta_Info.prototype.update = function(updates)
 
     drawDistChart(this.chart, meta_vals)
 
+    if (this.meta_info_cell.hasClass('active')) { 
+	this.addCellInfo();
+    }
+
+}
+
+Meta_Info.prototype.addCellInfo = function() {
+
+    // Need to create it if it isn't there
+    var self = this;
+
+    var cellinfo_div = $(self.dom_node).find('#cell-dist-div')
+    cellinfo_div.show()
+
+    if (self.CellInfo == null) { 
+
+	self.CellInfo = new Cell_Info("meta");
+    } 
+
+    var meta_key = get_global_status('plotted_item'); // assume it's meta infoe
+    var cells = get_global_status("selected_cells");
+
+    // plotted heatmap is based on sig_key, proj_key
+    // check if we are already showing the right heatmap and don't regenerate
+    var need_plot = false;
+
+    if (self.plotted_cellinfo['meta_key'] !== meta_key){
+        self.plotted_cellinfo['meta_key'] = meta_key
+        need_plot = true;
+    }
+
+    if (self.plotted_cellinfo['cells'] !== cells) { 
+	self.plotted_cellinfo['cells'] = cells;
+	need_plot = true;
+    }
+
+    if(!need_plot){
+        return $.when(true);
+    }
+
+    cellinfo_div.addClass('loading')
+
+    self.CellInfo.update()
+
+    cellinfo_div.removeClass("loading");
 }
 
 //Draw Dist Scatter
