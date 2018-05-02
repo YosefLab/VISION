@@ -367,13 +367,19 @@ setMethod("analyze", signature(object="FastProject"),
     # Populates @Projections
     object <- generateProjections(object)
 
+    # Populates @TrajectoryProjections
+    if (!is.null(object@latentTrajectory)) {
+        object <- generateTrajectoryProjections(object)
+    }
+
     message("Computing background distribution for signature scores...")
     signatureBackground <- calculateSignatureBackground(object, num = 3000)
 
     # Populates @SigConsistencyScores
     object <- analyzeSpatialCorrelations(object, signatureBackground)
 
-    if (tolower(object@trajectory_method) != "none") {
+    # Populates @TrajectoryConsistencyScores
+    if (!is.null(object@latentTrajectory)) {
         object <- analyzeTrajectoryCorrelations(object, signatureBackground)
     }
 

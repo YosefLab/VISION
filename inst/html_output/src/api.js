@@ -142,21 +142,17 @@ var api = (function(){
 
     output.tree = {}
 
-    output.tree.tree = function()
-    {
-        var query = "/Tree/List"
+    // Get milestones and connectivity for this 2d projection
+    output.tree.milestones = function(projection) {
+        var query = "/Tree/Projections/";
+        query = query.concat(encodeURI(projection), "/milestones");
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.tree.tree_points = function(projection) {
-        var query = "/Tree/";
-        query = query.concat(encodeURI(projection), "/Points");
-        return $.ajax(query, {dataType: "json"}).then(x => x)
-    }
-
+    // Get cell coordinates for this 2d projection
     output.tree.coordinates = function(projection) {
-        var query = "/Tree/";
-        query = query.concat(encodeURI(projection), "/Projection")
+        var query = "/Tree/Projections/";
+        query = query.concat(encodeURI(projection), "/coordinates")
         return $.ajax(query, {dataType: "json"}).then(x => fix_coordinates(x))
     }
 

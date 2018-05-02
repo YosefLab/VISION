@@ -250,23 +250,21 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         out <- toJSON(proj_names)
         return(out)
       }) %>%
-      get("/Tree/List", function(req, res, err) {
-
-        W <- object@TreeProjectionData@latentTree@adjMat
-
-        return(toJSON(W))
-      }) %>%
-      get("/Tree/(?<proj_name3>.*)/Points", function(req, res, err) {
+      get("/Tree/Projections/(?<proj_name3>.*)/milestones", function(req, res, err) {
         proj <- URLdecode(req$params$proj_name3)
 
-        C <- object@TreeProjectionData@projections[[proj]]@vData
+        C <- object@TrajectoryProjections[[proj]]@vData
+        W <- object@TrajectoryProjections[[proj]]@adjMat
 
-        return(toJSON(C))
+        out <- list(C, W)
+
+        return(toJSON(out))
       }) %>%
-      get("/Tree/(?<proj_name4>.*)/Projection", function(req, res, err) {
+      get("/Tree/Projections/(?<proj_name4>.*)/coordinates", function(req, res, err) {
         proj <- URLdecode(req$params$proj_name4)
+        coords <- object@TrajectoryProjections[[proj]]@pData
 
-        out <- FastProjectR:::coordinatesToJSON(object@TreeProjectionData@projections[[proj]]@pData)
+        out <- FastProjectR:::coordinatesToJSON(coords)
 
         return(out)
       }) %>%
@@ -274,8 +272,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         sigs <- colnames(object@sigScores)
         out <- FastProjectR:::sigProjMatrixToJSON(
-                                  object@TreeProjectionData@sigProjMatrix,
-                                  object@TreeProjectionData@emp_pMatrix,
+                                  object@TrajectoryConsistencyScores@sigProjMatrix,
+                                  object@TrajectoryConsistencyScores@emp_pMatrix,
                                   sigs)
         return(out)
       }) %>%
@@ -283,8 +281,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         sigs <- colnames(object@metaData)
         out <- FastProjectR:::sigProjMatrixToJSON(
-                                  object@TreeProjectionData@sigProjMatrix,
-                                  object@TreeProjectionData@emp_pMatrix,
+                                  object@TrajectoryConsistencyScores@sigProjMatrix,
+                                  object@TrajectoryConsistencyScores@emp_pMatrix,
                                   sigs)
         return(out)
       }) %>%
@@ -468,7 +466,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             info["name"] <- ""
         }
 
-        W <- object@TreeProjectionData
+        W <- object@latentTrajectory
         hasTree <- !is.null(W)
 
         info["has_tree"] <- hasTree

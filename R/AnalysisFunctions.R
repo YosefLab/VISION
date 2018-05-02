@@ -362,34 +362,25 @@ analyzeTrajectoryCorrelations <- function(object, signatureBackground = NULL) {
       signatureBackground <- calculateSignatureBackground(object, num = 3000)
   }
 
-  if (tolower(object@trajectory_method) != "none") {
-      message("Fitting principle tree...")
-      treeProjs <- generateTreeProjections(object@latentSpace,
-                                 inputProjections = object@Projections)
+  message("Computing significance of signatures...")
+  sigVTreeProj <- sigConsistencyScores(object$latentTrajectory,
+                                       object@sigScores,
+                                       object@metaData,
+                                       signatureBackground)
 
-      message("Computing significance of signatures...")
-      sigVTreeProj <- sigConsistencyScores(treeProjs$latentTree,
-                                           object@sigScores,
-                                           object@metaData,
-                                           signatureBackground)
+  message("Clustering Signatures...")
+  sigTreeClusters <- clusterSignatures(object@sigScores,
+                                       object@metaData,
+                                       sigVTreeProj$pVals,
+                                       clusterMeta = object@pool)
 
-      message("Clustering Signatures...")
-      sigTreeClusters <- clusterSignatures(object@sigScores,
-                                           object@metaData,
-                                           sigVTreeProj$pVals,
-                                           clusterMeta = object@pool)
+  TrajectoryConsistencyScores <- ProjectionData(
+      sigProjMatrix = sigVTreeProj$sigProjMatrix,
+      pMatrix = sigVTreeProj$pVals,
+      sigClusters = sigTreeClusters,
+      emp_pMatrix = sigVTreeProj$emp_pVals)
 
-      treeProjData <- TreeProjectionData(
-                                 latentTree = treeProjs$latentTree,
-                                 projections = treeProjs$projections,
-                                 sigProjMatrix = sigVTreeProj$sigProjMatrix,
-                                 pMatrix = sigVTreeProj$pVals,
-                                 emp_pMatrix = sigVTreeProj$emp_pVals,
-                                 sigClusters = sigTreeClusters,
-                                 treeScore = treeProjs$treeScore)
-
-      object@TreeProjectionData <- treeProjData
-  }
+  object@TrajectoryConsistencyScores <- TrajectoryConsistencyScores
 
   return(object)
 }

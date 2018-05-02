@@ -187,8 +187,7 @@ Right_Content.prototype.draw_tree = function() {
     var item_type = get_global_status('plotted_item_type');
     var proj_key = get_global_status('plotted_projection');
 
-    var tree_points = api.tree.tree_points(proj_key);
-    var tree_adjlist = api.tree.tree()
+    var milestonePromise = api.tree.milestones(proj_key);
 
     var projection = get_global_data('tree_projection_coordinates')
     var values = get_global_data('plotted_values')
@@ -210,8 +209,11 @@ Right_Content.prototype.draw_tree = function() {
         values = self.rank_values(values)
     }
 
-    return $.when(tree_points, tree_adjlist) // Runs when both are completed
-        .then(function(treep, treel){
+    return $.when(milestonePromise) // Runs when both are completed
+        .then(function(milestoneCoordinates){
+
+            var treep = milestoneCoordinates[0]
+            var treel = milestoneCoordinates[1]
 
             // Massage treep for easier D3 binding
 
