@@ -61,6 +61,8 @@ Right_Content.prototype.init = function()
                 })
                 .trigger('chosen:updated')
 
+            global_data.default_projection = proj_names[0]
+
         });
 
     return proj_promise

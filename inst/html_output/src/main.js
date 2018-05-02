@@ -279,9 +279,21 @@ window.onload = function()
             return cell_clusters_promise
         })
 
+    var sessionInfoPromise = api.sessionInfo().then(info => {
+        if(info.name.length > 0){
+            $('#SampleNameSpan').text(' - ' + info.name)
+        }
+
+        if(info.has_tree){
+            $('#nav-bar')
+                .find(".nav-link[data-main-vis='tree']")
+                .removeClass('disabled')
+        }
+    });
+
     // When it's all done, run this
-    $.when(right_promise, lower_left_promise, cellClustersPromise
-    )
+    $.when(right_promise, lower_left_promise,
+        cellClustersPromise, sessionInfoPromise)
         .then(function(){
             upper_left_content.select_default();
         });
@@ -294,19 +306,6 @@ window.onload = function()
         set_global_status({
             'main_vis': $(this).data('main-vis')
         })
-    });
-
-
-    api.sessionInfo().then(info => {
-        if(info.name.length > 0){
-            $('#SampleNameSpan').text(' - ' + info.name)
-        }
-
-        if(info.has_tree){
-            $('#nav-bar')
-                .find(".nav-link[data-main-vis='tree']")
-                .removeClass('disabled')
-        }
     });
 
     // get pool information

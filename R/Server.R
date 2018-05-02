@@ -247,6 +247,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       }) %>%
       get("/Projections/list", function(req, res, err) {
         proj_names <- names(object@Projections)
+        proj_names <- sort(proj_names, decreasing=TRUE) # hack to make tsne on top
         out <- toJSON(proj_names)
         return(out)
       }) %>%
