@@ -6,7 +6,7 @@
 Trajectory <- function(input) {
 
     # Create the adjacency matrix
-    network <- input$milestone_network
+    network <- as.data.frame(input$milestone_network)
     milestone_ids <- union(unique(network$from), unique(network$to))
     adjMat <- matrix(0.0, nrow = length(milestone_ids), ncol = length(milestone_ids),
                      dimnames = list(milestone_ids, milestone_ids))
@@ -43,7 +43,7 @@ Trajectory <- function(input) {
         stop("milestones in progressions$to don't match those in milestone_network")
     }
 
-    .Object <- new("Signature", adjMat = adjMat, progressions = progressions)
+    .Object <- new("Trajectory", adjMat = adjMat, progressions = progressions)
 
     return(.Object)
 }
@@ -61,10 +61,43 @@ Trajectory <- function(input) {
 #'          weights: matrix, cells X neighbors
 #'              Corresponding weights to nearest neighbors
 setMethod("computeKNNWeights", signature(object = "Trajectory"),
-            function(object, K = round(sqrt(nrow(object@pData))) ) {
+            function(object, K = round(sqrt(nrow(object@progressions))) ) {
 
-            # Todo: Fill in stuff here
-            # Similar to the one in methods-TreeProjection
+            edgePos = object@progressions$position
+			names(edgePos) = rownames(object@progressions)
+			edgeAssoc = t(object@progressions[,c("from", "to")])
+
+            distmat <- calculateTrajectoryDistances(adjMat = object@adjMat,
+                                                edgeAssoc = edgeAssoc,
+                                                edgePos = edgePos)
+
+            kQuantile <- K / nrow(object@progressions)
+            knnmat <- apply(distmat, 1, function(d) {
+                partition <- quantile(d, kQuantile)
+                d[d > partition] <- Inf
+                return(d)
+            })
+
+            nn <- t(apply(distmat, 1, function(r) {
+                            order(r)[1:K]
+            }))
+
+            d <- lapply(seq(nrow(nn)), function(i) {
+                            distmat[i, nn[i, ]]
+            })
+            d <- do.call(rbind, d)
+
+            sigma <- rowMaxs(d)
+            sigma[sigma == 0] <- 1.0 # occurs if all nearest neighbors at same point
+            sparse_weights <- exp(-1 * (d * d) / sigma ^ 2)
+
+            # Normalize row sums = 1
+            weightsNormFactor <- rowSums(sparse_weights)
+            weightsNormFactor[weightsNormFactor == 0] <- 1.0
+            sparse_weights <- sparse_weights / weightsNormFactor
+
+            rownames(nn) <- rownames(object)
+            rownames(d) <- rownames(object)
 
             return(list(indices = nn, weights = sparse_weights))
             })
