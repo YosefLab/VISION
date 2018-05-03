@@ -32,7 +32,7 @@ PCAnnotatorData <- setClass("PCAnnotatorData",
 Trajectory <- setClass("Trajectory",
     slots = c(
         adjMat = "matrix", # MxM connectivity for milestones (w/ lengths)
-        progression = "data.frame" # position of cells between milestones
+        progressions = "data.frame" # position of cells between milestones
             # rownames: cell (character)
             # columns:  from (character), to (character), position (numeric, 0 to 1)
 ))
@@ -93,7 +93,6 @@ FastProject <- setClass("FastProject",
         threshold = "numeric",
         sig_norm_method = "character",
         sig_score_method = "character",
-        trajectory_method = "character",
         exprData = "matrixORSparse",
         initialExprData = "matrixORSparse",
         unnormalizedData = "matrixORSparse",
@@ -126,7 +125,6 @@ FastProject <- setClass("FastProject",
         weights = matrix(NA, 1, 1),
         threshold = 0,
         sig_norm_method = "znorm_rows",
-        trajectory_method = "None",
         exprData = matrix(NA, 1, 1),
         initialExprData = matrix(NA, 1, 1),
         unnormalizedData = matrix(NA, 1, 1),

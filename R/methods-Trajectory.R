@@ -1,3 +1,53 @@
+#' Initialize a new Trajecotry object.
+#'
+#' @param input trajectory to model cell progression.  Wrapped result
+#' of a trajectory inference by the dynverse/dynwrap library
+#' @return Trajectory object
+Trajectory <- function(input) {
+
+    # Create the adjacency matrix
+    network <- input$milestone_network
+    milestone_ids <- union(unique(network$from), unique(network$to))
+    adjMat <- matrix(0.0, nrow = length(milestone_ids), ncol = length(milestone_ids),
+                     dimnames = list(milestone_ids, milestone_ids))
+
+    for (i in seq(nrow(network))){
+        from <- as.character(network[i, "from"])
+        to <- as.character(network[i, "to"])
+        edgeLength <- network[i, "length"]
+
+        adjMat[from, to] <- edgeLength
+        adjMat[to, from] <- edgeLength
+    }
+
+    progressions <- input$progressions
+    rownames(progressions) <- progressions$cell_id
+    progressions$cell_id <- NULL
+
+    colnames(progressions) <- gsub("percentage", "position",
+                                   colnames(progressions))
+
+    if (!("from" %in% colnames(progressions))){
+        stop("input Trajectory missing 'from' column")
+    }
+
+    if (!("to" %in% colnames(progressions))){
+        stop("input Trajectory missing 'to' column")
+    }
+
+    if (length(setdiff(unique(progressions$from), milestone_ids)) > 0) {
+        stop("milestones in progressions$from don't match those in milestone_network")
+    }
+
+    if (length(setdiff(unique(progressions$to), milestone_ids)) > 0) {
+        stop("milestones in progressions$to don't match those in milestone_network")
+    }
+
+    .Object <- new("Signature", adjMat = adjMat, progressions = progressions)
+
+    return(.Object)
+}
+
 #' Compute KNN weights based on geodesic distances for Trajectory objects
 #' @importFrom stats quantile
 #' @importFrom Matrix rowSums

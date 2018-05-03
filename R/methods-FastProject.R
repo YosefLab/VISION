@@ -33,8 +33,6 @@
 #' or "rank_norm_columns"
 #' @param sig_score_method Method to apply when calculating signature scores.
 #' Either "naive" (default) or "weighted_avg"
-#' @param trajectory_method Method to use to infer a trajectory.  Either
-#' "None" (default) or "SimplePPT".
 #' @param pool indicates whether or not to create supercells. Acceptable values
 #' are TRUE, FALSE, or 'auto', the last of which is the default and enables
 #' pooling if there are more than 15000 cells.
@@ -42,6 +40,8 @@
 #' @param cluster_variable variable to use to denote clusters
 #' @param latentSpace latent space for expression data. Numeric matrix or dataframe
 #' with dimensions CELLS x COMPONENTS
+#' @param latentTrajectory trajectory to model cell progression.  Wrapped result
+#' of a trajectory inference by the dynverse/dynwrap library
 #' @param name a name for the sample - shown on the output report
 #' @return A FastProject object
 #' @rdname FastProject-class
@@ -73,9 +73,9 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
                                         "znorm_rows_then_columns",
                                         "rank_norm_columns"),
                     sig_score_method=c("naive", "weighted_avg"),
-                    trajectory_method=c("None", "SimplePPT"),
                     pool="auto", cellsPerPartition=100, name=NULL,
-                    cluster_variable = "", latentSpace = NULL) {
+                    cluster_variable = "", latentSpace = NULL,
+                    latentTrajectory = NULL) {
 
             .Object <- new("FastProject")
 
@@ -193,7 +193,6 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
             .Object@threshold <- threshold
             .Object@sig_norm_method <- match.arg(sig_norm_method)
             .Object@sig_score_method <- match.arg(sig_score_method)
-            .Object@trajectory_method <- match.arg(trajectory_method)
             .Object@perm_wPCA <- perm_wPCA
 
             if (is.character(lean)){
@@ -264,6 +263,28 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
 
                 .Object@latentSpace <- latentSpace
                 .Object@initialLatentSpace <- latentSpace
+            }
+
+            if (!is.null(latentTrajectory)) {
+
+                if (!(
+                      "milestone_network" %in% names(latentTrajectory) &&
+                      "progressions" %in% names(latentTrajectory)
+                  )){
+                    stop("latentTrajectory must be a wrapped method using the dynverse/dynmethods library.")
+                }
+
+                .Object@latentTrajectory <- Trajectory(latentTrajectory)
+
+                sample_names <- colnames(.Object@exprData)
+                if (length(
+                        setdiff(
+                            sample_names,
+                            rownames(.Object@latentTrajectory@progressions)
+                            )
+                        ) > 0) {
+                    stop("Supplied progressions for latentTrajectory must have cell_ids that match sample/cell names")
+                }
             }
 
             .Object@cluster_variable <- cluster_variable
