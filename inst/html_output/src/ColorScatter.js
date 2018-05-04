@@ -402,6 +402,11 @@ ColorScatter.prototype.setSelected = function(selected_key, event_id)
             .classed("not-selected", function(d){return self.selectedPoints[d[3]] === undefined})
     }
 
+    var event = new CustomEvent('select-cells',
+	{detail: self.selectedPoints }) 
+
+    window.dispatchEvent(event);
+
 };
 
 ColorScatter.prototype.setHovered_TreeNode = function(node, clusters, event_id) {

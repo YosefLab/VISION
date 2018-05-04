@@ -12,12 +12,17 @@ global_status.main_vis = "clusters"; // Selected from 4 options on top
 global_status.plotted_projection = "";
 global_status.plotted_pc = 1;
 
+// Indicate whether or not we have pooled data
+global_status.pooled = false;
+
 // Determine projected values
 global_status.plotted_item = "";  // name of signature, meta or gene that is plotted
 global_status.plotted_item_type = ""; // either 'signature', 'meta', or 'gene'
 
 global_status.cluster_var = ""; // which cluster variable are we using
 global_status.selected_cluster = ""; // which cell cluster should be clustered
+
+global_status.selected_cells = []; // which cell(s) is/are currently selected
 
 global_status.upper_range = "";
 global_status.lower_range = "";
@@ -274,9 +279,21 @@ window.onload = function()
             return cell_clusters_promise
         })
 
+    var sessionInfoPromise = api.sessionInfo().then(info => {
+        if(info.name.length > 0){
+            $('#SampleNameSpan').text(' - ' + info.name)
+        }
+
+        if(info.has_tree){
+            $('#nav-bar')
+                .find(".nav-link[data-main-vis='tree']")
+                .removeClass('disabled')
+        }
+    });
+
     // When it's all done, run this
-    $.when(right_promise, lower_left_promise, cellClustersPromise
-    )
+    $.when(right_promise, lower_left_promise,
+        cellClustersPromise, sessionInfoPromise)
         .then(function(){
             upper_left_content.select_default();
         });
@@ -291,24 +308,25 @@ window.onload = function()
         })
     });
 
-
-    api.sessionInfo().then(info => {
-        if(info.name.length > 0){
-            $('#SampleNameSpan').text(' - ' + info.name)
-        }
-
-        if(info.has_tree){
-            $('#nav-bar')
-                .find(".nav-link[data-main-vis='tree']")
-                .removeClass('disabled')
-        }
-    });
+    // get pool information
+    var getPoolStatus = api.pool.stat()
+	.then(function(stat) { 
+	    if (stat) {
+		global_status.pooled = true;
+	    }
+	});
 
     window.addEventListener('hover-cells', function(e) {
         var list_of_cell_ids = e.detail
         right_content.hover_cells(list_of_cell_ids)
         upper_left_content.hover_cells(list_of_cell_ids)
         lower_left_content.hover_cells(list_of_cell_ids)
+    });
+
+    window.addEventListener("select-cells", function(e) { 
+	
+	global_status.selected_cells = Object.keys(e.detail);
+
     });
 
     /*

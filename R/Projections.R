@@ -1,19 +1,24 @@
 
 #' Registers the projection methods to be used
 #'
+#' @param numCells number of cells in this analysis
 #' @param lean If FALSE, all projections applied; else a subset of essential ones are applied. Default is FALSE.
 #' @return List of projection methods to be applied.
-registerMethods <- function(lean=FALSE) {
+registerMethods <- function(lean, numCells) {
 
     projMethods <- c()
+
     if (!lean) {
-    projMethods <- c(projMethods, "ISOMap" = applyISOMap)
-    projMethods <- c(projMethods, "ICA" = applyICA)
-    #projMethods <- c(projMethods, "RBF Kernel PCA" = applyRBFPCA)
+        projMethods <- c(projMethods, "ISOMap" = applyISOMap)
+        projMethods <- c(projMethods, "ICA" = applyICA)
     }
 
-    projMethods <- c(projMethods, "tSNE30" = applytSNE30)
-    projMethods <- c(projMethods, "tSNE10" = applytSNE10)
+    if (numCells > 90){
+        projMethods <- c(projMethods, "tSNE30" = applytSNE30)
+    }
+    if (numCells > 30){
+        projMethods <- c(projMethods, "tSNE10" = applytSNE10)
+    }
 
     return(projMethods)
 }
@@ -37,7 +42,8 @@ generateProjectionsInner <- function(expr, latentSpace, projection_genes=NULL, l
 
     exprData <- matLog2(exprData)
 
-    methodList <- registerMethods(lean)
+    NUM_CELLS <- nrow(latentSpace)
+    methodList <- registerMethods(lean, NUM_CELLS)
 
     projections <- list()
 
