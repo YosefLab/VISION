@@ -1,4 +1,4 @@
-#' Initialize a new Trajecotry object.
+#' Initialize a new Trajectory object.
 #'
 #' @param input trajectory to model cell progression.  Wrapped result
 #' of a trajectory inference by the dynverse/dynwrap library
@@ -101,3 +101,138 @@ setMethod("computeKNNWeights", signature(object = "Trajectory"),
 
             return(list(indices = nn, weights = sparse_weights))
             })
+
+
+#' Generate 2d representations of a trajectory model
+#'
+#' Creates 2d layouts of the milestone network and translates the
+#' cell positions into these layouts
+#'
+#' @importFrom igraph graph_from_data_frame
+#'
+#' @param trajectory Trajectory on which to operate
+#' @return trajectoryProjections list of TrajectoryProjection
+generateTrajectoryProjections <- function(trajectory) {
+
+    progressions <- trajectory@progressions
+    adjMat <- trajectory@adjMat
+
+    net <- igraph::graph_from_adjacency_matrix(adjMat, weighted = TRUE,
+                                               mode = "undirected")
+
+
+    adjMatInv <- adjMat ** -1
+    adjMatInv[is.infinite(adjMatInv)] <- 0
+
+    # some algorithms use weights to represent 'inverse' distance
+    invnet <- igraph::graph_from_adjacency_matrix(adjMatInv, weighted = TRUE,
+                                               mode = "undirected")
+
+    edges <- ends(net, E(net), names = TRUE)
+    adjMatBinary <- (adjMat > 0) * 1
+
+    tp_list <- list()
+
+    # layout with Fruchterman-Reingold algorithm
+    vData <- igraph::layout_with_fr(invnet)
+    rownames(vData) <- V(net)$name
+
+    pData <- translateCellPositions(progressions, vData, edges)
+
+    tp <- TrajectoryProjection(name = "FR", pData = pData, vData = vData,
+                               adjMat = adjMatBinary)
+
+    tp_list <- c(tp_list, tp)
+
+    # layout with Davidson-Harel
+    vData <- igraph::layout_with_dh(net)
+    rownames(vData) <- V(net)$name
+
+    pData <- translateCellPositions(progressions, vData, edges)
+
+    tp <- TrajectoryProjection(name = "DH", pData = pData, vData = vData,
+                               adjMat = adjMatBinary)
+
+    tp_list <- c(tp_list, tp)
+
+    # layout with Davidson-Harel
+    vData <- igraph::layout_as_tree(net)
+    rownames(vData) <- V(net)$name
+
+    pData <- translateCellPositions(progressions, vData, edges)
+
+    tp <- TrajectoryProjection(name = "Tree", pData = pData, vData = vData,
+                               adjMat = adjMatBinary)
+
+    tp_list <- c(tp_list, tp)
+
+    # layout with MDS
+    vData <- igraph::layout_with_mds(net)
+    rownames(vData) <- V(net)$name
+
+    pData <- translateCellPositions(progressions, vData, edges)
+
+    tp <- TrajectoryProjection(name = "MDS", pData = pData, vData = vData,
+                               adjMat = adjMatBinary)
+
+    tp_list <- c(tp_list, tp)
+
+    return(tp_list)
+}
+
+
+#' Translate cell positions
+#'
+#' Maps cell positions between edges
+#'
+#' @param progressions data.frame describing cell positions between milestones
+#' @param vData Mx2 matrix mapping miletones into 2d
+#' @param edges Edges x 2 matrix describing connectivity between edges
+#' @return pData Cells x 2 matrix with cell positions in 2d
+translateCellPositions <- function(progressions, vData, edges) {
+    pData <- lapply(seq(nrow(edges)), function(i) {
+        from <- edges[i, 1]
+        to <- edges[i, 2]
+
+        edge_dist <- sum((vData[from, ] - vData[to, ]) ** 2) ** .5
+
+
+        cells <- progressions[
+                     (progressions$from == from) & (progressions$to == to),
+                     , drop = FALSE
+                     ]
+
+        cells_i <- progressions[
+                       (progressions$from == to) & (progressions$to == from),
+                       , drop = FALSE
+                       ]
+
+        cells_i$position <- 1 - cells_i$position
+        cells <- rbind(cells, cells_i)
+
+        coordinates <- matrix(numeric(nrow(cells) * 2),
+                              nrow = nrow(cells), ncol = 2,
+                              dimnames = list(rownames(cells), c("x", "y")))
+
+        coordinates[, "x"] <- cells$position * edge_dist
+        coordinates[, "y"] <- rnorm(nrow(coordinates), sd = .1)
+
+        dx <- vData[to, 1] - vData[from, 1]
+        dy <- vData[to, 2] - vData[from, 2]
+
+        sinTheta <- dy / edge_dist
+        cosTheta <- dx / edge_dist
+
+        R <- matrix(c(cosTheta, sinTheta, -1 * sinTheta, cosTheta), nrow = 2)
+
+        coordinates <- coordinates %*% t(R) # rotation
+
+        coordinates <- t(t(coordinates) + vData[from, ]) # offset
+
+        return(coordinates)
+    })
+
+    pData <- do.call(rbind, pData)
+    pData <- pData[rownames(trajectory@progressions), , drop = FALSE]
+    return(pData)
+}
