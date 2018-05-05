@@ -106,8 +106,8 @@ function Sig_Info()
 
     this.cell_info = null
     this.plotted_cellinfo = {
-	'sig_key': '',
-	'cells': [], 
+        'sig_key': '',
+        'cells': [], 
     }
 
     this.CellInfo = null;
@@ -151,12 +151,6 @@ Sig_Info.prototype.update = function(updates)
     var sig_info = get_global_data('sig_info');
     if(sig_info.name === this.bound_sig || sig_info.isMeta)
     {
-        // Needed to switch to Signature view if we plot a new projection
-        // but stay on same signature
-        if('plotted_projection' in updates){
-            $(self.dom_node).find('#SigInfoButton').click();
-        }
-
         return;
     }
 
@@ -240,20 +234,15 @@ Sig_Info.prototype.drawHeat = function(){
     }
 
     var sig_key = get_global_status('plotted_item'); // assume it's a signature
-    var proj_key = get_global_status('plotted_projection');
 
     var sig_info = get_global_data('sig_info');
 
-    // plotted heatmap is based on sig_key, proj_key
+    // plotted heatmap is based on sig_key
     // check if we are already showing the right heatmap and don't regenerate
     var need_plot = false;
 
     if (self.plotted_heatmap['sig_key'] !== sig_key){
         self.plotted_heatmap['sig_key'] = sig_key
-        need_plot = true;
-    }
-    if (self.plotted_heatmap['proj_key'] !== proj_key){
-        self.plotted_heatmap['proj_key'] = proj_key
         need_plot = true;
     }
 
@@ -280,7 +269,6 @@ Sig_Info.prototype.drawHeat = function(){
                 return sig_info.sigDict[e]
             });
 
-            //var assignments = data.Clusters[proj_key][choice];
             var assignments = sample_labels.map(sample => clusters[sample]);
 
             self.heatmap.setData(dataMat,
@@ -304,14 +292,13 @@ Sig_Info.prototype.addCellInfo = function(){
     cellinfo_div.show()
 
     if (self.CellInfo == null) { 
-
-	self.CellInfo = new Cell_Info("signature");
+        self.CellInfo = new Cell_Info("signature");
     } 
 
     var sig_key = get_global_status('plotted_item'); // assume it's a signature
     var cells = get_global_status("selected_cells");
 
-    // plotted heatmap is based on sig_key, proj_key
+    // plotted heatmap is based on sig_key
     // check if we are already showing the right heatmap and don't regenerate
     var need_plot = false;
 
@@ -321,8 +308,8 @@ Sig_Info.prototype.addCellInfo = function(){
     }
 
     if (self.plotted_cellinfo['cells'] !== cells) { 
-	self.plotted_cellinfo['cells'] = cells;
-	need_plot = true;
+        self.plotted_cellinfo['cells'] = cells;
+        need_plot = true;
     }
 
     if(!need_plot){
@@ -380,12 +367,6 @@ Gene_Info.prototype.update = function(updates)
 
     this.bound_gene = gene
 
-    if (gene == this.bound_gene) {
-	if ('plotted_projection' in updates) { 
-	    $(self.dom_node).find('#GeneInfoButton').click()
-	}
-    }
-
     $(self.dom_node).find("GeneInfoButton").click();
 
     this.bound_gene = gene
@@ -416,14 +397,13 @@ Gene_Info.prototype.addCellInfo = function() {
     cellinfo_div.show()
 
     if (self.CellInfo == null) { 
-
-	self.CellInfo = new Cell_Info("gene");
+        self.CellInfo = new Cell_Info("gene");
     } 
 
     var gene_key = get_global_status('plotted_item'); // assume it's a gene
     var cells = get_global_status("selected_cells");
 
-    // plotted heatmap is based on sig_key, proj_key
+    // plotted heatmap is based on sig_key
     // check if we are already showing the right heatmap and don't regenerate
     var need_plot = false;
 
@@ -433,8 +413,8 @@ Gene_Info.prototype.addCellInfo = function() {
     }
 
     if (self.plotted_cellinfo['cells'] !== cells) { 
-	self.plotted_cellinfo['cells'] = cells;
-	need_plot = true;
+        self.plotted_cellinfo['cells'] = cells;
+        need_plot = true;
     }
 
     if(!need_plot){
@@ -582,12 +562,6 @@ Meta_Info.prototype.update = function(updates)
         return;
     }
 
-    if (meta == this.bound_meta) {
-	if ('plotted_projection' in updates) { 
-	    $(self.dom_node).find('#MetaInfoButton').click()
-	}
-    }
-
     $(self.dom_node).find("MetaInfoButton").click();
 
     this.bound_meta = meta
@@ -613,14 +587,13 @@ Meta_Info.prototype.addCellInfo = function() {
     cellinfo_div.show()
 
     if (self.CellInfo == null) { 
-
-	self.CellInfo = new Cell_Info("meta");
+        self.CellInfo = new Cell_Info("meta");
     } 
 
     var meta_key = get_global_status('plotted_item'); // assume it's meta infoe
     var cells = get_global_status("selected_cells");
 
-    // plotted heatmap is based on sig_key, proj_key
+    // plotted heatmap is based on sig_key
     // check if we are already showing the right heatmap and don't regenerate
     var need_plot = false;
 
@@ -630,8 +603,8 @@ Meta_Info.prototype.addCellInfo = function() {
     }
 
     if (self.plotted_cellinfo['cells'] !== cells) { 
-	self.plotted_cellinfo['cells'] = cells;
-	need_plot = true;
+        self.plotted_cellinfo['cells'] = cells;
+        need_plot = true;
     }
 
     if(!need_plot){
@@ -649,7 +622,8 @@ Meta_Info.prototype.addCellInfo = function() {
 function drawDistChart(parent_div, data, title) {
 
     var hist = create_dist(data)
-    var isFactor = typeof(data[0]) === "string"
+    var isFactor = (typeof(data[0]) === "string") &&
+                   (data[0] !== "NA")
 
     var x_vals = hist['centers']
     var counts = hist['counts']
@@ -722,7 +696,7 @@ function create_dist(data) {
     var counts;
     var centers;
 
-    if(typeof(data[0]) === "string") // Then it's a factor
+    if((typeof(data[0]) === "string") && (data[0] !== "NA")) // Then it's a factor
     {
         var count_hist = {}
         data.forEach(function(x){
@@ -740,6 +714,12 @@ function create_dist(data) {
 
     } else {
         var num_values = 10
+
+        // Need to filter out NA
+        var data_filtered = _.filter(data, x => x !== "NA")
+        var na_count = data.length - data_filtered.length
+        data = data_filtered
+
         var data_true_min = Math.min.apply(null, data)
         var data_min = Math.max(data_true_min, 0)
         var data_max = Math.max.apply(null, data)
@@ -779,6 +759,11 @@ function create_dist(data) {
 
             counts = [lessThenZeroCounts].concat(counts)
             centers = ["< 0"].concat(centers)
+        }
+
+        if(na_count > 0) { // Add a "NA" category
+            counts = [na_count].concat(counts)
+            centers = ["NA"].concat(centers)
         }
     }
 

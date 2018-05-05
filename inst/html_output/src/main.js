@@ -1,7 +1,7 @@
 var global_stack = [];
 
 var global_status = {};
-global_status.main_vis = "clusters"; // Selected from 4 options on top
+global_status.main_vis = ""; // Selected from 4 options on top
 /* Options are:
     'clusters'
     'pcannotator'
@@ -10,6 +10,7 @@ global_status.main_vis = "clusters"; // Selected from 4 options on top
 
 // Determine the projected coordinates
 global_status.plotted_projection = "";
+global_status.plotted_trajectory = "";
 global_status.plotted_pc = 1;
 
 // Indicate whether or not we have pooled data
@@ -41,7 +42,6 @@ global_data.plotted_values = {}; // Holds gene expression, signature scores/rank
 global_data.sig_info = {};  // Holds the information for the last plotted signature
 global_data.clusters = {};  // Maps cell ID to cluster ID
 global_data.cluster_variables = [];
-global_data.default_projection = 'tSNE30';
 
 var lower_left_content;
 var upper_left_content;
@@ -107,10 +107,10 @@ function set_global_status(update){
         lower_left_content_promises.push(pc_promise);
     }
 
-    if(('plotted_projection' in update && get_global_status('main_vis') === 'tree') ||
+    if(('plotted_trajectory' in update) ||
        ('main_vis' in update && get_global_status('main_vis') === 'tree')
     ){
-        var proj_key = get_global_status('plotted_projection');
+        var proj_key = get_global_status('plotted_trajectory');
         var proj_promise = api.tree.coordinates(proj_key)
             .then(function(projection){
                 global_data.tree_projection_coordinates = projection;
@@ -295,7 +295,11 @@ window.onload = function()
     $.when(right_promise, lower_left_promise,
         cellClustersPromise, sessionInfoPromise)
         .then(function(){
-            upper_left_content.select_default();
+            var update0 = {'main_vis': 'clusters'}
+            var update1 = upper_left_content.select_default_sig();
+            var update2 = right_content.select_default_proj();
+            var update = Object.assign({}, update0, update1, update2); // Merge
+            set_global_status(update)
         });
 
     // Enable the nav-bar functionality

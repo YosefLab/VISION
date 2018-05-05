@@ -63,9 +63,9 @@ Trajectory <- function(input) {
 setMethod("computeKNNWeights", signature(object = "Trajectory"),
             function(object, K = round(sqrt(nrow(object@progressions))) ) {
 
-            edgePos = object@progressions$position
-			names(edgePos) = rownames(object@progressions)
-			edgeAssoc = t(object@progressions[,c("from", "to")])
+            edgePos <- object@progressions$position
+			names(edgePos) <- rownames(object@progressions)
+			edgeAssoc <- t(object@progressions[, c("from", "to")])
 
             distmat <- calculateTrajectoryDistances(adjMat = object@adjMat,
                                                 edgeAssoc = edgeAssoc,
@@ -103,12 +103,74 @@ setMethod("computeKNNWeights", signature(object = "Trajectory"),
             })
 
 
+#' Generate meta-data associated with this trajectory
+#'
+#' Creates a categorical variable mapping cells to edges
+#' and numeric variables for their position along edges
+#'
+#' @importFrom igraph graph_from_adjacency_matrix
+#' @importFrom igraph ends
+#' @importFrom igraph E
+#'
+#' @param trajectory Trajectory on which to operate
+#' @return metaData dataframe with meta-data
+createTrajectoryMetaData <- function(trajectory){
+
+    adjMat <- trajectory@adjMat
+    progressions <- trajectory@progressions
+    net <- igraph::graph_from_adjacency_matrix(adjMat, weighted = TRUE,
+                                               mode = "undirected")
+    edges <- igraph::ends(net, igraph::E(net), names = TRUE)
+
+    meta <- data.frame(row.names = rownames(progressions))
+    meta[, "TrajectoryEdge"] <- ""
+
+    for (i in seq(nrow(edges))) {
+        from <- edges[i, 1]
+        to <- edges[i, 2]
+
+        cells <- progressions[
+                     (progressions$from == from) & (progressions$to == to),
+                     , drop = FALSE
+                     ]
+
+        cells_i <- progressions[
+                       (progressions$from == to) & (progressions$to == from),
+                       , drop = FALSE
+                       ]
+
+        cells_i$position <- 1 - cells_i$position
+        cells <- rbind(cells, cells_i)
+
+        edge_name <- paste(from, to, sep = "->")
+        position_var <- paste0("Position: ", edge_name)
+
+        meta[rownames(cells), "TrajectoryEdge"] <- edge_name
+        meta[, position_var] <- NA
+        meta[rownames(cells), position_var] <- cells$position
+    }
+
+    meta$TrajectoryEdge <- as.factor(meta$TrajectoryEdge)
+
+    return(meta)
+
+}
+
+
+
 #' Generate 2d representations of a trajectory model
 #'
 #' Creates 2d layouts of the milestone network and translates the
 #' cell positions into these layouts
 #'
-#' @importFrom igraph graph_from_data_frame
+#' @importFrom igraph graph_from_adjacency_matrix
+#' @importFrom igraph ends
+#' @importFrom igraph layout_with_fr
+#' @importFrom igraph layout_with_dh
+#' @importFrom igraph layout_as_tree
+#' @importFrom igraph layout_with_mds
+#' @importFrom igraph E
+#' @importFrom igraph V
 #'
 #' @param trajectory Trajectory on which to operate
 #' @return trajectoryProjections list of TrajectoryProjection
@@ -128,14 +190,14 @@ generateTrajectoryProjections <- function(trajectory) {
     invnet <- igraph::graph_from_adjacency_matrix(adjMatInv, weighted = TRUE,
                                                mode = "undirected")
 
-    edges <- ends(net, E(net), names = TRUE)
+    edges <- igraph::ends(net, igraph::E(net), names = TRUE)
     adjMatBinary <- (adjMat > 0) * 1
 
     tp_list <- list()
 
     # layout with Fruchterman-Reingold algorithm
     vData <- igraph::layout_with_fr(invnet)
-    rownames(vData) <- V(net)$name
+    rownames(vData) <- igraph::V(net)$name
 
     pData <- translateCellPositions(progressions, vData, edges)
 
@@ -146,7 +208,7 @@ generateTrajectoryProjections <- function(trajectory) {
 
     # layout with Davidson-Harel
     vData <- igraph::layout_with_dh(net)
-    rownames(vData) <- V(net)$name
+    rownames(vData) <- igraph::V(net)$name
 
     pData <- translateCellPositions(progressions, vData, edges)
 
@@ -157,7 +219,7 @@ generateTrajectoryProjections <- function(trajectory) {
 
     # layout with Davidson-Harel
     vData <- igraph::layout_as_tree(net)
-    rownames(vData) <- V(net)$name
+    rownames(vData) <- igraph::V(net)$name
 
     pData <- translateCellPositions(progressions, vData, edges)
 
@@ -168,7 +230,7 @@ generateTrajectoryProjections <- function(trajectory) {
 
     # layout with MDS
     vData <- igraph::layout_with_mds(net)
-    rownames(vData) <- V(net)$name
+    rownames(vData) <- igraph::V(net)$name
 
     pData <- translateCellPositions(progressions, vData, edges)
 
@@ -176,6 +238,8 @@ generateTrajectoryProjections <- function(trajectory) {
                                adjMat = adjMatBinary)
 
     tp_list <- c(tp_list, tp)
+
+    names(tp_list) <- vapply(tp_list, function(x) x@name, FUN.VALUE = "")
 
     return(tp_list)
 }
@@ -194,7 +258,7 @@ translateCellPositions <- function(progressions, vData, edges) {
         from <- edges[i, 1]
         to <- edges[i, 2]
 
-        edge_dist <- sum((vData[from, ] - vData[to, ]) ** 2) ** .5
+        edge_dist <- sum( (vData[from, ] - vData[to, ]) ** 2) ** .5
 
 
         cells <- progressions[
@@ -233,6 +297,6 @@ translateCellPositions <- function(progressions, vData, edges) {
     })
 
     pData <- do.call(rbind, pData)
-    pData <- pData[rownames(trajectory@progressions), , drop = FALSE]
+    pData <- pData[rownames(progressions), , drop = FALSE]
     return(pData)
 }

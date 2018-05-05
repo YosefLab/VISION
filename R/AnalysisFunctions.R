@@ -363,7 +363,7 @@ analyzeTrajectoryCorrelations <- function(object, signatureBackground = NULL) {
   }
 
   message("Computing significance of signatures...")
-  sigVTreeProj <- sigConsistencyScores(object$latentTrajectory,
+  sigVTreeProj <- sigConsistencyScores(object@latentTrajectory,
                                        object@sigScores,
                                        object@metaData,
                                        signatureBackground)
@@ -445,28 +445,36 @@ clusterSigScores <- function(object) {
             # Process the metaData variables
             meta_pvals <- lapply(colnames(metaData), function(sig){
 
-                if(length(cluster_ii) == 0 || length(not_cluster_ii) == 0){
+                if (length(cluster_ii) == 0 || length(not_cluster_ii) == 0){
                     return(list(pval = 1.0, stat = 0))
                 }
 
                 if (is.numeric(metaData[, sig])) {
-                    suppressWarnings({
 
-                        out_l <- ks.test(metaData[cluster_ii, sig],
-                                       metaData[not_cluster_ii, sig],
-                                       alternative = "less", exact = FALSE)
-                        out_g <- ks.test(metaData[cluster_ii, sig],
-                                       metaData[not_cluster_ii, sig],
-                                       alternative = "greater", exact = FALSE)
-                    })
-                    if (out_l$p.value < out_g$p.value) {
-                        pval <- out_l$p.value
-                        stat <- out_l$statistic
+                    x <- metaData[cluster_ii, sig]
+                    y <- metaData[not_cluster_ii, sig]
+
+                    if (all(is.na(x)) || all(is.na(y))){
+                        pval <- 1.0
+                        stat <- 0
                     } else {
-                        pval <- out_g$p.value
-                        stat <- out_g$statistic*-1
-                    }
 
+                        suppressWarnings({
+
+                            out_l <- ks.test(x, y, alternative = "less",
+                                             exact = FALSE)
+                            out_g <- ks.test(x, y, alternative = "greater",
+                                             exact = FALSE)
+                        })
+                        if (out_l$p.value < out_g$p.value) {
+                            pval <- out_l$p.value
+                            stat <- out_l$statistic
+                        } else {
+                            pval <- out_g$p.value
+                            stat <- out_g$statistic*-1
+                        }
+
+                    }
                 } else if (is.factor(metaData[, sig])) {
                     sigvals <- metaData[, sig, drop = F]
                     sigvals[, 2] <- 0

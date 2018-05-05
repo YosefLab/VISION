@@ -285,12 +285,18 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
                         ) > 0) {
                     stop("Supplied progressions for latentTrajectory must have cell_ids that match sample/cell names")
                 }
+
+                newMeta <- createTrajectoryMetaData(.Object@latentTrajectory)
+                newMeta <- newMeta[rownames(.Object@metaData), ]
+
+                .Object@metaData <- cbind(.Object@metaData, newMeta)
+                .Object@initialMetaData <- .Object@metaData
             }
 
             .Object@cluster_variable <- cluster_variable
 
             return(.Object)
-            }
+    }
 )
 
 #' @rdname FastProject-class
@@ -390,7 +396,10 @@ setMethod("analyze", signature(object="FastProject"),
 
     # Populates @TrajectoryProjections
     if (!is.null(object@latentTrajectory)) {
-        object <- generateTrajectoryProjections(object)
+
+        object@TrajectoryProjections <- generateTrajectoryProjections(
+                                            object@latentTrajectory
+                                        )
     }
 
     message("Computing background distribution for signature scores...")

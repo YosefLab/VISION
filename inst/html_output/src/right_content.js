@@ -61,11 +61,37 @@ Right_Content.prototype.init = function()
                 })
                 .trigger('chosen:updated')
 
-            global_data.default_projection = proj_names[0]
+        });
+
+    var treeproj_promise = api.tree.list()
+        .then(function(proj_names) {
+
+            var projSelect = self.dom_node.find('#SelectTrajectoryProjScatter')
+            projSelect.children().remove()
+
+            _.each(proj_names, function (proj) {
+                projSelect.append(
+                    $('<option>', {
+                        value: proj,
+                        text: proj
+                    }));
+            });
+
+            projSelect.chosen({
+                'width': '110px',
+                'disable_search_threshold': 99,
+            })
+                .off('change')
+                .on('change', function () {
+                    set_global_status({
+                        'plotted_trajectory':$(this).val(),
+                    });
+                })
+                .trigger('chosen:updated')
 
         });
 
-    return proj_promise
+    return $.when(proj_promise, treeproj_promise)
 
 
 }
@@ -78,6 +104,7 @@ Right_Content.prototype.update = function(updates)
         ('plotted_item' in updates) ||
         ('plotted_item_type' in updates) ||
         ('plotted_projection' in updates) ||
+        ('plotted_trajectory' in updates) ||
         ('plotted_pc' in updates) ||
         ('colorScatterOption' in updates) ||
         ('selected_cluster' in updates);
@@ -86,18 +113,22 @@ Right_Content.prototype.update = function(updates)
 
     var main_vis = get_global_status('main_vis');
 
+    var autoZoom = false
+    if('plotted_projection' in updates ||
+       'plotted_trajectory' in updates ||
+       'main_vis' in updates) {
+
+        autoZoom = true
+    }
+
     if(main_vis === 'clusters' || main_vis === "pcannotator"){
-        self.draw_sigvp();
+        self.draw_sigvp(autoZoom);
 
     } else if (main_vis === "tree") {
-        self.draw_tree();
+        self.draw_tree(autoZoom);
 
     } else {
         throw "Bad main_vis value!";
-    }
-
-    if('plotted_projection' in updates || 'main_vis' in updates) {
-        self.scatter.autoZoom();
     }
 
     // Update the dropdown if plotted projection changes elsewhere
@@ -108,9 +139,40 @@ Right_Content.prototype.update = function(updates)
         projSelect.trigger('chosen:updated') // Changes shown item, but doesn't fire update event
     }
 
+    // Update the dropdown if plotted trajectory changes elsewhere
+    if('plotted_trajectory' in updates) {
+        var proj_key = get_global_status('plotted_trajectory');
+        var projSelect = self.dom_node.find('#SelectTrajectoryProjScatter')
+        projSelect.val(proj_key)
+        projSelect.trigger('chosen:updated') // Changes shown item, but doesn't fire update event
+    }
+
+    if('main_vis' in updates){
+        $('#plot-subtitle-latent').hide()
+        $('#plot-subtitle-trajectory').hide()
+        if(main_vis === 'tree'){
+            $('#plot-subtitle-trajectory').show()
+        } else {
+            $('#plot-subtitle-latent').show()
+        }
+
+
+    }
+
 }
 
-Right_Content.prototype.draw_sigvp = function() {
+Right_Content.prototype.select_default_proj = function()
+{
+    var proj = $(this.dom_node.find('#SelectProjScatter')).val()
+    var traj = $(this.dom_node.find('#SelectTrajectoryProjScatter')).val()
+
+    var update = {}
+    update['plotted_projection'] = proj
+    update['plotted_trajectory'] = traj
+    return update;
+}
+
+Right_Content.prototype.draw_sigvp = function(autoZoom) {
 
     var self = this;
 
@@ -121,7 +183,8 @@ Right_Content.prototype.draw_sigvp = function() {
     var projection = get_global_data('sig_projection_coordinates')
     var values = get_global_data('plotted_values')
 
-    var isFactor = typeof(_.values(values)[0]) === 'string'
+    var isFactor = (typeof(_.values(values)[0]) === 'string') &&
+                   (_.values(values)[0] !== "NA")
 
     var full_color_range, min_color_value
     if(item_type === "gene"){
@@ -143,7 +206,6 @@ Right_Content.prototype.draw_sigvp = function() {
         && item_type !== "meta") {
 
         values = self.rank_values(values)
-
     }
 
 
@@ -176,38 +238,50 @@ Right_Content.prototype.draw_sigvp = function() {
 
     self.scatter.clearData()
     self.scatter.setData(points, isFactor, full_color_range, selected_cells, min_color_value);
-    self.scatter.redraw(true)();
 
+    if (autoZoom){
+        self.scatter.autoZoom();
+    } else {
+        self.scatter.redraw(true)();
+    }
 }
 
 
-Right_Content.prototype.draw_tree = function() {
+Right_Content.prototype.draw_tree = function(autoZoom) {
 
     var self = this;
 
     var item_key = get_global_status('plotted_item');
     var item_type = get_global_status('plotted_item_type');
-    var proj_key = get_global_status('plotted_projection');
+    var proj_key = get_global_status('plotted_trajectory');
 
     var milestonePromise = api.tree.milestones(proj_key);
 
     var projection = get_global_data('tree_projection_coordinates')
     var values = get_global_data('plotted_values')
 
-    var isFactor = typeof(_.values(values)[0]) === 'string'
+    var isFactor = (typeof(_.values(values)[0]) === 'string') &&
+                   (_.values(values)[0] !== "NA")
 
     var full_color_range, min_color_value
     if(item_type === "gene"){
         $(self.dom_node).find("#plotted-value-option").hide()
         full_color_range = true
         min_color_value = 0
+    } else if(item_type === "meta"){
+        $(self.dom_node).find("#plotted-value-option").hide()
+        full_color_range = false
+        min_color_value = -1e99
     } else {
         $(self.dom_node).find("#plotted-value-option").show()
         full_color_range = false
         min_color_value = -1e99
     }
 
-    if(self.getScatterColorOption() == "rank" && !isFactor && item_type !== "gene"){
+    if(self.getScatterColorOption() == "rank"
+        && !isFactor && item_type !== "gene"
+        && item_type !== "meta") {
+
         values = self.rank_values(values)
     }
 
@@ -234,9 +308,9 @@ Right_Content.prototype.draw_tree = function() {
             })
 
             var tree_points = [];
-            for (var i = 0; i < treep[0].length; i++) {
-                var x = treep[0][i];
-                var y = treep[1][i];
+            for (var i = 0; i < treep.length; i++) {
+                var x = treep[i][0];
+                var y = treep[i][1];
                 tree_points.push([x, y, "Node " + i]);
             }
 
@@ -269,7 +343,12 @@ Right_Content.prototype.draw_tree = function() {
             self.scatter.clearData()
             self.scatter.setData(points, isFactor, full_color_range, selected_cells, min_color_value)
             self.scatter.setTreeData(tree_points, tree_adj)
-            self.scatter.redraw(true)()
+
+            if (autoZoom){
+                self.scatter.autoZoom();
+            } else {
+                self.scatter.redraw(true)();
+            }
 
         });
 }
@@ -290,7 +369,8 @@ Right_Content.prototype.draw_pca = function() {
 
     var isFactor;
     if(item_type === "gene"){
-        isFactor = typeof(Object.values(values)[0]) === "string"
+        isFactor = (typeof(Object.values(values)[0]) === "string") &&
+                   (_.values(values)[0] !== "NA")
     } else {
         isFactor = false;
     }
@@ -318,7 +398,10 @@ Right_Content.prototype.resize = function() {
 
     $('#scatter-div').children().remove();
     this.scatter = new ColorScatter("#scatter-div", true, true);
-    this.update({'plotted_item': ''}) // Tricks into replotting
+    this.update({
+        'plotted_item': '',
+        'main_vis': '',
+    }) // Tricks into replotting
 
 }
 
@@ -439,7 +522,12 @@ Right_Content.prototype.exportSigProj = function()
         var zip_uri = "data:application/zip;base64," + zip.generate({type:"base64"});
 
         var a = document.createElement("a");
-        var proj_name = get_global_status('plotted_projection')
+        var proj_name;
+        if (main_vis === 'tree'){
+            proj_name = get_global_status('plotted_trajectory')
+        } else {
+            proj_name = get_global_status('plotted_projection')
+        }
 
         a.download = plotted_item+"_"+proj_name+".zip";
         a.href = zip_uri;

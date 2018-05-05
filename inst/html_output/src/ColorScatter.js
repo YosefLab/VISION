@@ -550,7 +550,7 @@ ColorScatter.prototype.redraw = function(performTransition) {
             .data(self.tree_points);
 
         tree_circles.enter().append("circle")
-            .style("fill", '#555555')
+            .style("fill", '#05ff65')
             .classed("tree", true);
 
         tree_circles
@@ -560,7 +560,7 @@ ColorScatter.prototype.redraw = function(performTransition) {
             .data(self.tree_adj);
 
         tree_edges.enter().append("line")
-            .attr("stroke", "#555555")
+            .attr("stroke", "#05ff65")
             .attr("stroke-width", 2)
             .attr("fill", 'none')
             .classed("tree", true);

@@ -186,6 +186,13 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => fix_coordinates(x))
     }
 
+
+    output.tree.list = function()
+    {
+        var query = prefix.concat("Tree/Projections/list")
+        return $.ajax(query, {dataType: "json"}).then(x => x)
+    }
+
     output.tree.sigProjMatrix = function(meta)
     {
         var query = prefix.concat("Tree")

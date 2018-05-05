@@ -251,6 +251,11 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         out <- toJSON(proj_names)
         return(out)
       }) %>%
+      get("/Tree/Projections/list", function(req, res, err) {
+        proj_names <- names(object@TrajectoryProjections)
+        out <- toJSON(proj_names)
+        return(out)
+      }) %>%
       get("/Tree/Projections/(?<proj_name3>.*)/milestones", function(req, res, err) {
         proj <- URLdecode(req$params$proj_name3)
 

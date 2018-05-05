@@ -72,16 +72,12 @@ Upper_Left_Content.prototype.update = function(updates)
 
 }
 
-Upper_Left_Content.prototype.select_default = function()
+Upper_Left_Content.prototype.select_default_sig = function()
 {
-    var new_projection = get_global_data('default_projection');
-
     var update = {}
-    update['plotted_projection'] = new_projection
-    update['plotted_item'] = this.sig_table.get_top_sig(new_projection)
+    update['plotted_item'] = this.sig_table.get_top_sig()
     update['plotted_item_type'] = 'signature'
-
-    set_global_status(update)
+    return update;
 }
 
 Upper_Left_Content.prototype.hover_cells = function()
@@ -423,9 +419,9 @@ Signature_Table.prototype.clickSummaryRow = function(d){
 
 Signature_Table.prototype.update = function(updates)
 {
+    var self = this;
 
     var clusters_promise;
-    var self = this;
     if (_.isEmpty(self.clusters)){
 
         clusters_promise = api.signature.clusters(false)
@@ -439,7 +435,6 @@ Signature_Table.prototype.update = function(updates)
 
     var matrix_promise;
     if( 'main_vis' in updates || _.isEmpty(self.matrix) || 'cluster_var' in updates){
-        var self = this;
         var main_vis = get_global_status('main_vis');
         var cluster_var = get_global_status('cluster_var');
 
@@ -469,11 +464,10 @@ Signature_Table.prototype.update = function(updates)
 
 }
 
-Signature_Table.prototype.get_top_sig = function(projection)
+Signature_Table.prototype.get_top_sig = function()
 {
     var matrix = this.matrix;
-    var j = matrix.proj_labels.indexOf(projection);
-    var s_i = matrix.pvals.map(function(e){return e[j];}).argSort();
+    var s_i = matrix.pvals.map(function(e){return e[0];}).argSort();
 
     return matrix.sig_labels[s_i[0]]
 }
@@ -528,7 +522,6 @@ Meta_Table.prototype.init = function()
 Meta_Table.prototype.update = function(updates)
 {
     var self = this;
-    var matrix_promise;
 
     var clusters_promise;
     if (_.isEmpty(self.clusters)){
@@ -542,6 +535,7 @@ Meta_Table.prototype.update = function(updates)
         clusters_promise = false
     }
 
+    var matrix_promise;
     if('main_vis' in updates || _.isEmpty(self.matrix) || 'cluster_var' in updates){
         var main_vis = get_global_status('main_vis');
         var cluster_var = get_global_status('cluster_var');
@@ -560,7 +554,7 @@ Meta_Table.prototype.update = function(updates)
                 return true
             });
     } else {
-        matrix_promise = $.when(false);
+        matrix_promise = false
     }
 
     return $.when(matrix_promise, clusters_promise)
@@ -753,7 +747,7 @@ Meta_Table.prototype.render = function()
                 .on("click", function(d){tableClickFunction_PC(matrix.sig_labels[d.row], 'meta')})
                 .append('div');
 
-        } else if (main_vis === 'clusters'){
+        } else {
             content_row
                 .filter(function(d,i) { return i > 0;})
                 .on("click", function(d){tableClickFunction_clusters(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'meta')})
