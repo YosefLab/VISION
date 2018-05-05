@@ -14,13 +14,12 @@ FastProject(data, ...)
 \S4method{FastProject}{matrixORSparse}(data, signatures, housekeeping = NULL,
   unnormalizedData = NULL, meta = NULL, nomodel = TRUE,
   projection_genes = c("fano"), lean = "auto", min_signature_genes = 5,
-  weights = NULL, threshold = 0, perm_wPCA = FALSE,
+  weights = NULL, threshold = 0.05, perm_wPCA = FALSE,
   sig_norm_method = c("znorm_columns", "none", "znorm_rows",
   "znorm_rows_then_columns", "rank_norm_columns"),
-  sig_score_method = c("naive", "weighted_avg"),
-  trajectory_method = c("None", "SimplePPT"), pool = "auto",
+  sig_score_method = c("naive", "weighted_avg"), pool = "auto",
   cellsPerPartition = 100, name = NULL, cluster_variable = "",
-  latentSpace = NULL)
+  latentSpace = NULL, latentTrajectory = NULL)
 
 \S4method{FastProject}{data.frame}(data, ...)
 
@@ -60,7 +59,8 @@ signature}
 \item{weights}{Precomputed weights for each coordinate. Normally computed
 from the FNR curve.}
 
-\item{threshold}{Threshold to apply for the threshold filter}
+\item{threshold}{Threshold to apply for the threshold filter. Number of cells or
+proportion of cells (if less than 1)}
 
 \item{perm_wPCA}{If TRUE, apply permutation WPCA to calculate significant
 number of PCs. Else not. Default FALSE.}
@@ -72,9 +72,6 @@ or "rank_norm_columns"}
 
 \item{sig_score_method}{Method to apply when calculating signature scores.
 Either "naive" (default) or "weighted_avg"}
-
-\item{trajectory_method}{Method to use to infer a trajectory.  Either
-"None" (default) or "SimplePPT".}
 
 \item{pool}{indicates whether or not to create supercells. Acceptable values
 are TRUE, FALSE, or 'auto', the last of which is the default and enables
@@ -88,6 +85,9 @@ pooling if there are more than 15000 cells.}
 
 \item{latentSpace}{latent space for expression data. Numeric matrix or dataframe
 with dimensions CELLS x COMPONENTS}
+
+\item{latentTrajectory}{trajectory to model cell progression.  Wrapped result
+of a trajectory inference by the dynverse/dynwrap library}
 }
 \value{
 A FastProject object

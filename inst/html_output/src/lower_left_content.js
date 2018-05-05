@@ -107,7 +107,7 @@ function Sig_Info()
     this.cell_info = null
     this.plotted_cellinfo = {
         'sig_key': '',
-        'cells': [], 
+        'cells': [],
     }
 
     this.CellInfo = null;
