@@ -24,7 +24,8 @@
 #' signature
 #' @param weights Precomputed weights for each coordinate. Normally computed
 #' from the FNR curve.
-#' @param threshold Threshold to apply for the threshold filter
+#' @param threshold Threshold to apply for the threshold filter. Number of cells or
+#' proportion of cells (if less than 1)
 #' @param perm_wPCA If TRUE, apply permutation WPCA to calculate significant
 #' number of PCs. Else not. Default FALSE.
 #' @param sig_norm_method Method to apply to normalize the expression matrix
@@ -68,7 +69,7 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
             function(data, signatures, housekeeping=NULL,
                     unnormalizedData = NULL, meta=NULL, nomodel=TRUE,
                     projection_genes=c("fano"), lean="auto", min_signature_genes=5,
-                    weights=NULL, threshold=0, perm_wPCA=FALSE,
+                    weights=NULL, threshold=.05, perm_wPCA=FALSE,
                     sig_norm_method = c("znorm_columns", "none", "znorm_rows",
                                         "znorm_rows_then_columns",
                                         "rank_norm_columns"),
@@ -190,6 +191,12 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
             .Object@projection_genes <- vapply(projection_genes,
                                                toupper, "",
                                                USE.NAMES = FALSE)
+
+            if (threshold < 1) {
+                num_samples <- ncol(.Object@exprData)
+                threshold <- round(threshold * num_samples)
+            }
+
             .Object@threshold <- threshold
             .Object@sig_norm_method <- match.arg(sig_norm_method)
             .Object@sig_score_method <- match.arg(sig_score_method)

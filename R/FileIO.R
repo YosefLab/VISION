@@ -24,7 +24,7 @@ readSignaturesInput <- function(filenames) {
     if (file_ext == "gmt") {
 
         conn <- file(filename, open="r")
-        lines <-readLines(conn)
+        lines <-readLines(conn, warn = FALSE)
         close(conn)
 
         lines <- strsplit(lines, '\t')

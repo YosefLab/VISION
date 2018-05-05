@@ -147,11 +147,6 @@ filterData <- function(object,
 
     message("Determining Projection Genes...")
 
-    if (object@threshold == 0) {
-        num_samples <- ncol(object@exprData)
-        object@threshold <- round(0.2 * num_samples)
-    }
-
     exprData <- matLog2(object@exprData)
 
     object@projection_genes <- applyFilters(
