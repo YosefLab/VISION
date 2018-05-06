@@ -252,7 +252,11 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         return(out)
       }) %>%
       get("/Tree/Projections/list", function(req, res, err) {
-        proj_names <- names(object@TrajectoryProjections)
+        if (is.null(object@TrajectoryProjections)){
+            proj_names <- character()
+        } else {
+            proj_names <- names(object@TrajectoryProjections)
+        }
         out <- toJSON(proj_names)
         return(out)
       }) %>%

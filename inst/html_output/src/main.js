@@ -107,7 +107,7 @@ function set_global_status(update){
         lower_left_content_promises.push(pc_promise);
     }
 
-    if(('plotted_trajectory' in update) ||
+    if(('plotted_trajectory' in update && get_global_status('main_vis') === 'tree') ||
        ('main_vis' in update && get_global_status('main_vis') === 'tree')
     ){
         var proj_key = get_global_status('plotted_trajectory');
