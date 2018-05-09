@@ -309,8 +309,10 @@ calculateTrajectoryDistances <- function(adjMat, edgeAssoc, edgePos, latentPnts 
                                                     mode = "undirected")
     nodeDistmat <- igraph::distances(graph)
 
-    gEdges <- apply(igraph::get.edgelist(graph), 1, as.numeric)
-    edgeToPnts <- apply(gEdges, 2, function(x) { apply(edgeAssoc==x, 2, all) })
+    #gEdges <- apply(igraph::get.edgelist(graph), 1, as.numeric)
+    gEdges <- igraph::get.edgelist(graph)
+
+    edgeToPnts <- apply(gEdges, 1, function(x) { apply(edgeAssoc==x, 2, all) })
 
     distmat <- matrix(rep(NA, NROW(edgeToPnts) ^ 2), NROW(edgeToPnts))
     ## compute intra-edge distances. Store in list for later calclations and set

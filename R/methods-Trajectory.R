@@ -73,7 +73,7 @@ setMethod("computeKNNWeights", signature(object = "Trajectory"),
 
             kQuantile <- K / nrow(object@progressions)
             knnmat <- apply(distmat, 1, function(d) {
-                partition <- quantile(d, kQuantile)
+                partition <- quantile(d, kQuantile, na.rm=T)
                 d[d > partition] <- Inf
                 return(d)
             })
@@ -87,6 +87,7 @@ setMethod("computeKNNWeights", signature(object = "Trajectory"),
             })
             d <- do.call(rbind, d)
 
+	    d[is.na(d)] = 0
             sigma <- rowMaxs(d)
             sigma[sigma == 0] <- 1.0 # occurs if all nearest neighbors at same point
             sparse_weights <- exp(-1 * (d * d) / sigma ^ 2)
