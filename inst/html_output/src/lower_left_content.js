@@ -6,7 +6,7 @@
  *      - Sig_Heatmap
  *      - Cell_SigInfo
  *    - Gene_Info
- *    	- 
+ *    	-
  *    - Meta_Info
  *    - Cell_Info
  *
@@ -125,7 +125,7 @@ Sig_Info.prototype.init = function()
                 {
                     return "<a href=http://www.genecards.org/cgi-bin/carddisp.pl?gene=" + data + " target='_blank'>" + data + "</a>";
                 }
-            }, 
+            },
             {'title': 'Sign', 'className': 'dt-center'}],
         'paging': false,
         'info': true,
@@ -196,7 +196,7 @@ Sig_Info.prototype.update = function(updates)
 
     if (this.sig_info_cell.hasClass("active")) {
 	this.addCellInfo();
-    }	
+    }
 }
 
 Sig_Info.prototype.build_cluster_dropdown_param = function()
@@ -291,9 +291,9 @@ Sig_Info.prototype.addCellInfo = function(){
     var cellinfo_div = $(self.dom_node).find('#cell-dist-div')
     cellinfo_div.show()
 
-    if (self.CellInfo == null) { 
+    if (self.CellInfo == null) {
         self.CellInfo = new Cell_Info("signature");
-    } 
+    }
 
     var sig_key = get_global_status('plotted_item'); // assume it's a signature
     var cells = get_global_status("selected_cells");
@@ -307,7 +307,7 @@ Sig_Info.prototype.addCellInfo = function(){
         need_plot = true;
     }
 
-    if (self.plotted_cellinfo['cells'] !== cells) { 
+    if (self.plotted_cellinfo['cells'] !== cells) {
         self.plotted_cellinfo['cells'] = cells;
         need_plot = true;
     }
@@ -336,7 +336,7 @@ function Gene_Info()
     this.cell_info = null
     this.plotted_cellinfo = {
 	'gene_key': '',
-	'cells': [], 
+	'cells': [],
     }
 
     this.CellInfo = null;
@@ -382,7 +382,7 @@ Gene_Info.prototype.update = function(updates)
 
     drawDistChart(this.chart, gene_exp, 'Expression')
 
-    if (this.gene_info_cell.hasClass('active')) { 
+    if (this.gene_info_cell.hasClass('active')) {
 	this.addCellInfo();
     }
 
@@ -396,9 +396,9 @@ Gene_Info.prototype.addCellInfo = function() {
     var cellinfo_div = $(self.dom_node).find('#cell-dist-div')
     cellinfo_div.show()
 
-    if (self.CellInfo == null) { 
+    if (self.CellInfo == null) {
         self.CellInfo = new Cell_Info("gene");
-    } 
+    }
 
     var gene_key = get_global_status('plotted_item'); // assume it's a gene
     var cells = get_global_status("selected_cells");
@@ -412,7 +412,7 @@ Gene_Info.prototype.addCellInfo = function() {
         need_plot = true;
     }
 
-    if (self.plotted_cellinfo['cells'] !== cells) { 
+    if (self.plotted_cellinfo['cells'] !== cells) {
         self.plotted_cellinfo['cells'] = cells;
         need_plot = true;
     }
@@ -433,9 +433,9 @@ function Cell_Info(data_type)
 {
     if (data_type == "signature") {
 	this.dom_node = document.getElementById("sig-info");
-    } else if (data_type == "meta") { 
+    } else if (data_type == "meta") {
 	this.dom_node = document.getElementById("meta-info");
-    } else if (data_type == "gene") { 
+    } else if (data_type == "gene") {
 	this.dom_node = document.getElementById("gene-info");
     }
 
@@ -454,24 +454,24 @@ Cell_Info.prototype.update = function()
 {
 
     var self = this;
-    if (this.data_type == "signature") { 
+    if (this.data_type == "signature") {
 
 	var name = get_global_data('sig_info').name;
 
-    } else if (this.data_type == "meta") { 
+    } else if (this.data_type == "meta") {
 
 	var name = get_global_status('plotted_item')
 
-    } else if (this.data_type == "gene") { 
-	
+    } else if (this.data_type == "gene") {
+
 	var name = get_global_status('plotted_item')
 
-    } 
-	
+    }
+
     var item_type = get_global_status('plotted_item_type')
     var cells = get_global_status('selected_cells')
-    
-     if (Object.keys(cells).length > 1) { 
+
+     if (Object.keys(cells).length > 1) {
 	this.bound_cell = "Selected Subset";
     } else {
 	this.bound_cell = cells[0]
@@ -485,24 +485,24 @@ Cell_Info.prototype.update = function()
     var poolstatus = get_global_status("pooled")
 
     f_exp = []
-
-    if (poolstatus && (this.data_type == "meta" || this.data_type == "gene")) { 
+    console.log(poolstatus)
+    if (poolstatus && (this.data_type == "meta" || this.data_type == "gene")) {
 	var promises = [];
-	exp = Object.keys(exp).forEach(function(k) { 
+	exp = Object.keys(exp).forEach(function(k) {
 	    if (cells.indexOf(k) > -1) {
 		var vals_promise = api.pool.values(k, self.data_type, name);
 		promises.push(vals_promise);
 	    }
 	});
-	
-	return Promise.all(promises).then(function(vs) { 
+
+	return Promise.all(promises).then(function(vs) {
 	    console.log(vs);
 	    for (var i = 0; i < vs.length; i++) {
-		for (var j = 0; j < vs[i].length; j++) { 
+		for (var j = 0; j < vs[i].length; j++) {
 		    f_exp.push(vs[i][j]);
 		}
 	    }
-	    
+
 	    console.log(f_exp);
 
 	    drawDistChart(self.chart, f_exp, "Values")
@@ -511,7 +511,7 @@ Cell_Info.prototype.update = function()
 	exp = Object.keys(exp).forEach(function(k) {
 	    if (cells.indexOf(k) > -1) {
 		f_exp.push(exp[k]);
-	   } 
+	   }
 	})
 	console.log(f_exp);
 
@@ -535,7 +535,7 @@ function Meta_Info()
     this.cell_info = null
     this.plotted_cellinfo = {
 	'meta_key': '',
-	'cells': [], 
+	'cells': [],
     }
 
     this.CellInfo = null;
@@ -572,7 +572,7 @@ Meta_Info.prototype.update = function(updates)
 
     drawDistChart(this.chart, meta_vals)
 
-    if (this.meta_info_cell.hasClass('active')) { 
+    if (this.meta_info_cell.hasClass('active')) {
 	this.addCellInfo();
     }
 
@@ -586,9 +586,9 @@ Meta_Info.prototype.addCellInfo = function() {
     var cellinfo_div = $(self.dom_node).find('#cell-dist-div')
     cellinfo_div.show()
 
-    if (self.CellInfo == null) { 
+    if (self.CellInfo == null) {
         self.CellInfo = new Cell_Info("meta");
-    } 
+    }
 
     var meta_key = get_global_status('plotted_item'); // assume it's meta infoe
     var cells = get_global_status("selected_cells");
@@ -602,7 +602,7 @@ Meta_Info.prototype.addCellInfo = function() {
         need_plot = true;
     }
 
-    if (self.plotted_cellinfo['cells'] !== cells) { 
+    if (self.plotted_cellinfo['cells'] !== cells) {
         self.plotted_cellinfo['cells'] = cells;
         need_plot = true;
     }
@@ -900,4 +900,3 @@ function addToPCAnalysisBox(sig_info) {
         });
 
 }
-

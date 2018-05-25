@@ -118,6 +118,7 @@ FastProject <- setClass("FastProject",
         latentSpace = "matrix",
         latentTrajectory = "Trajectory",
         initialLatentSpace = "matrix",
+        scale="logical",
         version = "numeric"),
     prototype = list(
         nomodel = FALSE,
@@ -150,5 +151,6 @@ FastProject <- setClass("FastProject",
         latentSpace = matrix(NA, 1, 1),
         latentTrajectory = NULL,
         initialLatentSpace = matrix(NA, 1, 1),
+        scale=T,
         version = 1.0
 ))

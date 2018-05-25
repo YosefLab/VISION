@@ -10,7 +10,7 @@ var api = (function(){
      */
 
     // location.pathname is either:
-    // this is either "/" or "/Results.html" if running normally
+    // this is either "/" or "/Results.html"fa if running normally
     // if running from RStudio Server this will be:
     // "/p/<port>/Results.html" or "/p/<port>/"
     // Need to set this dynamically so that it works with RStudio server
@@ -213,7 +213,7 @@ var api = (function(){
     output.pc.coordinates = function() {
         var query = prefix.concat("FilterGroup/PCA/Coordinates")
         return $.ajax(query, {dataType: "json"}).then(x => fix_coordinates(x))
-    }	
+    }
 
     output.pc.versus = function(pc1, pc2) {
         var query = prefix.concat("FilterGroup");
@@ -248,7 +248,7 @@ var api = (function(){
             type: "POST",
             url: query,
             data: JSON.stringify(subset),
-        }).done(alert("Running Subset Analysis"));	
+        }).done(alert("Running Subset Analysis"));
     }
 
     // Session Info Api

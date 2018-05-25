@@ -70,7 +70,7 @@ function set_global_status(update){
     });
 
     // Now all updates represent changes
-    
+
     _.forIn(update, function(value, key) {
         global_status[key] = value;
     });
@@ -237,10 +237,10 @@ $(window).resize(function()
     {
         $('#heatmap-div').find('svg').remove();
         global_heatmap = new HeatMap('#heatmap-div');
-    } 
+    }
 
     if ($('#tree_div').is(":visible"))
-    { 
+    {
         $('#tree_div').find('svg').remove();
     }
     */
@@ -314,8 +314,8 @@ window.onload = function()
 
     // get pool information
     var getPoolStatus = api.pool.stat()
-	.then(function(stat) { 
-	    if (stat) {
+	.then(function(stat) {
+	    if (stat[0]) {
 		global_status.pooled = true;
 	    }
 	});
@@ -327,8 +327,8 @@ window.onload = function()
         lower_left_content.hover_cells(list_of_cell_ids)
     });
 
-    window.addEventListener("select-cells", function(e) { 
-	
+    window.addEventListener("select-cells", function(e) {
+
 	global_status.selected_cells = Object.keys(e.detail);
 
     });
@@ -344,7 +344,7 @@ window.onload = function()
     var lowerRange = $("#lower-input");
 
     upperRange.on("input", function() {
-        global_status.upper_range = this.value; 
+        global_status.upper_range = this.value;
     });
 
     lowerRange.on("input", function() {
@@ -374,7 +374,7 @@ window.onload = function()
 
     $("#reload_heatmap").on("click", function() {
         console.log('here');
-        drawHeat(); 
+        drawHeat();
     });
 
     // Create listeners for main visualization modes
@@ -423,4 +423,3 @@ function goBack(d) {
     right_content.update()();
     drawHeat();
 }
-

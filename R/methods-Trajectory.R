@@ -20,7 +20,7 @@ Trajectory <- function(input) {
         adjMat[to, from] <- edgeLength
     }
 
-    progressions <- input$progressions
+    progressions <- as.data.frame(input$progressions)
     rownames(progressions) <- progressions$cell_id
     progressions$cell_id <- NULL
 
@@ -66,6 +66,7 @@ setMethod("computeKNNWeights", signature(object = "Trajectory"),
             edgePos <- object@progressions$position
 			names(edgePos) <- rownames(object@progressions)
 			edgeAssoc <- t(object@progressions[, c("from", "to")])
+            colnames(edgeAssoc) <- rownames(object@progressions)
 
             distmat <- calculateTrajectoryDistances(adjMat = object@adjMat,
                                                 edgeAssoc = edgeAssoc,

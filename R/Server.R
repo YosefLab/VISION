@@ -416,7 +416,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       get("/Pool/(?<pool1>.*)/Meta/(?<pool_key1>.*)", function(req, res, err) {
 	      pool_name = URLdecode(req$params$pool1)
 	      meta_key = URLdecode(req$params$pool_key1)
-	      
+
 	      cells = object@pools[[pool_name]]
 	      meta = as.list(object@initialMetaData[cells,meta_key])
 
@@ -426,7 +426,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       get("/Pool/(?<pool2>.*)/Gene/(?<pool_key2>.*)", function(req, res, err) {
 	      pool_name = URLdecode(req$params$pool2)
 	      gene_key = URLdecode(req$params$pool_key2)
-	      
+
 	      cells = object@pools[[pool_name]]
 	      expr = unname(as.list(object@initialExprData[gene_key, cells]))
 

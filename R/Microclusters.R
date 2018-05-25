@@ -330,4 +330,3 @@ createPools <- function(cl, expr) {
 
     return(pool_data)
 }
-

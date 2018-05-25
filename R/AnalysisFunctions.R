@@ -11,7 +11,11 @@ clusterCells <- function(object) {
 
     if (sum(dim(object@latentSpace)) == 2) { # No latent Space
 
-        exprData <- matLog2(object@exprData)
+        if (object@scale) {
+            exprData <- matLog2(object@exprData)
+        } else {
+            exprData <- object@exprData
+        }
         filterInput <- object@projection_genes
         filterThreshold <- object@threshold
 
@@ -147,7 +151,11 @@ filterData <- function(object,
 
     message("Determining Projection Genes...")
 
-    exprData <- matLog2(object@exprData)
+    if (object@scale) {
+        exprData <- matLog2(object@exprData)
+    } else {
+        exprData <- object@exprData
+    }
 
     object@projection_genes <- applyFilters(
                 exprData,
@@ -170,7 +178,8 @@ calcWeights <- function(object,
     if (!clustered && !object@nomodel) {
         message("Computing weights from False Negative Rate curves...")
         falseneg_out <- createFalseNegativeMap(object@exprData,
-                                               object@housekeepingData)
+                                               object@housekeepingData,
+                                               object@scale)
         object@weights <- computeWeights(falseneg_out[[1]], falseneg_out[[2]],
                                          object@exprData)
 
@@ -210,7 +219,7 @@ calcSignatureScores <- function(object,
     object@sig_norm_method <- sig_norm_method
     object@sig_score_method <- sig_score_method
 
-    normExpr <- getNormalizedCopy(object@exprData, object@sig_norm_method)
+    normExpr <- getNormalizedCopy(object@exprData, object@sig_norm_method, object@scale)
 
     sigScores <- batchSigEval(object@sigData, object@sig_score_method,
                               normExpr, object@weights)
@@ -255,7 +264,11 @@ computeLatentSpace <- function(object, projection_genes = NULL,
                          )
     }
 
-    exprData <- matLog2(exprData)
+    if (object@scale) {
+        exprData <- matLog2(exprData)
+    } else {
+        exprData <- object@exprData
+    }
 
     if (perm_wPCA) {
         res <- applyPermutationWPCA(exprData, weights, components = 30)
@@ -287,7 +300,7 @@ generateProjections <- function(object, lean=object@lean) {
   projections <- generateProjectionsInner(object@exprData,
                                      object@latentSpace,
                                      projection_genes = object@projection_genes,
-                                     lean = object@lean)
+                                     lean = object@lean, scale = object@scale)
 
   # Add inputProjections
   for (proj in names(object@inputProjections)){

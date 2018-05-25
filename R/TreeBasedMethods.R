@@ -309,12 +309,13 @@ calculateTrajectoryDistances <- function(adjMat, edgeAssoc, edgePos, latentPnts 
                                                     mode = "undirected")
     nodeDistmat <- igraph::distances(graph)
 
-    #gEdges <- apply(igraph::get.edgelist(graph), 1, as.numeric)
-    gEdges <- igraph::get.edgelist(graph)
+    #gEdges <- apply(igraph::get.edgelist(graph), 1, function(x) x )
+    gEdges <- t(igraph::get.edgelist(graph))
 
-    edgeToPnts <- apply(gEdges, 1, function(x) { apply(edgeAssoc==x, 2, all) })
+    edgeToPnts <- apply(gEdges, 2, function(x) { apply(edgeAssoc==x, 2, all) })
 
     distmat <- matrix(rep(NA, NROW(edgeToPnts) ^ 2), NROW(edgeToPnts))
+
     ## compute intra-edge distances. Store in list for later calclations and set
     ## values in result matrix
     ## loop contains assignment to external matrix, so apply can't be used.
@@ -322,12 +323,12 @@ calculateTrajectoryDistances <- function(adjMat, edgeAssoc, edgePos, latentPnts 
     ## be problematic (it's K-choose-2 matrices of size NxN)
     intraDist <- list()
     for (i in 1:NCOL(gEdges)) {
-    inEdgeDist <- calcIntraEdgeDistMat(edge.len = nodeDistmat[gEdges[1,i],
-                                                                gEdges[2,i]],
-                                        edgePos = edgePos[edgeToPnts[,i]])
-    intraDist[[i]] <- inEdgeDist[,c(1,NCOL(inEdgeDist))]
-    distmat[edgeToPnts[,i], edgeToPnts[,i]] <- inEdgeDist[-c(1,NROW(inEdgeDist)),
-                                                            -c(1,NROW(inEdgeDist))]
+        inEdgeDist <- calcIntraEdgeDistMat(edge.len = nodeDistmat[gEdges[1,i],
+                                                                    gEdges[2,i]],
+                                            edgePos = edgePos[edgeToPnts[,i]])
+        intraDist[[i]] <- inEdgeDist[,c(1,NCOL(inEdgeDist))]
+        distmat[edgeToPnts[,i], edgeToPnts[,i]] <- inEdgeDist[-c(1,NROW(inEdgeDist)),
+                                                                -c(1,NROW(inEdgeDist))]
     }
 
     ## for each pair of edges, calculate inter-edge distances and set them in the empty matrix
