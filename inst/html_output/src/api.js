@@ -10,7 +10,7 @@ var api = (function(){
      */
 
     // location.pathname is either:
-    // this is either "/" or "/Results.html"fa if running normally
+    // this is either "/" or "/Results.html" if running normally
     // if running from RStudio Server this will be:
     // "/p/<port>/Results.html" or "/p/<port>/"
     // Need to set this dynamically so that it works with RStudio server

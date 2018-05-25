@@ -175,7 +175,8 @@
                                     <td><span id="cell-source"></span></td>
                                 </tr>
                             </table>
-                            <div id="cell-dist-div"></div>
+                            <div id="cell-dist-div" style="margin-top: 10px"></div>
+                            <table id="cell-info-table" class="display" width="100%"></table>
                         </div>
                     </div>
                 </div>
@@ -198,22 +199,23 @@
 			    <div style='display: flex; flex-direction: column; justify-content: space-around; flex-grow: 1'>
 				<div id="gene-dist-div" style="display: flex; flex-direction:column"></div>
 			    </div>
-			</div> 
+			</div>
 			<div id="gene-info-cell" class="tab-pane" role="tabpanel" aria-labelledby="Gene-CellInfoButton">
-			    <table class='label-table' style='margin-left: 30px; margin-bottom:20px;'> 
+			    <table class='label-table' style='margin-left: 30px; margin-bottom:20px;'>
 				<tr style='font-size: 1.2em;'>
 				    <td>Gene:</td>
 				    <td style='width: 100%;'><span id='cell-analysis-title'></span></td>
-				</tr> 
+				</tr>
 				<tr>
 				    <td>Cell:</td>
 				    <td><span id="cell-source"></span></td>
 				</tr>
-			    </table> 
+			    </table>
 			    <div id="cell-dist-div"></div>
-			</div> 
-			    	
-		    </div> 
+                <table id="cell-info-table" class="display" width="100%"></table>
+			</div>
+
+		    </div>
                 </div>
                 <div id="meta-info" style="display: none">
 
@@ -222,7 +224,7 @@
                         <a class="nav-link" id="Meta-CellInfoButton" href="#meta-info-cell" data-toggle="tab" aria-controls="meta-info-cell" aria-selected="false">Cell</a>
                     </div>
 
-		
+
                     <div class="tab-content">
                         <div id="meta-info-default" class="tab-pane show active" role="tabpanel" aria-labelledby="SigInfoButton">
 			    <table class='label-table' style='margin-left: 30px; margin-bottom: 20px;'>
@@ -237,20 +239,21 @@
 			    </div>
 			</div>
 
-			<div id="meta-info-cell" class="tab-pane" role="tabpanel" aria-labelledby="Meta-CellInfoButtoon">
+			<div id="meta-info-cell" class="tab-pane" role="tabpanel" aria-labelledby="Meta-CellInfoButtoon" style='padding-top: 10px'>
 
-			    <table class='label-table' style='margin-left: 30px; margin-bottom:20px;'> 
+			    <table class='label-table' style='margin-left: 30px; margin-bottom:20px;'>
 				<tr style='font-size: 1.2em;'>
 				    <td>Value:</td>
 				    <td style='width: 100%;'><span id='cell-analysis-title'></span></td>
-				</tr> 
+				</tr>
 				<tr>
 				    <td>Cell:</td>
 				    <td><span id="cell-source"></span></td>
 				</tr>
-			    </table> 
+			    </table>
 			    <div id="cell-dist-div"></div>
-			</div> 
+                <table id="cell-info-table" class="display" width="100%"></table>
+			</div>
 		    </div>
 
                 </div>
@@ -272,7 +275,7 @@
                             </div>
                         </form>
                     </div>
-                    <div style="margin-top: 30px">        
+                    <div style="margin-top: 30px">
                         <span>
                             <button style="align-items: center; width: 60%; margin-left:20%; margin-right:20%" id="analysis-button" type="button" class="btn btn-default" onclick=runPCAnalysis()>Run Analysis</button>
                         </span>
@@ -312,7 +315,7 @@
                                 <button id="select-button" type="button" class="btn btn-default" onclick=selectRange()>Select Cells</button>
                             </span>
                         </div>
-                        <div style="margin-top: 30px; width: 100%;">        
+                        <div style="margin-top: 30px; width: 100%;">
                             <span>
                                 <button style="align-items: center; width: 60%; margin-left:20%; margin-right:20%" id="analysis-button" type="button" class="btn btn-default" onclick=runSubsetAnalysis()>Run Analysis</button>
                             </span>

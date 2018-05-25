@@ -316,7 +316,7 @@ window.onload = function()
     var getPoolStatus = api.pool.stat()
 	.then(function(stat) {
 	    if (stat[0]) {
-		global_status.pooled = true;
+		          global_status.pooled = true;
 	    }
 	});
 

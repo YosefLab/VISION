@@ -75,9 +75,9 @@ Lower_Left_Content.prototype.update = function(updates)
             $(this.gene_info.dom_node).hide()
             $(this.meta_info.dom_node).show()
         } else if (item_type == "cell") {
-	    $(this.sig_info.dom_node).hide()
-	    $(this.gene_info.dom_node).hide()
-	    $(this.meta_info.dom_node).hide()
+    	    $(this.sig_info.dom_node).hide()
+    	    $(this.gene_info.dom_node).hide()
+    	    $(this.meta_info.dom_node).hide()
 	}
     }
 
@@ -117,6 +117,7 @@ Sig_Info.prototype.init = function()
 {
     var self = this;
     var dt = $(this.content).find('#sig-info-table')
+
     dt.DataTable( {
         columns: [
             {
@@ -133,6 +134,8 @@ Sig_Info.prototype.init = function()
         'scrollCollapse': true,
     })
 
+
+
     $(self.dom_node).find('#HeatmapButton').on('click', function()
     {
         self.drawHeat()
@@ -140,7 +143,7 @@ Sig_Info.prototype.init = function()
 
     $(self.dom_node).find("#CellInfoButton").on('click', function()
     {
-	self.addCellInfo()
+	       self.addCellInfo()
     });
 
 }
@@ -288,6 +291,8 @@ Sig_Info.prototype.addCellInfo = function(){
     // Need to create it if it isn't there
     var self = this;
 
+
+
     var cellinfo_div = $(self.dom_node).find('#cell-dist-div')
     cellinfo_div.show()
 
@@ -315,6 +320,7 @@ Sig_Info.prototype.addCellInfo = function(){
     if(!need_plot){
         return $.when(true);
     }
+
 
     cellinfo_div.addClass('loading')
 
@@ -386,6 +392,18 @@ Gene_Info.prototype.update = function(updates)
 	this.addCellInfo();
     }
 
+    // var celldt = $(this.dom_node).find("#cell-info-table");
+    //
+    // celldt.DataTable( {
+    //     columns: [
+    //         { 'title': 'Cell' },
+    //         {'title': 'Value', 'className': 'dt-center'}],
+    //     'paging': false,
+    //     'info': true,
+    //     'scrollY': '15vh',
+    //     'scrollCollapse': true,
+    // })
+
 }
 
 Gene_Info.prototype.addCellInfo = function() {
@@ -432,11 +450,11 @@ Gene_Info.prototype.addCellInfo = function() {
 function Cell_Info(data_type)
 {
     if (data_type == "signature") {
-	this.dom_node = document.getElementById("sig-info");
+	       this.dom_node = document.getElementById("sig-info");
     } else if (data_type == "meta") {
-	this.dom_node = document.getElementById("meta-info");
+	       this.dom_node = document.getElementById("meta-info");
     } else if (data_type == "gene") {
-	this.dom_node = document.getElementById("gene-info");
+	       this.dom_node = document.getElementById("gene-info");
     }
 
     this.data_type = data_type;
@@ -444,10 +462,25 @@ function Cell_Info(data_type)
     this.source = $(this.dom_node).find('#cell-source');
     this.chart = $(this.dom_node).find('#cell-dist-div').get(0);
     this.bound_cell = ""
+    this.cell_table = $(this.dom_node).find("#cell-info-table");
+
+    var celldt = this.cell_table;
+
+    celldt.DataTable( {
+        columns: [
+            { 'title': 'Cell' },
+            {'title': 'Value', 'className': 'dt-center'}],
+        'paging': false,
+        'info': true,
+        'scrollY': '15vh',
+        'scrollCollapse': true,
+    })
+
 }
 
 Cell_Info.prototype.init = function()
 {
+
 }
 
 Cell_Info.prototype.update = function()
@@ -471,10 +504,10 @@ Cell_Info.prototype.update = function()
     var item_type = get_global_status('plotted_item_type')
     var cells = get_global_status('selected_cells')
 
-     if (Object.keys(cells).length > 1) {
-	this.bound_cell = "Selected Subset";
+    if (Object.keys(cells).length > 1) {
+	       this.bound_cell = "Selected Subset";
     } else {
-	this.bound_cell = cells[0]
+	       this.bound_cell = cells[0]
     }
 
     $(this.title).text(name)
@@ -485,39 +518,47 @@ Cell_Info.prototype.update = function()
     var poolstatus = get_global_status("pooled")
 
     f_exp = []
-    console.log(poolstatus)
+
     if (poolstatus && (this.data_type == "meta" || this.data_type == "gene")) {
-	var promises = [];
-	exp = Object.keys(exp).forEach(function(k) {
-	    if (cells.indexOf(k) > -1) {
-		var vals_promise = api.pool.values(k, self.data_type, name);
-		promises.push(vals_promise);
-	    }
-	});
+    	var promises = [];
+    	exp = Object.keys(exp).forEach(function(k) {
+    	    if (cells.indexOf(k) > -1) {
+    		var vals_promise = api.pool.values(k, self.data_type, name);
+    		promises.push(vals_promise);
+    	    }
+    	});
 
-	return Promise.all(promises).then(function(vs) {
-	    console.log(vs);
-	    for (var i = 0; i < vs.length; i++) {
-		for (var j = 0; j < vs[i].length; j++) {
-		    f_exp.push(vs[i][j]);
-		}
-	    }
+    	return Promise.all(promises).then(function(vs) {
+    	    console.log(vs);
+    	    for (var i = 0; i < vs.length; i++) {
+        		for (var j = 0; j < vs[i].length; j++) {
+        		    f_exp.push(vs[i][j]);
+        		}
+    	    }
 
-	    console.log(f_exp);
+    	    drawDistChart(self.chart, f_exp, "Values")
 
-	    drawDistChart(self.chart, f_exp, "Values")
-	});
+        });
+
     } else {
-	exp = Object.keys(exp).forEach(function(k) {
-	    if (cells.indexOf(k) > -1) {
-		f_exp.push(exp[k]);
-	   }
-	})
-	console.log(f_exp);
-
-
+    	exp = Object.keys(exp).forEach(function(k) {
+    	    if (cells.indexOf(k) > -1) {
+    		f_exp.push(exp[k]);
+    	   }
+    	})
 
         drawDistChart(this.chart, f_exp, 'Values')
+
+        exp_cells_dict = cells.map(function(e, i) {
+            return [e, f_exp[i]]
+        });
+
+        var dt = this.cell_table
+
+        dt.DataTable().clear()
+            .rows.add(exp_cells_dict)
+            .draw()
+
     }
 
 
@@ -550,6 +591,17 @@ Meta_Info.prototype.init = function()
 	self.addCellInfo()
     });
 
+    // var celldt = $(this.dom_node).find("#cell-info-table");
+    //
+    // celldt.DataTable( {
+    //     columns: [
+    //         { 'title': 'Cell' },
+    //         {'title': 'Value', 'className': 'dt-center'}],
+    //     'paging': false,
+    //     'info': true,
+    //     'scrollY': '15vh',
+    //     'scrollCollapse': true,
+    // })
 
 }
 
