@@ -79,18 +79,37 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.pool.values = function(pool, data_type, key) {
+    output.pool.values = function(subset, data_type, key) {
         var query = prefix.concat("Pool");
 
         if (data_type == "meta") {
-            query = query.concat(pool, "/Meta/", key);
+            query = query.concat("/Meta/", key);
         }  else if (data_type == "gene") {
-            query = query.concat(pool, "/Gene/", key);
+            query = query.concat("/Gene/", key);
         }
 
-        return $.ajax(query, {dataType: "json"}).then(x => x);
+        return $.ajax({
+            type: "POST",
+            url: query,
+            data: JSON.stringify(subset),
+            dataType: "json"
+        }).then(x => x);
+
+
     }
 
+    output.pool.cells = function(subset) {
+        var query = prefix.concat("Pool/Cells");
+
+
+        return $.ajax({
+            type: "POST",
+            url: query,
+            data: JSON.stringify(subset),
+            dataType: "json"
+        }).then(x => x);
+
+    }
     // Clusters API
 
     output.clusters = {}

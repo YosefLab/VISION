@@ -413,26 +413,6 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       get("/Pool/Status", function(req, res, err) {
         return(toJSON(object@pool, force=TRUE, pretty=TRUE))
       }) %>%
-      get("/Pool/(?<pool1>.*)/Meta/(?<pool_key1>.*)", function(req, res, err) {
-	      pool_name = URLdecode(req$params$pool1)
-	      meta_key = URLdecode(req$params$pool_key1)
-
-	      cells = object@pools[[pool_name]]
-	      meta = as.list(object@initialMetaData[cells,meta_key])
-
-	      out <- toJSON(meta, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
-	      return(out)
-      }) %>%
-      get("/Pool/(?<pool2>.*)/Gene/(?<pool_key2>.*)", function(req, res, err) {
-	      pool_name = URLdecode(req$params$pool2)
-	      gene_key = URLdecode(req$params$pool_key2)
-
-	      cells = object@pools[[pool_name]]
-	      expr = unname(as.list(object@initialExprData[gene_key, cells]))
-
-	      out <- toJSON(expr, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
-	      return(out)
-      }) %>%
       get("/Clusters/list", function(req, res, err) {
         cluster_vars <- names(object@ClusterSigScores)
         out <- toJSON(cluster_vars,
@@ -511,7 +491,50 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         return(result)
 
-      }) %>%
+     }) %>%
+     post("/Pool/Meta/(?<pool_key1>.*)", function(req, res, err) {
+
+         subset <- fromJSON(req$body)
+
+         subset = subset[!is.na(subset)]
+
+         meta_key = URLdecode(req$params$pool_key1)
+
+         cells = unname(unlist(object@pools[subset]))
+
+         meta = as.list(object@initialMetaData[cells,meta_key])
+
+         out <- toJSON(meta, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
+         return(out)
+
+     }) %>%
+     post("/Pool/Gene/(?<pool_key2>.*)", function(req, res, err) {
+
+         subset <- fromJSON(req$body)
+         subset = subset[!is.na(subset)]
+
+         gene_key = URLdecode(req$params$pool_key2)
+
+         cells = unname(unlist(object@pools[subset]))
+
+         expr = unname(as.list(object@initialExprData[gene_key, cells]))
+
+         out <- toJSON(expr, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
+         return(out)
+
+     }) %>%
+     post("/Pool/Cells", function(req, res, err) {
+
+         subset <- fromJSON(req$body)
+         subset = subset[!is.na(subset)]
+
+         cells = unname(unlist(object@pools[subset]))
+
+
+         out <- toJSON(cells, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
+         return(out)
+
+     }) %>%
       post("/Analysis/Run/", function(req, res, err) {
         subset <- fromJSON(req$body)
         subset <- subset[!is.na(subset)]

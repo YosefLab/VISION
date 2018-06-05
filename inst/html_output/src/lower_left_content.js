@@ -520,25 +520,39 @@ Cell_Info.prototype.update = function()
     f_exp = []
 
     if (poolstatus && (this.data_type == "meta" || this.data_type == "gene")) {
-    	var promises = [];
+    	var subset = [];
     	exp = Object.keys(exp).forEach(function(k) {
     	    if (cells.indexOf(k) > -1) {
-    		var vals_promise = api.pool.values(k, self.data_type, name);
-    		promises.push(vals_promise);
+    		          subset.push(k);
     	    }
     	});
 
-    	return Promise.all(promises).then(function(vs) {
-    	    console.log(vs);
-    	    for (var i = 0; i < vs.length; i++) {
-        		for (var j = 0; j < vs[i].length; j++) {
-        		    f_exp.push(vs[i][j]);
-        		}
-    	    }
+        vals_promise = api.pool.values(subset, self.data_type, name);
+        cellname_promise = api.pool.cells(subset);
 
-    	    drawDistChart(self.chart, f_exp, "Values")
+    	return $.when(vals_promise, cellname_promise)
+                    .then(function(vs, cell_subset) {
+
+
+            if (vs == "[]") {
+                alert("Not a cell property! Please choose another metadata item")
+            }
+
+    	    drawDistChart(self.chart, vs, "Values")
+
+            exp_cells_dict = cell_subset.map(function(e, i) {
+                return [e, vs[i]]
+            });
+
+            var dt = self.cell_table;
+
+            dt.DataTable().clear()
+                .rows.add(exp_cells_dict)
+                .draw();
 
         });
+
+
 
     } else {
     	exp = Object.keys(exp).forEach(function(k) {
@@ -553,7 +567,7 @@ Cell_Info.prototype.update = function()
             return [e, f_exp[i]]
         });
 
-        var dt = this.cell_table
+        var dt = this.cell_table;
 
         dt.DataTable().clear()
             .rows.add(exp_cells_dict)
