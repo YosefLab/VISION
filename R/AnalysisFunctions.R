@@ -394,8 +394,9 @@ analyzeTrajectoryCorrelations <- function(object, signatureBackground = NULL) {
   return(object)
 }
 
-#' Compute KS Test, for all factor meta data.  One level vs all others
+#' Compute Ranksums Test, for all factor meta data.  One level vs all others
 #'
+#' @importFrom parallel mclapply
 #' @param object the FastProject object
 #' @return the FastProject object with values set for the analysis results
 clusterSigScores <- function(object) {
@@ -409,7 +410,7 @@ clusterSigScores <- function(object) {
     # Must be a factor with at least 20 levels
     clusterMeta <- vapply(colnames(metaData), function(x) {
             scores <- metaData[[x]]
-            if (is.factor(scores) && length(levels(scores)) <= 20){
+            if (is.factor(scores) && length(levels(scores)) <= 50){
                 return(x)
             } else {
                 return("")
@@ -428,15 +429,15 @@ clusterSigScores <- function(object) {
             not_cluster_ii <- which(values != var_level)
 
             # Process the gene signatures
-            pvals <- lapply(colnames(sigScores), function(sig){
+            pvals <- mclapply(colnames(sigScores), function(sig){
                 suppressWarnings({
                     if(length(cluster_ii) == 0 || length(not_cluster_ii) == 0){
                         return(list(pval = 1.0, stat = 0))
                     }
-                    out_l <- ks.test(sigScores[cluster_ii, sig],
+                    out_l <- wilcox.test(sigScores[cluster_ii, sig],
                                    sigScores[not_cluster_ii, sig],
                                    alternative = "less", exact = FALSE)
-                    out_g <- ks.test(sigScores[cluster_ii, sig],
+                    out_g <- wilcox.test(sigScores[cluster_ii, sig],
                                    sigScores[not_cluster_ii, sig],
                                    alternative = "greater", exact = FALSE)
                 })
@@ -448,7 +449,7 @@ clusterSigScores <- function(object) {
                     stat <- out_g$statistic*-1
                 }
                 return(list(pval = pval, stat = stat))
-            })
+            }, mc.cores = 10)
             names(pvals) <- colnames(sigScores)
 
             # Process the metaData variables
@@ -470,9 +471,9 @@ clusterSigScores <- function(object) {
 
                         suppressWarnings({
 
-                            out_l <- ks.test(x, y, alternative = "less",
+                            out_l <- wilcox.test(x, y, alternative = "less",
                                              exact = FALSE)
-                            out_g <- ks.test(x, y, alternative = "greater",
+                            out_g <- wilcox.test(x, y, alternative = "greater",
                                              exact = FALSE)
                         })
                         if (out_l$p.value < out_g$p.value) {
