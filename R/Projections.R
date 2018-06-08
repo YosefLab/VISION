@@ -4,21 +4,16 @@
 #' @param numCells number of cells in this analysis
 #' @param lean If FALSE, all projections applied; else a subset of essential ones are applied. Default is FALSE.
 #' @return List of projection methods to be applied.
-registerMethods <- function(lean, numCells) {
+registerMethods <- function(projection_methods, numCells) {
+
+    all_proj_methods = c('ISOMAP' = applyISOMap,
+                        "ICA" = applyICA,
+                        "tSNE30" = applytSNE30,
+                        "tSNE10" = applytSNE10)
 
     projMethods <- c()
 
-    if (!lean) {
-        projMethods <- c(projMethods, "ISOMap" = applyISOMap)
-        projMethods <- c(projMethods, "ICA" = applyICA)
-    }
-
-    if (numCells > 90){
-        projMethods <- c(projMethods, "tSNE30" = applytSNE30)
-    }
-    if (numCells > 30){
-        projMethods <- c(projMethods, "tSNE10" = applytSNE10)
-    }
+    projMethods = all_proj_methods[projection_methods]
 
     return(projMethods)
 }
@@ -32,7 +27,7 @@ registerMethods <- function(lean, numCells) {
 #' @param lean If TRUE, diminished number of algorithms applied,
 #' if FALSE all algorithms applied. Default is FALSE
 #' @return list of Projection objects
-generateProjectionsInner <- function(expr, latentSpace, projection_genes=NULL, lean=FALSE, scale=TRUE) {
+generateProjectionsInner <- function(expr, latentSpace, projection_genes=NULL, projection_methods = NULL, scale=TRUE) {
 
     if (!is.null(projection_genes)) {
         exprData <- expr[projection_genes, ]
@@ -44,8 +39,9 @@ generateProjectionsInner <- function(expr, latentSpace, projection_genes=NULL, l
         exprData <- matLog2(exprData)
     }
 
+
     NUM_CELLS <- nrow(latentSpace)
-    methodList <- registerMethods(lean, NUM_CELLS)
+    methodList <- registerMethods(projection_methods, NUM_CELLS)
 
     projections <- list()
 

@@ -69,7 +69,7 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
             function(data, signatures, housekeeping=NULL,
                     unnormalizedData = NULL, meta=NULL, nomodel=TRUE, scale=TRUE,
                     projection_genes=c("fano"), lean="auto", min_signature_genes=5,
-                    weights=NULL, threshold=.05, perm_wPCA=FALSE,
+                    weights=NULL, threshold=.05, perm_wPCA=FALSE, projection_methods = NULL,
                     sig_norm_method = c("znorm_columns", "none", "znorm_rows",
                                         "znorm_rows_then_columns",
                                         "rank_norm_columns"),
@@ -214,6 +214,14 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
                 }
             }
             .Object@lean <- lean
+
+            if (is.null(projection_methods)) {
+
+                projection_methods = c("tSNE30")
+
+            }
+
+            .Object@projection_methods = projection_methods
 
             LOTS_OF_CELLS <- ncol(.Object@exprData) > 15000
 

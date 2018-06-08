@@ -300,7 +300,8 @@ generateProjections <- function(object, lean=object@lean) {
   projections <- generateProjectionsInner(object@exprData,
                                      object@latentSpace,
                                      projection_genes = object@projection_genes,
-                                     lean = object@lean, scale = object@scale)
+                                     projection_methods = object@projection_methods,
+                                     scale = object@scale)
 
   # Add inputProjections
   for (proj in names(object@inputProjections)){
