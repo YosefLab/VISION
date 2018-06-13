@@ -186,19 +186,19 @@ Right_Content.prototype.draw_sigvp = function(autoZoom) {
     var isFactor = (typeof(_.values(values)[0]) === 'string') &&
                    (_.values(values)[0] !== "NA")
 
-    var full_color_range, min_color_value
+    var full_color_range, diverging_colormap
     if(item_type === "gene"){
         $(self.dom_node).find("#plotted-value-option").hide()
         full_color_range = true
-        min_color_value = 0
+        diverging_colormap = false
     } else if(item_type === "meta"){
         $(self.dom_node).find("#plotted-value-option").hide()
         full_color_range = false
-        min_color_value = -1e99
+        diverging_colormap = true
     } else {
         $(self.dom_node).find("#plotted-value-option").show()
         full_color_range = false
-        min_color_value = -1e99
+        diverging_colormap = true
     }
 
     if(self.getScatterColorOption() == "rank"
@@ -237,7 +237,7 @@ Right_Content.prototype.draw_sigvp = function(autoZoom) {
     }
 
     self.scatter.clearData()
-    self.scatter.setData(points, isFactor, full_color_range, selected_cells, min_color_value);
+    self.scatter.setData(points, isFactor, full_color_range, selected_cells, diverging_colormap);
 
     if (autoZoom){
         self.scatter.autoZoom();
@@ -263,19 +263,19 @@ Right_Content.prototype.draw_tree = function(autoZoom) {
     var isFactor = (typeof(_.values(values)[0]) === 'string') &&
                    (_.values(values)[0] !== "NA")
 
-    var full_color_range, min_color_value
+    var full_color_range, diverging_colormap
     if(item_type === "gene"){
         $(self.dom_node).find("#plotted-value-option").hide()
         full_color_range = true
-        min_color_value = 0
+        diverging_colormap = false
     } else if(item_type === "meta"){
         $(self.dom_node).find("#plotted-value-option").hide()
         full_color_range = false
-        min_color_value = -1e99
+        diverging_colormap = true
     } else {
         $(self.dom_node).find("#plotted-value-option").show()
         full_color_range = false
-        min_color_value = -1e99
+        diverging_colormap = true
     }
 
     if(self.getScatterColorOption() == "rank"
@@ -341,7 +341,7 @@ Right_Content.prototype.draw_tree = function(autoZoom) {
             }
 
             self.scatter.clearData()
-            self.scatter.setData(points, isFactor, full_color_range, selected_cells, min_color_value)
+            self.scatter.setData(points, isFactor, full_color_range, selected_cells, diverging_colormap)
             self.scatter.setTreeData(tree_points, tree_adj)
 
             if (autoZoom){

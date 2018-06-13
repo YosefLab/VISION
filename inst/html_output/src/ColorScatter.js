@@ -119,7 +119,7 @@ ColorScatter.prototype.clearData = function() {
 }
 
 ColorScatter.prototype.setData = function(points, isFactor,
-    full_color_range, selected_cells, min_color_value)
+    full_color_range, selected_cells, diverging_colormap)
 {
 
     if(full_color_range === undefined){
@@ -130,8 +130,8 @@ ColorScatter.prototype.setData = function(points, isFactor,
         selected_cells = points.map(x => x[3]) //select all cells
     }
 
-    if(min_color_value === undefined){
-        min_color_value = -1e99
+    if(diverging_colormap === undefined){
+        diverging_colormap = true
     }
 
     selected_cells = _.keyBy(selected_cells, x => x)
@@ -160,12 +160,10 @@ ColorScatter.prototype.setData = function(points, isFactor,
 
     } else if(cvals[0] !== null) {
 
-        cvals = cvals.filter(e => e > min_color_value)
-
         cvals.sort(d3.ascending); // Needed for quantile
         var low, high, mid;
         if(full_color_range){
-            low = Math.max(d3.min(cvals), 0)
+            low = d3.min(cvals)
             high = d3.max(cvals)
             mid = (low + high)/2
         } else {
@@ -174,9 +172,15 @@ ColorScatter.prototype.setData = function(points, isFactor,
             mid = (low + high)/2
         }
 
-        this.colorScale = d3.scale.linear()
-            .domain([low, mid, high])
-            .range(["blue", "green", "red"]);
+        if(diverging_colormap){
+            this.colorScale = d3.scale.linear()
+                .domain([low, mid, high])
+                .range(["blue", "green", "red"]);
+        } else {
+            this.colorScale = d3.scale.linear()
+                .domain([low, mid, high])
+                .range(["#d8d8d8", "#395252", "#000000"]);
+        }
 
         // Format the bound labels
         var label_low = parseFloat(low.toFixed(2)).toString();
@@ -198,11 +202,7 @@ ColorScatter.prototype.setData = function(points, isFactor,
     // Compute colors for all points, add to points[n][4]
     var self = this
     this.points.forEach(function(x) {
-        if (x[3] in selected_cells && (x[2] > min_color_value || isFactor)) {
-            x[4] = self.colorScale(x[2])
-        } else {
-            x[4] = "#777777"
-        }
+        x[4] = self.colorScale(x[2])
     })
 }
 
