@@ -33,7 +33,7 @@ batchSigEval <- function(sigs, sig_score_method, eData, weights) {
 
     # Partition signatures into batches
     # 1200 seems to be an ok batch size goal
-    availableCores <- max(parallel::detectCores() - 1, 1)
+    availableCores <- min(max(parallel::detectCores() - 1, 1), 10)
     sigBatches <- batchify(sigs, 1200, n_workers = availableCores)
 
     allScoresBatches <- parallel::mclapply(sigBatches, function(sigBatch) {

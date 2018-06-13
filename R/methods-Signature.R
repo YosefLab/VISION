@@ -350,7 +350,7 @@ sigsVsProjection_n <- function(sigData, randomSigData,
     randomSigScores <- randomSigData$randomSigs
     sigAssignments <- randomSigData$sigAssignments
 
-    availableCores <- max(parallel::detectCores() - 1, 1)
+    availableCores <- min(max(parallel::detectCores() - 1, 1), 10)
     groupedResults <- mclapply(names(randomSigScores), function(group) {
 
         # Build a matrix of random background signatures for this group
