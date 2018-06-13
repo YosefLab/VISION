@@ -143,14 +143,7 @@ ColorScatter.prototype.setData = function(points, isFactor,
         .map(e => e[2])                      // extract 3rd column
 
     //Adjust circle size based on number of points
-    //Max is 5, Min is 2
-    //5 at 100 points, 2 at 2000 points
-    var m = (2-5) / (Math.log10(2000) - Math.log10(100));
-    var b = 5 - m*Math.log10(100);
-    var new_radius = m*Math.log10(points.length) + b
-    new_radius = Math.max(2, new_radius)
-    new_radius = Math.min(5, new_radius)
-    this.circle_radius = new_radius
+    this.circle_radius = this.pointsToRadius(points.length)
 
     if(isFactor)
     {
@@ -211,6 +204,29 @@ ColorScatter.prototype.setData = function(points, isFactor,
             x[4] = "#777777"
         }
     })
+}
+
+ColorScatter.prototype.pointsToRadius = function(n_points)
+{
+    // Pick a point size based on the number of scatter
+    // plot points
+
+    // Using a piecewise function for this
+    var a, b
+
+
+    var scale_factor = Math.min(this.width, this.height)/600
+
+    if(n_points <= 10000){
+        a = 116500
+        b = .284
+    } else {
+        a = 19800
+        b = .748
+    }
+
+    return Math.pow(a/n_points, b) * scale_factor
+
 }
 
 ColorScatter.prototype.setTreeData = function(tree_points, tree_adj)
