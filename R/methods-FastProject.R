@@ -17,9 +17,6 @@
 #' Else FNR and weights calculated. [Default:TRUE]
 #' @param projection_genes name of method ('threshold' or 'fano') or list of
 #' genes to use when computing projections.
-#' @param lean if TRUE omit some projection methods with poor scaling.
-#' Default is 'auto' which enables additional methods if the number of cells
-#' is less than 500.
 #' @param min_signature_genes Minimum number of genes required to compute a
 #' signature
 #' @param weights Precomputed weights for each coordinate. Normally computed
@@ -28,6 +25,9 @@
 #' proportion of cells (if less than 1)
 #' @param perm_wPCA If TRUE, apply permutation WPCA to calculate significant
 #' number of PCs. Else not. Default FALSE.
+#' @param projection_methods character vector of names for 2d projection methods to
+#' use for views of the latent space.  Options are "ISOMAP", "ICA",
+#' "tSNE30" (perplexity = 30), "tSNE10" (perplexity = 10).  "tSNE30" is default.
 #' @param sig_norm_method Method to apply to normalize the expression matrix
 #' before calculating signature scores. Valid options are:
 #' "znorm_columns" (default), "none", "znorm_rows", "znorm_rows_then_columns",
@@ -68,8 +68,9 @@
 setMethod("FastProject", signature(data = "matrixORSparse"),
             function(data, signatures, housekeeping=NULL,
                     unnormalizedData = NULL, meta=NULL, nomodel=TRUE,
-                    projection_genes=c("fano"), lean="auto", min_signature_genes=5,
-                    weights=NULL, threshold=.05, perm_wPCA=FALSE, projection_methods = NULL,
+                    projection_genes=c("fano"), min_signature_genes=5,
+                    weights=NULL, threshold=.05, perm_wPCA=FALSE,
+                    projection_methods=c("tSNE30"),
                     sig_norm_method = c("znorm_columns", "none", "znorm_rows",
                                         "znorm_rows_then_columns",
                                         "rank_norm_columns"),
@@ -202,26 +203,7 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
             .Object@sig_score_method <- match.arg(sig_score_method)
             .Object@perm_wPCA <- perm_wPCA
 
-            if (is.character(lean)){
-                if (tolower(lean) == "auto"){
-                    if (ncol(.Object@exprData) < 500){
-                        lean <- FALSE
-                    } else {
-                        lean <- TRUE
-                    }
-                } else {
-                    stop("Bad value for 'lean' argument")
-                }
-            }
-            .Object@lean <- lean
-
-            if (is.null(projection_methods)) {
-
-                projection_methods = c("tSNE30")
-
-            }
-
-            .Object@projection_methods = projection_methods
+            .Object@projection_methods <- projection_methods
 
             LOTS_OF_CELLS <- ncol(.Object@exprData) > 15000
 
@@ -621,7 +603,6 @@ createNewFP <- function(fp, subset) {
     .Object@threshold <- fp@threshold
     .Object@sig_norm_method <- fp@sig_norm_method
     .Object@sig_score_method <- fp@sig_score_method
-    .Object@lean = fp@lean
     .Object@perm_wPCA = fp@perm_wPCA
     .Object@pool = fp@pool
     .Object@cellsPerPartition = fp@cellsPerPartition

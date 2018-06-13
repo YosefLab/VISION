@@ -278,13 +278,9 @@ computeLatentSpace <- function(object, projection_genes = NULL,
 #'
 #'
 #' @param object the FastProject object
-#' @param lean if TRUE run a lean simulation. Else more robust pipeline
-#' initiated. Default is FALSE
 #' @return the FastProject object with values set for the analysis results
-generateProjections <- function(object, lean=object@lean) {
+generateProjections <- function(object) {
   message("Projecting data into 2 dimensions...")
-
-  object@lean <- lean
 
   projections <- generateProjectionsInner(object@exprData,
                                      object@latentSpace,
