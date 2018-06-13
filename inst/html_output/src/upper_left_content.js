@@ -291,7 +291,7 @@ Signature_Table.prototype.render = function()
                 .clamp(true);
         }
         var colorScaleCluster = d3.scale.linear()
-            .domain([-1,0,1])
+            .domain([-10,0,10])
             .range(["steelblue","white", "lightcoral"])
             .clamp(true);
 
@@ -723,7 +723,7 @@ Meta_Table.prototype.render = function()
                 .clamp(true);
         }
         var colorScaleCluster = d3.scale.linear()
-            .domain([-1,0,1])
+            .domain([-10,0,10])
             .range(["steelblue","white", "lightcoral"])
             .clamp(true);
 

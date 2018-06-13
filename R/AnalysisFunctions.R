@@ -443,10 +443,10 @@ clusterSigScores <- function(object) {
                 })
                 if (out_l$p.value < out_g$p.value) {
                     pval <- out_l$p.value
-                    stat <- out_l$statistic
+                    stat <- max(log10(out_l$p.value), -300) * -1 / 10
                 } else {
                     pval <- out_g$p.value
-                    stat <- out_g$statistic*-1
+                    stat <- max(log10(out_g$p.value), -300) / 10
                 }
                 return(list(pval = pval, stat = stat))
             }, mc.cores = 10)
@@ -478,10 +478,10 @@ clusterSigScores <- function(object) {
                         })
                         if (out_l$p.value < out_g$p.value) {
                             pval <- out_l$p.value
-                            stat <- out_l$statistic
+                            stat <- max(log10(out_l$p.value), -300) * -1 / 10
                         } else {
                             pval <- out_g$p.value
-                            stat <- out_g$statistic*-1
+                            stat <- max(log10(out_g$p.value), -300) / 10
                         }
 
                     }
