@@ -43,6 +43,15 @@
 #' with dimensions CELLS x COMPONENTS
 #' @param latentTrajectory trajectory to model cell progression.  Wrapped result
 #' of a trajectory inference by the dynverse/dynwrap library
+#' @param metaData a dataframe storing all metadata (can be either factor or numerical),
+#' where the rows are cells and columns are individual meta data items
+#' @param projection_methods a character list of which projection methods to apply. Can be: \itemize{
+#'    \item tSNE10 (tSNE with perplexity 10)
+#'    \item tSNE30 (tSNE with perplexity 30)
+#'    \item ICA
+#'    \item ISOMap
+#'}
+#' By default will perform tSNE and PCA on the data.
 #' @param name a name for the sample - shown on the output report
 #' @return A FastProject object
 #' @rdname FastProject-class
