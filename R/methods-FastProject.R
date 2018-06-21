@@ -228,6 +228,12 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
 
                 projection_methods = c("tSNE30")
 
+            } else {
+                valid_projections = c("tSNE10", "tSNE30", "ICA", "ISOMap")
+                check = sapply(projection_methods, function(x) x %in% valid_projections)
+                if (! all(check)) {
+                    stop("Bad value in 'projection_methods'. Please choose from tSNE10, tSNE30, ICA, ISOMap, or RBFPCA.")
+                }
             }
 
             .Object@projection_methods = projection_methods

@@ -6,10 +6,11 @@
 #' @return List of projection methods to be applied.
 registerMethods <- function(projection_methods, numCells) {
 
-    all_proj_methods = c('ISOMAP' = applyISOMap,
+    all_proj_methods = c('ISOMap' = applyISOMap,
                         "ICA" = applyICA,
                         "tSNE30" = applytSNE30,
-                        "tSNE10" = applytSNE10)
+                        "tSNE10" = applytSNE10,
+                        "RBFPCA" = applyRBFPCA)
 
     projMethods <- c()
 
@@ -48,7 +49,6 @@ generateProjectionsInner <- function(expr, latentSpace, projection_genes=NULL, p
     projections[["PCA: 1,2"]] <- latentSpace[, c(1, 2)]
     projections[["PCA: 1,3"]] <- latentSpace[, c(1, 3)]
     projections[["PCA: 2,3"]] <- latentSpace[, c(2, 3)]
-
     for (method in names(methodList)){
     message(method)
     ## run on raw data
@@ -335,8 +335,9 @@ applytSNE30 <- function(exprData) {
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
 applyISOMap <- function(exprData) {
 
-    res <- Isomap(t(exprData), dims=2)
-    res <- res$dim2
+    d.expr = dist.matrix(exprData, byrow=F)
+    res <- isomap(d.expr, ndim=2, epsilon=1e6)
+    res <- res$points
 
     rownames(res) <- colnames(exprData)
 
