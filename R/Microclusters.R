@@ -46,13 +46,12 @@ applyMicroClustering <- function(
     # If 'preserve_clusters' is provided, use these as the pre-clustering
     #   Otherwise, compute clusters using knn graph and louvain
     if (!is.null(preserve_clusters)) {
-        #cluster_names <- levels(preserve_clusters)
-        #cl <- lapply(cluster_names, function(level){
-        #    cells_at_level <- names(preserve_clusters)[preserve_clusters == level]
-        #    return(cells_at_level)
-        #})
-        #names(cl) <- cluster_names
-	cl <- preserve_clusters
+        cluster_names <- levels(preserve_clusters)
+        cl <- lapply(cluster_names, function(level){
+            cells_at_level <- names(preserve_clusters)[preserve_clusters == level]
+            return(cells_at_level)
+        })
+        names(cl) <- cluster_names
 
     } else {
         n_workers <- getWorkerCount()

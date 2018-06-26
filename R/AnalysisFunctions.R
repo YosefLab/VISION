@@ -47,7 +47,7 @@ clusterCells <- function(object) {
 
     n_workers <- getWorkerCount()
 
-    kn <- ball_tree_knn(res,
+    kn <- ball_tree_knn(res, round(log(res)),
                         min(round(sqrt(nrow(res))), 30),
                         n_workers)
 
