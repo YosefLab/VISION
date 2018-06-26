@@ -11,7 +11,11 @@ clusterCells <- function(object) {
 
     if (sum(dim(object@latentSpace)) == 2) { # No latent Space
 
-        exprData <- matLog2(object@exprData)
+        if (object@scale) {
+            exprData <- matLog2(object@exprData)
+        } else {
+            exprData <- object@exprData
+        }
         filterInput <- object@projection_genes
         filterThreshold <- object@threshold
 
@@ -147,12 +151,11 @@ filterData <- function(object,
 
     message("Determining Projection Genes...")
 
-    if (object@threshold == 0) {
-        num_samples <- ncol(object@exprData)
-        object@threshold <- round(0.2 * num_samples)
+    if (object@scale) {
+        exprData <- matLog2(object@exprData)
+    } else {
+        exprData <- object@exprData
     }
-
-    exprData <- matLog2(object@exprData)
 
     object@projection_genes <- applyFilters(
                 exprData,
@@ -175,7 +178,8 @@ calcWeights <- function(object,
     if (!clustered && !object@nomodel) {
         message("Computing weights from False Negative Rate curves...")
         falseneg_out <- createFalseNegativeMap(object@exprData,
-                                               object@housekeepingData)
+                                               object@housekeepingData,
+                                               object@scale)
         object@weights <- computeWeights(falseneg_out[[1]], falseneg_out[[2]],
                                          object@exprData)
 
@@ -215,7 +219,7 @@ calcSignatureScores <- function(object,
     object@sig_norm_method <- sig_norm_method
     object@sig_score_method <- sig_score_method
 
-    normExpr <- getNormalizedCopy(object@exprData, object@sig_norm_method)
+    normExpr <- getNormalizedCopy(object@exprData, object@sig_norm_method, object@scale)
 
     sigScores <- batchSigEval(object@sigData, object@sig_score_method,
                               normExpr, object@weights)
@@ -260,7 +264,11 @@ computeLatentSpace <- function(object, projection_genes = NULL,
                          )
     }
 
-    exprData <- matLog2(exprData)
+    if (object@scale) {
+        exprData <- matLog2(exprData)
+    } else {
+        exprData <- object@exprData
+    }
 
     if (perm_wPCA) {
         res <- applyPermutationWPCA(exprData, weights, components = 30)
@@ -292,7 +300,8 @@ generateProjections <- function(object, lean=object@lean) {
   projections <- generateProjectionsInner(object@exprData,
                                      object@latentSpace,
                                      projection_genes = object@projection_genes,
-                                     lean = object@lean)
+                                     projection_methods = object@projection_methods,
+                                     scale = object@scale)
 
   # Add inputProjections
   for (proj in names(object@inputProjections)){
@@ -362,34 +371,25 @@ analyzeTrajectoryCorrelations <- function(object, signatureBackground = NULL) {
       signatureBackground <- calculateSignatureBackground(object, num = 3000)
   }
 
-  if (tolower(object@trajectory_method) != "none") {
-      message("Fitting principle tree...")
-      treeProjs <- generateTreeProjections(object@latentSpace,
-                                 inputProjections = object@Projections)
+  message("Computing significance of signatures...")
+  sigVTreeProj <- sigConsistencyScores(object@latentTrajectory,
+                                       object@sigScores,
+                                       object@metaData,
+                                       signatureBackground)
 
-      message("Computing significance of signatures...")
-      sigVTreeProj <- sigConsistencyScores(treeProjs$latentTree,
-                                           object@sigScores,
-                                           object@metaData,
-                                           signatureBackground)
+  message("Clustering Signatures...")
+  sigTreeClusters <- clusterSignatures(object@sigScores,
+                                       object@metaData,
+                                       sigVTreeProj$pVals,
+                                       clusterMeta = object@pool)
 
-      message("Clustering Signatures...")
-      sigTreeClusters <- clusterSignatures(object@sigScores,
-                                           object@metaData,
-                                           sigVTreeProj$pVals,
-                                           clusterMeta = object@pool)
+  TrajectoryConsistencyScores <- ProjectionData(
+      sigProjMatrix = sigVTreeProj$sigProjMatrix,
+      pMatrix = sigVTreeProj$pVals,
+      sigClusters = sigTreeClusters,
+      emp_pMatrix = sigVTreeProj$emp_pVals)
 
-      treeProjData <- TreeProjectionData(
-                                 latentTree = treeProjs$latentTree,
-                                 projections = treeProjs$projections,
-                                 sigProjMatrix = sigVTreeProj$sigProjMatrix,
-                                 pMatrix = sigVTreeProj$pVals,
-                                 emp_pMatrix = sigVTreeProj$emp_pVals,
-                                 sigClusters = sigTreeClusters,
-                                 treeScore = treeProjs$treeScore)
-
-      object@TreeProjectionData <- treeProjData
-  }
+  object@TrajectoryConsistencyScores <- TrajectoryConsistencyScores
 
   return(object)
 }
@@ -454,28 +454,36 @@ clusterSigScores <- function(object) {
             # Process the metaData variables
             meta_pvals <- lapply(colnames(metaData), function(sig){
 
-                if(length(cluster_ii) == 0 || length(not_cluster_ii) == 0){
+                if (length(cluster_ii) == 0 || length(not_cluster_ii) == 0){
                     return(list(pval = 1.0, stat = 0))
                 }
 
                 if (is.numeric(metaData[, sig])) {
-                    suppressWarnings({
 
-                        out_l <- ks.test(metaData[cluster_ii, sig],
-                                       metaData[not_cluster_ii, sig],
-                                       alternative = "less", exact = FALSE)
-                        out_g <- ks.test(metaData[cluster_ii, sig],
-                                       metaData[not_cluster_ii, sig],
-                                       alternative = "greater", exact = FALSE)
-                    })
-                    if (out_l$p.value < out_g$p.value) {
-                        pval <- out_l$p.value
-                        stat <- out_l$statistic
+                    x <- metaData[cluster_ii, sig]
+                    y <- metaData[not_cluster_ii, sig]
+
+                    if (all(is.na(x)) || all(is.na(y))){
+                        pval <- 1.0
+                        stat <- 0
                     } else {
-                        pval <- out_g$p.value
-                        stat <- out_g$statistic*-1
-                    }
 
+                        suppressWarnings({
+
+                            out_l <- ks.test(x, y, alternative = "less",
+                                             exact = FALSE)
+                            out_g <- ks.test(x, y, alternative = "greater",
+                                             exact = FALSE)
+                        })
+                        if (out_l$p.value < out_g$p.value) {
+                            pval <- out_l$p.value
+                            stat <- out_l$statistic
+                        } else {
+                            pval <- out_g$p.value
+                            stat <- out_g$statistic*-1
+                        }
+
+                    }
                 } else if (is.factor(metaData[, sig])) {
                     sigvals <- metaData[, sig, drop = F]
                     sigvals[, 2] <- 0

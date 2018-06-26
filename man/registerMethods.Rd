@@ -4,10 +4,12 @@
 \alias{registerMethods}
 \title{Registers the projection methods to be used}
 \usage{
-registerMethods(lean = FALSE)
+registerMethods(lean, numCells)
 }
 \arguments{
 \item{lean}{If FALSE, all projections applied; else a subset of essential ones are applied. Default is FALSE.}
+
+\item{numCells}{number of cells in this analysis}
 }
 \value{
 List of projection methods to be applied.

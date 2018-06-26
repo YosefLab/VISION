@@ -29,6 +29,22 @@ PCAnnotatorData <- setClass("PCAnnotatorData",
     slots = c(pearsonCorr = "matrix")
 )
 
+Trajectory <- setClass("Trajectory",
+    slots = c(
+        adjMat = "matrix", # MxM connectivity for milestones (w/ lengths)
+        progressions = "data.frame" # position of cells between milestones
+            # rownames: cell (character)
+            # columns:  from (character), to (character), position (numeric, 0 to 1)
+))
+
+TrajectoryProjection <- setClass("TrajectoryProjection",
+    slots = c(
+        name = "character", # Name of projection
+        vData = "matrix", # Mx2, Coordinates for milestones
+        pData = "matrix", # Nx2, Coordiantes for cells
+        adjMat = "matrix" # MxM, Connectivity for milestones
+))
+
 TreeProjection <- setClass("TreeProjection",
     slots = c(
     pData = "matrix",
@@ -37,14 +53,6 @@ TreeProjection <- setClass("TreeProjection",
     adjMat = "matrix",
     edgeAssoc = "matrix",
     edgePos = "numeric"
-))
-
-TreeProjectionData <- setClass("TreeProjectionData",
-    contains = c("ProjectionData"),
-    slots = c(
-        latentTree = "TreeProjection",
-        projections = "list",
-        treeScore = "numericORNULL"
 ))
 
 ServerExpression <- setClass("ServerExpression",
@@ -74,7 +82,6 @@ Signature <- setClass("Signature",
 ))
 
 setClassUnion("ProjectionDataOrNULL", members=c("ProjectionData", "NULL"))
-setClassUnion("TreeProjectionDataOrNULL", members=c("TreeProjectionData", "NULL"))
 setClassUnion("PCAnnotatorDataOrNULL", members=c("PCAnnotatorData", "NULL"))
 
 FastProject <- setClass("FastProject",
@@ -86,7 +93,6 @@ FastProject <- setClass("FastProject",
         threshold = "numeric",
         sig_norm_method = "character",
         sig_score_method = "character",
-        trajectory_method = "character",
         exprData = "matrixORSparse",
         initialExprData = "matrixORSparse",
         unnormalizedData = "matrixORSparse",
@@ -101,15 +107,19 @@ FastProject <- setClass("FastProject",
         cellsPerPartition = "numeric",
         SigConsistencyScores = "ProjectionDataOrNULL",
         ClusterSigScores = "list",
-        TreeProjectionData = "TreeProjectionDataOrNULL",
+        TrajectoryConsistencyScores = "ProjectionDataOrNULL",
         PCAnnotatorData = "PCAnnotatorDataOrNULL",
+        projection_methods = "character",
         Projections = "list",
+        TrajectoryProjections = "list", # list of TrajectoryProjection
         pools = "list",
         inputProjections = "list",
         name = "character",
         cluster_variable = "character",
         latentSpace = "matrix",
+        latentTrajectory = "Trajectory",
         initialLatentSpace = "matrix",
+        scale="logical",
         version = "numeric"),
     prototype = list(
         nomodel = FALSE,
@@ -117,7 +127,6 @@ FastProject <- setClass("FastProject",
         weights = matrix(NA, 1, 1),
         threshold = 0,
         sig_norm_method = "znorm_rows",
-        trajectory_method = "None",
         exprData = matrix(NA, 1, 1),
         initialExprData = matrix(NA, 1, 1),
         unnormalizedData = matrix(NA, 1, 1),
@@ -132,14 +141,18 @@ FastProject <- setClass("FastProject",
         cellsPerPartition = 100,
         SigConsistencyScores = NULL,
         ClusterSigScores = list(),
-        TreeProjectionData = NULL,
+        TrajectoryConsistencyScores = NULL,
         PCAnnotatorData = NULL,
+        projection_methods = character(),
         Projections = list(),
+        TrajectoryProjections = list(),
         pools = list(),
         inputProjections = list(),
         name = "",
         cluster_variable = "",
         latentSpace = matrix(NA, 1, 1),
+        latentTrajectory = NULL,
         initialLatentSpace = matrix(NA, 1, 1),
+        scale=T,
         version = 1.0
 ))

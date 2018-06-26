@@ -12,6 +12,7 @@ applyMicroClustering <- function(
                          filterInput = "fano",
                          filterThreshold = round(ncol(exprData)*0.2),
                          preserve_clusters = NULL,
+			 random=F,
                          latentSpace = matrix(NA, 1, 1)) {
 
     if (all(dim(latentSpace) == c(1, 1))) {
@@ -45,12 +46,13 @@ applyMicroClustering <- function(
     # If 'preserve_clusters' is provided, use these as the pre-clustering
     #   Otherwise, compute clusters using knn graph and louvain
     if (!is.null(preserve_clusters)) {
-        cluster_names <- levels(preserve_clusters)
-        cl <- lapply(cluster_names, function(level){
-            cells_at_level <- names(preserve_clusters)[preserve_clusters == level]
-            return(cells_at_level)
-        })
-        names(cl) <- cluster_names
+        #cluster_names <- levels(preserve_clusters)
+        #cl <- lapply(cluster_names, function(level){
+        #    cells_at_level <- names(preserve_clusters)[preserve_clusters == level]
+        #    return(cells_at_level)
+        #})
+        #names(cl) <- cluster_names
+	cl <- preserve_clusters
 
     } else {
         n_workers <- getWorkerCount()
@@ -330,4 +332,3 @@ createPools <- function(cl, expr) {
 
     return(pool_data)
 }
-

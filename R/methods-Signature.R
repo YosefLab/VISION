@@ -97,7 +97,7 @@ calculateSignatureBackground <- function(object, num) {
     randomSigs <- out$randomSigs
     sigAssignments <- out$sigAssignments
 
-    normExpr <- getNormalizedCopy(object@exprData, object@sig_norm_method)
+    normExpr <- getNormalizedCopy(object@exprData, object@sig_norm_method, object@scale)
 
     randomSigScores <- batchSigEval(
                             unlist(randomSigs, recursive = FALSE),

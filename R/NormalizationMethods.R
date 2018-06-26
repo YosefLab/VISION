@@ -64,9 +64,11 @@ colRankNormalization <- function(data) {
 #' @param data numeric matrix
 #' @param func normalization method to apply
 #' @return Normalized data matrix according to function specified.
-getNormalizedCopy <- function(data, func) {
+getNormalizedCopy <- function(data, func, scale) {
 
-    data <- matLog2(data)
+    if (scale) {
+        data <- matLog2(data)
+    }
 
     if (func == "none") {
         return(noNormalization(data))
