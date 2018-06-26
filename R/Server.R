@@ -251,23 +251,30 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         out <- toJSON(proj_names)
         return(out)
       }) %>%
-      get("/Tree/List", function(req, res, err) {
-
-        W <- object@TreeProjectionData@latentTree@adjMat
-
-        return(toJSON(W))
+      get("/Tree/Projections/list", function(req, res, err) {
+        if (is.null(object@TrajectoryProjections)){
+            proj_names <- character()
+        } else {
+            proj_names <- names(object@TrajectoryProjections)
+        }
+        out <- toJSON(proj_names)
+        return(out)
       }) %>%
-      get("/Tree/(?<proj_name3>.*)/Points", function(req, res, err) {
+      get("/Tree/Projections/(?<proj_name3>.*)/milestones", function(req, res, err) {
         proj <- URLdecode(req$params$proj_name3)
 
-        C <- object@TreeProjectionData@projections[[proj]]@vData
+        C <- object@TrajectoryProjections[[proj]]@vData
+        W <- object@TrajectoryProjections[[proj]]@adjMat
 
-        return(toJSON(C))
+        out <- list(C, W)
+
+        return(toJSON(out))
       }) %>%
-      get("/Tree/(?<proj_name4>.*)/Projection", function(req, res, err) {
+      get("/Tree/Projections/(?<proj_name4>.*)/coordinates", function(req, res, err) {
         proj <- URLdecode(req$params$proj_name4)
+        coords <- object@TrajectoryProjections[[proj]]@pData
 
-        out <- FastProjectR:::coordinatesToJSON(object@TreeProjectionData@projections[[proj]]@pData)
+        out <- FastProjectR:::coordinatesToJSON(coords)
 
         return(out)
       }) %>%
@@ -275,8 +282,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         sigs <- colnames(object@sigScores)
         out <- FastProjectR:::sigProjMatrixToJSON(
-                                  object@TreeProjectionData@sigProjMatrix,
-                                  object@TreeProjectionData@emp_pMatrix,
+                                  object@TrajectoryConsistencyScores@sigProjMatrix,
+                                  object@TrajectoryConsistencyScores@emp_pMatrix,
                                   sigs)
         return(out)
       }) %>%
@@ -284,8 +291,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         sigs <- colnames(object@metaData)
         out <- FastProjectR:::sigProjMatrixToJSON(
-                                  object@TreeProjectionData@sigProjMatrix,
-                                  object@TreeProjectionData@emp_pMatrix,
+                                  object@TrajectoryConsistencyScores@sigProjMatrix,
+                                  object@TrajectoryConsistencyScores@emp_pMatrix,
                                   sigs)
         return(out)
       }) %>%
@@ -406,26 +413,6 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       get("/Pool/Status", function(req, res, err) {
         return(toJSON(object@pool, force=TRUE, pretty=TRUE))
       }) %>%
-      get("/Pool/(?<pool1>.*)/Meta/(?<pool_key1>.*)", function(req, res, err) {
-	      pool_name = URLdecode(req$params$pool1)
-	      meta_key = URLdecode(req$params$pool_key1)
-	      
-	      cells = object@pools[[pool_name]]
-	      meta = as.list(object@initialMetaData[cells,meta_key])
-
-	      out <- toJSON(meta, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
-	      return(out)
-      }) %>%
-      get("/Pool/(?<pool2>.*)/Gene/(?<pool_key2>.*)", function(req, res, err) {
-	      pool_name = URLdecode(req$params$pool2)
-	      gene_key = URLdecode(req$params$pool_key2)
-	      
-	      cells = object@pools[[pool_name]]
-	      expr = unname(as.list(object@initialExprData[gene_key, cells]))
-
-	      out <- toJSON(expr, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
-	      return(out)
-      }) %>%
       get("/Clusters/list", function(req, res, err) {
         cluster_vars <- names(object@ClusterSigScores)
         out <- toJSON(cluster_vars,
@@ -492,7 +479,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             info["name"] <- ""
         }
 
-        W <- object@TreeProjectionData
+        W <- object@latentTrajectory
         hasTree <- !is.null(W)
 
         info["has_tree"] <- hasTree
@@ -504,7 +491,50 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         return(result)
 
-      }) %>%
+     }) %>%
+     post("/Pool/Meta/(?<pool_key1>.*)", function(req, res, err) {
+
+         subset <- fromJSON(req$body)
+
+         subset = subset[!is.na(subset)]
+
+         meta_key = URLdecode(req$params$pool_key1)
+
+         cells = unname(unlist(object@pools[subset]))
+
+         meta = as.list(object@initialMetaData[cells,meta_key])
+
+         out <- toJSON(meta, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
+         return(out)
+
+     }) %>%
+     post("/Pool/Gene/(?<pool_key2>.*)", function(req, res, err) {
+
+         subset <- fromJSON(req$body)
+         subset = subset[!is.na(subset)]
+
+         gene_key = URLdecode(req$params$pool_key2)
+
+         cells = unname(unlist(object@pools[subset]))
+
+         expr = unname(as.list(object@initialExprData[gene_key, cells]))
+
+         out <- toJSON(expr, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
+         return(out)
+
+     }) %>%
+     post("/Pool/Cells", function(req, res, err) {
+
+         subset <- fromJSON(req$body)
+         subset = subset[!is.na(subset)]
+
+         cells = unname(unlist(object@pools[subset]))
+
+
+         out <- toJSON(cells, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
+         return(out)
+
+     }) %>%
       post("/Analysis/Run/", function(req, res, err) {
         subset <- fromJSON(req$body)
         subset <- subset[!is.na(subset)]

@@ -12,6 +12,7 @@ applyMicroClustering <- function(
                          filterInput = "fano",
                          filterThreshold = round(ncol(exprData)*0.2),
                          preserve_clusters = NULL,
+			 random=F,
                          latentSpace = matrix(NA, 1, 1)) {
 
     if (all(dim(latentSpace) == c(1, 1))) {
@@ -330,4 +331,3 @@ createPools <- function(cl, expr) {
 
     return(pool_data)
 }
-

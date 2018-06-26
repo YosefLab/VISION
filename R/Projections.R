@@ -4,21 +4,17 @@
 #' @param numCells number of cells in this analysis
 #' @param lean If FALSE, all projections applied; else a subset of essential ones are applied. Default is FALSE.
 #' @return List of projection methods to be applied.
-registerMethods <- function(lean, numCells) {
+registerMethods <- function(projection_methods, numCells) {
+
+    all_proj_methods = c('ISOMap' = applyISOMap,
+                        "ICA" = applyICA,
+                        "tSNE30" = applytSNE30,
+                        "tSNE10" = applytSNE10,
+                        "RBFPCA" = applyRBFPCA)
 
     projMethods <- c()
 
-    if (!lean) {
-        projMethods <- c(projMethods, "ISOMap" = applyISOMap)
-        projMethods <- c(projMethods, "ICA" = applyICA)
-    }
-
-    if (numCells > 90){
-        projMethods <- c(projMethods, "tSNE30" = applytSNE30)
-    }
-    if (numCells > 30){
-        projMethods <- c(projMethods, "tSNE10" = applytSNE10)
-    }
+    projMethods = all_proj_methods[projection_methods]
 
     return(projMethods)
 }
@@ -32,7 +28,7 @@ registerMethods <- function(lean, numCells) {
 #' @param lean If TRUE, diminished number of algorithms applied,
 #' if FALSE all algorithms applied. Default is FALSE
 #' @return list of Projection objects
-generateProjectionsInner <- function(expr, latentSpace, projection_genes=NULL, lean=FALSE) {
+generateProjectionsInner <- function(expr, latentSpace, projection_genes=NULL, projection_methods = NULL, scale=TRUE) {
 
     if (!is.null(projection_genes)) {
         exprData <- expr[projection_genes, ]
@@ -40,17 +36,19 @@ generateProjectionsInner <- function(expr, latentSpace, projection_genes=NULL, l
         exprData <- expr
     }
 
-    exprData <- matLog2(exprData)
+    if (scale) {
+        exprData <- matLog2(exprData)
+    }
+
 
     NUM_CELLS <- nrow(latentSpace)
-    methodList <- registerMethods(lean, NUM_CELLS)
+    methodList <- registerMethods(projection_methods, NUM_CELLS)
 
     projections <- list()
 
     projections[["PCA: 1,2"]] <- latentSpace[, c(1, 2)]
     projections[["PCA: 1,3"]] <- latentSpace[, c(1, 3)]
     projections[["PCA: 2,3"]] <- latentSpace[, c(2, 3)]
-
     for (method in names(methodList)){
     message(method)
     ## run on raw data
@@ -337,8 +335,9 @@ applytSNE30 <- function(exprData) {
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
 applyISOMap <- function(exprData) {
 
-    res <- Isomap(t(exprData), dims=2)
-    res <- res$dim2
+    d.expr = dist.matrix(exprData, byrow=F)
+    res <- isomap(d.expr, ndim=2, epsilon=1e6)
+    res <- res$points
 
     rownames(res) <- colnames(exprData)
 

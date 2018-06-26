@@ -24,7 +24,8 @@
 #' signature
 #' @param weights Precomputed weights for each coordinate. Normally computed
 #' from the FNR curve.
-#' @param threshold Threshold to apply for the threshold filter
+#' @param threshold Threshold to apply for the threshold filter. Number of cells or
+#' proportion of cells (if less than 1)
 #' @param perm_wPCA If TRUE, apply permutation WPCA to calculate significant
 #' number of PCs. Else not. Default FALSE.
 #' @param sig_norm_method Method to apply to normalize the expression matrix
@@ -33,8 +34,6 @@
 #' or "rank_norm_columns"
 #' @param sig_score_method Method to apply when calculating signature scores.
 #' Either "naive" (default) or "weighted_avg"
-#' @param trajectory_method Method to use to infer a trajectory.  Either
-#' "None" (default) or "SimplePPT".
 #' @param pool indicates whether or not to create supercells. Acceptable values
 #' are TRUE, FALSE, or 'auto', the last of which is the default and enables
 #' pooling if there are more than 15000 cells.
@@ -42,6 +41,17 @@
 #' @param cluster_variable variable to use to denote clusters
 #' @param latentSpace latent space for expression data. Numeric matrix or dataframe
 #' with dimensions CELLS x COMPONENTS
+#' @param latentTrajectory trajectory to model cell progression.  Wrapped result
+#' of a trajectory inference by the dynverse/dynwrap library
+#' @param metaData a dataframe storing all metadata (can be either factor or numerical),
+#' where the rows are cells and columns are individual meta data items
+#' @param projection_methods a character list of which projection methods to apply. Can be: \itemize{
+#'    \item tSNE10 (tSNE with perplexity 10)
+#'    \item tSNE30 (tSNE with perplexity 30)
+#'    \item ICA
+#'    \item ISOMap
+#'}
+#' By default will perform tSNE and PCA on the data.
 #' @param name a name for the sample - shown on the output report
 #' @return A FastProject object
 #' @rdname FastProject-class
@@ -66,16 +76,16 @@
 #'                      housekeeping = hkg)
 setMethod("FastProject", signature(data = "matrixORSparse"),
             function(data, signatures, housekeeping=NULL,
-                    unnormalizedData = NULL, meta=NULL, nomodel=TRUE,
+                    unnormalizedData = NULL, meta=NULL, nomodel=TRUE, scale=TRUE,
                     projection_genes=c("fano"), lean="auto", min_signature_genes=5,
-                    weights=NULL, threshold=0, perm_wPCA=FALSE,
+                    weights=NULL, threshold=.05, perm_wPCA=FALSE, projection_methods = NULL,
                     sig_norm_method = c("znorm_columns", "none", "znorm_rows",
                                         "znorm_rows_then_columns",
                                         "rank_norm_columns"),
                     sig_score_method=c("naive", "weighted_avg"),
-                    trajectory_method=c("None", "SimplePPT"),
                     pool="auto", cellsPerPartition=100, name=NULL,
-                    cluster_variable = "", latentSpace = NULL) {
+                    cluster_variable = "", latentSpace = NULL,
+                    latentTrajectory = NULL) {
 
             .Object <- new("FastProject")
 
@@ -190,10 +200,15 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
             .Object@projection_genes <- vapply(projection_genes,
                                                toupper, "",
                                                USE.NAMES = FALSE)
+
+            if (threshold < 1) {
+                num_samples <- ncol(.Object@exprData)
+                threshold <- round(threshold * num_samples)
+            }
+
             .Object@threshold <- threshold
             .Object@sig_norm_method <- match.arg(sig_norm_method)
             .Object@sig_score_method <- match.arg(sig_score_method)
-            .Object@trajectory_method <- match.arg(trajectory_method)
             .Object@perm_wPCA <- perm_wPCA
 
             if (is.character(lean)){
@@ -208,6 +223,20 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
                 }
             }
             .Object@lean <- lean
+
+            if (is.null(projection_methods)) {
+
+                projection_methods = c("tSNE30")
+
+            } else {
+                valid_projections = c("tSNE10", "tSNE30", "ICA", "ISOMap")
+                check = sapply(projection_methods, function(x) x %in% valid_projections)
+                if (! all(check)) {
+                    stop("Bad value in 'projection_methods'. Please choose from tSNE10, tSNE30, ICA, ISOMap, or RBFPCA.")
+                }
+            }
+
+            .Object@projection_methods = projection_methods
 
             LOTS_OF_CELLS <- ncol(.Object@exprData) > 15000
 
@@ -266,10 +295,39 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
                 .Object@initialLatentSpace <- latentSpace
             }
 
+            if (!is.null(latentTrajectory)) {
+
+                if (!(
+                      "milestone_network" %in% names(latentTrajectory) &&
+                      "progressions" %in% names(latentTrajectory)
+                  )){
+                    stop("latentTrajectory must be a wrapped method using the dynverse/dynmethods library.")
+                }
+
+                .Object@latentTrajectory <- Trajectory(latentTrajectory)
+
+                sample_names <- colnames(.Object@exprData)
+                if (length(
+                        setdiff(
+                            sample_names,
+                            rownames(.Object@latentTrajectory@progressions)
+                            )
+                        ) > 0) {
+                    stop("Supplied progressions for latentTrajectory must have cell_ids that match sample/cell names")
+                }
+
+                newMeta <- createTrajectoryMetaData(.Object@latentTrajectory)
+                newMeta <- newMeta[rownames(.Object@metaData), ]
+
+                .Object@metaData <- cbind(.Object@metaData, newMeta)
+                .Object@initialMetaData <- .Object@metaData
+            }
+
             .Object@cluster_variable <- cluster_variable
+            .Object@scale = scale
 
             return(.Object)
-            }
+    }
 )
 
 #' @rdname FastProject-class
@@ -367,13 +425,22 @@ setMethod("analyze", signature(object="FastProject"),
     # Populates @Projections
     object <- generateProjections(object)
 
+    # Populates @TrajectoryProjections
+    if (!is.null(object@latentTrajectory)) {
+
+        object@TrajectoryProjections <- generateTrajectoryProjections(
+                                            object@latentTrajectory
+                                        )
+    }
+
     message("Computing background distribution for signature scores...")
     signatureBackground <- calculateSignatureBackground(object, num = 3000)
 
     # Populates @SigConsistencyScores
     object <- analyzeSpatialCorrelations(object, signatureBackground)
 
-    if (tolower(object@trajectory_method) != "none") {
+    # Populates @TrajectoryConsistencyScores
+    if (!is.null(object@latentTrajectory)) {
         object <- analyzeTrajectoryCorrelations(object, signatureBackground)
     }
 

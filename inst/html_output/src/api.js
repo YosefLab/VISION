@@ -79,18 +79,37 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.pool.values = function(pool, data_type, key) {
+    output.pool.values = function(subset, data_type, key) {
         var query = prefix.concat("Pool");
 
         if (data_type == "meta") {
-            query = query.concat(pool, "/Meta/", key);
+            query = query.concat("/Meta/", key);
         }  else if (data_type == "gene") {
-            query = query.concat(pool, "/Gene/", key);
+            query = query.concat("/Gene/", key);
         }
 
-        return $.ajax(query, {dataType: "json"}).then(x => x);
+        return $.ajax({
+            type: "POST",
+            url: query,
+            data: JSON.stringify(subset),
+            dataType: "json"
+        }).then(x => x);
+
+
     }
 
+    output.pool.cells = function(subset) {
+        var query = prefix.concat("Pool/Cells");
+
+
+        return $.ajax({
+            type: "POST",
+            url: query,
+            data: JSON.stringify(subset),
+            dataType: "json"
+        }).then(x => x);
+
+    }
     // Clusters API
 
     output.clusters = {}
@@ -172,22 +191,25 @@ var api = (function(){
 
     output.tree = {}
 
-    output.tree.tree = function()
-    {
-        var query = prefix.concat("Tree/List")
+    // Get milestones and connectivity for this 2d projection
+    output.tree.milestones = function(projection) {
+        var query = prefix.concat("Tree/Projections/");
+        query = query.concat(encodeURI(projection), "/milestones");
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.tree.tree_points = function(projection) {
-        var query = prefix.concat("Tree/");
-        query = query.concat(encodeURI(projection), "/Points");
-        return $.ajax(query, {dataType: "json"}).then(x => x)
-    }
-
+    // Get cell coordinates for this 2d projection
     output.tree.coordinates = function(projection) {
-        var query = prefix.concat("Tree/");
-        query = query.concat(encodeURI(projection), "/Projection")
+        var query = prefix.concat("Tree/Projections/");
+        query = query.concat(encodeURI(projection), "/coordinates")
         return $.ajax(query, {dataType: "json"}).then(x => fix_coordinates(x))
+    }
+
+
+    output.tree.list = function()
+    {
+        var query = prefix.concat("Tree/Projections/list")
+        return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
     output.tree.sigProjMatrix = function(meta)
@@ -210,7 +232,7 @@ var api = (function(){
     output.pc.coordinates = function() {
         var query = prefix.concat("FilterGroup/PCA/Coordinates")
         return $.ajax(query, {dataType: "json"}).then(x => fix_coordinates(x))
-    }	
+    }
 
     output.pc.versus = function(pc1, pc2) {
         var query = prefix.concat("FilterGroup");
@@ -245,7 +267,7 @@ var api = (function(){
             type: "POST",
             url: query,
             data: JSON.stringify(subset),
-        }).done(alert("Running Subset Analysis"));	
+        }).done(alert("Running Subset Analysis"));
     }
 
     // Session Info Api

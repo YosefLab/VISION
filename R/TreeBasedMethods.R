@@ -288,7 +288,6 @@ projectOnTree <- function(data.pnts, V.pos, princAdj) {
 }
 
 
-
 #' Calculate distance matrix between all pairs of ponts based on their projection onto the tree
 #'
 #' @param princPnts (D x K numeric) the spatial locations of the principle points (tree vertices)
@@ -297,56 +296,62 @@ projectOnTree <- function(data.pnts, V.pos, princAdj) {
 #' @param edgePos (length N, numeric) relative postion on the edge for each point, in range [0,1]
 #'
 #' @return non-negative symmetric matrix in which [i,j] is the tree-based distance between points i, j.
-calculateTreeDistances <- function(princPnts, princAdj, edgeAssoc, edgePos) {
+calculateTrajectoryDistances <- function(adjMat, edgeAssoc, edgePos, latentPnts = NULL) {
     # get all distances in principle tree
-    princAdjW <- sqdist(t(princPnts), t(princPnts)) * princAdj
 
-    princGraph <- igraph::graph_from_adjacency_matrix(princAdjW,
+    adjW = adjMat
+    if (!is.null(latentPnts)) {
+        adjW <- sqdist(t(latentPnts), t(latentPnts)) * adjMat
+    }
+
+    graph <- igraph::graph_from_adjacency_matrix(adjW,
                                                     weighted = TRUE,
                                                     mode = "undirected")
-    nodeDistmat <- igraph::distances(princGraph)
+    nodeDistmat <- igraph::distances(graph)
 
-    princEdges <- apply(igraph::get.edgelist(princGraph), 1, as.numeric)
-    edgeToPnts <- apply(princEdges, 2, function(x) { apply(edgeAssoc==x, 2, all) })
+    #gEdges <- apply(igraph::get.edgelist(graph), 1, function(x) x )
+    gEdges <- t(igraph::get.edgelist(graph))
+
+    edgeToPnts <- apply(gEdges, 2, function(x) { apply(edgeAssoc==x, 2, all) })
 
     distmat <- matrix(rep(NA, NROW(edgeToPnts) ^ 2), NROW(edgeToPnts))
+
     ## compute intra-edge distances. Store in list for later calclations and set
     ## values in result matrix
     ## loop contains assignment to external matrix, so apply can't be used.
     ## Alternative is to use Reduce on lapply result, but memory footprint could
     ## be problematic (it's K-choose-2 matrices of size NxN)
     intraDist <- list()
-    for (i in 1:NCOL(princEdges)) {
-    inEdgeDist <- calcIntraEdgeDistMat(edge.len = nodeDistmat[princEdges[1,i],
-                                                                princEdges[2,i]],
-                                        edgePos = edgePos[edgeToPnts[,i]])
-    intraDist[[i]] <- inEdgeDist[,c(1,NCOL(inEdgeDist))]
-    distmat[edgeToPnts[,i], edgeToPnts[,i]] <- inEdgeDist[-c(1,NROW(inEdgeDist)),
-                                                            -c(1,NROW(inEdgeDist))]
+    for (i in 1:NCOL(gEdges)) {
+        inEdgeDist <- calcIntraEdgeDistMat(edge.len = nodeDistmat[gEdges[1,i],
+                                                                    gEdges[2,i]],
+                                            edgePos = edgePos[edgeToPnts[,i]])
+        intraDist[[i]] <- inEdgeDist[,c(1,NCOL(inEdgeDist))]
+        distmat[edgeToPnts[,i], edgeToPnts[,i]] <- inEdgeDist[-c(1,NROW(inEdgeDist)),
+                                                                -c(1,NROW(inEdgeDist))]
     }
 
     ## for each pair of edges, calculate inter-edge distances and set them in the empty matrix
-    for (i in 1:(NCOL(princEdges)-1)) {
-    for (j in (i+1):NCOL(princEdges)) {
-        ## figure out which pair is the right one (one with shortest distance)
-        edge1NodeInd <- which.min(nodeDistmat[princEdges[,i],princEdges[2,j]])
-        edge2NodeInd <- which.min(nodeDistmat[princEdges[edge1NodeInd, i], princEdges[,j]])
-        pathLength <- nodeDistmat[princEdges[edge1NodeInd,i], princEdges[edge2NodeInd,j]]
+    for (i in 1:(NCOL(gEdges)-1)) {
+        for (j in (i+1):NCOL(gEdges)) {
+            ## figure out which pair is the right one (one with shortest distance)
+            edge1NodeInd <- which.min(nodeDistmat[gEdges[,i],gEdges[2,j]])
+            edge2NodeInd <- which.min(nodeDistmat[gEdges[edge1NodeInd, i], gEdges[,j]])
+            pathLength <- nodeDistmat[gEdges[edge1NodeInd,i], gEdges[edge2NodeInd,j]]
 
-        ## get corresponding distance vectors from intraList
-        edge1DistMat <- intraDist[[i]]
-        edge1DistVec <- edge1DistMat[-c(1,NROW(edge1DistMat)), edge1NodeInd]
-        edge2DistMat <- intraDist[[j]]
-        edge2DistVec <- edge2DistMat[-c(1,NROW(edge2DistMat)), edge2NodeInd]
+            ## get corresponding distance vectors from intraList
+            edge1DistMat <- intraDist[[i]]
+            edge1DistVec <- edge1DistMat[-c(1,NROW(edge1DistMat)), edge1NodeInd]
+            edge2DistMat <- intraDist[[j]]
+            edge2DistVec <- edge2DistMat[-c(1,NROW(edge2DistMat)), edge2NodeInd]
 
-        ## set interedge distances in matrix
-        interDistmat <- calcInterEdgeDistMat(v1.dist = edge1DistVec,
-                                            v2.dist = edge2DistVec,
-                                            path.length = pathLength)
-        distmat[edgeToPnts[,i], edgeToPnts[,j]] <- interDistmat
+            ## set interedge distances in matrix
+            interDistmat <- calcInterEdgeDistMat(v1.dist = edge1DistVec,
+                                                v2.dist = edge2DistVec,
+                                                path.length = pathLength)
+            distmat[edgeToPnts[,i], edgeToPnts[,j]] <- interDistmat
+        }
     }
-    }
-
     # since we don't set all coordinates, but the matrix is symmetric
     return(pmax(distmat, t(distmat), na.rm = TRUE))
 }
