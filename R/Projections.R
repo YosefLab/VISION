@@ -28,7 +28,7 @@ registerMethods <- function(projection_methods, numCells) {
 #' @param lean If TRUE, diminished number of algorithms applied,
 #' if FALSE all algorithms applied. Default is FALSE
 #' @return list of Projection objects
-generateProjectionsInner <- function(expr, latentSpace, projection_genes=NULL, projection_methods = NULL, scale=TRUE) {
+generateProjectionsInner <- function(expr, latentSpace, projection_genes=NULL, projection_methods = NULL) {
 
     if (!is.null(projection_genes)) {
         exprData <- expr[projection_genes, ]
@@ -36,9 +36,7 @@ generateProjectionsInner <- function(expr, latentSpace, projection_genes=NULL, p
         exprData <- expr
     }
 
-    if (scale) {
-        exprData <- matLog2(exprData)
-    }
+    exprData <- matLog2(exprData)
 
 
     NUM_CELLS <- nrow(latentSpace)

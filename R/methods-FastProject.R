@@ -76,7 +76,7 @@
 #'                      housekeeping = hkg)
 setMethod("FastProject", signature(data = "matrixORSparse"),
             function(data, signatures, housekeeping=NULL,
-                    unnormalizedData = NULL, meta=NULL, nomodel=TRUE, scale=TRUE,
+                    unnormalizedData = NULL, meta=NULL, nomodel=TRUE,
                     projection_genes=c("fano"), lean="auto", min_signature_genes=5,
                     weights=NULL, threshold=.05, perm_wPCA=FALSE, projection_methods = NULL,
                     sig_norm_method = c("znorm_columns", "none", "znorm_rows",
@@ -324,7 +324,6 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
             }
 
             .Object@cluster_variable <- cluster_variable
-            .Object@scale = scale
 
             return(.Object)
     }
