@@ -89,11 +89,16 @@ task <- wrap_expression(
 start_dynmethods_docker()
 
 model %<-% infer_trajectory(task, ti_slingshot())
-
-saveRDS(model, file="hemato_traj_model.RDS")
 ```
 
 Now, with this model saved we can pass it to FastProjectR via the `latentTrajectory` parameter. The model will automatically be analzyed with the same signatures passed to the FastProjectR object, and with this model, the `Trajectory` tab will be activated in the FastProjectR output report. 
+
+``` {r, collapse=F, eval=F}
+covar = read.table("data/hemato_covariates.txt", sep='\t', header=T, row.names=1)
+covar = covar[rownames(expr),]
+fp <- FastProject(expr, c("data/h.all.v5.2.symbols.gmt"), projection_genes = rownames(expr), 
+            meta=covar, latentTrajectory = model, sig_norm_method="znorm_columns")
+```
 
 # Session Info
 ```{r, collapse=F, message=T}
