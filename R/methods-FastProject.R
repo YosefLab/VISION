@@ -168,6 +168,10 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
                                 message(paste0("Dropping '", var, "' from meta data as it is of type 'character' and has more than 20 unique values.  If you want to include this meta data variable, convert it to a factor before providing the data frame to FastProject"))
                             }
                         }
+
+                        if (is.logical(vals)){
+                            meta[, var] <- as.factor(vals)
+                        }
                     }
 
                     .Object@metaData <- meta[sampleLabels, , drop = FALSE]

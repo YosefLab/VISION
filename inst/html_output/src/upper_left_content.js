@@ -581,7 +581,7 @@ Meta_Table.prototype.render = function()
         var new_item = $("<div>")
         new_item.html("<div>" + proj_label + "</div>")
         new_cell.on("click", function() {
-            var col_name = $(this).html()
+            var col_name = $(this).text()
             self.sorted_column = col_name
             self.render()
         });

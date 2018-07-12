@@ -385,6 +385,8 @@ analyzeTrajectoryCorrelations <- function(object, signatureBackground = NULL) {
 #' @return the FastProject object with values set for the analysis results
 clusterSigScores <- function(object) {
 
+    message("Computing differential signature tests...")
+
     sigScores <- object@sigScores
     metaData <- object@metaData
 
