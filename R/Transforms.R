@@ -14,7 +14,7 @@ createFalseNegativeMap <- function(data, housekeeping_genes) {
     data_hk <- data_hk[filterGenesNovar(data_hk), ]
 
     data_hk <- matLog2(data_hk)
-    
+
     # calculate the distributions for hk gene
     # Gamma is 1 for any non-zero data point
     # Mu_h is the row (per gene) average of non zero points

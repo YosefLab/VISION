@@ -25,9 +25,6 @@
 #' proportion of cells (if less than 1)
 #' @param perm_wPCA If TRUE, apply permutation WPCA to calculate significant
 #' number of PCs. Else not. Default FALSE.
-#' @param projection_methods character vector of names for 2d projection methods to
-#' use for views of the latent space.  Options are "ISOMAP", "ICA",
-#' "tSNE30" (perplexity = 30), "tSNE10" (perplexity = 10).  "tSNE30" is default.
 #' @param sig_norm_method Method to apply to normalize the expression matrix
 #' before calculating signature scores. Valid options are:
 #' "znorm_columns" (default), "none", "znorm_rows", "znorm_rows_then_columns",
@@ -43,6 +40,16 @@
 #' with dimensions CELLS x COMPONENTS
 #' @param latentTrajectory trajectory to model cell progression.  Wrapped result
 #' of a trajectory inference by the dynverse/dynwrap library
+#' @param metaData a dataframe storing all metadata (can be either factor or numerical),
+#' where the rows are cells and columns are individual meta data items
+#' @param projection_methods a character list of which projection methods to apply. Can be: \itemize{
+#'    \item tSNE10 (tSNE with perplexity 10)
+#'    \item tSNE30 (tSNE with perplexity 30)
+#'    \item ICA
+#'    \item ISOMap
+#'    \item RBFPCA
+#'}
+#' By default will perform tSNE and PCA on the data.
 #' @param name a name for the sample - shown on the output report
 #' @return A FastProject object
 #' @rdname FastProject-class
@@ -70,7 +77,7 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
                     unnormalizedData = NULL, meta=NULL, nomodel=TRUE,
                     projection_genes=c("fano"), min_signature_genes=5,
                     weights=NULL, threshold=.05, perm_wPCA=FALSE,
-                    projection_methods=c("tSNE30"),
+                    projection_methods = c("tSNE30"),
                     sig_norm_method = c("znorm_columns", "none", "znorm_rows",
                                         "znorm_rows_then_columns",
                                         "rank_norm_columns"),
@@ -207,6 +214,11 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
             .Object@sig_score_method <- match.arg(sig_score_method)
             .Object@perm_wPCA <- perm_wPCA
 
+            valid_projections <- c("tSNE10", "tSNE30", "ICA", "ISOMap", "RBFPCA")
+            check <- sapply(projection_methods, function(x) x %in% valid_projections)
+            if (! all(check)) {
+                stop("Bad value in 'projection_methods'. Please choose from tSNE10, tSNE30, ICA, ISOMap, or RBFPCA.")
+            }
             .Object@projection_methods <- projection_methods
 
             LOTS_OF_CELLS <- ncol(.Object@exprData) > 15000

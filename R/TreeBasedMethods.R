@@ -331,28 +331,32 @@ calculateTrajectoryDistances <- function(adjMat, edgeAssoc, edgePos, latentPnts 
                                                                 -c(1,NROW(inEdgeDist))]
     }
 
-    ## for each pair of edges, calculate inter-edge distances and set them in the empty matrix
-    for (i in 1:(NCOL(gEdges)-1)) {
-        for (j in (i+1):NCOL(gEdges)) {
-            ## figure out which pair is the right one (one with shortest distance)
-            edge1NodeInd <- which.min(nodeDistmat[gEdges[,i],gEdges[2,j]])
-            edge2NodeInd <- which.min(nodeDistmat[gEdges[edge1NodeInd, i], gEdges[,j]])
-            pathLength <- nodeDistmat[gEdges[edge1NodeInd,i], gEdges[edge2NodeInd,j]]
+    # Only calculate inter-edge distances if there are at least 2 edges
+    if (ncol(gEdges) > 1) {
+        ## for each pair of edges, calculate inter-edge distances and set them in the empty matrix
+        for (i in 1:(NCOL(gEdges)-1)) {
+            for (j in (i+1):NCOL(gEdges)) {
+                ## figure out which pair is the right one (one with shortest distance)
+                edge1NodeInd <- which.min(nodeDistmat[gEdges[,i],gEdges[2,j]])
+                edge2NodeInd <- which.min(nodeDistmat[gEdges[edge1NodeInd, i], gEdges[,j]])
+                pathLength <- nodeDistmat[gEdges[edge1NodeInd,i], gEdges[edge2NodeInd,j]]
 
-            ## get corresponding distance vectors from intraList
-            edge1DistMat <- intraDist[[i]]
-            edge1DistVec <- edge1DistMat[-c(1,NROW(edge1DistMat)), edge1NodeInd]
-            edge2DistMat <- intraDist[[j]]
-            edge2DistVec <- edge2DistMat[-c(1,NROW(edge2DistMat)), edge2NodeInd]
+                ## get corresponding distance vectors from intraList
+                edge1DistMat <- intraDist[[i]]
+                edge1DistVec <- edge1DistMat[-c(1,NROW(edge1DistMat)), edge1NodeInd]
+                edge2DistMat <- intraDist[[j]]
+                edge2DistVec <- edge2DistMat[-c(1,NROW(edge2DistMat)), edge2NodeInd]
 
-            ## set interedge distances in matrix
-            interDistmat <- calcInterEdgeDistMat(v1.dist = edge1DistVec,
-                                                v2.dist = edge2DistVec,
-                                                path.length = pathLength)
-            distmat[edgeToPnts[,i], edgeToPnts[,j]] <- interDistmat
+                ## set interedge distances in matrix
+                interDistmat <- calcInterEdgeDistMat(v1.dist = edge1DistVec,
+                                                    v2.dist = edge2DistVec,
+                                                    path.length = pathLength)
+                distmat[edgeToPnts[,i], edgeToPnts[,j]] <- interDistmat
+            }
         }
+        # since we don't set all coordinates, but the matrix is symmetric
     }
-    # since we don't set all coordinates, but the matrix is symmetric
+
     return(pmax(distmat, t(distmat), na.rm = TRUE))
 }
 

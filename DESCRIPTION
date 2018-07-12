@@ -22,11 +22,11 @@ Imports:
 	mclust,
 	methods,
 	Rcpp,
-	RDRToolbox,
 	rsvd,
 	stats,
 	Rtsne,
 	utils,
+	vegan,
 	wordspace
 LinkingTo: Rcpp
 License: Artistic-2.0

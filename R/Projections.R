@@ -6,10 +6,11 @@
 #' @return List of projection methods to be applied.
 registerMethods <- function(projection_methods, numCells) {
 
-    all_proj_methods <- c("ISOMAP" = applyISOMap,
-                          "ICA" = applyICA,
-                          "tSNE30" = applytSNE30,
-                          "tSNE10" = applytSNE10)
+    all_proj_methods <- c("ISOMap" = applyISOMap,
+                        "ICA" = applyICA,
+                        "tSNE30" = applytSNE30,
+                        "tSNE10" = applytSNE10,
+                        "RBFPCA" = applyRBFPCA)
 
     projMethods <- all_proj_methods[projection_methods]
 
@@ -24,7 +25,7 @@ registerMethods <- function(projection_methods, numCells) {
 #' @param projection_genes character vector of gene names to use for projections
 #' @param projection_methods character vector of projection methods to use
 #' @return list of Projection objects
-generateProjectionsInner <- function(expr, latentSpace, projection_genes=NULL, projection_methods = NULL, scale=TRUE) {
+generateProjectionsInner <- function(expr, latentSpace, projection_genes=NULL, projection_methods = NULL) {
 
     if (!is.null(projection_genes)) {
         exprData <- expr[projection_genes, ]
@@ -32,9 +33,7 @@ generateProjectionsInner <- function(expr, latentSpace, projection_genes=NULL, p
         exprData <- expr
     }
 
-    if (scale) {
-        exprData <- matLog2(exprData)
-    }
+    exprData <- matLog2(exprData)
 
 
     NUM_CELLS <- nrow(latentSpace)
@@ -45,7 +44,6 @@ generateProjectionsInner <- function(expr, latentSpace, projection_genes=NULL, p
     projections[["PCA: 1,2"]] <- latentSpace[, c(1, 2)]
     projections[["PCA: 1,3"]] <- latentSpace[, c(1, 3)]
     projections[["PCA: 2,3"]] <- latentSpace[, c(2, 3)]
-
     for (method in names(methodList)){
     message(method)
     ## run on raw data
@@ -332,8 +330,9 @@ applytSNE30 <- function(exprData) {
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
 applyISOMap <- function(exprData) {
 
-    res <- Isomap(t(exprData), dims=2)
-    res <- res$dim2
+    d.expr = dist.matrix(exprData, byrow=F)
+    res <- isomap(d.expr, ndim=2, epsilon=1e6)
+    res <- res$points
 
     rownames(res) <- colnames(exprData)
 
