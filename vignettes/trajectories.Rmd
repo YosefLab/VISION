@@ -1,11 +1,11 @@
 ---
-title: "Trajectory Inference and FastProjectR"
+title: "Trajectory Inference and VISION"
 author: "Matthew Jones"
 date: "`r BiocStyle::doc_date()`"
 package: "`r BiocStyle::pkg_ver('BiocStyle')`"
 output: BiocStyle::html_document
 vignette: >
-  %\VignetteIndexEntry{Introduction to FastProjectR}
+  %\VignetteIndexEntry{Introduction to VISION}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -25,9 +25,9 @@ set.seed(6473) ## for reproducibility
 
 # Introduction
 
-FastProjectR can be used as a downstream tool for analyzing the biological significance of
+VISION can be used as a downstream tool for analyzing the biological significance of
 trajectories. The tool interfaces with the objects output from [Dynverse](https://github.com/dynverse).
-Briefly, Dynverse objects are general wrappers for any trajectory method, and Fastproject specifically
+Briefly, Dynverse objects are general wrappers for any trajectory method, and VISION specifically
 depends on two components in particular:
 
 - The milestone network (essentially the topology of the trajectory produced from your
@@ -40,7 +40,7 @@ for calculating signature consistency scores in the default pipeline.
 
 ## Installation
 
-You should have a working installation of [FastProjectR](https://github.com/YosefLab/FastProjectR), [dyno](https://github.com/dynverse/dyno), and [tidyverse](https://github.com/tidyverse/tidyverse). 
+You should have a working installation of [VISION](https://github.com/YosefLab/VISION), [dyno](https://github.com/dynverse/dyno), and [tidyverse](https://github.com/tidyverse/tidyverse). 
 
 ```{r, collapse=F, message=T, eval=F}
 devtools::install_github("YosefLab/FastProjectR")
@@ -58,45 +58,29 @@ We begin by loading in the data and perfomring perliminary scaling:
 
 ```{r, collapse=F, message=F, warning=F}
 library(FastProjectR)
-library(dyno)
-library(tidyverse)
+library(dynmethods)
+library(monocle)
+library(DDRTree)
 ```
 
 ```{r, collapse=F, message=T, eval=F}
 
 expr = as.matrix(read.table("data/hemato_counts.csv.gz", sep=',', header=T, row.names=1))
-
-# perform preliminary scaling
-n.umi = median(colSums(expr))
-expr = apply(expr, 2, function(x) (x * n.umi) / (sum(x) + 1))
-
-# get informative genes
-f.genes = filterGenesFano(expr)
-expr = expr[f.genes,]
-
-# log-normalize expression matrix
-n.expr = log2(expr)
 ```
 
-We'll now follow the [dyno vignette](https://github.com/dynverse/dyno) in the github README. You'll need to make sure you have [Docker](https://docs.docker.com/install/) installed. Although we use Slingshot here, there is a wide variety of methods that can be used, as listed on the [Dynmethods page](https://github.com/dynverse/dynmethods).
+We'll now follow the [dyno vignette](https://github.com/dynverse/dyno) in the github README. You'll need to make sure you have [Docker](https://docs.docker.com/install/) installed. Although we use Monocle2 here, there is a wide variety of methods that can be used, as listed on the [Dynmethods page](https://github.com/dynverse/dynmethods). Note that for Monocle, we are feeding in the raw counts, not scaled as you would when passing data into VISION.
 
 ```{r, collapse=F, message=T, eval=F}
-task <- wrap_expression(
-  counts = t(expr),
-  expression = t(n.expr)
-)
 
-start_dynmethods_docker()
-
-model %<-% infer_trajectory(task, ti_slingshot())
+model <- dynmethods:::run_monocle(t(expr), reduction_method="DDRTree", norm_method="log")
 ```
 
-Now, with this model saved we can pass it to FastProjectR via the `latentTrajectory` parameter. The model will automatically be analzyed with the same signatures passed to the FastProjectR object, and with this model, the `Trajectory` tab will be activated in the FastProjectR output report. 
+Now, with this model saved we can pass it to VISION via the `latentTrajectory` parameter. The model will automatically be analzyed with the same signatures passed to the FastProjectR object, and with this model, the `Trajectory` tab will be activated in the FastProjectR output report. 
 
 ``` {r, collapse=F, eval=F}
 covar = read.table("data/hemato_covariates.txt", sep='\t', header=T, row.names=1)
 covar = covar[rownames(expr),]
-fp <- FastProject(expr, c("data/h.all.v5.2.symbols.gmt"), projection_genes = rownames(expr), 
+vis <- VISION(expr, c("data/h.all.v5.2.symbols.gmt"), projection_genes = rownames(expr), 
             meta=covar, latentTrajectory = model, sig_norm_method="znorm_columns")
 ```
 

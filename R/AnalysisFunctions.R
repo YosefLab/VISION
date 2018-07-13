@@ -3,8 +3,8 @@
 #' Results of this are stored as a new variabe in the object's metaData
 #' and 'cluster_variable' is populated with its name
 #'
-#' @param object the FastProject object for which to cluster the cells
-#' @return the FastProject object modifed as described above
+#' @param object the VISION object for which to cluster the cells
+#' @return the VISION object modifed as described above
 clusterCells <- function(object) {
 
     message("Clustering cells...")
@@ -53,7 +53,7 @@ clusterCells <- function(object) {
     names(cl) <- paste('Cluster', seq(length(cl)))
 
     # cl is list of character vector
-    cluster_variable <- "FastProject_Clusters"
+    cluster_variable <- "VISION_Clusters"
     metaData <- object@metaData
 
     metaData[cluster_variable] <- factor(levels = names(cl))
@@ -72,9 +72,9 @@ clusterCells <- function(object) {
 
 #' create micro-clusters that reduce noise and complexity while maintaining
 #' the overall signal in the data
-#' @param object the FastProject object for which to cluster the cells
+#' @param object the VISION object for which to cluster the cells
 #' @param cellsPerPartition the minimum number of cells to put into a cluster
-#' @return the FastProject with pooled cells
+#' @return the VISION with pooled cells
 poolCells <- function(object,
                       cellsPerPartition=object@cellsPerPartition) {
     object@cellsPerPartition <- cellsPerPartition
@@ -135,10 +135,10 @@ poolCells <- function(object,
 }
 
 #' filter data accourding to the provided filters
-#' @param object the FastProject object
+#' @param object the VISION object
 #' @param threshold threshold to apply for the threshold filter
 #' @param projection_genes either a list of genes or a method to select genes
-#' @return the FastProject object, populated with filtered data
+#' @return the VISION object, populated with filtered data
 filterData <- function(object,
                        threshold=object@threshold,
                        projection_genes=object@projection_genes) {
@@ -160,10 +160,10 @@ filterData <- function(object,
 
 #' Calculate weights based on the false negative rates, computed using the
 #' provided housekeeping genes
-#' @param object the FastProject object
+#' @param object the VISION object
 #' @param nomodel (optional) if TRUE, no fnr curve calculated and all weights
 #' equal to 1. Else FNR and weights calculated.
-#' @return the FastProject object with populated weights slot
+#' @return the VISION object with populated weights slot
 calcWeights <- function(object,
                         nomodel=object@nomodel) {
     object@nomodel <- nomodel
@@ -190,13 +190,13 @@ calcWeights <- function(object,
 #' To estimate significance of these scores, a set of random gene signatures is
 #' generated to create a null distribution
 #'
-#' @param object the FastProject object
+#' @param object the VISION object
 #' @param sigData a list of Signature objects for which to compute the scores
 #' @param metaData a list of existing cell-signatures
 #' @param sig_norm_method (optional) Method to apply to normalize the expression
 #' matrix before calculating signature scores
 #' @param sig_score_method the scoring method to use
-#' @return the FastProject object, with signature score slots populated
+#' @return the VISION object, with signature score slots populated
 calcSignatureScores <- function(object,
                                 sigData=object@sigData,
                                 metaData=object@metaData,
@@ -223,11 +223,11 @@ calcSignatureScores <- function(object,
 
 #' Computes the latent space of the expression matrix using PCA
 #'
-#' @param object the FastProject object for which compute the latent space
+#' @param object the VISION object for which compute the latent space
 #' @param projection_genes character vector of gene names to use for projections
 #' @param perm_wPCA If TRUE, apply permutation wPCA to determine significant
 #' number of components. Default is FALSE.
-#' @return the FastProject with latentSpace populated
+#' @return the VISION with latentSpace populated
 computeLatentSpace <- function(object, projection_genes = NULL,
                                perm_wPCA = NULL) {
 
@@ -274,13 +274,13 @@ computeLatentSpace <- function(object, projection_genes = NULL,
 #' generate projections
 #'
 #' Generates 2-dimensional representations of the expression matrix
-#' Populates the 'Projections' slot on the FastProject object
+#' Populates the 'Projections' slot on the VISION object
 #'
 #'
-#' @param object the FastProject object
+#' @param object the VISION object
 #' @param lean if TRUE run a lean simulation. Else more robust pipeline
 #' initiated. Default is FALSE
-#' @return the FastProject object with values set for the analysis results
+#' @return the VISION object with values set for the analysis results
 generateProjections <- function(object, lean=object@lean) {
   message("Projecting data into 2 dimensions...")
 
@@ -307,9 +307,9 @@ generateProjections <- function(object, lean=object@lean) {
 #' different projection onto low-dimensional space are computed, and the
 #' consistency of the resulting space with the signature scores is computed
 #' to find signals that are captured succesfully by the projections.
-#' @param object the FastProject object
+#' @param object the VISION object
 #' @param signatureBackground as returned by `calculateSignatureBackground`
-#' @return the FastProject object with values set for the analysis results
+#' @return the VISION object with values set for the analysis results
 analyzeSpatialCorrelations <- function(object, signatureBackground = NULL) {
 
   if (is.null(signatureBackground)){
@@ -349,9 +349,9 @@ analyzeSpatialCorrelations <- function(object, signatureBackground = NULL) {
 #' different projection onto low-dimensional space are computed, and the
 #' consistency of the resulting space with the signature scores is computed
 #' to find signals that are captured succesfully by the projections.
-#' @param object the FastProject object
+#' @param object the VISION object
 #' @param signatureBackground as returned by `calculateSignatureBackground`
-#' @return the FastProject object with values set for the analysis results
+#' @return the VISION object with values set for the analysis results
 analyzeTrajectoryCorrelations <- function(object, signatureBackground = NULL) {
 
   if (is.null(signatureBackground)){
@@ -384,8 +384,8 @@ analyzeTrajectoryCorrelations <- function(object, signatureBackground = NULL) {
 
 #' Compute KS Test, for all factor meta data.  One level vs all others
 #'
-#' @param object the FastProject object
-#' @return the FastProject object with values set for the analysis results
+#' @param object the VISION object
+#' @return the VISION object with values set for the analysis results
 clusterSigScores <- function(object) {
 
     sigScores <- object@sigScores
@@ -518,10 +518,10 @@ clusterSigScores <- function(object) {
 
 #' Compute pearson correlation between signature scores and principle components
 #'
-#' Populations the PCAnnotatorData slot of the FastProject object
+#' Populations the PCAnnotatorData slot of the VISION object
 #'
 #' @importFrom Hmisc rcorr
-#' @param object the FastProject object
+#' @param object the VISION object
 #' @return pearsonCorr numeric matrix N_Signatures x N_PCs
 calculatePearsonCorr <- function(object){
 

@@ -2,42 +2,42 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 geary <- function(X, W) {
-    .Call('_FastProjectR_geary', PACKAGE = 'FastProjectR', X, W)
+    .Call('_VISION_geary', PACKAGE = 'VISION', X, W)
 }
 
 geary_sparse <- function(X, ind, W) {
-    .Call('_FastProjectR_geary_sparse', PACKAGE = 'FastProjectR', X, ind, W)
+    .Call('_VISION_geary_sparse', PACKAGE = 'VISION', X, ind, W)
 }
 
 geary_sparse_local <- function(X, ind, W) {
-    .Call('_FastProjectR_geary_sparse_local', PACKAGE = 'FastProjectR', X, ind, W)
+    .Call('_VISION_geary_sparse_local', PACKAGE = 'VISION', X, ind, W)
 }
 
 geary_all <- function(X, W) {
-    .Call('_FastProjectR_geary_all', PACKAGE = 'FastProjectR', X, W)
+    .Call('_VISION_geary_all', PACKAGE = 'VISION', X, W)
 }
 
 geary_sparse_all <- function(X, ind, W) {
-    .Call('_FastProjectR_geary_sparse_all', PACKAGE = 'FastProjectR', X, ind, W)
+    .Call('_VISION_geary_sparse_all', PACKAGE = 'VISION', X, ind, W)
 }
 
 ball_tree_vector_knn <- function(X, Y, K, n_threads) {
-    .Call('_FastProjectR_ball_tree_vector_knn', PACKAGE = 'FastProjectR', X, Y, K, n_threads)
+    .Call('_VISION_ball_tree_vector_knn', PACKAGE = 'VISION', X, Y, K, n_threads)
 }
 
 ball_tree_knn <- function(X, K, n_threads) {
-    .Call('_FastProjectR_ball_tree_knn', PACKAGE = 'FastProjectR', X, K, n_threads)
+    .Call('_VISION_ball_tree_knn', PACKAGE = 'VISION', X, K, n_threads)
 }
 
 load_in_knn <- function(nn, d) {
-    .Call('_FastProjectR_load_in_knn', PACKAGE = 'FastProjectR', nn, d)
+    .Call('_VISION_load_in_knn', PACKAGE = 'VISION', nn, d)
 }
 
 point_mult <- function(X, Y) {
-    invisible(.Call('_FastProjectR_point_mult', PACKAGE = 'FastProjectR', X, Y))
+    invisible(.Call('_VISION_point_mult', PACKAGE = 'VISION', X, Y))
 }
 
 multMat <- function(X, Y) {
-    .Call('_FastProjectR_multMat', PACKAGE = 'FastProjectR', X, Y)
+    .Call('_VISION_multMat', PACKAGE = 'VISION', X, Y)
 }
 

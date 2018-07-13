@@ -1,7 +1,7 @@
-#' @rdname FastProject-class
+#' @rdname VISION-class
 #' @export
-setGeneric("FastProject", function(data, ...) {
-    standardGeneric("FastProject")
+setGeneric("Vision", function(data, ...) {
+    standardGeneric("Vision")
 })
 
 setGeneric("analyze", function(object, ...) {

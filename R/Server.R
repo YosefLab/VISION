@@ -163,7 +163,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
     # Load the static file whitelist
     whitelist_file <- system.file("html_output/whitelist.txt",
-                                  package = "FastProjectR")
+                                  package = "VISION")
     static_whitelist <- scan(whitelist_file, what = "",
                              quiet = TRUE)
 
@@ -183,7 +183,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         if (name %in% colnames(sigMatrix)) {
           ss <- sigMatrix[, name, drop = FALSE]
           ss <- as.data.frame(ss)
-          out <- FastProjectR:::sigScoresToJSON(ss)
+          out <- VISION:::sigScoresToJSON(ss)
         }
         return(out)
       }) %>%
@@ -192,7 +192,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         name <- URLdecode(req$params$sig_name3)
         out <- "Signature does not exist!"
         if (name %in% colnames(metaData)) {
-          out <- FastProjectR:::sigScoresToJSON(metaData[name])
+          out <- VISION:::sigScoresToJSON(metaData[name])
         }
         return(out)
       }) %>%
@@ -202,7 +202,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         out <- "Signature does not exist!"
         if (name %in% names(signatures)) {
           sig <- signatures[[name]]
-          out <- FastProjectR:::signatureToJSON(sig)
+          out <- VISION:::signatureToJSON(sig)
         }
         return(out)
       }) %>%
@@ -220,7 +220,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             }
             genes = names(sig@sigDict)
             expMat = object@exprData
-            return(FastProjectR:::expressionToJSON(expMat, genes, zscore=TRUE))
+            return(VISION:::expressionToJSON(expMat, genes, zscore=TRUE))
         }
         return(out)
       }) %>%
@@ -242,7 +242,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       }) %>%
       get("/Projections/(?<proj_name1>.*)/coordinates", function(req, res, err) {
         proj <- URLdecode(req$params$proj_name1)
-        out <- FastProjectR:::coordinatesToJSON(object@Projections[[proj]])
+        out <- VISION:::coordinatesToJSON(object@Projections[[proj]])
         return(out)
       }) %>%
       get("/Projections/list", function(req, res, err) {
@@ -274,14 +274,14 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         proj <- URLdecode(req$params$proj_name4)
         coords <- object@TrajectoryProjections[[proj]]@pData
 
-        out <- FastProjectR:::coordinatesToJSON(coords)
+        out <- VISION:::coordinatesToJSON(coords)
 
         return(out)
       }) %>%
       get("/Tree/SigProjMatrix/Normal", function(req, res, err) {
 
         sigs <- colnames(object@sigScores)
-        out <- FastProjectR:::sigProjMatrixToJSON(
+        out <- VISION:::sigProjMatrixToJSON(
                                   object@TrajectoryConsistencyScores@sigProjMatrix,
                                   object@TrajectoryConsistencyScores@emp_pMatrix,
                                   sigs)
@@ -290,7 +290,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       get("/Tree/SigProjMatrix/Meta", function(req, res, err) {
 
         sigs <- colnames(object@metaData)
-        out <- FastProjectR:::sigProjMatrixToJSON(
+        out <- VISION:::sigProjMatrixToJSON(
                                   object@TrajectoryConsistencyScores@sigProjMatrix,
                                   object@TrajectoryConsistencyScores@emp_pMatrix,
                                   sigs)
@@ -334,7 +334,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       get("/FilterGroup/PCA/Coordinates", function(req, res, err) {
 
         pc <- object@latentSpace
-        out <- FastProjectR:::coordinatesToJSON(pc)
+        out <- VISION:::coordinatesToJSON(pc)
 
         return(out)
       }) %>%
@@ -360,7 +360,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
           pc <- object@PCAnnotatorData@pearsonCorr[, 1:10]
 
-        return(FastProjectR:::pearsonCorrToJSON(pc, sigs))
+        return(VISION:::pearsonCorrToJSON(pc, sigs))
       }) %>%
       get("/FilterGroup/PearsonCorr/Meta", function(req, res, err) {
 
@@ -372,7 +372,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
           pc <- object@PCAnnotatorData@pearsonCorr[, 1:10]
 
-        return(FastProjectR:::pearsonCorrToJSON(pc, sigs))
+        return(VISION:::pearsonCorrToJSON(pc, sigs))
       }) %>%
       get("/FilterGroup/PearsonCorr/list", function(req, res, err) {
 
@@ -424,7 +424,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         cluster_variable <- URLdecode(req$params$cluster_variable1)
         out <- "No Clusters!"
         if (cluster_variable %in% colnames(metaData)) {
-          out <- FastProjectR:::sigScoresToJSON(metaData[cluster_variable])
+          out <- VISION:::sigScoresToJSON(metaData[cluster_variable])
         }
         return(out)
       }) %>%
@@ -445,7 +445,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         pvals <- cbind(pvals, cluster_pvals)
         zscores <- cbind(zscores, cluster_zscores)
 
-        out <- FastProjectR:::sigProjMatrixToJSON(zscores, pvals, sigs)
+        out <- VISION:::sigProjMatrixToJSON(zscores, pvals, sigs)
         return(out)
       }) %>%
       get("/Clusters/(?<cluster_variable3>.*)/SigProjMatrix/Meta", function(req, res, err) {
@@ -465,7 +465,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         pvals <- cbind(pvals, cluster_pvals)
         zscores <- cbind(zscores, cluster_zscores)
 
-        out <- FastProjectR:::sigProjMatrixToJSON(zscores, pvals, sigs)
+        out <- VISION:::sigProjMatrixToJSON(zscores, pvals, sigs)
 
         return(out)
       }) %>%
@@ -544,8 +544,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             subset <- unlist(clust)
         }
 
-        nfp <- FastProjectR:::createNewFP(object, subset)
-        FastProjectR:::newAnalysis(nfp)
+        nfp <- VISION:::createNewFP(object, subset)
+        VISION:::newAnalysis(nfp)
         return()
       }) %>%
       get(path = NULL, function(req, res, err) {
@@ -564,7 +564,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
           }
 
           file_path <- system.file(static_whitelist[file_index],
-                         package = "FastProjectR")
+                         package = "VISION")
 
           mime_type <- mime::guess_type(file_path)
           res$content_type(mime_type)

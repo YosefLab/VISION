@@ -89,7 +89,7 @@ double jaccard_distance(const DataPoint &t1, const DataPoint &t2) {
             inter++;
         }
         if (t1.x(d) > 0 || t2.x(d) > 0) {
-            un++;     
+            un++;
         }
     }
     return 1 - (inter / un);
@@ -148,8 +148,8 @@ public:
     void find_partitions(std::vector< std::vector<int> >* clusters, std::vector<double>* cluster_radii, int L) {
 
 		std::vector< std::vector<int> > results;
-		find_partitions(_root, &results, cluster_radii, L);	
-		
+		find_partitions(_root, &results, cluster_radii, L);
+
 		// Gather results
 		for (unsigned int i = 0; i < results.size(); i++) {
 			std::vector<int> clust;
@@ -160,7 +160,7 @@ public:
 		}
 
 
-	
+
 
 	}
 
@@ -228,7 +228,7 @@ private:
         // Lower index is center of current node
         Node* node = new Node();
         node->index = lower;
-        node->num_points = 1; 
+        node->num_points = 1;
 
         if (upper - lower > 1) {      // if we did not arrive at leaf yet
 
@@ -271,7 +271,7 @@ private:
         // Lower index is center of current node
         Node* node = new Node();
         node->index = lower;
-        node->num_points = 1; 
+        node->num_points = 1;
 
         if (upper - lower > 1) {      // if we did not arrive at leaf yet
 
@@ -285,7 +285,7 @@ private:
 			int median = (upper + lower) / 2;
 
 
-			// Find dimensionality with greatest extent to partition around	
+			// Find dimensionality with greatest extent to partition around
 			/*for (int d = 0; d < elem.dimensionality(); d++) {
 				std::vector<DataPoint>::iterator max_elem = std::max_element(_items.begin() + lower,
 																   _items.begin() + upper,
@@ -296,20 +296,20 @@ private:
 					max_dim = d;
 				}
 			}*/
-			
+
             // Partition around the median distance
             std::nth_element(_items.begin() + lower,
                              _items.begin() + median,
                              _items.begin() + upper,
                             DistanceComparator(_items[lower]));
-			
+
 			// Partition around median distance in dimension of greatest extent
 			/*std::nth_element(_items.begin() + lower,
-							 _items.begin() + median, 
+							 _items.begin() + median,
 							 _items.begin() + upper,
 							 DistanceComparator_Single(elem, max_dim));
 			*/
-			
+
 
             // Threshold of the new node will be the distance to the median
             node->threshold = distance(_items[lower], _items[median]);
@@ -325,7 +325,7 @@ private:
         return node;
     }
 
-	// Helper function that partitions the tree according to the threshold L, starting from node NODE 
+	// Helper function that partitions the tree according to the threshold L, starting from node NODE
 	void find_partitions(Node* node, std::vector< std::vector<int> >* clusters, std::vector<double>* cluster_radii, int L) {
 
 		if (node == NULL) return;	// indicates that we're done here
@@ -333,7 +333,7 @@ private:
 			std::vector<int> partition;
 			partition.push_back(node->index);
 			clusters->push_back(partition);
-		}	
+		}
 
 		// If node meets threshold criteria, fill partition with all of points in node
 		if (node->num_points <= L && node->num_points > 1) {
@@ -342,18 +342,18 @@ private:
 			fill_partition(node->left, &partition);
 			clusters->push_back(partition);
 			find_partitions(node->right, clusters, cluster_radii, L);
-		} else {	
+		} else {
 			// If node didn't meet criteria, recursively partition tree to get rest of nodes
 			find_partitions(node->left, clusters, cluster_radii, L);
 			find_partitions(node->right, clusters, cluster_radii, L);
 		}
-	
+
 	}
 
 	// Helper function to fill a partition once a node passes the threshold criteria
 	void fill_partition(Node* node, std::vector<int>* partition) {
 
-		if (node == NULL) { return; }  
+		if (node == NULL) { return; }
 		if (node->right == NULL && node->left == NULL) {
 			partition->push_back(node->index);
 		}

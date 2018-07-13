@@ -1,6 +1,6 @@
-// Utilities for fast matrix operations to be wrapped with R in FastProjectR
+// Utilities for fast matrix operations to be wrapped with R in VISION
 
-#include <Rcpp.h> 
+#include <Rcpp.h>
 #include <iostream>
 #include <string>
 using namespace Rcpp;
@@ -21,7 +21,7 @@ double geary(NumericVector X, NumericMatrix W) {
     }
 
     // Now compute normalization factor 2Wtot*sum((x-mu_x)**2)/(N-1)
-    
+
     // Compute sum((x-mu_x)**2) = xvar
 
     unsigned int xsize = X.size();
@@ -68,7 +68,7 @@ double geary_sparse(NumericVector X, NumericMatrix ind, NumericMatrix W) {
     }
 
     // Now compute normalization factor 2Wtot*sum((x-mu_x)**2)/(N-1)
-    
+
     // Compute sum((x-mu_x)**2) = xvar
 
     unsigned int xsize = X.size();

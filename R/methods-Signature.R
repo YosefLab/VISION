@@ -81,7 +81,7 @@ createGeneSignature <- function(name, sigData, metadata="") {
 #' To estimate significance of these scores, a set of random gene signatures is
 #' generated to create a null distribution
 #'
-#' @param object the FastProject object
+#' @param object the VISION object
 #' @param num the number of signatures to generate
 #' @return A list with two items:
 #'

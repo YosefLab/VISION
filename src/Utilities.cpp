@@ -1,6 +1,6 @@
-// Utilities for fast matrix operations to be wrapped with R in FastProjectR
+// Utilities for fast matrix operations to be wrapped with R in VISION
 
-#include <Rcpp.h> 
+#include <Rcpp.h>
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -21,7 +21,7 @@ void point_mult(NumericMatrix & X, NumericVector & Y) {
 
 // [[Rcpp::export]]
 NumericVector multMat(NumericMatrix X, NumericMatrix Y) {
-	// Matrix multiplication where new matrix is created to store result 
+	// Matrix multiplication where new matrix is created to store result
 	NumericVector res = X * Y;
 	res.attr("dim") = Dimension(X.nrow(), X.ncol());
 	return res;
