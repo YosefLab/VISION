@@ -1,0 +1,172 @@
+---
+title: "Introduction to VISION"
+author: "Matthew Jones"
+date: "`r BiocStyle::doc_date()`"
+package: "`r BiocStyle::pkg_ver('BiocStyle')`"
+output: BiocStyle::html_document
+vignette: >
+  %\VignetteIndexEntry{Introduction to VISION}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+<style>
+pre.bluecars {
+    background-color: #aabbff !important;
+}
+pre.redcars {
+    background-color: #ffbbbb !important;
+}
+</style>
+
+
+``` {r options, include=F, cache=F, results='hide', message=F}
+
+knitr::opts_chunk$set(fig.align="center", cache=FALSE,error=FALSE,
+                      fig.width=6,fig.height=6,autodep=TRUE,
+                      out.width="600px", out.height="600px",
+                      results="markup", echo=TRUE, eval=TRUE)
+
+options(getClass.msg=FALSE)
+
+set.seed(6473) ## for reproducibility
+
+```
+
+
+# Introduction
+
+Recent technological advancements have allowed transcriptional profiling at the single-cell level. This has enabled a deeper investigation into cellular heterogeneity(Patel et al 2014), the identification of new cellular subtypes (Villani et al 2017), and more detailed modeling of developmental processes. Notably, the data produced in a single-cell RNA-seq (scRNA-seq) experiment is distinct from that of bulk RNA-seq in that it is typically sparse (with many expressed genes remaining undetected), and consists of a very high number of data points (up to hundreds of thousands of cells as in the Mouse Cell Atlas). Furthermore, while bulk studies are usually conducted in a comparative setting (e.g., case control studies), most investigations of scRNA-seq are based on comparisons of cells within a sample, without any preconceived stratification of these cells. 
+
+A typical primary step in the analysis of scRNA-seq data is therefore to extract a meaningful stratification of cells into groups or along some continuum in a data- driven manner, using various models for estimating cell-to-cell similarity.  One way to achieve such a stratification is to cluster cells in a low-dimensional "latent" space where cells can be related to one another using euclidean distances. While Principal Component Analysis (PCA) is a commonly used method, more recently linear factor models such as ZIFA or zinbWave and nonlinear deep generative models such as scVI or DCA have been developed to specifically address the underlying distributions found in single-cell read counts. Alternately, if the cells are expected to vary along a continuum, such as that which arises during a developmental time-course, cell-cell similarity maps can be used for inferring a tree- like representation of the data, and there are a variety of methods designed for this purpose (summarized in a recent review by Saelens and Cannoodt et al, 2018). 
+
+Here we present VISION, a module that can sit downstream of other common analyses such as clustering, dimensionality reduction, and trajectory inference. Specifically, VISION aids in the interpretation of scRNA-seq data, with or without predetermined labels, or stratifications of the data (e.g. clusterings) using the notion of cell-cell similarity maps (as interpreted from some latent space) and biological signatures (functional sets of genes that can be obtained online from, for example, MSigDB). Finally, VISION can evaluate the effect of cell- level meta data, such as library quality, batch,  clinical information, or additional experimental readouts (e.g., protein levels from a Cite-Seq experiment). Importantly, the use of VISION can greatly facilitate collaborative projects, as it offers a low- latency interactive report for the end- user, which can be hosted online and viewed on a web browser without the need for installing developer-grade software. VISION is freely available as an R package on Github (\url{www.github.com/YosefLab/VISION})
+
+# Preliminaries
+
+If you have yet to install VISION, we recommend installing the package from github to install this pacakge. Full source code can be found at the VISION github repository, available [here](http://www.github.com/YosefLab/VISION). 
+
+```r
+> require(devtools)
+> install_github("YosefLab/VISION")
+```
+
+Once VISION and R are installed, you may load in VISION and all of its dependencies using `library(VISION)`. 
+
+# Using VISION
+
+## The VISION Pipeline
+
+VISION generally follows the same pipeline from iteration to iteration, where minor differences can be specified via the various parameters in a VISION object. On a typical VISION run:
+
+- If a latent space is not specified, PCA is performed and the top 30 components are retained. 
+- A KNN graph is constructed from the latent space, named the *cell-cell similarity map*
+- Signature scores are computed using the expression matrix
+- Signature local "consistencies" on the cell-cell similarity map are computed using the Geary-C statistic, an auto-correlation statistic. 
+- An interactive web-based report is generated that can be used to explore and interpret the dataset. 
+
+## Analysis of Glioblastoma Cells with VISION
+As described above, VISION can be approached from many directions. Here, we present the simplest of applications, utilizing the `analyze` function. 
+
+First, we'll walk through how to create a VISION object for the `analyze` function. Most importantly, we need expression data and signature data. For this example we'll also include some meta-data, describing which patient each cell came from. In practice, this meta-data can be any range of discrete or continuous data describing each cell - for example, upstream analyses such as clustering results or important QC metric such as the number of UMIs per cell. This meta data should be a data frame where the row labels match the column labels of the expression matrix. 
+
+We'll operate on a set of 430 cells from five primary glioblastomas sequenced using scRNA-seq across 5,948 genes (Patel et. al. 2014). For our signatures, we will use the Hallmark gene set from MSigDB, which is available [here](http://software.broadinstitute.org/gsea/msigdb/collections.jsp#H). To note, we can specify multiple signature files but we'll stick to one for this example. 
+
+The expression data and siganture files: the expression data can be either a path to a tab-delimited .txt file, a numeric matrix directly, an ExpressionSet object or a SummerizedExperiment object; signature data can be provided as a list of .gmt files, .txt files or Signature objects (additional info on signature below). 
+
+``` {redcars}
+To note, please provide *scaled* expression data (e.g. counts per million, or median number of UMIs), without preforming any kind of prior normalization. 
+```
+
+We can also leverage a couple of other paramters of VISION: namely the method for normalizing the expression data before calculating signature scores, a meta data file, a set of desired projections, and a set of genes we'd like to utilize for projections. 
+
+```{bluecars}
+When specifying meta data, please provide a data frame where you have rows representing cells and each column a separate meta data item. Please make sure that the cell labels in the meta data match exactly the cell labels in the expression data matrix.
+```
+
+```{bluecars}
+VISION supports a range of dimensionality reduction methods for visualization:
+- tSNE30 (t-distributed Stochastic Neighborhood Embedding with perplexity 30) 
+- tSNE10 (tSNE with perplexity 10)
+- ICA
+- ISOMap
+
+VISION will always compute the first three principal components for visualization. Unless specified otherwise, VISION will always compute tSNE30 as well as this PCA.
+```
+
+All of these initialization would result in the same VISION object being created:
+
+```{r, collapse=F, message=T}
+# -- load VISION
+library(VISION)
+
+# -- read in expression data set
+expr <- as.matrix(read.table("data/expression_matrix.txt", 
+                   header = TRUE, sep = '\t', row.names = 1))
+
+# -- scale expression matrix by the median number of UMIs
+n.umi = median(colSums(expr))
+expr = apply(expr, 2, function(x) (x * n.umi) / (sum(x) + 1))
+
+# -- read in meta data
+meta = read.table("data/glio_meta.txt", sep='\t', header=T, row.names=1)
+meta = meta[colnames(expr), ,drop=F]
+meta[,1] = as.factor(meta[,1])
+
+# -- find genes to use for projections
+f.genes = VISION:::filterGenesFano(expr)
+
+# -- Create a VISION object with existing matrix
+vis <- Vision(expr, c("data/h.all.v5.2.symbols.gmt"), sig_norm_method = "znorm_columns", meta = meta,
+                projection_methods=c("tSNE30",  "ICA"), projection_genes = f.genes)
+
+```
+
+To note, you can also create a VISION object with a SummarizedExperiment object:
+```{r, collapse=F, message=F, eval=F}
+## -- Create a VISION object with a SummarizedExperiment
+se <- SummarizedExperiment::SummarizedExperiment(assays = list(counts = expr))
+vis <- Vision(se, c("data/h.all.v5.2.symbols.gmt"))
+```
+
+Now, with a VISION object, we can run `analyze` which will run the VISION pipeline and return another, processed VISION object.
+
+```{r, collapse=T, message=F, eval=T}
+vis <- analyze(vis)
+```
+
+With the processed Vision object, a dynamic web report can be generated with the `viewResults` function or the `saveAndViewResults` function, which will both save the VISIONOutput object as an .rds file and launch a web browser for the dynamic report.
+
+```{r, collapse=T, message=F, results=F, eval=F}
+viewResults(fp)
+```
+
+# Getting Signatures
+Gene signatures are essential to the VISION pipeline, and are fairly easy to get in any number of ways:
+
+## Downloading Signatures
+A great resource for gene signatures is `MSigDB`, curated by the Broad institute. Signatures can be browsed, searched and downloaded from [here](http://software.broadinstitute.org/gsea/msigdb/) as .gmt files, then provided to VISION to be included in the analysis.
+
+
+## Creating Signatures
+If there is a set of proprietary genes of interest, a user-defined signature can be created in two ways:
+### creating a Signature object
+Once a set of genes that are up or down regulated in the process or cell type of interest are selected, creating a Signature object is relatively straightforward:
+```{r create signature object, collapse=T, eval=F}
+up.genes <- c("ug1","ug2","ug3","ug4","ug5","ug6","ug7","ug8","ug9")
+down.genes <- c("dg1","dg2","dg3","dg4","dg5","dg6")
+
+sigData <- c(rep(1.0,length(up.genes)),rep(-1.0,length(down.genes)))
+names(sigData) <- c(up.genes, down.genes)
+
+sig <- createGeneSignature(name = "Interesting Process", sigData = sigData)
+```
+
+### Signature files
+Signature files are supported in either a .txt or .gmt format, which are both textual formats that are easy to create.
+Information on the precise acceptable format can be found [here](https://github.com/YosefLab/VISION/wiki/Signatures).
+
+# Session Info
+```{r, collapse=T}
+sessionInfo()
+```
