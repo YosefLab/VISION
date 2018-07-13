@@ -1,58 +1,35 @@
 VISION [![Travis-CI Build Status](https://travis-ci.org/YosefLab/VISION.svg?branch=master)](https://travis-ci.org/YosefLab/VISION)
 ===========
-Here we present FastProjectR, an extension of FastProject for R, enabling the two-dimensional visualization of single-cell data. The software package utilizes a wide spectrum of projection methods and provides functionality for systematically investigating the biological relevance of these low dimensional represenations by incorporating domain knowledge. While preserving the spirit of the first version, this R extension most importantly now supports the analysis of massive amounts of cell data - theoretically up to a million cells sequenced at any depth - and an improved visualization platform that allows for subset analysis based on the two dimensional representation.
+ere we present VISION, a module that can sit downstream of other common analyses such as clustering, dimensionality reduction, and trajectory inference. Specifically, VISION aids in the interpretation of scRNA-seq data, with or without predetermined labels, or stratifications of the data (e.g. clusterings) using the notion of cell-cell similarity maps (as interpreted from some latent space) and biological signatures (functional sets of genes that can be obtained online from, for example, MSigDB). Finally, VISION can evaluate the effect of cell- level meta data, such as library quality, batch, clinical information, or additional experimental readouts (e.g., protein levels from a Cite-Seq experiment). Importantly, the use of VISION can greatly facilitate collaborative projects, as it offers a low- latency interactive report for the end- user, which can be hosted online and viewed on a web browser without the need for installing developer-grade software.
 
-FastProjectR analyzes a gene expression matrix and produces a dynamic output report in which two-dimensional projections of the         data can be explored. Annotated gene sets (referred to as "signatures") are incorporated so that features in the projections can be understood in relation to the biological processes they might represent. FastProjectR provides a novel method of scoring each cell against a gene signature so as to minimize the effect of missed transcripts as well as a method to rank signature-projection pairings so that meaningful associations can be quickly identified. Additionally, FastProjectR is written with a modular architecture and designed to serve as a platform for incorporating and comparing new projection methods and gene selection algorithms.
 
-Installing FastProjectR
+Installing VISION
 -----------------------
 
-FastProjectR is currently not hosted on CRAN nor Bioconductor because it is still in development. To install and use the package, first ensure that an R version >= 3.4 is installed and that the package **devtools** is installed.
+We recommend installing VISION via github using devtools:
 
-To simplify the install process, first run the following command from within an R session whose working direcory is that where the pacakge is located:
-``` r
-  devtools::install(dependencies=T)
-```
-
-This command will automatically try to install all dependencies required by the packages and will in addition attempt to load the package into your R session's namespace. Most likely, however, there will be errors accompanying the installation - these packages that cannot be installed will need to be installed from github and bioconductor. To install the Rtsne.multicore package, use:
-``` r
-devtools::install_github("RGLab/Rtsne.multicore")
-```
-The rest of the packages will most likely need to be installed from Bioconductor using biocLite - use these commands in an R session to install a package from Bioconductor:
 ```r
-source("http://bioconductor.org/biocLite.R")
-biocLite(<name of the package>)
+require(devtools)
+install_github("YosefLab/VISION")
 ```
-How to Run FastProjectR
+
+The VISION Pipeline
+-----------------------
+VISION generally follows the same pipeline from iteration to iteration, where minor differences can be specified via the various parameters in a VISION object. On a typical VISION run:
+
+- If a latent space is not specified, PCA is performed and the top 30 components are retained.
+- A KNN graph is constructed from the latent space, named the cell-cell similarity map
+- Signature scores are computed using the expression matrix
+- Signature local “consistencies” on the cell-cell similarity map are computed using the Geary-C statistic, an auto-correlation statistic.
+- An interactive web-based report is generated that can be used to explore and interpret the dataset.
+
+How to run VISION
 -----------------------
 
-Once all necessary package dependencies are installed, to load FastProjectR into an R session, you can use
-```r
-devtools::load_all()
-```
-Note that if you are not running R from within the package directory, you must provide the path link as an argument to this function. This function will simulate loading in a package, as would happen if a package were being loaded in which was already installed on your computer. To run FastProjectR, a minimum of three files must be provided: an expression matrix (.txt), a list of housekeeping genes (.txt) , and list of signatures (.gmt or .txt). Refer to the packages wiki for more details on the input files. With these three files, a FastProjectR object can be created:
-```r
-fp <- FastProject(<expression file>, <list of signatures or signature files>, <char vector of housekeeping genes>)
-```
-There are many other arguments that can be provided to the FastProjectR object upon initialization, all of which can be found in the wiki or documentation. With the FastProject object created, the analysis can be run with
-``` r
-fpo <- analyze(fp)
-```
-
-This anlaysis will return a FastProjectOutput object which stores all relevant information for the visualization of the single cell data; this object can also be saved in an RDS file for future analysis.
-
-Analyzing FastProjectR Results
-------------------------------
-With the returned FastProjectOutput object, a dynamic report can be generated with the following command:
-```r
-viewResults(fpo)
-```
-Where **fpo** is the FastProjectOutput object generated from analysis. This will launch a local server on which the report will be shown; for best results, use Google Chrome.
+You can refer to the [vignettes](/vignettes) to run VISION. To note, there is an extra vignette detailing how
+to properly interface with [Dynverse](https://github.com/dynverse) for incorporating VISION into your
+trajectory inference pipeline.
 
 Sample Output
 -------------
-![FastProjectR Output Sample Image](/SampleOutput.png?raw=true)
-
-Additional Info
----------------
-All additional documentation is in the [FastProjectR Wiki](https://github.com/YosefLab/FastProjectR/wiki)
+![Link to an example output report (broken right now)]("https;//github.com/YosefLab/VISION")
