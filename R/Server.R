@@ -215,9 +215,6 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         }
         else{
             sig = object@sigData[[index]]
-            if(sig@isMeta) {
-                stop("Can't get expression for meta data signature")
-            }
             genes = names(sig@sigDict)
             expMat = object@exprData
             return(VISION:::expressionToJSON(expMat, genes, zscore=TRUE))
