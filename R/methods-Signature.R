@@ -506,7 +506,7 @@ sigsVsProjection_pcn <- function(metaData, weights, cells = NULL){
 
 #' Evaluates the significance of each meta data factor signature vs. a
 #' single projections weights
-#' @importFrom stats kruskal.test
+#' @importFrom stats chisq.test
 #' @importFrom parallel mclapply
 #' @param metaData data.frame of meta-data for cells
 #' @param weights numeric matrix of dimension N_SAMPLES x N_SAMPLES
@@ -590,16 +590,32 @@ sigsVsProjection_pcf <- function(metaData, weights, cells = NULL){
     }
 
     if (length(krList) > 0){
-        krTest <- kruskal.test(krList)
 
-        if (is.na(krTest$p.value)){
+        contingency_rows <- lapply(krList, function(vals){
+                        f <- integer(length(fLevels))
+                        names(f) <- seq(1:length(f))
+                        t <- table(vals)
+                        f[names(t)] <- t
+                        return(f)
+        })
+        contingency <- do.call(rbind, contingency_rows)
+
+        # Drop cols where all 0
+        good_cols <- colSums(contingency) > 0
+        contingency <- contingency[, good_cols]
+
+        suppressWarnings({
+            chsqResults <- chisq.test(contingency)
+        })
+
+        if (is.na(chsqResults$p.value)){
             c_score <- 0
             pval <- 1.0
         } else {
             # for the c_score, approximate the z-score using the chi-square dist
             df <- length(krList) - 1
-            c_score <- (krTest$statistic - df ) / sqrt(2 * df)
-            pval <- krTest$p.value
+            c_score <- (chsqResults$statistic - df ) / sqrt(2 * df)
+            pval <- chsqResults$p.value
         }
     } else {
         c_score <- 0
