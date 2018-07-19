@@ -1,5 +1,5 @@
-Package: FastProjectR
-Title: Two dimensional visualization of single-cell data
+Package: VISION
+Title: Functional interpretation of single cell RNA-seq latent manifolds
 Version: 0.99.6
 Authors@R: c(person("Matt", "Jones", email = "mattjones315@gmail.com", role = c("aut")),
 			 person("Tal", "Ashuach", email = "tal_ashuach@berkeley.edu", role = c("aut", "cre")),
@@ -7,7 +7,7 @@ Authors@R: c(person("Matt", "Jones", email = "mattjones315@gmail.com", role = c(
 			 person("Nir", "Yosef", email = "niryosef@berkeley.edu", role = c("ctb", "cph")))
 Author: Tal Ashuach [aut, cre], Matt Jones [aut], David Detomaso [aut], Nir Yosef [ctb]
 Maintainer: Tal Ashuach <tal_ashuach@berkeley.edu>
-Description: FastProjectR analyzes expression data and produces a dynamic report in which various two dimensional projections of the data can be explored. Annotated gene sets ("signatures") are incorporated so projection features can be understood in relation to the biological processes present in the data. In addition to standard dimensionality reduction methods, FastProjectR incorporates fitting a high dimensional principle tree to allow exploring continuous processes. FastProjectR supports the analysis of massive datasets - theoretically up to a million single cells at any sequencing depth, and an interactive visualization platforms that enables subset analysis based on two dimensional representations.
+Description: VISION provides functional interpretation of single cell RNA-seq (scRNA-seq) latent manifolds through the use of biological signatures (which can be downloaded from online) and precomputed metadata such as clustering assignments, disease status of a cell, or the number of UMIs observed in a cell. VISION can operate downstream of other common analyses such as dimensionality reduction, clustering, or trajectory analysis of scRNA-seq data. VISION produces an interactive web-based output report that can be easily shared with other collaborators or the greater scientific community with ease.
 Depends: R (>= 3.4)
 Imports:
 	fastICA,
@@ -32,7 +32,7 @@ LinkingTo: Rcpp
 License: Artistic-2.0
 Encoding: UTF-8
 LazyData: true
-BugReports: https://github.com/YosefLab/FastProjectR/issues
+BugReports: https://github.com/YosefLab/VISION/issues
 RoxygenNote: 6.0.1
 Suggests:
 	Biobase,
@@ -50,4 +50,3 @@ biocViews:
 	Transcriptomics,
 	Sequencing
 VignetteBuilder: knitr
-

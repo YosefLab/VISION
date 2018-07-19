@@ -84,7 +84,7 @@ Signature <- setClass("Signature",
 setClassUnion("ProjectionDataOrNULL", members=c("ProjectionData", "NULL"))
 setClassUnion("PCAnnotatorDataOrNULL", members=c("PCAnnotatorData", "NULL"))
 
-FastProject <- setClass("FastProject",
+Vision <- setClass("Vision",
     slots = c(
         nomodel = "logical",
         projection_genes = "character",

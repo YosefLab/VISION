@@ -1,4 +1,4 @@
-#' Initializes a new FastProject object.
+#' Initializes a new VISION object.
 #'
 #' @import logging
 #'
@@ -51,8 +51,8 @@
 #'}
 #' By default will perform tSNE and PCA on the data.
 #' @param name a name for the sample - shown on the output report
-#' @return A FastProject object
-#' @rdname FastProject-class
+#' @return A VISION object
+#' @rdname VISION-class
 #' @export
 #' @examples
 #' expMat <- matrix(rnorm(200000), nrow=500)
@@ -69,10 +69,10 @@
 #'                                  sigData = sigData))
 #' })
 #'
-#' fp <- FastProject(data = expMat,
+#' fp <- vision(data = expMat,
 #'                      signatures = sigs,
 #'                      housekeeping = hkg)
-setMethod("FastProject", signature(data = "matrixORSparse"),
+setMethod("Vision", signature(data = "matrixORSparse"),
             function(data, signatures, housekeeping=NULL,
                     unnormalizedData = NULL, meta=NULL, nomodel=TRUE,
                     projection_genes=c("fano"), min_signature_genes=5,
@@ -86,7 +86,7 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
                     cluster_variable = "", latentSpace = NULL,
                     latentTrajectory = NULL) {
 
-            .Object <- new("FastProject")
+            .Object <- new("Vision")
 
             rownames(data) <- toupper(rownames(data))
             .Object@initialExprData <- data
@@ -172,7 +172,7 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
                                 meta[, var] <- as.factor(vals)
                             } else {
                                 meta[, var] <- NULL
-                                message(paste0("Dropping '", var, "' from meta data as it is of type 'character' and has more than 20 unique values.  If you want to include this meta data variable, convert it to a factor before providing the data frame to FastProject"))
+                                message(paste0("Dropping '", var, "' from meta data as it is of type 'character' and has more than 20 unique values.  If you want to include this meta data variable, convert it to a factor before providing the data frame to Vision"))
                             }
                         }
 
@@ -312,49 +312,49 @@ setMethod("FastProject", signature(data = "matrixORSparse"),
     }
 )
 
-#' @rdname FastProject-class
+#' @rdname VISION-class
 #' @export
-setMethod("FastProject", signature(data = "data.frame"),
+setMethod("Vision", signature(data = "data.frame"),
             function(data, ...) {
                 data <- data.matrix(data)
-            return(FastProject(data, ...))
+            return(Vision(data, ...))
             }
 )
 
-#' @rdname FastProject-class
+#' @rdname VISION-class
 #' @export
-setMethod("FastProject", signature(data = "ExpressionSet"),
+setMethod("Vision", signature(data = "ExpressionSet"),
             function(data, ...) {
               if (!requireNamespace("Biobase", quietly = TRUE)){
                   stop("Package \"Biobase\" needed to load this data object.  Please install it.",
                        call. = FALSE)
               }
-            return(FastProject(Biobase::exprs(data), ...))
+            return(Vision(Biobase::exprs(data), ...))
             }
 )
 
-#' @rdname FastProject-class
+#' @rdname VISION-class
 #' @export
-setMethod("FastProject", signature(data = "SummarizedExperiment"),
+setMethod("Vision", signature(data = "SummarizedExperiment"),
           function(data, ...) {
 
               if (!requireNamespace("SummarizedExperiment", quietly = TRUE)){
                   stop("Package \"SummarizedExperiment\" needed to load this data object.  Please install it.",
                        call. = FALSE)
               }
-            return(FastProject(SummarizedExperiment::assay(data), ...))
+            return(Vision(SummarizedExperiment::assay(data), ...))
           }
 )
 
-#' Main entry point for running FastProject Analysis
+#' Main entry point for running VISION Analysis
 #'
-#' The main analysis function. Runs the entire FastProject analysis pipeline
-#' and returns a FastProject object populated with the result,
+#' The main analysis function. Runs the entire VISION analysis pipeline
+#' and returns a VISION object populated with the result,
 #'
 #' @export
 #' @aliases analyze
-#' @param object FastProject object
-#' @return FastProject object
+#' @param object VISION object
+#' @return VISION object
 #'
 #' @examples
 #' expMat <- matrix(rnorm(200000), nrow=500)
@@ -371,7 +371,7 @@ setMethod("FastProject", signature(data = "SummarizedExperiment"),
 #'                                  sigData = sigData))
 #' })
 #'
-#' fp <- FastProject(data = expMat,
+#' fp <- VISION(data = expMat,
 #'                      housekeeping = hkg,
 #'                      signatures = sigs)
 #'
@@ -379,7 +379,7 @@ setMethod("FastProject", signature(data = "SummarizedExperiment"),
 #' \dontrun{
 #' fp.out <- analyze(fp)
 #' }
-setMethod("analyze", signature(object="FastProject"),
+setMethod("analyze", signature(object="Vision"),
             function(object) {
     message("Beginning Analysis")
 
@@ -440,12 +440,12 @@ setMethod("analyze", signature(object="FastProject"),
 #' Add a set of projection coordinates
 #'
 #' @export
-#' @param object FastProject object
+#' @param object VISION object
 #' @param name Name of the projection
 #' @param coordinates numeric matrix or data.frame. Coordinates of each
 #' sample in the projection (NUM_SAMPLES x NUM_COMPONENTS)
-#' @return FastProject object
-setMethod("addProjection", signature(object = "FastProject"),
+#' @return VISION object
+setMethod("addProjection", signature(object = "Vision"),
             function(object, name, coordinates) {
 
     if (is(coordinates, "data.frame")){
@@ -471,13 +471,13 @@ setMethod("addProjection", signature(object = "FastProject"),
     return(object)
 })
 
-#' Save the FastProject object as an .RDS file and view the results on a
+#' Save the VISION object as an .RDS file and view the results on a
 #' localhost
 #'
 #' Save the results object as an RDS file for future use, and launch a local
 #' server to explore the results with a browser.
 #'
-#' @param fpout FastProject object
+#' @param fpout VISION object
 #' @param ofile the path to save the object in. If NULL, the object is saved
 #' in the working directory [default:NULL]
 #' @param port The port on which to serve the output viewer.  If omitted, a
@@ -502,7 +502,7 @@ setMethod("addProjection", signature(object = "FastProject"),
 #'                                  sigData = sigData))
 #' })
 #'
-#' fp <- FastProject(data = expMat,
+#' fp <- VISION(data = expMat,
 #'                      housekeeping = hkg,
 #'                      signatures = sigs)
 #'
@@ -511,7 +511,7 @@ setMethod("addProjection", signature(object = "FastProject"),
 #' fp.out <- analyze(fp)
 #' saveAndViewResults(fp.out)
 #' }
-setMethod("saveAndViewResults", signature(fpout="FastProject"),
+setMethod("saveAndViewResults", signature(fpout="Vision"),
           function(fpout, ofile=NULL, port=NULL, host=NULL, browser=TRUE, name=NULL) {
             if(is.null(ofile)) {
               i <- 1
@@ -531,7 +531,7 @@ setMethod("saveAndViewResults", signature(fpout="FastProject"),
 #'
 #' launch a local server to explore the results with a browser.
 #'
-#' @param object FastProject object or path to a file containing such an
+#' @param object VISION object or path to a file containing such an
 #' object (saved using saveAndViewResults, or directly using saveRDS)
 #' @param port The port on which to serve the output viewer.  If omitted, a
 #' random port between 8000 and 9999 is chosen.
@@ -558,7 +558,7 @@ setMethod("saveAndViewResults", signature(fpout="FastProject"),
 #'                                  sigData = sigData))
 #' })
 #'
-#' fp <- FastProject(data = expMat,
+#' fp <- VISION(data = expMat,
 #'                      housekeeping = hkg,
 #'                      signatures = sigs)
 #'
@@ -567,7 +567,7 @@ setMethod("saveAndViewResults", signature(fpout="FastProject"),
 #' fp.out <- analyze(fp)
 #' viewResults(fp.out)
 #' }
-setMethod("viewResults", signature(object="FastProject"),
+setMethod("viewResults", signature(object="Vision"),
           function(object, port=NULL, host=NULL, browser=TRUE, name=NULL) {
 
             if (!is.null(name)) {
@@ -586,19 +586,19 @@ setMethod("viewResults", signature(object="FastProject"),
 setMethod("viewResults", signature(object="character"),
           function(object, port=NULL, host=NULL, browser=TRUE, name=NULL) {
             fpo <- readRDS(object)
-            if(!is(fpo, "FastProject")){
-              stop("loaded object not a valid FastProject object")
+            if(!is(fpo, "Vision")){
+              stop("loaded object not a valid Vision object")
             }
             viewResults(fpo, port, host, browser, name)
           })
 
-#' create new FastProject object from a subset of the data in an existing one
-#' @param fp the FastProject object to subset
+#' create new VISION object from a subset of the data in an existing one
+#' @param fp the VISION object to subset
 #' @param subset the indices of the samples to keep
-#' @return a new FastProject object with the new data and the same analysis
+#' @return a new VISION object with the new data and the same analysis
 #' parameters
 createNewFP <- function(fp, subset) {
-    .Object <- new("FastProject")
+    .Object <- new("Vision")
     nexpr <- fp@initialExprData[,subset]
     rownames(nexpr) <- toupper(rownames(nexpr))
     .Object@initialExprData <- nexpr
