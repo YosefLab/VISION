@@ -207,16 +207,16 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         return(out)
       }) %>%
       get("/Signature/Expression/(?<sig_name4>.*)", function(req, res, err) {
-        all_names = vapply(object@sigData, function(x){ return(x@name) }, "")
+        all_names <- vapply(object@sigData, function(x){ return(x@name) }, "")
         name <- URLdecode(req$params$sig_name4)
-        index = match(name, all_names)
+        index <- match(name, all_names)
         if(is.na(index)){
             out <- "Signature does not exist!"
         }
         else{
-            sig = object@sigData[[index]]
-            genes = names(sig@sigDict)
-            expMat = object@exprData
+            sig <- object@sigData[[index]]
+            genes <- names(sig@sigDict)
+            expMat <- object@exprData
             return(VISION:::expressionToJSON(expMat, genes, zscore=TRUE))
         }
         return(out)
@@ -396,12 +396,12 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       }) %>%
       get("/Expression/Gene/(?<gene_name2>.*)", function(req, res, err) {
 
-        data <- log2(object@unnormalizedData + 1)
         gene_name <- URLdecode(req$params$gene_name2)
+        data <- log2(object@unnormalizedData[gene_name, ] + 1)
 
         result <- toJSON(
-                         as.list(data[gene_name,]),
-                         force=TRUE, pretty=TRUE, auto_unbox=TRUE
+                         as.list(data),
+                         force = TRUE, pretty = TRUE, auto_unbox = TRUE
                          )
 
         return(result)

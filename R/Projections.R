@@ -2,19 +2,17 @@
 #' Registers the projection methods to be used
 #'
 #' @param numCells number of cells in this analysis
-#' @param lean If FALSE, all projections applied; else a subset of essential ones are applied. Default is FALSE.
+#' @param projection_methods character vector of projection methods to use
 #' @return List of projection methods to be applied.
 registerMethods <- function(projection_methods, numCells) {
 
-    all_proj_methods = c('ISOMap' = applyISOMap,
+    all_proj_methods <- c("ISOMap" = applyISOMap,
                         "ICA" = applyICA,
                         "tSNE30" = applytSNE30,
                         "tSNE10" = applytSNE10,
                         "RBFPCA" = applyRBFPCA)
 
-    projMethods <- c()
-
-    projMethods = all_proj_methods[projection_methods]
+    projMethods <- all_proj_methods[projection_methods]
 
     return(projMethods)
 }
@@ -25,8 +23,7 @@ registerMethods <- function(projection_methods, numCells) {
 #' @param expr numeric matrix of gene expression
 #' @param latentSpace numeric matrix cells x components
 #' @param projection_genes character vector of gene names to use for projections
-#' @param lean If TRUE, diminished number of algorithms applied,
-#' if FALSE all algorithms applied. Default is FALSE
+#' @param projection_methods character vector of projection methods to use
 #' @return list of Projection objects
 generateProjectionsInner <- function(expr, latentSpace, projection_genes=NULL, projection_methods = NULL) {
 

@@ -172,6 +172,7 @@ calcWeights <- function(object,
         message("Computing weights from False Negative Rate curves...")
         falseneg_out <- createFalseNegativeMap(object@exprData,
                                                object@housekeepingData)
+
         object@weights <- computeWeights(falseneg_out[[1]], falseneg_out[[2]],
                                          object@exprData)
 
@@ -258,7 +259,6 @@ computeLatentSpace <- function(object, projection_genes = NULL,
 
     exprData <- matLog2(exprData)
 
-
     if (perm_wPCA) {
         res <- applyPermutationWPCA(exprData, weights, components = 30)
         pca_res <- res[[1]]
@@ -278,13 +278,9 @@ computeLatentSpace <- function(object, projection_genes = NULL,
 #'
 #'
 #' @param object the VISION object
-#' @param lean if TRUE run a lean simulation. Else more robust pipeline
-#' initiated. Default is FALSE
 #' @return the VISION object with values set for the analysis results
-generateProjections <- function(object, lean=object@lean) {
+generateProjections <- function(object) {
   message("Projecting data into 2 dimensions...")
-
-  object@lean <- lean
 
   projections <- generateProjectionsInner(object@exprData,
                                      object@latentSpace,
@@ -382,11 +378,14 @@ analyzeTrajectoryCorrelations <- function(object, signatureBackground = NULL) {
   return(object)
 }
 
-#' Compute KS Test, for all factor meta data.  One level vs all others
+#' Compute Ranksums Test, for all factor meta data.  One level vs all others
 #'
+#' @importFrom parallel mclapply
 #' @param object the VISION object
 #' @return the VISION object with values set for the analysis results
 clusterSigScores <- function(object) {
+
+    message("Computing differential signature tests...")
 
     sigScores <- object@sigScores
     metaData <- object@metaData
@@ -397,7 +396,7 @@ clusterSigScores <- function(object) {
     # Must be a factor with at least 20 levels
     clusterMeta <- vapply(colnames(metaData), function(x) {
             scores <- metaData[[x]]
-            if (is.factor(scores) && length(levels(scores)) <= 20){
+            if (is.factor(scores) && length(levels(scores)) <= 50){
                 return(x)
             } else {
                 return("")
@@ -416,27 +415,27 @@ clusterSigScores <- function(object) {
             not_cluster_ii <- which(values != var_level)
 
             # Process the gene signatures
-            pvals <- lapply(colnames(sigScores), function(sig){
+            pvals <- mclapply(colnames(sigScores), function(sig){
                 suppressWarnings({
                     if(length(cluster_ii) == 0 || length(not_cluster_ii) == 0){
                         return(list(pval = 1.0, stat = 0))
                     }
-                    out_l <- ks.test(sigScores[cluster_ii, sig],
+                    out_l <- wilcox.test(sigScores[cluster_ii, sig],
                                    sigScores[not_cluster_ii, sig],
                                    alternative = "less", exact = FALSE)
-                    out_g <- ks.test(sigScores[cluster_ii, sig],
+                    out_g <- wilcox.test(sigScores[cluster_ii, sig],
                                    sigScores[not_cluster_ii, sig],
                                    alternative = "greater", exact = FALSE)
                 })
                 if (out_l$p.value < out_g$p.value) {
                     pval <- out_l$p.value
-                    stat <- out_l$statistic
+                    stat <- max(log10(out_l$p.value), -300) * -1 / 10
                 } else {
                     pval <- out_g$p.value
-                    stat <- out_g$statistic*-1
+                    stat <- max(log10(out_g$p.value), -300) / 10
                 }
                 return(list(pval = pval, stat = stat))
-            })
+            }, mc.cores = 10)
             names(pvals) <- colnames(sigScores)
 
             # Process the metaData variables
@@ -458,17 +457,17 @@ clusterSigScores <- function(object) {
 
                         suppressWarnings({
 
-                            out_l <- ks.test(x, y, alternative = "less",
+                            out_l <- wilcox.test(x, y, alternative = "less",
                                              exact = FALSE)
-                            out_g <- ks.test(x, y, alternative = "greater",
+                            out_g <- wilcox.test(x, y, alternative = "greater",
                                              exact = FALSE)
                         })
                         if (out_l$p.value < out_g$p.value) {
                             pval <- out_l$p.value
-                            stat <- out_l$statistic
+                            stat <- max(log10(out_l$p.value), -300) * -1 / 10
                         } else {
                             pval <- out_g$p.value
-                            stat <- out_g$statistic*-1
+                            stat <- max(log10(out_g$p.value), -300) / 10
                         }
 
                     }

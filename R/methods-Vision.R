@@ -17,9 +17,6 @@
 #' Else FNR and weights calculated. [Default:TRUE]
 #' @param projection_genes name of method ('threshold' or 'fano') or list of
 #' genes to use when computing projections.
-#' @param lean if TRUE omit some projection methods with poor scaling.
-#' Default is 'auto' which enables additional methods if the number of cells
-#' is less than 500.
 #' @param min_signature_genes Minimum number of genes required to compute a
 #' signature
 #' @param weights Precomputed weights for each coordinate. Normally computed
@@ -50,6 +47,7 @@
 #'    \item tSNE30 (tSNE with perplexity 30)
 #'    \item ICA
 #'    \item ISOMap
+#'    \item RBFPCA
 #'}
 #' By default will perform tSNE and PCA on the data.
 #' @param name a name for the sample - shown on the output report
@@ -77,8 +75,9 @@
 setMethod("Vision", signature(data = "matrixORSparse"),
             function(data, signatures, housekeeping=NULL,
                     unnormalizedData = NULL, meta=NULL, nomodel=TRUE,
-                    projection_genes=c("fano"), lean="auto", min_signature_genes=5,
-                    weights=NULL, threshold=.05, perm_wPCA=FALSE, projection_methods = NULL,
+                    projection_genes=c("fano"), min_signature_genes=5,
+                    weights=NULL, threshold=.05, perm_wPCA=FALSE,
+                    projection_methods = c("tSNE30"),
                     sig_norm_method = c("znorm_columns", "none", "znorm_rows",
                                         "znorm_rows_then_columns",
                                         "rank_norm_columns"),
@@ -176,6 +175,10 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                                 message(paste0("Dropping '", var, "' from meta data as it is of type 'character' and has more than 20 unique values.  If you want to include this meta data variable, convert it to a factor before providing the data frame to Vision"))
                             }
                         }
+
+                        if (is.logical(vals)){
+                            meta[, var] <- as.factor(vals)
+                        }
                     }
 
                     .Object@metaData <- meta[sampleLabels, , drop = FALSE]
@@ -211,32 +214,12 @@ setMethod("Vision", signature(data = "matrixORSparse"),
             .Object@sig_score_method <- match.arg(sig_score_method)
             .Object@perm_wPCA <- perm_wPCA
 
-            if (is.character(lean)){
-                if (tolower(lean) == "auto"){
-                    if (ncol(.Object@exprData) < 500){
-                        lean <- FALSE
-                    } else {
-                        lean <- TRUE
-                    }
-                } else {
-                    stop("Bad value for 'lean' argument")
-                }
+            valid_projections <- c("tSNE10", "tSNE30", "ICA", "ISOMap", "RBFPCA")
+            check <- sapply(projection_methods, function(x) x %in% valid_projections)
+            if (! all(check)) {
+                stop("Bad value in 'projection_methods'. Please choose from tSNE10, tSNE30, ICA, ISOMap, or RBFPCA.")
             }
-            .Object@lean <- lean
-
-            if (is.null(projection_methods)) {
-
-                projection_methods = c("tSNE30")
-
-            } else {
-                valid_projections = c("tSNE10", "tSNE30", "ICA", "ISOMap")
-                check = sapply(projection_methods, function(x) x %in% valid_projections)
-                if (! all(check)) {
-                    stop("Bad value in 'projection_methods'. Please choose from tSNE10, tSNE30, ICA, ISOMap, or RBFPCA.")
-                }
-            }
-
-            .Object@projection_methods = projection_methods
+            .Object@projection_methods <- projection_methods
 
             LOTS_OF_CELLS <- ncol(.Object@exprData) > 15000
 
@@ -636,7 +619,6 @@ createNewFP <- function(fp, subset) {
     .Object@threshold <- fp@threshold
     .Object@sig_norm_method <- fp@sig_norm_method
     .Object@sig_score_method <- fp@sig_score_method
-    .Object@lean = fp@lean
     .Object@perm_wPCA = fp@perm_wPCA
     .Object@pool = fp@pool
     .Object@cellsPerPartition = fp@cellsPerPartition
