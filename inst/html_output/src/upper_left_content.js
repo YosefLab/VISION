@@ -339,9 +339,9 @@ Signature_Table.prototype.render = function()
                     tooltip_str = "corr = " + d.zscore.toFixed(2)
                 } else {
                     if(main_vis === 'clusters' && i > 0)
-                        tooltip_str = "p<" + d.pval.toFixed(3)
+                        tooltip_str = "p<" + _pval_format(d.pval)
                     else
-                        tooltip_str = "z=" + d.zscore.toFixed(2) + ", p<" + d.pval.toFixed(3)
+                        tooltip_str = "z=" + d.zscore.toFixed(2) + ", p<" + _pval_format(d.pval)
                 }
                 createTooltip(self.tooltip, this, tooltip_str)
                 hoverRowCol(header_row, this, matrix.proj_labels[d.col])
@@ -773,9 +773,9 @@ Meta_Table.prototype.render = function()
                     tooltip_str = "corr = " + d.zscore.toFixed(2)
                 } else {
                     if(main_vis === 'clusters' && i > 0)
-                        tooltip_str = "p<" + d.pval.toFixed(3)
+                        tooltip_str = "p<" + _pval_format(d.pval)
                     else
-                        tooltip_str = "z=" + d.zscore.toFixed(2) + ", p<" + d.pval.toFixed(3)
+                        tooltip_str = "z=" + d.zscore.toFixed(2) + ", p<" + _pval_format(d.pval)
                 }
                 createTooltip(self.tooltip, this, tooltip_str)
                 hoverRowCol(header_row, this, matrix.proj_labels[d.col])
@@ -1082,4 +1082,13 @@ function destroyTooltip(popper) {
     var node = document.querySelector('body #hidden-node')
     popper.reference = node;
     popper.update();
+}
+
+function _pval_format(x) {
+    var p = Math.pow(10, x)
+    if(p < 0.01){
+        return p.toExponential(1)
+    } else {
+        return p.toFixed(2)
+    }
 }
