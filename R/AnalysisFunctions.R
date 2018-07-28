@@ -216,7 +216,7 @@ calcSignatureScores <- function(object,
 
     sigScores <- batchSigEval(object@sigData, object@sig_score_method,
                               normExpr, object@weights)
-
+    
     object@sigScores <- sigScores
 
     return(object)
@@ -378,6 +378,23 @@ analyzeTrajectoryCorrelations <- function(object, signatureBackground = NULL) {
   return(object)
 }
 
+addNumericalMetaData <- function(object) { 
+
+  metaData = object@metaData
+  sigMatrix = object@sigScores
+	
+  meta_n = vapply(names(metaData), function(metaName) { 
+			is.numeric(metaData[,metaName])
+		}, FUN.VALUE=T)
+
+  meta_n = metaData[,meta_n]
+  sigMatrix = cbind(sigMatrix, meta_n) 
+
+  object@sigScores <- as.matrix(sigMatrix) 
+
+  return(object)
+}
+
 #' Compute Ranksums Test, for all factor meta data.  One level vs all others
 #'
 #' @importFrom parallel mclapply
@@ -531,15 +548,16 @@ calculatePearsonCorr <- function(object){
 
   ## combined gene signs and numeric meta variables
 
-  numericMetaVars <- vapply(colnames(metaData),
-                            function(x) is.numeric(metaData[[x]]),
-                            FUN.VALUE = TRUE)
+  #numericMetaVars <- vapply(colnames(metaData),
+  #                          function(x) is.numeric(metaData[[x]]),
+  #                          FUN.VALUE = TRUE)
 
-  numericMeta <- metaData[, numericMetaVars, drop = FALSE]
-  numericMeta <- numericMeta[rownames(sigMatrix), , drop = FALSE]
+  #numericMeta <- metaData[, numericMetaVars, drop = FALSE]
+  #numericMeta <- numericMeta[rownames(sigMatrix), , drop = FALSE]
 
 
-  computedSigMatrix <- cbind(sigMatrix, numericMeta)
+  #computedSigMatrix <- cbind(sigMatrix, numericMeta)
+  computedSigMatrix = cbind(sigMatrix, metaData)
 
   pearsonCorr <- lapply(1:ncol(computedSigMatrix), function(i) {
     lapply(1:ncol(latentSpace), function(j) {
