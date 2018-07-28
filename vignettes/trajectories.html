@@ -11,7 +11,7 @@
 
 <meta name="author" content="Matthew Jones" />
 
-<meta name="date" content="2018-07-13" />
+<meta name="date" content="2018-07-20" />
 
 <title>Trajectory Inference and VISION</title>
 
@@ -120,7 +120,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">Trajectory Inference and VISION</h1>
 <p class="author-name">Matthew Jones</p>
-<h4 class="date"><em>13 July 2018</em></h4>
+<h4 class="date"><em>20 July 2018</em></h4>
 <h4 class="package">Package</h4>
 <p>BiocStyle 2.8.2</p>
 
@@ -149,7 +149,7 @@ $(document).ready(function () {
 <div id="installation" class="section level2">
 <h2><span class="header-section-number">1.1</span> Installation</h2>
 <p>You should have a working installation of <a href="https://github.com/YosefLab/VISION">VISION</a>, <a href="https://github.com/dynverse/dyno">dyno</a>, and <a href="https://github.com/tidyverse/tidyverse">tidyverse</a>.</p>
-<pre class="r"><code>devtools::install_github(&quot;YosefLab/FastProjectR&quot;)
+<pre class="r"><code>devtools::install_github(&quot;YosefLab/VISION&quot;)
 devtools::install_github(&quot;dynverse/dyno&quot;)
 install.packages('tidyverse')</code></pre>
 </div>
@@ -161,7 +161,7 @@ install.packages('tidyverse')</code></pre>
 <div id="workflow" class="section level1">
 <h1><span class="header-section-number">2</span> Workflow</h1>
 <p>We begin by loading in the data and perfomring perliminary scaling:</p>
-<pre class="r"><code>library(FastProjectR)
+<pre class="r"><code>library(VISION)
 library(dynmethods)
 library(monocle)
 library(DDRTree)</code></pre>
@@ -196,7 +196,7 @@ vis &lt;- VISION(expr, c(&quot;data/h.all.v5.2.symbols.gmt&quot;), projection_ge
 ##  [1] monocle_2.8.0       DDRTree_0.1.5       irlba_2.3.2        
 ##  [4] VGAM_1.0-5          ggplot2_2.2.1.9000  Biobase_2.40.0     
 ##  [7] BiocGenerics_0.26.0 Matrix_1.2-14       dynmethods_0.1.0   
-## [10] FastProjectR_0.99.6 BiocStyle_2.8.2    
+## [10] VISION_0.99.6       BiocStyle_2.8.2    
 ## 
 ## loaded via a namespace (and not attached):
 ##   [1] Rtsne_0.13             colorspace_1.3-2       mclust_5.4.1          

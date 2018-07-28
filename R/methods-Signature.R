@@ -681,6 +681,13 @@ clusterSignatures <- function(sigMatrix, metaData, pvals, clusterMeta) {
 
   significant <- apply(pvals, 1, function(x) min(x) < -1.3)
 
+  meta_n = vapply(names(metaData), function(metaName) { 
+			is.numeric(metaData[,metaName])
+		}, FUN.VALUE=T)
+
+  meta_n = metaData[,meta_n]
+  sigMatrix = cbind(sigMatrix, meta_n) 
+
   comp_names <- colnames(sigMatrix)
   signif_computed <- significant[comp_names]
 
@@ -688,6 +695,9 @@ clusterSignatures <- function(sigMatrix, metaData, pvals, clusterMeta) {
 
   # Cluster computed signatures and precomputed signatures separately
   computedSigMatrix <- sigMatrix[, keep_significant, drop = FALSE]
+
+  # z-normalize each signature vector before clustering
+  computedSigMatrix <- colNormalization(as.matrix(computedSigMatrix))
 
   compcls <- list()
   maxcls <- 1
