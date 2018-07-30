@@ -709,13 +709,13 @@ clusterSignatures <- function(sigMatrix, metaData, pvals, clusterMeta) {
         cSM_sub <- computedSigMatrix
     }
 
-    r <- colRanks(
-            as.matrix(cSM_sub),
-            ties.method = "average",
-            preserveShape = TRUE
-         )
+    #r <- colRanks(
+    #        as.matrix(cSM_sub),
+    #        ties.method = "average",
+    #        preserveShape = TRUE
+    #     )
 
-    r <- t(r)
+    r <- t(as.matrix(cSM_sub))
 
     mbic <- mclustBIC(r, modelNames = "VVI")
     compkm <- Mclust(r, x = mbic)
