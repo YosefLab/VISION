@@ -681,12 +681,12 @@ clusterSignatures <- function(sigMatrix, metaData, pvals, clusterMeta) {
 
   significant <- apply(pvals, 1, function(x) min(x) < -1.3)
 
-  meta_n = vapply(names(metaData), function(metaName) { 
+  meta_n <- vapply(names(metaData), function(metaName) {
 			is.numeric(metaData[,metaName])
-		}, FUN.VALUE=T)
+		}, FUN.VALUE = TRUE)
 
-  meta_n = metaData[,meta_n]
-  sigMatrix = cbind(sigMatrix, meta_n) 
+  meta_n <- metaData[, meta_n]
+  sigMatrix <- cbind(sigMatrix, meta_n)
 
   comp_names <- colnames(sigMatrix)
   signif_computed <- significant[comp_names]
@@ -708,12 +708,6 @@ clusterSignatures <- function(sigMatrix, metaData, pvals, clusterMeta) {
     } else {
         cSM_sub <- computedSigMatrix
     }
-
-    #r <- colRanks(
-    #        as.matrix(cSM_sub),
-    #        ties.method = "average",
-    #        preserveShape = TRUE
-    #     )
 
     r <- t(as.matrix(cSM_sub))
 

@@ -278,6 +278,15 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       get("/Tree/SigProjMatrix/Normal", function(req, res, err) {
 
         sigs <- colnames(object@sigScores)
+
+        metaData <- object@metaData
+        meta_n <- vapply(names(metaData), function(metaName) {
+                  is.numeric(metaData[, metaName])
+              }, FUN.VALUE = TRUE)
+
+        meta_n <- colnames(metaData)[meta_n]
+        sigs <- c(sigs, meta_n)
+
         out <- VISION:::sigProjMatrixToJSON(
                                   object@TrajectoryConsistencyScores@sigProjMatrix,
                                   object@TrajectoryConsistencyScores@emp_pMatrix,
@@ -429,6 +438,14 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         sigs <- colnames(object@sigScores)
 
+        metaData <- object@metaData
+        meta_n <- vapply(names(metaData), function(metaName) {
+                  is.numeric(metaData[, metaName])
+              }, FUN.VALUE = TRUE)
+
+        meta_n <- colnames(metaData)[meta_n]
+        sigs <- c(sigs, meta_n)
+
         cluster_variable <- URLdecode(req$params$cluster_variable2)
         pvals <- object@SigConsistencyScores@emp_pMatrix
         zscores <- object@SigConsistencyScores@sigProjMatrix
@@ -480,6 +497,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         hasTree <- !is.null(W)
 
         info["has_tree"] <- hasTree
+
+        info[["meta_sigs"]] <- colnames(object@metaData)
 
         result <- toJSON(
                          info,

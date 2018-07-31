@@ -999,16 +999,6 @@ Signature_Table.prototype.doneTyping = function()
 
 
 // Function that's triggered when clicking on table cell
-function tableClickFunction(row_key, item_type)
-{
-
-    var update = {}
-    update['plotted_item_type'] = item_type;
-    update['plotted_item'] = row_key;
-
-    set_global_status(update);
-}
-
 function tableClickFunction_PC(row_key, item_type)
 {
     var update = {}
@@ -1018,13 +1008,21 @@ function tableClickFunction_PC(row_key, item_type)
     set_global_status(update);
 }
 
-function tableClickFunction_clusters(row_key, col_key, item_type)
+function tableClickFunction_clusters(row_key, col_key)
 {
     var update = {}
+
+    var meta_sigs = get_global_data('meta_sigs')
+
+    var item_type
+    if (meta_sigs.indexOf(row_key) > -1) {
+        item_type = 'meta'
+    } else {
+        item_type = 'signature'
+    }
+
     update['plotted_item_type'] = item_type;
     update['plotted_item'] = row_key;
-
-    var clusters = get_global_data('clusters')
 
     if (col_key === 'Consistency')
     {

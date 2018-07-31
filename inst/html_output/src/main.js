@@ -42,6 +42,7 @@ global_data.plotted_values = {}; // Holds gene expression, signature scores/rank
 global_data.sig_info = {};  // Holds the information for the last plotted signature
 global_data.clusters = {};  // Maps cell ID to cluster ID
 global_data.cluster_variables = [];
+global_data.meta_sigs = []; // Holds list of sig names that are meta-data
 
 var lower_left_content;
 var upper_left_content;
@@ -289,6 +290,8 @@ window.onload = function()
                 .find(".nav-link[data-main-vis='tree']")
                 .removeClass('disabled')
         }
+
+        global_data.meta_sigs = info.meta_sigs
     });
 
     // When it's all done, run this

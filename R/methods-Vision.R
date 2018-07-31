@@ -429,9 +429,6 @@ setMethod("analyze", signature(object="Vision"),
     # Populates @ClusterSigScores
     object <- clusterSigScores(object)
 
-	# Add Numerical MetaData to @sigScores
-    object <- addNumericalMetaData(object)
-
     # Populates #PCAnnotatorData
     object <- calculatePearsonCorr(object)
 
