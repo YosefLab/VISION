@@ -478,11 +478,16 @@ clusterSigScores <- function(object) {
                     sigvals[cluster_ii, 2] <- 1
                     sigvals[, 2] <- as.factor(sigvals[, 2])
                     M <- table(sigvals)
-                    suppressWarnings(
-                        out <- chisq.test(M)
-                    )
-                    pval <- out$p.value
-                    stat <- max(log10(out$p.value), -300)*-1 / 10
+                    if (nrow(M) > 1){
+                        suppressWarnings(
+                            out <- chisq.test(M)
+                        )
+                        pval <- out$p.value
+                        stat <- max(log10(out$p.value), -300)*-1 / 10
+                    } else {
+                        pval <- 1.0
+                        stat <- 0
+                    }
                 }
                 return(list(pval = pval, stat = stat))
             })
