@@ -537,10 +537,8 @@ sigsVsProjection_pcf <- function(metaData, weights, cells = NULL){
 
     ### build one hot matrix for factors
 
-    fValues <- scores
+    fValues <- droplevels(scores)
     fLevels <- levels(fValues)
-    factorFreq <- matrix(0L, ncol = length(fLevels))
-    factorMatrix <- matrix(0L, nrow = N_SAMPLES, ncol = length(fLevels))
 
     factList <- lapply(fLevels, function(fval) {
       factorMatrixRow <- matrix(0L, nrow = N_SAMPLES, ncol = 1)
@@ -557,33 +555,20 @@ sigsVsProjection_pcf <- function(metaData, weights, cells = NULL){
     }
 
     factorPredictions <- as.matrix(weights %*% factorMatrix)
-
     labels <- apply(factorMatrix, 1, which.max)
 
-    # Get predicted index and corresponding probability
-    preds_ii <- apply(factorPredictions, 1, which.max)
+    contingency_rows <- lapply(seq(fLevels), function(k){
+        group <- factorPredictions[labels == k, ]
+        return(colSums(group))
+    })
 
-    # Calculate the p value for meta data signature
-    krList <- list()
-    for (k in 1:length(fLevels)) {
-        group <- preds_ii[labels == k]
-        if (length(group) > 0){
-            krList <- c(krList, list(group))
-        }
-    }
+    contingency <- do.call(rbind, contingency_rows)
 
-    if (length(krList) > 0){
-
-        contingency_rows <- lapply(krList, function(vals){
-                        f <- integer(length(fLevels))
-                        names(f) <- seq(1:length(f))
-                        t <- table(vals)
-                        f[names(t)] <- t
-                        return(f)
-        })
-        contingency <- do.call(rbind, contingency_rows)
+    if (nrow(contingency) > 1){
 
         # Drop cols where all 0
+        # Should only happen in very rare circumstances
+        # (since neighborhoods aren't symmetric)
         good_cols <- colSums(contingency) > 0
         contingency <- contingency[, good_cols]
 
@@ -595,9 +580,8 @@ sigsVsProjection_pcf <- function(metaData, weights, cells = NULL){
             c_score <- 0
             pval <- 1.0
         } else {
-            # for the c_score, approximate the z-score using the chi-square dist
-            df <- length(krList) - 1
-            c_score <- (chsqResults$statistic - df ) / sqrt(2 * df)
+            # for the c_score, scale the x2 stat by the number of items
+            c_score <- chsqResults$statistic / sum(contingency)
             pval <- chsqResults$p.value
         }
     } else {
