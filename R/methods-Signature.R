@@ -449,7 +449,7 @@ sigsVsProjection_pcn <- function(metaData, weights, cells = NULL){
 
     sigScores <- rank(scores, ties.method = "average")
     if (all(sigScores == sigScores[1])) {
-      return(list(consistency = 0.0, pval = 1.0))
+      return(list(consistency = 1.0, pval = 1.0))
     }
 
     sigScores <- matrix(sigScores, ncol=1)
@@ -551,7 +551,7 @@ sigsVsProjection_pcf <- function(metaData, weights, cells = NULL){
                            nrow = N_SAMPLES, ncol = length(fLevels))
 
     if (1 %in% factorFreq) {
-        return(list(consistency = 0.0, pval = 1.0))
+        return(list(consistency = 1.0, pval = 1.0))
     }
 
     factorPredictions <- as.matrix(weights %*% factorMatrix)
@@ -577,15 +577,19 @@ sigsVsProjection_pcf <- function(metaData, weights, cells = NULL){
         })
 
         if (is.na(chsqResults$p.value)){
-            c_score <- 0
+            c_score <- 1.0
             pval <- 1.0
         } else {
-            # for the c_score, scale the x2 stat by the number of items
-            c_score <- chsqResults$statistic / sum(contingency)
+            # for the c_score, compute the 1-V (cramers V)
+            n <- sum(contingency)
+            V <- sqrt(chsqResults$statistic / n /
+                      min(nrow(contingency) - 1, ncol(contingency) - 1)
+                  )
+            c_score <- 1 - V
             pval <- chsqResults$p.value
         }
     } else {
-        c_score <- 0
+        c_score <- 1.0
         pval <- 1.0
     }
 

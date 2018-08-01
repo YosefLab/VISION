@@ -249,7 +249,7 @@ Signature_Table.prototype.render = function()
         var sort_col = matrix.proj_labels.indexOf(self.sorted_column);
         if(sort_col > -1){
             var sortFun = function(a,b){
-                return b[1][sort_col].zscore - a[1][sort_col].zscore; // Descending order
+                return a[1][sort_col].zscore - b[1][sort_col].zscore; // ascending order
             };
             formatted_data_w_row_labels.sort(sortFun);
         }
@@ -265,7 +265,7 @@ Signature_Table.prototype.render = function()
                 })
             } else {
                 row_vals = _.map(formatted_data_w_row_labels, x => {
-                    return (x[1][0].pval * 10000 + x[1][0].zscore*-1) // sort by pval, then zscore
+                    return (x[1][0].zscore) // sort by zscore (geary-c actually)
                 })
             }
 
@@ -275,7 +275,7 @@ Signature_Table.prototype.render = function()
             formatted_data_w_row_labels.splice(0, 0, leader_row);
 
             if (sort_col > -1) {
-                $(new_table_div).data('table-sort-val', leader_row[1][sort_col].zscore*-1)
+                $(new_table_div).data('table-sort-val', leader_row[1][sort_col].zscore)
             }
         }
 
@@ -286,7 +286,7 @@ Signature_Table.prototype.render = function()
                 .clamp(true);
         } else {
             var colorScale = d3.scale.linear()
-                .domain([0,3,10])
+                .domain([1,.5,0])
                 .range(["steelblue","white", "lightcoral"])
                 .clamp(true);
         }
@@ -685,7 +685,7 @@ Meta_Table.prototype.render = function()
             var sort_col = matrix.proj_labels.indexOf(self.sorted_column);
             if(sort_col > -1){
                 var sortFun = function(a,b){
-                    return b[1][sort_col].zscore - a[1][sort_col].zscore; // Descending order
+                    return a[1][sort_col].zscore - b[1][sort_col].zscore; // Descending order
                 };
                 formatted_data_w_row_labels.sort(sortFun);
             }
@@ -706,7 +706,7 @@ Meta_Table.prototype.render = function()
             formatted_data_w_row_labels.splice(0, 0, leader_row);
 
             if (sort_col > -1) {
-                $(new_table_div).data('table-sort-val', leader_row[1][sort_col].zscore*-1)
+                $(new_table_div).data('table-sort-val', leader_row[1][sort_col].zscore)
             }
         }
 
@@ -718,7 +718,7 @@ Meta_Table.prototype.render = function()
                 .clamp(true);
         } else {
             colorScale = d3.scale.linear()
-                .domain([0,3,10])
+                .domain([1,.5,0])
                 .range(["steelblue","white", "lightcoral"])
                 .clamp(true);
         }
