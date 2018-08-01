@@ -376,32 +376,26 @@ sigsVsProjection_n <- function(sigData, randomSigData,
         sigScoreMatrixGroup <- sigScoreMatrix[, groupSigNames, drop = FALSE]
 
         # Calculate scores for actual signatures
-        medDissimilarity <- geary_sig_v_proj(sigScoreMatrixGroup, weights$indices, weights$weights)
+        geary_c <- geary_sig_v_proj(sigScoreMatrixGroup, weights$indices, weights$weights)
 
         # Calculate scores for random signatures
-        randomMedDissimilarity <- geary_sig_v_proj(randomSigScoreMatrix, weights$indices, weights$weights)
+        geary_c_bg <- geary_sig_v_proj(randomSigScoreMatrix, weights$indices, weights$weights)
 
-        mu <- mean(randomMedDissimilarity)
-        sigma <- sd(randomMedDissimilarity)
+        mu <- mean(geary_c_bg)
+        sigma <- sd(geary_c_bg)
 
         #Create CDF function for medDissmilarityPrime and apply CDF function to
-        pvals <- pnorm( (medDissimilarity - mu) / sigma)
-        consistency <- (medDissimilarity - mu) / sigma * -1 # Make z-score, higher better
+        pvals <- pnorm( (geary_c - mu) / sigma)
 
-        orderedBg <- sort(randomMedDissimilarity)
-        empvals <- vapply(medDissimilarity, function(x) {
-                              N <- length(orderedBg)
-                              comp <- which(orderedBg < x)
-                              if (length(comp) == 0) {
-                                  p <- 1 / (N + 1)
-                              } else {
-                                  p <- (max(comp) + 1) / (N + 1)
-                              }
+        N <- length(geary_c_bg)
+        empvals <- vapply(geary_c, function(x) {
+                              comp <- sum(geary_c_bg < x)
+                              p <- (comp + 1) / (N + 1)
                               return(p)
        }, FUN.VALUE = 0.0)
 
 
-        return(list(consistency = consistency, pvals = pvals,
+        return(list(consistency = geary_c, pvals = pvals,
                     empvals = empvals))
 
     }, mc.cores = max(min(availableCores, length(randomSigScores)), 1))
@@ -462,7 +456,7 @@ sigsVsProjection_pcn <- function(metaData, weights, cells = NULL){
     rownames(sigScores) <- rownames(metaData)
     colnames(sigScores) <- metaName
 
-    medDissimilarity <- geary_sig_v_proj(sigScores,
+    geary_c <- geary_sig_v_proj(sigScores,
                                          weights$indices,
                                          weights$weights)
 
@@ -474,22 +468,11 @@ sigsVsProjection_pcn <- function(metaData, weights, cells = NULL){
                                          weights$indices,
                                          weights$weights)
 
-    mu <- mean(randomScores)
-    sigma <- sd(randomScores)
+    N <- length(randomScores)
+    comp <- sum(randomScores < geary_c)
+    pval <- (comp + 1) / (N + 1)
 
-    orderedBg <- sort(as.numeric(randomScores))
-    N <- length(orderedBg)
-    comp <- which(orderedBg < medDissimilarity)
-
-    if (length(comp) == 0) {
-        pval <- 1 / (N + 1)
-    } else {
-        pval <- (max(comp) + 1) / (N + 1)
-    }
-
-    c_score <- (medDissimilarity - mu) / sigma * -1 # make z-score, higher better
-
-    return(list(consistency = c_score, pval = pval))
+    return(list(consistency = geary_c, pval = pval))
 
   }, mc.cores = max(min(10, length(numericMeta)), 1))
 
