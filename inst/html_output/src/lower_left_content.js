@@ -386,10 +386,10 @@ Gene_Info.prototype.update = function(updates)
 
     var gene_exp = _.values(get_global_data('plotted_values'))
 
-    drawDistChart(this.chart, gene_exp, 'Expression')
+    drawDistChart(this.chart, gene_exp, 'Expression', true)
 
     if (this.gene_info_cell.hasClass('active')) {
-	this.addCellInfo();
+        this.addCellInfo();
     }
 
     // var celldt = $(this.dom_node).find("#cell-info-table");
@@ -639,7 +639,7 @@ Meta_Info.prototype.update = function(updates)
     drawDistChart(this.chart, meta_vals)
 
     if (this.meta_info_cell.hasClass('active')) {
-	this.addCellInfo();
+        this.addCellInfo();
     }
 
 }
@@ -685,35 +685,31 @@ Meta_Info.prototype.addCellInfo = function() {
 }
 
 //Draw Dist Scatter
-function drawDistChart(parent_div, data, title) {
+function drawDistChart(parent_div, data, title, pos_only) {
 
-    var hist = create_dist(data)
     var isFactor = (typeof(data[0]) === "string") &&
                    (data[0] !== "NA")
+
+    var hist;
+    if(pos_only !== undefined && pos_only){
+        hist = create_dist_positive(data)
+    } else if (isFactor) {
+        hist = create_dist_factor(data)
+    } else {
+        hist = create_dist(data)
+    }
 
     var x_vals = hist['centers']
     var counts = hist['counts']
 
-    var x_axis_params;
-    if(true) {
-        x_axis_params = {
-            type: 'category',
-            categories: x_vals,
-            tick: {
-                rotate: 75,
-                width: 100,
-            },
-            height: 100,
-        }
-    } else {
-        x_axis_params = {
-            type: 'indexed',
-            tick: {
-                rotate: 75,
-                format: d3.format('.2n')
-            },
-            height: 100,
-        }
+    var x_axis_params = {
+        type: 'category',
+        categories: x_vals,
+        tick: {
+            rotate: 75,
+            width: 100,
+        },
+        height: 100,
     }
 
     var c3_params = {
@@ -757,8 +753,10 @@ function drawDistChart(parent_div, data, title) {
 }
 
 
-function create_dist(data) {
-
+/* Creates the x/y values for a bar plot
+ * on categorical variables
+ */
+function create_dist_factor(data) {
     var counts;
     var centers;
 
@@ -778,59 +776,119 @@ function create_dist(data) {
             centers.push(key);
         })
 
-    } else {
-        var num_values = 10
+    }
 
-        // Need to filter out NA
-        var data_filtered = _.filter(data, x => x !== "NA")
-        var na_count = data.length - data_filtered.length
-        data = data_filtered
-
-        var data_true_min = Math.min.apply(null, data)
-        var data_min = Math.max(data_true_min, 0)
-        var data_max = Math.max.apply(null, data)
-
-        var bin_width = (data_max - data_min)/num_values
-
-        counts = Array.apply(Math, Array(num_values)).map(function() { return 0 });
-        centers = Array.apply(Math, Array(num_values)).map(function() { return 0 });
-
-        var low, high;
-        var formatFn = d3.format('.2n')
-        for (var i=0; i < num_values; i++) {
-            low = bin_width*i + data_min
-            high = bin_width*(i+1) + data_min
-
-            data.forEach(function(d) {
-                if (d >= low && d < high) {
-                    counts[i] += 1;
-                }
-            });
-
-            centers[i] = '[' + formatFn(low) + ', ' + formatFn(high) + ')';
-        }
+    return {'counts': counts, 'centers': centers}
+}
 
 
-        if(data_true_min < 0){ // Add a "< 0" category
-            low = -1e99
-            high = -1e-10
-            i = 0
-            var lessThenZeroCounts = 0;
+/* Creates the x/y values for a bar plot
+ * on numerical variables but truncate at zero
+ */
+function create_dist_positive(data) {
 
-            data.forEach(function(d) {
-                if (d >= low && d < high) {
-                    lessThenZeroCounts += 1;
-                }
-            });
+    var counts;
+    var centers;
 
-            counts = [lessThenZeroCounts].concat(counts)
-            centers = ["< 0"].concat(centers)
-        }
+    var num_values = 10
 
-        if(na_count > 0) { // Add a "NA" category
-            counts = [na_count].concat(counts)
-            centers = ["NA"].concat(centers)
-        }
+    // Need to filter out NA
+    var data_filtered = _.filter(data, x => x !== "NA")
+    var na_count = data.length - data_filtered.length
+    data = data_filtered
+
+    var data_true_min = Math.min.apply(null, data)
+    var data_min = Math.max(data_true_min, 0)
+    var data_max = Math.max.apply(null, data)
+
+    var bin_width = (data_max - data_min)/num_values
+
+    counts = Array.apply(Math, Array(num_values)).map(function() { return 0 });
+    centers = Array.apply(Math, Array(num_values)).map(function() { return 0 });
+
+    var low, high;
+    var formatFn = d3.format('.2n')
+    for (var i=0; i < num_values; i++) {
+        low = bin_width*i + data_min
+        high = bin_width*(i+1) + data_min
+
+        data.forEach(function(d) {
+            if (d >= low && d < high) {
+                counts[i] += 1;
+            }
+        });
+
+        centers[i] = '[' + formatFn(low) + ', ' + formatFn(high) + ')';
+    }
+
+
+    if(data_true_min < 0){ // Add a "< 0" category
+        low = -1e99
+        high = -1e-10
+        i = 0
+        var lessThenZeroCounts = 0;
+
+        data.forEach(function(d) {
+            if (d >= low && d < high) {
+                lessThenZeroCounts += 1;
+            }
+        });
+
+        counts = [lessThenZeroCounts].concat(counts)
+        centers = ["< 0"].concat(centers)
+    }
+
+    if(na_count > 0) { // Add a "NA" category
+        counts = [na_count].concat(counts)
+        centers = ["NA"].concat(centers)
+    }
+
+    return {'counts': counts, 'centers': centers}
+
+}
+
+
+/* Creates the x/y values for a bar plot
+ * on numerical variables but truncate at zero
+ */
+function create_dist(data) {
+
+    var counts;
+    var centers;
+
+    var num_values = 10
+
+    // Need to filter out NA
+    var data_filtered = _.filter(data, x => x !== "NA")
+    var na_count = data.length - data_filtered.length
+    data = data_filtered
+
+    var data_min = Math.min.apply(null, data)
+    var data_max = Math.max.apply(null, data)
+
+    var bin_width = (data_max - data_min)/num_values
+
+    counts = Array.apply(Math, Array(num_values)).map(function() { return 0 });
+    centers = Array.apply(Math, Array(num_values)).map(function() { return 0 });
+
+    var low, high;
+    var formatFn = d3.format('.2n')
+    for (var i=0; i < num_values; i++) {
+        low = bin_width*i + data_min
+        high = bin_width*(i+1) + data_min
+
+        data.forEach(function(d) {
+            if (d >= low && d < high) {
+                counts[i] += 1;
+            }
+        });
+
+        centers[i] = '[' + formatFn(low) + ', ' + formatFn(high) + ')';
+    }
+
+    if(na_count > 0) { // Add a "NA" category
+        counts = [na_count].concat(counts)
+        centers = ["NA"].concat(centers)
     }
 
     return {'counts': counts, 'centers': centers}
