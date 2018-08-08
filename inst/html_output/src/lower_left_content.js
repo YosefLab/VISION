@@ -74,13 +74,8 @@ Lower_Left_Content.prototype.update = function(updates)
             $(this.sig_info.dom_node).hide()
             $(this.gene_info.dom_node).hide()
             $(this.meta_info.dom_node).show()
-        } else if (item_type == "cell") {
-    	    $(this.sig_info.dom_node).hide()
-    	    $(this.gene_info.dom_node).hide()
-    	    $(this.meta_info.dom_node).hide()
-	}
+        }
     }
-
 }
 
 Lower_Left_Content.prototype.hover_cells = function()
@@ -143,7 +138,7 @@ Sig_Info.prototype.init = function()
 
     $(self.dom_node).find("#CellInfoButton").on('click', function()
     {
-	       self.addCellInfo()
+        self.addCellInfo()
     });
 
 }
@@ -198,7 +193,7 @@ Sig_Info.prototype.update = function(updates)
     }
 
     if (this.sig_info_cell.hasClass("active")) {
-	this.addCellInfo();
+        this.addCellInfo();
     }
 }
 

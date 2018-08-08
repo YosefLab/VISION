@@ -365,9 +365,6 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         return(result)
 
       }) %>%
-      get("/Pool/Status", function(req, res, err) {
-        return(toJSON(object@pool, force=TRUE, pretty=TRUE))
-      }) %>%
       get("/Clusters/list", function(req, res, err) {
         cluster_vars <- names(object@ClusterSigScores)
         out <- toJSON(cluster_vars,
@@ -448,6 +445,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         info["has_tree"] <- hasTree
 
         info[["meta_sigs"]] <- colnames(object@metaData)
+
+        info[["pooled"]] <- object@pool
 
         result <- toJSON(
                          info,

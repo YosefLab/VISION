@@ -1,5 +1,3 @@
-var global_stack = [];
-
 var global_status = {};
 global_status.main_vis = ""; // Selected from 4 options on top
 /* Options are:
@@ -24,14 +22,6 @@ global_status.cluster_var = ""; // which cluster variable are we using
 global_status.selected_cluster = ""; // which cell cluster should be clustered
 
 global_status.selected_cells = []; // which cell(s) is/are currently selected
-
-global_status.upper_range = "";
-global_status.lower_range = "";
-global_status.pc1 = "";
-global_status.pc2 = "";
-global_status.subset = [];
-global_status.subset_criteria = "Rank";
-
 
 var global_data = {};
 
@@ -292,6 +282,7 @@ window.onload = function()
         }
 
         global_data.meta_sigs = info.meta_sigs
+        global_status.pooled = info.pooled
     });
 
     // When it's all done, run this
@@ -315,14 +306,6 @@ window.onload = function()
         })
     });
 
-    // get pool information
-    var getPoolStatus = api.pool.stat()
-	.then(function(stat) {
-	    if (stat[0]) {
-		          global_status.pooled = true;
-	    }
-	});
-
     window.addEventListener('hover-cells', function(e) {
         var list_of_cell_ids = e.detail
         right_content.hover_cells(list_of_cell_ids)
@@ -332,97 +315,8 @@ window.onload = function()
 
     window.addEventListener("select-cells", function(e) {
 
-	global_status.selected_cells = Object.keys(e.detail);
+        global_status.selected_cells = Object.keys(e.detail);
 
     });
-
-    /*
-    $("#subset-criteria").change(function() {
-        global_status.subset_criteria = $(this).val();
-    });
-
-
-    // Set Listeners for Cell Subset Analysis
-    var upperRange = $("#upper-input");
-    var lowerRange = $("#lower-input");
-
-    upperRange.on("input", function() {
-        global_status.upper_range = this.value;
-    });
-
-    lowerRange.on("input", function() {
-        global_status.lower_range = this.value;
-    });
-
-
-    // Set Listeners for PC Analysis
-    var pc1 = $("#pc1-input");
-    var pc2 = $("#pc2-input");
-
-    pc1.on("input", function() {
-        global_status.pc1 = this.value;
-    });
-
-    pc2.on("input", function() {
-        global_status.pc2 = this.value;
-    });
-
-
-    //Define color option (for scatter) change function
-    $('input[name=scatterColorButtons]').change(function(){
-        var val = $('input[name=scatterColorButtons]:checked').val();
-        global_status.scatterColorOption = val;
-        right_content.update()();
-    });
-
-    $("#reload_heatmap").on("click", function() {
-        console.log('here');
-        drawHeat();
-    });
-
-    // Create listeners for main visualization modes
-    $("#proj_tab").on("click", function() {
-        global_status.main_vis = "sigvp";
-        createTableFromData();
-        right_content.update()();
-    });
-
-    $("#pc_tab").on("click", function() {
-
-        global_status.main_vis = "pcannotator"
-        createTableFromData();
-        right_content.update()();
-
-
-    });
-
-    $("#tree_tab").on("click", function() {
-        global_status.main_vis = "tree";
-        createTableFromData();
-        right_content.update()();
-    });
-
-    var criteriaList = ["Rank", "Value"];
-    for (var i = 0; i < criteriaList.length; i++) {
-        var criteria = criteriaList[i];
-        var option = $(document.createElement("option"));
-        option.text(criteria).val(criteria);
-        $("#subset-criteria").append(option);
-    }
-
-    */
 
 };
-
-function goBack(d) {
-
-    if (global_stack.length == 1) {
-        return;
-    }
-
-    curr_status = global_stack.pop();
-    global_status = global_stack.pop();
-    createTableFromData();
-    right_content.update()();
-    drawHeat();
-}

@@ -73,12 +73,6 @@ var api = (function(){
 
     output.pool = {}
 
-    output.pool.stat = function() {
-        var query = prefix.concat("Pool/Status");
-
-        return $.ajax(query, {dataType: "json"}).then(x => x)
-    }
-
     output.pool.values = function(subset, data_type, key) {
         var query = prefix.concat("Pool");
 

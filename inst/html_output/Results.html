@@ -178,45 +178,45 @@
                             <div id="cell-dist-div" style="margin-top: 10px"></div>
                             <table id="cell-info-table" class="display" width="100%"></table>
                         </div>
-                    </div>
-                </div>
+                    </div> <!-- end .tab-content -->
+                </div> <!-- end #sig-info -->
                 <div id="gene-info" style="display: none">
 
-		    <div class="nav nav-pills justify-content-center">
-	    	    <a class="nav-link active" id="GeneInfoButton" href="#gene-info-default" data-toggle="tab" aria-controls="gene-info-default" aria-selected="true">Gene</a>
-    		    <a class="nav-link" id="Gene-CellInfoButton" href="#gene-info-cell" data-toggle="tab" aria-controls="gene-info-cell" aria-selected="false">Cell</a>
-		    </div>
+                    <div class="nav nav-pills justify-content-center">
+                        <a class="nav-link active" id="GeneInfoButton" href="#gene-info-default" data-toggle="tab" aria-controls="gene-info-default" aria-selected="true">Gene</a>
+                        <a class="nav-link" id="Gene-CellInfoButton" href="#gene-info-cell" data-toggle="tab" aria-controls="gene-info-cell" aria-selected="false">Cell</a>
+                    </div>
 
-		    <div class="tab-content">
-			<div id="gene-info-default" class="tab-pane show active" role="tabpanel" aria-labelledby="GeneInfoButton">
-			    <table class='label-table' style='margin-left: 30px; margin-bottom: 20px;'>
-			        <tr style='font-size: 1.2em;'>
-				    <td>Gene:</td>
-				    <td style="width: 100%;"><span id="gene-analysis-title"></span></td>
-				</tr>
-			    </table>
+                    <div class="tab-content">
+                        <div id="gene-info-default" class="tab-pane show active" role="tabpanel" aria-labelledby="GeneInfoButton">
+                            <table class='label-table' style='margin-left: 30px; margin-bottom: 20px;'>
+                                <tr style='font-size: 1.2em;'>
+                                    <td>Gene:</td>
+                                    <td style="width: 100%;"><span id="gene-analysis-title"></span></td>
+                                </tr>
+                            </table>
 
-			    <div style='display: flex; flex-direction: column; justify-content: space-around; flex-grow: 1'>
-				<div id="gene-dist-div" style="display: flex; flex-direction:column"></div>
-			    </div>
-			</div>
-			<div id="gene-info-cell" class="tab-pane" role="tabpanel" aria-labelledby="Gene-CellInfoButton">
-			    <table class='label-table' style='margin-left: 30px; margin-bottom:20px;'>
-				<tr style='font-size: 1.2em;'>
-				    <td>Gene:</td>
-				    <td style='width: 100%;'><span id='cell-analysis-title'></span></td>
-				</tr>
-				<tr>
-				    <td>Cell:</td>
-				    <td><span id="cell-source"></span></td>
-				</tr>
-			    </table>
-			    <div id="cell-dist-div"></div>
-                <table id="cell-info-table" class="display" width="100%"></table>
-			</div>
+                            <div style='display: flex; flex-direction: column; justify-content: space-around; flex-grow: 1'>
+                                <div id="gene-dist-div" style="display: flex; flex-direction:column"></div>
+                            </div>
+                        </div>
+                        <div id="gene-info-cell" class="tab-pane" role="tabpanel" aria-labelledby="Gene-CellInfoButton">
+                            <table class='label-table' style='margin-left: 30px; margin-bottom:20px;'>
+                                <tr style='font-size: 1.2em;'>
+                                    <td>Gene:</td>
+                                    <td style='width: 100%;'><span id='cell-analysis-title'></span></td>
+                                </tr>
+                                <tr>
+                                    <td>Cell:</td>
+                                    <td><span id="cell-source"></span></td>
+                                </tr>
+                            </table>
+                            <div id="cell-dist-div"></div>
+                            <table id="cell-info-table" class="display" width="100%"></table>
+                        </div>
 
-		    </div>
-                </div>
+                    </div> <!-- end .tab-content -->
+                </div> <!-- end #gene-info -->
                 <div id="meta-info" style="display: none">
 
                     <div class="nav nav-pills justify-content-center">
@@ -227,101 +227,35 @@
 
                     <div class="tab-content">
                         <div id="meta-info-default" class="tab-pane show active" role="tabpanel" aria-labelledby="SigInfoButton">
-			    <table class='label-table' style='margin-left: 30px; margin-bottom: 20px;'>
-				<tr style='font-size: 1.2em;'>
-				    <td>Value:</td>
-				    <td style="width: 100%;"><span id="meta-analysis-title"></span></td>
-				</tr>
-			    </table>
+                            <table class='label-table' style='margin-left: 30px; margin-bottom: 20px;'>
+                                <tr style='font-size: 1.2em;'>
+                                    <td>Value:</td>
+                                    <td style="width: 100%;"><span id="meta-analysis-title"></span></td>
+                                </tr>
+                            </table>
 
-			    <div style='display: flex; flex-direction: column; justify-content: space-around; flex-grow: 1'>
-				<div id="meta-dist-div" style="display: flex; flex-direction:column"></div>
-			    </div>
-			</div>
-
-			<div id="meta-info-cell" class="tab-pane" role="tabpanel" aria-labelledby="Meta-CellInfoButtoon" style='padding-top: 10px'>
-
-			    <table class='label-table' style='margin-left: 30px; margin-bottom:20px;'>
-				<tr style='font-size: 1.2em;'>
-				    <td>Value:</td>
-				    <td style='width: 100%;'><span id='cell-analysis-title'></span></td>
-				</tr>
-				<tr>
-				    <td>Cell:</td>
-				    <td><span id="cell-source"></span></td>
-				</tr>
-			    </table>
-			    <div id="cell-dist-div"></div>
-                <table id="cell-info-table" class="display" width="100%"></table>
-			</div>
-		    </div>
-
-                </div>
-                <div id="pc-content-wrapper" style="display: none">
-                    <h4 id="pc-analysis-title" style="font-size: 16px; text-align: center"></h4>
-                    <div>
-                        <form id="pc-range-container">
-                            <div class="group" style="margin-left: 10px">
-                                <input class="range-input" id="pc1-input" type="text" required>
-                                <span class="highlight"></span>
-                                <span class="bar"></span>
-                                <label class="range-input-label">PC 1</label>
+                            <div style='display: flex; flex-direction: column; justify-content: space-around; flex-grow: 1'>
+                                <div id="meta-dist-div" style="display: flex; flex-direction:column"></div>
                             </div>
-                            <div class="group" style="float: right; margin-right: 10px;">
-                                <input class="range-input" id="pc2-input" type="text" required>
-                                <span class="highlight"></span>
-                                <span class="bar"></span>
-                                <label class="range-input-label">PC 2</label>
-                            </div>
-                        </form>
-                    </div>
-                    <div style="margin-top: 30px">
-                        <span>
-                            <button style="align-items: center; width: 60%; margin-left:20%; margin-right:20%" id="analysis-button" type="button" class="btn btn-default" onclick=runPCAnalysis()>Run Analysis</button>
-                        </span>
-                    </div>
-                    <p id="pc-analysis-content"></p>
-                </div>
-                <div id="cell-selection-wrapper" style="display: none">
-                    <div id="cell-selection-div" style="width: 80%; margin-right: 10%; margin-left: 10%;">
-                        <h4 style="text-align: center">Select Cells for Further Analysis</h4>
-                        <div>
-                            <span>
-                                <label for="subset-criteria">Criteria</label>
-                                <select id="subset-criteria">
-                                </select>
-                            </span>
-                            <br>
-                            <form id="cell-range-container">
-                                <div class="group" style="margin-left: 10px">
-                                    <input class="range-input" id="lower-input" type="text" required>
-                                    <span class="highlight"></span>
-                                    <span class="bar"></span>
-                                    <label class="range-input-label">Lower</label>
-                                </div>
-                                <div class="group" style="float: right; margin-right: 10px;">
-                                    <input class="range-input" id="upper-input" type="text" required>
-                                    <span class="highlight"></span>
-                                    <span class="bar"></span>
-                                    <label class="range-input-label">Upper</label>
-                                </div>
-                            </form>
                         </div>
-                        <div style="margin-top: 15px; margin-right:10px; width: 100%; min-height:20px;">
-                            <span style="float: right; margin-right: 10px;">
-                                <button id="unselct-button" type="button" class="btn btn-default" onclick=unselectRange()>Unselect Cells</button>
-                            </span>
-                            <span style="float:right; margin-right: 10px">
-                                <button id="select-button" type="button" class="btn btn-default" onclick=selectRange()>Select Cells</button>
-                            </span>
+
+                        <div id="meta-info-cell" class="tab-pane" role="tabpanel" aria-labelledby="Meta-CellInfoButtoon" style='padding-top: 10px'>
+
+                            <table class='label-table' style='margin-left: 30px; margin-bottom:20px;'>
+                                <tr style='font-size: 1.2em;'>
+                                    <td>Value:</td>
+                                    <td style='width: 100%;'><span id='cell-analysis-title'></span></td>
+                                </tr>
+                                <tr>
+                                    <td>Cell:</td>
+                                    <td><span id="cell-source"></span></td>
+                                </tr>
+                            </table>
+                            <div id="cell-dist-div"></div>
+                            <table id="cell-info-table" class="display" width="100%"></table>
                         </div>
-                        <div style="margin-top: 30px; width: 100%;">
-                            <span>
-                                <button style="align-items: center; width: 60%; margin-left:20%; margin-right:20%" id="analysis-button" type="button" class="btn btn-default" onclick=runSubsetAnalysis()>Run Analysis</button>
-                            </span>
-                        </div>
-                    </div>
-                </div>
+                    </div> <!-- end .tab-content -->
+                </div> <!-- end #meta-info -->
             </div> <!-- End of lower-left-content -->
         </div> <!-- End of left-content -->
         <div id="right-content">
