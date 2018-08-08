@@ -456,6 +456,12 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         return(result)
 
      }) %>%
+     get("/Cell/(?<cell_id1>.*)/Meta", function(req, res, err) {
+         cell_id <- URLdecode(req$params$cell_id1)
+         cell_meta <- as.list(object@initialMetaData[cell_id, ])
+         out <- toJSON(cell_meta, auto_unbox = TRUE)
+         return(out)
+     }) %>%
      post("/Pool/Meta/(?<pool_key1>.*)", function(req, res, err) {
 
          subset <- fromJSON(req$body)

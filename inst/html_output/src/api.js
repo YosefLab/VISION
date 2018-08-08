@@ -244,6 +244,16 @@ var api = (function(){
         }).done(alert("Running Subset Analysis"));
     }
 
+    // Cell API
+
+    output.cell = {}
+
+    output.cell.meta = function(cellId){
+        var query = prefix + "Cell/" + cellId + "/Meta"
+
+        return $.ajax(query, {dataType: "json"}).then(x => x)
+    }
+
     // Session Info Api
 
     output.sessionInfo = function() {

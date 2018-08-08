@@ -58,6 +58,7 @@ function ColorScatter(parent, colorbar, legend)
 
 
     this.svg = d3.select(parent).append("svg")
+        .on("click", function(){self.setSelected([]);})
         .attr("height", self.height + margin.top + margin.bottom)
         .attr("width", self.width + margin.right + margin.left)
         .append("g")
@@ -396,6 +397,8 @@ ColorScatter.prototype.setSelected = function(selected_key, event_id)
 {
 
     var self = this;
+
+    d3.event.stopPropagation();
 
     if (typeof(selected_key) === "string"){
         selected_key = [selected_key]
