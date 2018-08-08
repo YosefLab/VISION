@@ -397,11 +397,16 @@ clusterSigScores <- function(object) {
     # Must be a factor with at least 20 levels
     clusterMeta <- vapply(colnames(metaData), function(x) {
             scores <- metaData[[x]]
-            if (is.factor(scores) && length(levels(scores)) <= 50){
-                return(x)
-            } else {
+            if (!is.factor(scores)){
                 return("")
             }
+            if (length(levels(scores)) > 50){
+                return("")
+            }
+            if (length(unique(scores)) == 1){
+                return("")
+            }
+            return(x)
         }, FUN.VALUE = "")
     clusterMeta <- clusterMeta[clusterMeta != ""]
 

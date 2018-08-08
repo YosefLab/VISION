@@ -656,7 +656,7 @@ clusterSignatures <- function(sigMatrix, metaData, pvals, clusterMeta) {
 			is.numeric(metaData[,metaName])
 		}, FUN.VALUE = TRUE)
 
-  meta_n <- metaData[, meta_n]
+  meta_n <- metaData[, meta_n, drop = FALSE]
   sigMatrix <- cbind(sigMatrix, meta_n)
 
   comp_names <- colnames(sigMatrix)
