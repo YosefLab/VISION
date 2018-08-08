@@ -83,11 +83,13 @@ Lower_Left_Content.prototype.update = function(updates)
 
     if('plotted_item_type' in updates){
 
-        self.nav['values'].click()
+        if( updates['plotted_item_type'] !== 'signature-gene'){
+            self.nav['values'].click()
+        }
 
         var item_type = get_global_status('plotted_item_type')
         // Modify which nav pills are shown
-        if(item_type === 'signature'){
+        if(item_type === 'signature' || item_type === 'signature-gene'){
             $(this.nav['sig_info']).show()
             $(this.nav['sig_heatmap']).show()
         } else {
@@ -134,7 +136,7 @@ Values_Plot.prototype.update = function(updates)
         return;
     }
 
-    if(item_type === 'gene') {
+    if(item_type === 'gene' || item_type === 'signature-gene') {
         var urllink = "http://www.genecards.org/cgi-bin/carddisp.pl?gene=" + item;
         $(this.title).html(
             "<a href=" + urllink + " target='_blank'>" + item + "</a>"
@@ -211,7 +213,14 @@ Sig_Info.prototype.init = function()
                 'title': 'Gene',
                 'render': function(data)
                 {
-                    return "<a href=http://www.genecards.org/cgi-bin/carddisp.pl?gene=" + data + " target='_blank'>" + data + "</a>";
+                    return '<a href="javascript:void(0);" onclick="_setSignatureGene(\'' + data + '\')">' + data + '</a>';
+                }
+            },
+            {
+                'title': 'Info',
+                'render': function(data)
+                {
+                    return "<a href=http://www.genecards.org/cgi-bin/carddisp.pl?gene=" + data + " target='_blank'>&lt;genecards&gt;</a>";
                 }
             },
             {'title': 'Sign', 'className': 'dt-center'}],
@@ -256,15 +265,26 @@ Sig_Info.prototype.update = function(updates)
 
     var dataSet = _.map(sig_info.sigDict, function (value, key){
         if(value > 0){
-            return [key, '+'];
+            return [key, key, '+'];
         } else {
-            return [key, '-'];
+            return [key, key, '-'];
         }
     })
 
     dt.DataTable().clear()
         .rows.add(dataSet)
         .draw()
+}
+
+// Used when clicking on the gene namesin the signature-info table
+function _setSignatureGene(gene){
+    var update = {
+        'plotted_item': gene,
+        'plotted_item_type': 'signature-gene',
+    }
+
+    set_global_status(update)
+
 }
 
 function Sig_Heatmap()
@@ -283,7 +303,9 @@ Sig_Heatmap.prototype.init = function()
 
 Sig_Heatmap.prototype.update = function(updates)
 {
-    if($(this.dom_node).hasClass('active') && 'plotted_item' in updates){
+    if( $(this.dom_node).hasClass('active') &&
+        'plotted_item' in updates &&
+        get_global_status('plotted_item_type') === 'signature' ){ // Or else we'll update for signature-gene
         this.drawHeat();
     }
 
@@ -302,6 +324,9 @@ Sig_Heatmap.prototype.drawHeat = function(){
         var heatmap_height = heatmap_div.parent().parent().height()-40;
 
         self.heatmap = new HeatMap('#heatmap-div', heatmap_width, heatmap_height);
+        self.heatmap.click = function(gene, index, value){
+            _setSignatureGene(gene);
+        }
     }
 
     var sig_key = get_global_status('plotted_item'); // assume it's a signature

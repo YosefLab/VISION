@@ -187,7 +187,7 @@ Right_Content.prototype.draw_sigvp = function(autoZoom) {
                    (_.values(values)[0] !== "NA")
 
     var full_color_range, diverging_colormap
-    if(item_type === "gene"){
+    if(item_type === "gene" || item_type === 'signature-gene'){
         $(self.dom_node).find("#plotted-value-option").hide()
         full_color_range = true
         diverging_colormap = false
@@ -201,9 +201,7 @@ Right_Content.prototype.draw_sigvp = function(autoZoom) {
         diverging_colormap = true
     }
 
-    if(self.getScatterColorOption() == "rank"
-        && !isFactor && item_type !== "gene"
-        && item_type !== "meta") {
+    if(self.getScatterColorOption() == "rank" && item_type === 'signature') {
 
         values = self.rank_values(values)
     }
@@ -368,7 +366,7 @@ Right_Content.prototype.draw_pca = function() {
     var values = get_global_data('plotted_values')
 
     var isFactor;
-    if(item_type === "gene"){
+    if(item_type === "meta"){
         isFactor = (typeof(Object.values(values)[0]) === "string") &&
                    (_.values(values)[0] !== "NA")
     } else {

@@ -109,6 +109,8 @@ function HeatMap(parent, width, height)
     this.cell_labels = [];
 
     this.cluster_assignments = []; //Used in hoverCol.  Denotes which cluster each sample is assigned to
+
+    this.click = undefined; // To be overwritten and called when clicking
 }
 
 HeatMap.prototype.setLabels = function(xlabel, ylabel)
@@ -645,7 +647,12 @@ HeatMap.prototype.redraw = function() {
                 self.setHoveredRowLabel(d.gene);
                 self.setHoveredCol(d.index);
                 self.setHoveredIndicator(d.value);
-            });
+            })
+            .on("click", function(d, i){
+                if(self.click !== undefined){
+                    self.click(d.gene, d.index, d.value);
+                }
+            })
 
         heatmaRects_plus.style('fill',function(d) {
                 return self.colorScale(d.value);})
@@ -702,7 +709,12 @@ HeatMap.prototype.redraw = function() {
                 self.setHoveredRowLabel(d.gene);
                 self.setHoveredCol(d.index);
                 self.setHoveredIndicator(d.value);
-            });
+            })
+            .on("click", function(d, i){
+                if(self.click !== undefined){
+                    self.click(d.gene, d.index, d.value);
+                }
+            })
 
         self.svg
             .on("mouseleave", function(d){ self.setHoveredRowLabel(""); self.setHoveredIndicator();});

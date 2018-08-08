@@ -16,7 +16,7 @@ global_status.pooled = false;
 
 // Determine projected values
 global_status.plotted_item = "";  // name of signature, meta or gene that is plotted
-global_status.plotted_item_type = ""; // either 'signature', 'meta', or 'gene'
+global_status.plotted_item_type = ""; // either 'signature', 'meta', 'gene', or 'signature-gene'
 
 global_status.cluster_var = ""; // which cluster variable are we using
 global_status.selected_cluster = ""; // which cell cluster should be clustered
@@ -144,7 +144,7 @@ function set_global_status(update){
             val_promise = api.signature.scores(sig_key)
         } else if (type === 'meta') {
             val_promise = api.signature.meta(sig_key)
-        } else if (type === 'gene') {
+        } else if (type === 'gene' || type === 'signature-gene') {
             val_promise = api.expression.gene(sig_key)
         } else {
             throw 'Bad "plotted_item_type"!';

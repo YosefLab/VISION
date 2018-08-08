@@ -38,3 +38,12 @@
 #selected-cell-info .meta-table{
     margin-left: 80px
 }
+
+/* Hack stuff for data-tables columns */
+
+#lower-left-content .dataTables_scrollHead .dataTables_scrollHeadInner{
+    width: 100% !important;
+}
+#lower-left-content .dataTables_scrollHead table.dataTable{
+    width: 100% !important;
+}
