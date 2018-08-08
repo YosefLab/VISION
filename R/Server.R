@@ -302,65 +302,14 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
                                   sigs)
         return(out)
       }) %>%
-      get("/FilterGroup/(?<pc_num1>.*)/Loadings/Positive", function(req, res, err) {
-        pcnum <- as.numeric(URLdecode(req$params$pc_num1))
-
-        c <- object@latentSpace[, pcnum, drop = FALSE] # cells x 1
-        edata <- object@exprData # genes x cells
-        l <- edata %*% c
-        names(l) <- rownames(edata)
-
-        l <- sqrt(sum(l ^ 2)) # normalize the vector
-
-        posl <- l[l >= 0]
-
-        js1 <- toJSON(with(stack(posl), tapply(values, ind, c, simplify = FALSE)))
-
-        return(js1)
-
-      }) %>%
-      get("/FilterGroup/(?<pc_num6>.*)/Loadings/Negative", function(req, res, err) {
-        pcnum <- as.numeric(URLdecode(req$params$pc_num6))
-
-        c <- object@latentSpace[, pcnum, drop = FALSE] # cells x 1
-        edata <- object@exprData # genes x cells
-        l <- edata %*% c
-        names(l) <- rownames(edata)
-
-        l <- sqrt(sum(l ^ 2)) # normalize the vector
-
-        negl <- l[l < 0]
-
-        js2 <- toJSON(with(stack(negl),
-                           tapply(values, ind, c, simplify = FALSE)))
-
-        return(js2)
-
-      }) %>%
-      get("/FilterGroup/PCA/Coordinates", function(req, res, err) {
+      get("/PCA/Coordinates", function(req, res, err) {
 
         pc <- object@latentSpace
         out <- VISION:::coordinatesToJSON(pc)
 
         return(out)
       }) %>%
-      get("/FilterGroup/PCVersus/(?<pc_num3>.*)/(?<pc_num4>.*)", function(req, res, err) {
-
-        pc1 <- as.numeric(URLdecode(req$params$pc_num3))
-        pc2 <- as.numeric(URLdecode(req$params$pc_num4))
-
-
-        pcdata1 <- object@latentSpace[, pc1]
-        pcdata2 <- object@latentSpace[, pc2]
-
-
-        ret <- cbind(pcdata1, pcdata2)
-        coord <- apply(unname(ret), 1, as.list)
-        names(coord) <- rownames(ret)
-
-        return(toJSON(coord, force = TRUE, auto_unbox = TRUE))
-      }) %>%
-      get("/FilterGroup/PearsonCorr/Normal", function(req, res, err) {
+      get("/PearsonCorr/Normal", function(req, res, err) {
 
           sigs <- colnames(object@sigScores)
 
@@ -368,7 +317,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         return(VISION:::pearsonCorrToJSON(pc, sigs))
       }) %>%
-      get("/FilterGroup/PearsonCorr/Meta", function(req, res, err) {
+      get("/PearsonCorr/Meta", function(req, res, err) {
 
           sigs <- colnames(object@metaData)
           numericMeta <- vapply(sigs,
@@ -380,7 +329,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         return(VISION:::pearsonCorrToJSON(pc, sigs))
       }) %>%
-      get("/FilterGroup/PearsonCorr/list", function(req, res, err) {
+      get("/PearsonCorr/list", function(req, res, err) {
 
           pc <- object@PCAnnotatorData@pearsonCorr
           pcnames <- seq(ncol(pc))[1:10]

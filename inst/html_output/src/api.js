@@ -141,32 +141,18 @@ var api = (function(){
     output.filterGroup = {}
 
     output.filterGroup.pCorr = function(meta) {
-        var query = prefix.concat("FilterGroup");
+        var query = prefix;
         if (meta) {
-            query = query.concat("/PearsonCorr/Meta");
+            query = query.concat("PearsonCorr/Meta");
         } else {
-            query = query.concat("/PearsonCorr/Normal");
+            query = query.concat("PearsonCorr/Normal");
         }
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
     output.filterGroup.listPCs = function()
     {
-        var query = prefix.concat("FilterGroup/PearsonCorr/list")
-        return $.ajax(query, {dataType: "json"}).then(x => x)
-    }
-
-    output.filterGroup.loadings_pos = function(pcnum) {
-        var query = prefix.concat("FilterGroup/");
-        query = query.concat(encodeURI(pcnum), "/Loadings");
-        query = query.concat("/Positive");
-        return $.ajax(query, {dataType: "json"}).then(x => x)
-    }
-
-    output.filterGroup.loadings_neg= function(pcnum) {
-        var query = prefix.concat("FilterGroup/");
-        query = query.concat(encodeURI(pcnum), "/Loadings");
-        query = query.concat("/Negative");
+        var query = prefix.concat("PearsonCorr/list")
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
@@ -230,14 +216,8 @@ var api = (function(){
     output.pc = {}
 
     output.pc.coordinates = function() {
-        var query = prefix.concat("FilterGroup/PCA/Coordinates")
+        var query = prefix.concat("PCA/Coordinates")
         return $.ajax(query, {dataType: "json"}).then(x => fix_coordinates(x))
-    }
-
-    output.pc.versus = function(pc1, pc2) {
-        var query = prefix.concat("FilterGroup");
-        query = query.concat("/PCVersus/", encodeURI(pc1), "/", encodeURI(pc2));
-        return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
     // Expression API
