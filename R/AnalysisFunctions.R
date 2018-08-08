@@ -417,24 +417,19 @@ clusterSigScores <- function(object) {
 
             # Process the gene signatures
             pvals <- mclapply(colnames(sigScores), function(sig){
-                suppressWarnings({
-                    if(length(cluster_ii) == 0 || length(not_cluster_ii) == 0){
-                        return(list(pval = 1.0, stat = 0))
-                    }
-                    out_l <- wilcox.test(sigScores[cluster_ii, sig],
-                                   sigScores[not_cluster_ii, sig],
-                                   alternative = "less", exact = FALSE)
-                    out_g <- wilcox.test(sigScores[cluster_ii, sig],
-                                   sigScores[not_cluster_ii, sig],
-                                   alternative = "greater", exact = FALSE)
-                })
-                if (out_l$p.value < out_g$p.value) {
-                    pval <- out_l$p.value
-                    stat <- max(log10(out_l$p.value), -300) * -1 / 10
-                } else {
-                    pval <- out_g$p.value
-                    stat <- max(log10(out_g$p.value), -300) / 10
+
+                if(length(cluster_ii) == 0 || length(not_cluster_ii) == 0){
+                    return(list(pval = 1.0, stat = 0))
                 }
+
+                suppressWarnings({
+                    out <- wilcox.test(sigScores[cluster_ii, sig],
+                                   sigScores[not_cluster_ii, sig],
+                                   alternative = "two.sided", exact = FALSE)
+                })
+                pval <- out$p.value
+                AUC <- out$statistic / length(cluster_ii) / length(not_cluster_ii)
+                stat <- (AUC - .5) * 2  # translates (0.5, 1) to (0, 1)
                 return(list(pval = pval, stat = stat))
             }, mc.cores = 10)
             names(pvals) <- colnames(sigScores)
@@ -457,19 +452,13 @@ clusterSigScores <- function(object) {
                     } else {
 
                         suppressWarnings({
-
-                            out_l <- wilcox.test(x, y, alternative = "less",
-                                             exact = FALSE)
-                            out_g <- wilcox.test(x, y, alternative = "greater",
-                                             exact = FALSE)
+                            out <- wilcox.test(x, y,
+                                   alternative = "two.sided", exact = FALSE)
                         })
-                        if (out_l$p.value < out_g$p.value) {
-                            pval <- out_l$p.value
-                            stat <- max(log10(out_l$p.value), -300) * -1 / 10
-                        } else {
-                            pval <- out_g$p.value
-                            stat <- max(log10(out_g$p.value), -300) / 10
-                        }
+
+                        pval <- out$p.value
+                        AUC <- out$statistic / length(cluster_ii) / length(not_cluster_ii)
+                        stat <- (AUC - .5) * 2  # translates (0, 1) to (-1, 1)
 
                     }
                 } else if (is.factor(metaData[, sig])) {
@@ -483,7 +472,11 @@ clusterSigScores <- function(object) {
                             out <- chisq.test(M)
                         )
                         pval <- out$p.value
-                        stat <- max(log10(out$p.value), -300)*-1 / 10
+                        n <- sum(M)
+                        V <- sqrt(out$statistic / n /
+                            min(nrow(M) - 1, ncol(M) - 1)
+                        )
+                        stat <- V # Cramer's V
                     } else {
                         pval <- 1.0
                         stat <- 0

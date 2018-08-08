@@ -395,7 +395,7 @@ sigsVsProjection_n <- function(sigData, randomSigData,
        }, FUN.VALUE = 0.0)
 
 
-        return(list(consistency = geary_c, pvals = pvals,
+        return(list(consistency = 1 - geary_c, pvals = pvals,
                     empvals = empvals))
 
     }, mc.cores = max(min(availableCores, length(randomSigScores)), 1))
@@ -449,7 +449,7 @@ sigsVsProjection_pcn <- function(metaData, weights, cells = NULL){
 
     sigScores <- rank(scores, ties.method = "average")
     if (all(sigScores == sigScores[1])) {
-      return(list(consistency = 1.0, pval = 1.0))
+      return(list(consistency = 0.0, pval = 1.0))
     }
 
     sigScores <- matrix(sigScores, ncol=1)
@@ -472,7 +472,7 @@ sigsVsProjection_pcn <- function(metaData, weights, cells = NULL){
     comp <- sum(randomScores < geary_c)
     pval <- (comp + 1) / (N + 1)
 
-    return(list(consistency = geary_c, pval = pval))
+    return(list(consistency = 1 - geary_c, pval = pval))
 
   }, mc.cores = max(min(10, length(numericMeta)), 1))
 
@@ -551,7 +551,7 @@ sigsVsProjection_pcf <- function(metaData, weights, cells = NULL){
                            nrow = N_SAMPLES, ncol = length(fLevels))
 
     if (1 %in% factorFreq) {
-        return(list(consistency = 1.0, pval = 1.0))
+        return(list(consistency = 0.0, pval = 1.0))
     }
 
     factorPredictions <- as.matrix(weights %*% factorMatrix)
@@ -577,7 +577,7 @@ sigsVsProjection_pcf <- function(metaData, weights, cells = NULL){
         })
 
         if (is.na(chsqResults$p.value)){
-            c_score <- 1.0
+            c_score <- 0.0
             pval <- 1.0
         } else {
             # for the c_score, compute the 1-V (cramers V)
@@ -585,11 +585,11 @@ sigsVsProjection_pcf <- function(metaData, weights, cells = NULL){
             V <- sqrt(chsqResults$statistic / n /
                       min(nrow(contingency) - 1, ncol(contingency) - 1)
                   )
-            c_score <- 1 - V
+            c_score <- V
             pval <- chsqResults$p.value
         }
     } else {
-        c_score <- 1.0
+        c_score <- 0.0
         pval <- 1.0
     }
 

@@ -249,7 +249,7 @@ Signature_Table.prototype.render = function()
         var sort_col = matrix.proj_labels.indexOf(self.sorted_column);
         if(sort_col > -1){
             var sortFun = function(a,b){
-                return a[1][sort_col].zscore - b[1][sort_col].zscore; // ascending order
+                return b[1][sort_col].zscore - a[1][sort_col].zscore; // Descending order
             };
             formatted_data_w_row_labels.sort(sortFun);
         }
@@ -265,7 +265,7 @@ Signature_Table.prototype.render = function()
                 })
             } else {
                 row_vals = _.map(formatted_data_w_row_labels, x => {
-                    return (x[1][0].zscore) // sort by zscore (geary-c actually)
+                    return (x[1][0].zscore*-1) // sort by zscore (geary-c actually)
                 })
             }
 
@@ -275,7 +275,7 @@ Signature_Table.prototype.render = function()
             formatted_data_w_row_labels.splice(0, 0, leader_row);
 
             if (sort_col > -1) {
-                $(new_table_div).data('table-sort-val', leader_row[1][sort_col].zscore)
+                $(new_table_div).data('table-sort-val', leader_row[1][sort_col].zscore*-1)
             }
         }
 
@@ -286,12 +286,12 @@ Signature_Table.prototype.render = function()
                 .clamp(true);
         } else {
             var colorScale = d3.scale.linear()
-                .domain([1,.5,0])
+                .domain([0,.5,1])
                 .range(["steelblue","white", "lightcoral"])
                 .clamp(true);
         }
         var colorScaleCluster = d3.scale.linear()
-            .domain([-10,0,10])
+            .domain([-1,0,1])
             .range(["steelblue","white", "lightcoral"])
             .clamp(true);
 
@@ -339,7 +339,7 @@ Signature_Table.prototype.render = function()
                     tooltip_str = "corr = " + d.zscore.toFixed(2)
                 } else {
                     if(main_vis === 'clusters' && i > 0)
-                        tooltip_str = "p<" + _pval_format(d.pval)
+                        tooltip_str = "AUC=" + _auc_format(d.zscore) + "p<" + _pval_format(d.pval)
                     else
                         tooltip_str = "z=" + d.zscore.toFixed(2) + ", p<" + _pval_format(d.pval)
                 }
@@ -672,7 +672,7 @@ Meta_Table.prototype.render = function()
 
         var formatted_data_w_row_labels = d3.zip(sig_labels, formatted_data_matrix);
 
-        // Sort data if necessary
+        // Sort data within each table group
         var sortFun;
         if(self.sorted_column === "Name"){
             sortFun = function(a, b){
@@ -685,13 +685,14 @@ Meta_Table.prototype.render = function()
             var sort_col = matrix.proj_labels.indexOf(self.sorted_column);
             if(sort_col > -1){
                 var sortFun = function(a,b){
-                    return a[1][sort_col].zscore - b[1][sort_col].zscore; // Descending order
+                    return b[1][sort_col].zscore - a[1][sort_col].zscore; // Descending order
                 };
                 formatted_data_w_row_labels.sort(sortFun);
             }
         }
 
 
+        // Sort the row groups themselves
         $(new_table_div).data('table-sort-val', 0)
         if (cluster_ids.length > 1) {
             // Pull out the cluster leader and put it first
@@ -706,7 +707,7 @@ Meta_Table.prototype.render = function()
             formatted_data_w_row_labels.splice(0, 0, leader_row);
 
             if (sort_col > -1) {
-                $(new_table_div).data('table-sort-val', leader_row[1][sort_col].zscore)
+                $(new_table_div).data('table-sort-val', leader_row[1][sort_col].zscore*-1)
             }
         }
 
@@ -718,12 +719,12 @@ Meta_Table.prototype.render = function()
                 .clamp(true);
         } else {
             colorScale = d3.scale.linear()
-                .domain([1,.5,0])
+                .domain([0,.5,1])
                 .range(["steelblue","white", "lightcoral"])
                 .clamp(true);
         }
         var colorScaleCluster = d3.scale.linear()
-            .domain([-10,0,10])
+            .domain([-1,0,1])
             .range(["steelblue","white", "lightcoral"])
             .clamp(true);
 
@@ -1089,4 +1090,12 @@ function _pval_format(x) {
     } else {
         return p.toFixed(2)
     }
+}
+
+function _auc_format(x) {
+    // x is on range -1 to 1
+    // Convert to AUC
+    var auc = x/2 + 0.5
+    auc = Math.max(auc, 1-auc)
+    return auc.toFixed(2)
 }
