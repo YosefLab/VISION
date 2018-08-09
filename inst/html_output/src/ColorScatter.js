@@ -161,6 +161,7 @@ ColorScatter.prototype.setData = function(points, isFactor,
 
     } else if(cvals[0] !== null) {
 
+        cvals = cvals.filter(cv => cv !== "NA")
         cvals.sort(d3.ascending); // Needed for quantile
         var low, high, mid;
         if(full_color_range){
@@ -203,7 +204,11 @@ ColorScatter.prototype.setData = function(points, isFactor,
     // Compute colors for all points, add to points[n][4]
     var self = this
     this.points.forEach(function(x) {
-        x[4] = self.colorScale(x[2])
+        if (x[2] === "NA"){
+            x[4] = '#999999'
+        } else {
+            x[4] = self.colorScale(x[2])
+        }
     })
 }
 
