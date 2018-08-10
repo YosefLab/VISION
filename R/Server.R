@@ -478,6 +478,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         info[["pooled"]] <- object@pool
 
+        info[["ncells"]] <- nrow(object@metaData)
+
         result <- toJSON(
                          info,
                          force = TRUE, pretty = TRUE, auto_unbox = TRUE

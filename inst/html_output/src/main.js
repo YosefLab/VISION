@@ -288,6 +288,7 @@ window.onload = function()
 
         global_data.meta_sigs = info.meta_sigs
         global_status.pooled = info.pooled
+        global_status.ncells = info.ncells
     });
 
     // When it's all done, run this
@@ -312,10 +313,16 @@ window.onload = function()
     });
 
     window.addEventListener('hover-cells', function(e) {
-        var list_of_cell_ids = e.detail
-        right_content.hover_cells(list_of_cell_ids)
-        upper_left_content.hover_cells(list_of_cell_ids)
-        lower_left_content.hover_cells(list_of_cell_ids)
+
+        // Disable hover events if there are too many cells
+        // This is necessary for performance
+        var ncells = get_global_status('ncells')
+        if( ncells < 10000){
+            var list_of_cell_ids = e.detail
+            right_content.hover_cells(list_of_cell_ids)
+            upper_left_content.hover_cells(list_of_cell_ids)
+            lower_left_content.hover_cells(list_of_cell_ids)
+        }
     });
 
     window.addEventListener("select-cells", function(e) {
