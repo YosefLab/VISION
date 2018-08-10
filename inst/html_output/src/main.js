@@ -1,5 +1,5 @@
 var global_status = {};
-global_status.main_vis = ""; // Selected from 4 options on top
+global_status.main_vis = "clusters"; // Selected from 4 options on top
 /* Options are:
     'clusters'
     'pcannotator'
@@ -199,22 +199,25 @@ function set_global_status(update){
 
     $.when.apply($, right_content_promises).then(
         function() {
-            right_content.update(update);
-            right_content.setLoadingStatus(false);
+            right_content.update(update).then(() => {
+                right_content.setLoadingStatus(false);
+            })
         }
     );
 
     $.when.apply($, lower_left_content_promises).then(
         function() {
-            lower_left_content.update(update);
-            lower_left_content.setLoadingStatus(false);
+            lower_left_content.update(update).then(() => {
+                lower_left_content.setLoadingStatus(false);
+            })
         }
     );
 
     $.when.apply($, upper_left_content_promises).then(
         function() {
-            upper_left_content.update(update);
-            upper_left_content.setLoadingStatus(false);
+            upper_left_content.update(update).then(() => {
+                upper_left_content.setLoadingStatus(false);
+            })
         }
     );
 

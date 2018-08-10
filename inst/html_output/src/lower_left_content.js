@@ -77,8 +77,9 @@ Lower_Left_Content.prototype.update = function(updates)
     var self = this;
 
     // Updates passed to children components
+    var child_promises = []
     _.each(self.children, function(child){
-        child.update(updates)
+        child_promises.push(child.update(updates))
     });
 
     if('plotted_item_type' in updates){
@@ -110,6 +111,8 @@ Lower_Left_Content.prototype.update = function(updates)
         }
 
     }
+
+    return $.when.apply($, child_promises)
 }
 
 Lower_Left_Content.prototype.hover_cells = function()
@@ -398,7 +401,7 @@ Cell_Info.prototype.update = function(updates)
 
     var selected_cell = updates['selected_cell']
 
-    api.cell.meta(selected_cell).then(result => {
+    return api.cell.meta(selected_cell).then(result => {
         self.cell_id_span.text(selected_cell)
 
         // Rebuild meta-data table

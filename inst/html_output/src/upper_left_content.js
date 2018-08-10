@@ -66,9 +66,14 @@ Upper_Left_Content.prototype.init = function()
 Upper_Left_Content.prototype.update = function(updates)
 {
     // Updates passed to children components
+
+    var child_promises = []
+
     _.each(this.children, function(child){
-        child.update(updates)
+        child_promises.push(child.update(updates))
     });
+
+    return $.when.apply($, child_promises)
 
 }
 

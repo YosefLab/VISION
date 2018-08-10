@@ -109,7 +109,7 @@ Right_Content.prototype.update = function(updates)
         ('colorScatterOption' in updates) ||
         ('selected_cluster' in updates);
 
-    if (!needsUpdate) return;
+    if (!needsUpdate) return $.Deferred().resolve().promise()
 
     var main_vis = get_global_status('main_vis');
 
@@ -155,9 +155,10 @@ Right_Content.prototype.update = function(updates)
         } else {
             $('#plot-subtitle-latent').show()
         }
-
-
     }
+
+    // Need to return a promise
+    return $.Deferred().resolve().promise()
 
 }
 
