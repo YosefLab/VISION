@@ -311,9 +311,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       }) %>%
       get("/PearsonCorr/Normal", function(req, res, err) {
 
-          sigs <- colnames(object@sigScores)
-
           pc <- object@PCAnnotatorData@pearsonCorr[, 1:10]
+          sigs <- rownames(pc)
 
         return(VISION:::pearsonCorrToJSON(pc, sigs))
       }) %>%

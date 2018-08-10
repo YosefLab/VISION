@@ -523,7 +523,6 @@ clusterSigScores <- function(object) {
 #'
 #' Populations the PCAnnotatorData slot of the VISION object
 #'
-#' @importFrom Hmisc rcorr
 #' @param object the VISION object
 #' @return pearsonCorr numeric matrix N_Signatures x N_PCs
 calculatePearsonCorr <- function(object){
@@ -549,8 +548,14 @@ calculatePearsonCorr <- function(object){
     lapply(1:ncol(latentSpace), function(j) {
                ss <- computedSigMatrix[, i];
                pc <- latentSpace[, j];
-               pc_result <- rcorr(ss, pc, type = "pearson")
-               return(pc_result[[1]][1, 2])
+               suppressWarnings({
+                   pc_result <- cor.test(ss, pc)
+               })
+               if (is.na(pc_result$estimate)) {  # happens is std dev is 0 for a sig
+                   return(0)
+               } else {
+                   return(pc_result$estimate)
+               }
     })
   })
 
