@@ -76,6 +76,32 @@ Array.prototype.argSort = function()
     return out;
 };
 
+Array.prototype.argMin = function()
+{
+    var min = Infinity
+    var min_i = -1
+    for(var i = 0; i < this.length; i++){
+        if(this[i] < min){
+            min = this[i]
+            min_i = i
+        }
+    }
+    return min_i;
+};
+
+Array.prototype.argMax = function()
+{
+    var max = -Infinity
+    var max_i = -1
+    for(var i = 0; i < this.length; i++){
+        if(this[i] > max){
+            max = this[i]
+            max_i = i
+        }
+    }
+    return max_i;
+};
+
 var detect_browser_scrollbar_width = (function()
 {
     var _width = -1; // cache the value so its only calculated once

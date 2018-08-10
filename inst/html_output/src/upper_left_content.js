@@ -80,8 +80,21 @@ Upper_Left_Content.prototype.update = function(updates)
 Upper_Left_Content.prototype.select_default_sig = function()
 {
     var update = {}
-    update['plotted_item'] = this.sig_table.get_top_sig()
-    update['plotted_item_type'] = 'signature'
+
+    var plotted_item = this.sig_table.get_top_sig()
+
+    var meta_sigs = get_global_data('meta_sigs')
+
+    var item_type
+    if (meta_sigs.indexOf(plotted_item) > -1) {
+        item_type = 'meta'
+    } else {
+        item_type = 'signature'
+    }
+
+    update['plotted_item']  = plotted_item
+    update['plotted_item_type'] = item_type
+
     return update;
 }
 
@@ -472,9 +485,9 @@ Signature_Table.prototype.update = function(updates)
 Signature_Table.prototype.get_top_sig = function()
 {
     var matrix = this.matrix;
-    var s_i = matrix.pvals.map(function(e){return e[0];}).argSort();
+    var s_i = matrix.zscores.map(function(e){return e[0];}).argMax();
 
-    return matrix.sig_labels[s_i[0]]
+    return matrix.sig_labels[s_i]
 }
 
 
