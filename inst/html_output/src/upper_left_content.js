@@ -357,7 +357,7 @@ Signature_Table.prototype.render = function()
                     tooltip_str = "corr = " + d.zscore.toFixed(2)
                 } else {
                     if(main_vis === 'clusters' && i > 0)
-                        tooltip_str = "AUC=" + _auc_format(d.zscore) + "p<" + _pval_format(d.pval)
+                        tooltip_str = "AUC=" + _auc_format(d.zscore) + " p<" + _pval_format(d.pval)
                     else
                         tooltip_str = "z=" + d.zscore.toFixed(2) + ", p<" + _pval_format(d.pval)
                 }
@@ -1092,13 +1092,13 @@ function createTooltip(popper, node, text) {
     inner_node.textContent = text
 
     popper.reference = node;
-    popper.update();
+    popper.scheduleUpdate();
 }
 
 function destroyTooltip(popper) {
     var node = document.querySelector('body #hidden-node')
     popper.reference = node;
-    popper.update();
+    popper.scheduleUpdate();
 }
 
 function _pval_format(x) {

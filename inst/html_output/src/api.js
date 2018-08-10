@@ -44,13 +44,17 @@ var api = (function(){
     output.signature.scores = function(sig_name){
         var query = prefix.concat("Signature/Scores/")
         query = query.concat(encodeURI(sig_name))
-        return $.ajax(query, {dataType: "json"}).then(x => x)
+        return $.ajax(query, {dataType: "json"}).then(x => {
+            return _.fromPairs(_.zip(x['cells'], x['values']))
+        })
     }
 
     output.signature.meta = function(meta_name){
         var query = prefix.concat("Signature/Meta/")
         query = query.concat(encodeURI(meta_name))
-        return $.ajax(query, {dataType: "json"}).then(x => x)
+        return $.ajax(query, {dataType: "json"}).then(x => {
+            return _.fromPairs(_.zip(x['cells'], x['values']))
+        })
     }
 
     output.signature.expression = function(sig_name){
@@ -124,7 +128,9 @@ var api = (function(){
         var query = prefix.concat("Clusters/")
         query = query.concat(cluster_variable)
         query = query.concat("/Cells")
-        return $.ajax(query, {dataType: "json"}).then(x => x)
+        return $.ajax(query, {dataType: "json"}).then(x => {
+            return _.fromPairs(_.zip(x['cells'], x['values']))
+        })
     }
 
     output.clusters.list = function() {
@@ -222,7 +228,9 @@ var api = (function(){
     output.expression.gene = function(gene_name) {
         var query = prefix.concat("Expression/Gene/");
         query = query.concat(encodeURI(gene_name));
-        return $.ajax(query, {dataType: "json"}).then(x => x)
+        return $.ajax(query, {dataType: "json"}).then(x => {
+            return _.fromPairs(_.zip(x['cells'], x['values']))
+        })
     }
 
     output.expression.genes = {}

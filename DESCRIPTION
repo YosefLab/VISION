@@ -28,6 +28,8 @@ Imports:
 	utils,
 	vegan,
 	wordspace
+Suggests:
+    gzmem
 LinkingTo: Rcpp
 License: Artistic-2.0
 Encoding: UTF-8

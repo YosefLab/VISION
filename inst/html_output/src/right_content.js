@@ -184,8 +184,9 @@ Right_Content.prototype.draw_sigvp = function(autoZoom) {
     var projection = get_global_data('sig_projection_coordinates')
     var values = get_global_data('plotted_values')
 
-    var isFactor = (typeof(_.values(values)[0]) === 'string') &&
-                   (_.values(values)[0] !== "NA")
+    var sample_value = _.values(values)[0]
+    var isFactor = (typeof(sample_value) === 'string') &&
+                   (sample_value !== "NA")
 
     var full_color_range, diverging_colormap
     if(item_type === "gene" || item_type === 'signature-gene'){

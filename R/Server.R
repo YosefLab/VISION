@@ -69,11 +69,14 @@ expressionToJSON <- function(expr, geneList=NULL, zscore=FALSE) {
 #' @importFrom jsonlite toJSON
 #' @param ss single-column dataframe with scores for a single signature
 #' @return Signature scores list to JSON, with names of each entry that of the list names
-sigScoresToJSON <- function(ss) {
+sigScoresToJSON <- function(names, values) {
 
-    s <- as.list(ss[[1]])
-    names(s) <- rownames(ss)
-    json <- toJSON(s, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
+    out <- list(cells = names, values = values)
+
+    json <- toJSON(
+                     out,
+                     force = TRUE, pretty = TRUE, auto_unbox = TRUE
+                     )
 
     return(json)
 }
@@ -142,6 +145,21 @@ newAnalysis <- function(nfp) {
     saveAndViewResults(analyze(nfp))
 }
 
+compressJSONResponse <- function(json, res, req){
+
+    res$set_header("Content-Type", "application/json")
+
+    if (requireNamespace("gzmem", quietly = TRUE) &&
+        !is.null(req$get_header("accept_encoding")) &&
+        grepl("gzip", req$get_header("accept_encoding"), ignore.case = TRUE)
+   ){
+        res$set_header("Content-Encoding", "gzip")
+        res$body <- gzmem::mem_compress(charToRaw(json), format = "gzip")
+    } else {
+        res$body <- json
+    }
+}
+
 #' Lanch the server
 #' @importFrom jsonlite fromJSON
 #' @importFrom utils browseURL URLdecode stack
@@ -159,6 +177,11 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
     }
     if (is.null(host)) {
         host <- "127.0.0.1"
+    }
+
+    # Check for gzmem
+    if (!requireNamespace("gzmem", quietly = TRUE)){
+        warning("Package 'gzmem' not installed:\n    For faster network communication install gzmem with command: \n    > devtools::install_github(\"hrbrmstr/gzmem\")")
     }
 
     # Load the static file whitelist
@@ -179,22 +202,26 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       get("/Signature/Scores/(?<sig_name1>.*)", function(req, res, err) {
         sigMatrix <- object@sigScores
         name <- URLdecode(req$params$sig_name1)
-        out <- "Signature does not exist!"
         if (name %in% colnames(sigMatrix)) {
-          ss <- sigMatrix[, name, drop = FALSE]
-          ss <- as.data.frame(ss)
-          out <- VISION:::sigScoresToJSON(ss)
+            values <- sigMatrix[, name]
+            names <- rownames(sigMatrix)
+            out <- VISION:::sigScoresToJSON(names, values)
+            compressJSONResponse(out, res, req)
+        } else {
+            return("Signature does not exist!")
         }
-        return(out)
       }) %>%
       get("/Signature/Meta/(?<sig_name3>.*)", function(req, res, err) {
         metaData <- object@metaData
         name <- URLdecode(req$params$sig_name3)
-        out <- "Signature does not exist!"
         if (name %in% colnames(metaData)) {
-          out <- VISION:::sigScoresToJSON(metaData[name])
+            names <- rownames(metaData)
+            values <- metaData[[name]]
+            out <- VISION:::sigScoresToJSON(names, values)
+            compressJSONResponse(out, res, req)
+        } else {
+            return("Signature does not exist!")
         }
-        return(out)
       }) %>%
       get("/Signature/Info/(?<sig_name2>.*)", function(req, res, err){
         signatures <- object@sigData
@@ -210,16 +237,16 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         all_names <- vapply(object@sigData, function(x){ return(x@name) }, "")
         name <- URLdecode(req$params$sig_name4)
         index <- match(name, all_names)
-        if(is.na(index)){
-            out <- "Signature does not exist!"
+        if (is.na(index)){
+            return("Signature does not exist!")
         }
         else{
             sig <- object@sigData[[index]]
             genes <- names(sig@sigDict)
             expMat <- object@exprData
-            return(VISION:::expressionToJSON(expMat, genes, zscore=TRUE))
+            out <- VISION:::expressionToJSON(expMat, genes, zscore=TRUE)
+            compressJSONResponse(out, res, req)
         }
-        return(out)
       }) %>%
       get("/FilterGroup/SigClusters/Normal", function(req, res, err) {
 
@@ -240,7 +267,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       get("/Projections/(?<proj_name1>.*)/coordinates", function(req, res, err) {
         proj <- URLdecode(req$params$proj_name1)
         out <- VISION:::coordinatesToJSON(object@Projections[[proj]])
-        return(out)
+        compressJSONResponse(out, res, req)
       }) %>%
       get("/Projections/list", function(req, res, err) {
         proj_names <- names(object@Projections)
@@ -272,8 +299,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         coords <- object@TrajectoryProjections[[proj]]@pData
 
         out <- VISION:::coordinatesToJSON(coords)
+        compressJSONResponse(out, res, req)
 
-        return(out)
       }) %>%
       get("/Tree/SigProjMatrix/Normal", function(req, res, err) {
 
@@ -306,8 +333,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         pc <- object@latentSpace
         out <- VISION:::coordinatesToJSON(pc)
+        compressJSONResponse(out, res, req)
 
-        return(out)
       }) %>%
       get("/PearsonCorr/Normal", function(req, res, err) {
 
@@ -348,7 +375,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
                          force=TRUE, pretty=TRUE
                          )
 
-        return(result)
+        compressJSONResponse(result, res, req)
 
       }) %>%
       get("/Expression/Gene/(?<gene_name2>.*)", function(req, res, err) {
@@ -356,12 +383,14 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         gene_name <- URLdecode(req$params$gene_name2)
         data <- log2(object@unnormalizedData[gene_name, ] + 1)
 
+        out <- list(cells = names(data), values = data)
+
         result <- toJSON(
-                         as.list(data),
+                         out,
                          force = TRUE, pretty = TRUE, auto_unbox = TRUE
                          )
 
-        return(result)
+        compressJSONResponse(result, res, req)
 
       }) %>%
       get("/Clusters/list", function(req, res, err) {
@@ -373,11 +402,13 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       get("/Clusters/(?<cluster_variable1>.*)/Cells", function(req, res, err) {
         metaData <- object@metaData
         cluster_variable <- URLdecode(req$params$cluster_variable1)
-        out <- "No Clusters!"
         if (cluster_variable %in% colnames(metaData)) {
-          out <- VISION:::sigScoresToJSON(metaData[cluster_variable])
+            out <- VISION:::sigScoresToJSON(names = rownames(metaData),
+                                            values = metaData[[cluster_variable]])
+            compressJSONResponse(out, res, req)
+        } else {
+            return("No Clusters!")
         }
-        return(out)
       }) %>%
       get("/Clusters/(?<cluster_variable2>.*)/SigProjMatrix/Normal", function(req, res, err) {
 
@@ -489,7 +520,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
          expr = unname(as.list(object@initialExprData[gene_key, cells]))
 
          out <- toJSON(expr, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
-         return(out)
+         compressJSONResponse(out, res, req)
 
      }) %>%
      post("/Pool/Cells", function(req, res, err) {
@@ -547,5 +578,5 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
           }
       }) %>%
       simple_error_handler_json() %>%
-      serve_it(host=host, port=port)
+      serve_it(host = host, port = port)
 }
