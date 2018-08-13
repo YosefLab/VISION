@@ -28,8 +28,6 @@ Imports:
 	utils,
 	vegan,
 	wordspace
-Suggests:
-    gzmem
 LinkingTo: Rcpp
 License: Artistic-2.0
 Encoding: UTF-8
@@ -43,7 +41,8 @@ Suggests:
 	rmarkdown,
 	SummarizedExperiment,
     testthat,
-    ggplot2
+    ggplot2,
+    gzmem
 biocViews:
 	GeneExpression,
 	RNASeq,

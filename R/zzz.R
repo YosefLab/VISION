@@ -14,6 +14,7 @@
 #' @import methods
 #' @import jug
 #' @import loe
+#' @import Matrix
 #' @useDynLib VISION
 #' @name VISION
 NULL

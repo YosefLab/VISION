@@ -324,7 +324,7 @@ applytSNE30 <- function(exprData) {
 
 #' Performs ISOMap on data
 #'
-#' @importFrom RDRToolbox Isomap
+#' @importFrom vegan isomap
 #'
 #' @param exprData Expression data, NUM_GENES x NUM_SAMPLES
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
