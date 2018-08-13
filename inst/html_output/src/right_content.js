@@ -241,8 +241,6 @@ Right_Content.prototype.draw_sigvp = function(autoZoom) {
 
     if (autoZoom){
         self.scatter.autoZoom();
-    } else {
-        self.scatter.redraw(true)();
     }
 }
 
@@ -346,8 +344,6 @@ Right_Content.prototype.draw_tree = function(autoZoom) {
 
             if (autoZoom){
                 self.scatter.autoZoom();
-            } else {
-                self.scatter.redraw(true)();
             }
 
         });
@@ -389,7 +385,6 @@ Right_Content.prototype.draw_pca = function() {
 
     self.scatter.clearData()
     self.scatter.setData(points, isFactor);
-    self.scatter.redraw(true)();
 
 }
 
