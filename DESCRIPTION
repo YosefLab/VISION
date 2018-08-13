@@ -11,12 +11,12 @@ Description: VISION provides functional interpretation of single cell RNA-seq (s
 Depends: R (>= 3.4)
 Imports:
 	fastICA,
-	Hmisc,
 	igraph,
 	jsonlite,
 	jug,
 	loe,
 	logging,
+    parallel,
 	Matrix,
 	matrixStats,
 	mclust,
