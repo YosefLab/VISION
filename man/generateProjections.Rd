@@ -4,18 +4,15 @@
 \alias{generateProjections}
 \title{generate projections}
 \usage{
-generateProjections(object, lean = object@lean)
+generateProjections(object)
 }
 \arguments{
-\item{object}{the FastProject object}
-
-\item{lean}{if TRUE run a lean simulation. Else more robust pipeline
-initiated. Default is FALSE}
+\item{object}{the VISION object}
 }
 \value{
-the FastProject object with values set for the analysis results
+the VISION object with values set for the analysis results
 }
 \description{
 Generates 2-dimensional representations of the expression matrix
-Populates the 'Projections' slot on the FastProject object
+Populates the 'Projections' slot on the VISION object
 }

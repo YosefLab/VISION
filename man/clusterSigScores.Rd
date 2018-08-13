@@ -2,16 +2,16 @@
 % Please edit documentation in R/AnalysisFunctions.R
 \name{clusterSigScores}
 \alias{clusterSigScores}
-\title{Compute KS Test, for all factor meta data.  One level vs all others}
+\title{Compute Ranksums Test, for all factor meta data.  One level vs all others}
 \usage{
 clusterSigScores(object)
 }
 \arguments{
-\item{object}{the FastProject object}
+\item{object}{the VISION object}
 }
 \value{
-the FastProject object with values set for the analysis results
+the VISION object with values set for the analysis results
 }
 \description{
-Compute KS Test, for all factor meta data.  One level vs all others
+Compute Ranksums Test, for all factor meta data.  One level vs all others
 }

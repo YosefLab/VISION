@@ -9,7 +9,7 @@ calcSignatureScores(object, sigData = object@sigData,
   sig_score_method = object@sig_score_method)
 }
 \arguments{
-\item{object}{the FastProject object}
+\item{object}{the VISION object}
 
 \item{sigData}{a list of Signature objects for which to compute the scores}
 
@@ -21,7 +21,7 @@ matrix before calculating signature scores}
 \item{sig_score_method}{the scoring method to use}
 }
 \value{
-the FastProject object, with signature score slots populated
+the VISION object, with signature score slots populated
 }
 \description{
 For each signature-cell pair, compute a score that captures the level of

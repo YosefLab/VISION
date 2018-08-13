@@ -7,7 +7,7 @@
 calculateSignatureBackground(object, num)
 }
 \arguments{
-\item{object}{the FastProject object}
+\item{object}{the VISION object}
 
 \item{num}{the number of signatures to generate}
 }

@@ -4,7 +4,7 @@
 \alias{sigScoresToJSON}
 \title{Converts row of sigantures score matrix to JSON}
 \usage{
-sigScoresToJSON(ss)
+sigScoresToJSON(names, values)
 }
 \arguments{
 \item{ss}{single-column dataframe with scores for a single signature}

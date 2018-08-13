@@ -7,10 +7,10 @@
 clusterCells(object)
 }
 \arguments{
-\item{object}{the FastProject object for which to cluster the cells}
+\item{object}{the VISION object for which to cluster the cells}
 }
 \value{
-the FastProject object modifed as described above
+the VISION object modifed as described above
 }
 \description{
 Results of this are stored as a new variabe in the object's metaData

@@ -7,7 +7,7 @@
 computeLatentSpace(object, projection_genes = NULL, perm_wPCA = NULL)
 }
 \arguments{
-\item{object}{the FastProject object for which compute the latent space}
+\item{object}{the VISION object for which compute the latent space}
 
 \item{projection_genes}{character vector of gene names to use for projections}
 
@@ -15,7 +15,7 @@ computeLatentSpace(object, projection_genes = NULL, perm_wPCA = NULL)
 number of components. Default is FALSE.}
 }
 \value{
-the FastProject with latentSpace populated
+the VISION with latentSpace populated
 }
 \description{
 Computes the latent space of the expression matrix using PCA

@@ -7,11 +7,11 @@
 calculatePearsonCorr(object)
 }
 \arguments{
-\item{object}{the FastProject object}
+\item{object}{the VISION object}
 }
 \value{
 pearsonCorr numeric matrix N_Signatures x N_PCs
 }
 \description{
-Populations the PCAnnotatorData slot of the FastProject object
+Populations the PCAnnotatorData slot of the VISION object
 }

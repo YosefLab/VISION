@@ -8,12 +8,12 @@ the overall signal in the data}
 poolCells(object, cellsPerPartition = object@cellsPerPartition)
 }
 \arguments{
-\item{object}{the FastProject object for which to cluster the cells}
+\item{object}{the VISION object for which to cluster the cells}
 
 \item{cellsPerPartition}{the minimum number of cells to put into a cluster}
 }
 \value{
-the FastProject with pooled cells
+the VISION with pooled cells
 }
 \description{
 create micro-clusters that reduce noise and complexity while maintaining

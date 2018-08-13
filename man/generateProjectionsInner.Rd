@@ -5,7 +5,7 @@
 \title{Projects data into 2 dimensions using a variety of linear and non-linear methods.}
 \usage{
 generateProjectionsInner(expr, latentSpace, projection_genes = NULL,
-  lean = FALSE)
+  projection_methods = NULL)
 }
 \arguments{
 \item{expr}{numeric matrix of gene expression}
@@ -14,8 +14,7 @@ generateProjectionsInner(expr, latentSpace, projection_genes = NULL,
 
 \item{projection_genes}{character vector of gene names to use for projections}
 
-\item{lean}{If TRUE, diminished number of algorithms applied,
-if FALSE all algorithms applied. Default is FALSE}
+\item{projection_methods}{character vector of projection methods to use}
 }
 \value{
 list of Projection objects

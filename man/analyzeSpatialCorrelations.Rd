@@ -7,12 +7,12 @@
 analyzeSpatialCorrelations(object, signatureBackground = NULL)
 }
 \arguments{
-\item{object}{the FastProject object}
+\item{object}{the VISION object}
 
 \item{signatureBackground}{as returned by `calculateSignatureBackground`}
 }
 \value{
-the FastProject object with values set for the analysis results
+the VISION object with values set for the analysis results
 }
 \description{
 This is the main analysis function. For each filtered dataset, a set of
