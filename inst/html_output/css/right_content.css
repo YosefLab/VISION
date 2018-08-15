@@ -76,37 +76,6 @@
     flex-grow: 1;
 }
 
-#scatter-div svg {
-    font: 10px sans-serif;
-    /*background-color: rgba(255,255,255,0);*/
-}
-
-#scatter-div rect {
-    fill: #eee;
-}
-
-#scatter-div svg circle.scatter{
-    fill-opacity: 0.8;
-}
-
-#scatter-div svg circle.scatter.not-selected{
-    fill-opacity: 0.4;
-}
-
-#scatter-div svg circle.scatter.point-faded{
-    fill-opacity: 0.3;
-}
-
-#scatter-div svg circle.scatter.point-hover{
-    fill-opacity: .8;
-}
-
-#scatter-div .axis path,
-#scatter-div .axis line {
-    fill: none;
-    stroke: #fff
-}
-
 /* Classes for the scatter plot lasso */
 
 .lasso path {

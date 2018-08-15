@@ -327,7 +327,7 @@ window.onload = function()
 
     window.addEventListener("select-cells", function(e) {
 
-        var cells = Object.keys(e.detail);
+        var cells = e.detail;
         var update = {}
 
         if (cells.length == 0){

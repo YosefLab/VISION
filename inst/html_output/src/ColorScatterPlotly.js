@@ -23,37 +23,9 @@ ColorScatter.prototype.setData = function(points, isFactor,
     var circle_radius = this.pointsToRadius(points.length)
 
     var data = []; // Holds plotly traces
-    if(isFactor){
 
-        for (var j =0; j < 4; j+= 1){
-            var X = [],
-                Y = [],
-                id_sub = [],
-                n = 1000,
-                i;
-
-            for (i = 0; i < n; i += 1) {
-                X.push(points[i+n*j][0])
-                Y.push(points[i+n*j][1])
-                id_sub.push('ok')
-            }
-
-            var trace = {
-                x: X,
-                y: Y,
-                mode: "markers",
-                type: "scattergl",
-                text: id_sub,
-                name: j.toString(),
-                marker: {
-                    size: 4.2343,
-                }
-            }
-
-            data.push(trace)
-        }
-
-    } else if(isFactor) {
+    var showlegend = false
+    if(isFactor) {
         var c = _.map(points, p => p[2])
         var unique = d3.set(c).values();
         _.forEach(unique, level => {
@@ -74,6 +46,8 @@ ColorScatter.prototype.setData = function(points, isFactor,
             }
             data.push(trace)
         });
+
+        showlegend = true
 
     } else {
 
@@ -111,8 +85,11 @@ ColorScatter.prototype.setData = function(points, isFactor,
                 color: c,
                 cmin: low,
                 cmax: high,
+                showscale: true,
                 colorbar: {
-                    title: 'Colorbar'
+                    titleside: 'right', // default is 'top'
+                    thickness: 15, // pixels
+                    len: 0.5 //fraction of plot
                 },
                 colorscale: colorscale,
             },
@@ -123,7 +100,42 @@ ColorScatter.prototype.setData = function(points, isFactor,
 
     }
 
-    Plotly.react(this.parent, data)
+    var layout = {
+        hovermode: 'closest',
+        plot_bgcolor: '#eeeeee',
+        showlegend: showlegend,
+        legend: {
+            x: .8,
+            y: 1,
+            bgcolor: 'rgba(255, 255, 255, .6)',
+            bordercolor: 'rgba(0, 87, 82, .5)',
+            borderwidth: 1,
+        },
+        margin: {
+            l: 30,
+            r: 90,
+            t: 30,
+            b: 30,
+        }
+    };
+
+    var options = {
+        'scrollZoom': true,
+        'displaylogo': false,
+        'displayModeBar': true,
+        'modeBarButtonsToRemove': ['sendDataToCloud', 'hoverCompareCartesian', 'toggleSpikelines'],
+    }
+
+    Plotly.newPlot(this.parent, data, layout, options)
+
+    this.parent.on('plotly_click', function(data){
+
+        var point = data.points[0]
+        var cellId = point.text
+
+        var event = new CustomEvent('select-cells', {detail: [cellId]})
+        window.dispatchEvent(event);
+    })
 }
 
 ColorScatter.prototype.pointsToRadius = function(n_points)
@@ -145,7 +157,7 @@ ColorScatter.prototype.pointsToRadius = function(n_points)
         b = .748
     }
 
-    return Math.pow(a/n_points, b) * scale_factor
+    return Math.pow(a/n_points, b) * scale_factor * 2
 
 }
 
@@ -169,9 +181,3 @@ ColorScatter.prototype.autoZoom = function() {
 ColorScatter.prototype.hover_cells = function(cell_ids) {
 
 };
-
-
-
-ColorScatter.prototype.getSelected = function() {
-
-}

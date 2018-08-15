@@ -538,9 +538,3 @@ Right_Content.prototype.hover_cells = function(cell_ids)
 {
     this.scatter.hover_cells(cell_ids);
 }
-
-Right_Content.prototype.getSelectedCells = function() { 
-    
-    return this.scatter.getSelected();
-
-}	
