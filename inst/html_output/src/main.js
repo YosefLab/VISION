@@ -224,7 +224,7 @@ function set_global_status(update){
 
 }
 
-$(window).resize(function()
+window.onresize = function()
 {
     right_content.resize()
 
@@ -244,8 +244,7 @@ $(window).resize(function()
     //Render
     //drawHeat();
 
-
-});
+};
 
 window.onload = function()
 {

@@ -7,7 +7,7 @@ Right_Content.prototype.init = function()
 {
     var self = this;
     self.dom_node = $("#right-content");
-    self.scatter = new ColorScatter("#scatter-div", true, true);
+    self.scatter = new ColorScatter("#scatter-div");
 
     self.scatterColorOptions = $(self.dom_node).find("input[name='scatterColorButtons']")
 
@@ -237,7 +237,13 @@ Right_Content.prototype.draw_sigvp = function(autoZoom) {
     }
 
     self.scatter.clearData()
-    self.scatter.setData(points, isFactor, full_color_range, selected_cells, diverging_colormap);
+    self.scatter.setData({
+        points: points,
+        isFactor: isFactor,
+        full_color_range: full_color_range,
+        selected_cells: selected_cells,
+        diverging_colormap: diverging_colormap
+    });
 
     if (autoZoom){
         self.scatter.autoZoom();
@@ -339,8 +345,15 @@ Right_Content.prototype.draw_tree = function(autoZoom) {
             }
 
             self.scatter.clearData()
-            self.scatter.setData(points, isFactor, full_color_range, selected_cells, diverging_colormap)
-            self.scatter.setTreeData(tree_points, tree_adj)
+            self.scatter.setData({
+                points: points,
+                isFactor: isFactor,
+                full_color_range: full_color_range,
+                selected_cells: selected_cells,
+                diverging_colormap: diverging_colormap,
+                tree_points: tree_points,
+                tree_adj: tree_adj,
+            });
 
             if (autoZoom){
                 self.scatter.autoZoom();
@@ -384,20 +397,16 @@ Right_Content.prototype.draw_pca = function() {
     })
 
     self.scatter.clearData()
-    self.scatter.setData(points, isFactor);
-
+    self.scatter.setData({
+        points: points,
+        isFactor: isFactor
+    });
 }
 
 // Called when the window is resized
 Right_Content.prototype.resize = function() {
 
-    $('#scatter-div').children().remove();
-    this.scatter = new ColorScatter("#scatter-div", true, true);
-    this.update({
-        'plotted_item': '',
-        'main_vis': '',
-    }) // Tricks into replotting
-
+    this.scatter.resize()
 }
 
 Right_Content.prototype.getScatterColorOption = function() {
