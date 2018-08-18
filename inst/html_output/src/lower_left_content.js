@@ -149,8 +149,7 @@ Values_Plot.prototype.update = function(updates)
     }
 
     var plotted_values = _.values(get_global_data('plotted_values'))
-    var pos_only = item_type === 'gene'
-    drawDistChart(this.chart, plotted_values, pos_only)
+    drawDistChart(this.chart, plotted_values)
 }
 
 /*
@@ -642,208 +641,42 @@ Cell_Info.prototype.update = function()
 }
 */
 
-//Draw Dist Scatter
-function drawDistChart(parent_div, data, pos_only) {
+function drawDistChart(node, values) {
 
-    var isFactor = (typeof(data[0]) === "string") &&
-                   (data[0] !== "NA")
+    var isFactor = (typeof(values[0]) === "string") &&
+                   (values[0] !== "NA")
 
-    var hist;
-    if(pos_only !== undefined && pos_only){
-        hist = create_dist_positive(data)
-    } else if (isFactor) {
-        hist = create_dist_factor(data)
+    var data = []
+
+    if (!isFactor) {
+        data.push({
+            type: 'histogram',
+            x: values,
+            nbinsx: 20,
+        })
     } else {
-        hist = create_dist(data)
-    }
-
-    var x_vals = hist['centers']
-    var counts = hist['counts']
-
-    var x_axis_params = {
-        type: 'category',
-        categories: x_vals,
-        tick: {
-            rotate: 75,
-            width: 100,
-        },
-        height: 100,
-    }
-
-    var c3_params = {
-        bindto: parent_div,
-        data: {
-            x: 'x',
-            columns: [
-                ['x'].concat(x_vals),
-                ['y'].concat(counts)
-            ],
-            type: 'bar'
-        },
-        bar: {
-            width: {
-                ratio: 0.8
-            }
-        },
-        axis: {
-            x: x_axis_params,
-            y: {
-                type: 'indexed',
-            }
-        },
-        legend: {
-            show: false
-        },
-        size: {
-            width: 400
-        },
-        padding: {
-            right: 30,
-        },
-    }
-
-    c3.generate(c3_params)
-}
-
-
-/* Creates the x/y values for a bar plot
- * on categorical variables
- */
-function create_dist_factor(data) {
-    var counts;
-    var centers;
-
-    if((typeof(data[0]) === "string") && (data[0] !== "NA")) // Then it's a factor
-    {
-        var count_hist = {}
-        data.forEach(function(x){
-            count_hist[x] = 0;
+        var valcounts = _.countBy(values)
+        var pairs = _.toPairs(valcounts)
+        data.push({
+            type: 'bar',
+            x: _.map(pairs, x => x[0]),
+            y: _.map(pairs, x => x[1]),
         })
-        data.forEach(function(x){
-            count_hist[x] = count_hist[x] + 1;
-        })
-        counts = []
-        centers = []
-        _.forEach(count_hist, function(value, key){
-            counts.push(value);
-            centers.push(key);
-        })
-
+    }
+    var layout = {
+        margin: {
+            l: 50,
+            r: 50,
+            t: 30,
+            b: 60,
+        },
+        bargap: .1,
+    }
+    var options = {
+        'displaylogo': false,
+        'displayModeBar': false,
+        'modeBarButtonsToRemove': ['sendDataToCloud', 'hoverCompareCartesian', 'toggleSpikelines'],
     }
 
-    return {'counts': counts, 'centers': centers}
-}
-
-
-/* Creates the x/y values for a bar plot
- * on numerical variables but truncate at zero
- */
-function create_dist_positive(data) {
-
-    var counts;
-    var centers;
-
-    var num_values = 10
-
-    // Need to filter out NA
-    var data_filtered = _.filter(data, x => x !== "NA")
-    var na_count = data.length - data_filtered.length
-    data = data_filtered
-
-    var data_true_min = Math.min.apply(null, data)
-    var data_min = Math.max(data_true_min, 0)
-    var data_max = Math.max.apply(null, data)
-
-    var bin_width = (data_max - data_min)/num_values
-
-    counts = Array.apply(Math, Array(num_values)).map(function() { return 0 });
-    centers = Array.apply(Math, Array(num_values)).map(function() { return 0 });
-
-    var low, high;
-    var formatFn = d3.format('.2n')
-    for (var i=0; i < num_values; i++) {
-        low = bin_width*i + data_min
-        high = bin_width*(i+1) + data_min
-
-        data.forEach(function(d) {
-            if (d >= low && d < high) {
-                counts[i] += 1;
-            }
-        });
-
-        centers[i] = '[' + formatFn(low) + ', ' + formatFn(high) + ')';
-    }
-
-
-    if(data_true_min < 0){ // Add a "< 0" category
-        low = -1e99
-        high = -1e-10
-        i = 0
-        var lessThenZeroCounts = 0;
-
-        data.forEach(function(d) {
-            if (d >= low && d < high) {
-                lessThenZeroCounts += 1;
-            }
-        });
-
-        counts = [lessThenZeroCounts].concat(counts)
-        centers = ["< 0"].concat(centers)
-    }
-
-    if(na_count > 0) { // Add a "NA" category
-        counts = [na_count].concat(counts)
-        centers = ["NA"].concat(centers)
-    }
-
-    return {'counts': counts, 'centers': centers}
-
-}
-
-
-/* Creates the x/y values for a bar plot
- * on numerical variables but truncate at zero
- */
-function create_dist(data) {
-
-    var counts;
-    var centers;
-
-    var num_values = 10
-
-    // Need to filter out NA
-    var data_filtered = _.filter(data, x => x !== "NA")
-    var na_count = data.length - data_filtered.length
-    data = data_filtered
-
-    var data_min = Math.min.apply(null, data)
-    var data_max = Math.max.apply(null, data)
-
-    var bin_width = (data_max - data_min)/num_values
-
-    counts = Array.apply(Math, Array(num_values)).map(function() { return 0 });
-    centers = Array.apply(Math, Array(num_values)).map(function() { return 0 });
-
-    var low, high;
-    var formatFn = d3.format('.2n')
-    for (var i=0; i < num_values; i++) {
-        low = bin_width*i + data_min
-        high = bin_width*(i+1) + data_min
-
-        data.forEach(function(d) {
-            if (d >= low && d < high) {
-                counts[i] += 1;
-            }
-        });
-
-        centers[i] = '[' + formatFn(low) + ', ' + formatFn(high) + ')';
-    }
-
-    if(na_count > 0) { // Add a "NA" category
-        counts = [na_count].concat(counts)
-        centers = ["NA"].concat(centers)
-    }
-
-    return {'counts': counts, 'centers': centers}
-
+    Plotly.newPlot(node, data, layout, options)
 }

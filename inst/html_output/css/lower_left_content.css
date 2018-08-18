@@ -23,6 +23,8 @@
 }
 
 #lower-left-content .tab-content > div.active{
+    display: flex;
+    flex-direction: column;
 }
 
 #lower-left-content .meta-table td:first-child{

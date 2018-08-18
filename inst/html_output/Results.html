@@ -4,18 +4,15 @@
     <meta charset="UTF-8">
     <title>VISION Report</title>
 
-    <link rel="stylesheet" href="thirdparty/c3/c3.css">
     <link rel="stylesheet" href="thirdparty/chosen/chosen.min.css">
     <link rel="stylesheet" href="thirdparty/bootstrap/bootstrap.css">
     <link rel="stylesheet" href="thirdparty/datatables/datatables.min.css">
 
     <script type="text/javascript" src="thirdparty/jquery/jquery-2.1.4.min.js"></script>
     <script type="text/javascript" src="thirdparty/d3/d3.min.js"></script>
-    <script type="text/javascript" src="thirdparty/c3/c3.min.js"></script>
     <script type="text/javascript" src="thirdparty/d3/d3tip.js"></script>
     <script type="text/javascript" src="thirdparty/jszip/jszip.min.js"></script>
     <script type="text/javascript" src="thirdparty/lodash/lodash.min.js"></script>
-    <script type="text/javascript" src="thirdparty/d3/D3-Lasso-Plugin/lasso.js"></script>
     <script type="text/javascript" src="thirdparty/chosen/chosen.jquery.min.js"></script>
     <script type="text/javascript" src="thirdparty/bootstrap/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="thirdparty/datatables/datatables.min.js"></script>
@@ -149,16 +146,14 @@
                 </div>
                 <div class="tab-content">
                     <div id="value-plot" class="tab-pane show active" role="tabpanel" aria-labelledby="ValuesButton">
-                        <table class='label-table' style='margin-left: 30px; margin-bottom: 20px;'>
+                        <table class='label-table' style='margin-left: 30px;'>
                             <tr style='font-size: 1.2em;'>
                                 <td></td>
                                 <td style="width: 100%;"><span id="values-title"></span></td>
                             </tr>
                         </table>
 
-                        <div style='display: flex; flex-direction: column; justify-content: space-around; flex-grow: 1'>
-                            <div id="dist-div" style="display: flex; flex-direction:column"></div>
-                        </div>
+                        <div id="dist-div" style="flex-grow: 1"></div>
                     </div>
                     <div id="sig-info-default" class="tab-pane show" role="tabpanel" aria-labelledby="SigInfoButton">
                         <table class='label-table' style='margin-left: 30px; margin-bottom: 20px; width: 250px;'>
