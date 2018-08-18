@@ -465,7 +465,6 @@ Right_Content.prototype.exportSigProj = function()
 
     var main_vis = get_global_status('main_vis')
 
-    var type = get_global_status('plotted_item_type')
     var plotted_item = get_global_status('plotted_item')
     var values = get_global_data('plotted_values')
 
@@ -495,51 +494,19 @@ Right_Content.prototype.exportSigProj = function()
     var scatter_csv_str = table.join("\n");
     zip.file("Scatter.txt", scatter_csv_str);
 
-    //Get the scatter plot and convert to a PNG
-    var svg = $(self.dom_node).find('#scatter-div').children('svg');
-    svg.attr("version", 1.1)
-        .attr("xmlns", "http://www.w3.org/2000/svg");
-    var svg2 = svgCopy(svg.get(0));
+    var zip_uri = "data:application/zip;base64," + zip.generate({type:"base64"});
 
-    var html_data = svg2.parentNode.innerHTML;
-    zip.file("Scatter.svg", html_data);
+    var a = document.createElement("a");
+    var proj_name;
+    if (main_vis === 'tree'){
+        proj_name = get_global_status('plotted_trajectory')
+    } else {
+        proj_name = get_global_status('plotted_projection')
+    }
 
-    var imgsrc = "data:image/svg+xml;base64," + btoa(html_data);
-
-    var image = new Image();
-    image.onload = function()
-    {
-        var canvas = document.createElement("canvas");
-        canvas.width = image.width;
-        canvas.height = image.height;
-        var context = canvas.getContext("2d");
-        context.drawImage(image, 0,0);
-
-        var canvasdata = canvas.toDataURL("image/png");
-        //Strip off the data URI portion
-        var scatter_png = canvasdata.substring(canvasdata.indexOf(",")+1);
-
-        //Take the result and stick it into a zip
-
-        zip.file("Scatter.png", scatter_png   , {base64: true});
-
-        var zip_uri = "data:application/zip;base64," + zip.generate({type:"base64"});
-
-        var a = document.createElement("a");
-        var proj_name;
-        if (main_vis === 'tree'){
-            proj_name = get_global_status('plotted_trajectory')
-        } else {
-            proj_name = get_global_status('plotted_projection')
-        }
-
-        a.download = plotted_item+"_"+proj_name+".zip";
-        a.href = zip_uri;
-        a.click();
-
-    };
-
-    image.setAttribute("src", imgsrc)
+    a.download = plotted_item+"_"+proj_name+".zip";
+    a.href = zip_uri;
+    a.click();
 
 }
 
