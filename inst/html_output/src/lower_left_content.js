@@ -295,7 +295,7 @@ function Sig_Heatmap()
     this.heatmap = null
     this.plotted_heatmap = {
         'sig_key': '',
-        'proj_key': '',
+        'cluster_var': '',
     }
 }
 
@@ -306,7 +306,7 @@ Sig_Heatmap.prototype.init = function()
 Sig_Heatmap.prototype.update = function(updates)
 {
     if( $(this.dom_node).hasClass('active') &&
-        'plotted_item' in updates &&
+        (('plotted_item' in updates) || ('cluster_var' in updates)) &&
         get_global_status('plotted_item_type') === 'signature' ){ // Or else we'll update for signature-gene
         this.drawHeat();
     }
@@ -332,6 +332,7 @@ Sig_Heatmap.prototype.drawHeat = function(){
     }
 
     var sig_key = get_global_status('plotted_item'); // assume it's a signature
+    var cluster_var = get_global_status('cluster_var'); // assume it's a signature
 
     var sig_info = get_global_data('sig_info');
 
@@ -341,6 +342,11 @@ Sig_Heatmap.prototype.drawHeat = function(){
 
     if (self.plotted_heatmap['sig_key'] !== sig_key){
         self.plotted_heatmap['sig_key'] = sig_key
+        need_plot = true;
+    }
+
+    if (self.plotted_heatmap['cluster_var'] !== cluster_var){
+        self.plotted_heatmap['cluster_var'] = cluster_var
         need_plot = true;
     }
 
