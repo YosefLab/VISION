@@ -262,7 +262,7 @@ Right_Content.prototype.draw_tree = function(autoZoom) {
                    (_.values(values)[0] !== "NA")
 
     var full_color_range, diverging_colormap
-    if(item_type === "gene"){
+    if(item_type === "gene" || item_type === "signature-gene"){
         $(self.dom_node).find("#plotted-value-option").hide()
         full_color_range = true
         diverging_colormap = false

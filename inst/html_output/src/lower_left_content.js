@@ -430,7 +430,11 @@ Cell_Info.prototype.update = function(updates)
         return
     }
 
-    var selected_cell = updates['selected_cell']
+    if(get_global_status('selection_type') !== 'cell'){
+        return
+    }
+
+    var selected_cell = updates['selected_cell'][0]
 
     return api.cell.meta(selected_cell).then(result => {
         self.cell_id_span.text(selected_cell)

@@ -22,7 +22,6 @@ global_status.cluster_var = ""; // which cluster variable are we using
 global_status.selected_cluster = ""; // which cell cluster should be clustered
 
 global_status.selected_cell = ""; // which cell(s) is/are currently selected
-global_status.selected_cells = []; // which cell(s) is/are currently selected
 global_status.selection_type = "none"; // either 'cell', or 'cells', or 'pool', or 'pools', or 'none'
 global_status.selection_name = "Selection"; // For plot legends
 
