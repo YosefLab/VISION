@@ -106,8 +106,7 @@ Right_Content.prototype.update = function(updates)
         ('plotted_projection' in updates) ||
         ('plotted_trajectory' in updates) ||
         ('plotted_pc' in updates) ||
-        ('colorScatterOption' in updates) ||
-        ('selected_cluster' in updates);
+        ('colorScatterOption' in updates);
 
     if (!needsUpdate) return $.Deferred().resolve().promise()
 

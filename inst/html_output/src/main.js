@@ -19,7 +19,6 @@ global_status.plotted_item = "";  // name of signature, meta or gene that is plo
 global_status.plotted_item_type = ""; // either 'signature', 'meta', 'gene', or 'signature-gene'
 
 global_status.cluster_var = ""; // which cluster variable are we using
-global_status.selected_cluster = ""; // which cell cluster should be clustered
 
 global_status.selected_cell = ""; // which cell(s) is/are currently selected
 global_status.selection_type = "none"; // either 'cell', or 'cells', or 'pool', or 'pools', or 'none'
@@ -75,12 +74,6 @@ function set_global_status(update){
     var right_content_promises = [];
     var lower_left_content_promises = [];
     var upper_left_content_promises = [];
-
-    // clear the selected cluster if we're changing main vis or changing cluster variables
-    if('main_vis' in update || 'cluster_var' in update) {
-        global_status['selected_cluster'] = ''
-        update['selected_cluster'] = ''
-    }
 
     right_content.setLoadingStatus(true);
     lower_left_content.setLoadingStatus(true);
