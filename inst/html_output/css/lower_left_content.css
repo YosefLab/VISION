@@ -37,6 +37,10 @@
     padding: 5px;
 }
 
+#lower-left-content #dist-div{
+    overflow: hidden;
+}
+
 #selected-cell-info .meta-table{
     margin-left: 80px
 }

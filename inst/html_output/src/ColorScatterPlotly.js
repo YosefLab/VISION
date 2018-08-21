@@ -5,11 +5,6 @@
 function ColorScatter(node)
 {
     this.node = $(node).get(0)
-    this.width = $(node).width()
-    this.height = $(node).height()
-}
-
-ColorScatter.prototype.clearData = function() {
 }
 
 /*
@@ -308,7 +303,9 @@ ColorScatter.prototype.pointsToRadius = function(n_points)
     // 6857        5          7
     // 67171       2.5        3.5
 
-    var scale_factor = Math.min(this.width, this.height)/790
+    var width = $(this.node).width()
+    var height = $(this.node).height()
+    var scale_factor = Math.min(width, height)/790
 
     var x = 1/n_points
     var circle_radius =
@@ -335,7 +332,15 @@ ColorScatter.prototype.hover_cells = function(cell_ids) {
 
 };
 
-ColorScatter.prototype.resize = function()
+ColorScatter.prototype.resize = _.debounce(_resize, 300)
+
+function _resize()
 {
-    Plotly.Plots.resize(this.node);
-};
+    var cell_count = _(this.node.data).map(x => x.x.length).sum()
+    var circle_radius = this.pointsToRadius(cell_count)
+    var update = {
+        'marker.size': circle_radius,
+    }
+    Plotly.restyle(this.node, update)
+    Plotly.Plots.resize(this.node)
+}

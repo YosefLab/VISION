@@ -227,6 +227,7 @@ function set_global_status(update){
 window.onresize = function()
 {
     right_content.resize()
+    lower_left_content.resize()
 
     /*
     if($('#heatmap-div').is(":visible"))

@@ -74,6 +74,7 @@
 
 #scatter-div {
     flex-grow: 1;
+    overflow: hidden; /* so it shrinks even when plot is too big */
 }
 
 /* Classes for the scatter plot lasso */

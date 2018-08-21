@@ -60,9 +60,25 @@ Lower_Left_Content.prototype.init = function()
     var selection_info_promise = selection_info.init();
 
     var self = this;
-    this.nav['sig_heatmap'].on('click', function()
+    this.nav['sig_heatmap'].on('shown.bs.tab', function()
     {
-        self.sig_heatmap.drawHeat()
+        if(self.sig_heatmap.needs_resize){
+            self.sig_heatmap.resize();
+        }
+        if(self.sig_heatmap.needs_plot){
+            self.sig_heatmap.drawHeat()
+        }
+    })
+    this.nav['values'].on('shown.bs.tab', function()
+    {
+        // Need to delay resize because it doesn't work
+        // if the window is hidden
+        if(self.values_plot.needs_resize){
+            self.values_plot.resize()
+        }
+        if(self.values_plot.needs_plot){
+            self.values_plot.plot()
+        }
     })
 
     this.setLoadingStatus = createLoadingFunction(
@@ -70,7 +86,8 @@ Lower_Left_Content.prototype.init = function()
     );
 
     return $.when(sig_info_promise, values_plot_promise,
-        sig_heatmap_promise, cell_info_promise);
+        sig_heatmap_promise, cell_info_promise,
+        selection_info_promise);
 }
 
 Lower_Left_Content.prototype.update = function(updates)
@@ -145,11 +162,30 @@ Lower_Left_Content.prototype.hover_cells = function()
 {
 }
 
+
+Lower_Left_Content.prototype._resize = function(){
+    if($(this.nav['values']).hasClass('active')) {
+        this.values_plot.resize()
+    } else {
+        this.values_plot.needs_resize = true
+    }
+
+    if($(this.nav['sig_heatmap']).hasClass('active')) {
+        this.sig_heatmap.resize()
+    } else {
+        this.sig_heatmap.needs_resize = true
+    }
+}
+
+Lower_Left_Content.prototype.resize = _.debounce(Lower_Left_Content.prototype._resize, 300)
+
 function Values_Plot()
 {
     this.dom_node = document.getElementById("value-plot");
     this.title = $(this.dom_node).find('#values-title').get(0);
     this.chart = $(this.dom_node).find('#dist-div').get(0);
+    this.needs_resize = false
+    this.needs_plot = false
 }
 
 Values_Plot.prototype.init = function()
@@ -161,7 +197,11 @@ Values_Plot.prototype.update = function(updates)
     var item_type = get_global_status('plotted_item_type')
     var item = get_global_status('plotted_item')
 
-    if(!('plotted_item'in updates)){
+    if(!(
+        'plotted_item' in updates ||
+        'selected_cell' in updates ||
+        'selection_type' in updates
+    )){
         return;
     }
 
@@ -174,8 +214,37 @@ Values_Plot.prototype.update = function(updates)
         $(this.title).html(item)
     }
 
-    var plotted_values = _.values(get_global_data('plotted_values'))
-    drawDistChart(this.chart, plotted_values)
+    if($(this.dom_node).hasClass('active')){
+        this.plot()
+    } else {
+        this.needs_plot = true;
+    }
+}
+
+Values_Plot.prototype.plot = function()
+{
+    var plotted_values_object = get_global_data('plotted_values')
+
+    if(get_global_status('selection_type') === 'cells' ||
+        get_global_status('selection_type') === 'pools'){
+
+        var selected_cells = get_global_status('selected_cell')
+        var selection_name = get_global_status('selection_name')
+        var selected_values = _.values(_.pick(plotted_values_object, selected_cells))
+        var remainder_values = _.values(_.omit(plotted_values_object, selected_cells))
+        drawDistChartSelection(this.chart, selected_values, remainder_values, selection_name)
+    } else {
+        var plotted_values = _.values(plotted_values_object)
+        drawDistChart(this.chart, plotted_values)
+    }
+
+    this.needs_plot = false
+}
+
+Values_Plot.prototype.resize = function()
+{
+    Plotly.Plots.resize(this.chart)
+    this.needs_resize = false
 }
 
 /*
@@ -319,10 +388,9 @@ function Sig_Heatmap()
 {
     this.dom_node = document.getElementById('sig-info-cluster')
     this.heatmap = null
-    this.plotted_heatmap = {
-        'sig_key': '',
-        'cluster_var': '',
-    }
+    this.plotted_signature = ""
+    this.needs_resize = false
+    this.needs_plot = true
 }
 
 Sig_Heatmap.prototype.init = function()
@@ -331,12 +399,38 @@ Sig_Heatmap.prototype.init = function()
 
 Sig_Heatmap.prototype.update = function(updates)
 {
-    if( $(this.dom_node).hasClass('active') &&
-        (('plotted_item' in updates) || ('cluster_var' in updates)) &&
-        get_global_status('plotted_item_type') === 'signature' ){ // Or else we'll update for signature-gene
-        this.drawHeat();
+    var needs_update_sig = ('plotted_item' in updates) &&
+        (get_global_status('plotted_item_type') === 'signature')
+
+    var needs_update_cluster_var = 'cluster_var' in updates
+
+    // Or else we'll update for signature-gene
+    if(needs_update_sig){
+        this.plotted_signature = get_global_status("plotted_item")
     }
 
+    var needs_update = needs_update_sig || needs_update_cluster_var
+
+    if(needs_update){
+        if($(this.dom_node).hasClass('active')) {
+            this.drawHeat()
+        } else {
+            this.needs_plot = true;
+        }
+    }
+
+}
+
+Sig_Heatmap.prototype.initHeat = function(){
+    var self = this;
+    var heatmap_div = $(self.dom_node).find('#heatmap-div')
+    var heatmap_width = heatmap_div.parent().parent().width();
+    var heatmap_height = heatmap_div.parent().parent().height()-40;
+
+    self.heatmap = new HeatMap('#heatmap-div', heatmap_width, heatmap_height);
+    self.heatmap.click = function(gene, index, value){
+        _setSignatureGene(gene);
+    }
 }
 
 Sig_Heatmap.prototype.drawHeat = function(){
@@ -348,37 +442,11 @@ Sig_Heatmap.prototype.drawHeat = function(){
 
     if( heatmap_div.children('svg').length === 0)
     {
-        var heatmap_width = heatmap_div.parent().parent().width();
-        var heatmap_height = heatmap_div.parent().parent().height()-40;
-
-        self.heatmap = new HeatMap('#heatmap-div', heatmap_width, heatmap_height);
-        self.heatmap.click = function(gene, index, value){
-            _setSignatureGene(gene);
-        }
+        self.initHeat()
     }
 
-    var sig_key = get_global_status('plotted_item'); // assume it's a signature
-    var cluster_var = get_global_status('cluster_var'); // assume it's a signature
-
+    var sig_key = this.plotted_signature // kept current by 'update' method
     var sig_info = get_global_data('sig_info');
-
-    // plotted heatmap is based on sig_key
-    // check if we are already showing the right heatmap and don't regenerate
-    var need_plot = false;
-
-    if (self.plotted_heatmap['sig_key'] !== sig_key){
-        self.plotted_heatmap['sig_key'] = sig_key
-        need_plot = true;
-    }
-
-    if (self.plotted_heatmap['cluster_var'] !== cluster_var){
-        self.plotted_heatmap['cluster_var'] = cluster_var
-        need_plot = true;
-    }
-
-    if(!need_plot){
-        return $.when(true);
-    }
 
     heatmap_div.addClass('loading')
 
@@ -407,9 +475,19 @@ Sig_Heatmap.prototype.drawHeat = function(){
                 gene_signs,
                 sample_labels);
 
+            self.needs_plot = false
+
         }).always(function() {
             heatmap_div.removeClass('loading');
         });
+}
+
+Sig_Heatmap.prototype.resize = function()
+{
+    var heatmap_div = $(this.dom_node).find('#heatmap-div')
+    heatmap_div.find('svg').remove();
+    this.initHeat()
+    this.drawHeat()
 }
 
 function Cell_Info()
@@ -781,10 +859,18 @@ function drawDistChart(node, values) {
     var data = []
 
     if (!isFactor) {
+        var binmin = _.min(values)
+        var binmax = _.max(values)
+
         data.push({
             type: 'histogram',
             x: values,
-            nbinsx: 20,
+            autobinx: false,
+            xbins: {
+                start: binmin,
+                end: binmax,
+                size: (binmax-binmin)/40,
+            },
         })
     } else {
         var valcounts = _.countBy(values)
@@ -803,6 +889,88 @@ function drawDistChart(node, values) {
             b: 60,
         },
         bargap: .1,
+        dragmode: 'select',
+        selectdirection: 'h',
+    }
+    var options = {
+        'displaylogo': false,
+        'displayModeBar': false,
+        'modeBarButtonsToRemove': ['sendDataToCloud', 'hoverCompareCartesian', 'toggleSpikelines'],
+    }
+
+    Plotly.newPlot(node, data, layout, options)
+}
+
+function drawDistChartSelection(node, selected_values, remainder_values, selection_name) {
+
+    var isFactor = (typeof(selected_values[0]) === "string") &&
+                   (selected_values[0] !== "NA")
+
+    var data = []
+    var barmode;
+
+    if (!isFactor) {
+        var allvals = selected_values.concat(remainder_values)
+        var binmin = _.min(allvals)
+        var binmax = _.max(allvals)
+        data.push({
+            type: 'histogram',
+            x: remainder_values,
+            autobinx: false,
+            xbins: {
+                start: binmin,
+                end: binmax,
+                size: (binmax-binmin)/40,
+            },
+            name: 'Remainder',
+            histnorm: 'percent',
+            opacity: 0.7,
+        })
+        data.push({
+            type: 'histogram',
+            x: selected_values,
+            autobinx: false,
+            xbins: {
+                start: binmin,
+                end: binmax,
+                size: (binmax-binmin)/40,
+            },
+            name: selection_name,
+            histnorm: 'percent',
+            opacity: 0.7,
+        })
+        barmode = 'overlay'
+    } else {
+
+        var valcounts = _.countBy(remainder_values)
+        var pairs = _.toPairs(valcounts)
+        data.push({
+            type: 'bar',
+            name: 'Remainder',
+            x: _.map(pairs, x => x[0]),
+            y: _.map(pairs, x => x[1]/remainder_values.length*100),
+        })
+
+        valcounts = _.countBy(selected_values)
+        pairs = _.toPairs(valcounts)
+        data.push({
+            type: 'bar',
+            name: selection_name,
+            x: _.map(pairs, x => x[0]),
+            y: _.map(pairs, x => x[1]/selected_values.length*100),
+        })
+
+        barmode = 'group'
+    }
+    var layout = {
+        margin: {
+            l: 50,
+            r: 50,
+            t: 30,
+            b: 60,
+        },
+        bargap: .1,
+        barmode: barmode,
     }
     var options = {
         'displaylogo': false,
