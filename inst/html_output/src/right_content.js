@@ -7,7 +7,7 @@ Right_Content.prototype.init = function()
 {
     var self = this;
     self.dom_node = $("#right-content");
-    self.scatter = new ColorScatter("#scatter-div", true, true);
+    self.scatter = new ColorScatter("#scatter-div");
 
     self.scatterColorOptions = $(self.dom_node).find("input[name='scatterColorButtons']")
 
@@ -100,14 +100,17 @@ Right_Content.prototype.update = function(updates)
 {
     var self = this;
 
+    if('selected_cell' in updates){
+        self.scatter.updateSelection()
+    }
+
     var needsUpdate = ('main_vis' in updates) ||
         ('plotted_item' in updates) ||
         ('plotted_item_type' in updates) ||
         ('plotted_projection' in updates) ||
         ('plotted_trajectory' in updates) ||
         ('plotted_pc' in updates) ||
-        ('colorScatterOption' in updates) ||
-        ('selected_cluster' in updates);
+        ('colorScatterOption' in updates);
 
     if (!needsUpdate) return $.Deferred().resolve().promise()
 
@@ -213,36 +216,34 @@ Right_Content.prototype.draw_sigvp = function(autoZoom) {
 
     var points = [];
     var sample_labels = Object.keys(values).sort()
+    var selected_cells = get_global_status('selected_cell')
+    var selected_cells_map = _.keyBy(selected_cells, x => x)
+    if(selected_cells.length == 1){ // Just a single cell
+        selected_cells_map = {} // Don't style anything
+    }
 
     _.each(sample_labels, (sample_label) => {
         var x = projection[sample_label][0]
         var y = projection[sample_label][1]
         var sig_score = values[sample_label]
-        points.push([x, y, sig_score, sample_label]);
+        var selected = sample_label in selected_cells_map
+
+        points.push({
+            x: x, y: y,
+            value: sig_score, label: sample_label,
+            selected: selected,
+        });
     })
 
-    // Get selected cells
-    var selected_cluster = get_global_status('selected_cluster')
-    var clusters = get_global_data('clusters')
-
-    var selected_cells
-    if (selected_cluster !== ''){
-        selected_cells = _(clusters)
-            .toPairs(clusters)
-            .filter(x => x[1] === selected_cluster)
-            .map(x => x[0])
-            .value()
-    } else {
-        selected_cells === undefined
-    }
-
-    self.scatter.clearData()
-    self.scatter.setData(points, isFactor, full_color_range, selected_cells, diverging_colormap);
+    self.scatter.setData({
+        points: points,
+        isFactor: isFactor,
+        full_color_range: full_color_range,
+        diverging_colormap: diverging_colormap
+    });
 
     if (autoZoom){
         self.scatter.autoZoom();
-    } else {
-        self.scatter.redraw(true)();
     }
 }
 
@@ -264,7 +265,7 @@ Right_Content.prototype.draw_tree = function(autoZoom) {
                    (_.values(values)[0] !== "NA")
 
     var full_color_range, diverging_colormap
-    if(item_type === "gene"){
+    if(item_type === "gene" || item_type === "signature-gene"){
         $(self.dom_node).find("#plotted-value-option").hide()
         full_color_range = true
         diverging_colormap = false
@@ -299,12 +300,23 @@ Right_Content.prototype.draw_tree = function(autoZoom) {
 
             var points = [];
             var sample_labels = Object.keys(values).sort()
+            var selected_cells = get_global_status('selected_cell')
+            var selected_cells_map = _.keyBy(selected_cells, x => x)
+            if(selected_cells.length == 1){ // Just a single cell
+                selected_cells_map = {} // Don't style anything
+            }
 
             _.each(sample_labels, (sample_label) => {
                 var x = projection[sample_label][0]
                 var y = projection[sample_label][1]
                 var sig_score = values[sample_label]
-                points.push([x, y, sig_score, sample_label]);
+                var selected = sample_label in selected_cells_map
+
+                points.push({
+                    x: x, y: y,
+                    value: sig_score, label: sample_label,
+                    selected: selected,
+                });
             })
 
             var tree_points = [];
@@ -325,29 +337,17 @@ Right_Content.prototype.draw_tree = function(autoZoom) {
                 }
             }
 
-            // Get selected cells
-            var selected_cluster = get_global_status('selected_cluster')
-            var clusters = get_global_data('clusters')
-
-            var selected_cells
-            if (selected_cluster !== ''){
-                selected_cells = _(clusters)
-                    .toPairs(clusters)
-                    .filter(x => x[1] === selected_cluster)
-                    .map(x => x[0])
-                    .value()
-            } else {
-                selected_cells === undefined
-            }
-
-            self.scatter.clearData()
-            self.scatter.setData(points, isFactor, full_color_range, selected_cells, diverging_colormap)
-            self.scatter.setTreeData(tree_points, tree_adj)
+            self.scatter.setData({
+                points: points,
+                isFactor: isFactor,
+                full_color_range: full_color_range,
+                diverging_colormap: diverging_colormap,
+                tree_points: tree_points,
+                tree_adj: tree_adj,
+            });
 
             if (autoZoom){
                 self.scatter.autoZoom();
-            } else {
-                self.scatter.redraw(true)();
             }
 
         });
@@ -379,30 +379,35 @@ Right_Content.prototype.draw_pca = function() {
 
     var points = []
     var sample_labels = Object.keys(values).sort()
+    var selected_cells = get_global_status('selected_cell')
+    var selected_cells_map = _.keyBy(selected_cells, x => x)
+    if(selected_cells.length == 1){ // Just a single cell
+        selected_cells_map = {} // Don't style anything
+    }
 
     _.each(sample_labels, (sample_label) => {
         var x = pca[sample_label][pc_key-1]
         var y = values[sample_label]
         var sig_score = null
-        points.push([x, y, sig_score, sample_label]);
+        var selected = sample_label in selected_cells_map
+
+        points.push({
+            x: x, y: y,
+            value: sig_score, label: '',
+            selected: selected,
+        });
     })
 
-    self.scatter.clearData()
-    self.scatter.setData(points, isFactor);
-    self.scatter.redraw(true)();
-
+    self.scatter.setData({
+        points: points,
+        isFactor: isFactor
+    });
 }
 
 // Called when the window is resized
 Right_Content.prototype.resize = function() {
 
-    $('#scatter-div').children().remove();
-    this.scatter = new ColorScatter("#scatter-div", true, true);
-    this.update({
-        'plotted_item': '',
-        'main_vis': '',
-    }) // Tricks into replotting
-
+    this.scatter.resize()
 }
 
 Right_Content.prototype.getScatterColorOption = function() {
@@ -461,7 +466,6 @@ Right_Content.prototype.exportSigProj = function()
 
     var main_vis = get_global_status('main_vis')
 
-    var type = get_global_status('plotted_item_type')
     var plotted_item = get_global_status('plotted_item')
     var values = get_global_data('plotted_values')
 
@@ -491,51 +495,19 @@ Right_Content.prototype.exportSigProj = function()
     var scatter_csv_str = table.join("\n");
     zip.file("Scatter.txt", scatter_csv_str);
 
-    //Get the scatter plot and convert to a PNG
-    var svg = $(self.dom_node).find('#scatter-div').children('svg');
-    svg.attr("version", 1.1)
-        .attr("xmlns", "http://www.w3.org/2000/svg");
-    var svg2 = svgCopy(svg.get(0));
+    var zip_uri = "data:application/zip;base64," + zip.generate({type:"base64"});
 
-    var html_data = svg2.parentNode.innerHTML;
-    zip.file("Scatter.svg", html_data);
+    var a = document.createElement("a");
+    var proj_name;
+    if (main_vis === 'tree'){
+        proj_name = get_global_status('plotted_trajectory')
+    } else {
+        proj_name = get_global_status('plotted_projection')
+    }
 
-    var imgsrc = "data:image/svg+xml;base64," + btoa(html_data);
-
-    var image = new Image();
-    image.onload = function()
-    {
-        var canvas = document.createElement("canvas");
-        canvas.width = image.width;
-        canvas.height = image.height;
-        var context = canvas.getContext("2d");
-        context.drawImage(image, 0,0);
-
-        var canvasdata = canvas.toDataURL("image/png");
-        //Strip off the data URI portion
-        var scatter_png = canvasdata.substring(canvasdata.indexOf(",")+1);
-
-        //Take the result and stick it into a zip
-
-        zip.file("Scatter.png", scatter_png   , {base64: true});
-
-        var zip_uri = "data:application/zip;base64," + zip.generate({type:"base64"});
-
-        var a = document.createElement("a");
-        var proj_name;
-        if (main_vis === 'tree'){
-            proj_name = get_global_status('plotted_trajectory')
-        } else {
-            proj_name = get_global_status('plotted_projection')
-        }
-
-        a.download = plotted_item+"_"+proj_name+".zip";
-        a.href = zip_uri;
-        a.click();
-
-    };
-
-    image.setAttribute("src", imgsrc)
+    a.download = plotted_item+"_"+proj_name+".zip";
+    a.href = zip_uri;
+    a.click();
 
 }
 
@@ -543,9 +515,3 @@ Right_Content.prototype.hover_cells = function(cell_ids)
 {
     this.scatter.hover_cells(cell_ids);
 }
-
-Right_Content.prototype.getSelectedCells = function() { 
-    
-    return this.scatter.getSelected();
-
-}	

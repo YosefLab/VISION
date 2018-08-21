@@ -53,15 +53,32 @@ Lower_Left_Content.prototype.init = function()
 
     var cell_info_promise = cell_info.init();
 
-    //var cell_info = new Cell_Info();
-    //this.children.push(cell_info);
-    //this.cell_info = cell_info
+    var selection_info = new Selection_Info()
+    this.children.push(selection_info)
+    this.selection_info = selection_info
 
-    //var cell_info_promise = cell_info.init();
+    var selection_info_promise = selection_info.init();
+
     var self = this;
-    this.nav['sig_heatmap'].on('click', function()
+    this.nav['sig_heatmap'].on('shown.bs.tab', function()
     {
-        self.sig_heatmap.drawHeat()
+        if(self.sig_heatmap.needs_resize){
+            self.sig_heatmap.resize();
+        }
+        if(self.sig_heatmap.needs_plot){
+            self.sig_heatmap.drawHeat()
+        }
+    })
+    this.nav['values'].on('shown.bs.tab', function()
+    {
+        // Need to delay resize because it doesn't work
+        // if the window is hidden
+        if(self.values_plot.needs_resize){
+            self.values_plot.resize()
+        }
+        if(self.values_plot.needs_plot){
+            self.values_plot.plot()
+        }
     })
 
     this.setLoadingStatus = createLoadingFunction(
@@ -69,7 +86,8 @@ Lower_Left_Content.prototype.init = function()
     );
 
     return $.when(sig_info_promise, values_plot_promise,
-        sig_heatmap_promise, cell_info_promise);
+        sig_heatmap_promise, cell_info_promise,
+        selection_info_promise);
 }
 
 Lower_Left_Content.prototype.update = function(updates)
@@ -100,14 +118,39 @@ Lower_Left_Content.prototype.update = function(updates)
     }
 
     if('selection_type' in updates){
-        if(updates['selection_type'] === 'cell'){
+
+        var SELECTION_IS_CELL = updates['selection_type'] === 'cell'
+        var SELECTION_IS_CELLS = (
+            updates['selection_type'] === 'cells' ||
+            updates['selection_type'] === 'pool' ||
+            updates['selection_type'] === 'pools'
+        )
+
+        // Show or hide 'Cell'
+        if(SELECTION_IS_CELL){
             $(this.nav['cell_info']).show();
-            $(this.nav['cell_info']).click();
         } else {
-            if($(this.nav['cell_info']).hasClass('active')){
-                $(this.nav['values']).click();
-            }
             $(this.nav['cell_info']).hide();
+        }
+
+        // Show or hide 'Selection'
+        if (SELECTION_IS_CELLS) {
+            $(this.nav['selection_info']).show();
+        } else {
+            $(this.nav['selection_info']).hide();
+        }
+
+        // Determine navigation
+        if (SELECTION_IS_CELL){
+            $(this.nav['cell_info']).click();
+
+        } else if(!SELECTION_IS_CELL && $(this.nav['cell_info']).hasClass('active')) {
+            $(this.nav['values']).click();
+
+        } else if(!SELECTION_IS_CELLS &&
+            $(this.nav['selection_info']).hasClass('active')) {
+
+            $(this.nav['values']).click();
         }
 
     }
@@ -119,11 +162,30 @@ Lower_Left_Content.prototype.hover_cells = function()
 {
 }
 
+
+Lower_Left_Content.prototype._resize = function(){
+    if($(this.nav['values']).hasClass('active')) {
+        this.values_plot.resize()
+    } else {
+        this.values_plot.needs_resize = true
+    }
+
+    if($(this.nav['sig_heatmap']).hasClass('active')) {
+        this.sig_heatmap.resize()
+    } else {
+        this.sig_heatmap.needs_resize = true
+    }
+}
+
+Lower_Left_Content.prototype.resize = _.debounce(Lower_Left_Content.prototype._resize, 300)
+
 function Values_Plot()
 {
     this.dom_node = document.getElementById("value-plot");
     this.title = $(this.dom_node).find('#values-title').get(0);
     this.chart = $(this.dom_node).find('#dist-div').get(0);
+    this.needs_resize = false
+    this.needs_plot = false
 }
 
 Values_Plot.prototype.init = function()
@@ -135,7 +197,11 @@ Values_Plot.prototype.update = function(updates)
     var item_type = get_global_status('plotted_item_type')
     var item = get_global_status('plotted_item')
 
-    if(!('plotted_item'in updates)){
+    if(!(
+        'plotted_item' in updates ||
+        'selected_cell' in updates ||
+        'selection_type' in updates
+    )){
         return;
     }
 
@@ -148,9 +214,37 @@ Values_Plot.prototype.update = function(updates)
         $(this.title).html(item)
     }
 
-    var plotted_values = _.values(get_global_data('plotted_values'))
-    var pos_only = item_type === 'gene'
-    drawDistChart(this.chart, plotted_values, pos_only)
+    if($(this.dom_node).hasClass('active')){
+        this.plot()
+    } else {
+        this.needs_plot = true;
+    }
+}
+
+Values_Plot.prototype.plot = function()
+{
+    var plotted_values_object = get_global_data('plotted_values')
+
+    if(get_global_status('selection_type') === 'cells' ||
+        get_global_status('selection_type') === 'pools'){
+
+        var selected_cells = get_global_status('selected_cell')
+        var selection_name = get_global_status('selection_name')
+        var selected_values = _.values(_.pick(plotted_values_object, selected_cells))
+        var remainder_values = _.values(_.omit(plotted_values_object, selected_cells))
+        drawDistChartSelection(this.chart, selected_values, remainder_values, selection_name)
+    } else {
+        var plotted_values = _.values(plotted_values_object)
+        drawDistChart(this.chart, plotted_values)
+    }
+
+    this.needs_plot = false
+}
+
+Values_Plot.prototype.resize = function()
+{
+    Plotly.Plots.resize(this.chart)
+    this.needs_resize = false
 }
 
 /*
@@ -294,10 +388,9 @@ function Sig_Heatmap()
 {
     this.dom_node = document.getElementById('sig-info-cluster')
     this.heatmap = null
-    this.plotted_heatmap = {
-        'sig_key': '',
-        'proj_key': '',
-    }
+    this.plotted_signature = ""
+    this.needs_resize = false
+    this.needs_plot = true
 }
 
 Sig_Heatmap.prototype.init = function()
@@ -306,12 +399,38 @@ Sig_Heatmap.prototype.init = function()
 
 Sig_Heatmap.prototype.update = function(updates)
 {
-    if( $(this.dom_node).hasClass('active') &&
-        'plotted_item' in updates &&
-        get_global_status('plotted_item_type') === 'signature' ){ // Or else we'll update for signature-gene
-        this.drawHeat();
+    var needs_update_sig = ('plotted_item' in updates) &&
+        (get_global_status('plotted_item_type') === 'signature')
+
+    var needs_update_cluster_var = 'cluster_var' in updates
+
+    // Or else we'll update for signature-gene
+    if(needs_update_sig){
+        this.plotted_signature = get_global_status("plotted_item")
     }
 
+    var needs_update = needs_update_sig || needs_update_cluster_var
+
+    if(needs_update){
+        if($(this.dom_node).hasClass('active')) {
+            this.drawHeat()
+        } else {
+            this.needs_plot = true;
+        }
+    }
+
+}
+
+Sig_Heatmap.prototype.initHeat = function(){
+    var self = this;
+    var heatmap_div = $(self.dom_node).find('#heatmap-div')
+    var heatmap_width = heatmap_div.parent().parent().width();
+    var heatmap_height = heatmap_div.parent().parent().height()-40;
+
+    self.heatmap = new HeatMap('#heatmap-div', heatmap_width, heatmap_height);
+    self.heatmap.click = function(gene, index, value){
+        _setSignatureGene(gene);
+    }
 }
 
 Sig_Heatmap.prototype.drawHeat = function(){
@@ -323,31 +442,11 @@ Sig_Heatmap.prototype.drawHeat = function(){
 
     if( heatmap_div.children('svg').length === 0)
     {
-        var heatmap_width = heatmap_div.parent().parent().width();
-        var heatmap_height = heatmap_div.parent().parent().height()-40;
-
-        self.heatmap = new HeatMap('#heatmap-div', heatmap_width, heatmap_height);
-        self.heatmap.click = function(gene, index, value){
-            _setSignatureGene(gene);
-        }
+        self.initHeat()
     }
 
-    var sig_key = get_global_status('plotted_item'); // assume it's a signature
-
+    var sig_key = this.plotted_signature // kept current by 'update' method
     var sig_info = get_global_data('sig_info');
-
-    // plotted heatmap is based on sig_key
-    // check if we are already showing the right heatmap and don't regenerate
-    var need_plot = false;
-
-    if (self.plotted_heatmap['sig_key'] !== sig_key){
-        self.plotted_heatmap['sig_key'] = sig_key
-        need_plot = true;
-    }
-
-    if(!need_plot){
-        return $.when(true);
-    }
 
     heatmap_div.addClass('loading')
 
@@ -376,9 +475,19 @@ Sig_Heatmap.prototype.drawHeat = function(){
                 gene_signs,
                 sample_labels);
 
+            self.needs_plot = false
+
         }).always(function() {
             heatmap_div.removeClass('loading');
         });
+}
+
+Sig_Heatmap.prototype.resize = function()
+{
+    var heatmap_div = $(this.dom_node).find('#heatmap-div')
+    heatmap_div.find('svg').remove();
+    this.initHeat()
+    this.drawHeat()
 }
 
 function Cell_Info()
@@ -399,7 +508,11 @@ Cell_Info.prototype.update = function(updates)
         return
     }
 
-    var selected_cell = updates['selected_cell']
+    if(get_global_status('selection_type') !== 'cell'){
+        return
+    }
+
+    var selected_cell = updates['selected_cell'][0]
 
     return api.cell.meta(selected_cell).then(result => {
         self.cell_id_span.text(selected_cell)
@@ -412,17 +525,7 @@ Cell_Info.prototype.update = function(updates)
             var val = $(document.createElement('td'))
             prop.text(property+':');
 
-            var val_string;
-            if($.isNumeric(value)){
-                if((Math.abs(value) < 1e-3) ||
-                   (Math.abs(value) > 1e6) ){
-                    val_string = value.toExponential(3)
-                } else {
-                    val_string = value.toString();
-                }
-            } else {
-                val_string = value.toString();
-            }
+            var val_string = _formatNum(value)
 
             val.text(val_string);
             row.append(prop)
@@ -430,6 +533,112 @@ Cell_Info.prototype.update = function(updates)
             self.cell_info_table.append(row)
         })
     })
+}
+
+function Selection_Info()
+{
+    this.dom_node = document.getElementById('selection-info')
+}
+
+Selection_Info.prototype.init = function()
+{
+    this.cell_count_span = $(this.dom_node).find('#selected-cell-count-span')
+    this.selection_info_table = $(this.dom_node).find('#selection-info-table')
+    this.selection_info_table_meta = $(this.dom_node).find('#selection-info-table-meta')
+}
+
+Selection_Info.prototype.update = function(updates)
+{
+    var self = this;
+    if(!('selected_cell' in updates)){
+        return
+    }
+
+    if(
+        get_global_status('selection_type') !== 'cells' &&
+        get_global_status('selection_type') !== 'pool' &&
+        get_global_status('selection_type') !== 'pools'
+    ){
+        return
+    }
+
+    var selected_cells = updates['selected_cell']
+    self.cell_count_span.text(selected_cells.length)
+
+    return api.cells.meta(selected_cells).then(result => {
+
+        // Rebuild meta-data table
+        self.selection_info_table.children('tbody').empty()
+        _.each(result.numeric, function(value, property){
+            var row = $(document.createElement('tr'))
+            var prop = $(document.createElement('td'))
+            var valmin = $(document.createElement('td'))
+            var valmed = $(document.createElement('td'))
+            var valmax = $(document.createElement('td'))
+
+            prop.text(property+':');
+
+            // valmin.text(value['Min'].toFixed(1));
+            // valmed.text(value['Median'].toFixed(1));
+            // valmax.text(value['Max'].toFixed(1));
+            valmin.text(_formatNum(value['Min']));
+            valmed.text(_formatNum(value['Median']));
+            valmax.text(_formatNum(value['Max']));
+
+            row.append(prop)
+            row.append(valmin)
+            row.append(valmed)
+            row.append(valmax)
+
+            self.selection_info_table.children('tbody').append(row)
+        })
+
+        self.selection_info_table_meta.children('tbody').empty()
+        _.each(result.factor, function(value, property){
+
+            // Header row
+            var row = $(document.createElement('tr'))
+            var prop = $(document.createElement('td'))
+            var empty = $(document.createElement('td'))
+            prop.text(property+':');
+            row.append(prop)
+            row.append(empty)
+            self.selection_info_table_meta.children('tbody').append(row)
+
+            // Row for each factor level
+            _.each(value, function(percent, level){
+                var row = $(document.createElement('tr'))
+                var prop = $(document.createElement('td'))
+                var value = $(document.createElement('td'))
+                prop.text(level);
+                prop.css('font-weight', 'normal')
+                value.text(percent.toFixed(1)+'%');
+
+                row.append(prop)
+                row.append(value)
+                self.selection_info_table_meta.children('tbody').append(row)
+            })
+        })
+    })
+}
+
+
+function _formatNum(value){
+
+    if($.isNumeric(value)){
+
+        if(value === 0){ return "0"; }
+
+        if((Math.abs(value) < 1e-3) ||
+            (Math.abs(value) > 1e6) ){
+            return value.toExponential(3);
+        } else {
+            return value.toString();
+        }
+
+    } else {
+        return value.toString();
+    }
 }
 
 /*
@@ -642,208 +851,201 @@ Cell_Info.prototype.update = function()
 }
 */
 
-//Draw Dist Scatter
-function drawDistChart(parent_div, data, pos_only) {
+function drawDistChart(node, values) {
 
-    var isFactor = (typeof(data[0]) === "string") &&
-                   (data[0] !== "NA")
+    var isFactor = (typeof(values[0]) === "string") &&
+                   (values[0] !== "NA")
 
-    var hist;
-    if(pos_only !== undefined && pos_only){
-        hist = create_dist_positive(data)
-    } else if (isFactor) {
-        hist = create_dist_factor(data)
+    var data = []
+
+    if (!isFactor) {
+        var binmin = _.min(values)
+        var binmax = _.max(values)
+
+        data.push({
+            type: 'histogram',
+            x: values,
+            autobinx: false,
+            xbins: {
+                start: binmin,
+                end: binmax,
+                size: (binmax-binmin)/40,
+            },
+        })
     } else {
-        hist = create_dist(data)
+        var valcounts = _.countBy(values)
+        var pairs = _.toPairs(valcounts)
+        pairs = _.sortBy(pairs, x => x[0])
+        data.push({
+            type: 'bar',
+            x: _.map(pairs, x => x[0]),
+            y: _.map(pairs, x => x[1]),
+        })
+    }
+    var layout = {
+        margin: {
+            l: 50,
+            r: 50,
+            t: 30,
+            b: 60,
+        },
+        bargap: .1,
+        dragmode: 'select',
+        selectdirection: 'h',
+    }
+    var options = {
+        'displaylogo': false,
+        'displayModeBar': false,
+        'modeBarButtonsToRemove': ['sendDataToCloud', 'hoverCompareCartesian', 'toggleSpikelines'],
     }
 
-    var x_vals = hist['centers']
-    var counts = hist['counts']
+    Plotly.newPlot(node, data, layout, options)
 
-    var x_axis_params = {
-        type: 'category',
-        categories: x_vals,
-        tick: {
-            rotate: 75,
-            width: 100,
-        },
-        height: 100,
-    }
+    node.on('plotly_selected', function(eventData){
+        var cellIds = []
 
-    var c3_params = {
-        bindto: parent_div,
-        data: {
-            x: 'x',
-            columns: [
-                ['x'].concat(x_vals),
-                ['y'].concat(counts)
-            ],
-            type: 'bar'
-        },
-        bar: {
-            width: {
-                ratio: 0.8
+        if (eventData !== undefined) {
+            var values = get_global_data('plotted_values')
+            var selected = _.map(eventData.points, p => p.x)
+            var subset;
+
+            if(typeof(selected[0]) === 'string'){
+                var select_map = _.keyBy(selected)
+                subset = _.pickBy(values, v => v in select_map)
+            } else {
+                var min = _.min(selected)
+                var max = _.max(selected)
+
+                subset = _.pickBy(values, v => v >= min)
+                subset = _.pickBy(subset, v => v <= max)
             }
-        },
-        axis: {
-            x: x_axis_params,
-            y: {
-                type: 'indexed',
-            }
-        },
-        legend: {
-            show: false
-        },
-        size: {
-            width: 400
-        },
-        padding: {
-            right: 30,
-        },
-    }
+            cellIds = _.keys(subset)
+        } else {
+            cellIds = []
+        }
 
-    c3.generate(c3_params)
+        var event = new CustomEvent('select-cells', {
+            detail: {cells: cellIds}
+        })
+        window.dispatchEvent(event);
+    });
 }
 
+function drawDistChartSelection(node, selected_values, remainder_values, selection_name) {
 
-/* Creates the x/y values for a bar plot
- * on categorical variables
- */
-function create_dist_factor(data) {
-    var counts;
-    var centers;
+    var isFactor = (typeof(selected_values[0]) === "string") &&
+                   (selected_values[0] !== "NA")
 
-    if((typeof(data[0]) === "string") && (data[0] !== "NA")) // Then it's a factor
-    {
-        var count_hist = {}
-        data.forEach(function(x){
-            count_hist[x] = 0;
+    var data = []
+    var barmode;
+
+    if (!isFactor) {
+        var allvals = selected_values.concat(remainder_values)
+        var binmin = _.min(allvals)
+        var binmax = _.max(allvals)
+        data.push({
+            type: 'histogram',
+            x: remainder_values,
+            autobinx: false,
+            xbins: {
+                start: binmin,
+                end: binmax,
+                size: (binmax-binmin)/40,
+            },
+            name: 'Remainder',
+            histnorm: 'percent',
+            opacity: 0.7,
         })
-        data.forEach(function(x){
-            count_hist[x] = count_hist[x] + 1;
+        data.push({
+            type: 'histogram',
+            x: selected_values,
+            autobinx: false,
+            xbins: {
+                start: binmin,
+                end: binmax,
+                size: (binmax-binmin)/40,
+            },
+            name: selection_name,
+            histnorm: 'percent',
+            opacity: 0.7,
         })
-        counts = []
-        centers = []
-        _.forEach(count_hist, function(value, key){
-            counts.push(value);
-            centers.push(key);
+        barmode = 'overlay'
+    } else {
+
+        allvals = selected_values.concat(remainder_values)
+        var valcounts = _(allvals).uniq().keyBy().mapValues(() => 0).value()
+
+        var newvalcounts = _.countBy(remainder_values)
+        _.assign(valcounts, newvalcounts)
+        var pairs = _.toPairs(valcounts)
+        pairs = _.sortBy(pairs, x => x[0])
+        data.push({
+            type: 'bar',
+            name: 'Remainder',
+            x: _.map(pairs, x => x[0]),
+            y: _.map(pairs, x => x[1]/remainder_values.length*100),
         })
 
+        valcounts = _(allvals).uniq().keyBy().mapValues(() => 0).value()
+        newvalcounts = _.countBy(selected_values)
+        _.assign(valcounts, newvalcounts)
+        pairs = _.toPairs(valcounts)
+        pairs = _.sortBy(pairs, x => x[0])
+        data.push({
+            type: 'bar',
+            name: selection_name,
+            x: _.map(pairs, x => x[0]),
+            y: _.map(pairs, x => x[1]/selected_values.length*100),
+        })
+
+        barmode = 'group'
+    }
+    var layout = {
+        margin: {
+            l: 50,
+            r: 50,
+            t: 30,
+            b: 60,
+        },
+        bargap: .1,
+        dragmode: 'select',
+        barmode: barmode,
+    }
+    var options = {
+        'displaylogo': false,
+        'displayModeBar': false,
+        'modeBarButtonsToRemove': ['sendDataToCloud', 'hoverCompareCartesian', 'toggleSpikelines'],
     }
 
-    return {'counts': counts, 'centers': centers}
-}
+    Plotly.newPlot(node, data, layout, options)
 
+    node.on('plotly_selected', function(eventData){
+        var cellIds = []
 
-/* Creates the x/y values for a bar plot
- * on numerical variables but truncate at zero
- */
-function create_dist_positive(data) {
+        if (eventData !== undefined) {
+            var values = get_global_data('plotted_values')
+            var selected = _.map(eventData.points, p => p.x)
+            var subset;
 
-    var counts;
-    var centers;
+            if(typeof(selected[0]) === 'string'){
+                var select_map = _.keyBy(selected)
+                subset = _.pickBy(values, v => v in select_map)
+            } else {
+                var min = _.min(selected)
+                var max = _.max(selected)
 
-    var num_values = 10
-
-    // Need to filter out NA
-    var data_filtered = _.filter(data, x => x !== "NA")
-    var na_count = data.length - data_filtered.length
-    data = data_filtered
-
-    var data_true_min = Math.min.apply(null, data)
-    var data_min = Math.max(data_true_min, 0)
-    var data_max = Math.max.apply(null, data)
-
-    var bin_width = (data_max - data_min)/num_values
-
-    counts = Array.apply(Math, Array(num_values)).map(function() { return 0 });
-    centers = Array.apply(Math, Array(num_values)).map(function() { return 0 });
-
-    var low, high;
-    var formatFn = d3.format('.2n')
-    for (var i=0; i < num_values; i++) {
-        low = bin_width*i + data_min
-        high = bin_width*(i+1) + data_min
-
-        data.forEach(function(d) {
-            if (d >= low && d < high) {
-                counts[i] += 1;
+                subset = _.pickBy(values, v => v >= min)
+                subset = _.pickBy(subset, v => v <= max)
             }
-        });
 
-        centers[i] = '[' + formatFn(low) + ', ' + formatFn(high) + ')';
-    }
+            cellIds = _.keys(subset)
+        } else {
+            cellIds = []
+        }
 
-
-    if(data_true_min < 0){ // Add a "< 0" category
-        low = -1e99
-        high = -1e-10
-        i = 0
-        var lessThenZeroCounts = 0;
-
-        data.forEach(function(d) {
-            if (d >= low && d < high) {
-                lessThenZeroCounts += 1;
-            }
-        });
-
-        counts = [lessThenZeroCounts].concat(counts)
-        centers = ["< 0"].concat(centers)
-    }
-
-    if(na_count > 0) { // Add a "NA" category
-        counts = [na_count].concat(counts)
-        centers = ["NA"].concat(centers)
-    }
-
-    return {'counts': counts, 'centers': centers}
-
-}
-
-
-/* Creates the x/y values for a bar plot
- * on numerical variables but truncate at zero
- */
-function create_dist(data) {
-
-    var counts;
-    var centers;
-
-    var num_values = 10
-
-    // Need to filter out NA
-    var data_filtered = _.filter(data, x => x !== "NA")
-    var na_count = data.length - data_filtered.length
-    data = data_filtered
-
-    var data_min = Math.min.apply(null, data)
-    var data_max = Math.max.apply(null, data)
-
-    var bin_width = (data_max - data_min)/num_values
-
-    counts = Array.apply(Math, Array(num_values)).map(function() { return 0 });
-    centers = Array.apply(Math, Array(num_values)).map(function() { return 0 });
-
-    var low, high;
-    var formatFn = d3.format('.2n')
-    for (var i=0; i < num_values; i++) {
-        low = bin_width*i + data_min
-        high = bin_width*(i+1) + data_min
-
-        data.forEach(function(d) {
-            if (d >= low && d < high) {
-                counts[i] += 1;
-            }
-        });
-
-        centers[i] = '[' + formatFn(low) + ', ' + formatFn(high) + ')';
-    }
-
-    if(na_count > 0) { // Add a "NA" category
-        counts = [na_count].concat(counts)
-        centers = ["NA"].concat(centers)
-    }
-
-    return {'counts': counts, 'centers': centers}
-
+        var event = new CustomEvent('select-cells', {
+            detail: {cells: cellIds}
+        })
+        window.dispatchEvent(event);
+    });
 }

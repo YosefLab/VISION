@@ -648,12 +648,16 @@ geary_sig_v_proj <- function(values, indices, weights){
 #'     \item Computed: a list of clusters of computed signatures
 #'     \item Meta: a list of clusters of meta data signatures
 #' }
-clusterSignatures <- function(sigMatrix, metaData, pvals, clusterMeta) {
+clusterSignatures <- function(sigMatrix, metaData, pvals, consistency, clusterMeta) {
 
   significant <- apply(pvals, 1, function(x) min(x) < -1.3)
 
+  # Additionally, threshold on the Geary's C' itself
+  large <- consistency[, 1] > 0.2
+  significant <- significant & large
+
   meta_n <- vapply(names(metaData), function(metaName) {
-			is.numeric(metaData[,metaName]) && !any(is.na(metaData[,metaName]))
+			is.numeric(metaData[, metaName]) && !any(is.na(metaData[, metaName]))
 		}, FUN.VALUE = TRUE)
 
   meta_n <- metaData[, meta_n, drop = FALSE]
@@ -682,7 +686,7 @@ clusterSignatures <- function(sigMatrix, metaData, pvals, clusterMeta) {
 
     r <- t(as.matrix(cSM_sub))
 
-    mbic <- mclustBIC(r, modelNames = "VVI")
+    mbic <- mclustBIC(r, G=1:15, modelNames = "EII")
     compkm <- Mclust(r, x = mbic)
 
     compcls <- as.list(compkm$classification)

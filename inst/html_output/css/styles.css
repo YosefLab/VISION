@@ -106,6 +106,15 @@ table.label-table td{
     padding: 5px;
 }
 
+div.label-row {
+    font-size: 1.2em;
+}
+
+div.label-row > span:first-child{
+    font-weight: bold;
+    padding-right: 10px;
+}
+
 .label1 {
     font-weight: bold;
     font-size: 1.2em;

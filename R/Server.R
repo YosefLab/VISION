@@ -494,46 +494,41 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
          out <- toJSON(cell_meta, auto_unbox = TRUE)
          return(out)
      }) %>%
-     post("/Pool/Meta/(?<pool_key1>.*)", function(req, res, err) {
+     post("/Cells/Meta", function(req, res, err) {
 
          subset <- fromJSON(req$body)
+         subset <- subset[!is.na(subset)]
 
-         subset = subset[!is.na(subset)]
+         if (object@pool){
+             cells <- unname(unlist(object@pools[subset]))
+         } else {
+             cells <- subset
+         }
 
-         meta_key = URLdecode(req$params$pool_key1)
+         metaSubset <- object@initialMetaData[cells, ]
 
-         cells = unname(unlist(object@pools[subset]))
+         numericMeta <- vapply(metaSubset, is.numeric, FUN.VALUE = TRUE)
 
-         meta = as.list(object@initialMetaData[cells,meta_key])
+         metaSummaryNumeric <-
+             lapply(metaSubset[numericMeta], function(item){
+                vals <- quantile(item, probs = c(0, .5, 1), na.rm = TRUE)
+                names(vals) <- c("Min", "Median", "Max")
+                return(as.list(vals))
+             })
 
-         out <- toJSON(meta, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
-         return(out)
+         metaSummaryFactor <-
+             lapply(metaSubset[!numericMeta], function(item){
+                vals <- sort(table(droplevels(item)),
+                             decreasing = TRUE)
+                vals <- vals / length(item) * 100
+                return(as.list(vals))
+             })
 
-     }) %>%
-     post("/Pool/Gene/(?<pool_key2>.*)", function(req, res, err) {
+         metaSummary <- list(numeric = metaSummaryNumeric,
+                             factor = metaSummaryFactor
+                            )
 
-         subset <- fromJSON(req$body)
-         subset = subset[!is.na(subset)]
-
-         gene_key = URLdecode(req$params$pool_key2)
-
-         cells = unname(unlist(object@pools[subset]))
-
-         expr = unname(as.list(object@initialExprData[gene_key, cells]))
-
-         out <- toJSON(expr, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
-         compressJSONResponse(out, res, req)
-
-     }) %>%
-     post("/Pool/Cells", function(req, res, err) {
-
-         subset <- fromJSON(req$body)
-         subset = subset[!is.na(subset)]
-
-         cells = unname(unlist(object@pools[subset]))
-
-
-         out <- toJSON(cells, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
+         out <- toJSON(metaSummary, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
          return(out)
 
      }) %>%

@@ -328,7 +328,7 @@ Signature_Table.prototype.render = function()
             content_row
                 .filter(function(d,i) { return i > 0;})
                 .style('background-color', function(d){return colorScale(d.zscore);})
-                .on("click", function(d){tableClickFunction_PC(matrix.sig_labels[d.row], 'signature')})
+                .on("click", function(d){tableClickFunction_PC(matrix.sig_labels[d.row])})
                 .append('div');
 
         } else {
@@ -763,7 +763,7 @@ Meta_Table.prototype.render = function()
             content_row
                 .filter(function(d,i) { return i > 0;})
                 .style('background-color', function(d){return colorScale(d.zscore);})
-                .on("click", function(d){tableClickFunction_PC(matrix.sig_labels[d.row], 'meta')})
+                .on("click", function(d){tableClickFunction_PC(matrix.sig_labels[d.row])})
                 .append('div');
 
         } else {
@@ -1018,9 +1018,19 @@ Signature_Table.prototype.doneTyping = function()
 
 
 // Function that's triggered when clicking on table cell
-function tableClickFunction_PC(row_key, item_type)
+function tableClickFunction_PC(row_key)
 {
     var update = {}
+
+    var meta_sigs = get_global_data('meta_sigs')
+
+    var item_type
+    if (meta_sigs.indexOf(row_key) > -1) {
+        item_type = 'meta'
+    } else {
+        item_type = 'signature'
+    }
+
     update['plotted_item_type'] = item_type;
     update['plotted_item'] = row_key;
 
@@ -1047,7 +1057,6 @@ function tableClickFunction_clusters(row_key, col_key)
     {
         col_key = '' // This is used to indicate 'no cluster'
     }
-    update['selected_cluster'] = col_key;
 
     set_global_status(update);
 }

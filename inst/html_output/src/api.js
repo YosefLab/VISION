@@ -73,41 +73,6 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    // Pools API
-
-    output.pool = {}
-
-    output.pool.values = function(subset, data_type, key) {
-        var query = prefix.concat("Pool");
-
-        if (data_type == "meta") {
-            query = query.concat("/Meta/", key);
-        }  else if (data_type == "gene") {
-            query = query.concat("/Gene/", key);
-        }
-
-        return $.ajax({
-            type: "POST",
-            url: query,
-            data: JSON.stringify(subset),
-            dataType: "json"
-        }).then(x => x);
-
-
-    }
-
-    output.pool.cells = function(subset) {
-        var query = prefix.concat("Pool/Cells");
-
-
-        return $.ajax({
-            type: "POST",
-            url: query,
-            data: JSON.stringify(subset),
-            dataType: "json"
-        }).then(x => x);
-
-    }
     // Clusters API
 
     output.clusters = {}
@@ -260,6 +225,21 @@ var api = (function(){
         var query = prefix + "Cell/" + cellId + "/Meta"
 
         return $.ajax(query, {dataType: "json"}).then(x => x)
+    }
+
+    // Cells API
+
+    output.cells = {}
+
+    output.cells.meta = function(subset) {
+        var query = prefix.concat("Cells/Meta");
+
+        return $.ajax(query, {
+            type: "POST",
+            data: JSON.stringify(subset),
+            dataType: "json"
+        }).then(x => x);
+
     }
 
     // Session Info Api
