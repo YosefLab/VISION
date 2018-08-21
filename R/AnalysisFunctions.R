@@ -325,6 +325,7 @@ analyzeSpatialCorrelations <- function(object, signatureBackground = NULL) {
   sigClusters <- clusterSignatures(object@sigScores,
                                    object@metaData,
                                    sigConsistencyScores$emp_pVals,
+                                   sigConsistencyScores$sigProjMatrix,
                                    clusterMeta = object@pool)
 
   sigConsistencyScoresData <- ProjectionData(
@@ -365,6 +366,7 @@ analyzeTrajectoryCorrelations <- function(object, signatureBackground = NULL) {
   sigTreeClusters <- clusterSignatures(object@sigScores,
                                        object@metaData,
                                        sigVTreeProj$pVals,
+                                       sigVTreeProj$sigProjMatrix,
                                        clusterMeta = object@pool)
 
   TrajectoryConsistencyScores <- ProjectionData(

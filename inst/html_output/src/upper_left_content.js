@@ -1047,7 +1047,6 @@ function tableClickFunction_clusters(row_key, col_key)
     {
         col_key = '' // This is used to indicate 'no cluster'
     }
-    update['selected_cluster'] = col_key;
 
     set_global_status(update);
 }
