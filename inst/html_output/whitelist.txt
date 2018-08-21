@@ -31,5 +31,5 @@ html_output/thirdparty/datatables/datatables.min.js
 html_output/thirdparty/jquery/jquery-2.1.4.min.js
 html_output/thirdparty/jszip/jszip.min.js
 html_output/thirdparty/lodash/lodash.min.js
-html_output/thirdparty/popper/popper.js/dist/umd/popper.min.js
 html_output/thirdparty/plotly/plotly.js-1.40.0/dist/plotly.min.js
+html_output/thirdparty/popper/popper.js/dist/umd/popper.min.js
