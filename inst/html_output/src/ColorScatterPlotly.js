@@ -219,11 +219,6 @@ ColorScatter.prototype.setData = function(object)
         var point = data.points[0]
         var cellId = point.text
 
-        // Unselect everything in plot
-        Plotly.restyle(self.node, {
-            selectedpoints: [null],
-        })
-
         var event = new CustomEvent('select-cells', {
             detail: { cells: [cellId] }
         })
@@ -231,10 +226,6 @@ ColorScatter.prototype.setData = function(object)
     })
 
     this.node.on('plotly_doubleclick', function(){
-        // Unselect everything
-        Plotly.restyle(self.node, {
-            selectedpoints: [null],
-        })
 
         var event = new CustomEvent('select-cells', {
             detail: {cells: []}
@@ -246,10 +237,6 @@ ColorScatter.prototype.setData = function(object)
         var cellIds;
         if (eventData === undefined) {
             cellIds = [];
-            // Unselect everything
-            Plotly.restyle(self.node, {
-                selectedpoints: [null],
-            })
         } else {
             cellIds = _.map(eventData.points, d => {
                 return d.data.text[d.pointNumber];
@@ -265,19 +252,6 @@ ColorScatter.prototype.setData = function(object)
         var selectedPoints = data.fullData[data.curveNumber].text
         var name = data.fullData[data.curveNumber].name
 
-        // Update the selection in the plot
-        var selections = _.map(data.fullData, function(d){
-            if(d.index == data.curveNumber){
-                return _.range(d.x.length)
-            } else {
-                return []
-            }
-        });
-
-        Plotly.restyle(self.node, {
-            selectedpoints: selections,
-        })
-
         var event = new CustomEvent('select-cells', {
             detail: {cells: selectedPoints, name: name}
         })
@@ -287,6 +261,32 @@ ColorScatter.prototype.setData = function(object)
 
     this.node.on('plotly_legenddoubleclick', function(){
         return false;
+    })
+}
+
+ColorScatter.prototype.updateSelection = function()
+{
+    var selected_cells = get_global_status('selected_cell')
+    var selectedpoints;
+
+    if(selected_cells.length <= 1){
+        selectedpoints = [null]
+    } else {
+        var selected_cells_map = _.keyBy(selected_cells, x => x)
+        selectedpoints = _(this.node.data)
+            .map(trace => trace.text)
+            .map(trace_ids => _(trace_ids)
+                .map(x => x in selected_cells_map)
+                .map((e, i) => {return({selected: e, index: i})}) // add indices
+                .filter(x => x.selected)
+                .map(x => x.index)
+                .value()
+            ).value()
+    }
+
+    // Unselect everything
+    Plotly.restyle(this.node, {
+        selectedpoints: selectedpoints,
     })
 }
 

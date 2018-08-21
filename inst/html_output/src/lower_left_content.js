@@ -875,6 +875,7 @@ function drawDistChart(node, values) {
     } else {
         var valcounts = _.countBy(values)
         var pairs = _.toPairs(valcounts)
+        pairs = _.sortBy(pairs, x => x[0])
         data.push({
             type: 'bar',
             x: _.map(pairs, x => x[0]),
@@ -899,6 +900,35 @@ function drawDistChart(node, values) {
     }
 
     Plotly.newPlot(node, data, layout, options)
+
+    node.on('plotly_selected', function(eventData){
+        var cellIds = []
+
+        if (eventData !== undefined) {
+            var values = get_global_data('plotted_values')
+            var selected = _.map(eventData.points, p => p.x)
+            var subset;
+
+            if(typeof(selected[0]) === 'string'){
+                var select_map = _.keyBy(selected)
+                subset = _.pickBy(values, v => v in select_map)
+            } else {
+                var min = _.min(selected)
+                var max = _.max(selected)
+
+                subset = _.pickBy(values, v => v >= min)
+                subset = _.pickBy(subset, v => v <= max)
+            }
+            cellIds = _.keys(subset)
+        } else {
+            cellIds = []
+        }
+
+        var event = new CustomEvent('select-cells', {
+            detail: {cells: cellIds}
+        })
+        window.dispatchEvent(event);
+    });
 }
 
 function drawDistChartSelection(node, selected_values, remainder_values, selection_name) {
@@ -942,8 +972,13 @@ function drawDistChartSelection(node, selected_values, remainder_values, selecti
         barmode = 'overlay'
     } else {
 
-        var valcounts = _.countBy(remainder_values)
+        allvals = selected_values.concat(remainder_values)
+        var valcounts = _(allvals).uniq().keyBy().mapValues(() => 0).value()
+
+        var newvalcounts = _.countBy(remainder_values)
+        _.assign(valcounts, newvalcounts)
         var pairs = _.toPairs(valcounts)
+        pairs = _.sortBy(pairs, x => x[0])
         data.push({
             type: 'bar',
             name: 'Remainder',
@@ -951,8 +986,11 @@ function drawDistChartSelection(node, selected_values, remainder_values, selecti
             y: _.map(pairs, x => x[1]/remainder_values.length*100),
         })
 
-        valcounts = _.countBy(selected_values)
+        valcounts = _(allvals).uniq().keyBy().mapValues(() => 0).value()
+        newvalcounts = _.countBy(selected_values)
+        _.assign(valcounts, newvalcounts)
         pairs = _.toPairs(valcounts)
+        pairs = _.sortBy(pairs, x => x[0])
         data.push({
             type: 'bar',
             name: selection_name,
@@ -970,6 +1008,7 @@ function drawDistChartSelection(node, selected_values, remainder_values, selecti
             b: 60,
         },
         bargap: .1,
+        dragmode: 'select',
         barmode: barmode,
     }
     var options = {
@@ -979,4 +1018,34 @@ function drawDistChartSelection(node, selected_values, remainder_values, selecti
     }
 
     Plotly.newPlot(node, data, layout, options)
+
+    node.on('plotly_selected', function(eventData){
+        var cellIds = []
+
+        if (eventData !== undefined) {
+            var values = get_global_data('plotted_values')
+            var selected = _.map(eventData.points, p => p.x)
+            var subset;
+
+            if(typeof(selected[0]) === 'string'){
+                var select_map = _.keyBy(selected)
+                subset = _.pickBy(values, v => v in select_map)
+            } else {
+                var min = _.min(selected)
+                var max = _.max(selected)
+
+                subset = _.pickBy(values, v => v >= min)
+                subset = _.pickBy(subset, v => v <= max)
+            }
+
+            cellIds = _.keys(subset)
+        } else {
+            cellIds = []
+        }
+
+        var event = new CustomEvent('select-cells', {
+            detail: {cells: cellIds}
+        })
+        window.dispatchEvent(event);
+    });
 }

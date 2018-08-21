@@ -100,6 +100,10 @@ Right_Content.prototype.update = function(updates)
 {
     var self = this;
 
+    if('selected_cell' in updates){
+        self.scatter.updateSelection()
+    }
+
     var needsUpdate = ('main_vis' in updates) ||
         ('plotted_item' in updates) ||
         ('plotted_item_type' in updates) ||
