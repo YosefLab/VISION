@@ -18,14 +18,12 @@ ColorScatter.prototype.clearData = function() {
  * tree_adj: array of [point1, points2] indices into tree_points
  *
  */
-//ColorScatter.prototype.setData = function(points, isFactor, full_color_range, selected_cells, diverging_colormap)
 ColorScatter.prototype.setData = function(object)
 {
     var self = this
     var points = object['points']
     var isFactor = object['isFactor'] === undefined ? false : object['isFactor']
     var full_color_range = object['full_color_range'] === undefined ? false : object['full_color_range']
-    var selected_cells = object['selected_cells'] === undefined ? [] : object['selected_cells']
     var diverging_colormap = object['diverging_colormap'] === undefined ? true : object['diverging_colormap']
 
     var circle_radius = this.pointsToRadius(points.length)
@@ -34,13 +32,22 @@ ColorScatter.prototype.setData = function(object)
 
     var showlegend = false
     if(isFactor) {
-        var c = _.map(points, p => p[2])
+        var c = _.map(points, p => p['value'])
         var unique = d3.set(c).values();
         _.forEach(unique, level => {
-            var subset = _.filter(points, p => p[2] == level)
-            var x_sub = _.map(subset, p => p[0])
-            var y_sub = _.map(subset, p => p[1])
-            var id_sub = _.map(subset, p => p[3])
+            var subset = _.filter(points, p => p['value'] == level)
+            var x_sub = _.map(subset, p => p['x'])
+            var y_sub = _.map(subset, p => p['y'])
+            var id_sub = _.map(subset, p => p['label'])
+            var selected_points = _(subset)
+                .map((p, i) => {return({selected: p.selected, index: i})})
+                .filter(p => p.selected)
+                .map(p => p.index)
+                .value()
+
+            if(selected_points.length == 0)
+                selected_points = null
+
             var trace = {
                 x: x_sub,
                 y: y_sub,
@@ -51,6 +58,8 @@ ColorScatter.prototype.setData = function(object)
                 marker: {
                     size: circle_radius,
                 },
+                selectedpoints: selected_points,
+                hoverinfo: 'text+name',
             }
             data.push(trace)
         });
@@ -59,10 +68,10 @@ ColorScatter.prototype.setData = function(object)
 
     } else {
 
-        var x = _.map(points, p => p[0])
-        var y = _.map(points, p => p[1])
-        var c = _.map(points, p => p[2])
-        var id = _.map(points, p => p[3])
+        var x = _.map(points, p => p['x'])
+        var y = _.map(points, p => p['y'])
+        var c = _.map(points, p => p['value'])
+        var id = _.map(points, p => p['label'])
 
         var cvals = c.filter(cv => cv !== "NA")
         cvals.sort(d3.ascending); // Needed for quantile
@@ -86,6 +95,15 @@ ColorScatter.prototype.setData = function(object)
             ]
         }
 
+        var selected_points = _(points)
+            .map((p, i) => {return({selected: p.selected, index: i})})
+            .filter(p => p.selected)
+            .map(p => p.index)
+            .value()
+
+        if(selected_points.length == 0)
+            selected_points = null
+
         var trace1 = {
             x: x,
             y: y,
@@ -105,7 +123,8 @@ ColorScatter.prototype.setData = function(object)
                 },
                 colorscale: colorscale,
             },
-
+            selectedpoints: selected_points,
+            hoverinfo: 'text',
         }
 
         data.push(trace1)
@@ -218,15 +237,13 @@ ColorScatter.prototype.setData = function(object)
 
     this.node.on('plotly_doubleclick', function(){
         // Unselect everything
-        var selections = _.map(self.node.data, function(d){
-            return _.range(d.x.length)
-        });
-
         Plotly.restyle(self.node, {
-            selectedpoints: selections,
+            selectedpoints: [null],
         })
 
-        var event = new CustomEvent('select-cells', {detail: []})
+        var event = new CustomEvent('select-cells', {
+            detail: {cells: []}
+        })
         window.dispatchEvent(event);
     })
 
@@ -234,6 +251,10 @@ ColorScatter.prototype.setData = function(object)
         var cellIds;
         if (eventData === undefined) {
             cellIds = [];
+            // Unselect everything
+            Plotly.restyle(self.node, {
+                selectedpoints: [null],
+            })
         } else {
             cellIds = _.map(eventData.points, d => {
                 return d.data.text[d.pointNumber];

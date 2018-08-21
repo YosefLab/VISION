@@ -213,35 +213,29 @@ Right_Content.prototype.draw_sigvp = function(autoZoom) {
 
     var points = [];
     var sample_labels = Object.keys(values).sort()
+    var selected_cells = get_global_status('selected_cell')
+    var selected_cells_map = _.keyBy(selected_cells, x => x)
+    if(selected_cells.length == 1){ // Just a single cell
+        selected_cells_map = {} // Don't style anything
+    }
 
     _.each(sample_labels, (sample_label) => {
         var x = projection[sample_label][0]
         var y = projection[sample_label][1]
         var sig_score = values[sample_label]
-        points.push([x, y, sig_score, sample_label]);
+        var selected = sample_label in selected_cells_map
+
+        points.push({
+            x: x, y: y,
+            value: sig_score, label: sample_label,
+            selected: selected,
+        });
     })
 
-    // Get selected cells
-    var selected_cluster = get_global_status('selected_cluster')
-    var clusters = get_global_data('clusters')
-
-    var selected_cells
-    if (selected_cluster !== ''){
-        selected_cells = _(clusters)
-            .toPairs(clusters)
-            .filter(x => x[1] === selected_cluster)
-            .map(x => x[0])
-            .value()
-    } else {
-        selected_cells === undefined
-    }
-
-    self.scatter.clearData()
     self.scatter.setData({
         points: points,
         isFactor: isFactor,
         full_color_range: full_color_range,
-        selected_cells: selected_cells,
         diverging_colormap: diverging_colormap
     });
 
@@ -303,12 +297,23 @@ Right_Content.prototype.draw_tree = function(autoZoom) {
 
             var points = [];
             var sample_labels = Object.keys(values).sort()
+            var selected_cells = get_global_status('selected_cell')
+            var selected_cells_map = _.keyBy(selected_cells, x => x)
+            if(selected_cells.length == 1){ // Just a single cell
+                selected_cells_map = {} // Don't style anything
+            }
 
             _.each(sample_labels, (sample_label) => {
                 var x = projection[sample_label][0]
                 var y = projection[sample_label][1]
                 var sig_score = values[sample_label]
-                points.push([x, y, sig_score, sample_label]);
+                var selected = sample_label in selected_cells_map
+
+                points.push({
+                    x: x, y: y,
+                    value: sig_score, label: sample_label,
+                    selected: selected,
+                });
             })
 
             var tree_points = [];
@@ -329,27 +334,10 @@ Right_Content.prototype.draw_tree = function(autoZoom) {
                 }
             }
 
-            // Get selected cells
-            var selected_cluster = get_global_status('selected_cluster')
-            var clusters = get_global_data('clusters')
-
-            var selected_cells
-            if (selected_cluster !== ''){
-                selected_cells = _(clusters)
-                    .toPairs(clusters)
-                    .filter(x => x[1] === selected_cluster)
-                    .map(x => x[0])
-                    .value()
-            } else {
-                selected_cells === undefined
-            }
-
-            self.scatter.clearData()
             self.scatter.setData({
                 points: points,
                 isFactor: isFactor,
                 full_color_range: full_color_range,
-                selected_cells: selected_cells,
                 diverging_colormap: diverging_colormap,
                 tree_points: tree_points,
                 tree_adj: tree_adj,
@@ -388,15 +376,25 @@ Right_Content.prototype.draw_pca = function() {
 
     var points = []
     var sample_labels = Object.keys(values).sort()
+    var selected_cells = get_global_status('selected_cell')
+    var selected_cells_map = _.keyBy(selected_cells, x => x)
+    if(selected_cells.length == 1){ // Just a single cell
+        selected_cells_map = {} // Don't style anything
+    }
 
     _.each(sample_labels, (sample_label) => {
         var x = pca[sample_label][pc_key-1]
         var y = values[sample_label]
         var sig_score = null
-        points.push([x, y, sig_score, sample_label]);
+        var selected = sample_label in selected_cells_map
+
+        points.push({
+            x: x, y: y,
+            value: sig_score, label: '',
+            selected: selected,
+        });
     })
 
-    self.scatter.clearData()
     self.scatter.setData({
         points: points,
         isFactor: isFactor
