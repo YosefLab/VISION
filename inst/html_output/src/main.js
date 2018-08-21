@@ -24,6 +24,7 @@ global_status.selected_cluster = ""; // which cell cluster should be clustered
 global_status.selected_cell = ""; // which cell(s) is/are currently selected
 global_status.selected_cells = []; // which cell(s) is/are currently selected
 global_status.selection_type = "none"; // either 'cell', or 'cells', or 'pool', or 'pools', or 'none'
+global_status.selection_name = "Selection"; // For plot legends
 
 var global_data = {};
 
@@ -326,18 +327,19 @@ window.onload = function()
 
     window.addEventListener("select-cells", function(e) {
 
-        var cells = e.detail;
+        var cells = e.detail.cells;
         var update = {}
 
         if (cells.length == 0){
             update['selection_type'] = 'none'
+            update['selected_cell'] = cells
             set_global_status(update)
             return;
         }
 
         if(get_global_data('pooled')){
             if(cells.length == 1){
-                update['selected_cell'] = cells[0]
+                update['selected_cell'] = cells
                 update['selection_type'] = 'pool'
             } else {
                 update['selected_cell'] = cells
@@ -345,13 +347,20 @@ window.onload = function()
             }
         } else {
             if(cells.length == 1){
-                update['selected_cell'] = cells[0]
+                update['selected_cell'] = cells
                 update['selection_type'] = 'cell'
             } else {
                 update['selected_cell'] = cells
                 update['selection_type'] = 'cells'
             }
         }
+
+        var name = 'Selection'
+        if('name' in e.detail){
+            name = e.detail.name
+        }
+        update['selection_name'] = name;
+
         set_global_status(update)
     });
 

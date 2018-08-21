@@ -200,11 +200,19 @@ ColorScatter.prototype.setData = function(object)
     Plotly.newPlot(this.node, data, layout, options)
 
     this.node.on('plotly_click', function(data){
+        console.log('plotly_click')
 
         var point = data.points[0]
         var cellId = point.text
 
-        var event = new CustomEvent('select-cells', {detail: [cellId]})
+        // Unselect everything in plot
+        Plotly.restyle(self.node, {
+            selectedpoints: [null],
+        })
+
+        var event = new CustomEvent('select-cells', {
+            detail: { cells: [cellId] }
+        })
         window.dispatchEvent(event);
     })
 
@@ -231,12 +239,15 @@ ColorScatter.prototype.setData = function(object)
                 return d.data.text[d.pointNumber];
             });
         }
-        var event = new CustomEvent('select-cells', {detail: cellIds})
+        var event = new CustomEvent('select-cells', {
+            detail: {cells: cellIds}
+        })
         window.dispatchEvent(event);
     });
 
     this.node.on('plotly_legendclick', function(data){
         var selectedPoints = data.fullData[data.curveNumber].text
+        var name = data.fullData[data.curveNumber].name
 
         // Update the selection in the plot
         var selections = _.map(data.fullData, function(d){
@@ -251,7 +262,9 @@ ColorScatter.prototype.setData = function(object)
             selectedpoints: selections,
         })
 
-        var event = new CustomEvent('select-cells', {detail: selectedPoints})
+        var event = new CustomEvent('select-cells', {
+            detail: {cells: selectedPoints, name: name}
+        })
         window.dispatchEvent(event)
         return false;
     })
