@@ -101,7 +101,7 @@ All of these initialization would result in the same VISION object being created
 library(VISION)
 
 # -- read in expression data set
-expr <- as.matrix(read.table("data/expression_matrix.txt", 
+expr <- as.matrix(read.table("data/expression_matrix.txt.gz", 
                    header = TRUE, sep = '\t', row.names = 1))
 
 # -- scale expression matrix by the median number of UMIs
@@ -109,7 +109,7 @@ n.umi = median(colSums(expr))
 expr = apply(expr, 2, function(x) (x * n.umi) / (sum(x) + 1))
 
 # -- read in meta data
-meta = read.table("data/glio_meta.txt", sep='\t', header=T, row.names=1)
+meta = read.table("data/glio_meta.txt.gz", sep='\t', header=T, row.names=1)
 meta = meta[colnames(expr), ,drop=F]
 meta[,1] = as.factor(meta[,1])
 
