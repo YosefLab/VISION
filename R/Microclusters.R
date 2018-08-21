@@ -179,7 +179,7 @@ louvainCluster <- function(kn, data) {
 
     nn <- kn[[1]]
     d <- kn[[2]]
-    sigma <- apply(d, 1, max)
+    sigma <- apply(d, 1, function(x) quantile(x, c(.5))[[1]])
     d <- exp(-1 * (d*d) / sigma^2)
 
     nnl <- lapply(1:nrow(nn), function(i) nn[i,])

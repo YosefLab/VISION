@@ -11,7 +11,7 @@
 
 <meta name="author" content="Matthew Jones" />
 
-<meta name="date" content="2018-07-20" />
+<meta name="date" content="2018-08-20" />
 
 <title>Trajectory Inference and VISION</title>
 
@@ -120,7 +120,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">Trajectory Inference and VISION</h1>
 <p class="author-name">Matthew Jones</p>
-<h4 class="date"><em>20 July 2018</em></h4>
+<h4 class="date"><em>20 August 2018</em></h4>
 <h4 class="package">Package</h4>
 <p>BiocStyle 2.8.2</p>
 
@@ -160,19 +160,44 @@ install.packages('tidyverse')</code></pre>
 </div>
 <div id="workflow" class="section level1">
 <h1><span class="header-section-number">2</span> Workflow</h1>
-<p>We begin by loading in the data and perfomring perliminary scaling:</p>
+<p>We begin by loading in the data and requisite libraries:</p>
 <pre class="r"><code>library(VISION)
-library(dynmethods)
-library(monocle)
-library(DDRTree)</code></pre>
-<pre class="r"><code>expr = as.matrix(read.table(&quot;data/hemato_counts.csv.gz&quot;, sep=',', header=T, row.names=1))</code></pre>
-<p>We’ll now follow the <a href="https://github.com/dynverse/dyno">dyno vignette</a> in the github README. You’ll need to make sure you have <a href="https://docs.docker.com/install/">Docker</a> installed. Although we use Monocle2 here, there is a wide variety of methods that can be used, as listed on the <a href="https://github.com/dynverse/dynmethods">Dynmethods page</a>. Note that for Monocle, we are feeding in the raw counts, not scaled as you would when passing data into VISION.</p>
-<pre class="r"><code>model &lt;- dynmethods:::run_monocle(t(expr), reduction_method=&quot;DDRTree&quot;, norm_method=&quot;log&quot;)</code></pre>
-<p>Now, with this model saved we can pass it to VISION via the <code>latentTrajectory</code> parameter. The model will automatically be analzyed with the same signatures passed to the FastProjectR object, and with this model, the <code>Trajectory</code> tab will be activated in the FastProjectR output report.</p>
+library(dyno)
+library(tidyverse)</code></pre>
+<pre class="r"><code>counts = as.matrix(read.table(&quot;data/hemato_counts.csv.gz&quot;, sep=',', header=T, row.names=1))</code></pre>
+<p>We’ll now follow the <a href="https://github.com/dynverse/dyno">dyno vignette</a> in the github README. You’ll need to make sure you have <a href="https://docs.docker.com/install/">Docker</a> installed. Although we use Monocle2 here, there is a wide variety of methods that can be used, as listed on the <a href="https://github.com/dynverse/dynmethods">Dynmethods page</a>.</p>
+<p>Before running the model, we’ll need to perform some gene filtering. We first only select the genes used in the original Tusi et al study, then for further efficiency, we further filter using VISION’s Fano filtering.</p>
+<pre class="r"><code>k.genes = read.table(&quot;data/bBM.filtered_gene_list.paper.txt&quot;, sep=',')[,1]
+filt.counts = counts[k.genes,]
+
+f.genes = VISION:::filterGenesFano(filt.counts)
+filt.counts = filt.counts[f.genes,]</code></pre>
+<p>Now, resuming the workflow recommended on the dyno vignette,</p>
+<pre class="r"><code>scale.factor = median(colSums(counts))
+expr = apply(counts, 2, function(x) (x * scale.factor) / (sum(x) + 1))
+filt.expr = log(1 + expr[f.genes,])
+
+dataset = wrap_expression(
+  counts = t(filt.counts),
+  expression = t(filt.expr)
+)
+
+model &lt;- infer_trajectory(dataset, &quot;projected_slingshot&quot;, verbose=T)
+
+model &lt;- model %&gt;% add_dimred(dyndimred::dimred_mds, expression_source = dataset$expression)
+plot_dimred(
+  model, 
+  expression_source = dataset$expression
+)</code></pre>
+<p>Now, with this model saved we can pass it to VISION via the <code>latentTrajectory</code> parameter. The model will automatically be analzyed with the same signatures passed to the FastProjectR object, and with this model, the <code>Trajectory</code> tab will be activated in the VISION output report.</p>
 <pre class="r"><code>covar = read.table(&quot;data/hemato_covariates.txt&quot;, sep='\t', header=T, row.names=1)
-covar = covar[rownames(expr),]
-vis &lt;- VISION(expr, c(&quot;data/h.all.v5.2.symbols.gmt&quot;), projection_genes = rownames(expr), 
-            meta=covar, latentTrajectory = model, sig_norm_method=&quot;znorm_columns&quot;)</code></pre>
+covar = covar[colnames(expr),]
+vis &lt;- VISION(expr, 
+            c(&quot;data/h.all.v5.2.symbols.gmt&quot;), 
+            projection_genes = rownames(expr), 
+            meta=covar, 
+            latentTrajectory = model, 
+            sig_norm_method=&quot;znorm_columns&quot;)</code></pre>
 </div>
 <div id="session-info" class="section level1">
 <h1><span class="header-section-number">3</span> Session Info</h1>
@@ -189,55 +214,56 @@ vis &lt;- VISION(expr, c(&quot;data/h.all.v5.2.symbols.gmt&quot;), projection_ge
 ## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
 ## 
 ## attached base packages:
-##  [1] splines   stats4    parallel  stats     graphics  grDevices utils    
-##  [8] datasets  methods   base     
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] monocle_2.8.0       DDRTree_0.1.5       irlba_2.3.2        
-##  [4] VGAM_1.0-5          ggplot2_2.2.1.9000  Biobase_2.40.0     
-##  [7] BiocGenerics_0.26.0 Matrix_1.2-14       dynmethods_0.1.0   
-## [10] VISION_0.99.6       BiocStyle_2.8.2    
+##  [1] forcats_0.3.0       stringr_1.3.1       dplyr_0.7.6        
+##  [4] purrr_0.2.5         readr_1.1.1         tidyr_0.8.1        
+##  [7] tibble_1.4.2        ggplot2_3.0.0.9000  tidyverse_1.2.1    
+## [10] dyno_0.1.0          dynwrap_0.1.0       dynplot_0.1.0      
+## [13] dynmethods_0.1.0    dynguidelines_0.1.0 dynfeature_0.1.0   
+## [16] VISION_0.99.6       BiocStyle_2.8.2    
 ## 
 ## loaded via a namespace (and not attached):
-##   [1] Rtsne_0.13             colorspace_1.3-2       mclust_5.4.1          
-##   [4] rprojroot_1.3-2        htmlTable_1.12         base64enc_0.1-3       
-##   [7] rstudioapi_0.7         rje_1.9                ParamHelpers_1.11     
-##  [10] dynutils_0.1.0.9001    ggrepel_0.8.0          codetools_0.2-15      
-##  [13] logging_0.7-103        docopt_0.4.5           knitr_1.20            
-##  [16] Formula_1.2-3          jsonlite_1.5           cluster_2.0.7-1       
-##  [19] pheatmap_1.0.10        ggforce_0.1.2          wordspace_0.2-0       
-##  [22] readr_1.1.1            compiler_3.5.0         backports_1.1.2       
-##  [25] assertthat_0.2.0       lazyeval_0.2.1         limma_3.36.2          
-##  [28] cli_1.0.0              tweenr_0.1.5           acepack_1.4.1         
-##  [31] htmltools_0.3.6        tools_3.5.0            bindrcpp_0.2.2        
-##  [34] rsvd_0.9               igraph_1.2.1           gtable_0.2.0          
-##  [37] glue_1.2.0             RANN_2.5.1             reshape2_1.4.3        
-##  [40] dplyr_0.7.6            fastmatch_1.1-0        Rcpp_0.12.17          
-##  [43] slam_0.1-43            GA_3.1.1               nlme_3.1-137          
-##  [46] iterators_1.0.9        ggraph_1.0.1           xfun_0.2              
-##  [49] stringr_1.3.1          testthat_2.0.0         devtools_1.13.5       
-##  [52] MASS_7.3-49            scales_0.5.0           tidygraph_1.1.0       
-##  [55] loe_1.1                hms_0.4.2              RColorBrewer_1.1-2    
-##  [58] BBmisc_1.11            yaml_2.1.19            memoise_1.1.0         
-##  [61] gridExtra_2.3          dyndimred_0.1.0        rpart_4.1-13          
-##  [64] fastICA_1.2-1          latticeExtra_0.6-28    stringi_1.2.3         
-##  [67] desc_1.2.0             foreach_1.4.4          checkmate_1.8.5       
-##  [70] permute_0.9-4          lhs_0.16               shades_1.2.0          
-##  [73] densityClust_0.3       rlang_0.2.0.9001       pkgconfig_2.0.1       
-##  [76] matrixStats_0.53.1     qlcMatrix_0.9.7        dynplot_0.1.0         
-##  [79] evaluate_0.10.1        lattice_0.20-35        purrr_0.2.5           
-##  [82] bindr_0.1.1            patchwork_0.0.1        htmlwidgets_1.2       
-##  [85] pdist_1.2              tidyselect_0.2.4       plyr_1.8.4            
-##  [88] magrittr_1.5           bookdown_0.7           R6_2.2.2              
-##  [91] Hmisc_4.1-1            combinat_0.0-8         pillar_1.2.3          
-##  [94] foreign_0.8-70         withr_2.1.2            mgcv_1.8-23           
-##  [97] units_0.6-0            survival_2.41-3        dynwrap_0.1.0         
-## [100] nnet_7.3-12            tibble_1.4.2           crayon_1.3.4          
-## [103] rmarkdown_1.10         viridis_0.5.1          grid_3.5.0            
-## [106] data.table_1.11.4      FNN_1.1                vegan_2.5-2           
-## [109] HSMMSingleCell_0.114.0 sparsesvd_0.1-4        digest_0.6.15         
-## [112] tidyr_0.8.1            jug_0.1.7              munsell_0.5.0         
-## [115] viridisLite_0.3.0      iotools_0.2-5</code></pre>
+##   [1] Rtsne_0.13          colorspace_1.3-2    mclust_5.4.1       
+##   [4] rprojroot_1.3-2     htmlTable_1.12      base64enc_0.1-3    
+##   [7] rje_1.9             rstudioapi_0.7      ParamHelpers_1.11  
+##  [10] dynutils_1.0.1.9000 ggrepel_0.8.0       lubridate_1.7.4    
+##  [13] xml2_1.2.0          ranger_0.10.1       codetools_0.2-15   
+##  [16] splines_3.5.0       logging_0.7-103     knitr_1.20         
+##  [19] Formula_1.2-3       jsonlite_1.5        broom_0.5.0        
+##  [22] cluster_2.0.7-1     ggforce_0.1.3       shiny_1.1.0        
+##  [25] wordspace_0.2-0     httr_1.3.1          compiler_3.5.0     
+##  [28] backports_1.1.2     assertthat_0.2.0    Matrix_1.2-14      
+##  [31] lazyeval_0.2.1      cli_1.0.0           later_0.7.3        
+##  [34] tweenr_0.1.5        acepack_1.4.1       htmltools_0.3.6    
+##  [37] tools_3.5.0         bindrcpp_0.2.2      rsvd_0.9           
+##  [40] igraph_1.2.2        gtable_0.2.0        glue_1.3.0         
+##  [43] reshape2_1.4.3      fastmatch_1.1-0     Rcpp_0.12.18       
+##  [46] GA_3.1.1            cellranger_1.1.0    nlme_3.1-137       
+##  [49] iterators_1.0.9     ggraph_1.0.2        xfun_0.2           
+##  [52] rvest_0.3.2         testthat_2.0.0      mime_0.5           
+##  [55] devtools_1.13.6     MASS_7.3-49         scales_1.0.0       
+##  [58] tidygraph_1.1.0     loe_1.1             hms_0.4.2          
+##  [61] promises_1.0.1      parallel_3.5.0      RColorBrewer_1.1-2 
+##  [64] BBmisc_1.11         yaml_2.1.19         memoise_1.1.0      
+##  [67] gridExtra_2.3       dyndimred_0.1.0     rpart_4.1-13       
+##  [70] fastICA_1.2-1       latticeExtra_0.6-28 stringi_1.2.3      
+##  [73] desc_1.2.0          foreach_1.4.4       checkmate_1.8.5    
+##  [76] permute_0.9-4       shades_1.2.0        rlang_0.2.2.9000   
+##  [79] pkgconfig_2.0.2     matrixStats_0.53.1  evaluate_0.10.1    
+##  [82] lattice_0.20-35     bindr_0.1.1         patchwork_0.0.1    
+##  [85] htmlwidgets_1.2     pdist_1.2           tidyselect_0.2.4   
+##  [88] plyr_1.8.4          magrittr_1.5        bookdown_0.7       
+##  [91] R6_2.2.2            Hmisc_4.1-1         haven_1.1.2        
+##  [94] pillar_1.2.3        foreign_0.8-70      withr_2.1.2        
+##  [97] mgcv_1.8-23         units_0.6-0         survival_2.41-3    
+## [100] nnet_7.3-12         modelr_0.1.2        crayon_1.3.4       
+## [103] rmarkdown_1.10      viridis_0.5.1       readxl_1.1.0       
+## [106] grid_3.5.0          data.table_1.11.4   vegan_2.5-2        
+## [109] sparsesvd_0.1-4     digest_0.6.15       xtable_1.8-2       
+## [112] httpuv_1.4.4.1      jug_0.1.7           munsell_0.5.0      
+## [115] viridisLite_0.3.0   iotools_0.2-5</code></pre>
 </div>
 
 

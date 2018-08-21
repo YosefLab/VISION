@@ -54,35 +54,72 @@ In this vignette, we'll be analyzing a set of ~5,000 cells during haematopoiesis
 
 # Workflow
 
-We begin by loading in the data and perfomring perliminary scaling:
+We begin by loading in the data and requisite libraries:
 
 ```{r, collapse=F, message=F, warning=F}
 library(VISION)
-library(dynmethods)
-library(monocle)
-library(DDRTree)
+library(dyno)
+library(tidyverse)
 ```
 
 ```{r, collapse=F, message=T, eval=F}
 
-expr = as.matrix(read.table("data/hemato_counts.csv.gz", sep=',', header=T, row.names=1))
+counts = as.matrix(read.table("data/hemato_counts.csv.gz", sep=',', header=T, row.names=1))
 ```
 
-We'll now follow the [dyno vignette](https://github.com/dynverse/dyno) in the github README. You'll need to make sure you have [Docker](https://docs.docker.com/install/) installed. Although we use Monocle2 here, there is a wide variety of methods that can be used, as listed on the [Dynmethods page](https://github.com/dynverse/dynmethods). Note that for Monocle, we are feeding in the raw counts, not scaled as you would when passing data into VISION.
+We'll now follow the [dyno vignette](https://github.com/dynverse/dyno) in the github README. You'll need to make sure you have [Docker](https://docs.docker.com/install/) installed. Although we use Monocle2 here, there is a wide variety of methods that can be used, as listed on the [Dynmethods page](https://github.com/dynverse/dynmethods). 
+
+Before running the model, we'll need to perform some gene filtering. We first only select the genes used in the original Tusi et al study, then for further efficiency, we further filter using VISION's Fano filtering.
+
+```{r, collapse=F, message=T, eval=F}
+k.genes = read.table("data/bBM.filtered_gene_list.paper.txt", sep=',')[,1]
+filt.counts = counts[k.genes,]
+
+f.genes = VISION:::filterGenesFano(filt.counts)
+filt.counts = filt.counts[f.genes,]
+
+```
+
+Now, resuming the workflow recommended on the dyno vignette,
 
 ```{r, collapse=F, message=T, eval=F}
 
-model <- dynmethods:::run_monocle(t(expr), reduction_method="DDRTree", norm_method="log")
+scale.factor = median(colSums(counts))
+expr = apply(counts, 2, function(x) (x * scale.factor) / (sum(x) + 1))
+filt.expr = log(1 + expr[f.genes,])
+
+dataset = wrap_expression(
+  counts = t(filt.counts),
+  expression = t(filt.expr)
+)
+
+model <- infer_trajectory(dataset, "projected_slingshot", verbose=T)
+
+model <- model %>% add_dimred(dyndimred::dimred_mds, expression_source = dataset$expression)
+plot_dimred(
+  model, 
+  expression_source = dataset$expression
+)
+
 ```
 
-Now, with this model saved we can pass it to VISION via the `latentTrajectory` parameter. The model will automatically be analzyed with the same signatures passed to the FastProjectR object, and with this model, the `Trajectory` tab will be activated in the FastProjectR output report. 
+Now, with this model saved we can pass it to VISION via the `latentTrajectory` parameter. The model will automatically be analzyed with the same signatures passed to the FastProjectR object, and with this model, the `Trajectory` tab will be activated in the VISION output report. 
 
 ``` {r, collapse=F, eval=F}
 covar = read.table("data/hemato_covariates.txt", sep='\t', header=T, row.names=1)
-covar = covar[rownames(expr),]
-vis <- VISION(expr, c("data/h.all.v5.2.symbols.gmt"), projection_genes = rownames(expr), 
-            meta=covar, latentTrajectory = model, sig_norm_method="znorm_columns")
+covar = covar[colnames(expr), -1]
+vis <- Vision(expr, 
+            c("data/h.all.v5.2.symbols.gmt"), 
+            projection_genes = f.genes, 
+            meta=covar, 
+            latentTrajectory = model, 
+            sig_norm_method="znorm_columns")
+vis <- addProjection(vis, "MDS", model$dimred[,c(1,2)])
+
+vis <- analyze(vis)
 ```
+
+
 
 # Session Info
 ```{r, collapse=F, message=T}
