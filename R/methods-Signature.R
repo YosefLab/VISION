@@ -653,7 +653,7 @@ clusterSignatures <- function(sigMatrix, metaData, pvals, clusterMeta) {
   significant <- apply(pvals, 1, function(x) min(x) < -1.3)
 
   meta_n <- vapply(names(metaData), function(metaName) {
-			is.numeric(metaData[,metaName] && !any(is.na(metaData[,metaName])))
+			is.numeric(metaData[,metaName]) && !any(is.na(metaData[,metaName]))
 		}, FUN.VALUE = TRUE)
 
   meta_n <- metaData[, meta_n, drop = FALSE]
