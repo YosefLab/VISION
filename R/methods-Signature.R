@@ -657,7 +657,7 @@ clusterSignatures <- function(sigMatrix, metaData, pvals, consistency, clusterMe
   significant <- significant & large
 
   meta_n <- vapply(names(metaData), function(metaName) {
-			is.numeric(metaData[,metaName] && !any(is.na(metaData[,metaName])))
+			is.numeric(metaData[, metaName]) && !any(is.na(metaData[, metaName]))
 		}, FUN.VALUE = TRUE)
 
   meta_n <- metaData[, meta_n, drop = FALSE]
