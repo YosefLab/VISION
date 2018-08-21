@@ -53,11 +53,12 @@ Lower_Left_Content.prototype.init = function()
 
     var cell_info_promise = cell_info.init();
 
-    //var cell_info = new Cell_Info();
-    //this.children.push(cell_info);
-    //this.cell_info = cell_info
+    var selection_info = new Selection_Info()
+    this.children.push(selection_info)
+    this.selection_info = selection_info
 
-    //var cell_info_promise = cell_info.init();
+    var selection_info_promise = selection_info.init();
+
     var self = this;
     this.nav['sig_heatmap'].on('click', function()
     {
@@ -100,14 +101,39 @@ Lower_Left_Content.prototype.update = function(updates)
     }
 
     if('selection_type' in updates){
-        if(updates['selection_type'] === 'cell'){
+
+        var SELECTION_IS_CELL = updates['selection_type'] === 'cell'
+        var SELECTION_IS_CELLS = (
+            updates['selection_type'] === 'cells' ||
+            updates['selection_type'] === 'pool' ||
+            updates['selection_type'] === 'pools'
+        )
+
+        // Show or hide 'Cell'
+        if(SELECTION_IS_CELL){
             $(this.nav['cell_info']).show();
-            $(this.nav['cell_info']).click();
         } else {
-            if($(this.nav['cell_info']).hasClass('active')){
-                $(this.nav['values']).click();
-            }
             $(this.nav['cell_info']).hide();
+        }
+
+        // Show or hide 'Selection'
+        if (SELECTION_IS_CELLS) {
+            $(this.nav['selection_info']).show();
+        } else {
+            $(this.nav['selection_info']).hide();
+        }
+
+        // Determine navigation
+        if (SELECTION_IS_CELL){
+            $(this.nav['cell_info']).click();
+
+        } else if(!SELECTION_IS_CELL && $(this.nav['cell_info']).hasClass('active')) {
+            $(this.nav['values']).click();
+
+        } else if(!SELECTION_IS_CELLS &&
+            $(this.nav['selection_info']).hasClass('active')) {
+
+            $(this.nav['values']).click();
         }
 
     }
@@ -417,17 +443,7 @@ Cell_Info.prototype.update = function(updates)
             var val = $(document.createElement('td'))
             prop.text(property+':');
 
-            var val_string;
-            if($.isNumeric(value)){
-                if((Math.abs(value) < 1e-3) ||
-                   (Math.abs(value) > 1e6) ){
-                    val_string = value.toExponential(3)
-                } else {
-                    val_string = value.toString();
-                }
-            } else {
-                val_string = value.toString();
-            }
+            var val_string = _formatNum(value)
 
             val.text(val_string);
             row.append(prop)
@@ -435,6 +451,112 @@ Cell_Info.prototype.update = function(updates)
             self.cell_info_table.append(row)
         })
     })
+}
+
+function Selection_Info()
+{
+    this.dom_node = document.getElementById('selection-info')
+}
+
+Selection_Info.prototype.init = function()
+{
+    this.cell_count_span = $(this.dom_node).find('#selected-cell-count-span')
+    this.selection_info_table = $(this.dom_node).find('#selection-info-table')
+    this.selection_info_table_meta = $(this.dom_node).find('#selection-info-table-meta')
+}
+
+Selection_Info.prototype.update = function(updates)
+{
+    var self = this;
+    if(!('selected_cell' in updates)){
+        return
+    }
+
+    if(
+        get_global_status('selection_type') !== 'cells' &&
+        get_global_status('selection_type') !== 'pool' &&
+        get_global_status('selection_type') !== 'pools'
+    ){
+        return
+    }
+
+    var selected_cells = updates['selected_cell']
+    self.cell_count_span.text(selected_cells.length)
+
+    return api.cells.meta(selected_cells).then(result => {
+
+        // Rebuild meta-data table
+        self.selection_info_table.children('tbody').empty()
+        _.each(result.numeric, function(value, property){
+            var row = $(document.createElement('tr'))
+            var prop = $(document.createElement('td'))
+            var valmin = $(document.createElement('td'))
+            var valmed = $(document.createElement('td'))
+            var valmax = $(document.createElement('td'))
+
+            prop.text(property+':');
+
+            // valmin.text(value['Min'].toFixed(1));
+            // valmed.text(value['Median'].toFixed(1));
+            // valmax.text(value['Max'].toFixed(1));
+            valmin.text(_formatNum(value['Min']));
+            valmed.text(_formatNum(value['Median']));
+            valmax.text(_formatNum(value['Max']));
+
+            row.append(prop)
+            row.append(valmin)
+            row.append(valmed)
+            row.append(valmax)
+
+            self.selection_info_table.children('tbody').append(row)
+        })
+
+        self.selection_info_table_meta.children('tbody').empty()
+        _.each(result.factor, function(value, property){
+
+            // Header row
+            var row = $(document.createElement('tr'))
+            var prop = $(document.createElement('td'))
+            var empty = $(document.createElement('td'))
+            prop.text(property+':');
+            row.append(prop)
+            row.append(empty)
+            self.selection_info_table_meta.children('tbody').append(row)
+
+            // Row for each factor level
+            _.each(value, function(percent, level){
+                var row = $(document.createElement('tr'))
+                var prop = $(document.createElement('td'))
+                var value = $(document.createElement('td'))
+                prop.text(level);
+                prop.css('font-weight', 'normal')
+                value.text(percent.toFixed(1)+'%');
+
+                row.append(prop)
+                row.append(value)
+                self.selection_info_table_meta.children('tbody').append(row)
+            })
+        })
+    })
+}
+
+
+function _formatNum(value){
+
+    if($.isNumeric(value)){
+
+        if(value === 0){ return "0"; }
+
+        if((Math.abs(value) < 1e-3) ||
+            (Math.abs(value) > 1e6) ){
+            return value.toExponential(3);
+        } else {
+            return value.toString();
+        }
+
+    } else {
+        return value.toString();
+    }
 }
 
 /*

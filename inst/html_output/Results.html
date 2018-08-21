@@ -142,7 +142,7 @@
                     <a class="nav-link" id="SigInfoButton" href="#sig-info-default" data-toggle="tab" aria-controls="sig-info-default" aria-selected="true">Signature</a>
                     <a class="nav-link" id="HeatmapButton" href="#sig-info-cluster" data-toggle="tab" aria-controls="sig-info-cluster" aria-selected="false">Heatmap</a>
                     <a class="nav-link" id="CellButton" href="#selected-cell-info" data-toggle="tab" aria-controls="selected-cell-info" aria-selected="false" style="display: none">Cell</a>
-                    <a class="nav-link" id="SelectionButton" href="#sig-info-cell" data-toggle="tab" aria-controls="sig-info-cell" aria-selected="false" style="display: none">Selection</a>
+                    <a class="nav-link" id="SelectionButton" href="#selection-info" data-toggle="tab" aria-controls="selection-info" aria-selected="false" style="display: none">Selection</a>
                 </div>
                 <div class="tab-content">
                     <div id="value-plot" class="tab-pane show active" role="tabpanel" aria-labelledby="ValuesButton">
@@ -175,13 +175,35 @@
                         <div id="heatmap-div"></div>
                     </div>
                     <div id="selected-cell-info" class="tab-pane" role="tabpanel" aria-labelledby="CellButton">
-                        <table class='label-table' style='margin-left: 30px; margin-bottom: 20px;'>
-                            <tr style='font-size: 1.2em;'>
-                                <td>Cell ID:</td>
-                                <td><span id="cell-id-span" style="display: inline-block; word-wrap: break-word;"></span></td>
-                            </tr>
-                        </table>
+                        <div class='label-row' style='margin-left: 30px; margin-bottom: 20px;'>
+                            <span>Cell ID:</span>
+                            <span id="cell-id-span"></span>
+                        </div>
                         <table id="cell-info-table" class='meta-table'>
+                        </table>
+                    </div>
+                    <div id="selection-info" class="tab-pane" role="tabpanel" aria-labelledby="SelectionButton">
+                        <div class='label-row' style='margin-left: 30px; margin-bottom: 20px;'>
+                            <span>Cells Selected:</span>
+                            <span id="selected-cell-count-span"></span>
+                        </div>
+                        <table id="selection-info-table" class='meta-table'>
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>Min</th>
+                                    <th>Median</th>
+                                    <th>Max</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                        <table id="selection-info-table-meta" class='meta-table'>
+                            <thead>
+                                <th style="width: 100px"></th>
+                                <th></th>
+                            </thead>
+                            <tbody></tbody>
                         </table>
                     </div>
                 </div> <!-- End of .tab-content -->
