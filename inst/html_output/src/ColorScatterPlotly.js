@@ -179,6 +179,7 @@ ColorScatter.prototype.setData = function(object)
     var layout = {
         hovermode: 'closest',
         plot_bgcolor: '#eeeeee',
+        dragmode: 'pan',
         showlegend: showlegend,
         legend: {
             xanchor: 'right',
@@ -214,7 +215,6 @@ ColorScatter.prototype.setData = function(object)
     Plotly.newPlot(this.node, data, layout, options)
 
     this.node.on('plotly_click', function(data){
-        console.log('plotly_click')
 
         var point = data.points[0]
         var cellId = point.text
