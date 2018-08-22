@@ -860,7 +860,7 @@ function drawDistChart(node, values) {
 
     if (!isFactor) {
         var binmin = _.min(values)
-        var binmax = _.max(values)
+        var binmax = _.max(values) + 1e-4 // end is not inclusive so need buffer
 
         data.push({
             type: 'histogram',
@@ -913,8 +913,8 @@ function drawDistChart(node, values) {
                 var select_map = _.keyBy(selected)
                 subset = _.pickBy(values, v => v in select_map)
             } else {
-                var min = _.min(selected)
-                var max = _.max(selected)
+                var min = eventData.range.x[0]
+                var max = eventData.range.x[1]
 
                 subset = _.pickBy(values, v => v >= min)
                 subset = _.pickBy(subset, v => v <= max)
@@ -942,7 +942,7 @@ function drawDistChartSelection(node, selected_values, remainder_values, selecti
     if (!isFactor) {
         var allvals = selected_values.concat(remainder_values)
         var binmin = _.min(allvals)
-        var binmax = _.max(allvals)
+        var binmax = _.max(allvals) + 1e-4
         data.push({
             type: 'histogram',
             x: remainder_values,
@@ -1031,8 +1031,8 @@ function drawDistChartSelection(node, selected_values, remainder_values, selecti
                 var select_map = _.keyBy(selected)
                 subset = _.pickBy(values, v => v in select_map)
             } else {
-                var min = _.min(selected)
-                var max = _.max(selected)
+                var min = eventData.range.x[0]
+                var max = eventData.range.x[1]
 
                 subset = _.pickBy(values, v => v >= min)
                 subset = _.pickBy(subset, v => v <= max)
