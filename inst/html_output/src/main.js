@@ -14,6 +14,9 @@ global_status.plotted_pc = 1;
 // Indicate whether or not we have pooled data
 global_status.pooled = false;
 
+// Is trajectory data available?
+global_status.has_tree = false;
+
 // Determine projected values
 global_status.plotted_item = "";  // name of signature, meta or gene that is plotted
 global_status.plotted_item_type = ""; // either 'signature', 'meta', 'gene', or 'signature-gene'
@@ -282,17 +285,24 @@ window.onload = function()
         global_data.meta_sigs = info.meta_sigs
         global_status.pooled = info.pooled
         global_status.ncells = info.ncells
+        global_status.has_tree = info.has_tree
     });
 
     // When it's all done, run this
     $.when(right_promise, lower_left_promise,
         cellClustersPromise, sessionInfoPromise)
         .then(function(){
-            var update0 = {'main_vis': 'clusters'}
+            var has_tree = get_global_status('has_tree')
+            var update0 = {'main_vis': (has_tree ? 'tree': 'clusters')}
             var update1 = upper_left_content.select_default_sig();
             var update2 = right_content.select_default_proj();
             var update = Object.assign({}, update0, update1, update2); // Merge
             set_global_status(update)
+
+            if (has_tree){ // need to change styling for navbar button to select Traj
+                $('#nav-bar').find('.nav-link').removeClass('active')
+                $('a[data-main-vis="tree"]').addClass('active')
+            }
         });
 
     // Enable the nav-bar functionality
