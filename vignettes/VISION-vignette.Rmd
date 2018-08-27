@@ -106,7 +106,7 @@ expr <- as.matrix(read.table("data/expression_matrix.txt.gz",
 
 # -- scale expression matrix by the median number of UMIs
 n.umi = median(colSums(expr))
-expr = apply(expr, 2, function(x) (x * n.umi) / (sum(x) + 1))
+expr = apply(expr, 2, function(x) (x * n.umi) / sum(x))
 
 # -- read in meta data
 meta = read.table("data/glio_meta.txt.gz", sep='\t', header=T, row.names=1)

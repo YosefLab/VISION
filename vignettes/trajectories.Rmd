@@ -56,7 +56,7 @@ In this vignette, we'll be analyzing a set of ~5,000 cells during haematopoiesis
 
 We begin by loading in the data and requisite libraries:
 
-```{r, collapse=F, message=F, warning=F}
+```{r, collapse=F, message=F, warning=F, eval=F}
 library(VISION)
 library(dyno)
 library(tidyverse)
@@ -106,7 +106,7 @@ plot_dimred(
 
 Now, with this model saved we can pass it to VISION via the `latentTrajectory` parameter. The model will automatically be analzyed with the same signatures passed to the FastProjectR object, and with this model, the `Trajectory` tab will be activated in the VISION output report. 
 
-``` {r, collapse=F, eval=F}
+```{r, collapse=F, eval=F}
 covar = read.table("data/hemato_covariates.txt.gz", sep='\t', header=T, row.names=1)
 covar = covar[colnames(expr), -1]
 vis <- Vision(expr, 
