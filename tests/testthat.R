@@ -1,4 +1,4 @@
 library(testthat)
-library(FastProjectR)
+library(VISION)
 
-test_check("FastProjectR")
+test_check("VISION")

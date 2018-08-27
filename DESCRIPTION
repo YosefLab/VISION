@@ -42,7 +42,6 @@ Suggests:
 	SummarizedExperiment,
     testthat,
     ggplot2,
-    gzmem
 biocViews:
 	GeneExpression,
 	RNASeq,
