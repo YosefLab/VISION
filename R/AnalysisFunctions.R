@@ -212,6 +212,14 @@ calcSignatureScores <- function(object,
     object@sig_norm_method <- sig_norm_method
     object@sig_score_method <- sig_score_method
 
+    if (length(object@sigData) == 0) {
+        sigScores <- matrix(nrow=ncol(object@exprData), ncol=0,
+                            dimnames = list(colnames(object@exprData), NULL)
+                            )
+        object@sigScores <- sigScores
+        return(object)
+    }
+
     normExpr <- getNormalizedCopy(object@exprData, object@sig_norm_method)
 
     sigScores <- batchSigEval(object@sigData, object@sig_score_method,
@@ -546,27 +554,30 @@ calculatePearsonCorr <- function(object){
 
   computedSigMatrix <- cbind(sigMatrix, numericMeta)
 
-  pearsonCorr <- lapply(1:ncol(computedSigMatrix), function(i) {
-    lapply(1:ncol(latentSpace), function(j) {
-               ss <- computedSigMatrix[, i];
-               pc <- latentSpace[, j];
-               suppressWarnings({
-                   pc_result <- cor.test(ss, pc)
-               })
-               if (is.na(pc_result$estimate)) {  # happens is std dev is 0 for a sig
-                   return(0)
-               } else {
-                   return(pc_result$estimate)
-               }
-    })
-  })
+  pearsonCorr <- matrix(
+      0,
+      nrow = ncol(computedSigMatrix),
+      ncol = ncol(latentSpace),
+      dimnames = list(
+          colnames(computedSigMatrix),
+          colnames(latentSpace)
+      )
+  )
 
-  pearsonCorr <- matrix(unlist(lapply(pearsonCorr, unlist)),
-                        nrow=ncol(computedSigMatrix),
-                        ncol=ncol(latentSpace), byrow=TRUE)
-
-  rownames(pearsonCorr) <- colnames(computedSigMatrix)
-  colnames(pearsonCorr) <- colnames(latentSpace)
+  for (i in seq_len(ncol(computedSigMatrix))) {
+      for (j in seq_len(ncol(latentSpace))) {
+           ss <- computedSigMatrix[, i];
+           pc <- latentSpace[, j];
+           suppressWarnings({
+               pc_result <- cor.test(ss, pc)
+           })
+           if (is.na(pc_result$estimate)) {  # happens is std dev is 0 for a sig
+               pearsonCorr[i, j] <- 0
+           } else {
+               pearsonCorr[i, j] <- pc_result$estimate
+           }
+      }
+  }
 
   pcaAnnotData <- PCAnnotatorData(pearsonCorr = pearsonCorr)
   object@PCAnnotatorData <- pcaAnnotData

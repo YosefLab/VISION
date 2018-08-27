@@ -10,6 +10,9 @@
 #' @param n_workers number of batches is made divisible by n_workers
 #' @return list of list of items
 batchify <- function(items, per_batch, n_workers = 1) {
+    if (length(items) == 0){
+        return(list(list()))
+    }
     n_iterations <- round(length(items) / (per_batch * n_workers))
 
     if (n_iterations == 0){

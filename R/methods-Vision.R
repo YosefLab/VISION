@@ -73,7 +73,7 @@
 #'                      signatures = sigs,
 #'                      housekeeping = hkg)
 setMethod("Vision", signature(data = "matrixORSparse"),
-            function(data, signatures, housekeeping=NULL,
+            function(data, signatures=list(), housekeeping=NULL,
                     unnormalizedData = NULL, meta=NULL, nomodel=TRUE,
                     projection_genes=c("fano"), min_signature_genes=5,
                     weights=NULL, threshold=.05, perm_wPCA=FALSE,

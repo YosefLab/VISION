@@ -92,6 +92,15 @@ createGeneSignature <- function(name, sigData, metadata="") {
 #'     groups
 calculateSignatureBackground <- function(object, num) {
 
+    if (length(object@sigData) == 0) {
+        return(
+            list(
+                randomSigs = list(),
+                sigAssignments = numeric()
+                )
+        )
+    }
+
     # Construct random signatures for background distribution
     out <- generatePermutationNull(num, object@exprData, object@sigData)
     randomSigs <- out$randomSigs
@@ -279,7 +288,7 @@ sigConsistencyScores <- function(latentSpace, sigScoresData,
     # Cast to 1-column matrices so its consistent with other ProjectionData outputs
 
     # FDR-correct and log-transform p-values
-    if (fdrCorrect){
+    if (fdrCorrect && nrow(pvals) > 0){
         pvals <- apply(pvals, MARGIN = 2,
                                     FUN = p.adjust, method = "BH")
         pvals[pvals == 0] <- 10 ^ (-300)
@@ -329,6 +338,11 @@ sigsVsProjection_n <- function(sigData, randomSigData,
     sigScoreMatrix <- sigData
     if (!is.null(cells)){
         sigScoreMatrix <- sigScoreMatrix[cells, , drop = FALSE]
+    }
+
+    if (length(sigData) == 0){
+        return(list(consistency = numeric(), pvals = numeric(),
+                empvals = numeric()))
     }
 
     rowLabels <- rownames(sigScoreMatrix)
