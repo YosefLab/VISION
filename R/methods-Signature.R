@@ -671,12 +671,13 @@ clusterSignatures <- function(sigMatrix, metaData, pvals, consistency, clusterMe
   # Cluster computed signatures and precomputed signatures separately
   computedSigMatrix <- sigMatrix[, keep_significant, drop = FALSE]
 
-  # z-normalize each signature vector before clustering
-  computedSigMatrix <- colNormalization(as.matrix(computedSigMatrix))
-
   compcls <- list()
   maxcls <- 1
   if (ncol(computedSigMatrix) > 5) {
+
+    # z-normalize each signature vector before clustering
+    computedSigMatrix <- colNormalization(as.matrix(computedSigMatrix))
+
 
     if (nrow(computedSigMatrix) > 5000) {
         cSM_sub <- computedSigMatrix[sample(nrow(computedSigMatrix), 5000), ]
