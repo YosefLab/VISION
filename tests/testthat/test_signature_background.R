@@ -7,7 +7,7 @@ test_that("Can generate random background signatures", {
 
   data <- read.table(data_file, sep = "\t", header = TRUE)
 
-  object <- FastProject(data, sig_file)
+  object <- Vision(data, sig_file)
 
   # Mock the weights
   ed <- object@exprData

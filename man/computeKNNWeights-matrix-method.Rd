@@ -5,7 +5,8 @@
 \alias{computeKNNWeights,matrix-method}
 \title{compute for each vector the weights to apply to it's K nearest neighbors}
 \usage{
-\S4method{computeKNNWeights}{matrix}(object, K = round(sqrt(nrow(object))))
+\S4method{computeKNNWeights}{matrix}(object,
+  K = round(sqrt(nrow(object))))
 }
 \arguments{
 \item{object}{matrix to use for KNN}

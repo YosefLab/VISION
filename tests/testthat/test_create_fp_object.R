@@ -1,6 +1,6 @@
-context("Create FastProject Object")
+context("Create Vision Object")
 
-test_that("Can create the FastProject Object", {
+test_that("Can create the Vision Object", {
 
   data_file <- "test_data/expression_matrix.txt"
   sig_file <- "test_data/published_signatures/tcga_sigs.txt"
@@ -10,13 +10,13 @@ test_that("Can create the FastProject Object", {
   data <- read.table(data_file, sep = "\t", header = TRUE)
 
   expect_s4_class(
-    FastProject(data, sig_file),
-    "FastProject"
+    Vision(data, sig_file),
+    "Vision"
   )
 
   expect_s4_class(
-    FastProject(data, sig_file, meta = meta),
-    "FastProject"
+    Vision(data, sig_file, meta = meta),
+    "Vision"
   )
 
 })

@@ -4,7 +4,7 @@
 \alias{clusterSignatures}
 \title{Clusters signatures according to the rank sum}
 \usage{
-clusterSignatures(sigMatrix, metaData, pvals, clusterMeta)
+clusterSignatures(sigMatrix, metaData, pvals, consistency, clusterMeta)
 }
 \arguments{
 \item{sigMatrix}{matrix of signatures scores, NUM_SAMPLES x NUM_SIGNATURES}

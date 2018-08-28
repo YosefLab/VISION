@@ -205,7 +205,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         if (name %in% colnames(sigMatrix)) {
             values <- sigMatrix[, name]
             names <- rownames(sigMatrix)
-            out <- VISION:::sigScoresToJSON(names, values)
+            out <- sigScoresToJSON(names, values)
             compressJSONResponse(out, res, req)
         } else {
             return("Signature does not exist!")
@@ -217,7 +217,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         if (name %in% colnames(metaData)) {
             names <- rownames(metaData)
             values <- metaData[[name]]
-            out <- VISION:::sigScoresToJSON(names, values)
+            out <- sigScoresToJSON(names, values)
             compressJSONResponse(out, res, req)
         } else {
             return("Signature does not exist!")
@@ -229,7 +229,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         out <- "Signature does not exist!"
         if (name %in% names(signatures)) {
           sig <- signatures[[name]]
-          out <- VISION:::signatureToJSON(sig)
+          out <- signatureToJSON(sig)
         }
         return(out)
       }) %>%
@@ -244,7 +244,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             sig <- object@sigData[[index]]
             genes <- names(sig@sigDict)
             expMat <- object@exprData
-            out <- VISION:::expressionToJSON(expMat, genes, zscore=TRUE)
+            out <- expressionToJSON(expMat, genes, zscore=TRUE)
             compressJSONResponse(out, res, req)
         }
       }) %>%
@@ -266,7 +266,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       }) %>%
       get("/Projections/(?<proj_name1>.*)/coordinates", function(req, res, err) {
         proj <- URLdecode(req$params$proj_name1)
-        out <- VISION:::coordinatesToJSON(object@Projections[[proj]])
+        out <- coordinatesToJSON(object@Projections[[proj]])
         compressJSONResponse(out, res, req)
       }) %>%
       get("/Projections/list", function(req, res, err) {
@@ -298,7 +298,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         proj <- URLdecode(req$params$proj_name4)
         coords <- object@TrajectoryProjections[[proj]]@pData
 
-        out <- VISION:::coordinatesToJSON(coords)
+        out <- coordinatesToJSON(coords)
         compressJSONResponse(out, res, req)
 
       }) %>%
@@ -314,7 +314,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         meta_n <- colnames(metaData)[meta_n]
         sigs <- c(sigs, meta_n)
 
-        out <- VISION:::sigProjMatrixToJSON(
+        out <- sigProjMatrixToJSON(
                                   object@TrajectoryConsistencyScores@sigProjMatrix,
                                   object@TrajectoryConsistencyScores@emp_pMatrix,
                                   sigs)
@@ -323,7 +323,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       get("/Tree/SigProjMatrix/Meta", function(req, res, err) {
 
         sigs <- colnames(object@metaData)
-        out <- VISION:::sigProjMatrixToJSON(
+        out <- sigProjMatrixToJSON(
                                   object@TrajectoryConsistencyScores@sigProjMatrix,
                                   object@TrajectoryConsistencyScores@emp_pMatrix,
                                   sigs)
@@ -332,7 +332,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       get("/PCA/Coordinates", function(req, res, err) {
 
         pc <- object@latentSpace
-        out <- VISION:::coordinatesToJSON(pc)
+        out <- coordinatesToJSON(pc)
         compressJSONResponse(out, res, req)
 
       }) %>%
@@ -341,7 +341,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
           pc <- object@PCAnnotatorData@pearsonCorr[, 1:10]
           sigs <- rownames(pc)
 
-        return(VISION:::pearsonCorrToJSON(pc, sigs))
+        return(pearsonCorrToJSON(pc, sigs))
       }) %>%
       get("/PearsonCorr/Meta", function(req, res, err) {
 
@@ -353,7 +353,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
           pc <- object@PCAnnotatorData@pearsonCorr[, 1:10]
 
-        return(VISION:::pearsonCorrToJSON(pc, sigs))
+        return(pearsonCorrToJSON(pc, sigs))
       }) %>%
       get("/PearsonCorr/list", function(req, res, err) {
 
@@ -403,7 +403,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         metaData <- object@metaData
         cluster_variable <- URLdecode(req$params$cluster_variable1)
         if (cluster_variable %in% colnames(metaData)) {
-            out <- VISION:::sigScoresToJSON(names = rownames(metaData),
+            out <- sigScoresToJSON(names = rownames(metaData),
                                             values = metaData[[cluster_variable]])
             compressJSONResponse(out, res, req)
         } else {
@@ -435,7 +435,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         pvals <- cbind(pvals, cluster_pvals)
         zscores <- cbind(zscores, cluster_zscores)
 
-        out <- VISION:::sigProjMatrixToJSON(zscores, pvals, sigs)
+        out <- sigProjMatrixToJSON(zscores, pvals, sigs)
         return(out)
       }) %>%
       get("/Clusters/(?<cluster_variable3>.*)/SigProjMatrix/Meta", function(req, res, err) {
@@ -455,7 +455,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         pvals <- cbind(pvals, cluster_pvals)
         zscores <- cbind(zscores, cluster_zscores)
 
-        out <- VISION:::sigProjMatrixToJSON(zscores, pvals, sigs)
+        out <- sigProjMatrixToJSON(zscores, pvals, sigs)
 
         return(out)
       }) %>%
@@ -541,8 +541,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             subset <- unlist(clust)
         }
 
-        nfp <- VISION:::createNewFP(object, subset)
-        VISION:::newAnalysis(nfp)
+        nfp <- createNewFP(object, subset)
+        newAnalysis(nfp)
         return()
       }) %>%
       get(path = NULL, function(req, res, err) {

@@ -4,7 +4,8 @@
 \alias{calculateTrajectoryDistances}
 \title{Calculate distance matrix between all pairs of ponts based on their projection onto the tree}
 \usage{
-calculateTrajectoryDistances(adjMat, edgeAssoc, edgePos, latentPnts = NULL)
+calculateTrajectoryDistances(adjMat, edgeAssoc, edgePos,
+  latentPnts = NULL)
 }
 \arguments{
 \item{edgeAssoc}{(2 x N) for each point, the edge it is projected to (represented as (V1,V2), where V1<V2)}

@@ -11,10 +11,11 @@
 \usage{
 Vision(data, ...)
 
-\S4method{Vision}{matrixORSparse}(data, signatures, housekeeping = NULL,
-  unnormalizedData = NULL, meta = NULL, nomodel = TRUE,
-  projection_genes = c("fano"), min_signature_genes = 5, weights = NULL,
-  threshold = 0.05, perm_wPCA = FALSE, projection_methods = c("tSNE30"),
+\S4method{Vision}{matrixORSparse}(data, signatures = list(),
+  housekeeping = NULL, unnormalizedData = NULL, meta = NULL,
+  nomodel = TRUE, projection_genes = c("fano"),
+  min_signature_genes = 5, weights = NULL, threshold = 0.05,
+  perm_wPCA = FALSE, projection_methods = c("tSNE30"),
   sig_norm_method = c("znorm_columns", "none", "znorm_rows",
   "znorm_rows_then_columns", "rank_norm_columns"),
   sig_score_method = c("naive", "weighted_avg"), pool = "auto",
@@ -118,7 +119,7 @@ return(createGeneSignature(name = paste0("sig",i),
                                  sigData = sigData))
 })
 
-fp <- vision(data = expMat,
+fp <- Vision(data = expMat,
                      signatures = sigs,
                      housekeeping = hkg)
 }

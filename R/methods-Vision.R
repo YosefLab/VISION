@@ -69,7 +69,7 @@
 #'                                  sigData = sigData))
 #' })
 #'
-#' fp <- vision(data = expMat,
+#' fp <- Vision(data = expMat,
 #'                      signatures = sigs,
 #'                      housekeeping = hkg)
 setMethod("Vision", signature(data = "matrixORSparse"),
@@ -360,9 +360,6 @@ setMethod("Vision", signature(data = "SummarizedExperiment"),
 #' expMat <- matrix(rnorm(200000), nrow=500)
 #' rownames(expMat) <- paste0("gene",1:500)
 #'
-#' # choose housekeeping genes
-#' hkg <- housekeeping$default
-#'
 #' #create 20 signatures of 25 genes each
 #' sigs <- lapply(1:20, function(i) {
 #' sigData <- sign(rnorm(25))
@@ -371,9 +368,8 @@ setMethod("Vision", signature(data = "SummarizedExperiment"),
 #'                                  sigData = sigData))
 #' })
 #'
-#' fp <- VISION(data = expMat,
-#'                      housekeeping = hkg,
-#'                      signatures = sigs)
+#' fp <- Vision(data = expMat,
+#'              signatures = sigs)
 #'
 #' ## analyze requires actual non-random data to run properly
 #' \dontrun{
@@ -492,9 +488,6 @@ setMethod("addProjection", signature(object = "Vision"),
 #' expMat <- matrix(rnorm(200000), nrow=500)
 #' rownames(expMat) <- paste0("gene",1:500)
 #'
-#' # choose housekeeping genes
-#' hkg <- housekeeping$default
-#'
 #' #create 20 signatures of 25 genes each
 #' sigs <- lapply(1:20, function(i) {
 #' sigData <- sign(rnorm(25))
@@ -503,9 +496,7 @@ setMethod("addProjection", signature(object = "Vision"),
 #'                                  sigData = sigData))
 #' })
 #'
-#' fp <- VISION(data = expMat,
-#'                      housekeeping = hkg,
-#'                      signatures = sigs)
+#' fp <- Vision(data = expMat, signatures = sigs)
 #'
 #' ## analyze requires actual non-random data to run properly
 #' \dontrun{
@@ -548,9 +539,6 @@ setMethod("saveAndViewResults", signature(fpout="Vision"),
 #' expMat <- matrix(rnorm(200000), nrow=500)
 #' rownames(expMat) <- paste0("gene",1:500)
 #'
-#' # choose housekeeping genes
-#' hkg <- housekeeping$default
-#'
 #' #create 20 signatures of 25 genes each
 #' sigs <- lapply(1:20, function(i) {
 #' sigData <- sign(rnorm(25))
@@ -559,9 +547,7 @@ setMethod("saveAndViewResults", signature(fpout="Vision"),
 #'                                  sigData = sigData))
 #' })
 #'
-#' fp <- VISION(data = expMat,
-#'                      housekeeping = hkg,
-#'                      signatures = sigs)
+#' fp <- Vision(data = expMat, signatures = sigs)
 #'
 #' ## analyze requires actual non-random data to run properly
 #' \dontrun{

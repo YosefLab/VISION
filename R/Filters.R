@@ -137,11 +137,11 @@ filterGenesFano <- function(data, num_mad=2, plot=FALSE) {
     message(paste(length(gene_pass_names), "Genes Retained"))
 
     if(plot) {
-        g <- ggplot() + aes(x=mu, y=fano, color=gene_passes) +
-            geom_point(size=.5, alpha=.5) +
-            scale_x_log10() +
-            ylim(0, quantile(fano, .99)) +
-            scale_color_manual(values=c("FALSE"="black", "TRUE"="darkcyan"))
+        g <- ggplot2::ggplot() + ggplot2::aes(x=mu, y=fano, color=gene_passes) +
+            ggplot2::geom_point(size=.5, alpha=.5) +
+            ggplot2::scale_x_log10() +
+            ggplot2::ylim(0, quantile(fano, .99)) +
+            ggplot2::scale_color_manual(values=c("FALSE"="black", "TRUE"="darkcyan"))
         print(g)
     }
     return(gene_pass_names)

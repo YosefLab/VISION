@@ -22,9 +22,6 @@ and returns a VISION object populated with the result,
 expMat <- matrix(rnorm(200000), nrow=500)
 rownames(expMat) <- paste0("gene",1:500)
 
-# choose housekeeping genes
-hkg <- housekeeping$default
-
 #create 20 signatures of 25 genes each
 sigs <- lapply(1:20, function(i) {
 sigData <- sign(rnorm(25))
@@ -33,9 +30,8 @@ return(createGeneSignature(name = paste0("sig",i),
                                  sigData = sigData))
 })
 
-fp <- VISION(data = expMat,
-                     housekeeping = hkg,
-                     signatures = sigs)
+fp <- Vision(data = expMat,
+             signatures = sigs)
 
 ## analyze requires actual non-random data to run properly
 \dontrun{

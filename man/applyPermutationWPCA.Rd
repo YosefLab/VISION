@@ -4,7 +4,8 @@
 \alias{applyPermutationWPCA}
 \title{Applies pemutation method to return the most significant components of weighted PCA data}
 \usage{
-applyPermutationWPCA(expr, weights, components = 50, p_threshold = 0.05)
+applyPermutationWPCA(expr, weights, components = 50,
+  p_threshold = 0.05)
 }
 \arguments{
 \item{expr}{Expression data}
