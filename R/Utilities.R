@@ -34,20 +34,6 @@ batchify <- function(items, per_batch, n_workers = 1) {
     return(out)
 }
 
-#' Gets number of processes available for multicore work
-#'
-#' @return integer number of cores
-getWorkerCount <- function() {
-
-    backends <- BiocParallel::registered()
-
-    if ("MulticoreParam" %in% backends) {
-        return(backends$MulticoreParam$workers)
-    } else {
-        return(1)
-    }
-
-}
 
 #' Check's the version of the FastProject object and displays error if necessary
 #'

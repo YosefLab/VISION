@@ -13,11 +13,8 @@
 #' @param eData numeric Matrix Genes x Cells
 #' @param weights Weight matrix computed through FNR curve
 #' @importFrom parallel mclapply
-#' @importFrom parallel detectCores
 #' @return matrix of signature scores, cells X signatures
 batchSigEval <- function(sigs, sig_score_method, eData, weights) {
-
-    workers <- BiocParallel::bpparam()$workers
 
     if (sig_score_method == "naive") {
         weights <- matrix(NA, 1, 1)
@@ -33,13 +30,14 @@ batchSigEval <- function(sigs, sig_score_method, eData, weights) {
 
     # Partition signatures into batches
     # 1200 seems to be an ok batch size goal
-    availableCores <- min(max(parallel::detectCores() - 1, 1), 10)
-    sigBatches <- batchify(sigs, 1200, n_workers = availableCores)
+    n_workers <- getOption("mc.cores")
+    n_workers <- if (is.null(n_workers)) 2 else n_workers
+    sigBatches <- batchify(sigs, 1200, n_workers = n_workers)
 
     allScoresBatches <- parallel::mclapply(sigBatches, function(sigBatch) {
         scores <- innerEvalSignatureBatch(expr_weights, sigBatch, weights)
         return(scores)
-    }, mc.cores = min(availableCores, length(sigBatches)))
+    })
 
     # allScoresBatches is list of sig x cell matrices
     sigScores <- t(do.call(rbind, allScoresBatches))

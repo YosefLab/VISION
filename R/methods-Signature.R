@@ -364,7 +364,6 @@ sigsVsProjection_n <- function(sigData, randomSigData,
     randomSigScores <- randomSigData$randomSigs
     sigAssignments <- randomSigData$sigAssignments
 
-    availableCores <- min(max(parallel::detectCores() - 1, 1), 10)
     groupedResults <- mclapply(names(randomSigScores), function(group) {
 
         # Build a matrix of random background signatures for this group
@@ -412,7 +411,7 @@ sigsVsProjection_n <- function(sigData, randomSigData,
         return(list(consistency = 1 - geary_c, pvals = pvals,
                     empvals = empvals))
 
-    }, mc.cores = max(min(availableCores, length(randomSigScores)), 1))
+    })
 
 
     consistency <- do.call(c, lapply(groupedResults, function(x) x$consistency))
@@ -488,7 +487,7 @@ sigsVsProjection_pcn <- function(metaData, weights, cells = NULL){
 
     return(list(consistency = 1 - geary_c, pval = pval))
 
-  }, mc.cores = max(min(10, length(numericMeta)), 1))
+  })
 
   names(results) <- numericMeta
 
@@ -609,7 +608,7 @@ sigsVsProjection_pcf <- function(metaData, weights, cells = NULL){
 
     return(list(consistency = c_score, pval = pval))
 
-  }, mc.cores = max(min(10, length(factorMeta)), 1))
+  })
 
   names(results) <- factorMeta
 

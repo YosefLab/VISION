@@ -392,7 +392,8 @@ calcInterEdgeDistMat <- function(v1.dist, v2.dist, path.length) {
 #' @return a list of the k neughbors for each of the vectors in `query`
 findNeighbors <- function(data, query, k) {
 
-    n_workers <- getWorkerCount()
+    n_workers <- getOption("mc.cores")
+    n_workers <- if (is.null(n_workers)) 2 else n_workers
 
     neighborhood <- lapply(1:ncol(query), function(x) {
     vkn <- ball_tree_vector_knn(data, query[,x], k, n_workers)

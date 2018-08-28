@@ -53,7 +53,10 @@ applyMicroClustering <- function(
         names(cl) <- cluster_names
 
     } else {
-        n_workers <- getWorkerCount()
+
+        n_workers <- getOption("mc.cores")
+        n_workers <- if (is.null(n_workers)) 2 else n_workers
+
         kn <- ball_tree_knn(res,
                             min(round(sqrt(nrow(res))), 30),
                             n_workers)
@@ -279,19 +282,18 @@ readjust_clusters <- function(clusters, data, cellsPerPartition=100) {
 #' @param cl cluster association of each cell
 #' @param expr expression data
 #' @importFrom parallel mclapply
-#' @importFrom parallel detectCores
 #' @return a matrx of expression data for the pooled cells
 createPoolsBatch <- function(cl, expr) {
 
-    availableCores <- max(parallel::detectCores() - 1, 1)
-    n_workers <- min(availableCores, 10)
+    n_workers <- getOption("mc.cores")
+    n_workers <- if (is.null(n_workers)) 2 else n_workers
 
     cl_batches <- batchify(cl, 500, n_workers = n_workers)
 
     pool_batches <- parallel::mclapply(cl_batches, function(cl_batch) {
                        pool_expression <- createPools(cl_batch, expr)
                        return(pool_expression)
-    }, mc.cores = min(n_workers, length(cl_batches)))
+    })
 
     pool_data <- do.call(cbind, pool_batches)
 

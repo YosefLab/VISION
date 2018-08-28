@@ -132,6 +132,11 @@ vis <- Vision(se, c("data/h.all.v5.2.symbols.gmt"))
 Now, with a VISION object, we can run `analyze` which will run the VISION pipeline and return another, processed VISION object.
 
 ```{r, collapse=T, message=F, eval=T}
+
+# Set the number of threads
+# Some pieces of the analysis will be parallelzed
+options(mc.cores = 2)
+
 vis <- analyze(vis)
 ```
 
