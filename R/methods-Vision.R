@@ -84,7 +84,7 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                     sig_score_method=c("naive", "weighted_avg"),
                     pool="auto", cellsPerPartition=100, name=NULL,
                     cluster_variable = "", latentSpace = NULL,
-                    latentTrajectory = NULL) {
+                    latentTrajectory = NULL, pools=list()) {
 
             .Object <- new("Vision")
 
@@ -307,6 +307,7 @@ setMethod("Vision", signature(data = "matrixORSparse"),
             }
 
             .Object@cluster_variable <- cluster_variable
+            .Object@pools = pools
 
             return(.Object)
     }
@@ -383,7 +384,7 @@ setMethod("analyze", signature(object="Vision"),
         object <- clusterCells(object)
     }
 
-    if (object@pool) {
+    if (object@pool || length(object@pools) > 0) {
         object <- poolCells(object)
     }
 
@@ -562,6 +563,14 @@ setMethod("viewResults", signature(object="Vision"),
             }
 
             versionCheck(object)
+            
+            if (length(object@sigData) == 0 && ncol(object@metaData) == 0) {
+                stop("Error: This object contains no signature data.")
+            }
+
+            if (is.null(object@PCAnnotatorData)) {
+                stop("Error: This object contains no PCAnnotatorData.")
+            }
 
             message("Launching the server...")
             message("Press exit or ctrl c to exit")
@@ -573,6 +582,15 @@ setMethod("viewResults", signature(object="Vision"),
 setMethod("viewResults", signature(object="character"),
           function(object, port=NULL, host=NULL, browser=TRUE, name=NULL) {
             fpo <- readRDS(object)
+
+            if (length(object@sigData) == 0 && ncol(object@metaData) == 0) {
+                stop("Error: This object contains no signature data.")
+            }
+
+            if (is.null(object@PCAnnotatorData)) {
+                stop("Error: This object contains no PCAnnotatorData.")
+            }
+
             if(!is(fpo, "Vision")){
               stop("loaded object not a valid Vision object")
             }

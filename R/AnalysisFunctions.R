@@ -80,12 +80,16 @@ poolCells <- function(object,
                       cellsPerPartition=object@cellsPerPartition) {
     object@cellsPerPartition <- cellsPerPartition
 
-    message(paste(
-      "Performing micro-pooling on",
-      ncol(object@exprData),
-      "cells with a target pool size of",
-      object@cellsPerPartition
-    ))
+    if (length(object@pools) == 0) {
+        message(paste(
+          "Performing micro-pooling on",
+          ncol(object@exprData),
+          "cells with a target pool size of",
+          object@cellsPerPartition
+        ))
+    } else {
+      message("Performing micro-poolong on pre-computed pools")
+    }
 
     if (object@cluster_variable != "") {
         preserve_clusters <- object@metaData[[object@cluster_variable]]
@@ -94,14 +98,16 @@ poolCells <- function(object,
         preserve_clusters <- NULL
     }
 
-    pools <- applyMicroClustering(object@exprData,
-                                          cellsPerPartition = object@cellsPerPartition,
-                                          filterInput = object@projection_genes,
-                                          filterThreshold = object@threshold,
-                                          preserve_clusters = preserve_clusters,
-                                          latentSpace = object@latentSpace)
+    if (length(object@pools) == 0) {
+        pools <- applyMicroClustering(object@exprData,
+                                              cellsPerPartition = object@cellsPerPartition,
+                                              filterInput = object@projection_genes,
+                                              filterThreshold = object@threshold,
+                                              preserve_clusters = preserve_clusters,
+                                              latentSpace = object@latentSpace)
 
-    object@pools <- pools
+        object@pools <- pools
+    }
 
     pooled_cells <- createPoolsBatch(object@pools, object@exprData)
     object@exprData <- pooled_cells

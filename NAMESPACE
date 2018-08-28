@@ -2,6 +2,7 @@
 
 export(Vision)
 export(createGeneSignature)
+export(applyMicroClustering)
 exportMethods(Vision)
 exportMethods(addProjection)
 exportMethods(analyze)
