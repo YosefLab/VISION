@@ -288,7 +288,7 @@ sigConsistencyScores <- function(latentSpace, sigScoresData,
     # Cast to 1-column matrices so its consistent with other ProjectionData outputs
 
     # FDR-correct and log-transform p-values
-    if (fdrCorrect && nrow(pvals) > 0){
+    if (fdrCorrect && nrow(pvals) > 1){
         pvals <- apply(pvals, MARGIN = 2,
                                     FUN = p.adjust, method = "BH")
         pvals[pvals == 0] <- 10 ^ (-300)
