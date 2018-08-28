@@ -45,16 +45,6 @@ TrajectoryProjection <- setClass("TrajectoryProjection",
         adjMat = "matrix" # MxM, Connectivity for milestones
 ))
 
-TreeProjection <- setClass("TreeProjection",
-    slots = c(
-    pData = "matrix",
-    name = "character",
-    vData = "matrix",
-    adjMat = "matrix",
-    edgeAssoc = "matrix",
-    edgePos = "numeric"
-))
-
 ServerExpression <- setClass("ServerExpression",
     slots = c(
     data = "matrix",
