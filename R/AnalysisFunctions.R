@@ -42,7 +42,8 @@ clusterCells <- function(object) {
         res <- object@latentSpace
     }
 
-    n_workers <- getWorkerCount()
+    n_workers <- getOption("mc.cores")
+    n_workers <- if (is.null(n_workers)) 2 else n_workers
 
     kn <- ball_tree_knn(res,
                         min(round(sqrt(nrow(res))), 30),
@@ -446,7 +447,7 @@ clusterSigScores <- function(object) {
                 AUC <- out$statistic / length(cluster_ii) / length(not_cluster_ii)
                 stat <- (AUC - .5) * 2  # translates (0.5, 1) to (0, 1)
                 return(list(pval = pval, stat = stat))
-            }, mc.cores = 10)
+            })
             names(pvals) <- colnames(sigScores)
 
             # Process the metaData variables
