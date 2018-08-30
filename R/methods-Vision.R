@@ -88,6 +88,15 @@ setMethod("Vision", signature(data = "matrixORSparse"),
 
             .Object <- new("Vision")
 
+
+            if (is.null(rownames(data))) {
+                stop("rownames(data) = NULL. Expression matrix must have gene names as the rownames")
+            }
+
+            if (is.null(colnames(data))) {
+                colnames(data) <- paste0("cell", seq(ncol(data)))
+            }
+
             rownames(data) <- toupper(rownames(data))
             .Object@initialExprData <- data
             .Object@exprData <- data
