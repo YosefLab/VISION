@@ -427,111 +427,68 @@ clusterSigScores <- function(object) {
         }, FUN.VALUE = "")
     clusterMeta <- clusterMeta[clusterMeta != ""]
 
-    clusterPVals <- function(sigScores, metaData, variable) {
+    # Split meta into numeric and factor
+    numericMeta <- vapply(seq_len(ncol(metaData)),
+                          function(i) is.numeric(metaData[[i]]),
+                          FUN.VALUE = TRUE)
+    numericMeta <- metaData[, numericMeta]
+    numericMeta <- as.matrix(numericMeta)
 
+    factorMeta <- vapply(seq_len(ncol(metaData)),
+                          function(i) is.factor(metaData[[i]]),
+                          FUN.VALUE = TRUE)
+    factorMeta <- metaData[, factorMeta]
+
+    if(ncol(sigScores) > 0){
+        sigScoreRanks <- colRanks(sigScores,
+                                  preserveShape = TRUE,
+                                  ties.method = "average")
+        dimnames(sigScoreRanks) <- dimnames(sigScores)
+    } else {
+        sigScoreRanks <- sigScores
+    }
+
+    if(ncol(numericMeta) > 0){
+        numericMetaRanks <- colRanks(numericMeta,
+                                     preserveShape = TRUE,
+                                     ties.method = "average")
+        dimnames(numericMetaRanks) <- dimnames(numericMeta)
+    } else {
+        numericMetaRanks <- numericMeta
+    }
+
+    out <- lapply(clusterMeta, function(variable){
         values <- metaData[[variable]]
         var_levels <- levels(values)
 
         result <- lapply(var_levels, function(var_level){
-
             cluster_ii <- which(values == var_level)
-            not_cluster_ii <- which(values != var_level)
 
-            # Process the gene signatures
-            pvals <- mclapply(colnames(sigScores), function(sig){
+            r1 <- matrix_wilcox(sigScoreRanks, cluster_ii,
+                                check_na = FALSE, check_ties = FALSE)
 
-                if(length(cluster_ii) == 0 || length(not_cluster_ii) == 0){
-                    return(list(pval = 1.0, stat = 0))
-                }
+            r2 <- matrix_wilcox(numericMetaRanks, cluster_ii,
+                                check_na = TRUE, check_ties = TRUE)
 
-                suppressWarnings({
-                    out <- wilcox.test(sigScores[cluster_ii, sig],
-                                   sigScores[not_cluster_ii, sig],
-                                   alternative = "two.sided", exact = FALSE)
-                })
-                pval <- out$p.value
-                AUC <- out$statistic / length(cluster_ii) / length(not_cluster_ii)
-                stat <- (AUC - .5) * 2  # translates (0.5, 1) to (0, 1)
-                return(list(pval = pval, stat = stat))
-            })
-            names(pvals) <- colnames(sigScores)
+            r3 <- matrix_chisq(factorMeta, cluster_ii)
 
-            # Process the metaData variables
-            meta_pvals <- lapply(colnames(metaData), function(sig){
-
-                if (length(cluster_ii) == 0 || length(not_cluster_ii) == 0){
-                    return(list(pval = 1.0, stat = 0))
-                }
-
-                if (is.numeric(metaData[, sig])) {
-
-                    x <- metaData[cluster_ii, sig]
-                    y <- metaData[not_cluster_ii, sig]
-
-                    if (all(is.na(x)) || all(is.na(y))){
-                        pval <- 1.0
-                        stat <- 0
-                    } else {
-
-                        suppressWarnings({
-                            out <- wilcox.test(x, y,
-                                   alternative = "two.sided", exact = FALSE)
-                        })
-
-                        pval <- out$p.value
-                        AUC <- out$statistic / length(cluster_ii) / length(not_cluster_ii)
-                        stat <- (AUC - .5) * 2  # translates (0, 1) to (-1, 1)
-
-                    }
-                } else if (is.factor(metaData[, sig])) {
-                    sigvals <- metaData[, sig, drop = F]
-                    sigvals[, 2] <- 0
-                    sigvals[cluster_ii, 2] <- 1
-                    sigvals[, 2] <- as.factor(sigvals[, 2])
-                    M <- table(sigvals)
-                    if (nrow(M) > 1){
-                        suppressWarnings(
-                            out <- chisq.test(M)
-                        )
-                        pval <- out$p.value
-                        n <- sum(M)
-                        V <- sqrt(out$statistic / n /
-                            min(nrow(M) - 1, ncol(M) - 1)
-                        )
-                        stat <- V # Cramer's V
-                    } else {
-                        pval <- 1.0
-                        stat <- 0
-                    }
-                }
-                return(list(pval = pval, stat = stat))
-            })
-            names(meta_pvals) <- colnames(metaData)
-
-            all <- c(pvals, meta_pvals)
-            all_pvals <- vapply(all, function(x) x$pval, FUN.VALUE = 0.0)
-            all_zscores <- vapply(all, function(x) x$stat, FUN.VALUE = 0.0)
-
-            return(list(pvals = all_pvals, zscores = all_zscores))
+            pval <- c(r1$pval, r2$pval, r3$pval)
+            stat <- c(r1$stat, r2$stat, r3$stat)
+            return(list(pval = pval, stat = stat))
         })
-        names(result) <- var_levels
-        zscores <- do.call(cbind,
-                         lapply(result, function(x) x$zscores))
-        pvals <- do.call(cbind,
-                         lapply(result, function(x) x$pvals))
 
-        pvals_adj <- apply(pvals, MARGIN = 2, FUN = p.adjust, method = "BH")
+        names(result) <- var_levels
+        result <- result[order(var_levels)]
+        stat <- do.call(cbind, lapply(result, function(x) x$stat))
+        pval <- do.call(cbind, lapply(result, function(x) x$pval))
+
+        pvals_adj <- apply(pval, MARGIN = 2, FUN = p.adjust, method = "BH")
         pvals_adj[pvals_adj < 1e-300] <- 1e-300
         pvals_adj <- log10(pvals_adj)
-        return(list(pvals = pvals_adj, zscores = zscores))
-    }
-
-    pvalsAndZscores <- lapply(clusterMeta, function(variable){
-        result <- clusterPVals(sigScores, metaData, variable)
-        return(result)
+        return(list(pval = pvals_adj, zscores = stat))
     })
 
-    object@ClusterSigScores <- pvalsAndZscores
+    object@ClusterSigScores <- out
     return(object)
 
 }

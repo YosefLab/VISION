@@ -20,7 +20,7 @@ Vision(data, ...)
   "znorm_rows_then_columns", "rank_norm_columns"),
   sig_score_method = c("naive", "weighted_avg"), pool = "auto",
   cellsPerPartition = 100, name = NULL, cluster_variable = "",
-  latentSpace = NULL, latentTrajectory = NULL)
+  latentSpace = NULL, latentTrajectory = NULL, pools = list())
 
 \S4method{Vision}{data.frame}(data, ...)
 

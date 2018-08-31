@@ -7,6 +7,7 @@
 #' @importFrom Matrix tcrossprod
 #' @importFrom Matrix rowMeans
 #' @return pooled cells - named list of vectors - cells in each supercell
+#' @export
 applyMicroClustering <- function(
                          exprData, cellsPerPartition=100,
                          filterInput = "fano",
