@@ -485,7 +485,7 @@ clusterSigScores <- function(object) {
         pvals_adj <- apply(pval, MARGIN = 2, FUN = p.adjust, method = "BH")
         pvals_adj[pvals_adj < 1e-300] <- 1e-300
         pvals_adj <- log10(pvals_adj)
-        return(list(pval = pvals_adj, zscores = stat))
+        return(list(pvals = pvals_adj, zscores = stat))
     })
 
     object@ClusterSigScores <- out
