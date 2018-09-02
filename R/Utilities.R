@@ -114,9 +114,11 @@ matLog2 <- function(spmat, scale = FALSE, scaleFactor = 1e6) {
 #' @param check_ties - whether or not to check for ties in ranks (slows computation)
 #' @return pval - numeric vector, pvalue for each column
 #' @return stat - numeric vector, test statistic (scaled AUC) for each column
-matrix_wilcox <- function(ranks, cluster_ii, check_na = FALSE, check_ties = FALSE){
+matrix_wilcox <- function(ranks, cluster_ii,
+                          check_na = FALSE, check_ties = FALSE){
 
-    if (ncol(ranks) == 0){  # handle edge case
+    # handle edge case
+    if (ncol(ranks) == 0){
         p <- numeric()
         stat <- numeric()
         return(list(pval = p, stat = stat))
@@ -126,7 +128,7 @@ matrix_wilcox <- function(ranks, cluster_ii, check_na = FALSE, check_ties = FALS
 
     if (check_na){
         n1 <- nrow(subset) - colCounts(subset, value = NA)
-        n2 <- colMaxs(ranks, na.rm = TRUE) - n1
+        n2 <- nrow(ranks) - n1 - colCounts(subset, value = NA)
     } else {
         n1 <- length(cluster_ii)
         n2 <- nrow(ranks) - n1
@@ -135,7 +137,7 @@ matrix_wilcox <- function(ranks, cluster_ii, check_na = FALSE, check_ties = FALS
 
     r1 <- colSums(subset, na.rm = T)
 
-    u1 <- r1 - n1*(n1 + 1)/2
+    u1 <- r1 - n1 * (n1 + 1) / 2
 
     u <- u1
     AUC <- u / (n1 * n2)
@@ -144,7 +146,7 @@ matrix_wilcox <- function(ranks, cluster_ii, check_na = FALSE, check_ties = FALS
     stat <- (AUC - .5) * 2  # translates (0.5, 1) to (0, 1)
 
     # u to z-score
-    m_u <- (n1*n2)/2
+    m_u <- (n1 * n2) / 2
     if (check_ties){
         sd_u <- vapply(seq_len(ncol(ranks)), function(i){
                     Y <- ranks[, i]
@@ -152,25 +154,27 @@ matrix_wilcox <- function(ranks, cluster_ii, check_na = FALSE, check_ties = FALS
                     n2 <- if (length(n2) == 1) n2 else n2[i]
                     has_ties <- length(Y) != length(unique(Y))
                     if (!has_ties){
-                        sd_ui <- sqrt(n1*n2*(n1+n2+1)/12)
+                        sd_ui <- sqrt(n1 * n2 * (n1 + n2 + 1) / 12)
                         return(sd_ui)
                     }
-                    n <- n1+n2
+                    n <- n1 + n2
                     n_ties <- table(Y)
                     sd_ui <- sqrt(
-                                  n1*n2/12 *
-                                  (n+1 - sum(n_ties**3 - n_ties)/n/(n-1))
-                              )
+                                  n1 * n2 / 12 *
+                                  (n + 1 -
+                                   sum(n_ties ** 3 - n_ties) / n / (n - 1)
+                                  )
+                             )
                     return(sd_ui)
         }, FUN.VALUE = 0.0)
 
 
     } else {
-        sd_u <- sqrt(n1*n2*(n1+n2+1)/12)
+        sd_u <- sqrt(n1 * n2 * (n1 + n2 + 1) / 12)
     }
     z <- (u - m_u) / sd_u
     z <- -1 * abs(z) # ensure negative
-    z <- z + .5/sd_u # continuity correction
+    z <- z + .5 / sd_u # continuity correction
     z[sd_u == 0] <- 0  # handle case where n1 or n2 = 0
     p <- pnorm(z) * 2
 
@@ -192,7 +196,7 @@ matrix_chisq <- function(factorDF, cluster_ii) {
 
     out <- lapply(colnames(factorDF), function(var){
 
-                    if(!is.factor(factorDF[[var]])){
+                    if (!is.factor(factorDF[[var]])){
                         stop("Error: matrix_chisq must be called on a factor dataframe")
                     }
 

@@ -399,6 +399,7 @@ analyzeTrajectoryCorrelations <- function(object, signatureBackground = NULL) {
 #' Compute Ranksums Test, for all factor meta data.  One level vs all others
 #'
 #' @importFrom parallel mclapply
+#' @importFrom matrixStats colRanks
 #' @param object the VISION object
 #' @return the VISION object with values set for the analysis results
 clusterSigScores <- function(object) {
@@ -431,15 +432,15 @@ clusterSigScores <- function(object) {
     numericMeta <- vapply(seq_len(ncol(metaData)),
                           function(i) is.numeric(metaData[[i]]),
                           FUN.VALUE = TRUE)
-    numericMeta <- metaData[, numericMeta]
+    numericMeta <- metaData[, numericMeta, drop = F]
     numericMeta <- as.matrix(numericMeta)
 
     factorMeta <- vapply(seq_len(ncol(metaData)),
                           function(i) is.factor(metaData[[i]]),
                           FUN.VALUE = TRUE)
-    factorMeta <- metaData[, factorMeta]
+    factorMeta <- metaData[, factorMeta, drop = F]
 
-    if(ncol(sigScores) > 0){
+    if (ncol(sigScores) > 0){
         sigScoreRanks <- colRanks(sigScores,
                                   preserveShape = TRUE,
                                   ties.method = "average")
@@ -448,7 +449,7 @@ clusterSigScores <- function(object) {
         sigScoreRanks <- sigScores
     }
 
-    if(ncol(numericMeta) > 0){
+    if (ncol(numericMeta) > 0){
         numericMetaRanks <- colRanks(numericMeta,
                                      preserveShape = TRUE,
                                      ties.method = "average")
