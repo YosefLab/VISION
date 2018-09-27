@@ -126,9 +126,12 @@ matrix_wilcox <- function(ranks, cluster_ii,
 
     subset <- ranks[cluster_ii, , drop = FALSE]
 
+    not_cluster_ii = setdiff(seq(nrow(ranks)), cluster_ii)
+    subset_2 = ranks[not_cluster_ii, , drop=FALSE]
+
     if (check_na){
         n1 <- nrow(subset) - colCounts(subset, value = NA)
-        n2 <- nrow(ranks) - n1 - colCounts(subset, value = NA)
+	n2 <- nrow(subset_2) - colCounts(subset_2, value=NA)
     } else {
         n1 <- length(cluster_ii)
         n2 <- nrow(ranks) - n1
