@@ -32,4 +32,4 @@ trajectory inference pipeline.
 
 Sample Output
 -------------
-![Link to an example output report of ~9,000 CBMC's sequenced with the CITE-seq protocol]("http://s124.millennium.berkeley.edu:7703/")
+[Link to an example output report of ~9,000 CBMC's sequenced with the CITE-seq protocol](http://s124.millennium.berkeley.edu:7703/)
