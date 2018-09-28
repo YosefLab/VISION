@@ -2,6 +2,8 @@ VISION [![Travis-CI Build Status](https://travis-ci.org/YosefLab/VISION.svg?bran
 ===========
 Here we present VISION, a module that can sit downstream of other common analyses such as clustering, dimensionality reduction, and trajectory inference. Specifically, VISION aids in the interpretation of scRNA-seq data, with or without predetermined labels, or stratifications of the data (e.g. clusterings) using the notion of cell-cell similarity maps (as interpreted from some latent space) and biological signatures (functional sets of genes that can be obtained online from, for example, MSigDB). Finally, VISION can evaluate the effect of cell- level meta data, such as library quality, batch, clinical information, or additional experimental readouts (e.g., protein levels from a Cite-Seq experiment). Importantly, the use of VISION can greatly facilitate collaborative projects, as it offers a low- latency interactive report for the end- user, which can be hosted online and viewed on a web browser without the need for installing developer-grade software.
 
+_For more information, refer to our preprint on biorxiv: [Functional Interpretation of Single-Cell Similarity Maps
+](https://www.biorxiv.org/content/early/2018/08/29/403055)_
 
 Installing VISION
 -----------------------
