@@ -72,10 +72,10 @@ First, we'll walk through how to create a VISION object for the `analyze` functi
 
 We'll operate on a set of 430 cells from five primary glioblastomas sequenced using scRNA-seq across 5,948 genes (Patel et. al. 2014). For our signatures, we will use the Hallmark gene set from MSigDB, which is available [here](http://software.broadinstitute.org/gsea/msigdb/collections.jsp#H). To note, we can specify multiple signature files but we'll stick to one for this example. 
 
-The expression data and siganture files: the expression data can be either a path to a tab-delimited .txt file, a numeric matrix directly, an ExpressionSet object or a SummerizedExperiment object; signature data can be provided as a list of .gmt files, .txt files or Signature objects (additional info on signature below). 
+The expression data and siganture files: the expression data can be either a path to a tab-delimited .txt file, a .mtx sparse matrix format file, a numeric matrix directly, a sparse matrix from the Matrix package, an ExpressionSet object, or a SummerizedExperiment object; signature data can be provided as a list of .gmt files, .txt files or Signature objects (additional info on signature below). 
 
 ``` {redcars}
-To note, please provide *scaled* expression data (e.g. counts per million, or median number of UMIs), without preforming any kind of prior normalization. 
+To note, it's recommended to provide *scaled* expression data (e.g. counts per million, or median number of UMIs), without preforming any kind of prior normalization. However, VISION should still be able to process normalized expression counts.
 ```
 
 We can also leverage a couple of other paramters of VISION: namely the method for normalizing the expression data before calculating signature scores, a meta data file, a set of desired projections, and a set of genes we'd like to utilize for projections. 
@@ -113,12 +113,24 @@ meta = read.table("data/glio_meta.txt.gz", sep='\t', header=T, row.names=1)
 meta = meta[colnames(expr), ,drop=F]
 meta[,1] = as.factor(meta[,1])
 
+vis <- Vision(expr, c("data/h.all.v5.2.symbols.gmt"), 
+              meta = meta,
+              projection_methods=c("tSNE30",  "ICA"),
+              projection_genes = "fano")
+```
+
+If the user would like to specify a list of genes to use (for example from a previous filtering scheme), the user can replace the last call to the Vision constructor with these lines:
+
+```{r, collapse=F, message=T, eval=F}
 # -- find genes to use for projections
 f.genes = VISION:::filterGenesFano(expr)
 
 # -- Create a VISION object with existing matrix
-vis <- Vision(expr, c("data/h.all.v5.2.symbols.gmt"), sig_norm_method = "znorm_columns", meta = meta,
-                projection_methods=c("tSNE30",  "ICA"), projection_genes = f.genes)
+vis <- Vision(expr, 
+              c("data/h.all.v5.2.symbols.gmt"), 
+              meta = meta,
+              projection_methods=c("tSNE30",  "ICA"), 
+              projection_genes = f.genes)
 
 ```
 
@@ -144,6 +156,16 @@ With the processed Vision object, a dynamic web report can be generated with the
 
 ```{r, collapse=T, message=F, results=F, eval=F}
 viewResults(fp)
+```
+
+# Adding 2-D Projections
+Often times, users will have pre-computed projections that they would like to use for visualizing their data (e.g. a pre-computed tSNE, or UMAP projetction). In this case, VISION offers users to load in any number of these precomputed projections with separate calls to the `addProjection` method. These projections should be a numeric matrix, where columns correspond to components of the projection and the rows match exactly the sample names of the expression matrix of the Vision object.
+
+```{r, collapse=T, message=F, results=F, eval=F}
+projection <- as.matrix(read.table(<path to projection))
+
+vis <- addProjection(vis, "CustomProjection", projection)
+
 ```
 
 # Getting Signatures
