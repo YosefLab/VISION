@@ -119,7 +119,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">Introduction to VISION</h1>
 <p class="author-name">Matthew Jones</p>
-<h4 class="date"><em>4 October 2018</em></h4>
+<h4 class="date"><em>8 October 2018</em></h4>
 <h4 class="package">Package</h4>
 <p>BiocStyle 2.8.2</p>
 
@@ -141,7 +141,8 @@ $(document).ready(function () {
 <li><a href="#signature-files"><span class="toc-section-number">5.2.1</span> Signature files</a></li>
 </ul></li>
 </ul></li>
-<li><a href="#session-info"><span class="toc-section-number">6</span> Session Info</a></li>
+<li><a href="#working-with-large-datasets-micropooling"><span class="toc-section-number">6</span> Working with large datasets: Micropooling</a></li>
+<li><a href="#session-info"><span class="toc-section-number">7</span> Session Info</a></li>
 </ul>
 </div>
 
@@ -302,8 +303,13 @@ sig &lt;- createGeneSignature(name = &quot;Interesting Process&quot;, sigData = 
 </div>
 </div>
 </div>
+<div id="working-with-large-datasets-micropooling" class="section level1">
+<h1><span class="header-section-number">6</span> Working with large datasets: Micropooling</h1>
+<p>scRNA-seq experiments have grown in size over the past couple of years, and as such we have provided an algorithm for pooling together similar cells and continuing with analysis, thus reducing the cell-wise time complexity of the VISION pipeline. For more information, please see our micropooling vignette.</p>
+<p>Briefly, however, you can control the parameters of the micropooling algorithm first with the <code>pool</code> boolean argument (setting <code>pool=T</code> when creating the Vision object will force the pooling of cells) and <code>cellsPerPartition</code> as a integer argument for specifying the maximum number of cells per micropool. By default, Vision will create micropools with 100 cells per micropool for datasets that exceed 15,000 cells (we recommend changing the <code>pool</code> argument and the <code>cellsPerPartition</code> argument on a case-by-case basis.)</p>
+</div>
 <div id="session-info" class="section level1">
-<h1><span class="header-section-number">6</span> Session Info</h1>
+<h1><span class="header-section-number">7</span> Session Info</h1>
 <pre class="r"><code>sessionInfo()
 ## R version 3.5.0 (2018-04-23)
 ## Platform: x86_64-apple-darwin15.6.0 (64-bit)
@@ -323,8 +329,8 @@ sig &lt;- createGeneSignature(name = &quot;Interesting Process&quot;, sigData = 
 ## [1] VISION_0.99.6   BiocStyle_2.8.2
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] Rcpp_0.12.18       compiler_3.5.0     iotools_0.2-5     
-##  [4] base64enc_0.1-3    tools_3.5.0        digest_0.6.15     
+##  [1] Rcpp_0.12.19       compiler_3.5.0     iotools_0.2-5     
+##  [4] base64enc_0.1-3    tools_3.5.0        digest_0.6.17     
 ##  [7] mclust_5.4.1       wordspace_0.2-0    jsonlite_1.5      
 ## [10] evaluate_0.10.1    Rtsne_0.13         nlme_3.1-137      
 ## [13] lattice_0.20-35    loe_1.1            mgcv_1.8-23       

@@ -193,6 +193,12 @@ sig <- createGeneSignature(name = "Interesting Process", sigData = sigData)
 Signature files are supported in either a .txt or .gmt format, which are both textual formats that are easy to create.
 Information on the precise acceptable format can be found [here](https://github.com/YosefLab/VISION/wiki/Signatures).
 
+#Working with large datasets: Micropooling
+
+scRNA-seq experiments have grown in size over the past couple of years, and as such we have provided an algorithm for pooling together similar cells and continuing with analysis, thus reducing the cell-wise time complexity of the VISION pipeline. For more information, please see our micropooling vignette. 
+
+Briefly, however, you can control the parameters of the micropooling algorithm first with the `pool` boolean argument (setting `pool=T` when creating the Vision object will force the pooling of cells) and `cellsPerPartition` as a integer argument for specifying the maximum number of cells per micropool. By default, Vision will create micropools with 100 cells per micropool for datasets that exceed 15,000 cells (we recommend changing the `pool` argument and the `cellsPerPartition` argument on a case-by-case basis.)
+
 # Session Info
 ```{r, collapse=T}
 sessionInfo()

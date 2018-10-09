@@ -12,13 +12,16 @@ We recommend installing VISION via github using devtools:
 
 ```r
 require(devtools)
-install_github("YosefLab/VISION")
+install_github("YosefLab/VISION", build_vignettes=T)
 ```
+
+We recommend using the build_vignettes argument to view vignettes from R (use the `vignette()` function). 
 
 The VISION Pipeline
 -----------------------
 VISION generally follows the same pipeline from iteration to iteration, where minor differences can be specified via the various parameters in a VISION object. On a typical VISION run:
 
+- For large datasets, or if the user so chooses, micropools are computed - grouping similar cells together to reduce the complexity of the analysis.
 - If a latent space is not specified, PCA is performed and the top 30 components are retained.
 - A KNN graph is constructed from the latent space, named the cell-cell similarity map
 - Signature scores are computed using the expression matrix
