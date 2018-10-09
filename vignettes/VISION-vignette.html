@@ -279,6 +279,15 @@ vis &lt;- analyze(vis)
 
 vis &lt;- addProjection(vis, &quot;CustomProjection&quot;, projection)
 </code></pre>
+<p>For completeness, you can also extract the projections of a particular Vision object:</p>
+<pre class="r"><code># obtain a list of all projections in this Vision object
+projections &lt;- vis@Projections
+
+# see names of projections
+names(projections)
+
+# Obtain a dataframe of a particular projection (rows = cells, columns=components)
+pca12 = projections[[&quot;PCA: 1,2&quot;]]</code></pre>
 </div>
 <div id="getting-signatures" class="section level1">
 <h1><span class="header-section-number">5</span> Getting Signatures</h1>

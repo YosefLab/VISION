@@ -168,6 +168,19 @@ vis <- addProjection(vis, "CustomProjection", projection)
 
 ```
 
+For completeness, you can also extract the projections of a particular Vision object:
+
+```{r, collapse=T, message=F, results=F, eval=F}
+# obtain a list of all projections in this Vision object
+projections <- vis@Projections
+
+# see names of projections
+names(projections)
+
+# Obtain a dataframe of a particular projection (rows = cells, columns=components)
+pca12 = projections[["PCA: 1,2"]]
+```
+
 # Getting Signatures
 Gene signatures are essential to the VISION pipeline, and are fairly easy to get in any number of ways:
 
