@@ -571,7 +571,7 @@ sigsVsProjection_pcf <- function(metaData, weights, cells = NULL){
     labels <- apply(factorMatrix, 1, which.max)
 
     contingency_rows <- lapply(seq(fLevels), function(k){
-        group <- factorPredictions[labels == k, ]
+        group <- factorPredictions[labels == k, , drop = FALSE]
         return(colSums(group))
     })
 
