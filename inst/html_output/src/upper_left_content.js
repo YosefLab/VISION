@@ -14,6 +14,7 @@ function Upper_Left_Content()
     this.sig_table = {}
     this.pc_table = {}
     this.gene_select = {}
+    this.hotspot_table = {}
     this.dom_node = document.getElementById("upper-left-content");
 }
 
@@ -37,6 +38,19 @@ Upper_Left_Content.prototype.init = function()
 
     var gene_select_promise = gene_select.init()
 
+    var hotspot_table_promise = true;
+
+    var sessionInfoPromise = api.sessionInfo().then(info => {
+        has_hotspot = info.has_hotspot
+        if (has_hotspot) {
+            var hotspot_table = new Hotspot_Table()
+            this.children.push(hotspot_table)
+            this.hotspot_table = hotspot_table
+            hotspot_table_promise = hotspot_table.init();
+        }
+    });
+    
+
     this.setLoadingStatus = createLoadingFunction(
         document.getElementById("upper-left-content")
     );
@@ -59,7 +73,7 @@ Upper_Left_Content.prototype.init = function()
         })
 
 
-    return $.when(sig_table_promise, pc_table_promise, gene_select_promise);
+    return $.when(sig_table_promise, pc_table_promise, gene_select_promise, hotspot_table_promise);
 
 }
 
@@ -105,7 +119,7 @@ Upper_Left_Content.prototype.hover_cells = function()
 
 function Signature_Table()
 {
-    this.dom_node = document.getElementById("table-div-container");
+    this.dom_node = document.getElementById("sig-table-div-container");
     this.matrix = {}
     this.clusters = {}
     this.sorted_column = 'Consistency'
@@ -174,7 +188,7 @@ Signature_Table.prototype.render = function()
     // Create the Header row
     var header_row = $(self.dom_node).children(".sig-tables-header").find(".proj-row");
     header_row.find("th:not(:first-child)").remove()
-    _.each(matrix.proj_labels, function(proj_label){
+    _.each([matrix.proj_labels], function(proj_label){
         var new_cell = $("<th>")
         var new_item = $("<div>")
         new_item.html("<div>" + proj_label + "</div>")
@@ -1062,6 +1076,19 @@ function tableClickFunction_clusters(row_key, col_key)
 }
 
 
+function tableClickFunction_HotspotGene(gene)
+{
+    var update = {}
+
+    var meta_sigs = get_global_data('meta_sigs')
+
+    update['plotted_item_type'] = "gene";
+    update['plotted_item'] = gene;
+
+    set_global_status(update);
+}
+
+
 function hoverRowCol(header_row, node, col){
     $(header_row).find('th').filter((i, e) => $(e).text() == col).addClass('highlight')
     $(node).siblings('td:first-child').addClass('highlight')
@@ -1126,3 +1153,437 @@ function _auc_format(x) {
     auc = Math.max(auc, 1-auc)
     return auc.toFixed(2)
 }
+
+
+
+// Yanay 
+function Hotspot_Table()
+{
+    this.dom_node = document.getElementById("hotspot-table-div-container");
+    this.matrix = {}
+    this.clusters = {}
+    this.sorted_column = 'Max Gi'
+    this.filterSig = $(this.dom_node).find('#hotspot_filt_input')
+    this.is_filtering = false
+    this.is_collapsed = {} // cluster -> boolean, holds whether a cluster is collapsed
+    this.tooltip = {} // will contain a Popper.js object
+}
+
+
+Hotspot_Table.prototype.init = function()
+{
+
+    var self = this;
+
+    var debounced = _.debounce(function(){self.doneTyping()}, 500)
+    self.filterSig.on('input', debounced)
+
+
+    var popper = document.querySelector('body > #hotspot-tooltip')
+    var arrow = popper.querySelector('.arrow')
+    var initialNode = document.querySelector('body > #hidden-node')
+
+    var outPopper = new Popper(initialNode, popper, {placement: 'top',
+        modifiers: {
+            arrow: {
+                enabled: true,
+                element: arrow,
+            },
+            preventOverflow: {
+                enabled: false,
+            },
+            hide: {
+                enabled: false,
+            },
+        }
+    })
+
+    this.tooltip = outPopper;
+
+    // Set up the scrolling behavior
+    var header_div = this.dom_node.querySelector('.hotspot-tables-header')
+    var tables_div = this.dom_node.querySelector('.hotspot-tables-wrapper')
+    $(tables_div).on('scroll', function() {
+        $(header_div).scrollLeft($(this).scrollLeft())
+    })
+
+    var update_promise = self.update({})
+    return update_promise;
+
+}
+
+Hotspot_Table.prototype.render = function()
+{
+    var self = this;
+    var matrix = self.matrix;
+    var main_vis = get_global_status('main_vis');
+
+    var cluster_ids = _(self.clusters).values().uniq().sort(x => x).value()
+
+    // If the filtering is enabled, we're just going to put everything into one cluster
+    if (self.is_filtering){
+        cluster_ids = [1]
+    }
+
+    // Create the Header row
+    var header_row = $(self.dom_node).children(".hotspot-tables-header").find(".proj-row");
+    header_row.find("th:not(:first-child)").remove()
+    _.each(["Max GI"], function(cluster_label){
+        var new_cell = $("<th>")
+        var new_item = $("<div>")
+        new_item.html("<div>" + cluster_label + "</div>")
+        new_cell.on("click", function() {
+            var col_name = $(this).text()
+            self.sorted_column = col_name
+            self.render()
+        });
+        new_cell.append(new_item)
+        header_row.append(new_cell)
+    });
+
+    // Add padding for scrollbar width of table below it
+    $(self.dom_node).children(".hotspot-tables-header")
+        .css("padding-right", detect_browser_scrollbar_width() + "px")
+
+    var clusterTableDiv = $(self.dom_node).children('.hotspot-tables-wrapper').first()
+    var new_table_divs = []
+
+    // Remove old tables
+    clusterTableDiv.children('.hotspot-table-div').remove()
+
+    var curr_cl;
+    for (var i = 0; i < cluster_ids.length; i++) {
+        curr_cl = cluster_ids[i];
+
+        if (!(curr_cl in self.is_collapsed)){
+            self.is_collapsed[curr_cl] = true;
+        }
+
+        var gene_labels = [];
+        for (var ind = 0; ind < matrix.genes.length; ind++) {
+            var gene = matrix.genes[ind];
+            if (matrix.ClusterId[ind] === curr_cl) {
+                gene_labels.push(gene);
+            }            
+        }
+
+        if (gene_labels.length < 1) {
+            
+            break;
+        }
+
+        // Create new table and add to table_div
+        var new_table_div = document.createElement("div");
+        new_table_div.setAttribute("class", "hotspot-table-div");
+
+        var new_table = document.createElement("table");
+        new_table.setAttribute("id", "table"+ curr_cl);
+        new_table.setAttribute("class", "hotspot-table");
+        $(new_table).data("cluster", curr_cl)
+
+        var thead = document.createElement("thead");
+
+        var tbody = document.createElement("tbody");
+
+        new_table.appendChild(thead);
+        new_table.appendChild(tbody);
+
+
+        new_table_div.appendChild(new_table);
+        new_table_divs.push(new_table_div);
+
+        // Format cell data for better d3 binding
+        
+
+        var maxGis = []; // rows of z-scores
+        //var pvals = []; // rows of p-values
+        var gene_indices = [] // signature index corresponding to each row
+
+        for (var ind = 0; ind < gene_labels.length; ind++) {
+            var gene = gene_labels[ind];
+            var gene_index = matrix.genes.indexOf(gene)
+            if (matrix.ClusterId[gene_index] === curr_cl) {
+                maxGis.push(matrix.MaxGi[gene_index]);
+                gene_indices.push(gene_index);
+            }            
+        }
+
+
+        var formatted_data_matrix = _.zip(gene_indices, maxGis)
+            .map(x => {
+                var gene_index = x[0]
+                var maxgis_row = x[1]
+                return _.zip([maxgis_row]).map((x, j)  => {
+                    return {
+                        "row": gene_index, "col": j,
+                        "maxgi": x[0], "gene_name": matrix.genes[gene_index]
+                    }
+                })
+            })
+
+        var formatted_data_w_row_labels = d3.zip(gene_labels, formatted_data_matrix);
+        //yanay
+        // Sort data if necessary
+
+        var sort_col = 0;
+        if(sort_col > -1){
+            var sortFun = function(a,b){
+                return b[1][sort_col].maxgi - a[1][sort_col].maxgi; // Descending order
+            };
+            formatted_data_w_row_labels = formatted_data_w_row_labels.sort(sortFun);
+        }
+
+
+        $(new_table_div).data('table-sort-val', 0)
+        /*if (cluster_ids.length < 1) {
+            // Pull out the cluster leader and put it first
+
+            var row_vals;
+            if (main_vis === "pcannotator") {
+                row_vals = _.map(formatted_data_w_row_labels, x => {
+                    return _(x[1]).map(y => y.maxgi).sum()
+                })
+            } else {
+                row_vals = _.map(formatted_data_w_row_labels, x => {
+                    return (x[1][0].maxgi*-1) // sort by maxgi
+                })
+            }
+
+            var leader_row_i = row_vals.indexOf(_.min(row_vals))
+            var leader_row = formatted_data_w_row_labels[leader_row_i];
+            formatted_data_w_row_labels.splice(leader_row_i, 1);
+            formatted_data_w_row_labels.splice(0, 0, leader_row);
+
+            if (sort_col > -1) {
+                $(new_table_div).data('table-sort-val', leader_row[1][sort_col].maxgi*-1)
+            }
+        }*/
+
+
+        var colorScale = d3.scale.linear()
+            .domain([0,50,1])
+            .range(["steelblue", "crimson"])
+            .clamp(true);
+
+        var content_rows = d3.select(new_table).select('tbody').selectAll('tr')
+            .data(formatted_data_w_row_labels);
+        content_rows.enter().append('tr');
+        content_rows.exit().remove();
+
+        var content_row = content_rows.selectAll("td")
+            .data(function(d){return [d[0]].concat(d[1]);})
+
+        content_row.enter().append('td');
+        content_row.exit().remove();
+
+       
+        content_row
+            .filter(function(d,i) { return i > 0;})
+            .on("click", function(d){
+                console.log(d);
+                tableClickFunction_HotspotGene(d.gene_name)})
+
+        content_row
+            .filter(function(d,i) { return i == 1;})
+            .style('background-color', function(d){return colorScale(d.maxgi);})
+            .append('div')
+            .text(function(d){ return d.maxgi.toPrecision ? d.maxgi.toPrecision(2) : d.maxgi;})
+
+
+        // Hover actions
+        var rowHoverFunc = function(header_row){
+            return function(d, i){
+                var tooltip_str;
+                if(main_vis === 'pcannotator'){
+                    tooltip_str = "corr = " + d.maxgi.toFixed(2)
+                } else {
+                    if(main_vis === 'clusters' && i > 0)
+                        tooltip_str = "Max GI=" + _auc_format(d.maxgi) 
+                    else
+                        tooltip_str = "Max GI=" + d.maxgi.toFixed(2)
+                }
+                createTooltip(self.tooltip, this, tooltip_str)
+                hoverRowCol(header_row, this, cluster_ids[d.col])
+            }
+        }(header_row, new_table);
+        var rowUnHoverFunc = function(header_row){
+            return function(d){
+                destroyTooltip(self.tooltip)
+                unhoverRowCol(header_row, this, cluster_ids[d.col])
+            }
+        }(header_row, new_table);
+
+        content_row
+            .filter(function(d,i) { return i > 0;})
+            .on("mouseenter", rowHoverFunc)
+            .on("mouseleave", rowUnHoverFunc)
+
+        // Add text for signature names
+        content_row.filter(function(d,i) { return i == 0;})
+            .html(function(d){return '<div class="hotspot-row-label"><div>'+d+'</div></div>';})
+
+        // Add cluster expand/collapse behavior ONLY if more than one cluster
+        if (cluster_ids.length > 1) {
+
+            $(new_table).addClass('collapsible')
+
+            if (self.is_collapsed[curr_cl]){
+                $(new_table).addClass('collapsed')
+            }
+
+            $(new_table).children('tbody').children('tr:first-child').children("td:first-child")
+                .on("click", function() { self.clickSummaryRow(this); });
+        }
+
+    }
+
+    new_table_divs = _.sortBy(new_table_divs, d => {
+        return $(d).data('table-sort-val')
+    });
+
+    _.forEach(new_table_divs, new_table_div => {
+        clusterTableDiv.append(new_table_div);
+    });
+
+    // Apply compact styling for pcannotator
+    if(main_vis === "pcannotator" || main_vis === "clusters" || main_vis === "tree"){
+        $(self.dom_node).find('table').addClass('compact')
+    } else {
+        $(self.dom_node).find('table').removeClass('compact')
+    }
+    if(main_vis === "clusters" || main_vis === "tree"){
+        $(self.dom_node).find('table').addClass('first-col')
+    } else {
+        $(self.dom_node).find('table').removeClass('first-col')
+    }
+
+    // Trigger existinging filter
+    self.filterSig.trigger('input');
+}
+
+Hotspot_Table.prototype.clickSummaryRow = function(d){
+
+    var table_id = $(d).closest('table')
+    var cluster_id = table_id.data('cluster')
+
+    if (this.is_collapsed[cluster_id]){
+        this.is_collapsed[cluster_id] = false;
+        table_id.removeClass('collapsed')
+    } else {
+        this.is_collapsed[cluster_id] = true;
+        table_id.addClass('collapsed')
+    }
+}
+
+
+Hotspot_Table.prototype.update = function(updates)
+{
+    var self = this;
+
+    var clusters_promise;
+    if (_.isEmpty(self.clusters)){
+
+        clusters_promise = api.signature.clusters(false)
+            .then(function(cls){
+                self.clusters = cls;
+                return true;
+            })
+    } else {
+        clusters_promise = false
+    }
+
+    var matrix_promise;
+    if( 'main_vis' in updates || _.isEmpty(self.matrix) || 'cluster_var' in updates){
+        var main_vis = get_global_status('main_vis');
+        var cluster_var = get_global_status('cluster_var');
+
+        matrix_promise = api.hotspotGenesClusters();
+        matrix_promise = matrix_promise
+            .then(function(matrix) {
+                self.matrix = matrix;
+                return true;
+            });
+    } else {
+        matrix_promise = false
+    }
+
+    return $.when(matrix_promise, clusters_promise)
+        .then(function(matrix_update, clusters_update){
+            if(matrix_update || clusters_update){
+                self.render();
+            }
+        });
+
+}
+
+Hotspot_Table.prototype.get_top_sig = function()
+{
+    var matrix = this.matrix;
+    var s_i = matrix.MaxGi.map(function(e){return e[0];}).argMax();
+
+    return matrix.gene_labels[s_i]
+}
+
+Hotspot_Table.prototype.doneTyping = function()
+{
+    var self = this;
+    var val = self.filterSig.val();
+
+    if (val.length > 0 && !self.is_filtering) {
+        // Just started filtering, need to re-render table
+        self.is_filtering = true
+        self.render()
+        return // No need to finish - this function is called at the end of render()
+    }
+
+    if (val.length == 0 && self.is_filtering) {
+        // Just ended filtering, need to re-render table
+        self.is_filtering = false
+        self.render()
+        return // No need to finish - this function is called at the end of render()
+    }
+
+    var vals = val.split(",");
+    vals = vals.map(function(str){return str.trim();})
+        .filter(function(str){ return str.length > 0;})
+        .map(function(str){ return str.toLowerCase();})
+
+    var tablerows = $(self.dom_node).find('.hotspot-table-div').find('tr')
+    tablerows.removeClass('filtered');
+
+    var posvals = vals.filter(function(str){ return str[0] != '!';});
+    var negvals = vals.filter(function(str){ return str[0] == '!';})
+        .map(function(str){ return str.slice(1);})
+        .filter( function(str){return str.length > 0;});
+
+    if(posvals.length > 0){
+        tablerows.filter(function(i, element){
+            var sig_text = $(element).children('td').first().html().toLowerCase();
+            for(var j = 0; j < posvals.length; j++)
+            {
+                if(sig_text.indexOf(posvals[j]) > -1)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }).addClass('filtered');
+    }
+
+    if(negvals.length > 0){
+        tablerows.filter(function(i, element){
+            var sig_text = $(element).children('td').first().html().toLowerCase();
+            for(var j = 0; j < negvals.length; j++)
+            {
+                if(sig_text.indexOf(negvals[j]) > -1)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }).addClass('filtered');
+    }
+}
+
+
+

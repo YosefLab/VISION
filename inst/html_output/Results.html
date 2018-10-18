@@ -30,7 +30,7 @@
     <script type="text/javascript" src="src/right_content.js"></script>
     <script type="text/javascript" src="src/misc.js"></script>
     <script type="text/javascript" src="src/api.js"></script>
-
+    
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/right_content.css">
     <link rel="stylesheet" href="css/upper_left_content.css">
@@ -53,6 +53,9 @@
             <li class="nav-item">
                 <a class="nav-link disabled" href="#" data-main-vis="tree">Trajectories</a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link disabled" href="#" data-main-vis="hotspot">Hotspot</a>
+            </li>
         </ul>
     </div>
     <div id="main-content">
@@ -67,7 +70,10 @@
                     <div class='section-nav' style="flex-grow: 1">
                         <ul class="nav nav-pills justify-content-center">
                             <li class="nav-item">
-                                <a class="nav-link active" id="sig-table-tab" data-toggle="tab" href="#table-div-container" role="tab" aria-controls="sig-table" aria-selected="true">Signatures</a>
+                                <a class="nav-link" id="hotspot-table-tab" data-toggle="tab" href="#hotspot-table-div-container" role="tab" aria-controls="hotspot-table" aria-selected="false">Hotspot Genes</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link active" id="sig-table-tab" data-toggle="tab" href="#sig-table-div-container" role="tab" aria-controls="sig-table" aria-selected="true">Signatures</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" id="meta-table-tab" data-toggle="tab" href="#meta-table-div" role="tab" aria-controls="meta-table" aria-selected="false">Cell Meta</a>
@@ -80,7 +86,25 @@
                 </div>
 
                 <div class="tab-content upper-left-section-content">
-                    <div class="tab-pane show active" id="table-div-container" role="tabpanel" aria-labelledby="sig-table-tab">
+                    <div class="tab-pane" id="hotspot-table-div-container" role="tabpanel" aria-labelledby="hotspot-table-tab">
+                        <div class="hotspot-tables-header">
+                            <table class="hotspot-table">
+                                <thead>
+                                    <tr class="proj-row">
+                                        <th>
+                                            <div>
+                                            <input id="hotspot_filt_input" class="form-control"
+                                                   type="text" placeholder="Filter Hotspot Genes...">
+                                            </input>
+                                            </div>
+                                        </th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <div class="hotspot-tables-wrapper"></div>
+                    </div>
+                    <div class="tab-pane show active" id="sig-table-div-container" role="tabpanel" aria-labelledby="sig-table-tab">
                         <div class="sig-tables-header">
                             <table class="sig-table">
                                 <thead>
@@ -250,6 +274,12 @@
         </div> <!-- End of right-content -->
     </div>
     <div id="sig-tooltip">
+        <div class="inner">
+            Test!
+        </div>
+        <div class="arrow"></div>
+    </div>
+    <div id="hotspot-tooltip">
         <div class="inner">
             Test!
         </div>

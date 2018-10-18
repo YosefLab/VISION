@@ -6,6 +6,7 @@
 # on the different types of data.
 
 setClassUnion('numericORNULL', members=c('numeric', 'NULL'))
+setClassUnion('listORNULL', members=c('list', 'NULL'))
 setClassUnion('matrixORSparse', members=c("matrix", "dgCMatrix", "dgTMatrix"))
 
 Cluster <- setClass("Cluster",
@@ -108,7 +109,8 @@ Vision <- setClass("Vision",
         latentSpace = "matrix",
         latentTrajectory = "Trajectory",
         initialLatentSpace = "matrix",
-        version = "numeric"),
+        version = "numeric",
+        Hotspot = "listORNULL"),
     prototype = list(
         nomodel = FALSE,
         weights = matrix(NA, 1, 1),
@@ -140,5 +142,6 @@ Vision <- setClass("Vision",
         latentSpace = matrix(NA, 1, 1),
         latentTrajectory = NULL,
         initialLatentSpace = matrix(NA, 1, 1),
-        version = 1.0
+        version = 1.0,
+        Hotspot = NULL
 ))

@@ -4,6 +4,7 @@ global_status.main_vis = "clusters"; // Selected from 4 options on top
     'clusters'
     'pcannotator'
     'tree'
+    'hotspot'
 */
 
 // Determine the projected coordinates
@@ -112,7 +113,7 @@ function set_global_status(update){
 
     if('plotted_projection' in update || 'main_vis' in update){
         if( get_global_status('main_vis') === 'clusters' ||
-            get_global_status('main_vis') === 'pcannotator'){
+            get_global_status('main_vis') === 'pcannotator' || get_global_status('main_vis') === 'hotspot'){
 
             var proj_key = get_global_status('plotted_projection');
             var proj_promise = api.projections.coordinates(proj_key)
@@ -250,10 +251,6 @@ window.onload = function()
     upper_left_content = new Upper_Left_Content()
     right_content = new Right_Content()
 
-
-    var lower_left_promise = lower_left_content.init();
-    var right_promise = right_content.init();
-
     // Get the cluster assignments for cells
     var cellClustersPromise = api.clusters.list()
         .then(function(data) {
@@ -282,11 +279,50 @@ window.onload = function()
                 .removeClass('disabled')
         }
 
+
         global_data.meta_sigs = info.meta_sigs
         global_status.pooled = info.pooled
         global_status.ncells = info.ncells
         global_status.has_tree = info.has_tree
+
+        if(info.has_hotspot){
+            $('#nav-bar')
+                .find(".nav-link[data-main-vis='hotspot']")
+                .removeClass('disabled')                
+        }
+        $("#hotspot-table-tab").hide()
+        $("#nav-bar .nav-link").each(function(){
+                    $(this).click(function(){
+                    if ($(".nav-link[data-main-vis='hotspot']").hasClass("active")) {
+                        console.log("Active")
+                        // disable others, show hotspot
+                        $("#hotspot-table-tab").show();
+                        $("#hotspot-table-tab").click();
+                        $("#sig-table-tab").hide();
+                        $("#meta-table-tab").hide();
+                        $("#genes-table-tab").hide();
+                    } else {
+                        console.log("Not active")
+                        // disable hotspot, show others
+                        $("#sig-table-tab").show();
+                        $("#sig-table-tab").click();
+                        $("#meta-table-tab").show();
+                        $("#genes-table-tab").show();
+                        $("#hotspot-table-tab").hide()
+                    }
+                })
+                })
+        global_data.has_hotspot = info.has_hotspot
     });
+
+
+    $.when(sessionInfoPromise).then(function(){
+        if(global_data.has_hotspot){
+            var hotspotGenesClustersPromise = api.hotspotGenesClusters().then(info => {
+                global_data.hotspotGenesClusters = info
+            })
+        }
+    })
 
     // When it's all done, run this
     $.when(right_promise, lower_left_promise,
@@ -366,5 +402,6 @@ window.onload = function()
 
         set_global_status(update)
     });
-
+    var lower_left_promise = lower_left_content.init();
+    var right_promise = right_content.init();
 };

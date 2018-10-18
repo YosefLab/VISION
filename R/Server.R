@@ -473,6 +473,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         hasTree <- !is.null(W)
 
         info["has_tree"] <- hasTree
+        
+        info["has_hotspot"] <- !is.null(object@Hotspot)
 
         info[["meta_sigs"]] <- colnames(object@metaData)
 
@@ -494,6 +496,12 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
          out <- toJSON(cell_meta, auto_unbox = TRUE)
          return(out)
      }) %>%
+    get("/Hotspot/GeneClusters", function(req, res, err) {
+      gi_and_clusters <- as.list(object@Hotspot$gene_clusters)
+      gi_and_clusters$genes <- rownames(object@Hotspot$gene_clusters)
+      out <- toJSON(gi_and_clusters, auto_unbox = TRUE)
+      return(out)
+    }) %>%
      post("/Cells/Meta", function(req, res, err) {
 
          subset <- fromJSON(req$body)

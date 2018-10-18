@@ -124,12 +124,11 @@ Right_Content.prototype.update = function(updates)
         autoZoom = true
     }
 
-    if(main_vis === 'clusters' || main_vis === "pcannotator"){
+    if(main_vis === 'clusters' || main_vis === "pcannotator" || main_vis === "hotspot"){
         self.draw_sigvp(autoZoom);
 
     } else if (main_vis === "tree") {
         self.draw_tree(autoZoom);
-
     } else {
         throw "Bad main_vis value!";
     }
@@ -472,16 +471,16 @@ Right_Content.prototype.exportSigProj = function()
     //Convert the data that's in the scatter plot to a tab-delimited table
 
     var proj;
-    if (main_vis === 'clusters' || main_vis === 'pcannotator') {
+    if (main_vis === 'clusters' || main_vis === 'pcannotator' || main_vis === 'hotspot') {
         proj = get_global_data('sig_projection_coordinates')
-    } else if (main_vis ==='tree') {
+    } else if (main_vis === 'tree') {
         proj = get_global_data('tree_projection_coordinates')
     } else {
         throw "Bad main_vis value!";
     }
 
     var table;
-    if (main_vis === 'tree' || main_vis === 'clusters') {
+    if (main_vis === 'tree' || main_vis === 'clusters'|| main_vis === 'hotspot') {
 
         table = _.map(proj, (value, key) => {
             return [key, proj[key][0], proj[key][1], values[key]]

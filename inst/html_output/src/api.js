@@ -249,6 +249,13 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
+    // Hotspot Genes Clusters Api
+
+    output.hotspotGenesClusters = function() {
+        var query = prefix.concat("Hotspot/GeneClusters")
+        return $.ajax(query, {dataType: "json"}).then(x => x)
+    }
+
     return output;
 
 })();

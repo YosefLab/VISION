@@ -31,3 +31,8 @@ setGeneric("viewResults", function(object, ...) {
 setGeneric("computeKNNWeights", function(object, ...) {
     standardGeneric("computeKNNWeights")
 })
+
+setGeneric("Hotspot", function(object, ...) {
+  standardGeneric("Hotspot")
+})
+
