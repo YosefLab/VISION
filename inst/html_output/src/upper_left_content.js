@@ -948,7 +948,7 @@ Gene_Select.prototype.update = function(updates)
             if(this.recent_genes.indexOf(gene) === -1){
                 this.recent_genes.unshift(gene)
 
-                if(this.recent_genes.length > 10){
+                if(this.recent_genes.length > 20){
                     this.recent_genes.pop();
                 }
 
