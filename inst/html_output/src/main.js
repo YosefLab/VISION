@@ -16,6 +16,7 @@ global_status.pooled = false;
 
 // Is trajectory data available?
 global_status.has_tree = false;
+global_status.has_sigs = true;
 
 // Determine projected values
 global_status.plotted_item = "";  // name of signature, meta or gene that is plotted
@@ -254,23 +255,6 @@ window.onload = function()
     var lower_left_promise = lower_left_content.init();
     var right_promise = right_content.init();
 
-    // Get the cluster assignments for cells
-    var cellClustersPromise = api.clusters.list()
-        .then(function(data) {
-            global_data.cluster_variables = data;
-            global_status.cluster_var = global_data.cluster_variables[0];
-
-            return upper_left_content.init();
-        }).then(function() {
-
-            var cluster_var = get_global_status('cluster_var')
-            var cell_clusters_promise = api.clusters.cells(cluster_var)
-                .then( data => {
-                    global_data.clusters = data
-                })
-            return cell_clusters_promise
-        })
-
     var sessionInfoPromise = api.sessionInfo().then(info => {
         if(info.name.length > 0){
             $('#SampleNameSpan').text(' - ' + info.name)
@@ -286,11 +270,30 @@ window.onload = function()
         global_status.pooled = info.pooled
         global_status.ncells = info.ncells
         global_status.has_tree = info.has_tree
-    });
+        global_status.has_sigs = info.has_sigs
+    })
+
+    var cellClustersPromise = api.clusters.list()
+        .then(function(data) {
+            global_data.cluster_variables = data;
+            global_status.cluster_var = global_data.cluster_variables[0];
+        })
+
+    var combinedPromise = $.when(sessionInfoPromise, cellClustersPromise)
+        .then(function(){
+            return upper_left_content.init();
+        }).then(function() {
+            var cluster_var = get_global_status('cluster_var')
+            var cell_clusters_promise = api.clusters.cells(cluster_var)
+                .then( data => {
+                    global_data.clusters = data
+                })
+            return cell_clusters_promise
+        })
+
 
     // When it's all done, run this
-    $.when(right_promise, lower_left_promise,
-        cellClustersPromise, sessionInfoPromise)
+    $.when(right_promise, lower_left_promise, combinedPromise)
         .then(function(){
             var has_tree = get_global_status('has_tree')
             var update0 = {'main_vis': (has_tree ? 'tree': 'clusters')}

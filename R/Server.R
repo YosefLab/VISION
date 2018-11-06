@@ -480,6 +480,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         info[["ncells"]] <- nrow(object@metaData)
 
+        info[["has_sigs"]] <- length(object@sigData) > 0
+
         result <- toJSON(
                          info,
                          force = TRUE, pretty = TRUE, auto_unbox = TRUE

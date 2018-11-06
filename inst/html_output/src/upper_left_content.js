@@ -58,6 +58,17 @@ Upper_Left_Content.prototype.init = function()
             });
         })
 
+    // If no signatures, need to hide the 'Signatures' nav item
+
+    var has_sigs = get_global_status('has_sigs')
+    if(!has_sigs){
+        var nav = $(this.dom_node).find('.section-nav')
+        var sigTableTab = nav.find('#sig-table-tab')
+        var metaTableTab = nav.find('#meta-table-tab')
+        sigTableTab.parent().hide()
+        metaTableTab.click()
+    }
+
 
     return $.when(sig_table_promise, pc_table_promise, gene_select_promise);
 
@@ -81,7 +92,14 @@ Upper_Left_Content.prototype.select_default_sig = function()
 {
     var update = {}
 
-    var plotted_item = this.sig_table.get_top_sig()
+    var has_sigs = get_global_status('has_sigs')
+
+    var plotted_item
+    if (has_sigs){
+        plotted_item = this.sig_table.get_top_sig()
+    } else {
+        plotted_item = this.pc_table.get_top_sig()
+    }
 
     var meta_sigs = get_global_data('meta_sigs')
 
@@ -438,6 +456,12 @@ Signature_Table.prototype.clickSummaryRow = function(d){
 Signature_Table.prototype.update = function(updates)
 {
     var self = this;
+
+    // If there are no signatures, don't update
+    var has_sigs = get_global_status('has_sigs')
+    if(!has_sigs){
+        return $.when(null); // Empty promise
+    }
 
     var clusters_promise;
     if (_.isEmpty(self.clusters)){
@@ -865,6 +889,14 @@ Meta_Table.prototype.clickSummaryRow = function(d){
         this.is_collapsed[cluster_id] = true;
         table_id.addClass('collapsed')
     }
+}
+
+Meta_Table.prototype.get_top_sig = function()
+{
+    var matrix = this.matrix;
+    var s_i = matrix.zscores.map(function(e){return e[0];}).argMax();
+
+    return matrix.sig_labels[s_i]
 }
 
 function Gene_Select()

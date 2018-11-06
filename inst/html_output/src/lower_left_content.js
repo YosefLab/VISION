@@ -333,7 +333,7 @@ Sig_Info.prototype.update = function(updates)
 {
 
     var sig_info = get_global_data('sig_info');
-    if(sig_info.name === this.bound_sig || sig_info.isMeta)
+    if(_.isEmpty(sig_info) || sig_info.name === this.bound_sig || sig_info.isMeta)
     {
         return;
     }
