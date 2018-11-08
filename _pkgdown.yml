@@ -1,0 +1,14 @@
+reference:
+    - title: Primary methods
+      contents:
+          - Vision
+          - analyze
+          - viewResults
+    - title: Customizing VISION
+      contents:
+          - addProjection
+          - createGeneSignature
+    - title: Micropooling Outside of VISION
+      contents:
+          - applyMicroClustering
+

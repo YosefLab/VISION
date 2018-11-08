@@ -1,0 +1,8 @@
+pandoc: 2.2.3.2
+pkgdown: 1.1.0
+pkgdown_sha: ~
+articles:
+  VISION-vignette: VISION-vignette.html
+  micropooling: micropooling.html
+  trajectories: trajectories.html
+

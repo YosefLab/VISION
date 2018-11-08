@@ -447,6 +447,7 @@ setMethod("analyze", signature(object="Vision"),
 #' Add a set of projection coordinates
 #'
 #' @export
+#' @aliases addProjection
 #' @param object VISION object
 #' @param name Name of the projection
 #' @param coordinates numeric matrix or data.frame. Coordinates of each

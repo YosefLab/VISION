@@ -3,6 +3,7 @@
 \docType{methods}
 \name{addProjection,Vision-method}
 \alias{addProjection,Vision-method}
+\alias{addProjection}
 \title{Add a set of projection coordinates}
 \usage{
 \S4method{addProjection}{Vision}(object, name, coordinates)
