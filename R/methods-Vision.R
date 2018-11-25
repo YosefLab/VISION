@@ -645,6 +645,8 @@ createNewFP <- function(fp, subset) {
 #' @export
 #' @param object VISION object
 #' @param counts 
+#' @importFrom  matrixStats rowAnys
+#' @importFrom  matrixStats colAnys
 #' @return VISION object
 setMethod("Hotspot", signature(object="Vision"), function(object, counts) {
             
