@@ -649,6 +649,9 @@ createNewFP <- function(fp, subset) {
 #' @importFrom  matrixStats colAnys
 #' @return VISION object
 setMethod("Hotspot", signature(object="Vision"), function(object, counts) {
+
+            counts <- counts[rownames(vis@exprData), ]
+            counts <- counts[, colnames(vis@exprData)]
             
             umis <- colSums(counts)
             out <- neighborsAndWeights(vis@latentSpace)
@@ -672,13 +675,21 @@ setMethod("Hotspot", signature(object="Vision"), function(object, counts) {
             
             n_neighbors <- ncol(neighbors)
             gene_mean <- rowMeans(logexp)
-            
+
             scaled_gi <- gi / n_neighbors / gene_mean
             scaled_gi <- scaled_gi[sig_genes, , drop = FALSE]
-            
+
+            sig_cells <- colAnys(pvals[sig_genes, , drop = FALSE] < THRESHOLD)
+            scaled_gi <- scaled_gi[, sig_cells, drop = FALSE]
+
+            if (ncol(scaled_gi) > 2000){
+                scaled_gi <- scaled_gi[, sample(ncol(scaled_gi), 2000), drop = FALSE]
+            }
+
             # Now cluster scaled_gi values
             mbic <- mclustBIC(scaled_gi, G = 1:15,
-                              modelNames = "EII"
+                              modelNames = "EII",
+                              initialization = list(subset = sample(nrow(scaled_gi), 100))
             )
             
             compkm <- Mclust(scaled_gi, x = mbic)
@@ -689,9 +700,9 @@ setMethod("Hotspot", signature(object="Vision"), function(object, counts) {
               row.names = names(compkm$classification)
             )
             object@Hotspot <- list()
-            object@Hotspot$gi = gi
-            object@Hotspot$pvals = pvals
-            object@Hotspot$gene_clusters = gene_clusters
+            object@Hotspot$gi <- gi
+            object@Hotspot$pvals <- pvals
+            object@Hotspot$gene_clusters <- gene_clusters
             
             return(object)
           })
