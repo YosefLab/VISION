@@ -22,6 +22,7 @@ readSignaturesInput <- function(filenames) {
         lines <- readLines(conn, warn = FALSE)
         close(conn)
 
+        lines <- trimws(lines)
         lines <- strsplit(lines, "\t")
 
         # Remove invalid lines
@@ -68,7 +69,7 @@ readSignaturesInput <- function(filenames) {
 
             if (sig_name %in% names(sig_data)) {
                 existingSig <- sig_data[[sig_name]]
-                existingSig@sigDict[names(values)] <- values
+                existingSig@sigDict[toupper(names(values))] <- values
                 sig_data[[sig_name]] <- existingSig
             } else {
                 newSig <- Signature(values, sig_name,

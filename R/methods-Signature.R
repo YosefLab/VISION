@@ -42,13 +42,10 @@ Signature <- function(sigDict, name, source, metaData="") {
     stop("Missing source file.")
   }
 
-  names(sigDict) <- vapply(
-                       names(sigDict), toupper,
-                       "", USE.NAMES = FALSE
-                       )
+  names(sigDict) <- toupper(names(sigDict))
 
-  .Object <- new("Signature", sigDict=sigDict, name=name,
-                 source=source, metaData=metaData)
+  .Object <- new("Signature", sigDict = sigDict, name = name,
+                 source = source, metaData = metaData)
 
   return(.Object)
 }
