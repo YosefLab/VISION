@@ -7,12 +7,10 @@
 \title{Save the VISION object as an .RDS file and view the results on a
 localhost}
 \usage{
-\S4method{saveAndViewResults}{Vision}(fpout, ofile = NULL, port = NULL,
-  host = NULL, browser = TRUE, name = NULL)
+\S4method{saveAndViewResults}{Vision}(object, ofile = NULL,
+  port = NULL, host = NULL, browser = TRUE, name = NULL)
 }
 \arguments{
-\item{fpout}{VISION object}
-
 \item{ofile}{the path to save the object in. If NULL, the object is saved
 in the working directory [default:NULL]}
 
@@ -21,31 +19,31 @@ random port between 8000 and 9999 is chosen.}
 
 \item{host}{The host used to serve the output viewer. If omitted, "127.0.0.1"
 is used.}
+
+\item{vis}{VISION object}
 }
 \value{
 the path of the saved file
 }
 \description{
-Save the results object as an RDS file for future use, and launch a local
-server to explore the results with a browser.
+This is just a convience function wrapping two function calls
+}
+\details{
+saveAndViewResults(vis, 'vision_results.rds')
+
+is equivalent to:
+
+saveRDS(vis, 'vision_results.rds')
+    viewResults(vis)
 }
 \examples{
-expMat <- matrix(rnorm(200000), nrow=500)
-rownames(expMat) <- paste0("gene",1:500)
-
-#create 20 signatures of 25 genes each
-sigs <- lapply(1:20, function(i) {
-sigData <- sign(rnorm(25))
-names(sigData) <- paste0("gene",sample(1:100,25))
-return(createGeneSignature(name = paste0("sig",i),
-                                 sigData = sigData))
-})
-
-fp <- Vision(data = expMat, signatures = sigs)
-
-## analyze requires actual non-random data to run properly
 \dontrun{
-fp.out <- analyze(fp)
-saveAndViewResults(fp.out)
+
+vis <- Vision(data = expMat, signatures = sigs)
+
+options(mc.cores=10) # Use 10 cores
+vis <- analyze(vis)
+
+saveAndViewResults(vis, 'vision_results.rds') # Saves and launches dynamic output report
 }
 }

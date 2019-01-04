@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Add a set of projection coordinates — addProjection,Vision-method • VISION</title>
+<title>Add a set of projection coordinates to use for visualization — addProjection,Vision-method • VISION</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -30,9 +30,14 @@
 
 
 
-<meta property="og:title" content="Add a set of projection coordinates — addProjection,Vision-method" />
+<meta property="og:title" content="Add a set of projection coordinates to use for visualization — addProjection,Vision-method" />
 
-<meta property="og:description" content="Add a set of projection coordinates" />
+<meta property="og:description" content="By default VISION will run tSNE on the latent space and use this
+to display the cells in the output report.  However, with this
+method, you may add additional two-dimensional coordinates for
+inclusion in the output report. This is useful if you have previously
+run tSNE (or any other visualization method) and wish to integrate
+the results into VISION." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -84,6 +89,9 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/Signatures.html">Gene Signatures</a>
+    </li>
+    <li>
       <a href="../articles/VISION-vignette.html">Introduction to VISION</a>
     </li>
     <li>
@@ -93,6 +101,9 @@
       <a href="../articles/trajectories.html">Trajectory Inference and VISION</a>
     </li>
   </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
       
@@ -110,14 +121,19 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Add a set of projection coordinates</h1>
+    <h1>Add a set of projection coordinates to use for visualization</h1>
     
     <div class="hidden name"><code>addProjection-Vision-method.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Add a set of projection coordinates</p>
+    <p>By default VISION will run tSNE on the latent space and use this
+to display the cells in the output report.  However, with this
+method, you may add additional two-dimensional coordinates for
+inclusion in the output report. This is useful if you have previously
+run tSNE (or any other visualization method) and wish to integrate
+the results into VISION.</p>
     
     </div>
 
@@ -147,6 +163,22 @@ sample in the projection (NUM_SAMPLES x NUM_COMPONENTS)</p></td>
     <p>VISION object</p>
     
 
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><span class='co'># NOT RUN {</span>
+<span class='co'># First create the VISION object</span>
+<span class='no'>vis</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='VISION-class.html'>Vision</a></span>(<span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>expMat</span>, <span class='kw'>signatures</span> <span class='kw'>=</span> <span class='no'>sigs</span>)
+
+<span class='co'># Load and add an additional visualization</span>
+<span class='no'>my_umap</span> <span class='kw'>&lt;-</span> <span class='fu'>read.csv</span>(<span class='st'>"umap_results.csv"</span>)
+<span class='no'>vis</span> <span class='kw'>&lt;-</span> <span class='fu'>addProjection</span>(<span class='no'>vis</span>, <span class='st'>"UMAP"</span>, <span class='no'>my_umap</span>)
+
+<span class='co'># Run analysis</span>
+<span class='no'>vis</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='analyze-Vision-method.html'>analyze</a></span>(<span class='no'>vis</span>)
+
+<span class='co'># View results</span>
+<span class='fu'><a href='viewResults.html'>viewResults</a></span>(<span class='no'>vis</span>)
+
+<span class='co'># }</span></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
@@ -154,14 +186,16 @@ sample in the projection (NUM_SAMPLES x NUM_COMPONENTS)</p></td>
       <li><a href="#arguments">Arguments</a></li>
       
       <li><a href="#value">Value</a></li>
-          </ul>
+      
+      <li><a href="#examples">Examples</a></li>
+    </ul>
 
   </div>
 </div>
 
       <footer>
       <div class="copyright">
-  <p>Developed by Matt Jones, Tal Ashuach, David Detomaso.</p>
+  <p>Developed by Matt Jones, David Detomaso, Tal Ashuach.</p>
 </div>
 
 <div class="pkgdown">

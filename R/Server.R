@@ -138,13 +138,6 @@ pearsonCorrToJSON <- function(pc, sigs) {
 
 }
 
-#' Run the analysis again wth user-defined subsets or confguration
-#' @param nfp the new FastProject object to analyze
-#' @return None
-newAnalysis <- function(nfp) {
-    saveAndViewResults(analyze(nfp))
-}
-
 compressJSONResponse <- function(json, res, req){
 
     res$set_header("Content-Type", "application/json")
@@ -534,47 +527,34 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
          return(out)
 
      }) %>%
-      post("/Analysis/Run/", function(req, res, err) {
-        subset <- fromJSON(req$body)
-        subset <- subset[!is.na(subset)]
+     get(path = NULL, function(req, res, err) {
 
-        if (length(object@pools) > 0) {
-            clust <- object@pools[subset]
-            subset <- unlist(clust)
-        }
+         if (req$path == "/") {
+             path <- "Results.html"
+         } else {
+             path <- substring(req$path, 2) # remove first / character
+         }
+         path <- paste0("html_output/", path)
+         file_index <- match(path, static_whitelist)
 
-        nfp <- createNewFP(object, subset)
-        newAnalysis(nfp)
-        return()
-      }) %>%
-      get(path = NULL, function(req, res, err) {
+         if (is.na(file_index)) {
+             res$set_status(404)
+             return(NULL)
+         }
 
-          if (req$path == "/") {
-              path <- "Results.html"
-          } else {
-              path <- substring(req$path, 2) # remove first / character
-          }
-          path <- paste0("html_output/", path)
-          file_index <- match(path, static_whitelist)
+         file_path <- system.file(static_whitelist[file_index],
+                        package = "VISION")
 
-          if (is.na(file_index)) {
-              res$set_status(404)
-              return(NULL)
-          }
+         mime_type <- mime::guess_type(file_path)
+         res$content_type(mime_type)
 
-          file_path <- system.file(static_whitelist[file_index],
-                         package = "VISION")
+         data <- readBin(file_path, "raw", n = file.info(file_path)$size)
 
-          mime_type <- mime::guess_type(file_path)
-          res$content_type(mime_type)
-
-          data <- readBin(file_path, "raw", n = file.info(file_path)$size)
-
-          if (grepl("image|octet|pdf", mime_type)) {
-              return(data)
-          } else {
-              return(rawToChar(data))
-          }
+         if (grepl("image|octet|pdf", mime_type)) {
+             return(data)
+         } else {
+             return(rawToChar(data))
+         }
       }) %>%
       simple_error_handler_json() %>%
       serve_it(host = host, port = port)

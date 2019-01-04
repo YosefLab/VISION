@@ -16,25 +16,15 @@ VISION object
 }
 \description{
 The main analysis function. Runs the entire VISION analysis pipeline
-and returns a VISION object populated with the result,
+and returns a VISION object populated with the result.
 }
 \examples{
-expMat <- matrix(rnorm(200000), nrow=500)
-rownames(expMat) <- paste0("gene",1:500)
-
-#create 20 signatures of 25 genes each
-sigs <- lapply(1:20, function(i) {
-sigData <- sign(rnorm(25))
-names(sigData) <- paste0("gene",sample(1:100,25))
-return(createGeneSignature(name = paste0("sig",i),
-                                 sigData = sigData))
-})
-
-fp <- Vision(data = expMat,
-             signatures = sigs)
-
-## analyze requires actual non-random data to run properly
 \dontrun{
-fp.out <- analyze(fp)
+
+vis <- Vision(data = expMat, signatures = sigs)
+
+options(mc.cores=10) # Use 10 cores
+vis <- analyze(vis)
+
 }
 }

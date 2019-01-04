@@ -1,13 +1,13 @@
 Package: VISION
 Title: Functional interpretation of single cell RNA-seq latent manifolds
 Version: 0.99.6
-Authors@R: c(person("Matt", "Jones", email = "mattjones315@gmail.com", role = c("aut")),
-			 person("Tal", "Ashuach", email = "tal_ashuach@berkeley.edu", role = c("aut", "cre")),
-			 person("David", "Detomaso", email = "david.detomaso@berkeley.edu", role = c("aut")),
+Authors@R: c(person("Matt", "Jones", email = "mattjones315@gmail.com", role = c("aut", "cre")),
+			 person("David", "Detomaso", email = "david.detomaso@berkeley.edu", role = c("aut", "cre")),
+			 person("Tal", "Ashuach", email = "tal_ashuach@berkeley.edu", role = c("aut")),
 			 person("Nir", "Yosef", email = "niryosef@berkeley.edu", role = c("ctb", "cph")))
-Author: Tal Ashuach [aut, cre], Matt Jones [aut], David Detomaso [aut], Nir Yosef [ctb]
-Maintainer: Tal Ashuach <tal_ashuach@berkeley.edu>
-Description: VISION provides functional interpretation of single cell RNA-seq (scRNA-seq) latent manifolds through the use of biological signatures (which can be downloaded from online) and precomputed metadata such as clustering assignments, disease status of a cell, or the number of UMIs observed in a cell. VISION can operate downstream of other common analyses such as dimensionality reduction, clustering, or trajectory analysis of scRNA-seq data. VISION produces an interactive web-based output report that can be easily shared with other collaborators or the greater scientific community with ease.
+Author: Matt Jones [aut, cre], David Detomaso [aut, cre], Tal Ashuach [aut], Nir Yosef [ctb]
+Maintainer: Matt Jones <mattjones315@gmail.com>
+Description: VISION provides functional interpretation of single cell RNA-seq (scRNA-seq) latent manifolds through the use of biological signatures (which can be downloaded from online databases). VISION can operate downstream of other common analyses such as dimensionality reduction, clustering, or trajectory analysis of scRNA-seq data. VISION produces an interactive web-based output report that can be easily shared with other collaborators or the greater scientific community.
 Depends: R (>= 3.4)
 Imports:
 	fastICA,
@@ -33,7 +33,7 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 BugReports: https://github.com/YosefLab/VISION/issues
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1
 Suggests:
 	Biobase,
 	BiocStyle,

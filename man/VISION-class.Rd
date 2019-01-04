@@ -19,8 +19,8 @@ Vision(data, ...)
   sig_norm_method = c("znorm_columns", "none", "znorm_rows",
   "znorm_rows_then_columns", "rank_norm_columns"),
   sig_score_method = c("naive", "weighted_avg"), pool = "auto",
-  cellsPerPartition = 100, name = NULL, cluster_variable = "",
-  latentSpace = NULL, latentTrajectory = NULL, pools = list())
+  cellsPerPartition = 100, name = NULL, latentSpace = NULL,
+  latentTrajectory = NULL, pools = list())
 
 \S4method{Vision}{data.frame}(data, ...)
 
@@ -30,39 +30,42 @@ Vision(data, ...)
 }
 \arguments{
 \item{data}{expression data - can be one of these: \itemize{
-\item numeric matrix
+\item numeric matrix or sparse matrix (GENES x CELLS)
+\item data.frame (GENES x CELLS)
 \item ExpressionSet object
 \item SummzrizedExperiment object (or extending classes)
-}}
+}
+Expression data should be scaled and normalized, but not log-transformed.}
 
-\item{signatures}{list of file paths to signature files (.gmt or .txt) or a
-list of Signature objects}
+\item{signatures}{list of file paths to signature files (.gmt or .txt) or
+Signature objects.  See the createGeneSignature(...) method for information
+on creating Signature objects.}
 
 \item{housekeeping}{vector of gene names}
 
-\item{meta}{data file with cell meta data (.txt), or a
-data.frame with meta information. Note that rows should match samples in the
-data, and columns should either be factors or numerics.}
+\item{meta}{data.frame with meta-data for cells. Rows in this data.frame should correspond
+with columns in the expression data matrix}
 
 \item{nomodel}{if TRUE, no fnr curve calculated and all weights equal to 1.
 Else FNR and weights calculated. [Default:TRUE]}
 
-\item{projection_genes}{name of method ('threshold' or 'fano') or list of
+\item{projection_genes}{name of filtering method ('threshold' or 'fano') or list of
 genes to use when computing projections.}
 
-\item{min_signature_genes}{Minimum number of genes required to compute a
-signature}
+\item{min_signature_genes}{Signature that match less than this number of genes in the
+supplied expression matrix are removed.}
 
 \item{weights}{Precomputed weights for each coordinate. Normally computed
 from the FNR curve.}
 
-\item{threshold}{Threshold to apply for the threshold filter. Number of cells or
-proportion of cells (if less than 1)}
+\item{threshold}{Threshold to apply when using the 'threshold' projection genes filter.
+If greater than 1, this specifies the number of cells in which a gene must be detected
+for it to be used when computing PCA. If less than 1, this instead specifies the proportion of cells needed}
 
-\item{perm_wPCA}{If TRUE, apply permutation WPCA to calculate significant
-number of PCs. Else not. Default FALSE.}
+\item{perm_wPCA}{If TRUE, apply permutation procedure to calculate significant
+number of PCs when running PCA.  If FALSE (default), retain the top 30.}
 
-\item{projection_methods}{a character list of which projection methods to apply. Can be: \itemize{
+\item{projection_methods}{a character vector specifying which projection methods to apply. Can be: \itemize{
    \item tSNE10 (tSNE with perplexity 10)
    \item tSNE30 (tSNE with perplexity 30)
    \item ICA
@@ -87,16 +90,11 @@ pooling if there are more than 15000 cells.}
 
 \item{name}{a name for the sample - shown on the output report}
 
-\item{cluster_variable}{variable to use to denote clusters}
-
 \item{latentSpace}{latent space for expression data. Numeric matrix or dataframe
 with dimensions CELLS x COMPONENTS}
 
 \item{latentTrajectory}{trajectory to model cell progression.  Wrapped result
-of a trajectory inference by the dynverse/dynwrap library}
-
-\item{metaData}{a dataframe storing all metadata (can be either factor or numerical),
-where the rows are cells and columns are individual meta data items}
+of a trajectory inference method by the dynverse/dynwrap library}
 }
 \value{
 A VISION object
@@ -105,21 +103,17 @@ A VISION object
 Initializes a new VISION object.
 }
 \examples{
-expMat <- matrix(rnorm(200000), nrow=500)
-rownames(expMat) <- paste0("gene",1:500)
+\dontrun{
+expMat <- read.csv("expressionMatrix.csv", row.names=1)
+meta <- read.csv("metaData.csv", row.names=1)
 
-# choose housekeeping genes
-hkg <- housekeeping$default
+sigs <- c("/path/to/signatures/msigdb_Hallmark.gmt",
+          "/path/to/signatures/Enrichr/ChEA_2015.txt"
+         )
 
-#create 20 signatures of 25 genes each
-sigs <- lapply(1:20, function(i) {
-sigData <- sign(rnorm(25))
-names(sigData) <- paste0("gene",sample(1:100,25))
-return(createGeneSignature(name = paste0("sig",i),
-                                 sigData = sigData))
-})
 
-fp <- Vision(data = expMat,
-                     signatures = sigs,
-                     housekeeping = hkg)
+vis <- Vision(data = expMat,
+              signatures = sigs,
+              meta = meta)
+}
 }

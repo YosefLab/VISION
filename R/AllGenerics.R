@@ -16,7 +16,7 @@ setGeneric("cluster", function(object, method, param) {
     standardGeneric("cluster")
 })
 
-setGeneric("saveAndViewResults", function(fpout, ...) {
+setGeneric("saveAndViewResults", function(object, ...) {
     standardGeneric("saveAndViewResults")
 })
 

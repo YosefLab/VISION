@@ -4,7 +4,7 @@
 \name{addProjection,Vision-method}
 \alias{addProjection,Vision-method}
 \alias{addProjection}
-\title{Add a set of projection coordinates}
+\title{Add a set of projection coordinates to use for visualization}
 \usage{
 \S4method{addProjection}{Vision}(object, name, coordinates)
 }
@@ -20,5 +20,28 @@ sample in the projection (NUM_SAMPLES x NUM_COMPONENTS)}
 VISION object
 }
 \description{
-Add a set of projection coordinates
+By default VISION will run tSNE on the latent space and use this
+to display the cells in the output report.  However, with this
+method, you may add additional two-dimensional coordinates for
+inclusion in the output report. This is useful if you have previously
+run tSNE (or any other visualization method) and wish to integrate
+the results into VISION.
+}
+\examples{
+\dontrun{
+
+# First create the VISION object
+vis <- Vision(data = expMat, signatures = sigs)
+
+# Load and add an additional visualization
+my_umap <- read.csv("umap_results.csv")
+vis <- addProjection(vis, "UMAP", my_umap)
+
+# Run analysis
+vis <- analyze(vis)
+
+# View results
+viewResults(vis)
+
+}
 }

@@ -33,7 +33,7 @@
 <meta property="og:title" content="Main entry point for running VISION Analysis — analyze,Vision-method" />
 
 <meta property="og:description" content="The main analysis function. Runs the entire VISION analysis pipeline
-and returns a VISION object populated with the result," />
+and returns a VISION object populated with the result." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -85,6 +85,9 @@ and returns a VISION object populated with the result," />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/Signatures.html">Gene Signatures</a>
+    </li>
+    <li>
       <a href="../articles/VISION-vignette.html">Introduction to VISION</a>
     </li>
     <li>
@@ -94,6 +97,9 @@ and returns a VISION object populated with the result," />
       <a href="../articles/trajectories.html">Trajectory Inference and VISION</a>
     </li>
   </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
       
@@ -119,7 +125,7 @@ and returns a VISION object populated with the result," />
     <div class="ref-description">
     
     <p>The main analysis function. Runs the entire VISION analysis pipeline
-and returns a VISION object populated with the result,</p>
+and returns a VISION object populated with the result.</p>
     
     </div>
 
@@ -142,23 +148,11 @@ and returns a VISION object populated with the result,</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><span class='co'># NOT RUN {</span>
-<span class='no'>expMat</span> <span class='kw'>&lt;-</span> <span class='fu'>matrix</span>(<span class='fu'>rnorm</span>(<span class='fl'>200000</span>), <span class='kw'>nrow</span><span class='kw'>=</span><span class='fl'>500</span>)
-<span class='fu'>rownames</span>(<span class='no'>expMat</span>) <span class='kw'>&lt;-</span> <span class='fu'>paste0</span>(<span class='st'>"gene"</span>,<span class='fl'>1</span>:<span class='fl'>500</span>)
+<span class='no'>vis</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='VISION-class.html'>Vision</a></span>(<span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>expMat</span>, <span class='kw'>signatures</span> <span class='kw'>=</span> <span class='no'>sigs</span>)
 
-<span class='co'>#create 20 signatures of 25 genes each</span>
-<span class='no'>sigs</span> <span class='kw'>&lt;-</span> <span class='fu'>lapply</span>(<span class='fl'>1</span>:<span class='fl'>20</span>, <span class='kw'>function</span>(<span class='no'>i</span>) {
-<span class='no'>sigData</span> <span class='kw'>&lt;-</span> <span class='fu'>sign</span>(<span class='fu'>rnorm</span>(<span class='fl'>25</span>))
-<span class='fu'>names</span>(<span class='no'>sigData</span>) <span class='kw'>&lt;-</span> <span class='fu'>paste0</span>(<span class='st'>"gene"</span>,<span class='fu'>sample</span>(<span class='fl'>1</span>:<span class='fl'>100</span>,<span class='fl'>25</span>))
-<span class='fu'>return</span>(<span class='fu'><a href='createGeneSignature.html'>createGeneSignature</a></span>(<span class='kw'>name</span> <span class='kw'>=</span> <span class='fu'>paste0</span>(<span class='st'>"sig"</span>,<span class='no'>i</span>),
-                                 <span class='kw'>sigData</span> <span class='kw'>=</span> <span class='no'>sigData</span>))
-})
+<span class='fu'>options</span>(<span class='kw'>mc.cores</span><span class='kw'>=</span><span class='fl'>10</span>) <span class='co'># Use 10 cores</span>
+<span class='no'>vis</span> <span class='kw'>&lt;-</span> <span class='fu'>analyze</span>(<span class='no'>vis</span>)
 
-<span class='no'>fp</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='VISION-class.html'>Vision</a></span>(<span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>expMat</span>,
-             <span class='kw'>signatures</span> <span class='kw'>=</span> <span class='no'>sigs</span>)
-
-<span class='co'>## analyze requires actual non-random data to run properly</span>
-<span class='co'># }</span><span class='co'># NOT RUN {</span>
-<span class='no'>fp.out</span> <span class='kw'>&lt;-</span> <span class='fu'>analyze</span>(<span class='no'>fp</span>)
 <span class='co'># }</span></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -176,7 +170,7 @@ and returns a VISION object populated with the result,</p>
 
       <footer>
       <div class="copyright">
-  <p>Developed by Matt Jones, Tal Ashuach, David Detomaso.</p>
+  <p>Developed by Matt Jones, David Detomaso, Tal Ashuach.</p>
 </div>
 
 <div class="pkgdown">
