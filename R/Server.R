@@ -192,6 +192,11 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
     # Launch the server
     jug() %>%
+      get(".*", function(req, res, err) {
+          # Enable caching
+          res$set_header("Cache-Control", "max-age=7200")
+          return(NULL)
+      }) %>%
       get("/Signature/Scores/(?<sig_name1>.*)", function(req, res, err) {
         sigMatrix <- object@sigScores
         name <- URLdecode(req$params$sig_name1)
