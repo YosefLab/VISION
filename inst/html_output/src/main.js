@@ -9,7 +9,6 @@ global_status.main_vis = "clusters"; // Selected from 4 options on top
 // Determine the projected coordinates
 global_status.plotted_projection = "";
 global_status.plotted_trajectory = "";
-global_status.plotted_pc = 1;
 
 // Indicate whether or not we have pooled data
 global_status.pooled = false;

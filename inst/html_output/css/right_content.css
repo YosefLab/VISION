@@ -13,7 +13,7 @@
     font-size: 18px;
     display: flex;
     flex-direction: row;
-    height: 73px;
+    height: 50px;
     margin-bottom: 10px;
 }
 
@@ -23,14 +23,9 @@
     min-width: 0;
 }
 
-#plot-title-div .titles .subtitle, #plot-title-div .titles .title{
+#plot-title-div .titles .subtitle{
     margin: 10px;
     font-family: "Arial", Helvetica, sans-serif;
-}
-
-#plot-title-div .titles .title{
-    max-height: 2em;
-    overflow-y: hidden;
 }
 
 #plot-title-div .titles .subtitle{
@@ -54,6 +49,7 @@
 
 #plot-title-div .color-options label{
     padding: 0 6px;
+    display: flex; /* Needed so icons are centered vertically */
 }
 
 #plot-title-div .color-options .label{
@@ -72,42 +68,37 @@
     vertical-align: baseline;
 }
 
-#scatter-div {
+#scatter-container-div {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column
+}
+
+.scatter-layout-container {
     flex-grow: 1;
     overflow: hidden; /* so it shrinks even when plot is too big */
+    display: flex;
+    flex-direction: column;
 }
 
-/* Classes for the scatter plot lasso */
-
-.lasso path {
-	stroke: rgb(80, 80, 80);
-	stroke-width: 2px;
+.scatter-split-row-div {
+    display: flex;
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    flex-direction: row;
+    overflow: hidden;
 }
 
-.lasso .drawn  {
-	fill-opacity: 0.5;
-}	
-
-.lasso .loop_close {
-	fill: none;
-	stroke-dasharray: 4,4;
+.scatter-split-plot-div {
+    display: flex; /* even though this isn't a flex container, fixes it's shrinking/growing */
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    border: solid 1px #ffffff;
+    overflow: hidden;
 }
 
-.lasso .origin {
-	fill: #3399FF;
-	fill-opacity: .5;
+.scatter-split-plot-div.active {
+    border: solid 1px black;
 }
-
-.not-possible {
-	fill: rgb(85,85,85);
-}
-
-.possible {
-	fill: black;
-}
-
-.legend-subs {
-	font: 11px 'Open Sans', sans-serif;
-    stroke-width: 0;
-}
-

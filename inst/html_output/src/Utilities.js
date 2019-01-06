@@ -172,20 +172,22 @@ function createLoadingFunction(node){
     var loadFun = function(loadState){
 
         if(loadState === true){
-            timer = setTimeout(() => {
-                $(node).addClass('loading');
-                loadingDiv = document.createElement("div");
-                $(loadingDiv).height($(node).height());
-                $(loadingDiv).width($(node).width());
-                $(loadingDiv).offset($(node).offset());
-                $(loadingDiv).addClass('loadingSpinner');
-                var img = $('<img />', {
-                    src: 'css/loading.svg',
-                    alt: 'loading-spinner'
-                });
-                img.appendTo(loadingDiv);
-                $(node).parent().append(loadingDiv);
-            }, 1000);
+            if(timer === -1){ // don't overwrite an existing timer and lose it
+                timer = setTimeout(() => {
+                    $(node).addClass('loading');
+                    loadingDiv = document.createElement("div");
+                    $(loadingDiv).height($(node).height());
+                    $(loadingDiv).width($(node).width());
+                    $(loadingDiv).offset($(node).offset());
+                    $(loadingDiv).addClass('loadingSpinner');
+                    var img = $('<img />', {
+                        src: 'css/loading.svg',
+                        alt: 'loading-spinner'
+                    });
+                    img.appendTo(loadingDiv);
+                    $(node).parent().append(loadingDiv);
+                }, 1000);
+            }
         } else {
             if(timer !== -1){
                 clearTimeout(timer);

@@ -214,7 +214,6 @@
             <div id="sigvp-scatter-div">
                 <div id="plot-title-div">
                     <div class="titles">
-                        <div class="title" id="plot-title"></div>
                         <div class="subtitle" id="plot-subtitle-latent">
                             <span style="margin-right: 10px">Projection:</span>
                             <select id="SelectProjScatter" class="form-control"></select>
@@ -225,8 +224,41 @@
                         </div>
                     </div>
                     <div class="color-options" >
+                        <div id="plotted-layout-option">
+                            <div class="label">Layout</div>
+                            <div class="btn-group" data-toggle="buttons">
+                                <label class="btn btn-outline-secondary active">
+                                    <input type="radio" name="scatterLayoutButtons" value="full" autocomplete="off" checked>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    </svg>
+                                </label>
+                                <label class="btn btn-outline-secondary">
+                                    <input type="radio" name="scatterLayoutButtons" value="splitH" autocomplete="off">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></rect>
+                                        <line x1="3" y1="12" x2="21" y2="12" />
+                                    </svg>
+                                </label>
+                                <label class="btn btn-outline-secondary">
+                                    <input type="radio" name="scatterLayoutButtons" value="splitV" autocomplete="off">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></rect>
+                                        <line x1="12" y1="3" x2="12" y2="21" />
+                                    </svg>
+                                </label>
+                                <label class="btn btn-outline-secondary">
+                                    <input type="radio" name="scatterLayoutButtons" value="split4" autocomplete="off">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></rect>
+                                        <line x1="3" y1="12" x2="21" y2="12" />
+                                        <line x1="12" y1="3" x2="12" y2="21" />
+                                    </svg>
+                                </label>
+                            </div>
+                        </div>
                         <div id="plotted-value-option">
-                            <div class="label">Plotted Value</div>
+                            <div class="label">Signature Scaling</div>
                             <div class="btn-group" data-toggle="buttons">
                                 <label class="btn btn-outline-secondary">
                                     <input type="radio" name="scatterColorButtons" id="valueoption" value="value" autocomplete="off"> Value
@@ -237,14 +269,33 @@
                             </div>
                         </div>
                         <div>
-                            <button id="lasso-select" type="button" class="btn btn-outline-secondary btn-bottom-margin" style="display: none">Enable Lasso Select</button>
-                        </div>
-                        <div>
                             <button id="export-button" type="button" class="btn btn-outline-secondary btn-bottom-margin">Export</button>
                         </div>
                     </div>
                 </div>
-                <div id="scatter-div"></div>
+                <div id="scatter-container-div">
+                    <div id="scatter-div" class="scatter-layout-container"></div>
+                    <div id="scatter-splitH-div" class="scatter-layout-container" style="display: none">
+                            <div id='scatter-splitH-div0' class="scatter-split-plot-div active"></div>
+                            <div id='scatter-splitH-div1' class="scatter-split-plot-div"></div>
+                    </div>
+                    <div id="scatter-splitV-div" class="scatter-layout-container" style="display: none">
+                        <div class="scatter-split-row-div">
+                            <div id='scatter-splitV-div0' class="scatter-split-plot-div active"></div>
+                            <div id='scatter-splitV-div1' class="scatter-split-plot-div"></div>
+                        </div>
+                    </div>
+                    <div id="scatter-split-div" class="scatter-layout-container" style="display: none">
+                        <div class="scatter-split-row-div">
+                            <div id='scatter-split-div0' class="scatter-split-plot-div active"></div>
+                            <div id='scatter-split-div1' class="scatter-split-plot-div"></div>
+                        </div>
+                        <div class="scatter-split-row-div">
+                            <div id='scatter-split-div2' class="scatter-split-plot-div"></div>
+                            <div id='scatter-split-div3' class="scatter-split-plot-div"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
         </div> <!-- End of right-content -->
