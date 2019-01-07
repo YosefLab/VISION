@@ -240,14 +240,11 @@ ColorScatter.prototype.setData = function(object)
 
     var options = this.getOptions()
 
-    if (this.firstPlot) {
+    if (this.firstPlot || this.plotlyBug(data)) {
         Plotly.newPlot(this.node, data, layout, options)
+        this.createListeners()
     } else {
         Plotly.react(this.node, data, layout, options)
-    }
-
-    if (this.firstPlot) {
-        this.createListeners()
     }
 
     this.firstPlot = false
@@ -563,4 +560,24 @@ ColorScatter.prototype.relayout = function(newLayout)
 ColorScatter.prototype.clear = function() {
     Plotly.purge(this.node)
     this.firstPlot = true
+}
+
+/*
+ * Addresses Plotly Issue:
+ *   - https://github.com/plotly/plotly.js/issues/3405
+ */
+ColorScatter.prototype.plotlyBug = function(newData) {
+    var oldData = this.node.data
+
+    var oldSizes = _.map(oldData, trace => trace.x.length)
+    var newSizes = _.map(newData, trace => trace.x.length)
+
+    var plotBug = false
+    for(var i = 0; i < oldSizes.length; i++) {
+        if ((oldSizes[i] > 10000) && (newSizes[i] <= 10000)) {
+            plotBug = true
+        }
+    }
+
+    return plotBug
 }
