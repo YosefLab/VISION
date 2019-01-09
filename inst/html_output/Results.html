@@ -5,7 +5,7 @@
     <title>VISION Report</title>
 
     <link rel="stylesheet" href="thirdparty/chosen/chosen.min.css">
-    <link rel="stylesheet" href="thirdparty/bootstrap/bootstrap.css">
+    <link rel="stylesheet" href="thirdparty/bootstrap/bootstrap.min.css">
     <link rel="stylesheet" href="thirdparty/datatables/datatables.min.css">
 
     <script type="text/javascript" src="thirdparty/jquery/jquery-2.1.4.min.js"></script>
@@ -235,7 +235,7 @@
                     <div class="color-options" >
                         <div id="plotted-layout-option">
                             <div class="label">Layout</div>
-                            <div class="btn-group" data-toggle="buttons">
+                            <div class="btn-group btn-group-toggle" role="group" aria-label="Layout Buttons" data-toggle="buttons">
                                 <label class="btn btn-outline-secondary active">
                                     <input type="radio" name="scatterLayoutButtons" value="full" autocomplete="off" checked>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -268,7 +268,7 @@
                         </div>
                         <div id="plotted-value-option">
                             <div class="label">Signature Scaling</div>
-                            <div class="btn-group" data-toggle="buttons">
+                            <div class="btn-group btn-group-toggle" role="group" data-toggle="buttons">
                                 <label class="btn btn-outline-secondary">
                                     <input type="radio" name="scatterColorButtons" id="valueoption" value="value" autocomplete="off"> Value
                                 </label>
