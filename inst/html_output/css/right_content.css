@@ -37,10 +37,8 @@
 #plot-title-div .color-options{
     display: flex;
     flex-direction: row;
-    justify-content: space-around;
     align-items: flex-end;
     text-align: center;
-    max-width: 450px;
 }
 
 #plot-title-div .color-options > div {
@@ -95,10 +93,44 @@
     flex-grow: 1;
     flex-shrink: 1;
     flex-basis: 0;
-    border: solid 1px #ffffff;
+    border-style: solid;
+    border-width: 1px;
+    border-color: #ffffff;
     overflow: hidden;
 }
 
 .scatter-split-plot-div.active {
-    border: solid 1px black;
+    border-color: var(--primary);
+}
+
+.selection-list {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    height: 250px;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+.selection-list > .loadable-selection-option{
+    padding: 10px;
+}
+
+.selection-list > .loadable-selection-option:hover {
+    background-color: #eeeeee;
+    cursor: pointer;
+}
+
+.selection-list > .loadable-selection-option.selected {
+    color: #ffffff;
+    background-color: var(--primary);
+}
+
+.empty-list {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    height: 250px;
+    margin-left: 20px;
+    margin-right: 20px;
 }

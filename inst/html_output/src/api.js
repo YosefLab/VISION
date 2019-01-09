@@ -242,6 +242,29 @@ var api = (function(){
 
     }
 
+    output.cells.saveSelection = function(selectionName, subset) {
+        var query = prefix.concat("Cells/Selections/" + selectionName);
+
+        return $.ajax(query, {
+            type: "POST",
+            data: JSON.stringify(subset),
+            dataType: "json"
+        }).then(x => x);
+
+    }
+
+    output.cells.getSelection = function(selectionName) {
+        var query = prefix.concat("Cells/Selections/" + selectionName);
+        return $.ajax(query, {dataType: "json" }).then(x => x);
+
+    }
+
+    output.cells.listSelections = function() {
+        var query = prefix.concat("Cells/Selections");
+        return $.ajax(query, {dataType: "json" }).then(x => x);
+
+    }
+
     // Session Info Api
 
     output.sessionInfo = function() {

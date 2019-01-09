@@ -110,11 +110,110 @@ Right_Content.prototype.init = function()
             set_global_status(update);
         })
 
-    $(self.dom_node)
-        .find("#export-button")
-        .on("click", function () {
-            self.exportSigProj()
-        });
+    // Set up events for saving/loading selections
+    var saveSelectionModal = $('#saveSelectionModal')
+    saveSelectionModal.on('shown.bs.modal', function() {
+        // Update selection name if it has a name already
+        var selectionName = get_global_status('selection_name')
+        var selectionInput = $(this).find('#saveSelectionName')
+        if (selectionName !== "Selection"){
+            selectionInput.val(selectionName)
+        } else {
+            selectionInput.val("")
+        }
+        selectionInput.focus()
+    }).on('keyup', function(event){
+        if(event.key != "Enter") return;
+        $(this).find('.confirm-button').click()
+        event.preventDefault();
+    })
+
+    saveSelectionModal.find(".confirm-button").on("click", function() {
+        // Save selection and close modal
+        var selectionName = saveSelectionModal.find('#saveSelectionName').val()
+
+        if (selectionName === "") return;
+
+        var selectedCells = get_global_status('selected_cell')
+
+        api.cells.saveSelection(selectionName, selectedCells)
+        set_global_status({
+            'selection_name': selectionName
+        })
+
+        saveSelectionModal.modal('hide')
+
+    })
+
+    var loadSelectionModal = $('#loadSelectionModal')
+    var lSM_loading = createLoadingFunction(loadSelectionModal.find('.modal-body'))
+    loadSelectionModal.on('show.bs.modal', function() {
+        // Load selections and display
+
+        var modalList = loadSelectionModal.find('.selection-list')
+        var emptyList = loadSelectionModal.find('.empty-list')
+        lSM_loading(true)
+
+        api.cells.listSelections().then(data => {
+            modalList.empty()
+
+            var confirmButton = loadSelectionModal.find('.confirm-button')
+            if(data.length === 0){
+
+                modalList.hide()
+                emptyList.show()
+                confirmButton.attr('disabled', true)
+                return
+            }
+            emptyList.hide()
+            modalList.show()
+
+            confirmButton.attr('disabled', false)
+
+            var itemClickFun = function(){
+                modalList.find('.loadable-selection-option').removeClass('selected')
+                $(this).addClass('selected')
+            }
+
+            _.each(data, (name, i) => {
+                var e = document.createElement('div')
+                e.innerText = name
+                e.classList.add('loadable-selection-option')
+                if (i == 0){ // Select first element
+                    e.classList.add('selected')
+                }
+                e.addEventListener('click', itemClickFun)
+                modalList.append(e)
+            })
+
+        }).always(() => {
+            lSM_loading(false)
+        })
+
+    }).on('keyup', function(event){
+        if(event.key != "Enter") return;
+        $(this).find('.confirm-button').click()
+        event.preventDefault();
+    })
+
+    loadSelectionModal.find(".confirm-button").on("click", function() {
+        // Load selection and close modal
+        self.setLoadingStatus(true)
+
+        var selectionToLoad = loadSelectionModal.find('.loadable-selection-option.selected').text()
+
+        api.cells.getSelection(selectionToLoad).then(cells => {
+            var update = {
+                selected_cell: cells,
+                selection_type: get_global_status('pooled')? 'pools' : 'cells',
+                selection_name: selectionToLoad,
+            }
+            set_global_status(update)
+        })
+
+
+        loadSelectionModal.modal('hide')
+    })
 
     self.setLoadingStatus = createLoadingFunction(self.dom_node);
 
@@ -195,6 +294,15 @@ Right_Content.prototype.update = function(updates)
                 visiblePlotData[i]['scatter'].updateSelection()
             }
         }
+
+        var selection_type = get_global_status('selection_type')
+        var selection_button = $(this.dom_node).find('#save-selection-button')
+        if (selection_type === 'cells' || selection_type === 'pools'){
+            selection_button.attr('disabled', false)
+        } else {
+            selection_button.attr('disabled', true)
+        }
+
     }
 
     var needsUpdate = ('main_vis' in updates) ||
@@ -524,59 +632,6 @@ Right_Content.prototype.rank_values = function(values)
     }
 
     return ranks
-}
-
-/*
-Exports a zip with data in it
- */
-Right_Content.prototype.exportSigProj = function()
-{
-    var self = this;
-    var zip = new JSZip();
-
-    var main_vis = get_global_status('main_vis')
-
-    var plotted_item = get_global_status('plotted_item')
-    var values = get_global_data('plotted_values')
-
-    //Convert the data that's in the scatter plot to a tab-delimited table
-
-    var proj;
-    if (main_vis === 'clusters' || main_vis === 'pcannotator') {
-        proj = get_global_data('sig_projection_coordinates')
-    } else if (main_vis ==='tree') {
-        proj = get_global_data('tree_projection_coordinates')
-    } else {
-        throw "Bad main_vis value!";
-    }
-
-    var table;
-
-    table = _.map(proj, (value, key) => {
-        return [key, proj[key][0], proj[key][1], values[key]]
-    });
-
-    table = [["Cell", "X", "Y", plotted_item]].concat(table);
-
-
-    table = table.map(function(x){ return x.join("\t");});
-    var scatter_csv_str = table.join("\n");
-    zip.file("Scatter.txt", scatter_csv_str);
-
-    var zip_uri = "data:application/zip;base64," + zip.generate({type:"base64"});
-
-    var a = document.createElement("a");
-    var proj_name;
-    if (main_vis === 'tree'){
-        proj_name = get_global_status('plotted_trajectory')
-    } else {
-        proj_name = get_global_status('plotted_projection')
-    }
-
-    a.download = plotted_item+"_"+proj_name+".zip";
-    a.href = zip_uri;
-    a.click();
-
 }
 
 Right_Content.prototype.hover_cells = function(cell_ids)

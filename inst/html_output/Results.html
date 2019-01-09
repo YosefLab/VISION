@@ -277,8 +277,14 @@
                                 </label>
                             </div>
                         </div>
-                        <div>
-                            <button id="export-button" type="button" class="btn btn-outline-secondary btn-bottom-margin">Export</button>
+                        <div id="selection-options">
+                            <div class="label">Selected Cells</div>
+                            <div style="display: flex;">
+                                <button id="save-selection-button" type="button" class="btn btn-outline-secondary"
+                                    data-toggle="modal" data-target="#saveSelectionModal" disabled>Save</button>
+                                <button id="load-selection-button" type="button" class="btn btn-outline-secondary"
+                                    data-toggle="modal" data-target="#loadSelectionModal" style="margin-left: 5px" >Load</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -316,5 +322,61 @@
         <div class="arrow"></div>
     </div>
     <div id="hidden-node" style="position: absolute; left: -10000px; top: 10000px;"></div>
+
+    <!-- Save Selection Modal -->
+    <div class="modal fade" id="saveSelectionModal" tabindex="-1" role="dialog" aria-labelledby="saveSelectionModalTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="saveSelectionModalTitle">Save Selection</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+              <div class="form-group">
+                  <label for="saveSelectionName">Selection Name</label>
+                  <input type="text" class="form-control" id="saveSelectionName" area-describedby="selectionNameHelp"></input>
+                  <small id="selectionNameHelp" class="form-text text-muted">Pick a name for this selection.</small>
+              </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary confirm-button">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- End Save Selection Modal -->
+
+    <!-- Load Selection Modal -->
+    <div class="modal fade" id="loadSelectionModal" tabindex="-1" role="dialog" aria-labelledby="loadSelectionModalTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="loadSelectionModalTitle">Load Selection</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+              <div style="font-weight: bold; margin-bottom: 15px">Select a stored selection: </div>
+              <div class="selection-list">
+              </div>
+              <div class="empty-list" style="display: none">
+                  <div>
+                      There are no saved selections
+                  </div>
+              </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary confirm-button">Load</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- End Load Selection Modal -->
+
 </body>
 </html>

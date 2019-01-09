@@ -162,7 +162,7 @@ compressJSONResponse <- function(json, res, req){
 #' random port between 8000 and 9999 is chosen.
 #' @param host The host used to serve the output viewer. If omitted, "127.0.0.1"
 #' is used.
-#' @return None
+#' @return object
 launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
     if (is.null(port)) {
@@ -532,6 +532,24 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
          return(out)
 
      }) %>%
+     get("/Cells/Selections", function(req, res, err) {
+         selectionNames <- as.character(names(object@selections))
+         out <- toJSON(selectionNames)
+         return(out)
+     }) %>%
+     get("/Cells/Selections/(?<selection_id1>.*)", function(req, res, err) {
+         selection_id <- URLdecode(req$params$selection_id1)
+         selectionCells <- object@selections[[selection_id]]
+         out <- toJSON(selectionCells, auto_unbox = TRUE)
+         return(out)
+     }) %>%
+     post("/Cells/Selections/(?<selection_id2>.*)", function(req, res, err) {
+         selection_id <- URLdecode(req$params$selection_id2)
+         cell_ids <- fromJSON(req$body)
+         object@selections[[selection_id]] <<- cell_ids # Super assignment!
+         out <- ""  # Empty body for successful POST
+         return(out)
+     }) %>%
      get(path = NULL, function(req, res, err) {
 
          if (req$path == "/") {
@@ -561,6 +579,14 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
              return(rawToChar(data))
          }
       }) %>%
-      simple_error_handler_json() %>%
-      serve_it(host = host, port = port)
+      simple_error_handler_json() -> jug_app
+
+      tryCatch({
+          serve_it(jug_app, host = host, port = port)
+      },
+      interrupt = function(i){
+          message("Server Exited")
+      })
+
+      return(object)
 }

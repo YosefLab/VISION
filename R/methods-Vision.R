@@ -569,7 +569,7 @@ setMethod("saveAndViewResults", signature(object = "Vision"),
 #'
 #' saveRDS(vis, 'vision_results.rds') # (Optional) Save results
 #'
-#' viewResults(vis) # Launches dynamic output report
+#' vis <- viewResults(vis) # Launches dynamic output report
 #' }
 setMethod("viewResults", signature(object = "Vision"),
           function(object, port=NULL, host=NULL, browser=TRUE, name=NULL) {
@@ -588,9 +588,15 @@ setMethod("viewResults", signature(object = "Vision"),
                 stop("Error: This object contains no PCAnnotatorData.")
             }
 
+            if (!.hasSlot(object, "selections")) {
+                object@selections <- list()
+            }
+
             message("Launching the server...")
             message("Press exit or ctrl c to exit")
-            launchServer(object, port, host, browser)
+            object <- launchServer(object, port, host, browser)
+
+            return(object)
           })
 
 #' @rdname viewResults
@@ -603,5 +609,38 @@ setMethod("viewResults", signature(object = "character"),
               stop("loaded object not a valid Vision object")
             }
 
-            viewResults(fpo, port, host, browser, name)
+            fpo <- viewResults(fpo, port, host, browser, name)
+            return(fpo)
+          })
+
+
+#' Get saved selections
+#'
+#' Groups of cells can be selected and saved using the interactive output report
+#' This method allows you to retrieve these selections later in R for downstream analyses
+#'
+#' Note:  In order for selections to correctly save when launching the report, the report
+#'        must be run by storing the results back into the object.
+#         E.g.
+#'                  vis <- viewResults(vis)
+#'        and not
+#'                  viewResults(vis)
+#'
+#'
+#' @param object VISION object
+#' @return list Named list of selections.  Each selection is a character vector of cell/pool IDs
+#' @export
+#' @rdname getSelections
+#' @examples
+#' \dontrun{
+#'
+#' vis <- viewResults(vis)  # Selections saved while viewing results
+#'
+#' # Retrieve cell IDs for a selection group named 'interesting cells'
+#' interestingCells <- getSelections(vis)[['interesting cells']]
+#'
+#' }
+setMethod("getSelections", signature(object = "Vision"),
+          function(object) {
+              return(object@selections)
           })

@@ -28,6 +28,10 @@ setGeneric("viewResults", function(object, ...) {
     standardGeneric("viewResults")
 })
 
+setGeneric("getSelections", function(object, ...) {
+    standardGeneric("getSelections")
+})
+
 setGeneric("computeKNNWeights", function(object, ...) {
     standardGeneric("computeKNNWeights")
 })
