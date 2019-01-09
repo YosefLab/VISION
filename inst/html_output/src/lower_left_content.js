@@ -85,6 +85,9 @@ Lower_Left_Content.prototype.init = function()
         document.getElementById("lower-left-content")
     );
 
+    $(this.dom_node).find('#download-cells-button')
+        .on('click', self.exportSelectedCells)
+
     return $.when(sig_info_promise, values_plot_promise,
         sig_heatmap_promise, cell_info_promise,
         selection_info_promise);
@@ -1048,4 +1051,30 @@ function drawDistChartSelection(node, selected_values, remainder_values, selecti
         })
         window.dispatchEvent(event);
     });
+}
+
+
+/*
+Exports This list of Cell IDs selected
+ */
+Lower_Left_Content.prototype.exportSelectedCells = function()
+{
+
+    var selected_cells = get_global_status('selected_cell')
+    var selection_name = get_global_status('selection_name')
+
+
+    var text = selected_cells.join("\n");
+
+    var file_uri = "data:text/plain;charset=utf-8," + encodeURIComponent(text)
+
+    var a = document.createElement("a");
+
+    // Make selection_name filename-safe
+    selection_name = selection_name.replace(/[^a-z0-9]/gi, '_')
+    a.download = selection_name + ".txt"
+    a.href = file_uri;
+
+    a.click();
+
 }

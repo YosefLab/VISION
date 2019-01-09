@@ -183,9 +183,18 @@
                         </table>
                     </div>
                     <div id="selection-info" class="tab-pane" role="tabpanel" aria-labelledby="SelectionButton">
-                        <div class='label-row' style='margin-left: 30px; margin-bottom: 20px;'>
-                            <span>Cells Selected:</span>
-                            <span id="selected-cell-count-span"></span>
+                        <div class='label-row' style='margin-left: 30px; margin-bottom: 20px; display: flex; flex-shrink: 0; align-items: center;'>
+                            <div>Cells Selected:</div>
+                            <div id="selected-cell-count-span" style="padding-right: 5px"></div>
+                            <div id="download-cells-button" class="vis-icon invert">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="29" height="29" viewBox="0 0 29 29" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="14" y1="5" x2="14" y2="17" />
+                                    <line x1="9" y1="13" x2="14" y2="17" />
+                                    <line x1="19" y1="13" x2="14" y2="17" />
+                                    <line x1="19" y1="13" x2="14" y2="17" />
+                                    <path d="M6 18 L6 21 L22 21 L22 18" />
+                                </svg>
+                            </div>
                         </div>
                         <table id="selection-info-table" class='meta-table'>
                             <thead>

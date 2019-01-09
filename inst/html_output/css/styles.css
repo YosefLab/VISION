@@ -110,7 +110,7 @@ div.label-row {
     font-size: 1.2em;
 }
 
-div.label-row > span:first-child{
+div.label-row > span:first-child, div.label-row > div:first-child{
     font-weight: bold;
     padding-right: 10px;
 }
@@ -157,4 +157,26 @@ div.label-row > span:first-child{
     border-top: 5px solid black;
     margin-left: auto;
     margin-right: auto;
+}
+
+div.vis-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    width: 24px;
+    height: 24px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+div.vis-icon.invert {
+    background-color: var(--primary);
+    color: white;
+}
+
+div.vis-icon > svg {
+    position: absolute;
+    width: 85%;
+    height: 85%;
 }
