@@ -14,7 +14,7 @@ html_output/src/misc.js
 html_output/src/right_content.js
 html_output/src/upper_left_content.js
 html_output/thirdparty/bootstrap/bootstrap.bundle.min.js
-html_output/thirdparty/bootstrap/bootstrap.css
+html_output/thirdparty/bootstrap/bootstrap.min.css
 html_output/thirdparty/chosen/chosen-sprite.png
 html_output/thirdparty/chosen/chosen-sprite@2x.png
 html_output/thirdparty/chosen/chosen.jquery.min.js
@@ -31,5 +31,5 @@ html_output/thirdparty/datatables/datatables.min.js
 html_output/thirdparty/jquery/jquery-2.1.4.min.js
 html_output/thirdparty/jszip/jszip.min.js
 html_output/thirdparty/lodash/lodash.min.js
-html_output/thirdparty/plotly/plotly.js-1.40.0/dist/plotly.min.js
+html_output/thirdparty/plotly/plotly.js-1.43.1/dist/plotly.min.js
 html_output/thirdparty/popper/popper.js/dist/umd/popper.min.js

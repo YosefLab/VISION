@@ -2,26 +2,39 @@
 % Please edit documentation in R/Microclusters.R
 \name{applyMicroClustering}
 \alias{applyMicroClustering}
-\title{Cluster single cells so signal is maintained but the sample size and noise
-are reduce, using the louvain clustering algorithm}
+\title{Pool cells into microclusters}
 \usage{
 applyMicroClustering(exprData, cellsPerPartition = 100,
   filterInput = "fano", filterThreshold = round(ncol(exprData) * 0.2),
-  preserve_clusters = NULL, latentSpace = matrix(NA, 1, 1))
+  preserve_clusters = NULL, latentSpace = NULL)
 }
 \arguments{
 \item{exprData}{the expression data matrix}
 
 \item{cellsPerPartition}{control over the minimum number of cells to put into each supercell}
 
+\item{filterInput}{name of filtering method ('threshold' or 'fano') or list of
+genes to use when computing projections.}
+
+\item{filterThreshold}{Threshold to apply when using the 'threshold' projection genes filter.
+If greater than 1, this specifies the number of cells in which a gene must be detected
+for it to be used when computing PCA. If less than 1, this instead specifies the proportion of cells needed}
+
 \item{preserve_clusters}{named factor vector denoted cluster boundaries to preserve}
 
-\item{latentSpace}{numeric matrix cells x components}
+\item{latentSpace}{(Optional) Latent space to be used instead of PCA numeric matrix cells x components}
 }
 \value{
 pooled cells - named list of vectors - cells in each supercell
 }
 \description{
-Cluster single cells so signal is maintained but the sample size and noise
-are reduce, using the louvain clustering algorithm
+Merges similar transcriptional profiles into representative 'pools'
+}
+\details{
+A latent space is computed for the expression data via PCA after
+filtering on genes (using parameters `filterInput` and `filterThreshold`).
+
+Alternately, a latent space can be supplied via the `latentSpace` argument
+
+Euclidean distance within the latent space is then used to create cell pools
 }

@@ -52,20 +52,37 @@ Signature <- function(sigDict, name, source, metaData="") {
 
 #' Create a user-defined gene signature
 #'
+#' Typical usage of VISION involes providing a location to a ".gmt" signature
+#' file from which VISION automatically creates Signature objects.  However,
+#' using the createGeneSignature method, users may programmatically define
+#' signatures from within R.
+#'
 #' @param name the name of the signature
 #' @param sigData a named vector where the names correspond to genes in the
 #' data and the values are either `1.0` for up-regulated (or positive) genes,
-#' and `-1.0` for down regulated (negtive) genes.
+#' and `-1.0` for down-regulated (negtive) genes. For an unsigned signature
+#' use 1.0 for all values.
 #' @param metadata metadata that is relevent to the signature. [Default:NULL]
 #' @export
 #' @return a Signature object
 #' @examples
-#' sig <- createGeneSignature(name="signature", c(gene1=1.0,gene17=1.0,
-#'                                                      gene4=1.0, gene31=-1.0,
-#'                                                      gene3=-1.0, gene9=1.0))
-#' sig2 <- createGeneSignature(name="signature", c(gene18=1.0,gene29=1.0,
-#'                                                      gene400=-1.0, gene1=-1.0,
-#'                                                      gene7=1.0, gene9=1.0))
+#'
+#'
+#' sig1 <- createGeneSignature(
+#'            name = "CD8 Markers",
+#'            sigData = c(CD8A=1, CD8B=1, GZMK=1, GZMB=1,
+#'                        GZMH=1, GZMA=1, GNLY=1, DUSP2=1,
+#'                        EOMES=1, TBX21=1, PRMD1=1, PRF1=1,
+#'                        IFNG=1)
+#'        )
+#'
+#' cc_sigs <- "path/to/cell_cycle.gmt"
+#'
+#' sigs <- c(sig1, cc_sigs)
+#'
+#' vis <- Vision(data = expMat, signatures = sigs)
+#'
+#'
 createGeneSignature <- function(name, sigData, metadata="") {
   return(new("Signature", sigDict=sigData, name=name, metaData=metadata,
              source="user-defined"))

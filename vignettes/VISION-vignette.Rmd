@@ -1,6 +1,6 @@
 ---
 title: "Introduction to VISION"
-author: "Matthew Jones"
+author: "Matthew Jones and David DeTomaso"
 date: "`r BiocStyle::doc_date()`"
 package: "`r BiocStyle::pkg_ver('BiocStyle')`"
 output: BiocStyle::html_document
@@ -33,15 +33,6 @@ set.seed(6473) ## for reproducibility
 
 ```
 
-
-# Introduction
-
-Recent technological advancements have allowed transcriptional profiling at the single-cell level. This has enabled a deeper investigation into cellular heterogeneity(Patel et al 2014), the identification of new cellular subtypes (Villani et al 2017), and more detailed modeling of developmental processes. Notably, the data produced in a single-cell RNA-seq (scRNA-seq) experiment is distinct from that of bulk RNA-seq in that it is typically sparse (with many expressed genes remaining undetected), and consists of a very high number of data points (up to hundreds of thousands of cells as in the Mouse Cell Atlas). Furthermore, while bulk studies are usually conducted in a comparative setting (e.g., case control studies), most investigations of scRNA-seq are based on comparisons of cells within a sample, without any preconceived stratification of these cells. 
-
-A typical primary step in the analysis of scRNA-seq data is therefore to extract a meaningful stratification of cells into groups or along some continuum in a data- driven manner, using various models for estimating cell-to-cell similarity.  One way to achieve such a stratification is to cluster cells in a low-dimensional "latent" space where cells can be related to one another using euclidean distances. While Principal Component Analysis (PCA) is a commonly used method, more recently linear factor models such as ZIFA or zinbWave and nonlinear deep generative models such as scVI or DCA have been developed to specifically address the underlying distributions found in single-cell read counts. Alternately, if the cells are expected to vary along a continuum, such as that which arises during a developmental time-course, cell-cell similarity maps can be used for inferring a tree- like representation of the data, and there are a variety of methods designed for this purpose (summarized in a recent review by Saelens and Cannoodt et al, 2018). 
-
-Here we present VISION, a module that can sit downstream of other common analyses such as clustering, dimensionality reduction, and trajectory inference. Specifically, VISION aids in the interpretation of scRNA-seq data, with or without predetermined labels, or stratifications of the data (e.g. clusterings) using the notion of cell-cell similarity maps (as interpreted from some latent space) and biological signatures (functional sets of genes that can be obtained online from, for example, MSigDB). Finally, VISION can evaluate the effect of cell- level meta data, such as library quality, batch,  clinical information, or additional experimental readouts (e.g., protein levels from a Cite-Seq experiment). Importantly, the use of VISION can greatly facilitate collaborative projects, as it offers a low- latency interactive report for the end- user, which can be hosted online and viewed on a web browser without the need for installing developer-grade software. VISION is freely available as an R package on Github (\url{www.github.com/YosefLab/VISION})
-
 # Preliminaries
 
 If you have yet to install VISION, we recommend installing the package from github to install this pacakge. Full source code can be found at the VISION github repository, available [here](http://www.github.com/YosefLab/VISION). 
@@ -51,168 +42,148 @@ If you have yet to install VISION, we recommend installing the package from gith
 > install_github("YosefLab/VISION")
 ```
 
-Once VISION and R are installed, you may load in VISION and all of its dependencies using `library(VISION)`. 
+Once VISION and R are installed, you may load in VISION using `library(VISION)`. 
 
 # Using VISION
 
-## The VISION Pipeline
+Running an analysis with vision consists of three steps:
 
-VISION generally follows the same pipeline from iteration to iteration, where minor differences can be specified via the various parameters in a VISION object. On a typical VISION run:
+1. Creating the VISION object
+2. Running the `analyze` function
+3. Browsing results
 
-- If a latent space is not specified, PCA is performed and the top 30 components are retained. 
-- A KNN graph is constructed from the latent space, named the *cell-cell similarity map*
-- Signature scores are computed using the expression matrix
-- Signature local "consistencies" on the cell-cell similarity map are computed using the Geary-C statistic, an auto-correlation statistic. 
-- An interactive web-based report is generated that can be used to explore and interpret the dataset. 
+## Creating the VISION object
 
-## Analysis of Glioblastoma Cells with VISION
-As described above, VISION can be approached from many directions. Here, we present the simplest of applications, utilizing the `analyze` function. 
+Creating the VISION object requires a gene expression matrix and *either* a list of Gene Signatures or a data.frame of meta-data.
 
-First, we'll walk through how to create a VISION object for the `analyze` function. Most importantly, we need expression data and signature data. For this example we'll also include some meta-data, describing which patient each cell came from. In practice, this meta-data can be any range of discrete or continuous data describing each cell - for example, upstream analyses such as clustering results or important QC metric such as the number of UMIs per cell. This meta data should be a data frame where the row labels match the column labels of the expression matrix. 
-
-We'll operate on a set of 430 cells from five primary glioblastomas sequenced using scRNA-seq across 5,948 genes (Patel et. al. 2014). For our signatures, we will use the Hallmark gene set from MSigDB, which is available [here](http://software.broadinstitute.org/gsea/msigdb/collections.jsp#H). To note, we can specify multiple signature files but we'll stick to one for this example. 
-
-The expression data and siganture files: the expression data can be either a path to a tab-delimited .txt file, a .mtx sparse matrix format file, a numeric matrix directly, a sparse matrix from the Matrix package, an ExpressionSet object, or a SummerizedExperiment object; signature data can be provided as a list of .gmt files, .txt files or Signature objects (additional info on signature below). 
-
-``` {redcars}
-To note, it's recommended to provide *scaled* expression data (e.g. counts per million, or median number of UMIs), without preforming any kind of prior normalization. However, VISION should still be able to process normalized expression counts.
-```
-
-We can also leverage a couple of other paramters of VISION: namely the method for normalizing the expression data before calculating signature scores, a meta data file, a set of desired projections, and a set of genes we'd like to utilize for projections. 
-
-```{bluecars}
-When specifying meta data, please provide a data frame where you have rows representing cells and each column a separate meta data item. Please make sure that the cell labels in the meta data match exactly the cell labels in the expression data matrix.
-```
-
-```{bluecars}
-VISION supports a range of dimensionality reduction methods for visualization:
-- tSNE30 (t-distributed Stochastic Neighborhood Embedding with perplexity 30) 
-- tSNE10 (tSNE with perplexity 10)
-- ICA
-- ISOMap
-
-VISION will always compute the first three principal components for visualization. Unless specified otherwise, VISION will always compute tSNE30 as well as this PCA.
-```
-
-All of these initialization would result in the same VISION object being created:
-
-```{r, collapse=F, message=T}
-# -- load VISION
-library(VISION)
-
-# -- read in expression data set
-expr <- as.matrix(read.table("data/expression_matrix.txt.gz", 
-                   header = TRUE, sep = '\t', row.names = 1))
-
-# -- scale expression matrix by the median number of UMIs
-n.umi = median(colSums(expr))
-expr = apply(expr, 2, function(x) (x * n.umi) / sum(x))
-
-# -- read in meta data
-meta = read.table("data/glio_meta.txt.gz", sep='\t', header=T, row.names=1)
-meta = meta[colnames(expr), ,drop=F]
-meta[,1] = as.factor(meta[,1])
-
-vis <- Vision(expr, c("data/h.all.v5.2.symbols.gmt"), 
-              meta = meta,
-              projection_methods=c("tSNE30",  "ICA"),
-              projection_genes = "fano")
-```
-
-If the user would like to specify a list of genes to use (for example from a previous filtering scheme), the user can replace the last call to the Vision constructor with these lines:
+In this example - both are provided.
 
 ```{r, collapse=F, message=T, eval=F}
-# -- find genes to use for projections
-f.genes = VISION:::filterGenesFano(expr)
+# Load VISION
+library(VISION)
 
-# -- Create a VISION object with existing matrix
-vis <- Vision(expr, 
-              c("data/h.all.v5.2.symbols.gmt"), 
-              meta = meta,
-              projection_methods=c("tSNE30",  "ICA"), 
-              projection_genes = f.genes)
+# Read in expression counts (Genes X Cells)
+counts <- read.table("data/expression_counts.txt.gz",
+                     header = TRUE,
+                     sep = '\t',
+                     row.names = 1)
 
+# Scale counts within a sample
+n.umi <- colSums(counts)
+
+scaled_counts <- t(t(counts) / n.umi) * median(n.umi)
+
+# Read in meta data (Cells x Vars)
+meta = read.table("data/glio_meta.txt.gz", sep='\t', header=T, row.names=1)
+
+vis <- Vision(scaled_counts, 
+              signatures = c("data/h.all.v5.2.symbols.gmt"), 
+              meta = meta)
 ```
 
-To note, you can also create a VISION object with a SummarizedExperiment object:
-```{r, collapse=F, message=F, eval=F}
-## -- Create a VISION object with a SummarizedExperiment
-se <- SummarizedExperiment::SummarizedExperiment(assays = list(counts = expr))
-vis <- Vision(se, c("data/h.all.v5.2.symbols.gmt"))
-```
+**Expression Data**
 
-Now, with a VISION object, we can run `analyze` which will run the VISION pipeline and return another, processed VISION object.
+The provided expression data should be scaled and normalized.  The example above shows just a simple UMI-scaling, but it is recommended to apply more advanced normalization procedures such as batch correction or removal of technical confounders.
 
-```{r, collapse=T, message=F, eval=T}
+The expression data should not be log-transformed prior to loading into VISION.
 
-# Set the number of threads
-# Some pieces of the analysis will be parallelzed
+**Signatures**
+
+Signatures can be provided as a list of paths to signature files (\*.gmt) or Signature objects.  
+
+See [the signature vignette](Signatures.html) for more information on finding or creating gene Signatures.
+
+**Meta Data**
+
+An R data.frame with cell-level meta-data.  This could be confounding variables (e.g. percentage of mitochondrial RNA, number of genes detected) or experimental covariates (e.g. genotype, donor, batch).
+
+This input is optional if Signatures are provided.
+
+**Other Options**
+
+Other options and inputs can be provided to customize how VISION runs.  For information on this, see the "Customizing VISION Analysis" section below.
+
+## Running an Analysis
+
+To run an analysis, simply call the analyze function:
+
+```{r, collapse=T, message=F, eval=F}
+
+# Set the number of threads when running parallel computations
 options(mc.cores = 2)
 
 vis <- analyze(vis)
 ```
 
-With the processed Vision object, a dynamic web report can be generated with the `viewResults` function or the `saveAndViewResults` function, which will both save the VISIONOutput object as an .rds file and launch a web browser for the dynamic report.
+## Viewing Results
+
+With the processed Vision object, a dynamic web report can be generated with the `viewResults` function.
 
 ```{r, collapse=T, message=F, results=F, eval=F}
 viewResults(vis)
 ```
 
-# Adding 2-D Projections
-Often times, users will have pre-computed projections that they would like to use for visualizing their data (e.g. a pre-computed tSNE, or UMAP projetction). In this case, VISION offers users to load in any number of these precomputed projections with separate calls to the `addProjection` method. These projections should be a numeric matrix, where columns correspond to components of the projection and the rows match exactly the sample names of the expression matrix of the Vision object.
+This will launch a browser running the interactive report.  
+
+Other options (port, host, browser) can be provided to control how this occurs.  For example, if you are launching a report on a remote server (such as an AWS instance) and want to make it accessible to others, run this with `host="0.0.0.0"`, some selected port number (e.g. `port=8888`), and `browser=FALSE` (so a browser isn't auto-opened).  Then the report should be available at "\<your instance IP address\>:8888".  (Note:  You will also likely need to enable inbound traffic on your selected port for this to work correctly).
+
+Alternately, you can work with the VISION object directly in R. For example:
 
 ```{r, collapse=T, message=F, results=F, eval=F}
-projection <- as.matrix(read.table(<path to projection))
+# Display autocorrelation coefficients for signatures
+head(vis@SigConsistencyScores@sigProjMatrix)
 
-vis <- addProjection(vis, "CustomProjection", projection)
+# View autocorrelation empirical p-values
+head(vis@SigConsistencyScores@emp_pMatrix)
 
+# Plot signature scores for a signature of interest
+tsne <- vis@Projections$tSNE30
+sigScores <- vis@sigScores[, "HALLMARK_INTERFERON_GAMMA_RESPONSE"]
+
+library(ggplot2)
+ggplot() + aes(x=tsne[, 1], y=tsne[, 2], color=sigScores) + geom_point()
 ```
 
-For completeness, you can also extract the projections of a particular Vision object:
-
-```{r, collapse=T, message=F, results=F, eval=F}
-# obtain a list of all projections in this Vision object
-projections <- vis@Projections
-
-# see names of projections
-names(projections)
-
-# Obtain a dataframe of a particular projection (rows = cells, columns=components)
-pca12 = projections[["PCA: 1,2"]]
-```
-
-# Getting Signatures
-Gene signatures are essential to the VISION pipeline, and are fairly easy to get in any number of ways:
-
-## Downloading Signatures
-A great resource for gene signatures is `MSigDB`, curated by the Broad institute. Signatures can be browsed, searched and downloaded from [here](http://software.broadinstitute.org/gsea/msigdb/) as .gmt files, then provided to VISION to be included in the analysis.
+For more details on the structure of the VISION object see XXX.
 
 
-## Creating Signatures
-If there is a set of proprietary genes of interest, a user-defined signature can be created in two ways:
-### creating a Signature object
-Once a set of genes that are up or down regulated in the process or cell type of interest are selected, creating a Signature object is relatively straightforward:
-```{r create signature object, collapse=T, eval=F}
-up.genes <- c("ug1","ug2","ug3","ug4","ug5","ug6","ug7","ug8","ug9")
-down.genes <- c("dg1","dg2","dg3","dg4","dg5","dg6")
+## Customizing the Latent Space
 
-sigData <- c(rep(1.0,length(up.genes)),rep(-1.0,length(down.genes)))
-names(sigData) <- c(up.genes, down.genes)
+VISION requires a latent space to model the similarity between cells (used to determine a cell's local neighborhood).
 
-sig <- createGeneSignature(name = "Interesting Process", sigData = sigData)
-```
+By default, this is calculated via PCA on a subset of the genes.  A few arguments control this process:
 
-### Signature files
-Signature files are supported in either a .txt or .gmt format, which are both textual formats that are easy to create.
-Information on the precise acceptable format can be found [here](https://github.com/YosefLab/VISION/wiki/Signatures).
+- `projection_genes` - controls how genes are selected for PCA.  Options are:
+    - `"threshold"` - use a threshold to select genes.  The `threshold` argument specifies either the number or proportion of genes in which a cell must be expressed to be included.
+    - `"fano"` - first the "threshold" filter is applied.  Then genes are ordered by mean expression into 30 bins and within each bin, genes with a high fano factor (2 MAD above the median) are retained
+    - character vector of gene names - specify the genes to use directly
 
-#Working with large datasets: Micropooling
+### Specifying a Custom Latent Space
+
+Alternately, if a latent space has been computed elsewhere (either via PCA, or other factor analysis methods such as [ZIFA](https://github.com/epierson9/ZIFA), [ZINB-WaVE](https://github.com/drisso/zinbwave) or [scVI](https://github.com/YosefLab/scVI)) it can be provided via the `latentSpace` argument as a data frame.
+
+## Micropooling
 
 scRNA-seq experiments have grown in size over the past couple of years, and as such we have provided an algorithm for pooling together similar cells and continuing with analysis, thus reducing the cell-wise time complexity of the VISION pipeline. For more information, please see our micropooling vignette. 
 
-Briefly, however, you can control the parameters of the micropooling algorithm first with the `pool` boolean argument (setting `pool=T` when creating the Vision object will force the pooling of cells) and `cellsPerPartition` as a integer argument for specifying the maximum number of cells per micropool. By default, Vision will create micropools with 100 cells per micropool for datasets that exceed 15,000 cells (we recommend changing the `pool` argument and the `cellsPerPartition` argument on a case-by-case basis.)
+You can control the parameters of the micropooling algorithm using two arguments:
 
-# Session Info
-```{r, collapse=T}
-sessionInfo()
+- `pool` - boolean specifying whether or not to apply micropooling.  By default this is set to 'auto' and micropooling is run when the number of cells exceeds 15,000.
+- `cellsPerPartition` - integer specifying the maximum number of cells per micropool.
+
+
+## Adding 2d Projections
+
+Two-dimensional projections are used to visualize the data in the output report.
+
+By default, VISION computes tSNE on the latent space for visualization.  However, other options are availabled via the `projection_methods` argument.
+
+Often times, users will have pre-computed projections that they would like to use for visualizing their data (e.g. a pre-computed tSNE, or UMAP projetction). In this case, the `addProjection` method can be used to add this view of the data to the output report.
+
+```{r, collapse=T, message=F, results=F, eval=F}
+projection <- read.csv("umap_results.csv")
+
+# projection is a matirx or data.frame of dimension (Cells x 2)
+
+vis <- addProjection(vis, "UMAP", projection)
 ```

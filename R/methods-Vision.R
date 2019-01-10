@@ -3,28 +3,31 @@
 #' @import logging
 #'
 #' @param data expression data - can be one of these: \itemize{
-#' \item numeric matrix
+#' \item numeric matrix or sparse matrix (GENES x CELLS)
+#' \item data.frame (GENES x CELLS)
 #' \item ExpressionSet object
 #' \item SummzrizedExperiment object (or extending classes)
 #' }
-#' @param signatures list of file paths to signature files (.gmt or .txt) or a
-#' list of Signature objects
+#' Expression data should be scaled and normalized, but not log-transformed.
+#' @param signatures list of file paths to signature files (.gmt or .txt) or
+#' Signature objects.  See the createGeneSignature(...) method for information
+#' on creating Signature objects.
 #' @param housekeeping vector of gene names
-#' @param meta data file with cell meta data (.txt), or a
-#' data.frame with meta information. Note that rows should match samples in the
-#' data, and columns should either be factors or numerics.
+#' @param meta data.frame with meta-data for cells. Rows in this data.frame should correspond
+#' with columns in the expression data matrix
 #' @param nomodel if TRUE, no fnr curve calculated and all weights equal to 1.
 #' Else FNR and weights calculated. [Default:TRUE]
-#' @param projection_genes name of method ('threshold' or 'fano') or list of
+#' @param projection_genes name of filtering method ('threshold' or 'fano') or list of
 #' genes to use when computing projections.
-#' @param min_signature_genes Minimum number of genes required to compute a
-#' signature
+#' @param min_signature_genes Signature that match less than this number of genes in the
+#' supplied expression matrix are removed.
 #' @param weights Precomputed weights for each coordinate. Normally computed
 #' from the FNR curve.
-#' @param threshold Threshold to apply for the threshold filter. Number of cells or
-#' proportion of cells (if less than 1)
-#' @param perm_wPCA If TRUE, apply permutation WPCA to calculate significant
-#' number of PCs. Else not. Default FALSE.
+#' @param threshold Threshold to apply when using the 'threshold' projection genes filter.
+#' If greater than 1, this specifies the number of cells in which a gene must be detected
+#' for it to be used when computing PCA. If less than 1, this instead specifies the proportion of cells needed
+#' @param perm_wPCA If TRUE, apply permutation procedure to calculate significant
+#' number of PCs when running PCA.  If FALSE (default), retain the top 30.
 #' @param sig_norm_method Method to apply to normalize the expression matrix
 #' before calculating signature scores. Valid options are:
 #' "znorm_columns" (default), "none", "znorm_rows", "znorm_rows_then_columns",
@@ -35,14 +38,11 @@
 #' are TRUE, FALSE, or 'auto', the last of which is the default and enables
 #' pooling if there are more than 15000 cells.
 #' @param cellsPerPartition the minimum number of cells to put into a cluster
-#' @param cluster_variable variable to use to denote clusters
 #' @param latentSpace latent space for expression data. Numeric matrix or dataframe
 #' with dimensions CELLS x COMPONENTS
 #' @param latentTrajectory trajectory to model cell progression.  Wrapped result
-#' of a trajectory inference by the dynverse/dynwrap library
-#' @param metaData a dataframe storing all metadata (can be either factor or numerical),
-#' where the rows are cells and columns are individual meta data items
-#' @param projection_methods a character list of which projection methods to apply. Can be: \itemize{
+#' of a trajectory inference method by the dynverse/dynwrap library
+#' @param projection_methods a character vector specifying which projection methods to apply. Can be: \itemize{
 #'    \item tSNE10 (tSNE with perplexity 10)
 #'    \item tSNE30 (tSNE with perplexity 30)
 #'    \item ICA
@@ -55,23 +55,19 @@
 #' @rdname VISION-class
 #' @export
 #' @examples
-#' expMat <- matrix(rnorm(200000), nrow=500)
-#' rownames(expMat) <- paste0("gene",1:500)
+#' \dontrun{
+#' expMat <- read.csv("expressionMatrix.csv", row.names=1)
+#' meta <- read.csv("metaData.csv", row.names=1)
 #'
-#' # choose housekeeping genes
-#' hkg <- housekeeping$default
+#' sigs <- c("/path/to/signatures/msigdb_Hallmark.gmt",
+#'           "/path/to/signatures/Enrichr/ChEA_2015.txt"
+#'          )
 #'
-#' #create 20 signatures of 25 genes each
-#' sigs <- lapply(1:20, function(i) {
-#' sigData <- sign(rnorm(25))
-#' names(sigData) <- paste0("gene",sample(1:100,25))
-#' return(createGeneSignature(name = paste0("sig",i),
-#'                                  sigData = sigData))
-#' })
 #'
-#' fp <- Vision(data = expMat,
-#'                      signatures = sigs,
-#'                      housekeeping = hkg)
+#' vis <- Vision(data = expMat,
+#'               signatures = sigs,
+#'               meta = meta)
+#' }
 setMethod("Vision", signature(data = "matrixORSparse"),
             function(data, signatures=list(), housekeeping=NULL,
                     unnormalizedData = NULL, meta=NULL, nomodel=TRUE,
@@ -83,8 +79,7 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                                         "rank_norm_columns"),
                     sig_score_method=c("naive", "weighted_avg"),
                     pool="auto", cellsPerPartition=100, name=NULL,
-                    cluster_variable = "", latentSpace = NULL,
-                    latentTrajectory = NULL, pools=list()) {
+                    latentSpace = NULL, latentTrajectory = NULL, pools=list()) {
 
             .Object <- new("Vision")
 
@@ -147,7 +142,14 @@ setMethod("Vision", signature(data = "matrixORSparse"),
             }
 
             if (is.list(signatures)) {
-                .Object@sigData <- signatures
+                sigs <- lapply(signatures, function(sig){
+                           if (is(sig, "Signature")){
+                               return(sig)
+                           } else {
+                               return(readSignaturesInput(sig))
+                           }
+                })
+                .Object@sigData <- do.call(c, sigs)
                 names(.Object@sigData) <- vapply(.Object@sigData,
                                             function(x){x@name}, "")
             } else if (is.character(signatures)) {
@@ -315,8 +317,7 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                 .Object@initialMetaData <- .Object@metaData
             }
 
-            .Object@cluster_variable <- cluster_variable
-            .Object@pools = pools
+            .Object@pools <- pools
 
             return(.Object)
     }
@@ -359,7 +360,7 @@ setMethod("Vision", signature(data = "SummarizedExperiment"),
 #' Main entry point for running VISION Analysis
 #'
 #' The main analysis function. Runs the entire VISION analysis pipeline
-#' and returns a VISION object populated with the result,
+#' and returns a VISION object populated with the result.
 #'
 #' @export
 #' @aliases analyze
@@ -367,23 +368,13 @@ setMethod("Vision", signature(data = "SummarizedExperiment"),
 #' @return VISION object
 #'
 #' @examples
-#' expMat <- matrix(rnorm(200000), nrow=500)
-#' rownames(expMat) <- paste0("gene",1:500)
-#'
-#' #create 20 signatures of 25 genes each
-#' sigs <- lapply(1:20, function(i) {
-#' sigData <- sign(rnorm(25))
-#' names(sigData) <- paste0("gene",sample(1:100,25))
-#' return(createGeneSignature(name = paste0("sig",i),
-#'                                  sigData = sigData))
-#' })
-#'
-#' fp <- Vision(data = expMat,
-#'              signatures = sigs)
-#'
-#' ## analyze requires actual non-random data to run properly
 #' \dontrun{
-#' fp.out <- analyze(fp)
+#'
+#' vis <- Vision(data = expMat, signatures = sigs)
+#'
+#' options(mc.cores=10) # Use 10 cores
+#' vis <- analyze(vis)
+#'
 #' }
 setMethod("analyze", signature(object="Vision"),
             function(object) {
@@ -444,7 +435,14 @@ setMethod("analyze", signature(object="Vision"),
     return(object)
 })
 
-#' Add a set of projection coordinates
+#' Add a set of projection coordinates to use for visualization
+#'
+#' By default VISION will run tSNE on the latent space and use this
+#' to display the cells in the output report.  However, with this
+#' method, you may add additional two-dimensional coordinates for
+#' inclusion in the output report. This is useful if you have previously
+#' run tSNE (or any other visualization method) and wish to integrate
+#' the results into VISION.
 #'
 #' @export
 #' @aliases addProjection
@@ -453,6 +451,23 @@ setMethod("analyze", signature(object="Vision"),
 #' @param coordinates numeric matrix or data.frame. Coordinates of each
 #' sample in the projection (NUM_SAMPLES x NUM_COMPONENTS)
 #' @return VISION object
+#' @examples
+#' \dontrun{
+#'
+#' # First create the VISION object
+#' vis <- Vision(data = expMat, signatures = sigs)
+#'
+#' # Load and add an additional visualization
+#' my_umap <- read.csv("umap_results.csv")
+#' vis <- addProjection(vis, "UMAP", my_umap)
+#'
+#' # Run analysis
+#' vis <- analyze(vis)
+#'
+#' # View results
+#' viewResults(vis)
+#'
+#' }
 setMethod("addProjection", signature(object = "Vision"),
             function(object, name, coordinates) {
 
@@ -482,10 +497,16 @@ setMethod("addProjection", signature(object = "Vision"),
 #' Save the VISION object as an .RDS file and view the results on a
 #' localhost
 #'
-#' Save the results object as an RDS file for future use, and launch a local
-#' server to explore the results with a browser.
+#' This is just a convience function wrapping two function calls
 #'
-#' @param fpout VISION object
+#'     saveAndViewResults(vis, 'vision_results.rds')
+#'
+#' is equivalent to:
+#'
+#'     saveRDS(vis, 'vision_results.rds')
+#'     viewResults(vis)
+#'
+#' @param vis VISION object
 #' @param ofile the path to save the object in. If NULL, the object is saved
 #' in the working directory [default:NULL]
 #' @param port The port on which to serve the output viewer.  If omitted, a
@@ -496,37 +517,29 @@ setMethod("addProjection", signature(object = "Vision"),
 #' @aliases saveAndViewResults
 #' @export
 #' @examples
-#' expMat <- matrix(rnorm(200000), nrow=500)
-#' rownames(expMat) <- paste0("gene",1:500)
-#'
-#' #create 20 signatures of 25 genes each
-#' sigs <- lapply(1:20, function(i) {
-#' sigData <- sign(rnorm(25))
-#' names(sigData) <- paste0("gene",sample(1:100,25))
-#' return(createGeneSignature(name = paste0("sig",i),
-#'                                  sigData = sigData))
-#' })
-#'
-#' fp <- Vision(data = expMat, signatures = sigs)
-#'
-#' ## analyze requires actual non-random data to run properly
 #' \dontrun{
-#' fp.out <- analyze(fp)
-#' saveAndViewResults(fp.out)
+#'
+#' vis <- Vision(data = expMat, signatures = sigs)
+#'
+#' options(mc.cores=10) # Use 10 cores
+#' vis <- analyze(vis)
+#'
+#' saveAndViewResults(vis, 'vision_results.rds') # Saves and launches dynamic output report
 #' }
-setMethod("saveAndViewResults", signature(fpout="Vision"),
-          function(fpout, ofile=NULL, port=NULL, host=NULL, browser=TRUE, name=NULL) {
-            if(is.null(ofile)) {
+setMethod("saveAndViewResults", signature(object = "Vision"),
+          function(object, ofile=NULL, port=NULL, host=NULL,
+                   browser=TRUE, name=NULL) {
+            if (is.null(ofile)) {
               i <- 1
-              ofile <- paste0("./fpout", i, ".rds")
+              ofile <- paste0("./vis", i, ".rds")
               while (file.exists(ofile)) {
-                i <- i+1
-                ofile <- paste0("./fpout", i, ".rds")
+                i <- i + 1
+                ofile <- paste0("./vis", i, ".rds")
               }
             }
 
-            saveRDS(fpout, file=ofile)
-            viewResults(fpout, port, host, browser, name)
+            saveRDS(object, file = ofile)
+            viewResults(object, port, host, browser, name)
             return(ofile)
           })
 
@@ -534,7 +547,7 @@ setMethod("saveAndViewResults", signature(fpout="Vision"),
 #'
 #' launch a local server to explore the results with a browser.
 #'
-#' @param object VISION object or path to a file containing such an
+#' @param object VISION object or path to an RDS file containing such an
 #' object (saved using saveAndViewResults, or directly using saveRDS)
 #' @param port The port on which to serve the output viewer.  If omitted, a
 #' random port between 8000 and 9999 is chosen.
@@ -547,25 +560,18 @@ setMethod("saveAndViewResults", signature(fpout="Vision"),
 #' @export
 #' @rdname viewResults
 #' @examples
-#' expMat <- matrix(rnorm(200000), nrow=500)
-#' rownames(expMat) <- paste0("gene",1:500)
-#'
-#' #create 20 signatures of 25 genes each
-#' sigs <- lapply(1:20, function(i) {
-#' sigData <- sign(rnorm(25))
-#' names(sigData) <- paste0("gene",sample(1:100,25))
-#' return(createGeneSignature(name = paste0("sig",i),
-#'                                  sigData = sigData))
-#' })
-#'
-#' fp <- Vision(data = expMat, signatures = sigs)
-#'
-#' ## analyze requires actual non-random data to run properly
 #' \dontrun{
-#' fp.out <- analyze(fp)
-#' viewResults(fp.out)
+#'
+#' vis <- Vision(data = expMat, signatures = sigs)
+#'
+#' options(mc.cores=10) # Use 10 cores
+#' vis <- analyze(vis)
+#'
+#' saveRDS(vis, 'vision_results.rds') # (Optional) Save results
+#'
+#' vis <- viewResults(vis) # Launches dynamic output report
 #' }
-setMethod("viewResults", signature(object="Vision"),
+setMethod("viewResults", signature(object = "Vision"),
           function(object, port=NULL, host=NULL, browser=TRUE, name=NULL) {
 
             if (!is.null(name)) {
@@ -573,70 +579,68 @@ setMethod("viewResults", signature(object="Vision"),
             }
 
             versionCheck(object)
-            
+
             if (length(object@sigData) == 0 && ncol(object@metaData) == 0) {
                 stop("Error: This object contains no signature data.")
             }
 
             if (is.null(object@PCAnnotatorData)) {
                 stop("Error: This object contains no PCAnnotatorData.")
+            }
+
+            if (!.hasSlot(object, "selections")) {
+                object@selections <- list()
             }
 
             message("Launching the server...")
             message("Press exit or ctrl c to exit")
-            launchServer(object, port, host, browser)
+            object <- launchServer(object, port, host, browser)
+
+            return(object)
           })
 
 #' @rdname viewResults
 #' @export
-setMethod("viewResults", signature(object="character"),
+setMethod("viewResults", signature(object = "character"),
           function(object, port=NULL, host=NULL, browser=TRUE, name=NULL) {
             fpo <- readRDS(object)
 
-            if (length(object@sigData) == 0 && ncol(object@metaData) == 0) {
-                stop("Error: This object contains no signature data.")
-            }
-
-            if (is.null(object@PCAnnotatorData)) {
-                stop("Error: This object contains no PCAnnotatorData.")
-            }
-
-            if(!is(fpo, "Vision")){
+            if (!is(fpo, "Vision")){
               stop("loaded object not a valid Vision object")
             }
-            viewResults(fpo, port, host, browser, name)
+
+            fpo <- viewResults(fpo, port, host, browser, name)
+            return(fpo)
           })
 
-#' create new VISION object from a subset of the data in an existing one
-#' @param fp the VISION object to subset
-#' @param subset the indices of the samples to keep
-#' @return a new VISION object with the new data and the same analysis
-#' parameters
-createNewFP <- function(fp, subset) {
-    .Object <- new("Vision")
-    nexpr <- fp@initialExprData[,subset]
-    rownames(nexpr) <- toupper(rownames(nexpr))
-    .Object@initialExprData <- nexpr
-    .Object@exprData <- nexpr
 
-    .Object@housekeepingData <- fp@housekeepingData
-    .Object@sigData <- fp@sigData
-
-    .Object@metaData <- lapply(fp@metaData, function(sigscore) {
-        sigscore@scores <- sigscore@scores[subset]
-        return(sigscore)
-    })
-
-    if (!all(dim(fp@weights) == c(1, 1))){
-        .Object@weights <- fp@weights[, subset]
-    }
-    .Object@projection_genes <- fp@projection_genes
-    .Object@threshold <- fp@threshold
-    .Object@sig_norm_method <- fp@sig_norm_method
-    .Object@sig_score_method <- fp@sig_score_method
-    .Object@perm_wPCA = fp@perm_wPCA
-    .Object@pool = fp@pool
-    .Object@cellsPerPartition = fp@cellsPerPartition
-
-    return(.Object)
-}
+#' Get saved selections
+#'
+#' Groups of cells can be selected and saved using the interactive output report
+#' This method allows you to retrieve these selections later in R for downstream analyses
+#'
+#' Note:  In order for selections to correctly save when launching the report, the report
+#'        must be run by storing the results back into the object.
+#         E.g.
+#'                  vis <- viewResults(vis)
+#'        and not
+#'                  viewResults(vis)
+#'
+#'
+#' @param object VISION object
+#' @return list Named list of selections.  Each selection is a character vector of cell/pool IDs
+#' @export
+#' @rdname getSelections
+#' @examples
+#' \dontrun{
+#'
+#' vis <- viewResults(vis)  # Selections saved while viewing results
+#'
+#' # Retrieve cell IDs for a selection group named 'interesting cells'
+#' interestingCells <- getSelections(vis)[['interesting cells']]
+#'
+#' }
+setMethod("getSelections", signature(object = "Vision"),
+          function(object) {
+              return(object@selections)
+          })

@@ -32,7 +32,10 @@
 
 <meta property="og:title" content="Create a user-defined gene signature — createGeneSignature" />
 
-<meta property="og:description" content="Create a user-defined gene signature" />
+<meta property="og:description" content="Typical usage of VISION involes providing a location to a &quot;.gmt&quot; signature
+file from which VISION automatically creates Signature objects.  However,
+using the createGeneSignature method, users may programmatically define
+signatures from within R." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -84,6 +87,9 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/Signatures.html">Gene Signatures</a>
+    </li>
+    <li>
       <a href="../articles/VISION-vignette.html">Introduction to VISION</a>
     </li>
     <li>
@@ -93,6 +99,9 @@
       <a href="../articles/trajectories.html">Trajectory Inference and VISION</a>
     </li>
   </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
       
@@ -117,7 +126,10 @@
 
     <div class="ref-description">
     
-    <p>Create a user-defined gene signature</p>
+    <p>Typical usage of VISION involes providing a location to a ".gmt" signature
+file from which VISION automatically creates Signature objects.  However,
+using the createGeneSignature method, users may programmatically define
+signatures from within R.</p>
     
     </div>
 
@@ -134,7 +146,8 @@
       <th>sigData</th>
       <td><p>a named vector where the names correspond to genes in the
 data and the values are either `1.0` for up-regulated (or positive) genes,
-and `-1.0` for down regulated (negtive) genes.</p></td>
+and `-1.0` for down-regulated (negtive) genes. For an unsigned signature
+use 1.0 for all values.</p></td>
     </tr>
     <tr>
       <th>metadata</th>
@@ -149,12 +162,22 @@ and `-1.0` for down regulated (negtive) genes.</p></td>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><span class='co'># NOT RUN {</span>
-<span class='no'>sig</span> <span class='kw'>&lt;-</span> <span class='fu'>createGeneSignature</span>(<span class='kw'>name</span><span class='kw'>=</span><span class='st'>"signature"</span>, <span class='fu'>c</span>(<span class='kw'>gene1</span><span class='kw'>=</span><span class='fl'>1.0</span>,<span class='kw'>gene17</span><span class='kw'>=</span><span class='fl'>1.0</span>,
-                                                     <span class='kw'>gene4</span><span class='kw'>=</span><span class='fl'>1.0</span>, <span class='kw'>gene31</span><span class='kw'>=</span>-<span class='fl'>1.0</span>,
-                                                     <span class='kw'>gene3</span><span class='kw'>=</span>-<span class='fl'>1.0</span>, <span class='kw'>gene9</span><span class='kw'>=</span><span class='fl'>1.0</span>))
-<span class='no'>sig2</span> <span class='kw'>&lt;-</span> <span class='fu'>createGeneSignature</span>(<span class='kw'>name</span><span class='kw'>=</span><span class='st'>"signature"</span>, <span class='fu'>c</span>(<span class='kw'>gene18</span><span class='kw'>=</span><span class='fl'>1.0</span>,<span class='kw'>gene29</span><span class='kw'>=</span><span class='fl'>1.0</span>,
-                                                     <span class='kw'>gene400</span><span class='kw'>=</span>-<span class='fl'>1.0</span>, <span class='kw'>gene1</span><span class='kw'>=</span>-<span class='fl'>1.0</span>,
-                                                     <span class='kw'>gene7</span><span class='kw'>=</span><span class='fl'>1.0</span>, <span class='kw'>gene9</span><span class='kw'>=</span><span class='fl'>1.0</span>))
+
+<span class='no'>sig1</span> <span class='kw'>&lt;-</span> <span class='fu'>createGeneSignature</span>(
+           <span class='kw'>name</span> <span class='kw'>=</span> <span class='st'>"CD8 Markers"</span>,
+           <span class='kw'>sigData</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='kw'>CD8A</span><span class='kw'>=</span><span class='fl'>1</span>, <span class='kw'>CD8B</span><span class='kw'>=</span><span class='fl'>1</span>, <span class='kw'>GZMK</span><span class='kw'>=</span><span class='fl'>1</span>, <span class='kw'>GZMB</span><span class='kw'>=</span><span class='fl'>1</span>,
+                       <span class='kw'>GZMH</span><span class='kw'>=</span><span class='fl'>1</span>, <span class='kw'>GZMA</span><span class='kw'>=</span><span class='fl'>1</span>, <span class='kw'>GNLY</span><span class='kw'>=</span><span class='fl'>1</span>, <span class='kw'>DUSP2</span><span class='kw'>=</span><span class='fl'>1</span>,
+                       <span class='kw'>EOMES</span><span class='kw'>=</span><span class='fl'>1</span>, <span class='kw'>TBX21</span><span class='kw'>=</span><span class='fl'>1</span>, <span class='kw'>PRMD1</span><span class='kw'>=</span><span class='fl'>1</span>, <span class='kw'>PRF1</span><span class='kw'>=</span><span class='fl'>1</span>,
+                       <span class='kw'>IFNG</span><span class='kw'>=</span><span class='fl'>1</span>)
+       )
+
+<span class='no'>cc_sigs</span> <span class='kw'>&lt;-</span> <span class='st'>"path/to/cell_cycle.gmt"</span>
+
+<span class='no'>sigs</span> <span class='kw'>&lt;-</span> <span class='fu'>c</span>(<span class='no'>sig1</span>, <span class='no'>cc_sigs</span>)
+
+<span class='no'>vis</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='VISION-class.html'>Vision</a></span>(<span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>expMat</span>, <span class='kw'>signatures</span> <span class='kw'>=</span> <span class='no'>sigs</span>)
+
+
 <span class='co'># }</span></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -172,7 +195,7 @@ and `-1.0` for down regulated (negtive) genes.</p></td>
 
       <footer>
       <div class="copyright">
-  <p>Developed by Matt Jones, Tal Ashuach, David Detomaso.</p>
+  <p>Developed by Matt Jones, David Detomaso, Tal Ashuach.</p>
 </div>
 
 <div class="pkgdown">

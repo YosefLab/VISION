@@ -34,8 +34,7 @@ localhost — saveAndViewResults,Vision-method • VISION</title>
 <meta property="og:title" content="Save the VISION object as an .RDS file and view the results on a
 localhost — saveAndViewResults,Vision-method" />
 
-<meta property="og:description" content="Save the results object as an RDS file for future use, and launch a local
-server to explore the results with a browser." />
+<meta property="og:description" content="This is just a convience function wrapping two function calls" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -87,6 +86,9 @@ server to explore the results with a browser." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/Signatures.html">Gene Signatures</a>
+    </li>
+    <li>
       <a href="../articles/VISION-vignette.html">Introduction to VISION</a>
     </li>
     <li>
@@ -96,6 +98,9 @@ server to explore the results with a browser." />
       <a href="../articles/trajectories.html">Trajectory Inference and VISION</a>
     </li>
   </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
       
@@ -121,22 +126,17 @@ localhost</h1>
 
     <div class="ref-description">
     
-    <p>Save the results object as an RDS file for future use, and launch a local
-server to explore the results with a browser.</p>
+    <p>This is just a convience function wrapping two function calls</p>
     
     </div>
 
     <pre class="usage"><span class='co'># S4 method for Vision</span>
-<span class='fu'>saveAndViewResults</span>(<span class='no'>fpout</span>, <span class='kw'>ofile</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>port</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>host</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>browser</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
+<span class='fu'>saveAndViewResults</span>(<span class='no'>object</span>, <span class='kw'>ofile</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>port</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>host</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>browser</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
-    <tr>
-      <th>fpout</th>
-      <td><p>VISION object</p></td>
-    </tr>
     <tr>
       <th>ofile</th>
       <td><p>the path to save the object in. If NULL, the object is saved
@@ -152,32 +152,32 @@ random port between 8000 and 9999 is chosen.</p></td>
       <td><p>The host used to serve the output viewer. If omitted, "127.0.0.1"
 is used.</p></td>
     </tr>
+    <tr>
+      <th>vis</th>
+      <td><p>VISION object</p></td>
+    </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p>the path of the saved file</p>
     
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>saveAndViewResults(vis, 'vision_results.rds')</p>
+<p>is equivalent to:</p>
+<p>saveRDS(vis, 'vision_results.rds')
+    viewResults(vis)</p>
+    
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><span class='co'># NOT RUN {</span>
-<span class='no'>expMat</span> <span class='kw'>&lt;-</span> <span class='fu'>matrix</span>(<span class='fu'>rnorm</span>(<span class='fl'>200000</span>), <span class='kw'>nrow</span><span class='kw'>=</span><span class='fl'>500</span>)
-<span class='fu'>rownames</span>(<span class='no'>expMat</span>) <span class='kw'>&lt;-</span> <span class='fu'>paste0</span>(<span class='st'>"gene"</span>,<span class='fl'>1</span>:<span class='fl'>500</span>)
+<span class='no'>vis</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='VISION-class.html'>Vision</a></span>(<span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>expMat</span>, <span class='kw'>signatures</span> <span class='kw'>=</span> <span class='no'>sigs</span>)
 
-<span class='co'>#create 20 signatures of 25 genes each</span>
-<span class='no'>sigs</span> <span class='kw'>&lt;-</span> <span class='fu'>lapply</span>(<span class='fl'>1</span>:<span class='fl'>20</span>, <span class='kw'>function</span>(<span class='no'>i</span>) {
-<span class='no'>sigData</span> <span class='kw'>&lt;-</span> <span class='fu'>sign</span>(<span class='fu'>rnorm</span>(<span class='fl'>25</span>))
-<span class='fu'>names</span>(<span class='no'>sigData</span>) <span class='kw'>&lt;-</span> <span class='fu'>paste0</span>(<span class='st'>"gene"</span>,<span class='fu'>sample</span>(<span class='fl'>1</span>:<span class='fl'>100</span>,<span class='fl'>25</span>))
-<span class='fu'>return</span>(<span class='fu'><a href='createGeneSignature.html'>createGeneSignature</a></span>(<span class='kw'>name</span> <span class='kw'>=</span> <span class='fu'>paste0</span>(<span class='st'>"sig"</span>,<span class='no'>i</span>),
-                                 <span class='kw'>sigData</span> <span class='kw'>=</span> <span class='no'>sigData</span>))
-})
+<span class='fu'>options</span>(<span class='kw'>mc.cores</span><span class='kw'>=</span><span class='fl'>10</span>) <span class='co'># Use 10 cores</span>
+<span class='no'>vis</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='analyze-Vision-method.html'>analyze</a></span>(<span class='no'>vis</span>)
 
-<span class='no'>fp</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='VISION-class.html'>Vision</a></span>(<span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>expMat</span>, <span class='kw'>signatures</span> <span class='kw'>=</span> <span class='no'>sigs</span>)
-
-<span class='co'>## analyze requires actual non-random data to run properly</span>
-<span class='co'># }</span><span class='co'># NOT RUN {</span>
-<span class='no'>fp.out</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='analyze-Vision-method.html'>analyze</a></span>(<span class='no'>fp</span>)
-<span class='fu'>saveAndViewResults</span>(<span class='no'>fp.out</span>)
+<span class='fu'>saveAndViewResults</span>(<span class='no'>vis</span>, <span class='st'>'vision_results.rds'</span>) <span class='co'># Saves and launches dynamic output report</span>
 <span class='co'># }</span></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -186,6 +186,8 @@ is used.</p></td>
       <li><a href="#arguments">Arguments</a></li>
       
       <li><a href="#value">Value</a></li>
+
+      <li><a href="#details">Details</a></li>
       
       <li><a href="#examples">Examples</a></li>
     </ul>
@@ -195,7 +197,7 @@ is used.</p></td>
 
       <footer>
       <div class="copyright">
-  <p>Developed by Matt Jones, Tal Ashuach, David Detomaso.</p>
+  <p>Developed by Matt Jones, David Detomaso, Tal Ashuach.</p>
 </div>
 
 <div class="pkgdown">

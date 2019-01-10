@@ -6,8 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Cluster single cells so signal is maintained but the sample size and noise
-are reduce, using the louvain clustering algorithm — applyMicroClustering • VISION</title>
+<title>Pool cells into microclusters — applyMicroClustering • VISION</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -31,11 +30,9 @@ are reduce, using the louvain clustering algorithm — applyMicroClustering • 
 
 
 
-<meta property="og:title" content="Cluster single cells so signal is maintained but the sample size and noise
-are reduce, using the louvain clustering algorithm — applyMicroClustering" />
+<meta property="og:title" content="Pool cells into microclusters — applyMicroClustering" />
 
-<meta property="og:description" content="Cluster single cells so signal is maintained but the sample size and noise
-are reduce, using the louvain clustering algorithm" />
+<meta property="og:description" content="Merges similar transcriptional profiles into representative 'pools'" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -87,6 +84,9 @@ are reduce, using the louvain clustering algorithm" />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/Signatures.html">Gene Signatures</a>
+    </li>
+    <li>
       <a href="../articles/VISION-vignette.html">Introduction to VISION</a>
     </li>
     <li>
@@ -96,6 +96,9 @@ are reduce, using the louvain clustering algorithm" />
       <a href="../articles/trajectories.html">Trajectory Inference and VISION</a>
     </li>
   </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
       
@@ -113,22 +116,20 @@ are reduce, using the louvain clustering algorithm" />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Cluster single cells so signal is maintained but the sample size and noise
-are reduce, using the louvain clustering algorithm</h1>
+    <h1>Pool cells into microclusters</h1>
     
     <div class="hidden name"><code>applyMicroClustering.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Cluster single cells so signal is maintained but the sample size and noise
-are reduce, using the louvain clustering algorithm</p>
+    <p>Merges similar transcriptional profiles into representative 'pools'</p>
     
     </div>
 
     <pre class="usage"><span class='fu'>applyMicroClustering</span>(<span class='no'>exprData</span>, <span class='kw'>cellsPerPartition</span> <span class='kw'>=</span> <span class='fl'>100</span>,
   <span class='kw'>filterInput</span> <span class='kw'>=</span> <span class='st'>"fano"</span>, <span class='kw'>filterThreshold</span> <span class='kw'>=</span> <span class='fu'>round</span>(<span class='fu'>ncol</span>(<span class='no'>exprData</span>) * <span class='fl'>0.2</span>),
-  <span class='kw'>preserve_clusters</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>latentSpace</span> <span class='kw'>=</span> <span class='fu'>matrix</span>(<span class='fl'>NA</span>, <span class='fl'>1</span>, <span class='fl'>1</span>))</pre>
+  <span class='kw'>preserve_clusters</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>latentSpace</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -142,18 +143,36 @@ are reduce, using the louvain clustering algorithm</p>
       <td><p>control over the minimum number of cells to put into each supercell</p></td>
     </tr>
     <tr>
+      <th>filterInput</th>
+      <td><p>name of filtering method ('threshold' or 'fano') or list of
+genes to use when computing projections.</p></td>
+    </tr>
+    <tr>
+      <th>filterThreshold</th>
+      <td><p>Threshold to apply when using the 'threshold' projection genes filter.
+If greater than 1, this specifies the number of cells in which a gene must be detected
+for it to be used when computing PCA. If less than 1, this instead specifies the proportion of cells needed</p></td>
+    </tr>
+    <tr>
       <th>preserve_clusters</th>
       <td><p>named factor vector denoted cluster boundaries to preserve</p></td>
     </tr>
     <tr>
       <th>latentSpace</th>
-      <td><p>numeric matrix cells x components</p></td>
+      <td><p>(Optional) Latent space to be used instead of PCA numeric matrix cells x components</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p>pooled cells - named list of vectors - cells in each supercell</p>
+    
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>A latent space is computed for the expression data via PCA after
+filtering on genes (using parameters `filterInput` and `filterThreshold`).</p>
+<p>Alternately, a latent space can be supplied via the `latentSpace` argument</p>
+<p>Euclidean distance within the latent space is then used to create cell pools</p>
     
 
   </div>
@@ -163,6 +182,8 @@ are reduce, using the louvain clustering algorithm</p>
       <li><a href="#arguments">Arguments</a></li>
       
       <li><a href="#value">Value</a></li>
+
+      <li><a href="#details">Details</a></li>
           </ul>
 
   </div>
@@ -170,7 +191,7 @@ are reduce, using the louvain clustering algorithm</p>
 
       <footer>
       <div class="copyright">
-  <p>Developed by Matt Jones, Tal Ashuach, David Detomaso.</p>
+  <p>Developed by Matt Jones, David Detomaso, Tal Ashuach.</p>
 </div>
 
 <div class="pkgdown">

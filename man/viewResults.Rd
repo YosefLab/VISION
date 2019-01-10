@@ -14,7 +14,7 @@
   browser = TRUE, name = NULL)
 }
 \arguments{
-\item{object}{VISION object or path to a file containing such an
+\item{object}{VISION object or path to an RDS file containing such an
 object (saved using saveAndViewResults, or directly using saveRDS)}
 
 \item{port}{The port on which to serve the output viewer.  If omitted, a
@@ -34,22 +34,15 @@ None
 launch a local server to explore the results with a browser.
 }
 \examples{
-expMat <- matrix(rnorm(200000), nrow=500)
-rownames(expMat) <- paste0("gene",1:500)
-
-#create 20 signatures of 25 genes each
-sigs <- lapply(1:20, function(i) {
-sigData <- sign(rnorm(25))
-names(sigData) <- paste0("gene",sample(1:100,25))
-return(createGeneSignature(name = paste0("sig",i),
-                                 sigData = sigData))
-})
-
-fp <- Vision(data = expMat, signatures = sigs)
-
-## analyze requires actual non-random data to run properly
 \dontrun{
-fp.out <- analyze(fp)
-viewResults(fp.out)
+
+vis <- Vision(data = expMat, signatures = sigs)
+
+options(mc.cores=10) # Use 10 cores
+vis <- analyze(vis)
+
+saveRDS(vis, 'vision_results.rds') # (Optional) Save results
+
+viewResults(vis) # Launches dynamic output report
 }
 }

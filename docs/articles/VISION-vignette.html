@@ -52,6 +52,9 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
+      <a href="../articles/Signatures.html">Gene Signatures</a>
+    </li>
+    <li>
       <a href="../articles/VISION-vignette.html">Introduction to VISION</a>
     </li>
     <li>
@@ -61,6 +64,9 @@
       <a href="../articles/trajectories.html">Trajectory Inference and VISION</a>
     </li>
   </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
 <ul class="nav navbar-nav navbar-right"></ul>
@@ -76,9 +82,9 @@
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1>Introduction to VISION</h1>
-                        <h4 class="author">Matthew Jones</h4>
+                        <h4 class="author">Matthew Jones and David DeTomaso</h4>
             
-            <h4 class="date">7 November 2018</h4>
+            <h4 class="date">4 January 2019</h4>
       
       
       <div class="hidden name"><code>VISION-vignette.Rmd</code></div>
@@ -95,221 +101,139 @@ pre.redcars {
     background-color: #ffbbbb !important;
 }
 </style>
-<div id="introduction" class="section level1">
-<h1 class="hasAnchor">
-<a href="#introduction" class="anchor"></a>Introduction</h1>
-<p>Recent technological advancements have allowed transcriptional profiling at the single-cell level. This has enabled a deeper investigation into cellular heterogeneity(Patel et al 2014), the identification of new cellular subtypes (Villani et al 2017), and more detailed modeling of developmental processes. Notably, the data produced in a single-cell RNA-seq (scRNA-seq) experiment is distinct from that of bulk RNA-seq in that it is typically sparse (with many expressed genes remaining undetected), and consists of a very high number of data points (up to hundreds of thousands of cells as in the Mouse Cell Atlas). Furthermore, while bulk studies are usually conducted in a comparative setting (e.g., case control studies), most investigations of scRNA-seq are based on comparisons of cells within a sample, without any preconceived stratification of these cells.</p>
-<p>A typical primary step in the analysis of scRNA-seq data is therefore to extract a meaningful stratification of cells into groups or along some continuum in a data- driven manner, using various models for estimating cell-to-cell similarity. One way to achieve such a stratification is to cluster cells in a low-dimensional “latent” space where cells can be related to one another using euclidean distances. While Principal Component Analysis (PCA) is a commonly used method, more recently linear factor models such as ZIFA or zinbWave and nonlinear deep generative models such as scVI or DCA have been developed to specifically address the underlying distributions found in single-cell read counts. Alternately, if the cells are expected to vary along a continuum, such as that which arises during a developmental time-course, cell-cell similarity maps can be used for inferring a tree- like representation of the data, and there are a variety of methods designed for this purpose (summarized in a recent review by Saelens and Cannoodt et al, 2018).</p>
-<p>Here we present VISION, a module that can sit downstream of other common analyses such as clustering, dimensionality reduction, and trajectory inference. Specifically, VISION aids in the interpretation of scRNA-seq data, with or without predetermined labels, or stratifications of the data (e.g. clusterings) using the notion of cell-cell similarity maps (as interpreted from some latent space) and biological signatures (functional sets of genes that can be obtained online from, for example, MSigDB). Finally, VISION can evaluate the effect of cell- level meta data, such as library quality, batch, clinical information, or additional experimental readouts (e.g., protein levels from a Cite-Seq experiment). Importantly, the use of VISION can greatly facilitate collaborative projects, as it offers a low- latency interactive report for the end- user, which can be hosted online and viewed on a web browser without the need for installing developer-grade software. VISION is freely available as an R package on Github ()</p>
-</div>
 <div id="preliminaries" class="section level1">
 <h1 class="hasAnchor">
 <a href="#preliminaries" class="anchor"></a>Preliminaries</h1>
 <p>If you have yet to install VISION, we recommend installing the package from github to install this pacakge. Full source code can be found at the VISION github repository, available <a href="http://www.github.com/YosefLab/VISION">here</a>.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="op">&gt;</span><span class="st"> </span><span class="kw">require</span>(devtools)</a>
 <a class="sourceLine" id="cb1-2" data-line-number="2"><span class="op">&gt;</span><span class="st"> </span><span class="kw">install_github</span>(<span class="st">"YosefLab/VISION"</span>)</a></code></pre></div>
-<p>Once VISION and R are installed, you may load in VISION and all of its dependencies using <code>library(VISION)</code>.</p>
+<p>Once VISION and R are installed, you may load in VISION using <code>library(VISION)</code>.</p>
 </div>
 <div id="using-vision" class="section level1">
 <h1 class="hasAnchor">
 <a href="#using-vision" class="anchor"></a>Using VISION</h1>
-<div id="the-vision-pipeline" class="section level2">
+<p>Running an analysis with vision consists of three steps:</p>
+<ol style="list-style-type: decimal">
+<li>Creating the VISION object</li>
+<li>Running the <code>analyze</code> function</li>
+<li>Browsing results</li>
+</ol>
+<div id="creating-the-vision-object" class="section level2">
 <h2 class="hasAnchor">
-<a href="#the-vision-pipeline" class="anchor"></a>The VISION Pipeline</h2>
-<p>VISION generally follows the same pipeline from iteration to iteration, where minor differences can be specified via the various parameters in a VISION object. On a typical VISION run:</p>
+<a href="#creating-the-vision-object" class="anchor"></a>Creating the VISION object</h2>
+<p>Creating the VISION object requires a gene expression matrix and <em>either</em> a list of Gene Signatures or a data.frame of meta-data.</p>
+<p>In this example - both are provided.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="co"># Load VISION</span></a>
+<a class="sourceLine" id="cb2-2" data-line-number="2"><span class="kw">library</span>(VISION)</a>
+<a class="sourceLine" id="cb2-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb2-4" data-line-number="4"><span class="co"># Read in expression counts (Genes X Cells)</span></a>
+<a class="sourceLine" id="cb2-5" data-line-number="5">counts &lt;-<span class="st"> </span><span class="kw">read.table</span>(<span class="st">"data/expression_counts.txt.gz"</span>,</a>
+<a class="sourceLine" id="cb2-6" data-line-number="6">                     <span class="dt">header =</span> <span class="ot">TRUE</span>,</a>
+<a class="sourceLine" id="cb2-7" data-line-number="7">                     <span class="dt">sep =</span> <span class="st">'</span><span class="ch">\t</span><span class="st">'</span>,</a>
+<a class="sourceLine" id="cb2-8" data-line-number="8">                     <span class="dt">row.names =</span> <span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb2-9" data-line-number="9"></a>
+<a class="sourceLine" id="cb2-10" data-line-number="10"><span class="co"># Scale counts within a sample</span></a>
+<a class="sourceLine" id="cb2-11" data-line-number="11">n.umi &lt;-<span class="st"> </span><span class="kw">colSums</span>(counts)</a>
+<a class="sourceLine" id="cb2-12" data-line-number="12"></a>
+<a class="sourceLine" id="cb2-13" data-line-number="13">scaled_counts &lt;-<span class="st"> </span><span class="kw">t</span>(<span class="kw">t</span>(counts) <span class="op">/</span><span class="st"> </span>n.umi) <span class="op">*</span><span class="st"> </span><span class="kw">median</span>(n.umi)</a>
+<a class="sourceLine" id="cb2-14" data-line-number="14"></a>
+<a class="sourceLine" id="cb2-15" data-line-number="15"><span class="co"># Read in meta data (Cells x Vars)</span></a>
+<a class="sourceLine" id="cb2-16" data-line-number="16">meta =<span class="st"> </span><span class="kw">read.table</span>(<span class="st">"data/glio_meta.txt.gz"</span>, <span class="dt">sep=</span><span class="st">'</span><span class="ch">\t</span><span class="st">'</span>, <span class="dt">header=</span>T, <span class="dt">row.names=</span><span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb2-17" data-line-number="17"></a>
+<a class="sourceLine" id="cb2-18" data-line-number="18">vis &lt;-<span class="st"> </span><span class="kw"><a href="../reference/VISION-class.html">Vision</a></span>(scaled_counts, </a>
+<a class="sourceLine" id="cb2-19" data-line-number="19">              <span class="dt">signatures =</span> <span class="kw">c</span>(<span class="st">"data/h.all.v5.2.symbols.gmt"</span>), </a>
+<a class="sourceLine" id="cb2-20" data-line-number="20">              <span class="dt">meta =</span> meta)</a></code></pre></div>
+<p><strong>Expression Data</strong></p>
+<p>The provided expression data should be scaled and normalized. The example above shows just a simple UMI-scaling, but it is recommended to apply more advanced normalization procedures such as batch correction or removal of technical confounders.</p>
+<p>The expression data should not be log-transformed prior to loading into VISION.</p>
+<p><strong>Signatures</strong></p>
+<p>Signatures can be provided as a list of paths to signature files (*.gmt) or Signature objects.</p>
+<p>See <a href="Signatures.html">the signature vignette</a> for more information on finding or creating gene Signatures.</p>
+<p><strong>Meta Data</strong></p>
+<p>An R data.frame with cell-level meta-data. This could be confounding variables (e.g. percentage of mitochondrial RNA, number of genes detected) or experimental covariates (e.g. genotype, donor, batch).</p>
+<p>This input is optional if Signatures are provided.</p>
+<p><strong>Other Options</strong></p>
+<p>Other options and inputs can be provided to customize how VISION runs. For information on this, see the “Customizing VISION Analysis” section below.</p>
+</div>
+<div id="running-an-analysis" class="section level2">
+<h2 class="hasAnchor">
+<a href="#running-an-analysis" class="anchor"></a>Running an Analysis</h2>
+<p>To run an analysis, simply call the analyze function:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb3-2" data-line-number="2"><span class="co"># Set the number of threads when running parallel computations</span></a>
+<a class="sourceLine" id="cb3-3" data-line-number="3"><span class="kw">options</span>(<span class="dt">mc.cores =</span> <span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb3-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb3-5" data-line-number="5">vis &lt;-<span class="st"> </span><span class="kw"><a href="../reference/analyze-Vision-method.html">analyze</a></span>(vis)</a></code></pre></div>
+</div>
+<div id="viewing-results" class="section level2">
+<h2 class="hasAnchor">
+<a href="#viewing-results" class="anchor"></a>Viewing Results</h2>
+<p>With the processed Vision object, a dynamic web report can be generated with the <code>viewResults</code> function.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="kw"><a href="../reference/viewResults.html">viewResults</a></span>(vis)</a></code></pre></div>
+<p>This will launch a browser running the interactive report.</p>
+<p>Other options (port, host, browser) can be provided to control how this occurs. For example, if you are launching a report on a remote server (such as an AWS instance) and want to make it accessible to others, run this with <code>host="0.0.0.0"</code>, some selected port number (e.g. <code>port=8888</code>), and <code>browser=FALSE</code> (so a browser isn’t auto-opened). Then the report should be available at “&lt;your instance IP address&gt;:8888”. (Note: You will also likely need to enable inbound traffic on your selected port for this to work correctly).</p>
+<p>Alternately, you can work with the VISION object directly in R. For example:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="co"># Display autocorrelation coefficients for signatures</span></a>
+<a class="sourceLine" id="cb5-2" data-line-number="2"><span class="kw">head</span>(vis<span class="op">@</span>SigConsistencyScores<span class="op">@</span>sigProjMatrix)</a>
+<a class="sourceLine" id="cb5-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb5-4" data-line-number="4"><span class="co"># View autocorrelation empirical p-values</span></a>
+<a class="sourceLine" id="cb5-5" data-line-number="5"><span class="kw">head</span>(vis<span class="op">@</span>SigConsistencyScores<span class="op">@</span>emp_pMatrix)</a>
+<a class="sourceLine" id="cb5-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb5-7" data-line-number="7"><span class="co"># Plot signature scores for a signature of interest</span></a>
+<a class="sourceLine" id="cb5-8" data-line-number="8">tsne &lt;-<span class="st"> </span>vis<span class="op">@</span>Projections<span class="op">$</span>tSNE30</a>
+<a class="sourceLine" id="cb5-9" data-line-number="9">sigScores &lt;-<span class="st"> </span>vis<span class="op">@</span>sigScores[, <span class="st">"HALLMARK_INTERFERON_GAMMA_RESPONSE"</span>]</a>
+<a class="sourceLine" id="cb5-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb5-11" data-line-number="11"><span class="kw">library</span>(ggplot2)</a>
+<a class="sourceLine" id="cb5-12" data-line-number="12"><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span>() <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="dt">x=</span>tsne[, <span class="dv">1</span>], <span class="dt">y=</span>tsne[, <span class="dv">2</span>], <span class="dt">color=</span>sigScores) <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html">geom_point</a></span>()</a></code></pre></div>
+<p>For more details on the structure of the VISION object see XXX.</p>
+</div>
+<div id="customizing-the-latent-space" class="section level2">
+<h2 class="hasAnchor">
+<a href="#customizing-the-latent-space" class="anchor"></a>Customizing the Latent Space</h2>
+<p>VISION requires a latent space to model the similarity between cells (used to determine a cell’s local neighborhood).</p>
+<p>By default, this is calculated via PCA on a subset of the genes. A few arguments control this process:</p>
 <ul>
-<li>If a latent space is not specified, PCA is performed and the top 30 components are retained.</li>
-<li>A KNN graph is constructed from the latent space, named the <em>cell-cell similarity map</em>
+<li>
+<code>projection_genes</code> - controls how genes are selected for PCA. Options are:
+<ul>
+<li>
+<code>"threshold"</code> - use a threshold to select genes. The <code>threshold</code> argument specifies either the number or proportion of genes in which a cell must be expressed to be included.</li>
+<li>
+<code>"fano"</code> - first the “threshold” filter is applied. Then genes are ordered by mean expression into 30 bins and within each bin, genes with a high fano factor (2 MAD above the median) are retained</li>
+<li>character vector of gene names - specify the genes to use directly</li>
+</ul>
 </li>
-<li>Signature scores are computed using the expression matrix</li>
-<li>Signature local “consistencies” on the cell-cell similarity map are computed using the Geary-C statistic, an auto-correlation statistic.</li>
-<li>An interactive web-based report is generated that can be used to explore and interpret the dataset.</li>
+</ul>
+<div id="specifying-a-custom-latent-space" class="section level3">
+<h3 class="hasAnchor">
+<a href="#specifying-a-custom-latent-space" class="anchor"></a>Specifying a Custom Latent Space</h3>
+<p>Alternately, if a latent space has been computed elsewhere (either via PCA, or other factor analysis methods such as <a href="https://github.com/epierson9/ZIFA">ZIFA</a>, <a href="https://github.com/drisso/zinbwave">ZINB-WaVE</a> or <a href="https://github.com/YosefLab/scVI">scVI</a>) it can be provided via the <code>latentSpace</code> argument as a data frame.</p>
+</div>
+</div>
+<div id="micropooling" class="section level2">
+<h2 class="hasAnchor">
+<a href="#micropooling" class="anchor"></a>Micropooling</h2>
+<p>scRNA-seq experiments have grown in size over the past couple of years, and as such we have provided an algorithm for pooling together similar cells and continuing with analysis, thus reducing the cell-wise time complexity of the VISION pipeline. For more information, please see our micropooling vignette.</p>
+<p>You can control the parameters of the micropooling algorithm using two arguments:</p>
+<ul>
+<li>
+<code>pool</code> - boolean specifying whether or not to apply micropooling. By default this is set to ‘auto’ and micropooling is run when the number of cells exceeds 15,000.</li>
+<li>
+<code>cellsPerPartition</code> - integer specifying the maximum number of cells per micropool.</li>
 </ul>
 </div>
-<div id="analysis-of-glioblastoma-cells-with-vision" class="section level2">
+<div id="adding-2d-projections" class="section level2">
 <h2 class="hasAnchor">
-<a href="#analysis-of-glioblastoma-cells-with-vision" class="anchor"></a>Analysis of Glioblastoma Cells with VISION</h2>
-<p>As described above, VISION can be approached from many directions. Here, we present the simplest of applications, utilizing the <code>analyze</code> function.</p>
-<p>First, we’ll walk through how to create a VISION object for the <code>analyze</code> function. Most importantly, we need expression data and signature data. For this example we’ll also include some meta-data, describing which patient each cell came from. In practice, this meta-data can be any range of discrete or continuous data describing each cell - for example, upstream analyses such as clustering results or important QC metric such as the number of UMIs per cell. This meta data should be a data frame where the row labels match the column labels of the expression matrix.</p>
-<p>We’ll operate on a set of 430 cells from five primary glioblastomas sequenced using scRNA-seq across 5,948 genes (Patel et. al. 2014). For our signatures, we will use the Hallmark gene set from MSigDB, which is available <a href="http://software.broadinstitute.org/gsea/msigdb/collections.jsp#H">here</a>. To note, we can specify multiple signature files but we’ll stick to one for this example.</p>
-<p>The expression data and siganture files: the expression data can be either a path to a tab-delimited .txt file, a .mtx sparse matrix format file, a numeric matrix directly, a sparse matrix from the Matrix package, an ExpressionSet object, or a SummerizedExperiment object; signature data can be provided as a list of .gmt files, .txt files or Signature objects (additional info on signature below).</p>
-<pre class="redcars"><code>To note, it's recommended to provide *scaled* expression data (e.g. counts per million, or median number of UMIs), without preforming any kind of prior normalization. However, VISION should still be able to process normalized expression counts.</code></pre>
-<p>We can also leverage a couple of other paramters of VISION: namely the method for normalizing the expression data before calculating signature scores, a meta data file, a set of desired projections, and a set of genes we’d like to utilize for projections.</p>
-<pre class="bluecars"><code>When specifying meta data, please provide a data frame where you have rows representing cells and each column a separate meta data item. Please make sure that the cell labels in the meta data match exactly the cell labels in the expression data matrix.</code></pre>
-<pre class="bluecars"><code>VISION supports a range of dimensionality reduction methods for visualization:
-- tSNE30 (t-distributed Stochastic Neighborhood Embedding with perplexity 30) 
-- tSNE10 (tSNE with perplexity 10)
-- ICA
-- ISOMap
-
-VISION will always compute the first three principal components for visualization. Unless specified otherwise, VISION will always compute tSNE30 as well as this PCA.</code></pre>
-<p>All of these initialization would result in the same VISION object being created:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="co"># -- load VISION</span></a>
-<a class="sourceLine" id="cb5-2" data-line-number="2"><span class="kw">library</span>(VISION)</a></code></pre></div>
-<pre><code>## Warning: replacing previous import 'Matrix::cov2cor' by 'stats::cov2cor'
-## when loading 'VISION'</code></pre>
-<pre><code>## Warning: replacing previous import 'Matrix::toeplitz' by 'stats::toeplitz'
-## when loading 'VISION'</code></pre>
-<pre><code>## Warning: replacing previous import 'Matrix::update' by 'stats::update' when
-## loading 'VISION'</code></pre>
-<pre><code>## Warning: replacing previous import 'Matrix::tail' by 'utils::tail' when
-## loading 'VISION'</code></pre>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" data-line-number="1"><span class="co"># -- read in expression data set</span></a>
-<a class="sourceLine" id="cb10-2" data-line-number="2">expr &lt;-<span class="st"> </span><span class="kw">as.matrix</span>(<span class="kw">read.table</span>(<span class="st">"data/expression_matrix.txt.gz"</span>, </a>
-<a class="sourceLine" id="cb10-3" data-line-number="3">                   <span class="dt">header =</span> <span class="ot">TRUE</span>, <span class="dt">sep =</span> <span class="st">'</span><span class="ch">\t</span><span class="st">'</span>, <span class="dt">row.names =</span> <span class="dv">1</span>))</a>
-<a class="sourceLine" id="cb10-4" data-line-number="4"></a>
-<a class="sourceLine" id="cb10-5" data-line-number="5"><span class="co"># -- scale expression matrix by the median number of UMIs</span></a>
-<a class="sourceLine" id="cb10-6" data-line-number="6">n.umi =<span class="st"> </span><span class="kw">median</span>(<span class="kw">colSums</span>(expr))</a>
-<a class="sourceLine" id="cb10-7" data-line-number="7">expr =<span class="st"> </span><span class="kw">apply</span>(expr, <span class="dv">2</span>, <span class="cf">function</span>(x) (x <span class="op">*</span><span class="st"> </span>n.umi) <span class="op">/</span><span class="st"> </span><span class="kw">sum</span>(x))</a>
-<a class="sourceLine" id="cb10-8" data-line-number="8"></a>
-<a class="sourceLine" id="cb10-9" data-line-number="9"><span class="co"># -- read in meta data</span></a>
-<a class="sourceLine" id="cb10-10" data-line-number="10">meta =<span class="st"> </span><span class="kw">read.table</span>(<span class="st">"data/glio_meta.txt.gz"</span>, <span class="dt">sep=</span><span class="st">'</span><span class="ch">\t</span><span class="st">'</span>, <span class="dt">header=</span>T, <span class="dt">row.names=</span><span class="dv">1</span>)</a>
-<a class="sourceLine" id="cb10-11" data-line-number="11">meta =<span class="st"> </span>meta[<span class="kw">colnames</span>(expr), ,drop=F]</a>
-<a class="sourceLine" id="cb10-12" data-line-number="12">meta[,<span class="dv">1</span>] =<span class="st"> </span><span class="kw">as.factor</span>(meta[,<span class="dv">1</span>])</a>
-<a class="sourceLine" id="cb10-13" data-line-number="13"></a>
-<a class="sourceLine" id="cb10-14" data-line-number="14">vis &lt;-<span class="st"> </span><span class="kw"><a href="../reference/VISION-class.html">Vision</a></span>(expr, <span class="kw">c</span>(<span class="st">"data/h.all.v5.2.symbols.gmt"</span>), </a>
-<a class="sourceLine" id="cb10-15" data-line-number="15">              <span class="dt">meta =</span> meta,</a>
-<a class="sourceLine" id="cb10-16" data-line-number="16">              <span class="dt">projection_methods=</span><span class="kw">c</span>(<span class="st">"tSNE30"</span>,  <span class="st">"ICA"</span>),</a>
-<a class="sourceLine" id="cb10-17" data-line-number="17">              <span class="dt">projection_genes =</span> <span class="st">"fano"</span>)</a></code></pre></div>
-<pre><code>## Loading data from data/h.all.v5.2.symbols.gmt ...</code></pre>
-<p>If the user would like to specify a list of genes to use (for example from a previous filtering scheme), the user can replace the last call to the Vision constructor with these lines:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" data-line-number="1"><span class="co"># -- find genes to use for projections</span></a>
-<a class="sourceLine" id="cb12-2" data-line-number="2">f.genes =<span class="st"> </span>VISION<span class="op">:::</span><span class="kw"><a href="../reference/filterGenesFano.html">filterGenesFano</a></span>(expr)</a>
-<a class="sourceLine" id="cb12-3" data-line-number="3"></a>
-<a class="sourceLine" id="cb12-4" data-line-number="4"><span class="co"># -- Create a VISION object with existing matrix</span></a>
-<a class="sourceLine" id="cb12-5" data-line-number="5">vis &lt;-<span class="st"> </span><span class="kw"><a href="../reference/VISION-class.html">Vision</a></span>(expr, </a>
-<a class="sourceLine" id="cb12-6" data-line-number="6">              <span class="kw">c</span>(<span class="st">"data/h.all.v5.2.symbols.gmt"</span>), </a>
-<a class="sourceLine" id="cb12-7" data-line-number="7">              <span class="dt">meta =</span> meta,</a>
-<a class="sourceLine" id="cb12-8" data-line-number="8">              <span class="dt">projection_methods=</span><span class="kw">c</span>(<span class="st">"tSNE30"</span>,  <span class="st">"ICA"</span>), </a>
-<a class="sourceLine" id="cb12-9" data-line-number="9">              <span class="dt">projection_genes =</span> f.genes)</a></code></pre></div>
-<p>To note, you can also create a VISION object with a SummarizedExperiment object:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" data-line-number="1"><span class="co">## -- Create a VISION object with a SummarizedExperiment</span></a>
-<a class="sourceLine" id="cb13-2" data-line-number="2">se &lt;-<span class="st"> </span>SummarizedExperiment<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/SummarizedExperiment/topics/RangedSummarizedExperiment-class">SummarizedExperiment</a></span>(<span class="dt">assays =</span> <span class="kw">list</span>(<span class="dt">counts =</span> expr))</a>
-<a class="sourceLine" id="cb13-3" data-line-number="3">vis &lt;-<span class="st"> </span><span class="kw"><a href="../reference/VISION-class.html">Vision</a></span>(se, <span class="kw">c</span>(<span class="st">"data/h.all.v5.2.symbols.gmt"</span>))</a></code></pre></div>
-<p>Now, with a VISION object, we can run <code>analyze</code> which will run the VISION pipeline and return another, processed VISION object.</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" data-line-number="1"></a>
-<a class="sourceLine" id="cb14-2" data-line-number="2"><span class="co"># Set the number of threads</span></a>
-<a class="sourceLine" id="cb14-3" data-line-number="3"><span class="co"># Some pieces of the analysis will be parallelzed</span></a>
-<a class="sourceLine" id="cb14-4" data-line-number="4"><span class="kw">options</span>(<span class="dt">mc.cores =</span> <span class="dv">2</span>)</a>
-<a class="sourceLine" id="cb14-5" data-line-number="5"></a>
-<a class="sourceLine" id="cb14-6" data-line-number="6">vis &lt;-<span class="st"> </span><span class="kw"><a href="../reference/analyze-Vision-method.html">analyze</a></span>(vis)</a>
-<a class="sourceLine" id="cb14-7" data-line-number="7"><span class="co">## Centering</span></a>
-<a class="sourceLine" id="cb14-8" data-line-number="8"><span class="co">## Whitening</span></a>
-<a class="sourceLine" id="cb14-9" data-line-number="9"><span class="co">## Symmetric FastICA using logcosh approx. to neg-entropy function</span></a>
-<a class="sourceLine" id="cb14-10" data-line-number="10"><span class="co">## Iteration 1 tol=0.119713</span></a>
-<a class="sourceLine" id="cb14-11" data-line-number="11"><span class="co">## Iteration 2 tol=0.210383</span></a>
-<a class="sourceLine" id="cb14-12" data-line-number="12"><span class="co">## Iteration 3 tol=0.450565</span></a>
-<a class="sourceLine" id="cb14-13" data-line-number="13"><span class="co">## Iteration 4 tol=0.007726</span></a>
-<a class="sourceLine" id="cb14-14" data-line-number="14"><span class="co">## Iteration 5 tol=0.001647</span></a>
-<a class="sourceLine" id="cb14-15" data-line-number="15"><span class="co">## Iteration 6 tol=0.000714</span></a>
-<a class="sourceLine" id="cb14-16" data-line-number="16"><span class="co">## Iteration 7 tol=0.000355</span></a>
-<a class="sourceLine" id="cb14-17" data-line-number="17"><span class="co">## Iteration 8 tol=0.000181</span></a>
-<a class="sourceLine" id="cb14-18" data-line-number="18"><span class="co">## Iteration 9 tol=0.000091</span></a>
-<a class="sourceLine" id="cb14-19" data-line-number="19"><span class="co">## Iteration 10 tol=0.000045</span></a>
-<a class="sourceLine" id="cb14-20" data-line-number="20"><span class="co">## Iteration 11 tol=0.000022</span></a>
-<a class="sourceLine" id="cb14-21" data-line-number="21"><span class="co">## Iteration 12 tol=0.000010</span></a>
-<a class="sourceLine" id="cb14-22" data-line-number="22"><span class="co">## Iteration 13 tol=0.000005</span></a>
-<a class="sourceLine" id="cb14-23" data-line-number="23"><span class="co">##   sigSize sigBalance</span></a>
-<a class="sourceLine" id="cb14-24" data-line-number="24"><span class="co">## 1       6  1.0000000</span></a>
-<a class="sourceLine" id="cb14-25" data-line-number="25"><span class="co">## 2      10  1.0000000</span></a>
-<a class="sourceLine" id="cb14-26" data-line-number="26"><span class="co">## 3      22  1.0000000</span></a>
-<a class="sourceLine" id="cb14-27" data-line-number="27"><span class="co">## 4      34  0.9826303</span></a>
-<a class="sourceLine" id="cb14-28" data-line-number="28"><span class="co">## 5      48  0.9384921</span></a></code></pre></div>
-<p>With the processed Vision object, a dynamic web report can be generated with the <code>viewResults</code> function or the <code>saveAndViewResults</code> function, which will both save the VISIONOutput object as an .rds file and launch a web browser for the dynamic report.</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" data-line-number="1"><span class="kw"><a href="../reference/viewResults.html">viewResults</a></span>(vis)</a></code></pre></div>
+<a href="#adding-2d-projections" class="anchor"></a>Adding 2d Projections</h2>
+<p>Two-dimensional projections are used to visualize the data in the output report.</p>
+<p>By default, VISION computes tSNE on the latent space for visualization. However, other options are availabled via the <code>projection_methods</code> argument.</p>
+<p>Often times, users will have pre-computed projections that they would like to use for visualizing their data (e.g. a pre-computed tSNE, or UMAP projetction). In this case, the <code>addProjection</code> method can be used to add this view of the data to the output report.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" data-line-number="1">projection &lt;-<span class="st"> </span><span class="kw">read.csv</span>(<span class="st">"umap_results.csv"</span>)</a>
+<a class="sourceLine" id="cb6-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb6-3" data-line-number="3"><span class="co"># projection is a matirx or data.frame of dimension (Cells x 2)</span></a>
+<a class="sourceLine" id="cb6-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb6-5" data-line-number="5">vis &lt;-<span class="st"> </span><span class="kw"><a href="../reference/addProjection-Vision-method.html">addProjection</a></span>(vis, <span class="st">"UMAP"</span>, projection)</a></code></pre></div>
 </div>
-</div>
-<div id="adding-2-d-projections" class="section level1">
-<h1 class="hasAnchor">
-<a href="#adding-2-d-projections" class="anchor"></a>Adding 2-D Projections</h1>
-<p>Often times, users will have pre-computed projections that they would like to use for visualizing their data (e.g. a pre-computed tSNE, or UMAP projetction). In this case, VISION offers users to load in any number of these precomputed projections with separate calls to the <code>addProjection</code> method. These projections should be a numeric matrix, where columns correspond to components of the projection and the rows match exactly the sample names of the expression matrix of the Vision object.</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" data-line-number="1">projection &lt;-<span class="st"> </span><span class="kw">as.matrix</span>(<span class="kw">read.table</span>(<span class="op">&lt;</span>path to projection))</a>
-<a class="sourceLine" id="cb16-2" data-line-number="2"></a>
-<a class="sourceLine" id="cb16-3" data-line-number="3">vis &lt;-<span class="st"> </span><span class="kw"><a href="../reference/addProjection-Vision-method.html">addProjection</a></span>(vis, <span class="st">"CustomProjection"</span>, projection)</a></code></pre></div>
-<p>For completeness, you can also extract the projections of a particular Vision object:</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" data-line-number="1"><span class="co"># obtain a list of all projections in this Vision object</span></a>
-<a class="sourceLine" id="cb17-2" data-line-number="2">projections &lt;-<span class="st"> </span>vis<span class="op">@</span>Projections</a>
-<a class="sourceLine" id="cb17-3" data-line-number="3"></a>
-<a class="sourceLine" id="cb17-4" data-line-number="4"><span class="co"># see names of projections</span></a>
-<a class="sourceLine" id="cb17-5" data-line-number="5"><span class="kw">names</span>(projections)</a>
-<a class="sourceLine" id="cb17-6" data-line-number="6"></a>
-<a class="sourceLine" id="cb17-7" data-line-number="7"><span class="co"># Obtain a dataframe of a particular projection (rows = cells, columns=components)</span></a>
-<a class="sourceLine" id="cb17-8" data-line-number="8">pca12 =<span class="st"> </span>projections[[<span class="st">"PCA: 1,2"</span>]]</a></code></pre></div>
-</div>
-<div id="getting-signatures" class="section level1">
-<h1 class="hasAnchor">
-<a href="#getting-signatures" class="anchor"></a>Getting Signatures</h1>
-<p>Gene signatures are essential to the VISION pipeline, and are fairly easy to get in any number of ways:</p>
-<div id="downloading-signatures" class="section level2">
-<h2 class="hasAnchor">
-<a href="#downloading-signatures" class="anchor"></a>Downloading Signatures</h2>
-<p>A great resource for gene signatures is <code>MSigDB</code>, curated by the Broad institute. Signatures can be browsed, searched and downloaded from <a href="http://software.broadinstitute.org/gsea/msigdb/">here</a> as .gmt files, then provided to VISION to be included in the analysis.</p>
-</div>
-<div id="creating-signatures" class="section level2">
-<h2 class="hasAnchor">
-<a href="#creating-signatures" class="anchor"></a>Creating Signatures</h2>
-<p>If there is a set of proprietary genes of interest, a user-defined signature can be created in two ways: ### creating a Signature object Once a set of genes that are up or down regulated in the process or cell type of interest are selected, creating a Signature object is relatively straightforward:</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb18-1" data-line-number="1">up.genes &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">"ug1"</span>,<span class="st">"ug2"</span>,<span class="st">"ug3"</span>,<span class="st">"ug4"</span>,<span class="st">"ug5"</span>,<span class="st">"ug6"</span>,<span class="st">"ug7"</span>,<span class="st">"ug8"</span>,<span class="st">"ug9"</span>)</a>
-<a class="sourceLine" id="cb18-2" data-line-number="2">down.genes &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">"dg1"</span>,<span class="st">"dg2"</span>,<span class="st">"dg3"</span>,<span class="st">"dg4"</span>,<span class="st">"dg5"</span>,<span class="st">"dg6"</span>)</a>
-<a class="sourceLine" id="cb18-3" data-line-number="3"></a>
-<a class="sourceLine" id="cb18-4" data-line-number="4">sigData &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="kw">rep</span>(<span class="fl">1.0</span>,<span class="kw">length</span>(up.genes)),<span class="kw">rep</span>(<span class="op">-</span><span class="fl">1.0</span>,<span class="kw">length</span>(down.genes)))</a>
-<a class="sourceLine" id="cb18-5" data-line-number="5"><span class="kw">names</span>(sigData) &lt;-<span class="st"> </span><span class="kw">c</span>(up.genes, down.genes)</a>
-<a class="sourceLine" id="cb18-6" data-line-number="6"></a>
-<a class="sourceLine" id="cb18-7" data-line-number="7">sig &lt;-<span class="st"> </span><span class="kw"><a href="../reference/createGeneSignature.html">createGeneSignature</a></span>(<span class="dt">name =</span> <span class="st">"Interesting Process"</span>, <span class="dt">sigData =</span> sigData)</a></code></pre></div>
-<div id="signature-files" class="section level3">
-<h3 class="hasAnchor">
-<a href="#signature-files" class="anchor"></a>Signature files</h3>
-<p>Signature files are supported in either a .txt or .gmt format, which are both textual formats that are easy to create. Information on the precise acceptable format can be found <a href="https://github.com/YosefLab/VISION/wiki/Signatures">here</a>.</p>
-<p>#Working with large datasets: Micropooling</p>
-<p>scRNA-seq experiments have grown in size over the past couple of years, and as such we have provided an algorithm for pooling together similar cells and continuing with analysis, thus reducing the cell-wise time complexity of the VISION pipeline. For more information, please see our micropooling vignette.</p>
-<p>Briefly, however, you can control the parameters of the micropooling algorithm first with the <code>pool</code> boolean argument (setting <code>pool=T</code> when creating the Vision object will force the pooling of cells) and <code>cellsPerPartition</code> as a integer argument for specifying the maximum number of cells per micropool. By default, Vision will create micropools with 100 cells per micropool for datasets that exceed 15,000 cells (we recommend changing the <code>pool</code> argument and the <code>cellsPerPartition</code> argument on a case-by-case basis.)</p>
-</div>
-</div>
-</div>
-<div id="session-info" class="section level1">
-<h1 class="hasAnchor">
-<a href="#session-info" class="anchor"></a>Session Info</h1>
-<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb19-1" data-line-number="1"><span class="kw">sessionInfo</span>()</a>
-<a class="sourceLine" id="cb19-2" data-line-number="2"><span class="co">## R version 3.5.1 (2018-07-02)</span></a>
-<a class="sourceLine" id="cb19-3" data-line-number="3"><span class="co">## Platform: x86_64-pc-linux-gnu (64-bit)</span></a>
-<a class="sourceLine" id="cb19-4" data-line-number="4"><span class="co">## Running under: Ubuntu 16.04.4 LTS</span></a>
-<a class="sourceLine" id="cb19-5" data-line-number="5"><span class="co">## </span></a>
-<a class="sourceLine" id="cb19-6" data-line-number="6"><span class="co">## Matrix products: default</span></a>
-<a class="sourceLine" id="cb19-7" data-line-number="7"><span class="co">## BLAS/LAPACK: /data/yosef2/users/david.detomaso/programs1604/lib/libopenblas_genericp-r0.3.2.so</span></a>
-<a class="sourceLine" id="cb19-8" data-line-number="8"><span class="co">## </span></a>
-<a class="sourceLine" id="cb19-9" data-line-number="9"><span class="co">## locale:</span></a>
-<a class="sourceLine" id="cb19-10" data-line-number="10"><span class="co">##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              </span></a>
-<a class="sourceLine" id="cb19-11" data-line-number="11"><span class="co">##  [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    </span></a>
-<a class="sourceLine" id="cb19-12" data-line-number="12"><span class="co">##  [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   </span></a>
-<a class="sourceLine" id="cb19-13" data-line-number="13"><span class="co">##  [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 </span></a>
-<a class="sourceLine" id="cb19-14" data-line-number="14"><span class="co">##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            </span></a>
-<a class="sourceLine" id="cb19-15" data-line-number="15"><span class="co">## [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       </span></a>
-<a class="sourceLine" id="cb19-16" data-line-number="16"><span class="co">## </span></a>
-<a class="sourceLine" id="cb19-17" data-line-number="17"><span class="co">## attached base packages:</span></a>
-<a class="sourceLine" id="cb19-18" data-line-number="18"><span class="co">## [1] stats     graphics  grDevices utils     datasets  methods   base     </span></a>
-<a class="sourceLine" id="cb19-19" data-line-number="19"><span class="co">## </span></a>
-<a class="sourceLine" id="cb19-20" data-line-number="20"><span class="co">## other attached packages:</span></a>
-<a class="sourceLine" id="cb19-21" data-line-number="21"><span class="co">## [1] VISION_0.99.6   BiocStyle_2.8.2</span></a>
-<a class="sourceLine" id="cb19-22" data-line-number="22"><span class="co">## </span></a>
-<a class="sourceLine" id="cb19-23" data-line-number="23"><span class="co">## loaded via a namespace (and not attached):</span></a>
-<a class="sourceLine" id="cb19-24" data-line-number="24"><span class="co">##  [1] Rcpp_1.0.0         compiler_3.5.1     iotools_0.2-5     </span></a>
-<a class="sourceLine" id="cb19-25" data-line-number="25"><span class="co">##  [4] base64enc_0.1-3    tools_3.5.1        digest_0.6.15     </span></a>
-<a class="sourceLine" id="cb19-26" data-line-number="26"><span class="co">##  [7] mclust_5.4.1       wordspace_0.2-0    nlme_3.1-137      </span></a>
-<a class="sourceLine" id="cb19-27" data-line-number="27"><span class="co">## [10] jsonlite_1.5       evaluate_0.11      memoise_1.1.0     </span></a>
-<a class="sourceLine" id="cb19-28" data-line-number="28"><span class="co">## [13] Rtsne_0.13         lattice_0.20-35    loe_1.1           </span></a>
-<a class="sourceLine" id="cb19-29" data-line-number="29"><span class="co">## [16] mgcv_1.8-24        pkgconfig_2.0.1    rlang_0.2.1       </span></a>
-<a class="sourceLine" id="cb19-30" data-line-number="30"><span class="co">## [19] Matrix_1.2-14      igraph_1.2.2       commonmark_1.5    </span></a>
-<a class="sourceLine" id="cb19-31" data-line-number="31"><span class="co">## [22] parallel_3.5.1     yaml_2.2.0         pkgdown_1.1.0     </span></a>
-<a class="sourceLine" id="cb19-32" data-line-number="32"><span class="co">## [25] xfun_0.3           fastICA_1.2-1      cluster_2.0.7-1   </span></a>
-<a class="sourceLine" id="cb19-33" data-line-number="33"><span class="co">## [28] stringr_1.3.1      roxygen2_6.1.0     xml2_1.2.0        </span></a>
-<a class="sourceLine" id="cb19-34" data-line-number="34"><span class="co">## [31] knitr_1.20         desc_1.2.0         fs_1.2.6          </span></a>
-<a class="sourceLine" id="cb19-35" data-line-number="35"><span class="co">## [34] rprojroot_1.3-2    grid_3.5.1         R6_2.2.2          </span></a>
-<a class="sourceLine" id="cb19-36" data-line-number="36"><span class="co">## [37] jug_0.1.7          rmarkdown_1.10     bookdown_0.7      </span></a>
-<a class="sourceLine" id="cb19-37" data-line-number="37"><span class="co">## [40] magrittr_1.5       backports_1.1.2    htmltools_0.3.6   </span></a>
-<a class="sourceLine" id="cb19-38" data-line-number="38"><span class="co">## [43] matrixStats_0.54.0 MASS_7.3-50        sparsesvd_0.1-4   </span></a>
-<a class="sourceLine" id="cb19-39" data-line-number="39"><span class="co">## [46] rsvd_1.0.0         assertthat_0.2.0   permute_0.9-4     </span></a>
-<a class="sourceLine" id="cb19-40" data-line-number="40"><span class="co">## [49] logging_0.7-103    stringi_1.2.4      vegan_2.5-3       </span></a>
-<a class="sourceLine" id="cb19-41" data-line-number="41"><span class="co">## [52] crayon_1.3.4</span></a></code></pre></div>
 </div>
   </div>
 
@@ -318,22 +242,17 @@ VISION will always compute the first three principal components for visualizatio
       <h2 class="hasAnchor">
 <a href="#tocnav" class="anchor"></a>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
-<li><a href="#introduction">Introduction</a></li>
-      <li><a href="#preliminaries">Preliminaries</a></li>
+<li><a href="#preliminaries">Preliminaries</a></li>
       <li>
 <a href="#using-vision">Using VISION</a><ul class="nav nav-pills nav-stacked">
-<li><a href="#the-vision-pipeline">The VISION Pipeline</a></li>
-      <li><a href="#analysis-of-glioblastoma-cells-with-vision">Analysis of Glioblastoma Cells with VISION</a></li>
+<li><a href="#creating-the-vision-object">Creating the VISION object</a></li>
+      <li><a href="#running-an-analysis">Running an Analysis</a></li>
+      <li><a href="#viewing-results">Viewing Results</a></li>
+      <li><a href="#customizing-the-latent-space">Customizing the Latent Space</a></li>
+      <li><a href="#micropooling">Micropooling</a></li>
+      <li><a href="#adding-2d-projections">Adding 2d Projections</a></li>
       </ul>
 </li>
-      <li><a href="#adding-2-d-projections">Adding 2-D Projections</a></li>
-      <li>
-<a href="#getting-signatures">Getting Signatures</a><ul class="nav nav-pills nav-stacked">
-<li><a href="#downloading-signatures">Downloading Signatures</a></li>
-      <li><a href="#creating-signatures">Creating Signatures</a></li>
-      </ul>
-</li>
-      <li><a href="#session-info">Session Info</a></li>
       </ul>
 </div>
       </div>
@@ -342,7 +261,7 @@ VISION will always compute the first three principal components for visualizatio
 
 
       <footer><div class="copyright">
-  <p>Developed by Matt Jones, Tal Ashuach, David Detomaso.</p>
+  <p>Developed by Matt Jones, David Detomaso, Tal Ashuach.</p>
 </div>
 
 <div class="pkgdown">

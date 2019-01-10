@@ -138,13 +138,6 @@ pearsonCorrToJSON <- function(pc, sigs) {
 
 }
 
-#' Run the analysis again wth user-defined subsets or confguration
-#' @param nfp the new FastProject object to analyze
-#' @return None
-newAnalysis <- function(nfp) {
-    saveAndViewResults(analyze(nfp))
-}
-
 compressJSONResponse <- function(json, res, req){
 
     res$set_header("Content-Type", "application/json")
@@ -169,7 +162,7 @@ compressJSONResponse <- function(json, res, req){
 #' random port between 8000 and 9999 is chosen.
 #' @param host The host used to serve the output viewer. If omitted, "127.0.0.1"
 #' is used.
-#' @return None
+#' @return object
 launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
     if (is.null(port)) {
@@ -199,6 +192,11 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
     # Launch the server
     jug() %>%
+      get(".*", function(req, res, err) {
+          # Enable caching
+          res$set_header("Cache-Control", "max-age=7200")
+          return(NULL)
+      }) %>%
       get("/Signature/Scores/(?<sig_name1>.*)", function(req, res, err) {
         sigMatrix <- object@sigScores
         name <- URLdecode(req$params$sig_name1)
@@ -534,48 +532,61 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
          return(out)
 
      }) %>%
-      post("/Analysis/Run/", function(req, res, err) {
-        subset <- fromJSON(req$body)
-        subset <- subset[!is.na(subset)]
+     get("/Cells/Selections", function(req, res, err) {
+         selectionNames <- as.character(names(object@selections))
+         out <- toJSON(selectionNames)
+         return(out)
+     }) %>%
+     get("/Cells/Selections/(?<selection_id1>.*)", function(req, res, err) {
+         selection_id <- URLdecode(req$params$selection_id1)
+         selectionCells <- object@selections[[selection_id]]
+         out <- toJSON(selectionCells, auto_unbox = TRUE)
+         return(out)
+     }) %>%
+     post("/Cells/Selections/(?<selection_id2>.*)", function(req, res, err) {
+         selection_id <- URLdecode(req$params$selection_id2)
+         cell_ids <- fromJSON(req$body)
+         object@selections[[selection_id]] <<- cell_ids # Super assignment!
+         out <- ""  # Empty body for successful POST
+         return(out)
+     }) %>%
+     get(path = NULL, function(req, res, err) {
 
-        if (length(object@pools) > 0) {
-            clust <- object@pools[subset]
-            subset <- unlist(clust)
-        }
+         if (req$path == "/") {
+             path <- "Results.html"
+         } else {
+             path <- substring(req$path, 2) # remove first / character
+         }
+         path <- paste0("html_output/", path)
+         file_index <- match(path, static_whitelist)
 
-        nfp <- createNewFP(object, subset)
-        newAnalysis(nfp)
-        return()
+         if (is.na(file_index)) {
+             res$set_status(404)
+             return(NULL)
+         }
+
+         file_path <- system.file(static_whitelist[file_index],
+                        package = "VISION")
+
+         mime_type <- mime::guess_type(file_path)
+         res$content_type(mime_type)
+
+         data <- readBin(file_path, "raw", n = file.info(file_path)$size)
+
+         if (grepl("image|octet|pdf", mime_type)) {
+             return(data)
+         } else {
+             return(rawToChar(data))
+         }
       }) %>%
-      get(path = NULL, function(req, res, err) {
+      simple_error_handler_json() -> jug_app
 
-          if (req$path == "/") {
-              path <- "Results.html"
-          } else {
-              path <- substring(req$path, 2) # remove first / character
-          }
-          path <- paste0("html_output/", path)
-          file_index <- match(path, static_whitelist)
+      tryCatch({
+          serve_it(jug_app, host = host, port = port)
+      },
+      interrupt = function(i){
+          message("Server Exited")
+      })
 
-          if (is.na(file_index)) {
-              res$set_status(404)
-              return(NULL)
-          }
-
-          file_path <- system.file(static_whitelist[file_index],
-                         package = "VISION")
-
-          mime_type <- mime::guess_type(file_path)
-          res$content_type(mime_type)
-
-          data <- readBin(file_path, "raw", n = file.info(file_path)$size)
-
-          if (grepl("image|octet|pdf", mime_type)) {
-              return(data)
-          } else {
-              return(rawToChar(data))
-          }
-      }) %>%
-      simple_error_handler_json() %>%
-      serve_it(host = host, port = port)
+      return(object)
 }

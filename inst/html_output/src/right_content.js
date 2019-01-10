@@ -1,37 +1,219 @@
 function Right_Content()
 {
-    this.scatter = {}
 }
 
 Right_Content.prototype.init = function()
 {
     var self = this;
     self.dom_node = $("#right-content");
-    self.scatter = new ColorScatter("#scatter-div");
 
     self.scatterColorOptions = $(self.dom_node).find("input[name='scatterColorButtons']")
+    self.scatterLayoutOptions = $(self.dom_node).find("input[name='scatterLayoutButtons']")
+
+    self.selectedLayout = 'full'
+
+    // Holds cached plot data -- needed when redrawing all plots
+    self.layoutPlotData = {
+        'full': [{}],
+        'splitH': [{}, {}],
+        'splitV': [{}, {}],
+        'split4': [{}, {}, {}, {}],
+    }
+
+    self.layoutMeta = {
+        'full': {selectedPlot: 0, initialized: true, plotDivs: ['#scatter-div']},
+        'splitH': {selectedPlot: 0, initialized: false,
+            plotDivs: [
+                "#scatter-splitH-div0", "#scatter-splitH-div1",
+            ]},
+        'splitV': {selectedPlot: 0, initialized: false,
+            plotDivs: [
+                "#scatter-splitV-div0", "#scatter-splitV-div1",
+            ]},
+        'split4': {selectedPlot: 0, initialized: false,
+            plotDivs: [
+                "#scatter-split-div0", "#scatter-split-div1",
+                "#scatter-split-div2", "#scatter-split-div3",
+            ]},
+    }
+
+    self.layoutPlotData['full'][0]['scatter'] = new ColorScatter("#scatter-div");
 
     $(self.scatterColorOptions).on('change', function(){
         self.update({ 'colorScatterOption': '' }) // No need to send value
     })
 
-    //Enable Toggling of Lasso Select
-    $(self.dom_node).find("#lasso-select").on("click", function() {
-        var tog = $(this).html();
-        if (tog == "Enable Lasso Select") {
-            self.scatter.toggleLasso(true);
-            $(this).html("Disable Lasso Select");
-        } else {
-            self.scatter.toggleLasso(false);
-            $(this).html("Enable Lasso Select");
-        }
-    });
+    $(self.scatterLayoutOptions).on('change', function(eventObj){
+        var selectedValue = eventObj.currentTarget.value
 
-    $(self.dom_node)
-        .find("#export-button")
-        .on("click", function () {
-            self.exportSigProj()
-        });
+        $(self.dom_node).find('.scatter-layout-container').hide()
+
+        if(selectedValue === 'full'){
+            $(self.dom_node).find('#scatter-div').show()
+        } else if(selectedValue === 'splitH') {
+            $(self.dom_node).find('#scatter-splitH-div').show()
+        } else if(selectedValue === 'splitV') {
+            $(self.dom_node).find('#scatter-splitV-div').show()
+        } else if(selectedValue === 'split4') {
+            $(self.dom_node).find('#scatter-split-div').show()
+        }
+
+        self.changeLayout(selectedValue)
+    })
+
+    var _scatter_relayout = function(e) {
+        // Used to synchronize zoom events between visible scatter plots
+        // First need to remove the listener to prevent infinite loop
+
+        self.dom_node.get(0).removeEventListener('scatter_relayout', _scatter_relayout)
+
+        var promises = []
+
+        var visiblePlotData = self.getVisiblePlotData()
+        for (var i = 0; i < visiblePlotData.length; i++){
+            if (e.detail.origin !== visiblePlotData[i]['scatter']){
+                promises.push(
+                    visiblePlotData[i]['scatter'].relayout(e.detail.newLayout)
+                )
+            }
+        }
+
+        Promise.all(promises).then(function(){
+            self.dom_node.get(0).addEventListener('scatter_relayout', _scatter_relayout)
+        })
+    }
+
+    self.dom_node.get(0).addEventListener('scatter_relayout', _scatter_relayout)
+
+    // Allow for clicking to specify selected plot div
+    $(self.dom_node).find(".scatter-split-plot-div")
+        .on('click', function(e){
+            var targetId = e.currentTarget.id
+            var layoutMeta = self.layoutMeta[self.selectedLayout]
+            layoutMeta['selectedPlot'] = parseInt(targetId[targetId.length-1])
+
+            // Need to clear current selection, but only inside the current scatter-layout-container
+            $(e.currentTarget).parents('.scatter-layout-container')
+                .find('.scatter-split-plot-div')
+                .removeClass('active')
+
+            $(e.currentTarget).addClass('active')
+
+            // Fire the update so the lower-left area changes too
+            //
+            var plottedData = self.getSelectedPlotData()
+
+            var update = {}
+            update['plotted_item_type'] = plottedData['item_type'];
+            update['plotted_item'] = plottedData['item_key'];
+
+            set_global_status(update);
+        })
+
+    // Set up events for saving/loading selections
+    var saveSelectionModal = $('#saveSelectionModal')
+    saveSelectionModal.on('shown.bs.modal', function() {
+        // Update selection name if it has a name already
+        var selectionName = get_global_status('selection_name')
+        var selectionInput = $(this).find('#saveSelectionName')
+        if (selectionName !== "Selection"){
+            selectionInput.val(selectionName)
+        } else {
+            selectionInput.val("")
+        }
+        selectionInput.focus()
+    }).on('keyup', function(event){
+        if(event.key != "Enter") return;
+        $(this).find('.confirm-button').click()
+        event.preventDefault();
+    })
+
+    saveSelectionModal.find(".confirm-button").on("click", function() {
+        // Save selection and close modal
+        var selectionName = saveSelectionModal.find('#saveSelectionName').val()
+
+        if (selectionName === "") return;
+
+        var selectedCells = get_global_status('selected_cell')
+
+        api.cells.saveSelection(selectionName, selectedCells)
+        set_global_status({
+            'selection_name': selectionName
+        })
+
+        saveSelectionModal.modal('hide')
+
+    })
+
+    var loadSelectionModal = $('#loadSelectionModal')
+    var lSM_loading = createLoadingFunction(loadSelectionModal.find('.modal-body'))
+    loadSelectionModal.on('show.bs.modal', function() {
+        // Load selections and display
+
+        var modalList = loadSelectionModal.find('.selection-list')
+        var emptyList = loadSelectionModal.find('.empty-list')
+        lSM_loading(true)
+
+        api.cells.listSelections().then(data => {
+            modalList.empty()
+
+            var confirmButton = loadSelectionModal.find('.confirm-button')
+            if(data.length === 0){
+
+                modalList.hide()
+                emptyList.show()
+                confirmButton.attr('disabled', true)
+                return
+            }
+            emptyList.hide()
+            modalList.show()
+
+            confirmButton.attr('disabled', false)
+
+            var itemClickFun = function(){
+                modalList.find('.loadable-selection-option').removeClass('selected')
+                $(this).addClass('selected')
+            }
+
+            _.each(data, (name, i) => {
+                var e = document.createElement('div')
+                e.innerText = name
+                e.classList.add('loadable-selection-option')
+                if (i == 0){ // Select first element
+                    e.classList.add('selected')
+                }
+                e.addEventListener('click', itemClickFun)
+                modalList.append(e)
+            })
+
+        }).always(() => {
+            lSM_loading(false)
+        })
+
+    }).on('keyup', function(event){
+        if(event.key != "Enter") return;
+        $(this).find('.confirm-button').click()
+        event.preventDefault();
+    })
+
+    loadSelectionModal.find(".confirm-button").on("click", function() {
+        // Load selection and close modal
+        self.setLoadingStatus(true)
+
+        var selectionToLoad = loadSelectionModal.find('.loadable-selection-option.selected').text()
+
+        api.cells.getSelection(selectionToLoad).then(cells => {
+            var update = {
+                selected_cell: cells,
+                selection_type: get_global_status('pooled')? 'pools' : 'cells',
+                selection_name: selectionToLoad,
+            }
+            set_global_status(update)
+        })
+
+
+        loadSelectionModal.modal('hide')
+    })
 
     self.setLoadingStatus = createLoadingFunction(self.dom_node);
 
@@ -100,8 +282,27 @@ Right_Content.prototype.update = function(updates)
 {
     var self = this;
 
+    var plotData = self.getSelectedPlotData()
+
+    // Update the selection status in ALL plots
     if('selected_cell' in updates){
-        self.scatter.updateSelection()
+        var visiblePlotData = this.getVisiblePlotData()
+        for (var i = 0; i < visiblePlotData.length; i++){
+
+            // Need to check in case it's not initialized
+            if ('scatter' in visiblePlotData[i]) {
+                visiblePlotData[i]['scatter'].updateSelection()
+            }
+        }
+
+        var selection_type = get_global_status('selection_type')
+        var selection_button = $(this.dom_node).find('#save-selection-button')
+        if (selection_type === 'cells' || selection_type === 'pools'){
+            selection_button.attr('disabled', false)
+        } else {
+            selection_button.attr('disabled', true)
+        }
+
     }
 
     var needsUpdate = ('main_vis' in updates) ||
@@ -109,29 +310,60 @@ Right_Content.prototype.update = function(updates)
         ('plotted_item_type' in updates) ||
         ('plotted_projection' in updates) ||
         ('plotted_trajectory' in updates) ||
-        ('plotted_pc' in updates) ||
         ('colorScatterOption' in updates);
 
     if (!needsUpdate) return $.Deferred().resolve().promise()
 
     var main_vis = get_global_status('main_vis');
+    var projection = get_global_data('sig_projection_coordinates')
 
     var autoZoom = false
+
     if('plotted_projection' in updates ||
        'plotted_trajectory' in updates ||
        'main_vis' in updates) {
 
         autoZoom = true
+
+        // If the projection is changing, then we need to change all the plots
+        var allPlotData = this.getAllPlotData()
+        for (var i = 0; i < allPlotData.length; i++){
+            allPlotData[i]['projection'] = projection
+            allPlotData[i]['needsUpdate'] = true
+        }
     }
 
-    if(main_vis === 'clusters' || main_vis === "pcannotator"){
-        self.draw_sigvp(autoZoom);
+    if ('colorScatterOption' in updates) {
 
-    } else if (main_vis === "tree") {
-        self.draw_tree(autoZoom);
+        // Mark all plots for update
+        var allPlotData = this.getAllPlotData()
+        for (var i = 0; i < allPlotData.length; i++){
+            allPlotData[i]['needsUpdate'] = true
+        }
+    }
 
-    } else {
-        throw "Bad main_vis value!";
+    var item_key = get_global_status('plotted_item');
+    var item_type = get_global_status('plotted_item_type');
+    var values = get_global_data('plotted_values')
+
+    // If this, then we just need to change the selected visualization
+    if('plotted_item' in updates ||
+       'plotted_item_type' in updates ||
+       'plotted_values' in updates) {
+
+        plotData['item_key'] = item_key
+        plotData['item_type'] = item_type
+        plotData['values'] = values
+        plotData['needsUpdate'] = true
+
+    }
+
+    // Update all visible plots if they need it
+    var visiblePlotData = this.getVisiblePlotData()
+    for (i = 0; i < visiblePlotData.length; i++){
+        if (visiblePlotData[i]['needsUpdate']){
+            this.draw_scatter(visiblePlotData[i], autoZoom)
+        }
     }
 
     // Update the dropdown if plotted projection changes elsewhere
@@ -150,6 +382,7 @@ Right_Content.prototype.update = function(updates)
         projSelect.trigger('chosen:updated') // Changes shown item, but doesn't fire update event
     }
 
+    // Show either the Projection or Tree lists
     if('main_vis' in updates){
         $('#plot-subtitle-latent').hide()
         $('#plot-subtitle-trajectory').hide()
@@ -176,16 +409,17 @@ Right_Content.prototype.select_default_proj = function()
     return update;
 }
 
-Right_Content.prototype.draw_sigvp = function(autoZoom) {
+/*
+ * scatter: Instance of ColorScatter - which plot to update
+ * item_key: string - name of plotted item
+ * item_type: string - one of 'signature', 'meta', 'gene', or 'signature-gene'
+ * values: sample name (str) -> int/str - values to plot
+ * projection: sample name (str) -> [x, y] - coordinates for each sample
+ * autoZoom: bool - whether or not to re-zoom the plot
+ */
+Right_Content.prototype.draw_sigvp = function(scatter, item_key, item_type, values, projection, autoZoom) {
 
     var self = this;
-
-    var item_key = get_global_status('plotted_item');
-    var item_type = get_global_status('plotted_item_type');
-    var proj_key = get_global_status('plotted_projection');
-
-    var projection = get_global_data('sig_projection_coordinates')
-    var values = get_global_data('plotted_values')
 
     var sample_value = _.values(values)[0]
     var isFactor = (typeof(sample_value) === 'string') &&
@@ -193,15 +427,12 @@ Right_Content.prototype.draw_sigvp = function(autoZoom) {
 
     var full_color_range, diverging_colormap
     if(item_type === "gene" || item_type === 'signature-gene'){
-        $(self.dom_node).find("#plotted-value-option").hide()
         full_color_range = true
         diverging_colormap = false
     } else if(item_type === "meta"){
-        $(self.dom_node).find("#plotted-value-option").hide()
         full_color_range = false
         diverging_colormap = true
     } else {
-        $(self.dom_node).find("#plotted-value-option").show()
         full_color_range = false
         diverging_colormap = true
     }
@@ -211,8 +442,6 @@ Right_Content.prototype.draw_sigvp = function(autoZoom) {
         values = self.rank_values(values)
     }
 
-
-    $('#plot-title').text(item_key);
 
     var points = [];
     var sample_labels = Object.keys(values).sort()
@@ -235,46 +464,45 @@ Right_Content.prototype.draw_sigvp = function(autoZoom) {
         });
     })
 
-    self.scatter.setData({
+    scatter.setData({
         points: points,
         isFactor: isFactor,
         full_color_range: full_color_range,
-        diverging_colormap: diverging_colormap
+        diverging_colormap: diverging_colormap,
+        title: item_key,
+        autozoom: autoZoom,
     });
 
-    if (autoZoom){
-        self.scatter.autoZoom();
-    }
 }
 
 
-Right_Content.prototype.draw_tree = function(autoZoom) {
+/*
+ * scatter: Instance of ColorScatter - which plot to update
+ * item_key: string - name of plotted item
+ * item_type: string - one of 'signature', 'meta', 'gene', or 'signature-gene'
+ * values: sample name (str) -> int/str - values to plot
+ * projection: sample name (str) -> [x, y] - coordinates for each sample
+ * autoZoom: bool - whether or not to re-zoom the plot
+ */
+Right_Content.prototype.draw_tree = function(scatter, item_key, item_type, values, projection, autoZoom) {
 
     var self = this;
 
-    var item_key = get_global_status('plotted_item');
-    var item_type = get_global_status('plotted_item_type');
     var proj_key = get_global_status('plotted_trajectory');
 
     var milestonePromise = api.tree.milestones(proj_key);
-
-    var projection = get_global_data('tree_projection_coordinates')
-    var values = get_global_data('plotted_values')
 
     var isFactor = (typeof(_.values(values)[0]) === 'string') &&
                    (_.values(values)[0] !== "NA")
 
     var full_color_range, diverging_colormap
     if(item_type === "gene" || item_type === "signature-gene"){
-        $(self.dom_node).find("#plotted-value-option").hide()
         full_color_range = true
         diverging_colormap = false
     } else if(item_type === "meta"){
-        $(self.dom_node).find("#plotted-value-option").hide()
         full_color_range = false
         diverging_colormap = true
     } else {
-        $(self.dom_node).find("#plotted-value-option").show()
         full_color_range = false
         diverging_colormap = true
     }
@@ -295,8 +523,6 @@ Right_Content.prototype.draw_tree = function(autoZoom) {
             // Massage treep for easier D3 binding
 
             tree_points = []
-
-            $('#plot-title').text(item_key);
 
             var points = [];
             var sample_labels = Object.keys(values).sort()
@@ -337,77 +563,29 @@ Right_Content.prototype.draw_tree = function(autoZoom) {
                 }
             }
 
-            self.scatter.setData({
+            scatter.setData({
                 points: points,
                 isFactor: isFactor,
                 full_color_range: full_color_range,
                 diverging_colormap: diverging_colormap,
                 tree_points: tree_points,
                 tree_adj: tree_adj,
+                title: item_key,
+                autozoom: autoZoom,
             });
 
-            if (autoZoom){
-                self.scatter.autoZoom();
-            }
-
         });
 }
 
-Right_Content.prototype.draw_pca = function() {
-
-    var self = this;
-
-    $(self.dom_node).find("#plotted-value-option").hide()
-
-    var item_key = get_global_status('plotted_item');
-    var item_type = get_global_status('plotted_item_type');
-
-    var pc_key = get_global_status('plotted_pc');
-
-    var pca = get_global_data('pca_projection_coordinates')
-    var values = get_global_data('plotted_values')
-
-    var isFactor;
-    if(item_type === "meta"){
-        isFactor = (typeof(Object.values(values)[0]) === "string") &&
-                   (_.values(values)[0] !== "NA")
-    } else {
-        isFactor = false;
-    }
-
-    $("#plot-title").text(item_key);
-
-    var points = []
-    var sample_labels = Object.keys(values).sort()
-    var selected_cells = get_global_status('selected_cell')
-    var selected_cells_map = _.keyBy(selected_cells, x => x)
-    if(selected_cells.length == 1){ // Just a single cell
-        selected_cells_map = {} // Don't style anything
-    }
-
-    _.each(sample_labels, (sample_label) => {
-        var x = pca[sample_label][pc_key-1]
-        var y = values[sample_label]
-        var sig_score = null
-        var selected = sample_label in selected_cells_map
-
-        points.push({
-            x: x, y: y,
-            value: sig_score, label: '',
-            selected: selected,
-        });
-    })
-
-    self.scatter.setData({
-        points: points,
-        isFactor: isFactor
-    });
-}
 
 // Called when the window is resized
 Right_Content.prototype.resize = function() {
 
-    this.scatter.resize()
+    var visiblePlots = this.getVisiblePlotData()
+
+    for (var i = 0; i < visiblePlots.length; i++) {
+        visiblePlots[i]['scatter'].resize()
+    }
 }
 
 Right_Content.prototype.getScatterColorOption = function() {
@@ -456,62 +634,120 @@ Right_Content.prototype.rank_values = function(values)
     return ranks
 }
 
-/*
-Exports a zip with data in it
- */
-Right_Content.prototype.exportSigProj = function()
+Right_Content.prototype.hover_cells = function(cell_ids)
 {
-    var self = this;
-    var zip = new JSZip();
+    var visiblePlots = this.getVisiblePlotData()
 
-    var main_vis = get_global_status('main_vis')
+    for (var i = 0; i < visiblePlots.length; i++) {
+        visiblePlots[i]['scatter'].hover_cells(cell_ids)
+    }
+}
 
-    var plotted_item = get_global_status('plotted_item')
-    var values = get_global_data('plotted_values')
+Right_Content.prototype.changeLayout = function(newLayout)
+{
+    // Old plot data
+    var refPlotData = this.getSelectedPlotData()
+    var refVisiblePlotData = this.getVisiblePlotData()
 
-    //Convert the data that's in the scatter plot to a tab-delimited table
+    // Change layout here
+    this.selectedLayout = newLayout
+    var newLayoutMeta = this.layoutMeta[this.selectedLayout]
 
-    var proj;
-    if (main_vis === 'clusters' || main_vis === 'pcannotator') {
-        proj = get_global_data('sig_projection_coordinates')
-    } else if (main_vis ==='tree') {
-        proj = get_global_data('tree_projection_coordinates')
+    var splitInitialized = newLayoutMeta['initialized']
+
+    var plotData, visiblePlotData
+    if(splitInitialized){
+
+        plotData = this.getSelectedPlotData()
+
+        for (var prop in refPlotData){
+            if(prop === 'scatter') {continue; }
+            if(prop === 'needsUpdate') {continue; }
+            plotData[prop] = refPlotData[prop]
+        }
+
+    } else {
+        // New plot data
+        visiblePlotData = this.getVisiblePlotData()
+        var plotDivs = newLayoutMeta['plotDivs']
+
+        // Loop through visible splits assigning their content from exists splits
+        for (var i = 0; i < visiblePlotData.length; i++){
+
+            plotData = visiblePlotData[i]
+            refPlotData = refVisiblePlotData[i % refVisiblePlotData.length]
+
+            plotData['scatter'] = new ColorScatter(plotDivs[i])
+            plotData['needsUpdate'] = true
+
+            for (prop in refPlotData){
+                if (prop === 'scatter') {continue; }
+                if(prop === 'needsUpdate') {continue; }
+                plotData[prop] = refPlotData[prop]
+            }
+
+        }
+
+        newLayoutMeta['initialized'] = true
+    }
+
+    visiblePlotData = this.getVisiblePlotData()
+
+    // Need to purge all non-visible plots to reduce WebGL context count
+    // Then need to re-create all visible plots
+    var allPlotData = this.getAllPlotData()
+    for (var i = 0; i < allPlotData.length; i++) {
+        if ('scatter' in allPlotData[i]) {
+            allPlotData[i]['scatter'].clear()
+        }
+    }
+
+    var autoZoom = false
+    for (var i = 0; i < visiblePlotData.length; i++) {
+        $.extend(visiblePlotData[i]['scatter'].currentZoom, refPlotData['scatter'].currentZoom)
+        this.draw_scatter(visiblePlotData[i], autoZoom)
+    }
+
+}
+
+Right_Content.prototype.draw_scatter = function(plotData, autoZoom)
+{
+    var main_vis = get_global_status('main_vis');
+
+    if(main_vis === 'clusters' || main_vis === "pcannotator"){
+        this.draw_sigvp(plotData['scatter'], plotData['item_key'], plotData['item_type'], plotData['values'], plotData['projection'], autoZoom);
+
+    } else if (main_vis === "tree") {
+        this.draw_tree(plotData['scatter'], plotData['item_key'], plotData['item_type'], plotData['values'], plotData['projection'], autoZoom);
+
     } else {
         throw "Bad main_vis value!";
     }
 
-    var table;
-    if (main_vis === 'tree' || main_vis === 'clusters') {
-
-        table = _.map(proj, (value, key) => {
-            return [key, proj[key][0], proj[key][1], values[key]]
-        });
-
-        table = [["Cell", "X", "Y", plotted_item]].concat(table);
-
-    }
-
-    table = table.map(function(x){ return x.join("\t");});
-    var scatter_csv_str = table.join("\n");
-    zip.file("Scatter.txt", scatter_csv_str);
-
-    var zip_uri = "data:application/zip;base64," + zip.generate({type:"base64"});
-
-    var a = document.createElement("a");
-    var proj_name;
-    if (main_vis === 'tree'){
-        proj_name = get_global_status('plotted_trajectory')
-    } else {
-        proj_name = get_global_status('plotted_projection')
-    }
-
-    a.download = plotted_item+"_"+proj_name+".zip";
-    a.href = zip_uri;
-    a.click();
+    plotData['needsUpdate'] = false
 
 }
 
-Right_Content.prototype.hover_cells = function(cell_ids)
+Right_Content.prototype.getSelectedPlotData = function()
 {
-    this.scatter.hover_cells(cell_ids);
+    var layoutMeta = this.layoutMeta[this.selectedLayout]
+    var visiblePlotData = this.layoutPlotData[this.selectedLayout]
+
+    return visiblePlotData[layoutMeta.selectedPlot]
+}
+
+Right_Content.prototype.getVisiblePlotData = function()
+{
+    var visiblePlotData = this.layoutPlotData[this.selectedLayout]
+    return visiblePlotData
+}
+
+Right_Content.prototype.getAllPlotData = function()
+{
+    return _.flatMap(this.layoutPlotData, x => _.values(x))
+}
+
+Right_Content.prototype.getAllLayoutMeta = function()
+{
+    return _.flatMap(this.layoutMeta, x => _.values(x))
 }

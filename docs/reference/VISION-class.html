@@ -84,6 +84,9 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/Signatures.html">Gene Signatures</a>
+    </li>
+    <li>
       <a href="../articles/VISION-vignette.html">Introduction to VISION</a>
     </li>
     <li>
@@ -93,6 +96,9 @@
       <a href="../articles/trajectories.html">Trajectory Inference and VISION</a>
     </li>
   </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
       
@@ -132,8 +138,8 @@
   <span class='kw'>sig_norm_method</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"znorm_columns"</span>, <span class='st'>"none"</span>, <span class='st'>"znorm_rows"</span>,
   <span class='st'>"znorm_rows_then_columns"</span>, <span class='st'>"rank_norm_columns"</span>),
   <span class='kw'>sig_score_method</span> <span class='kw'>=</span> <span class='fu'>c</span>(<span class='st'>"naive"</span>, <span class='st'>"weighted_avg"</span>), <span class='kw'>pool</span> <span class='kw'>=</span> <span class='st'>"auto"</span>,
-  <span class='kw'>cellsPerPartition</span> <span class='kw'>=</span> <span class='fl'>100</span>, <span class='kw'>name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>cluster_variable</span> <span class='kw'>=</span> <span class='st'>""</span>,
-  <span class='kw'>latentSpace</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>latentTrajectory</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>pools</span> <span class='kw'>=</span> <span class='fu'>list</span>())
+  <span class='kw'>cellsPerPartition</span> <span class='kw'>=</span> <span class='fl'>100</span>, <span class='kw'>name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>latentSpace</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>latentTrajectory</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>pools</span> <span class='kw'>=</span> <span class='fu'>list</span>())
 
 <span class='co'># S4 method for data.frame</span>
 <span class='fu'>Vision</span>(<span class='no'>data</span>, <span class='no'>...</span>)
@@ -150,15 +156,17 @@
     <tr>
       <th>data</th>
       <td><p>expression data - can be one of these:</p><ul>
-<li><p>numeric matrix</p></li>
+<li><p>numeric matrix or sparse matrix (GENES x CELLS)</p></li>
+<li><p>data.frame (GENES x CELLS)</p></li>
 <li><p>ExpressionSet object</p></li>
 <li><p>SummzrizedExperiment object (or extending classes)</p></li>
-</ul></td>
+</ul><p>Expression data should be scaled and normalized, but not log-transformed.</p></td>
     </tr>
     <tr>
       <th>signatures</th>
-      <td><p>list of file paths to signature files (.gmt or .txt) or a
-list of Signature objects</p></td>
+      <td><p>list of file paths to signature files (.gmt or .txt) or
+Signature objects.  See the createGeneSignature(...) method for information
+on creating Signature objects.</p></td>
     </tr>
     <tr>
       <th>housekeeping</th>
@@ -166,9 +174,8 @@ list of Signature objects</p></td>
     </tr>
     <tr>
       <th>meta</th>
-      <td><p>data file with cell meta data (.txt), or a
-data.frame with meta information. Note that rows should match samples in the
-data, and columns should either be factors or numerics.</p></td>
+      <td><p>data.frame with meta-data for cells. Rows in this data.frame should correspond
+with columns in the expression data matrix</p></td>
     </tr>
     <tr>
       <th>nomodel</th>
@@ -177,13 +184,13 @@ Else FNR and weights calculated. [Default:TRUE]</p></td>
     </tr>
     <tr>
       <th>projection_genes</th>
-      <td><p>name of method ('threshold' or 'fano') or list of
+      <td><p>name of filtering method ('threshold' or 'fano') or list of
 genes to use when computing projections.</p></td>
     </tr>
     <tr>
       <th>min_signature_genes</th>
-      <td><p>Minimum number of genes required to compute a
-signature</p></td>
+      <td><p>Signature that match less than this number of genes in the
+supplied expression matrix are removed.</p></td>
     </tr>
     <tr>
       <th>weights</th>
@@ -192,17 +199,18 @@ from the FNR curve.</p></td>
     </tr>
     <tr>
       <th>threshold</th>
-      <td><p>Threshold to apply for the threshold filter. Number of cells or
-proportion of cells (if less than 1)</p></td>
+      <td><p>Threshold to apply when using the 'threshold' projection genes filter.
+If greater than 1, this specifies the number of cells in which a gene must be detected
+for it to be used when computing PCA. If less than 1, this instead specifies the proportion of cells needed</p></td>
     </tr>
     <tr>
       <th>perm_wPCA</th>
-      <td><p>If TRUE, apply permutation WPCA to calculate significant
-number of PCs. Else not. Default FALSE.</p></td>
+      <td><p>If TRUE, apply permutation procedure to calculate significant
+number of PCs when running PCA.  If FALSE (default), retain the top 30.</p></td>
     </tr>
     <tr>
       <th>projection_methods</th>
-      <td><p>a character list of which projection methods to apply. Can be:</p><ul>
+      <td><p>a character vector specifying which projection methods to apply. Can be:</p><ul>
 <li><p>tSNE10 (tSNE with perplexity 10)</p></li>
 <li><p>tSNE30 (tSNE with perplexity 30)</p></li>
 <li><p>ICA</p></li>
@@ -237,10 +245,6 @@ pooling if there are more than 15000 cells.</p></td>
       <td><p>a name for the sample - shown on the output report</p></td>
     </tr>
     <tr>
-      <th>cluster_variable</th>
-      <td><p>variable to use to denote clusters</p></td>
-    </tr>
-    <tr>
       <th>latentSpace</th>
       <td><p>latent space for expression data. Numeric matrix or dataframe
 with dimensions CELLS x COMPONENTS</p></td>
@@ -248,12 +252,7 @@ with dimensions CELLS x COMPONENTS</p></td>
     <tr>
       <th>latentTrajectory</th>
       <td><p>trajectory to model cell progression.  Wrapped result
-of a trajectory inference by the dynverse/dynwrap library</p></td>
-    </tr>
-    <tr>
-      <th>metaData</th>
-      <td><p>a dataframe storing all metadata (can be either factor or numerical),
-where the rows are cells and columns are individual meta data items</p></td>
+of a trajectory inference method by the dynverse/dynwrap library</p></td>
     </tr>
     </table>
     
@@ -264,23 +263,17 @@ where the rows are cells and columns are individual meta data items</p></td>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><span class='co'># NOT RUN {</span>
-<span class='no'>expMat</span> <span class='kw'>&lt;-</span> <span class='fu'>matrix</span>(<span class='fu'>rnorm</span>(<span class='fl'>200000</span>), <span class='kw'>nrow</span><span class='kw'>=</span><span class='fl'>500</span>)
-<span class='fu'>rownames</span>(<span class='no'>expMat</span>) <span class='kw'>&lt;-</span> <span class='fu'>paste0</span>(<span class='st'>"gene"</span>,<span class='fl'>1</span>:<span class='fl'>500</span>)
+<span class='no'>expMat</span> <span class='kw'>&lt;-</span> <span class='fu'>read.csv</span>(<span class='st'>"expressionMatrix.csv"</span>, <span class='kw'>row.names</span><span class='kw'>=</span><span class='fl'>1</span>)
+<span class='no'>meta</span> <span class='kw'>&lt;-</span> <span class='fu'>read.csv</span>(<span class='st'>"metaData.csv"</span>, <span class='kw'>row.names</span><span class='kw'>=</span><span class='fl'>1</span>)
 
-<span class='co'># choose housekeeping genes</span>
-<span class='no'>hkg</span> <span class='kw'>&lt;-</span> <span class='no'>housekeeping</span>$<span class='no'>default</span>
+<span class='no'>sigs</span> <span class='kw'>&lt;-</span> <span class='fu'>c</span>(<span class='st'>"/path/to/signatures/msigdb_Hallmark.gmt"</span>,
+          <span class='st'>"/path/to/signatures/Enrichr/ChEA_2015.txt"</span>
+         )
 
-<span class='co'>#create 20 signatures of 25 genes each</span>
-<span class='no'>sigs</span> <span class='kw'>&lt;-</span> <span class='fu'>lapply</span>(<span class='fl'>1</span>:<span class='fl'>20</span>, <span class='kw'>function</span>(<span class='no'>i</span>) {
-<span class='no'>sigData</span> <span class='kw'>&lt;-</span> <span class='fu'>sign</span>(<span class='fu'>rnorm</span>(<span class='fl'>25</span>))
-<span class='fu'>names</span>(<span class='no'>sigData</span>) <span class='kw'>&lt;-</span> <span class='fu'>paste0</span>(<span class='st'>"gene"</span>,<span class='fu'>sample</span>(<span class='fl'>1</span>:<span class='fl'>100</span>,<span class='fl'>25</span>))
-<span class='fu'>return</span>(<span class='fu'><a href='createGeneSignature.html'>createGeneSignature</a></span>(<span class='kw'>name</span> <span class='kw'>=</span> <span class='fu'>paste0</span>(<span class='st'>"sig"</span>,<span class='no'>i</span>),
-                                 <span class='kw'>sigData</span> <span class='kw'>=</span> <span class='no'>sigData</span>))
-})
 
-<span class='no'>fp</span> <span class='kw'>&lt;-</span> <span class='fu'>Vision</span>(<span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>expMat</span>,
-                     <span class='kw'>signatures</span> <span class='kw'>=</span> <span class='no'>sigs</span>,
-                     <span class='kw'>housekeeping</span> <span class='kw'>=</span> <span class='no'>hkg</span>)
+<span class='no'>vis</span> <span class='kw'>&lt;-</span> <span class='fu'>Vision</span>(<span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>expMat</span>,
+              <span class='kw'>signatures</span> <span class='kw'>=</span> <span class='no'>sigs</span>,
+              <span class='kw'>meta</span> <span class='kw'>=</span> <span class='no'>meta</span>)
 <span class='co'># }</span></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -298,7 +291,7 @@ where the rows are cells and columns are individual meta data items</p></td>
 
       <footer>
       <div class="copyright">
-  <p>Developed by Matt Jones, Tal Ashuach, David Detomaso.</p>
+  <p>Developed by Matt Jones, David Detomaso, Tal Ashuach.</p>
 </div>
 
 <div class="pkgdown">

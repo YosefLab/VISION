@@ -1,9 +1,24 @@
-#' Cluster single cells so signal is maintained but the sample size and noise
-#' are reduce, using the louvain clustering algorithm
+#' Pool cells into microclusters
+#'
+#' Merges similar transcriptional profiles into representative 'pools'
+#'
+#' A latent space is computed for the expression data via PCA after
+#' filtering on genes (using parameters `filterInput` and `filterThreshold`).
+#'
+#' Alternately, a latent space can be supplied via the `latentSpace` argument
+#'
+#' Euclidean distance within the latent space is then used to create cell pools
+#'
+#'
 #' @param exprData the expression data matrix
 #' @param cellsPerPartition control over the minimum number of cells to put into each supercell
+#' @param filterInput name of filtering method ('threshold' or 'fano') or list of
+#' genes to use when computing projections.
+#' @param filterThreshold Threshold to apply when using the 'threshold' projection genes filter.
+#' If greater than 1, this specifies the number of cells in which a gene must be detected
+#' for it to be used when computing PCA. If less than 1, this instead specifies the proportion of cells needed
 #' @param preserve_clusters named factor vector denoted cluster boundaries to preserve
-#' @param latentSpace numeric matrix cells x components
+#' @param latentSpace (Optional) Latent space to be used instead of PCA numeric matrix cells x components
 #' @importFrom Matrix tcrossprod
 #' @importFrom Matrix rowMeans
 #' @return pooled cells - named list of vectors - cells in each supercell
@@ -13,9 +28,9 @@ applyMicroClustering <- function(
                          filterInput = "fano",
                          filterThreshold = round(ncol(exprData)*0.2),
                          preserve_clusters = NULL,
-                         latentSpace = matrix(NA, 1, 1)) {
+                         latentSpace = NULL) {
 
-    if (all(dim(latentSpace) == c(1, 1))) {
+    if (is.null(latentSpace) || all(dim(latentSpace) == c(1, 1))) {
         exprData <- matLog2(exprData)
         gene_passes <- applyFilters(exprData, filterThreshold, filterInput)
         fexpr <- exprData[gene_passes, ]
