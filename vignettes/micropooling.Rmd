@@ -3,7 +3,7 @@ title: "Micropooling"
 package: "`r BiocStyle::pkg_ver('BiocStyle')`"
 output: BiocStyle::html_document
 vignette: >
-  %\VignetteIndexEntry{Introduction to VISION}
+  %\VignetteIndexEntry{Micropooling}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

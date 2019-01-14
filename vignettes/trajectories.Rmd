@@ -3,7 +3,7 @@ title: "Incorporating a Trajectory Model"
 package: "`r BiocStyle::pkg_ver('BiocStyle')`"
 output: BiocStyle::html_document
 vignette: >
-  %\VignetteIndexEntry{Introduction to VISION}
+  %\VignetteIndexEntry{Incorporating a Trajectory Model}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
