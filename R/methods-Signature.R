@@ -66,8 +66,7 @@ Signature <- function(sigDict, name, source, metaData="") {
 #' @export
 #' @return a Signature object
 #' @examples
-#'
-#'
+#' \dontrun{
 #' sig1 <- createGeneSignature(
 #'            name = "CD8 Markers",
 #'            sigData = c(CD8A=1, CD8B=1, GZMK=1, GZMB=1,
@@ -81,8 +80,7 @@ Signature <- function(sigDict, name, source, metaData="") {
 #' sigs <- c(sig1, cc_sigs)
 #'
 #' vis <- Vision(data = expMat, signatures = sigs)
-#'
-#'
+#' }
 createGeneSignature <- function(name, sigData, metadata="") {
   return(new("Signature", sigDict=sigData, name=name, metaData=metadata,
              source="user-defined"))

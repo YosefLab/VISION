@@ -506,13 +506,15 @@ setMethod("addProjection", signature(object = "Vision"),
 #'     saveRDS(vis, 'vision_results.rds')
 #'     viewResults(vis)
 #'
-#' @param vis VISION object
+#' @param object VISION object
 #' @param ofile the path to save the object in. If NULL, the object is saved
 #' in the working directory [default:NULL]
 #' @param port The port on which to serve the output viewer.  If omitted, a
 #' random port between 8000 and 9999 is chosen.
 #' @param host The host used to serve the output viewer. If omitted, "127.0.0.1"
 #' is used.
+#' @param browser Whether or not to launch the browser automatically (default=TRUE)
+#' @param name Name for the sample - is shown at the top of the output report
 #' @return the path of the saved file
 #' @aliases saveAndViewResults
 #' @export
@@ -676,7 +678,7 @@ setMethod("getSelections", signature(object = "Vision"),
 #' }
 setMethod("getProjections", signature(object = "Vision"),
           function(object) {
-              return(vis@Projections)
+              return(object@Projections)
           })
 
 
@@ -695,7 +697,7 @@ setMethod("getProjections", signature(object = "Vision"),
 #' @rdname getLatentSpace
 setMethod("getLatentSpace", signature(object = "Vision"),
           function(object) {
-              return(vis@latentSpace)
+              return(object@latentSpace)
           })
 
 

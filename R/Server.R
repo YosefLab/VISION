@@ -162,6 +162,7 @@ compressJSONResponse <- function(json, res, req){
 #' random port between 8000 and 9999 is chosen.
 #' @param host The host used to serve the output viewer. If omitted, "127.0.0.1"
 #' is used.
+#' @param browser Whether or not to launch the web browser
 #' @return object
 launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 

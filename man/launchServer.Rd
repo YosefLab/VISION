@@ -15,6 +15,8 @@ random port between 8000 and 9999 is chosen.}
 
 \item{host}{The host used to serve the output viewer. If omitted, "127.0.0.1"
 is used.}
+
+\item{browser}{Whether or not to launch the web browser}
 }
 \value{
 object
