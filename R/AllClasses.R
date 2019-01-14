@@ -19,10 +19,10 @@ Cluster <- setClass("Cluster",
 
 ProjectionData <- setClass("ProjectionData",
     slots = c(
-    sigProjMatrix = "matrix",
-    pMatrix = "matrix",
-    sigClusters = "list",
-    emp_pMatrix = "matrix"
+    Consistency = "matrix",
+    pValue = "matrix",
+    FDR = "matrix",
+    sigClusters = "list"
 ))
 
 PCAnnotatorData <- setClass("PCAnnotatorData",
@@ -141,6 +141,6 @@ Vision <- setClass("Vision",
         latentSpace = matrix(NA, 1, 1),
         latentTrajectory = NULL,
         initialLatentSpace = matrix(NA, 1, 1),
-        version = 1.0,
+        version = 1.1,
         selections = list()
 ))

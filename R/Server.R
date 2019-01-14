@@ -313,8 +313,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         sigs <- c(sigs, meta_n)
 
         out <- sigProjMatrixToJSON(
-                                  object@TrajectoryConsistencyScores@sigProjMatrix,
-                                  object@TrajectoryConsistencyScores@emp_pMatrix,
+                                  object@TrajectoryConsistencyScores@Consistency,
+                                  object@TrajectoryConsistencyScores@FDR,
                                   sigs)
         return(out)
       }) %>%
@@ -322,8 +322,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         sigs <- colnames(object@metaData)
         out <- sigProjMatrixToJSON(
-                                  object@TrajectoryConsistencyScores@sigProjMatrix,
-                                  object@TrajectoryConsistencyScores@emp_pMatrix,
+                                  object@TrajectoryConsistencyScores@Consistency,
+                                  object@TrajectoryConsistencyScores@FDR,
                                   sigs)
         return(out)
       }) %>%
@@ -421,19 +421,30 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         sigs <- c(sigs, meta_n)
 
         cluster_variable <- URLdecode(req$params$cluster_variable2)
-        pvals <- object@SigConsistencyScores@emp_pMatrix
-        zscores <- object@SigConsistencyScores@sigProjMatrix
+        pvals <- object@SigConsistencyScores@FDR
+        stat <- object@SigConsistencyScores@Consistency
 
-        cluster_pvals <- object@ClusterSigScores[[cluster_variable]]$pvals
-        cluster_zscores <- object@ClusterSigScores[[cluster_variable]]$zscores
+        var_res <- object@ClusterSigScores[[cluster_variable]]
 
-        pvals <- pvals[rownames(cluster_pvals), , drop = F]
-        zscores <- zscores[rownames(cluster_zscores), , drop = F]
+        cluster_pval <- lapply(var_res, function(var_level_res){
+            var_level_res["FDR"]
+        })
+        cluster_pval <- as.matrix(do.call(cbind, cluster_pval))
+        colnames(cluster_pval) <- names(var_res)
 
-        pvals <- cbind(pvals, cluster_pvals)
-        zscores <- cbind(zscores, cluster_zscores)
+        cluster_stat <- lapply(var_res, function(var_level_res){
+            var_level_res["stat"]
+        })
+        cluster_stat <- as.matrix(do.call(cbind, cluster_stat))
+        colnames(cluster_stat) <- names(var_res)
 
-        out <- sigProjMatrixToJSON(zscores, pvals, sigs)
+        cluster_pval <- cluster_pval[rownames(pvals), , drop = F]
+        cluster_stat <- cluster_stat[rownames(pvals), , drop = F]
+
+        pvals <- cbind(pvals, cluster_pval)
+        stat <- cbind(stat, cluster_stat)
+
+        out <- sigProjMatrixToJSON(stat, pvals, sigs)
         return(out)
       }) %>%
       get("/Clusters/(?<cluster_variable3>.*)/SigProjMatrix/Meta", function(req, res, err) {
@@ -441,19 +452,30 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         sigs <- colnames(object@metaData)
 
         cluster_variable <- URLdecode(req$params$cluster_variable3)
-        pvals <- object@SigConsistencyScores@emp_pMatrix
-        zscores <- object@SigConsistencyScores@sigProjMatrix
+        pvals <- object@SigConsistencyScores@FDR
+        stat <- object@SigConsistencyScores@Consistency
 
-        cluster_pvals <- object@ClusterSigScores[[cluster_variable]]$pvals
-        cluster_zscores <- object@ClusterSigScores[[cluster_variable]]$zscores
+        var_res <- object@ClusterSigScores[[cluster_variable]]
 
-        pvals <- pvals[rownames(cluster_pvals), , drop = F]
-        zscores <- zscores[rownames(cluster_zscores), , drop = F]
+        cluster_pval <- lapply(var_res, function(var_level_res){
+            var_level_res["FDR"]
+        })
+        cluster_pval <- as.matrix(do.call(cbind, cluster_pval))
+        colnames(cluster_pval) <- names(var_res)
 
-        pvals <- cbind(pvals, cluster_pvals)
-        zscores <- cbind(zscores, cluster_zscores)
+        cluster_stat <- lapply(var_res, function(var_level_res){
+            var_level_res["stat"]
+        })
+        cluster_stat <- as.matrix(do.call(cbind, cluster_stat))
+        colnames(cluster_stat) <- names(var_res)
 
-        out <- sigProjMatrixToJSON(zscores, pvals, sigs)
+        cluster_pval <- cluster_pval[rownames(pvals), , drop = F]
+        cluster_stat <- cluster_stat[rownames(pvals), , drop = F]
+
+        pvals <- cbind(pvals, cluster_pval)
+        stat <- cbind(stat, cluster_stat)
+
+        out <- sigProjMatrixToJSON(stat, pvals, sigs)
 
         return(out)
       }) %>%

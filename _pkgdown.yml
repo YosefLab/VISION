@@ -13,6 +13,17 @@ reference:
       contents:
           - addProjection
           - createGeneSignature
+    - title: Accessing Data inside the VISION object
+      contents:
+          - getSignatureScores
+          - getLatentSpace
+          - getLatentTrajectory
+          - getProjections
+          - getSignatureConsistency
+          - getMetaConsistency
+          - getSignatureDifferential
+          - getMetaDifferential
+          - getSelections
     - title: Micropooling Outside of VISION
       contents:
           - applyMicroClustering

@@ -146,7 +146,6 @@ matrix_wilcox <- function(ranks, cluster_ii,
     AUC <- u / (n1 * n2)
     AUC <- ifelse(is.infinite(AUC), .5, AUC) # Edge case n2 == 0
     AUC <- ifelse(is.na(AUC), .5, AUC) # Edge case, n1 == 0
-    stat <- (AUC - .5) * 2  # translates (0.5, 1) to (0, 1)
 
     # u to z-score
     m_u <- (n1 * n2) / 2
@@ -183,7 +182,7 @@ matrix_wilcox <- function(ranks, cluster_ii,
 
     p[p > 1] <- 1  # Can happen due to continuity correction
 
-    return(list(pval = p, stat = stat))
+    return(list(pval = p, stat = AUC))
 }
 
 #' Perform 1vAll factor analysis given a factor matrix and group definition

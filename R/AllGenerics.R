@@ -35,3 +35,35 @@ setGeneric("getSelections", function(object, ...) {
 setGeneric("computeKNNWeights", function(object, ...) {
     standardGeneric("computeKNNWeights")
 })
+
+setGeneric("getProjections", function(object, ...) {
+    standardGeneric("getProjections")
+})
+
+setGeneric("getLatentSpace", function(object, ...) {
+    standardGeneric("getLatentSpace")
+})
+
+setGeneric("getLatentTrajectory", function(object, ...) {
+    standardGeneric("getLatentTrajectory")
+})
+
+setGeneric("getSignatureScores", function(object, ...) {
+    standardGeneric("getSignatureScores")
+})
+
+setGeneric("getSignatureConsistency", function(object, ...) {
+    standardGeneric("getSignatureConsistency")
+})
+
+setGeneric("getSignatureDifferential", function(object, ...) {
+    standardGeneric("getSignatureDifferential")
+})
+
+setGeneric("getMetaConsistency", function(object, ...) {
+    standardGeneric("getMetaConsistency")
+})
+
+setGeneric("getMetaDifferential", function(object, ...) {
+    standardGeneric("getMetaDifferential")
+})

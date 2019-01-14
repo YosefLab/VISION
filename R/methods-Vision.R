@@ -416,7 +416,7 @@ setMethod("analyze", signature(object="Vision"),
     signatureBackground <- calculateSignatureBackground(object, num = 3000)
 
     # Populates @SigConsistencyScores
-    object <- analyzeSpatialCorrelations(object, signatureBackground)
+    object <- analyzeLocalCorrelations(object, signatureBackground)
 
     # Populates @TrajectoryConsistencyScores
     if (!is.null(object@latentTrajectory)) {
@@ -616,20 +616,23 @@ setMethod("viewResults", signature(object = "character"),
 
 #' Get saved selections
 #'
-#' Groups of cells can be selected and saved using the interactive output report
-#' This method allows you to retrieve these selections later in R for downstream analyses
+#' Access saved groups of cell IDs defined while using the interactive output report
+#'
+#' This method allows you to retrieve saved selections later in R for downstream analyses
 #'
 #' Note:  In order for selections to correctly save when launching the report, the report
 #'        must be run by storing the results back into the object.
-#         E.g.
-#'                  vis <- viewResults(vis)
-#'        and not
-#'                  viewResults(vis)
+#'
+#' E.g.
+#' \preformatted{vis <- viewResults(vis)}
+#' and not
+#' \preformatted{viewResults(vis)}
 #'
 #'
 #' @param object VISION object
-#' @return list Named list of selections.  Each selection is a character vector of cell/pool IDs
+#' @return Named list of selections.  Each selection is a character vector of cell/pool IDs
 #' @export
+#' @aliases getSelections
 #' @rdname getSelections
 #' @examples
 #' \dontrun{
@@ -643,4 +646,290 @@ setMethod("viewResults", signature(object = "character"),
 setMethod("getSelections", signature(object = "Vision"),
           function(object) {
               return(object@selections)
+          })
+
+
+#' Get 2D views of the expression data
+#'
+#' This method provides access to the 2d projections that are used
+#' to display results in the output report
+#'
+#' @param object VISION object
+#' @return List of matrix (Cells x 2)
+#' @export
+#' @aliases getProjections
+#' @rdname getProjections
+#' @examples
+#' \dontrun{
+#'
+#' # After running 'analyze'
+#' # Retrieve tSNE30 (tSNE with perplexity 30) and plot it
+#'
+#' tsne <- getProjections(vis)[["tSNE30"]]
+#'
+#' plot(tsne[, 1], tsne[, 2])
+#'
+#' # To see the names of available projections, just run:
+#'
+#' names(getProjections(vis))
+#'
+#' }
+setMethod("getProjections", signature(object = "Vision"),
+          function(object) {
+              return(vis@Projections)
+          })
+
+
+#' Get Latent Space
+#'
+#' Provides access to the latent space used for
+#' local consistency analysis
+#'
+#' If a latent trajectory was supplied, access it by using \code{getLatentTrajectory}
+#' instead
+#'
+#' @param object VISION object
+#' @return the latent space as a matrix of dimension (Cells x Components)
+#' @export
+#' @aliases getLatentSpace
+#' @rdname getLatentSpace
+setMethod("getLatentSpace", signature(object = "Vision"),
+          function(object) {
+              return(vis@latentSpace)
+          })
+
+
+#' Get Latent Trajectory
+#'
+#' Provides access to the latent trajectory used for
+#' local consistency analysis
+#'
+#' If a latent space was supplied, access it by using \code{getLatentSpace}
+#' instead
+#'
+#' @param object VISION object
+#' @return Trajectory object
+#' @export
+#' @aliases getLatentTrajectory
+#' @rdname getLatentTrajectory
+#' @examples
+#' \dontrun{
+#'
+#' trajectory <- getLatentTrajectory(vis)
+#'
+#' # MxM connectivity for network milestones
+#' trajectory@adjMat
+#'
+#' # data.frame with the position of cells between milestones
+#' # Columns are:
+#' #    cell
+#' #    from (milestone)
+#' #    to (milestone)
+#' #    position (0 to 1)
+#' trajectory@progressions
+#'
+#' }
+setMethod("getLatentTrajectory", signature(object = "Vision"),
+          function(object) {
+              return(object@latentTrajectory)
+          })
+
+
+#' Get Signature Scores
+#'
+#' Access to the signature scores computed by VISION
+#'
+#' @param object VISION object
+#' @return Signature scores as a (Cells x Signature) matrix
+#' @export
+#' @aliases getSignatureScores
+#' @rdname getSignatureScores
+setMethod("getSignatureScores", signature(object = "Vision"),
+          function(object) {
+              return(object@sigScores)
+          })
+
+
+#' Get Signature Consistency Scores
+#'
+#' Access the local consistency scores computed for signatures
+#'
+#' Local consistency scores are calculated from the input latent
+#' space (default's to PCA) or the input trajectory model (if provided)
+#'
+#' @param object VISION object
+#' @return data.frame with columns 'Consistency', 'pValue', and 'FDR'
+#' @export
+#' @aliases getSignatureConsistency
+#' @rdname getSignatureConsistency
+setMethod("getSignatureConsistency", signature(object = "Vision"),
+          function(object) {
+              if (is.null(object@TrajectoryConsistencyScores)){
+                  localData <- object@SigConsistencyScores
+              } else {
+                  localData <- object@TrajectoryConsistencyScores
+              }
+
+              # Remove meta-variables
+              metaVars <- colnames(object@metaData)
+
+              fdr <- localData@FDR[, 1]
+              pVals <- localData@pValue[, 1]
+              consistency <- localData@Consistency[, 1]
+
+              sigs <- setdiff(names(pVals), metaVars)
+
+              pVals <- pVals[sigs]
+              consistency <- consistency[sigs]
+              fdr <- fdr[sigs]
+
+              out <- data.frame(
+                  Consistency = consistency,
+                  pValue = pVals,
+                  FDR = fdr,
+                  row.names = sigs
+              )
+
+              out <- out[order(out$pValue, out$Consistency * -1), ]
+
+              return(out)
+
+          })
+
+
+#' Get MetaData Consistency Scores
+#'
+#' Access the local consistency scores computed for meta-data variables
+#'
+#' Local consistency scores are calculated from the input latent
+#' space (default's to PCA) or the input trajectory model (if provided)
+#'
+#' @param object VISION object
+#' @return data.frame with columns 'Consistency', 'pValue', and 'FDR'
+#' @export
+#' @aliases getMetaConsistency
+#' @rdname getMetaConsistency
+setMethod("getMetaConsistency", signature(object = "Vision"),
+          function(object) {
+              if (is.null(object@TrajectoryConsistencyScores)){
+                  localData <- object@SigConsistencyScores
+              } else {
+                  localData <- object@TrajectoryConsistencyScores
+              }
+
+              # Remove non meta-variables
+              metaVars <- colnames(object@metaData)
+
+              fdr <- localData@FDR[, 1]
+              pVals <- localData@pValue[, 1]
+              consistency <- localData@Consistency[, 1]
+
+              sigs <- intersect(names(pVals), metaVars)
+
+              pVals <- pVals[sigs]
+              consistency <- consistency[sigs]
+              fdr <- fdr[sigs]
+
+              out <- data.frame(
+                  Consistency = consistency,
+                  pValue = pVals,
+                  FDR = fdr,
+                  row.names = sigs
+              )
+
+              out <- out[order(out$pValue, out$Consistency * -1), ]
+
+              return(out)
+
+          })
+
+
+#' Get Results of One-vs-All Differential Signature Tests
+#'
+#' Returns the results of running one-vs-all differential signature
+#' tests for each level of every factor meta-variable.
+#'
+#' The 'stat' variable refers to the AUC
+#'
+#' The output object has a nested structure:
+#'
+#' List of meta-data variables -> List of variable levels -> Results Dataframe
+#'
+#' The results dataframe has three columns: "stat", "pValue", "FDR"
+#'
+#' @param object VISION object
+#' @return nested list of list of data.frame (see details)
+#' @export
+#' @aliases getSignatureDifferential
+#' @rdname getSignatureDifferential
+setMethod("getSignatureDifferential", signature(object = "Vision"),
+          function(object) {
+
+              # This is almost what we want to output, but needs some massaging
+              ClusterSigScores <- object@ClusterSigScores
+
+              metaVars <- colnames(object@metaData)
+
+              if (is.null(ClusterSigScores)){
+                  return(ClusterSigScores)
+              }
+
+              to_keep <- setdiff(
+                  rownames(ClusterSigScores[[1]][[1]]),
+                  metaVars
+                  )
+
+              ClusterSigScores <- lapply(ClusterSigScores, function(var_res){
+                  var_res <- lapply(var_res, function(var_level_res){
+                      var_level_res <- var_level_res[to_keep, , drop = FALSE]
+                  })
+              })
+
+              return(ClusterSigScores)
+          })
+
+
+#' Get Results of One-vs-All Differential Tests with Metadata Variables
+#'
+#' Returns the results of running one-vs-all differential
+#' tests for each level of every factor meta-variable.
+#'
+#' For numeric meta-variables, the 'stat' is the AUC. For factor meta-variables
+#' the stat is the chisq statistic comparing the two groups
+#'
+#' The output object has a nested structure:
+#'
+#' List of meta-data variables -> List of variable levels -> Results Dataframe
+#'
+#' The results dataframe has three columns: "stat", "pValue", "FDR"
+#'
+#' @param object VISION object
+#' @return nested list of list of data.frame (see details)
+#' @export
+#' @aliases getMetaDifferential
+#' @rdname getMetaDifferential
+setMethod("getMetaDifferential", signature(object = "Vision"),
+          function(object) {
+
+              # This is almost what we want to output, but needs some massaging
+              ClusterSigScores <- object@ClusterSigScores
+
+              metaVars <- colnames(object@metaData)
+
+              if (is.null(ClusterSigScores)){
+                  return(ClusterSigScores)
+              }
+
+              to_keep <- intersect(
+                  rownames(ClusterSigScores[[1]][[1]]),
+                  metaVars
+                  )
+
+              ClusterSigScores <- lapply(ClusterSigScores, function(var_res){
+                  var_res <- lapply(var_res, function(var_level_res){
+                      var_level_res <- var_level_res[to_keep, , drop = FALSE]
+                  })
+              })
+
+              return(ClusterSigScores)
           })

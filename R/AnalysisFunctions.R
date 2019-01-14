@@ -312,7 +312,7 @@ generateProjections <- function(object) {
   return(object)
 }
 
-#' Compute spatial correlations for all signatures
+#' Compute local correlations for all signatures
 #'
 #' This is the main analysis function. For each filtered dataset, a set of
 #' different projection onto low-dimensional space are computed, and the
@@ -321,14 +321,14 @@ generateProjections <- function(object) {
 #' @param object the VISION object
 #' @param signatureBackground as returned by `calculateSignatureBackground`
 #' @return the VISION object with values set for the analysis results
-analyzeSpatialCorrelations <- function(object, signatureBackground = NULL) {
+analyzeLocalCorrelations <- function(object, signatureBackground = NULL) {
 
   if (is.null(signatureBackground)){
       message("Computing background distribution for signature scores...")
       signatureBackground <- calculateSignatureBackground(object, num = 3000)
   }
 
-  message("Evaluating spatial consistency of signatures...")
+  message("Evaluating local consistency of signatures...")
 
   sigConsistencyScores <- sigConsistencyScores(
                                 object@latentSpace,
@@ -339,15 +339,15 @@ analyzeSpatialCorrelations <- function(object, signatureBackground = NULL) {
   message("Clustering Signatures...")
   sigClusters <- clusterSignatures(object@sigScores,
                                    object@metaData,
-                                   sigConsistencyScores$emp_pVals,
+                                   sigConsistencyScores$fdr,
                                    sigConsistencyScores$sigProjMatrix,
                                    clusterMeta = object@pool)
 
   sigConsistencyScoresData <- ProjectionData(
-                             sigProjMatrix = sigConsistencyScores$sigProjMatrix,
-                             pMatrix = sigConsistencyScores$pVals,
-                             sigClusters = sigClusters,
-                             emp_pMatrix = sigConsistencyScores$emp_pVals)
+                             Consistency = sigConsistencyScores$sigProjMatrix,
+                             pValue = sigConsistencyScores$pVals,
+                             FDR = sigConsistencyScores$fdr,
+                             sigClusters = sigClusters)
 
   object@SigConsistencyScores <- sigConsistencyScoresData
 
@@ -385,10 +385,10 @@ analyzeTrajectoryCorrelations <- function(object, signatureBackground = NULL) {
                                        clusterMeta = object@pool)
 
   TrajectoryConsistencyScores <- ProjectionData(
-      sigProjMatrix = sigVTreeProj$sigProjMatrix,
-      pMatrix = sigVTreeProj$pVals,
-      sigClusters = sigTreeClusters,
-      emp_pMatrix = sigVTreeProj$emp_pVals)
+      Consistency = sigVTreeProj$sigProjMatrix,
+      pValue = sigVTreeProj$pVals,
+      FDR = sigVTreeProj$fdr,
+      sigClusters = sigTreeClusters)
 
   object@TrajectoryConsistencyScores <- TrajectoryConsistencyScores
 
@@ -475,18 +475,17 @@ clusterSigScores <- function(object) {
 
             pval <- c(r1$pval, r2$pval, r3$pval)
             stat <- c(r1$stat, r2$stat, r3$stat)
-            return(list(pval = pval, stat = stat))
+            fdr <- p.adjust(pval, method = "BH")
+            out <- data.frame(
+                stat = stat, pValue = pval, FDR = fdr
+            )
+            return(out)
         })
 
         names(result) <- var_levels
         result <- result[order(var_levels)]
-        stat <- do.call(cbind, lapply(result, function(x) x$stat))
-        pval <- do.call(cbind, lapply(result, function(x) x$pval))
 
-        pvals_adj <- apply(pval, MARGIN = 2, FUN = p.adjust, method = "BH")
-        pvals_adj[pvals_adj < 1e-300] <- 1e-300
-        pvals_adj <- log10(pvals_adj)
-        return(list(pvals = pvals_adj, zscores = stat))
+        return(result)
     })
 
     object@ClusterSigScores <- out

@@ -327,7 +327,7 @@ Signature_Table.prototype.render = function()
                 .clamp(true);
         }
         var colorScaleCluster = d3.scale.linear()
-            .domain([-1,0,1])
+            .domain([0,0.5,1])
             .range(["steelblue","white", "lightcoral"])
             .clamp(true);
 
@@ -364,7 +364,7 @@ Signature_Table.prototype.render = function()
                 .filter(function(d,i) { return i > 1;})
                 .style('background-color', function(d){return colorScaleCluster(d.zscore);})
                 .append('div')
-                .text(function(d){ return d.pval < -1.301 ? '*' : '';})
+                .text(function(d){ return d.pval < 0.05 ? '*' : '';})
         }
 
         // Hover actions
@@ -766,7 +766,7 @@ Meta_Table.prototype.render = function()
                 .clamp(true);
         }
         var colorScaleCluster = d3.scale.linear()
-            .domain([-1,0,1])
+            .domain([0,0.5,1])
             .range(["steelblue","white", "lightcoral"])
             .clamp(true);
 
@@ -1142,8 +1142,7 @@ function destroyTooltip(popper) {
     popper.scheduleUpdate();
 }
 
-function _pval_format(x) {
-    var p = Math.pow(10, x)
+function _pval_format(p) {
     if(p < 0.01){
         return p.toExponential(1)
     } else {

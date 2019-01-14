@@ -255,7 +255,6 @@ generatePermutationNull <- function(num, eData, sigData) {
 #'
 #'   sigAssignments: named factor vector assigning signatures to random background
 #'     groups
-#' @param fdrCorrect logical, whether or not to FDR correct p-values
 #' @return list:
 #' \itemize{
 #'     \item sigProbMatrix: the vector of consistency z-scores
@@ -263,8 +262,7 @@ generatePermutationNull <- function(num, eData, sigData) {
 #'     \item emp_pVals: pvalues for the scores
 #' }
 sigConsistencyScores <- function(latentSpace, sigScoresData,
-                                      metaData, randomSigData,
-                                      fdrCorrect = TRUE) {
+                                      metaData, randomSigData) {
 
     signatureNames <- c(colnames(sigScoresData), colnames(metaData))
 
@@ -283,40 +281,27 @@ sigConsistencyScores <- function(latentSpace, sigScoresData,
               svp_pcn$pvals,
               svp_pcf$pvals)
 
-    emp_pvals <- c(svp_n$empvals,
-                  svp_pcn$pvals,
-                  svp_pcf$pvals)
-
     consistency <- consistency[signatureNames]
     pvals <- pvals[signatureNames]
-    emp_pvals <- emp_pvals[signatureNames]
 
     consistency <- as.matrix(consistency)
     pvals <- as.matrix(pvals)
-    emp_pvals <- as.matrix(emp_pvals)
 
     colnames(consistency) <- c("Consistency")
     colnames(pvals) <- c("Consistency")
-    colnames(emp_pvals) <- c("Consistency")
-
-    # Cast to 1-column matrices so its consistent with other ProjectionData outputs
 
     # FDR-correct and log-transform p-values
-    if (fdrCorrect && nrow(pvals) > 1){
-        pvals <- apply(pvals, MARGIN = 2,
+    if (nrow(pvals) > 1){
+        fdr <- apply(pvals, MARGIN = 2,
                                     FUN = p.adjust, method = "BH")
-        pvals[pvals == 0] <- 10 ^ (-300)
-        pvals <- log10(pvals)
-
-        emp_pvals <- apply(emp_pvals, MARGIN = 2,
-                                       FUN = p.adjust, method = "BH")
-        emp_pvals[emp_pvals == 0] <- 10 ^ (-300)
-        emp_pvals <- log10(emp_pvals)
+    } else {
+        fdr <- matrix(nrow = 0, ncol = 1)
+        colnames(fdr) <- "Consistency"
     }
 
     return(list(sigProjMatrix = consistency,
                 pVals = pvals,
-                emp_pVals = emp_pvals)
+                fdr = fdr)
     )
 }
 
@@ -408,12 +393,6 @@ sigsVsProjection_n <- function(sigData, randomSigData,
         # Calculate scores for random signatures
         geary_c_bg <- geary_sig_v_proj(randomSigScoreMatrix, weights$indices, weights$weights)
 
-        mu <- mean(geary_c_bg)
-        sigma <- sd(geary_c_bg)
-
-        #Create CDF function for medDissmilarityPrime and apply CDF function to
-        pvals <- pnorm( (geary_c - mu) / sigma)
-
         N <- length(geary_c_bg)
         empvals <- vapply(geary_c, function(x) {
                               comp <- sum(geary_c_bg < x)
@@ -422,19 +401,15 @@ sigsVsProjection_n <- function(sigData, randomSigData,
        }, FUN.VALUE = 0.0)
 
 
-        return(list(consistency = 1 - geary_c, pvals = pvals,
-                    empvals = empvals))
+        return(list(consistency = 1 - geary_c, pvals = empvals))
 
     })
 
 
     consistency <- do.call(c, lapply(groupedResults, function(x) x$consistency))
     pvals <- do.call(c, lapply(groupedResults, function(x) x$pvals))
-    empvals <- do.call(c, lapply(groupedResults, function(x) x$empvals))
 
-
-    return(list(consistency = consistency, pvals = pvals,
-                empvals = empvals))
+    return(list(consistency = consistency, pvals = pvals))
 }
 
 #' Evaluates the significance of each meta data numeric signature vs. a
