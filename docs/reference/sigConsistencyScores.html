@@ -84,16 +84,19 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/Signatures.html">Gene Signatures</a>
-    </li>
-    <li>
       <a href="../articles/VISION-vignette.html">Introduction to VISION</a>
     </li>
     <li>
-      <a href="../articles/micropooling.html">Micropooling and VISION</a>
+      <a href="../articles/micropooling.html">Micropooling</a>
     </li>
     <li>
-      <a href="../articles/trajectories.html">Trajectory Inference and VISION</a>
+      <a href="../articles/trajectories.html">Incorporating a Trajectory Model</a>
+    </li>
+    <li>
+      <a href="../articles/web_only/SignatureConsistency.html">Signature Consistency</a>
+    </li>
+    <li>
+      <a href="../articles/web_only/Signatures.html">Gene Signatures</a>
     </li>
   </ul>
 </li>
@@ -103,7 +106,12 @@
       </ul>
       
       <ul class="nav navbar-nav navbar-right">
-        
+        <li>
+  <a href="https://github.com/yoseflab/VISION">
+    <span class="fa fa-github fa-lg"></span>
+     
+  </a>
+</li>
       </ul>
       
     </div><!--/.nav-collapse -->
@@ -117,7 +125,7 @@
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Evaluates the significance of each signature in each cluster</h1>
-    
+    <small class="dont-index">Source: <a href='https://github.com/yoseflab/VISION/blob/master/R/methods-Signature.R'><code>R/methods-Signature.R</code></a></small>
     <div class="hidden name"><code>sigConsistencyScores.Rd</code></div>
     </div>
 
@@ -127,8 +135,7 @@
     
     </div>
 
-    <pre class="usage"><span class='fu'>sigConsistencyScores</span>(<span class='no'>latentSpace</span>, <span class='no'>sigScoresData</span>, <span class='no'>metaData</span>, <span class='no'>randomSigData</span>,
-  <span class='kw'>fdrCorrect</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
+    <pre class="usage"><span class='fu'>sigConsistencyScores</span>(<span class='no'>latentSpace</span>, <span class='no'>sigScoresData</span>, <span class='no'>metaData</span>, <span class='no'>randomSigData</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -154,10 +161,6 @@ size is cells x signatures</p></td>
     and is a numeric matrix of size cells X signatures</p>
 <p>sigAssignments: named factor vector assigning signatures to random background
     groups</p></td>
-    </tr>
-    <tr>
-      <th>fdrCorrect</th>
-      <td><p>logical, whether or not to FDR correct p-values</p></td>
     </tr>
     </table>
     

@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Wrapper for storing all relevant information for a given projection. — ProjectionData • VISION</title>
+<title>Wrapper for storing all relevant information for a given consistency test — ProjectionData • VISION</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -30,11 +30,11 @@
 
 
 
-<meta property="og:title" content="Wrapper for storing all relevant information for a given projection. — ProjectionData" />
+<meta property="og:title" content="Wrapper for storing all relevant information for a given consistency test — ProjectionData" />
 
-<meta property="og:description" content="Stores a list of Projection objects
+<meta property="og:description" content="Stores a list of consistency test results
 Also stores clusters, a signature to projection matrix
-Initializes a ProjectionData object for neatly storing all relevant data to a given projection section" />
+Initializes a ProjectionData object for storing the consistency test results" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -86,16 +86,19 @@ Initializes a ProjectionData object for neatly storing all relevant data to a gi
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/Signatures.html">Gene Signatures</a>
-    </li>
-    <li>
       <a href="../articles/VISION-vignette.html">Introduction to VISION</a>
     </li>
     <li>
-      <a href="../articles/micropooling.html">Micropooling and VISION</a>
+      <a href="../articles/micropooling.html">Micropooling</a>
     </li>
     <li>
-      <a href="../articles/trajectories.html">Trajectory Inference and VISION</a>
+      <a href="../articles/trajectories.html">Incorporating a Trajectory Model</a>
+    </li>
+    <li>
+      <a href="../articles/web_only/SignatureConsistency.html">Signature Consistency</a>
+    </li>
+    <li>
+      <a href="../articles/web_only/Signatures.html">Gene Signatures</a>
     </li>
   </ul>
 </li>
@@ -105,7 +108,12 @@ Initializes a ProjectionData object for neatly storing all relevant data to a gi
       </ul>
       
       <ul class="nav navbar-nav navbar-right">
-        
+        <li>
+  <a href="https://github.com/yoseflab/VISION">
+    <span class="fa fa-github fa-lg"></span>
+     
+  </a>
+</li>
       </ul>
       
     </div><!--/.nav-collapse -->
@@ -118,39 +126,39 @@ Initializes a ProjectionData object for neatly storing all relevant data to a gi
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Wrapper for storing all relevant information for a given projection.</h1>
-    
+    <h1>Wrapper for storing all relevant information for a given consistency test</h1>
+    <small class="dont-index">Source: <a href='https://github.com/yoseflab/VISION/blob/master/R/methods-ProjectionData.R'><code>R/methods-ProjectionData.R</code></a></small>
     <div class="hidden name"><code>ProjectionData.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Stores a list of Projection objects
+    <p>Stores a list of consistency test results
 Also stores clusters, a signature to projection matrix
-Initializes a ProjectionData object for neatly storing all relevant data to a given projection section</p>
+Initializes a ProjectionData object for storing the consistency test results</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>ProjectionData</span>(<span class='no'>sigProjMatrix</span>, <span class='no'>pMatrix</span>, <span class='no'>sigClusters</span>, <span class='no'>emp_pMatrix</span>)</pre>
+    <pre class="usage"><span class='fu'>ProjectionData</span>(<span class='no'>Consistency</span>, <span class='no'>pValue</span>, <span class='no'>FDR</span>, <span class='no'>sigClusters</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>sigProjMatrix</th>
-      <td><p>Matrix storing the median consistency score per projection, signature pair</p></td>
+      <th>Consistency</th>
+      <td><p>Matrix storing the consistency score per signature pair</p></td>
     </tr>
     <tr>
-      <th>pMatrix</th>
+      <th>pValue</th>
       <td><p>Matrix storing the p values for each projection, signature pair</p></td>
+    </tr>
+    <tr>
+      <th>FDR</th>
+      <td><p>Matrix storing the FDR for each p-value (BH method)</p></td>
     </tr>
     <tr>
       <th>sigClusters</th>
       <td><p>the signature clusters</p></td>
-    </tr>
-    <tr>
-      <th>projections</th>
-      <td><p>List of Projection objects to be stored</p></td>
     </tr>
     </table>
     

@@ -32,9 +32,9 @@ Merges similar transcriptional profiles into representative 'pools'
 }
 \details{
 A latent space is computed for the expression data via PCA after
-filtering on genes (using parameters `filterInput` and `filterThreshold`).
+filtering on genes (using parameters \code{filterInput} and \code{filterThreshold}).
 
-Alternately, a latent space can be supplied via the `latentSpace` argument
+Alternately, a latent space can be supplied via the \code{latentSpace} argument
 
 Euclidean distance within the latent space is then used to create cell pools
 }

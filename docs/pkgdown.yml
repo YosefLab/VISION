@@ -2,8 +2,12 @@ pandoc: 2.2.3.2
 pkgdown: 1.1.0
 pkgdown_sha: ~
 articles:
-  Signatures: Signatures.html
   VISION-vignette: VISION-vignette.html
   micropooling: micropooling.html
   trajectories: trajectories.html
+  SignatureConsistency: web_only/SignatureConsistency.html
+  Signatures: web_only/Signatures.html
+urls:
+  reference: https://yoseflab.github.io/VISION//reference
+  article: https://yoseflab.github.io/VISION//articles
 

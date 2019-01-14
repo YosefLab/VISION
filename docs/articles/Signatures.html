@@ -58,7 +58,7 @@
       <a href="../articles/VISION-vignette.html">Introduction to VISION</a>
     </li>
     <li>
-      <a href="../articles/micropooling.html">Micropooling and VISION</a>
+      <a href="../articles/micropooling.html">Micropooling</a>
     </li>
     <li>
       <a href="../articles/trajectories.html">Trajectory Inference and VISION</a>
@@ -69,7 +69,14 @@
   <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
-<ul class="nav navbar-nav navbar-right"></ul>
+<ul class="nav navbar-nav navbar-right">
+<li>
+  <a href="https://github.com/yoseflab/VISION">
+    <span class="fa fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
 </div>
 <!--/.nav-collapse -->
   </div>
@@ -82,42 +89,77 @@
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1>Gene Signatures</h1>
-                        <h4 class="author">David DeTomaso and Matthew Jones</h4>
             
-            <h4 class="date">4 January 2019</h4>
       
-      
+      <small class="dont-index">Source: <a href="https://github.com/yoseflab/VISION/blob/master/vignettes/Signatures.Rmd"><code>vignettes/Signatures.Rmd</code></a></small>
       <div class="hidden name"><code>Signatures.Rmd</code></div>
 
     </div>
 
     
     
-<div id="getting-signatures" class="section level1">
+<div id="what-is-a-signature" class="section level1">
 <h1 class="hasAnchor">
-<a href="#getting-signatures" class="anchor"></a>Getting Signatures</h1>
-<p>Gene signatures are essential to the VISION pipeline, and are fairly easy to get in any number of ways:</p>
-<div id="downloading-signatures" class="section level2">
-<h2 class="hasAnchor">
-<a href="#downloading-signatures" class="anchor"></a>Downloading Signatures</h2>
-<p>A great resource for gene signatures is <code>MSigDB</code>, curated by the Broad institute. Signatures can be browsed, searched and downloaded from <a href="http://software.broadinstitute.org/gsea/msigdb/">here</a> as .gmt files, then provided to VISION to be included in the analysis.</p>
+<a href="#what-is-a-signature" class="anchor"></a>What is a Signature?</h1>
+<p>A gene signature is a set of genes involved in some biological process.</p>
+<p>Signatures come in two flavors:</p>
+<ul>
+<li>
+<strong>Unsigned</strong> - A set of genes that have some common annotation. For example, genes involved in a pathway of interest. These signatures commonly derive from manual annotation approaches These signatures commonly derive from manual annotation approaches.</li>
+<li>
+<strong>Signed</strong> - A set of genes which describes the <em>contrast</em> between two conditions. Signed signatures compare condition A vs. condition B and have a set of ‘positive’ genes which are increased in A (compared to B) and a set of ‘negative’ genes which are decreased in A (compared to B). Signed signatures are often defined computationally as the result of a differential expression test in some previous experiment.</li>
+</ul>
 </div>
-<div id="creating-signatures" class="section level2">
-<h2 class="hasAnchor">
-<a href="#creating-signatures" class="anchor"></a>Creating Signatures</h2>
-<p>If there is a set of proprietary genes of interest, a user-defined signature can be created in two ways: ### creating a Signature object Once a set of genes that are up or down regulated in the process or cell type of interest are selected, creating a Signature object is relatively straightforward:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1">up.genes &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">"ug1"</span>,<span class="st">"ug2"</span>,<span class="st">"ug3"</span>,<span class="st">"ug4"</span>,<span class="st">"ug5"</span>,<span class="st">"ug6"</span>,<span class="st">"ug7"</span>,<span class="st">"ug8"</span>,<span class="st">"ug9"</span>)</a>
-<a class="sourceLine" id="cb1-2" data-line-number="2">down.genes &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">"dg1"</span>,<span class="st">"dg2"</span>,<span class="st">"dg3"</span>,<span class="st">"dg4"</span>,<span class="st">"dg5"</span>,<span class="st">"dg6"</span>)</a>
-<a class="sourceLine" id="cb1-3" data-line-number="3"></a>
-<a class="sourceLine" id="cb1-4" data-line-number="4">sigData &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="kw">rep</span>(<span class="fl">1.0</span>,<span class="kw">length</span>(up.genes)),<span class="kw">rep</span>(<span class="op">-</span><span class="fl">1.0</span>,<span class="kw">length</span>(down.genes)))</a>
-<a class="sourceLine" id="cb1-5" data-line-number="5"><span class="kw">names</span>(sigData) &lt;-<span class="st"> </span><span class="kw">c</span>(up.genes, down.genes)</a>
-<a class="sourceLine" id="cb1-6" data-line-number="6"></a>
-<a class="sourceLine" id="cb1-7" data-line-number="7">sig &lt;-<span class="st"> </span><span class="kw"><a href="../reference/createGeneSignature.html">createGeneSignature</a></span>(<span class="dt">name =</span> <span class="st">"Interesting Process"</span>, <span class="dt">sigData =</span> sigData)</a></code></pre></div>
-<div id="signature-files" class="section level3">
-<h3 class="hasAnchor">
-<a href="#signature-files" class="anchor"></a>Signature files</h3>
-<p>Signature files are supported in either a .txt or .gmt format, which are both textual formats that are easy to create. Information on the precise acceptable format can be found <a href="https://github.com/YosefLab/VISION/wiki/Signatures">here</a>.</p>
+<div id="where-to-find-signatures" class="section level1">
+<h1 class="hasAnchor">
+<a href="#where-to-find-signatures" class="anchor"></a>Where to find Signatures?</h1>
+<p>A great resource for gene signatures is <strong>MSigDB</strong>, curated by the Broad institute. Signatures can be browsed, searched and downloaded from <a href="http://software.broadinstitute.org/gsea/msigdb/">here</a> as .gmt files, then provided to VISION to be included in the analysis.</p>
+<p>Alternately, many signature libraries in .gmt format are available through <strong><a href="http://amp.pharm.mssm.edu/Enrichr">Enrichr</a></strong> on their <a href="http://amp.pharm.mssm.edu/Enrichr/#stats">“Libraries”</a> page.</p>
+<p>Finally, if you have your own lists of genes, you can define you own signatures following the instructions below.</p>
 </div>
+<div id="creating-signatures-manually" class="section level1">
+<h1 class="hasAnchor">
+<a href="#creating-signatures-manually" class="anchor"></a>Creating Signatures Manually</h1>
+<p>If there is a set of proprietary genes of interest, a user-defined signature can be created in two ways:</p>
+<div id="creating-a-signature-object-in-r" class="section level2">
+<h2 class="hasAnchor">
+<a href="#creating-a-signature-object-in-r" class="anchor"></a>1. Creating a Signature object in R</h2>
+<p>Once a set of genes that are up or down regulated in the process or cell type of interest are selected, creating a Signature object from them is relatively straightforward:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1">sigData &lt;-<span class="st"> </span><span class="kw">c</span>(</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2">    <span class="dt">Gene.A =</span> <span class="dv">1</span>, <span class="dt">Gene.B =</span> <span class="dv">1</span>, <span class="dt">Gene.C =</span> <span class="dv">1</span>,</a>
+<a class="sourceLine" id="cb1-3" data-line-number="3">    <span class="dt">Gene.D =</span> <span class="dv">-1</span>, <span class="dt">Gene.B =</span> <span class="dv">-1</span>, <span class="dt">Gene.C =</span> <span class="dv">-1</span></a>
+<a class="sourceLine" id="cb1-4" data-line-number="4">)</a>
+<a class="sourceLine" id="cb1-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb1-6" data-line-number="6">sig &lt;-<span class="st"> </span><span class="kw"><a href="../reference/createGeneSignature.html">createGeneSignature</a></span>(<span class="dt">name =</span> <span class="st">"Interesting Process"</span>, <span class="dt">sigData =</span> sigData)</a></code></pre></div>
+<p>For the sigData vector, the names represent gene names and the values (1 or -1) represent the ‘sign’ of the gene. For an unsigned signature, just use 1 for the value of every gene.</p>
+<p>A list of these sig objects can then be passed into the VISION object constructor instead of paths to .gmt files.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1">sig1 &lt;-<span class="st"> </span><span class="kw"><a href="../reference/createGeneSignature.html">createGeneSignature</a></span>(<span class="dt">name =</span> <span class="st">"Interesting Process"</span>, ... )</a>
+<a class="sourceLine" id="cb2-2" data-line-number="2">sig2 &lt;-<span class="st"> </span><span class="kw"><a href="../reference/createGeneSignature.html">createGeneSignature</a></span>(<span class="dt">name =</span> <span class="st">"Another Interesting Process"</span>, ... )</a>
+<a class="sourceLine" id="cb2-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb2-4" data-line-number="4">mySignatures &lt;-<span class="st"> </span><span class="kw">c</span>(sig1, sig2)</a>
+<a class="sourceLine" id="cb2-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb2-6" data-line-number="6">vis &lt;-<span class="st"> </span><span class="kw"><a href="../reference/VISION-class.html">Vision</a></span>(<span class="dt">data =</span> expressionMat, <span class="dt">signatures =</span> mySignatures)</a></code></pre></div>
+<p>Additionally, you can mix and match user-created signatures and paths to signature files in the <code>signatures</code> argument. When doing this, signatures in each library file are read and combined with the user-created signatures.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1">sig1 &lt;-<span class="st"> </span><span class="kw"><a href="../reference/createGeneSignature.html">createGeneSignature</a></span>(<span class="dt">name =</span> <span class="st">"Interesting Process"</span>, ... )</a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">sig2 &lt;-<span class="st"> </span><span class="kw"><a href="../reference/createGeneSignature.html">createGeneSignature</a></span>(<span class="dt">name =</span> <span class="st">"Another Interesting Process"</span>, ... )</a>
+<a class="sourceLine" id="cb3-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb3-4" data-line-number="4">mySignatures &lt;-<span class="st"> </span><span class="kw">c</span>(sig1, sig2, <span class="st">'path/to/some/library.gmt'</span>)</a>
+<a class="sourceLine" id="cb3-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb3-6" data-line-number="6">vis &lt;-<span class="st"> </span><span class="kw"><a href="../reference/VISION-class.html">Vision</a></span>(<span class="dt">data =</span> expressionMat, <span class="dt">signatures =</span> mySignatures)</a></code></pre></div>
+</div>
+<div id="create-your-own--gmt-files" class="section level2">
+<h2 class="hasAnchor">
+<a href="#create-your-own--gmt-files" class="anchor"></a>2. Create your own .gmt files</h2>
+<p>Signature files are supported in the .gmt format - a textual format which is easy to create and view</p>
+<p>The file is tab-deliminted and contains one signature per line, (however ‘positive’ and ‘negative’ genes are split into two lines)</p>
+<p>Each line should look like this:</p>
+<pre><code>&lt;Signature Name&gt; TAB &lt;Signature Description&gt; TAB &lt;Gene1&gt; TAB &lt;Gene2&gt; … (etc) </code></pre>
+<p>To denote signed signatures, use two lines to show the signature, with the “positive” genes in one line and the “negative” genes in the other. Add "_plus" to the signature name on the line with the positive genes and "_minus" to the signature name on the line with the negative genes.</p>
+<p>Example:</p>
+<pre><code>MEMORY_VS_NAIVE_CD8_TCELL_plus    GSE16522   RHOC    OFD1     MLF1   ...
+MEMORY_VS_NAIVE_CD8_TCELL_minus   GSE16522   PTPRK   S100A5   IL1A   ...
+BCELL_VS_LUPUS_BCELL_plus         GSE10325   OXT     KCNH2    BTBD7  ...
+BCELL_VS_LUPUS_BCELL_minus        GSE10325   VAMP5   WSB2     CCR2   ...</code></pre>
 </div>
 </div>
   </div>
@@ -127,10 +169,12 @@
       <h2 class="hasAnchor">
 <a href="#tocnav" class="anchor"></a>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
-<li>
-<a href="#getting-signatures">Getting Signatures</a><ul class="nav nav-pills nav-stacked">
-<li><a href="#downloading-signatures">Downloading Signatures</a></li>
-      <li><a href="#creating-signatures">Creating Signatures</a></li>
+<li><a href="#what-is-a-signature">What is a Signature?</a></li>
+      <li><a href="#where-to-find-signatures">Where to find Signatures?</a></li>
+      <li>
+<a href="#creating-signatures-manually">Creating Signatures Manually</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#creating-a-signature-object-in-r">1. Creating a Signature object in R</a></li>
+      <li><a href="#create-your-own--gmt-files">2. Create your own .gmt files</a></li>
       </ul>
 </li>
       </ul>

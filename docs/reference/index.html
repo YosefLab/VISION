@@ -81,16 +81,19 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/Signatures.html">Gene Signatures</a>
-    </li>
-    <li>
       <a href="../articles/VISION-vignette.html">Introduction to VISION</a>
     </li>
     <li>
-      <a href="../articles/micropooling.html">Micropooling and VISION</a>
+      <a href="../articles/micropooling.html">Micropooling</a>
     </li>
     <li>
-      <a href="../articles/trajectories.html">Trajectory Inference and VISION</a>
+      <a href="../articles/trajectories.html">Incorporating a Trajectory Model</a>
+    </li>
+    <li>
+      <a href="../articles/web_only/SignatureConsistency.html">Signature Consistency</a>
+    </li>
+    <li>
+      <a href="../articles/web_only/Signatures.html">Gene Signatures</a>
     </li>
   </ul>
 </li>
@@ -100,7 +103,12 @@
       </ul>
       
       <ul class="nav navbar-nav navbar-right">
-        
+        <li>
+  <a href="https://github.com/yoseflab/VISION">
+    <span class="fa fa-github fa-lg"></span>
+     
+  </a>
+</li>
       </ul>
       
     </div><!--/.nav-collapse -->
@@ -173,6 +181,68 @@
     </tbody><tbody>
       <tr>
         <th colspan="2">
+          <h2 id="section-accessing-data-inside-the-vision-object" class="hasAnchor"><a href="#section-accessing-data-inside-the-vision-object" class="anchor"></a>Accessing Data inside the VISION object</h2>
+          <p class="section-desc"></p>
+        </th>
+      </tr>
+      <tr>
+        
+        <td>
+          <p><code><a href="getSignatureScores.html">getSignatureScores(<i>&lt;Vision&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Get Signature Scores</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="getLatentSpace.html">getLatentSpace(<i>&lt;Vision&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Get Latent Space</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="getLatentTrajectory.html">getLatentTrajectory(<i>&lt;Vision&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Get Latent Trajectory</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="getProjections.html">getProjections(<i>&lt;Vision&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Get 2D views of the expression data</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="getSignatureConsistency.html">getSignatureConsistency(<i>&lt;Vision&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Get Signature Consistency Scores</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="getMetaConsistency.html">getMetaConsistency(<i>&lt;Vision&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Get MetaData Consistency Scores</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="getSignatureDifferential.html">getSignatureDifferential(<i>&lt;Vision&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Get Results of One-vs-All Differential Signature Tests</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="getMetaDifferential.html">getMetaDifferential(<i>&lt;Vision&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Get Results of One-vs-All Differential Tests with Metadata Variables</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="getSelections.html">getSelections(<i>&lt;Vision&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Get saved selections</p></td>
+      </tr>
+    </tbody><tbody>
+      <tr>
+        <th colspan="2">
           <h2 id="section-micropooling-outside-of-vision" class="hasAnchor"><a href="#section-micropooling-outside-of-vision" class="anchor"></a>Micropooling Outside of VISION</h2>
           <p class="section-desc"></p>
         </th>
@@ -183,6 +253,24 @@
           <p><code><a href="applyMicroClustering.html">applyMicroClustering()</a></code> </p>
         </td>
         <td><p>Pool cells into microclusters</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="poolMatrixCols.html">poolMatrixCols()</a></code> </p>
+        </td>
+        <td><p>Pools columns of a numeric matrix</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="poolMatrixRows.html">poolMatrixRows()</a></code> </p>
+        </td>
+        <td><p>Pools rows of a numeric matrix</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="poolMetaData.html">poolMetaData()</a></code> </p>
+        </td>
+        <td><p>Aggregate meta-data for cells in pools</p></td>
       </tr>
     </tbody>
     </table>
@@ -193,6 +281,7 @@
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#section-primary-methods">Primary methods</a></li>
       <li><a href="#section-customizing-vision">Customizing VISION</a></li>
+      <li><a href="#section-accessing-data-inside-the-vision-object">Accessing Data inside the VISION object</a></li>
       <li><a href="#section-micropooling-outside-of-vision">Micropooling Outside of VISION</a></li>
     </ul>
   </div>

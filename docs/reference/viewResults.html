@@ -84,16 +84,19 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/Signatures.html">Gene Signatures</a>
-    </li>
-    <li>
       <a href="../articles/VISION-vignette.html">Introduction to VISION</a>
     </li>
     <li>
-      <a href="../articles/micropooling.html">Micropooling and VISION</a>
+      <a href="../articles/micropooling.html">Micropooling</a>
     </li>
     <li>
-      <a href="../articles/trajectories.html">Trajectory Inference and VISION</a>
+      <a href="../articles/trajectories.html">Incorporating a Trajectory Model</a>
+    </li>
+    <li>
+      <a href="../articles/web_only/SignatureConsistency.html">Signature Consistency</a>
+    </li>
+    <li>
+      <a href="../articles/web_only/Signatures.html">Gene Signatures</a>
     </li>
   </ul>
 </li>
@@ -103,7 +106,12 @@
       </ul>
       
       <ul class="nav navbar-nav navbar-right">
-        
+        <li>
+  <a href="https://github.com/yoseflab/VISION">
+    <span class="fa fa-github fa-lg"></span>
+     
+  </a>
+</li>
       </ul>
       
     </div><!--/.nav-collapse -->
@@ -117,7 +125,7 @@
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>View results of analysis</h1>
-    
+    <small class="dont-index">Source: <a href='https://github.com/yoseflab/VISION/blob/master/R/methods-Vision.R'><code>R/methods-Vision.R</code></a></small>
     <div class="hidden name"><code>viewResults.Rd</code></div>
     </div>
 
@@ -177,7 +185,7 @@ is used.</p></td>
 
 <span class='fu'>saveRDS</span>(<span class='no'>vis</span>, <span class='st'>'vision_results.rds'</span>) <span class='co'># (Optional) Save results</span>
 
-<span class='fu'>viewResults</span>(<span class='no'>vis</span>) <span class='co'># Launches dynamic output report</span>
+<span class='no'>vis</span> <span class='kw'>&lt;-</span> <span class='fu'>viewResults</span>(<span class='no'>vis</span>) <span class='co'># Launches dynamic output report</span>
 <span class='co'># }</span></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">

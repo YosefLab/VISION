@@ -43,6 +43,6 @@ vis <- analyze(vis)
 
 saveRDS(vis, 'vision_results.rds') # (Optional) Save results
 
-viewResults(vis) # Launches dynamic output report
+vis <- viewResults(vis) # Launches dynamic output report
 }
 }

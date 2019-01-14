@@ -17,7 +17,7 @@ random port between 8000 and 9999 is chosen.}
 is used.}
 }
 \value{
-None
+object
 }
 \description{
 Lanch the server

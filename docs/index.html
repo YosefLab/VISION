@@ -18,7 +18,7 @@
 <![endif]-->
 </head>
 <body>
-    <div class="container template-home">
+    <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
     <div class="navbar-header">
@@ -52,16 +52,19 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="articles/Signatures.html">Gene Signatures</a>
-    </li>
-    <li>
       <a href="articles/VISION-vignette.html">Introduction to VISION</a>
     </li>
     <li>
-      <a href="articles/micropooling.html">Micropooling and VISION</a>
+      <a href="articles/micropooling.html">Micropooling</a>
     </li>
     <li>
-      <a href="articles/trajectories.html">Trajectory Inference and VISION</a>
+      <a href="articles/trajectories.html">Incorporating a Trajectory Model</a>
+    </li>
+    <li>
+      <a href="articles/web_only/SignatureConsistency.html">Signature Consistency</a>
+    </li>
+    <li>
+      <a href="articles/web_only/Signatures.html">Gene Signatures</a>
     </li>
   </ul>
 </li>
@@ -69,7 +72,14 @@
   <a href="news/index.html">Changelog</a>
 </li>
       </ul>
-<ul class="nav navbar-nav navbar-right"></ul>
+<ul class="nav navbar-nav navbar-right">
+<li>
+  <a href="https://github.com/yoseflab/VISION">
+    <span class="fa fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
 </div>
 <!--/.nav-collapse -->
   </div>
@@ -79,8 +89,12 @@
 
       
       </header><div class="row">
-  <div class="contents col-md-9">
-    <div id="vision-travis-ci-build-status" class="section level1">
+  <div class="col-md-9 contents">
+    
+
+    
+    
+<div id="vision-travis-ci-build-status" class="section level1">
 <div class="page-header"><h1 class="hasAnchor">
 <a href="#vision-travis-ci-build-status" class="anchor"></a>VISION <a href="https://travis-ci.org/YosefLab/VISION"><img src="https://travis-ci.org/YosefLab/VISION.svg?branch=master" alt="Travis-CI Build Status"></a>
 </h1></div>
@@ -93,6 +107,7 @@
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">require</span>(devtools)</a>
 <a class="sourceLine" id="cb1-2" data-line-number="2"><span class="kw"><a href="http://www.rdocumentation.org/packages/devtools/topics/install_github">install_github</a></span>(<span class="st">"YosefLab/VISION"</span>, <span class="dt">build_vignettes=</span>T)</a></code></pre></div>
 <p>We recommend using the build_vignettes argument to view vignettes from R (use the <code>vignette()</code> function).</p>
+<p>See the DESCRIPTION file for a complete list of R dependencies. If the R dependencies are already installed, installation should finish in a few minutes.</p>
 </div>
 <div id="the-vision-pipeline" class="section level2">
 <h2 class="hasAnchor">
@@ -115,15 +130,21 @@
 <div id="sample-output" class="section level2">
 <h2 class="hasAnchor">
 <a href="#sample-output" class="anchor"></a>Sample Output</h2>
-<p><a href="http://s124.millennium.berkeley.edu:7703/">Click here for an example output report of ~9,000 CBMC’s sequenced with the CITE-seq protocol</a> <img src="https://github.com/YosefLab/VISION/blob/master/docs/example_report.png" alt="Screenshot of report"></p>
+<p><img src="example_report.png"></p>
+<ul>
+<li><a href="http://s124.millennium.berkeley.edu:7703/">Live output example: ~9,000 CBMC’s sequenced with the CITE-seq protocol</a></li>
+<li><a href="https://github.com/YosefLab/VISION/raw/master/docs/VISION_Report_Manual.pdf">Tour of the output report user interface(PDF)</a></li>
+</ul>
 </div>
 </div>
   </div>
 
-  <div class="col-md-3" id="sidebar">
+  <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <div class="links">
 <h2>Links</h2>
 <ul class="list-unstyled">
+<li>Browse source code at <br><a href="https://github.com/yoseflab/VISION">https://​github.com/​yoseflab/​VISION</a>
+</li>
 <li>Report a bug at <br><a href="https://github.com/YosefLab/VISION/issues">https://​github.com/​YosefLab/​VISION/​issues</a>
 </li>
 </ul>
@@ -146,7 +167,8 @@
 </ul>
 </div>
 
-  </div>
+      </div>
+
 </div>
 
 

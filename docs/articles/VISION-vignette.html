@@ -52,16 +52,19 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="../articles/Signatures.html">Gene Signatures</a>
-    </li>
-    <li>
       <a href="../articles/VISION-vignette.html">Introduction to VISION</a>
     </li>
     <li>
-      <a href="../articles/micropooling.html">Micropooling and VISION</a>
+      <a href="../articles/micropooling.html">Micropooling</a>
     </li>
     <li>
-      <a href="../articles/trajectories.html">Trajectory Inference and VISION</a>
+      <a href="../articles/trajectories.html">Incorporating a Trajectory Model</a>
+    </li>
+    <li>
+      <a href="../articles/web_only/SignatureConsistency.html">Signature Consistency</a>
+    </li>
+    <li>
+      <a href="../articles/web_only/Signatures.html">Gene Signatures</a>
     </li>
   </ul>
 </li>
@@ -69,7 +72,14 @@
   <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
-<ul class="nav navbar-nav navbar-right"></ul>
+<ul class="nav navbar-nav navbar-right">
+<li>
+  <a href="https://github.com/yoseflab/VISION">
+    <span class="fa fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
 </div>
 <!--/.nav-collapse -->
   </div>
@@ -82,31 +92,21 @@
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1>Introduction to VISION</h1>
-                        <h4 class="author">Matthew Jones and David DeTomaso</h4>
             
-            <h4 class="date">4 January 2019</h4>
       
-      
+      <small class="dont-index">Source: <a href="https://github.com/yoseflab/VISION/blob/master/vignettes/VISION-vignette.Rmd"><code>vignettes/VISION-vignette.Rmd</code></a></small>
       <div class="hidden name"><code>VISION-vignette.Rmd</code></div>
 
     </div>
 
     
     
-<style>
-pre.bluecars {
-    background-color: #aabbff !important;
-}
-pre.redcars {
-    background-color: #ffbbbb !important;
-}
-</style>
 <div id="preliminaries" class="section level1">
 <h1 class="hasAnchor">
 <a href="#preliminaries" class="anchor"></a>Preliminaries</h1>
 <p>If you have yet to install VISION, we recommend installing the package from github to install this pacakge. Full source code can be found at the VISION github repository, available <a href="http://www.github.com/YosefLab/VISION">here</a>.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="op">&gt;</span><span class="st"> </span><span class="kw">require</span>(devtools)</a>
-<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="op">&gt;</span><span class="st"> </span><span class="kw">install_github</span>(<span class="st">"YosefLab/VISION"</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">require</span>(devtools)</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="kw"><a href="http://www.rdocumentation.org/packages/devtools/topics/install_github">install_github</a></span>(<span class="st">"YosefLab/VISION"</span>)</a></code></pre></div>
 <p>Once VISION and R are installed, you may load in VISION using <code>library(VISION)</code>.</p>
 </div>
 <div id="using-vision" class="section level1">
@@ -159,11 +159,10 @@ pre.redcars {
 <h2 class="hasAnchor">
 <a href="#running-an-analysis" class="anchor"></a>Running an Analysis</h2>
 <p>To run an analysis, simply call the analyze function:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1"></a>
-<a class="sourceLine" id="cb3-2" data-line-number="2"><span class="co"># Set the number of threads when running parallel computations</span></a>
-<a class="sourceLine" id="cb3-3" data-line-number="3"><span class="kw">options</span>(<span class="dt">mc.cores =</span> <span class="dv">2</span>)</a>
-<a class="sourceLine" id="cb3-4" data-line-number="4"></a>
-<a class="sourceLine" id="cb3-5" data-line-number="5">vis &lt;-<span class="st"> </span><span class="kw"><a href="../reference/analyze-Vision-method.html">analyze</a></span>(vis)</a></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="co"># Set the number of threads when running parallel computations</span></a>
+<a class="sourceLine" id="cb3-2" data-line-number="2"><span class="kw">options</span>(<span class="dt">mc.cores =</span> <span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb3-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb3-4" data-line-number="4">vis &lt;-<span class="st"> </span><span class="kw"><a href="../reference/analyze-Vision-method.html">analyze</a></span>(vis)</a></code></pre></div>
 </div>
 <div id="viewing-results" class="section level2">
 <h2 class="hasAnchor">
