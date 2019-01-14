@@ -1,0 +1,105 @@
+---
+title: "Gene Signatures"
+---
+
+# What is a Signature?
+
+A gene signature is a set of genes involved in some biological process.
+
+Signatures come in two flavors:
+
+- **Unsigned** - A set of genes that have some common annotation.  For example, genes involved in a pathway of interest.  These signatures commonly derive from manual annotation approaches  These signatures commonly derive from manual annotation approaches.
+- **Signed** - A set of genes which describes the *contrast* between two conditions. Signed signatures compare condition A vs. condition B and have a set of 'positive' genes which are increased in A (compared to B) and a set of 'negative' genes which are decreased in A (compared to B).  Signed signatures are often defined computationally as the result of a differential expression test in some previous experiment.
+
+# Where to find Signatures
+A great resource for gene signatures is **MSigDB**, curated by the Broad institute. Signatures can be browsed, searched and downloaded from [here](http://software.broadinstitute.org/gsea/msigdb/) as .gmt files, then provided to VISION to be included in the analysis.
+
+Alternately, many signature libraries in .gmt format are available through **[Enrichr](http://amp.pharm.mssm.edu/Enrichr)** on their ["Libraries"](http://amp.pharm.mssm.edu/Enrichr/#stats) page.
+
+Finally, if you have your own lists of genes, you can define you own signatures following the instructions below.
+
+# Creating Signatures Manually
+If there is a set of proprietary genes of interest, a user-defined signature can be created in two ways:
+
+## 1. Creating a Signature object in R
+
+Once a set of genes that are up or down regulated in the process or cell type of interest are selected, creating a Signature object from them is relatively straightforward:
+
+```{r create signature object, collapse=T, eval=F}
+sigData <- c(
+    Gene.A = 1, Gene.B = 1, Gene.C = 1,
+    Gene.D = -1, Gene.B = -1, Gene.C = -1
+)
+
+sig <- createGeneSignature(name = "Interesting Process", sigData = sigData)
+```
+For the sigData vector, the names represent gene names and the values (1 or -1) represent the 'sign' of the gene.  For an unsigned signature, just use 1 for the value of every gene.
+
+A list of these sig objects can then be passed into the VISION object constructor instead of paths to .gmt files.
+
+```{r, collapse=T, eval=F}
+sig1 <- createGeneSignature(name = "Interesting Process", ... )
+sig2 <- createGeneSignature(name = "Another Interesting Process", ... )
+
+mySignatures <- c(sig1, sig2)
+
+vis <- Vision(data = expressionMat, signatures = mySignatures)
+```
+
+Additionally, you can mix and match user-created signatures and paths to signature files in the `signatures` argument.  When doing this, signatures in each library file are read and combined with the user-created signatures.
+
+```{r, collapse=T, eval=F}
+sig1 <- createGeneSignature(name = "Interesting Process", ... )
+sig2 <- createGeneSignature(name = "Another Interesting Process", ... )
+
+mySignatures <- c(sig1, sig2, 'path/to/some/library.gmt')
+
+vis <- Vision(data = expressionMat, signatures = mySignatures)
+```
+
+## 2. Create your own .gmt files
+
+Signature files are supported in the .gmt format - a textual format which is easy to create and view
+
+The file is tab-deliminted and contains one signature per line, (however 'positive' and 'negative' genes are split into two lines)
+
+Each line should look like this: 
+
+```
+<Signature Name> TAB <Signature Description> TAB <Gene1> TAB <Gene2> … (etc) 
+```
+ 
+To denote signed signatures, use two lines to show the signature, with the "positive" genes in one line and the "negative" genes in the other.  Add "_plus" to the signature name on the line with the positive genes and "_minus" to the signature name on the line with the negative genes.  
+
+For example:
+
+```
+MEMORY_VS_NAIVE_CD8_TCELL_plus    GSE16522   RHOC    OFD1     MLF1   ...
+MEMORY_VS_NAIVE_CD8_TCELL_minus   GSE16522   PTPRK   S100A5   IL1A   ...
+BCELL_VS_LUPUS_BCELL_plus         GSE10325   OXT     KCNH2    BTBD7  ...
+BCELL_VS_LUPUS_BCELL_minus        GSE10325   VAMP5   WSB2     CCR2   ...
+```
+
+# Signature Scores
+
+For each signature an overall measure of expression is evaluated for each cell as the *Signature Score*. This is computed as:
+
+$$ s_j = \frac{1}{|G_{pos}| + |G_{neg}} \Bigg(\sum_{g \in G_{pos}}{X_{gj}} - \sum_{g \in G_{neg}}{X_{gj}}\Bigg) $$
+
+Where:
+
+* $s_j$ is the signature score in cell *j*
+* $X_{gj}$ is the *log*, *scaled* expression of gene *g* in cell *j*
+* $G_{pos}$ and $G_{neg}$ are the set of 'positive' and 'negative' signature genes respectively
+
+VISION expects the input expression data to already be scaled (i.e., the gene counts in each cell are divided by the total number of counts in the cell and multiplied by some constant such as 10,000 or the median number of umi across cells) and normalized (significant technical confounders regressed-out).  Internally, VISION additionally log-transforms ($log_2(x+1)$) the expression data to compress the dynamic range.  This is done so that genes which are naturally expressed at higher magnitudes don't dominate the signature score as heavily.
+
+However, with just the above formulation, we have observed that depending on the scaling or normalization method, signature scores can still be highly correlated with cell-level metrics such as the number of UMI per cell.  To account for this, we note that the expected value of a randomly-drawn signature in cell *j* is:
+
+$$ \frac{|G_{pos}| - |G_{neg}|}{|G_{pos}| + |G_{neg}|} \bar{X_j} $$
+
+And the expected variance of a random signature score is:
+
+$$ \frac{var(X_j)}{|G_{pos}| + |G_{neg}|} $$
+
+Therefore we can remove global cell-specific distributional effects from the signature scores by first Z-normalizing the expression data, $X_j$, within each cell (so that $\bar{X_j}$ is 0 and $var(X_j)$ is 1) prior to calculating signature scores as defined above.  This is the default operation performed by VISION (controlled through the `sig_norm_method` parameter).

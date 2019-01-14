@@ -1,7 +1,5 @@
 ---
 title: "Introduction to VISION"
-author: "Matthew Jones and David DeTomaso"
-date: "`r BiocStyle::doc_date()`"
 package: "`r BiocStyle::pkg_ver('BiocStyle')`"
 output: BiocStyle::html_document
 vignette: >
@@ -9,16 +7,6 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
-
-<style>
-pre.bluecars {
-    background-color: #aabbff !important;
-}
-pre.redcars {
-    background-color: #ffbbbb !important;
-}
-</style>
-
 
 ``` {r options, include=F, cache=F, results='hide', message=F}
 
@@ -38,8 +26,8 @@ set.seed(6473) ## for reproducibility
 If you have yet to install VISION, we recommend installing the package from github to install this pacakge. Full source code can be found at the VISION github repository, available [here](http://www.github.com/YosefLab/VISION). 
 
 ```r
-> require(devtools)
-> install_github("YosefLab/VISION")
+require(devtools)
+install_github("YosefLab/VISION")
 ```
 
 Once VISION and R are installed, you may load in VISION using `library(VISION)`. 
@@ -108,7 +96,6 @@ Other options and inputs can be provided to customize how VISION runs.  For info
 To run an analysis, simply call the analyze function:
 
 ```{r, collapse=T, message=F, eval=F}
-
 # Set the number of threads when running parallel computations
 options(mc.cores = 2)
 

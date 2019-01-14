@@ -1,7 +1,5 @@
 ---
-title: "Micropooling and VISION"
-author: "Matthew Jones"
-date: "`r BiocStyle::doc_date()`"
+title: "Micropooling"
 package: "`r BiocStyle::pkg_ver('BiocStyle')`"
 output: BiocStyle::html_document
 vignette: >
@@ -25,32 +23,30 @@ set.seed(6473) ## for reproducibility
 
 # Introduction
 
-To accommodate datasets that exceed available memory and CPU resources, VISION creates pooled cells using a custom micropooling algorithm. In standard use cases, the users provide the entire expression matrix and VISION will create pooled cells with the user-defined cellsPerPartition argument as supplied to the VISION object constructor. Analysis will resume on the pooled data matrix, where each pooled cell has at most cellsPerPartition cells per pool. We find that this drastically reduces the run time, producing results from 500K cells in just under around an hour. We also find that the local autocorrelation scores run in the latent space as computed from the pooled cells is consistent with that when these scores are computed from the entire dataset. 
+To accommodate datasets that exceed available memory and CPU resources, VISION creates pooled cells using a custom micropooling algorithm. In standard use cases, the users provide the entire expression matrix and VISION will create pooled cells with the user-defined cellsPerPartition argument as supplied to the VISION object constructor. Analysis will resume on the pooled data matrix, where each pooled cell has at most cellsPerPartition cells per pool. This significantly reduces the run time, producing results from 500K cells in just under around an hour. We also find that the local autocorrelation scores run in the latent space as computed from the pooled cells is consistent with that when these scores are computed from the entire dataset. 
 
 # The Algorithm 
 
 The micropooling algorithm relies on iterative clustering of the latent space. Specifically, given an expression matrix and a cellsPerPartition target size, we use the following procedure:
 
-- Form a latent space using the first 30 Principal Components 
-- Compute a KNN graph, where edge weights are determined by applying a Gaussian kernel to the euclidean distances in PC space
+- Form a latent space using the first 30 components from PCA
+    - Alternately, use the user-provided latent space or latent trajectory model
+- Compute a KNN graph, where edge weights are determined by applying a Gaussian kernel to the euclidean distances in the latent model
 - Perform Louvain Clustering on KNN graph
-- Iteratively perform K-means clustering within the louvain clusters until we have at most cellsPerPartition cells per cluster.
+- Iteratively perform K-means clustering within the louvain clusters until we have at most `cellsPerPartition` cells per cluster.
 - Collapse cells into pooled cells by computing the gene-wise mean for all cells in each cluster.
 
 By default, VISION does not allow micropooling within discrete classes (e.g. cell types, or batch) as we find that unbiased clusterings are the most sensible and reflective of the data. Instead, in the output report, pooled cells report their percent consistency of each discrete meta data item (e.g. a pooled cell is 80% CD4+ T cell and 20% CD8+ T cell). In this way, users may develop an intuition of the phenotype of each pooled cell. To note, users may also elect to perform clusterings outside of the VISION analysis pipeline and provide it to the VISION object constructor as pooled data - this allows users to perform micorclustering within discrete classes if they so wish.
 
-# The Data
+# Micropooling Example
+
+## Data
 
 In this vignette, we'll be analyzing a set of ~5,000 cells during haematopoiesis ([Tusi et al, Nature 2018](https://www.nature.com/articles/nature25741)). 
 
-# Workflow
+## Workflow
 
-You'll only need VISION installed for this example, which can be installed as such:
-```{r, collapse=F, message=T, eval=F}
-devtools::install_github("YosefLab/VISION")
-```
-
-Now, we'll demonstrate a very common use case of micropooling on the data:
+Here, we'll demonstrate a common use case of micropooling on the data:
 
 ```{r, collapse=F, message=F, warning=F, eval=F}
 library(VISION)
@@ -61,65 +57,55 @@ counts = as.matrix(read.table("data/hemato_counts.csv.gz", sep=',', header=T, ro
 scale.factor = median(colSums(counts))
 scaled.counts = t(t(counts) / colSums(counts)) * scale.factor
 
-# perform preliminary Fano filtering to determing projection genes, as usual
-f.genes = VISION:::filterGenesFano(scaled.counts)
-
 # read in meta data 
 meta = read.table("data/hemato_covariates.txt.gz", sep='\t', header=T, row.names=1)
 meta = meta[colnames(scaled.counts), -1]
 
-vis <- Vision(scaled.counts, 
-              c("data/h.all.v5.2.symbols.gmt"),
-              pool=T, 
-              cellsPerPartition=5,
-              projection_genes = f.genes, 
-              meta=meta)
+vis <- Vision(scaled.counts, meta = meta
+              signatures = c("data/h.all.v5.2.symbols.gmt"),
+              pool = T, cellsPerPartition = 5)
 
 vis <- analyze(vis)
 
 viewResults(vis)
 ```
 
-Often times, there are discrete classes that users may not wish to break out of when micropooling (e.g. they may not want to mix cells from disease and control cases). If this is the case, you may preform micropooling outside of the analysis pipeline and pass it in as such:
+# Micropooling independently of the main VISION analysis
+
+There may be reasons it is desired micropool outside of the main VISION `analyze` function.  For example, there may be discrete classes that users may not wish to pool across (e.g. not wanting to merge disease and control cells).  Or, you may want to only use the micropooling function independently of the rest of the pipeline.  This can be accomplished using the `applyMicroClustering` utility function as demonstrated here.
 
 ```{r, collapse=F, message=F, warning=F, eval=F}
+## Create scaled.counts and meta as shown above
 
-cellsPerPartition = 5
+pools <- applyMicroClustering(scaled.counts, cellsPerPartition = 5)
 
-meta$GRvsER = as.factor(sapply(meta$ct, function(x) ifelse((x == "BA" || x == "ER" || x == "MK"), "ErLin", "GrLin")))
+# Create pooled versions of expression matrix and meta-data
+pooledExpression <- poolMatrixCols(scaled.counts, pools)
+pooledMeta <- poolMetaData(meta, pools)
 
-meta.var = meta[,"GRvsER", drop=F]
-all.pools = sapply(levels(meta.var$GRvsER), function(x) { 
-    print(x)
-    cells = rownames(meta.var)[meta.var[,1] == x]
-    pools = VISION:::applyMicroClustering(scaled.counts[, cells],
-                              cellsPerPartition=cellsPerPartition,
-                              filterInput = f.genes,
-                              filterThreshold = 0.1,
-                              preserve_clusters = NULL, 
-                              latentSpace = matrix(NA, 1, 1))
-    
-    nn <- sapply(1:length(pools), function(y) paste0(x, ".microcluster", y))
-  
-    names(pools) <- nn
-    return(pools)
-    
-  })
-
-all.pools = unlist(all.pools, recursive=F)
-
-vis <- Vision(scaled.counts, 
-              c("data/h.all.v5.2.symbols.gmt"),
-              projection_genes = f.genes, 
-              meta=meta, 
-              pools = all.pools)
-
-vis <- analyze(vis)
-
+# These could then be fed into the VISION constructor
+vis <- Vision(pooledExpression, meta = pooledMeta
+              signatures = c("data/h.all.v5.2.symbols.gmt"))
 ```
 
+Alternately, if you already have a latent space computed and wish to use this (instead of PCA) when pooling *outside* of the normal 
+Vision pipeline, you can provide it when calling `applyMicroClustering` and later pool the latent space.
 
-# Session Info
-```{r, collapse=F, message=T}
-sessionInfo()
+This is demonstrated below:
+
+```{r, collapse=F, message=F, warning=F, eval=F}
+## Create scaled.counts and meta as shown above
+
+pools <- applyMicroClustering(scaled.counts,
+    cellsPerPartition = 5, latentSpace = latentPpace)
+
+# Create pooled versions of expression matrix and meta-data
+pooledExpression <- poolMatrixCols(scaled.counts, pools)
+pooledMeta <- poolMetaData(meta, pools)
+pooledLatentSpace <- poolMatrixRows(latentSpace, pools)
+
+# These could then be fed into the VISION constructor
+vis <- Vision(pooledExpression, meta = pooledMeta
+              signatures = c("data/h.all.v5.2.symbols.gmt"),
+              latentSpace = pooledLatentSpace)
 ```

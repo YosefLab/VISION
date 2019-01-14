@@ -109,18 +109,18 @@ poolCells <- function(object,
         object@pools <- pools
     }
 
-    pooled_cells <- createPoolsBatch(object@pools, object@exprData)
+    pooled_cells <- poolMatrixCols(object@exprData, object@pools)
     object@exprData <- pooled_cells
 
-    pooled_unnorm <- createPoolsBatch(object@pools, object@unnormalizedData)
+    pooled_unnorm <- poolMatrixCols(object@unnormalizedData, object@pools)
     object@unnormalizedData <- pooled_unnorm
 
     if (!all(dim(object@latentSpace) == c(1, 1))) {
-        pooled_latent <- t(createPoolsBatch(object@pools, t(object@latentSpace)))
+        pooled_latent <- poolMatrixRows(object@latentSpace, object@pools)
         object@latentSpace <- pooled_latent
     }
 
-    poolMeta <- createPooledMetaData(object@metaData, object@pools)
+    poolMeta <- poolMetaData(object@metaData, object@pools)
     object@metaData <- poolMeta
 
     if (length(object@inputProjections) > 0){
@@ -128,7 +128,7 @@ poolCells <- function(object,
         newInputProjections <- lapply(
             object@inputProjections,
             function(proj) {
-                new_coords <- t(createPoolsBatch(object@pools, t(proj)))
+                new_coords <- poolMatrixRows(proj, object@pools)
                 return(new_coords)
             })
 

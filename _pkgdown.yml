@@ -11,4 +11,44 @@ reference:
     - title: Micropooling Outside of VISION
       contents:
           - applyMicroClustering
+          - poolMatrixCols
+          - poolMatrixRows
+          - poolMetaData
+
+navbar:
+    structure:
+        left:
+        - home
+        - intro
+        - reference
+        - articles
+        - tutorials
+        - news
+        right: github
+    components:
+        home:
+            icon: fa-home fa-lg
+            href: index.html
+        articles:
+            text: Articles
+            menu:
+            - text: Introduction to VISION
+              href: articles/VISION-vignette.html
+            - text: Gene Signatures
+              href: articles/web_only/Signatures.html
+            - text: Signature Consistency
+              href: articles/web_only/SignatureConsistency.html
+            - text: Micropooling
+              href: articles/micropooling.html
+            - text: Incorporating a Trajectory Model
+              href: articles/trajectories.html
+        reference:
+            text: Reference
+            href: reference/index.html
+    news:
+        text: Changelog
+        href: news/index.html
+    github:
+        icon: fa-github fa-lg
+        href: https://github.com/yoseflab/VISION
 
