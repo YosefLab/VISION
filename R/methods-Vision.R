@@ -942,3 +942,19 @@ setMethod("getMetaDifferential", signature(object = "Vision"),
 
               return(ClusterSigScores)
           })
+
+# Some Printing methods
+format.Vision <- function(vis) {
+    nGenes <- nrow(vis@exprData)
+    nCells <- ncol(vis@exprData)
+    msg <- sprintf("<A 'Vision' object with %i Genes and %i Cells>", nGenes, nCells)
+    return(msg)
+}
+
+print.Vision <- function(vis) {
+    print(format(vis))
+}
+
+setMethod("show", "Vision",
+    function(object) print(object)
+)
