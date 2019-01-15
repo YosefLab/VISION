@@ -149,7 +149,11 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                                return(readSignaturesInput(sig))
                            }
                 })
-                .Object@sigData <- do.call(c, sigs)
+                if (length(sigs) > 0){
+                    .Object@sigData <- do.call(c, sigs)
+                } else {
+                    .Object@sigData <- sigs
+                }
                 names(.Object@sigData) <- vapply(.Object@sigData,
                                             function(x){x@name}, "")
             } else if (is.character(signatures)) {
@@ -229,6 +233,9 @@ setMethod("Vision", signature(data = "matrixORSparse"),
             check <- sapply(projection_methods, function(x) x %in% valid_projections)
             if (! all(check)) {
                 stop("Bad value in 'projection_methods'. Please choose from tSNE10, tSNE30, ICA, ISOMap, or RBFPCA.")
+            }
+            if(length(projection_methods) == 0){
+                projection_methods <- character()
             }
             .Object@projection_methods <- projection_methods
 
