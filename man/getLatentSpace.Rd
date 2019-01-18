@@ -16,7 +16,7 @@ the latent space as a matrix of dimension (Cells x Components)
 }
 \description{
 Provides access to the latent space used for
-local consistency analysis
+local autocorrelation analysis
 }
 \details{
 If a latent trajectory was supplied, access it by using \code{getLatentTrajectory}

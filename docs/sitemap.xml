@@ -136,6 +136,9 @@
     <loc>https://yoseflab.github.io/VISION//reference/computeWeights.html</loc>
   </url>
   <url>
+    <loc>https://yoseflab.github.io/VISION//reference/convertGeneIds.html</loc>
+  </url>
+  <url>
     <loc>https://yoseflab.github.io/VISION//reference/coordinatesToJSON.html</loc>
   </url>
   <url>
@@ -193,7 +196,7 @@
     <loc>https://yoseflab.github.io/VISION//reference/getMSE.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/getMetaConsistency.html</loc>
+    <loc>https://yoseflab.github.io/VISION//reference/getMetaAutocorrelation.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/getMetaDifferential.html</loc>
@@ -208,7 +211,7 @@
     <loc>https://yoseflab.github.io/VISION//reference/getSelections.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/getSignatureConsistency.html</loc>
+    <loc>https://yoseflab.github.io/VISION//reference/getSignatureAutocorrelation.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/getSignatureDifferential.html</loc>
@@ -218,6 +221,9 @@
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/housekeeping.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/ilog1p.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/innerEvalSignatureBatch.html</loc>
@@ -266,6 +272,12 @@
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/readSignaturesInput.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/read_10x.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/read_10x_h5.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/readjust_clusters.html</loc>
@@ -328,7 +340,13 @@
     <loc>https://yoseflab.github.io/VISION//articles/trajectories.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//articles/web_only/SignatureConsistency.html</loc>
+    <loc>https://yoseflab.github.io/VISION//articles/web_only/10xData.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//articles/web_only/Seurat.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//articles/web_only/SignatureAutocorrelation.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//articles/web_only/Signatures.html</loc>

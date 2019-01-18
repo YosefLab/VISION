@@ -16,7 +16,7 @@ Trajectory object
 }
 \description{
 Provides access to the latent trajectory used for
-local consistency analysis
+local autocorrelation analysis
 }
 \details{
 If a latent space was supplied, access it by using \code{getLatentSpace}
