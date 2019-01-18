@@ -40,9 +40,9 @@ Suggests:
 	BiocStyle,
 	knitr,
 	rmarkdown,
-	SummarizedExperiment,
     testthat,
     ggplot2,
+    Seurat,
 biocViews:
 	GeneExpression,
 	RNASeq,

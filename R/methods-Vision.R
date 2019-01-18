@@ -364,6 +364,106 @@ setMethod("Vision", signature(data = "SummarizedExperiment"),
           }
 )
 
+#' Create Vision object form a Seurat object
+#'
+#' Initializes a Vision object from an existing Seurat object taking any existing
+#' expression data, meta-data, and dimensionality reductions if they exist already
+#'
+#' @rdname VISION-class
+#' @param dimRed Dimensionality reduction to use for the latentSpace.  Default is to
+#' look for "pca" and use that if it exists
+#' @param dimRedComponents number of components to use for the selected dimensionality
+#' reduction.  Default is to use all components
+#' @export
+setMethod("Vision", signature(data = "seurat"),
+          function(data, dimRed = NULL, dimRedComponents = NULL, ...) {
+
+              if (!requireNamespace("Seurat", quietly = TRUE)){
+                  stop("Package \"Seurat\" needed to load this data object.  Please install it.",
+                       call. = FALSE)
+              }
+
+              obj <- data
+              args <- list(...)
+
+              # Get Unnormalized Data
+              message("Importing Raw Data from obj@raw.data ...")
+              unnormData <- obj@raw.data
+              totals <- colSums(unnormData)
+              scalefactor <- median(totals)
+              unnormData <- t(t(unnormData) / totals * scalefactor)
+
+              args[["unnormalizedData"]] <- unnormData
+
+
+              # Get Expression Data from seurat object
+              exprData <- NULL
+              if (!is.null(obj@scale.data)){
+                  message("Importing Expression Data from obj@scale.data ...")
+                  exprData <- ilog1p(obj@scale.data)
+              } else {
+                  # Can't just check obj@data because this could be the raw
+                  # data if NormalizeData hadn't been run and we would risk
+                  # exponentiated non log-scale data
+                  if ("NormalizeData" %in% names(obj@calc.params)){
+                      message("Importing Expression Data from obj@data ...")
+                      exprData <- ilog1p(obj@data)
+                  } else {
+                      exprData <- unnormData
+                  }
+              }
+
+              args[["data"]] <- exprData
+
+              # Get meta data
+              if (!("meta" %in% names(args))){
+                  message("Importing Meta Data from obj@meta ...")
+                  args[["meta"]] <- obj@meta.data
+              }
+
+              # Get latent space
+              if (is.null(dimRed) && "pca" %in% names(obj@dr)) {
+                  dimRed <- "pca"
+              }
+
+              if (!("latentSpace" %in% names(args))){
+
+                  message(
+                      sprintf("Importing latent space from reduction.type='%s' using first '%i' components",
+                          dimRed, dimRedComponents
+                          ))
+
+                  latentSpace <- GetCellEmbeddings(obj,
+                      reduction.type = dimRed,
+                      dims.use = dimRedComponents
+                  )
+
+                  args[["latentSpace"]] <- latentSpace
+
+              }
+
+              vis <- do.call(Vision, args)
+
+              for (method in names(obj@dr)){
+                  name <- paste0("Seurat_", method)
+
+                  message(sprintf("Adding Visualization: %s", name))
+
+                  coordinates <- GetCellEmbeddings(obj,
+                      reduction.type = method,
+                      dims.use = 1:2
+                      )
+                  vis <- addProjection(vis,
+                      name, coordinates
+                      )
+              }
+
+              return(vis)
+          }
+)
+
+
+
 #' Main entry point for running VISION Analysis
 #'
 #' The main analysis function. Runs the entire VISION analysis pipeline

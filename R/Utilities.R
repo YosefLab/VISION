@@ -101,6 +101,38 @@ matLog2 <- function(spmat, scale = FALSE, scaleFactor = 1e6) {
 
 }
 
+
+#' inverse log-scale transform a dense OR sparse matrix
+#'
+#' This avoids the creation of a dense intermediate matrix when
+#' operating on sparse matrices
+#'
+#' Performs result <- exp(spmat) - 1
+#'
+#' @importFrom Matrix sparseMatrix
+#' @importFrom Matrix summary
+#' @param spmat sparse Matrix
+#' @return logmat sparse Matrix
+ilog1p <- function(spmat) {
+
+
+    if (is(spmat, "sparseMatrix")) {
+        matsum <- summary(spmat)
+
+        ilogx <- exp(matsum$x) - 1
+
+        ilogmat <- sparseMatrix(i = matsum$i, j = matsum$j,
+                                x = ilogx, dims = dim(spmat),
+                                dimnames = dimnames(spmat))
+    } else {
+        ilogmat <- exp(spmat) - 1
+    }
+
+
+    return(ilogmat)
+
+}
+
 #' Vectorized wilcox rank-sums test
 #'
 #' Given indices in cluster_ii, compute the ranksums test

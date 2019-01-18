@@ -1,0 +1,57 @@
+---
+title: "How To: Working with Seurat"
+---
+
+If you are already using Seurat for your analysis, VISION provides a convenience function for creating a Vision object from a Seurat object.
+
+## How this works
+
+* If `obj@scale.data` exists, this is used as the expression data.
+  * Otherwise, `obj@data` is used if "NormalizeData" was previously run.
+  * If "NormalizeData" was not run, then `obj@raw.data` is used (after scaling the expression sum in each cell to the median)
+* The cell meta-data is taken from `obj@meta.data`
+* Lower-dimensional visualizations are taken from the first 2 components of every "Dimensionality Reduction" in `object@dr`
+  * These are added using their names prefixed with "Seurat\_"
+* If "pca" has been run, the latentSpace input is taken from its associated cell embeddings
+  * The `dimRed` parameter can be used to select a different dimensionality reduction for this
+  * The `dimRedComponents` can be used to limit the number of components used (Default: All components)
+  * Otherwise, VISION computes the latentSpace by running PCA internally
+
+## Examples
+
+Assuming you already have a Seurat object defined as `seurat.obj`, you can use it in this way:
+
+```{r, collapse=T, eval=F}
+signatures <- c("data/h.all.v5.2.symbols.gmt")
+
+vision.obj <- Vision(seurat.obj, signatures = signatures)
+
+vision.obj <- analyze(vision.obj)
+
+viewResults(vision.obj)
+```
+
+The above call would take the "pca" dimensionality reduction from `seurat.obj` if it is defined.  If you instead had run a Diffusion Map using Seurat and wanted to use that as your latent space, you could specify that like this:
+
+```{r, collapse=T, eval=F}
+vision.obj <- Vision(seurat.obj,
+    signatures = signatures, 
+    dimRed <- "dm")
+```
+
+Any of the other `Vision()` constructor parameters can also be passed here.  For example, if you wanted to enable microclustering with 5 cells per micropool:
+
+```{r, collapse=T, eval=F}
+vision.obj <- Vision(seurat.obj,
+    signatures = signatures, 
+    pool = T, cellsPerPartition = 5
+    )
+```
+
+By default, Vision will still run tSNE as part of the main analysis pipeline.  You may wish to skip this if a visualization has already been run in Seurat.  To instruction VISION to not run any additional visualization projections, set `projection_methods = NULL` like so:
+
+```{r, collapse=T, eval=F}
+vision.obj <- Vision(seurat.obj,
+    signatures = signatures, 
+    projection_methods = NULL)
+```
