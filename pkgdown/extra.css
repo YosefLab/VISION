@@ -1,0 +1,53 @@
+/*
+ * Customizations to override the bootstrap theming
+ * Gives the documentation similar styling to the output report
+ */
+
+
+/* Background color for nav bar */
+.navbar-default {
+    background-color: #005752 !important;
+}
+
+/* Background color for selected nav items in nav bar */
+.navbar-default .navbar-nav>.active>a,
+.navbar-default .navbar-nav>.active>a:hover,
+.navbar-default .navbar-nav>.active>a:focus {
+    background-color: hsla(177, 47%, 29%, 1) !important;
+}
+
+/* Hover color for nav-bar */
+.navbar-default .navbar-nav>li>a:hover,
+.navbar-default .navbar-nav>li>a:focus {
+    color: hsla(177, 21%, 71%, 1) !important;
+}
+
+/* Other links in nav-bar */
+.navbar-default .navbar-link:hover,
+.navbar-default .navbar-link:focus {
+    color: hsla(177, 21%, 71%, 1) !important;
+}
+
+
+/* Current table-of-contents item on the right-side */
+.nav-pills>li.active>a,
+.nav-pills>li.active>a:hover,
+.nav-pills>li.active>a:focus {
+    background-color: #005752 !important;
+}
+
+/* links */
+/* bad, need to specify some :not selectors */
+footer a, .contents a, #sidebar a {
+    color: hsla(177, 93%, 27%, 1) !important;
+}
+
+#sidebar .nav-pills > li.active a {
+    color: #ffffff !important;
+}
+
+/*
+a:hover {
+    color: hsla(177, 93%, 27%, 1) !important;
+}
+*/
