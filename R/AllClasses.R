@@ -6,7 +6,7 @@
 # on the different types of data.
 
 setClassUnion('numericORNULL', members=c('numeric', 'NULL'))
-setClassUnion('matrixORSparse', members=c("matrix", "dgCMatrix", "dgTMatrix"))
+setClassUnion('matrixORSparse', members=c("matrix", "dgeMatrix", "dgCMatrix", "dgTMatrix"))
 
 Cluster <- setClass("Cluster",
     slots = c(
