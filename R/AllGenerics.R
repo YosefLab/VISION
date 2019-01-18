@@ -52,16 +52,16 @@ setGeneric("getSignatureScores", function(object, ...) {
     standardGeneric("getSignatureScores")
 })
 
-setGeneric("getSignatureConsistency", function(object, ...) {
-    standardGeneric("getSignatureConsistency")
+setGeneric("getSignatureAutocorrelation", function(object, ...) {
+    standardGeneric("getSignatureAutocorrelation")
 })
 
 setGeneric("getSignatureDifferential", function(object, ...) {
     standardGeneric("getSignatureDifferential")
 })
 
-setGeneric("getMetaConsistency", function(object, ...) {
-    standardGeneric("getMetaConsistency")
+setGeneric("getMetaAutocorrelation", function(object, ...) {
+    standardGeneric("getMetaAutocorrelation")
 })
 
 setGeneric("getMetaDifferential", function(object, ...) {

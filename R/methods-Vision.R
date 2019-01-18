@@ -792,7 +792,7 @@ setMethod("getProjections", signature(object = "Vision"),
 #' Get Latent Space
 #'
 #' Provides access to the latent space used for
-#' local consistency analysis
+#' local autocorrelation analysis
 #'
 #' If a latent trajectory was supplied, access it by using \code{getLatentTrajectory}
 #' instead
@@ -811,7 +811,7 @@ setMethod("getLatentSpace", signature(object = "Vision"),
 #' Get Latent Trajectory
 #'
 #' Provides access to the latent trajectory used for
-#' local consistency analysis
+#' local autocorrelation analysis
 #'
 #' If a latent space was supplied, access it by using \code{getLatentSpace}
 #' instead
@@ -859,19 +859,19 @@ setMethod("getSignatureScores", signature(object = "Vision"),
           })
 
 
-#' Get Signature Consistency Scores
+#' Get Signature Autocorrelation Scores
 #'
-#' Access the local consistency scores computed for signatures
+#' Access the local autocorrelation scores computed for signatures
 #'
-#' Local consistency scores are calculated from the input latent
+#' Local autocorrelation scores are calculated from the input latent
 #' space (default's to PCA) or the input trajectory model (if provided)
 #'
 #' @param object VISION object
-#' @return data.frame with columns 'Consistency', 'pValue', and 'FDR'
+#' @return data.frame with columns 'C', 'pValue', and 'FDR'
 #' @export
-#' @aliases getSignatureConsistency
-#' @rdname getSignatureConsistency
-setMethod("getSignatureConsistency", signature(object = "Vision"),
+#' @aliases getSignatureAutocorrelation
+#' @rdname getSignatureAutocorrelation
+setMethod("getSignatureAutocorrelation", signature(object = "Vision"),
           function(object) {
               if (is.null(object@TrajectoryConsistencyScores)){
                   localData <- object@SigConsistencyScores
@@ -893,32 +893,32 @@ setMethod("getSignatureConsistency", signature(object = "Vision"),
               fdr <- fdr[sigs]
 
               out <- data.frame(
-                  Consistency = consistency,
+                  C = consistency,
                   pValue = pVals,
                   FDR = fdr,
                   row.names = sigs
               )
 
-              out <- out[order(out$pValue, out$Consistency * -1), ]
+              out <- out[order(out$pValue, out$C * -1), ]
 
               return(out)
 
           })
 
 
-#' Get MetaData Consistency Scores
+#' Get MetaData Autocorrelation Scores
 #'
-#' Access the local consistency scores computed for meta-data variables
+#' Access the local autocorrelation scores computed for meta-data variables
 #'
-#' Local consistency scores are calculated from the input latent
+#' Local autocorrelation scores are calculated from the input latent
 #' space (default's to PCA) or the input trajectory model (if provided)
 #'
 #' @param object VISION object
-#' @return data.frame with columns 'Consistency', 'pValue', and 'FDR'
+#' @return data.frame with columns 'C', 'pValue', and 'FDR'
 #' @export
-#' @aliases getMetaConsistency
-#' @rdname getMetaConsistency
-setMethod("getMetaConsistency", signature(object = "Vision"),
+#' @aliases getMetaAutocorrelation
+#' @rdname getMetaAutocorrelation
+setMethod("getMetaAutocorrelation", signature(object = "Vision"),
           function(object) {
               if (is.null(object@TrajectoryConsistencyScores)){
                   localData <- object@SigConsistencyScores
@@ -940,13 +940,13 @@ setMethod("getMetaConsistency", signature(object = "Vision"),
               fdr <- fdr[sigs]
 
               out <- data.frame(
-                  Consistency = consistency,
+                  C = consistency,
                   pValue = pVals,
                   FDR = fdr,
                   row.names = sigs
               )
 
-              out <- out[order(out$pValue, out$Consistency * -1), ]
+              out <- out[order(out$pValue, out$C * -1), ]
 
               return(out)
 

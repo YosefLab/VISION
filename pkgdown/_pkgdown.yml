@@ -19,8 +19,8 @@ reference:
           - getLatentSpace
           - getLatentTrajectory
           - getProjections
-          - getSignatureConsistency
-          - getMetaConsistency
+          - getSignatureAutocorrelation
+          - getMetaAutocorrelation
           - getSignatureDifferential
           - getMetaDifferential
           - getSelections
@@ -58,7 +58,7 @@ navbar:
       - text: Gene Signatures
         href: articles/web_only/Signatures.html
       - text: Signature Autocorrelation
-        href: articles/web_only/SignatureConsistency.html
+        href: articles/web_only/SignatureAutocorrelation.html
       - text: Micropooling
         href: articles/micropooling.html
       - text: Incorporating a Trajectory Model
