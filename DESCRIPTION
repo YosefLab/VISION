@@ -43,6 +43,7 @@ Suggests:
     testthat,
     ggplot2,
     Seurat,
+    hdf5r
 biocViews:
 	GeneExpression,
 	RNASeq,
