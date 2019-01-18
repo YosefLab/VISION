@@ -109,12 +109,14 @@
 
     
     
-<div id="vision-travis-ci-build-status" class="section level1">
+<p><img src="reference/figures/logo.svg" align="right" style="width: 150px; padding: 20px"><a href="https://travis-ci.org/YosefLab/VISION"><img src="https://travis-ci.org/YosefLab/VISION.svg?branch=master" alt="Build status"></a></p>
+<div id="functional-interpretation-for-scrna-seq-data" class="section level1">
 <div class="page-header"><h1 class="hasAnchor">
-<a href="#vision-travis-ci-build-status" class="anchor"></a>VISION <a href="https://travis-ci.org/YosefLab/VISION"><img src="https://travis-ci.org/YosefLab/VISION.svg?branch=master" alt="Travis-CI Build Status"></a>
-</h1></div>
-<p>Here we present VISION, a module that can sit downstream of other common analyses such as clustering, dimensionality reduction, and trajectory inference. Specifically, VISION aids in the interpretation of scRNA-seq data, with or without predetermined labels, or stratifications of the data (e.g. clusterings) using the notion of cell-cell similarity maps (as interpreted from some latent space) and biological signatures (functional sets of genes that can be obtained online from, for example, MSigDB). Finally, VISION can evaluate the effect of cell- level meta data, such as library quality, batch, clinical information, or additional experimental readouts (e.g., protein levels from a Cite-Seq experiment). Importantly, the use of VISION can greatly facilitate collaborative projects, as it offers a low- latency interactive report for the end- user, which can be hosted online and viewed on a web browser without the need for installing developer-grade software.</p>
-<p><em>For more information, refer to our preprint on biorxiv: <a href="https://www.biorxiv.org/content/early/2018/08/29/403055">Functional Interpretation of Single-Cell Similarity Maps</a></em></p>
+<a href="#functional-interpretation-for-scrna-seq-data" class="anchor"></a>Functional Interpretation for <br> scRNA-seq Data</h1></div>
+<p>VISION aids in the interpretation of single-cell RNA-seq (scRNA-seq) data by selecting for gene signatures which describe coordinated variation between cells. While the software only requires an expression matrix and a signature library (available in online databases), it is also designed to integrate into existing scRNA-seq analysis pipelines by taking advantage of precomputed dimensionality reductions, trajectory inferences or clustering results. The results of this analysis are made available through a dynamic web-app which can be shared with collaborators without requiring them to install any additional software.</p>
+<ul>
+<li><a href="https://www.biorxiv.org/content/early/2018/08/29/403055">Biorxiv Preprint</a></li>
+</ul>
 <div id="installing-vision" class="section level2">
 <h2 class="hasAnchor">
 <a href="#installing-vision" class="anchor"></a>Installing VISION</h2>
