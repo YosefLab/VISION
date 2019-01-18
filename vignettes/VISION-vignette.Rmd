@@ -104,7 +104,7 @@ vis <- analyze(vis)
 
 ## Viewing Results
 
-With the processed Vision object, a dynamic web report can be generated with the `viewResults` function.
+With the processed Vision object, a dynamic web report can be generated with the `viewResults()` function.
 
 ```{r, collapse=T, message=F, results=F, eval=F}
 viewResults(vis)
@@ -165,7 +165,7 @@ Two-dimensional projections are used to visualize the data in the output report.
 
 By default, VISION computes tSNE on the latent space for visualization.  However, other options are availabled via the `projection_methods` argument.
 
-Often times, users will have pre-computed projections that they would like to use for visualizing their data (e.g. a pre-computed tSNE, or UMAP projetction). In this case, the `addProjection` method can be used to add this view of the data to the output report.
+Often times, users will have pre-computed projections that they would like to use for visualizing their data (e.g. a pre-computed tSNE, or UMAP projetction). In this case, the `addProjection()` method can be used to add this view of the data to the output report.
 
 ```{r, collapse=T, message=F, results=F, eval=F}
 projection <- read.csv("umap_results.csv")

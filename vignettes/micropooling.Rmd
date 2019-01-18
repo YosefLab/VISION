@@ -72,7 +72,7 @@ viewResults(vis)
 
 # Micropooling independently of the main VISION analysis
 
-There may be reasons it is desired micropool outside of the main VISION `analyze` function.  For example, there may be discrete classes that users may not wish to pool across (e.g. not wanting to merge disease and control cells).  Or, you may want to only use the micropooling function independently of the rest of the pipeline.  This can be accomplished using the `applyMicroClustering` utility function as demonstrated here.
+There may be reasons it is desired micropool outside of the main VISION `analyze()` function.  For example, there may be discrete classes that users may not wish to pool across (e.g. not wanting to merge disease and control cells).  Or, you may want to only use the micropooling function independently of the rest of the pipeline.  This can be accomplished using the `applyMicroClustering()` utility function as demonstrated here.
 
 ```{r, collapse=F, message=F, warning=F, eval=F}
 ## Create scaled.counts and meta as shown above
@@ -89,7 +89,7 @@ vis <- Vision(pooledExpression, meta = pooledMeta
 ```
 
 Alternately, if you already have a latent space computed and wish to use this (instead of PCA) when pooling *outside* of the normal 
-Vision pipeline, you can provide it when calling `applyMicroClustering` and later pool the latent space.
+Vision pipeline, you can provide it when calling `applyMicroClustering()` and later pool the latent space.
 
 This is demonstrated below:
 
