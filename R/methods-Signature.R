@@ -312,7 +312,7 @@ sigConsistencyScores <- function(latentSpace, sigScoresData,
 #' single projections weights
 #'
 #' @importFrom matrixStats colMedians
-#' @importFrom parallel mclapply
+#' @importFrom pbmcapply pbmclapply
 #' @param sigData numeric matrix of signature scores
 #' size is cells x signatures
 #' @param randomSigData A list with two items:
@@ -365,7 +365,7 @@ sigsVsProjection_n <- function(sigData, randomSigData,
     randomSigScores <- randomSigData$randomSigs
     sigAssignments <- randomSigData$sigAssignments
 
-    groupedResults <- mclapply(names(randomSigScores), function(group) {
+    groupedResults <- pbmclapply(names(randomSigScores), function(group) {
 
         # Build a matrix of random background signatures for this group
         randomSigScoreMatrix <- randomSigScores[[group]]
@@ -417,7 +417,7 @@ sigsVsProjection_n <- function(sigData, randomSigData,
 #' Evaluates the significance of each meta data numeric signature vs. a
 #' single projections weights
 #' @importFrom stats pnorm
-#' @importFrom parallel mclapply
+#' @importFrom pbmcapply pbmclapply
 #' @param metaData data.frame of meta-data for cells
 #' @param weights numeric matrix of dimension N_SAMPLES x N_SAMPLES
 #' @param cells list of cell names.  Subsets anlysis to provided cells.
@@ -447,7 +447,7 @@ sigsVsProjection_pcn <- function(metaData, weights, cells = NULL){
 
   numericMeta <- names(numericMeta)[numericMeta]
 
-  results <- mclapply(numericMeta, function(metaName) {
+  results <- pbmclapply(numericMeta, function(metaName) {
 
     scores <- metaData[[metaName]]
 
@@ -494,7 +494,7 @@ sigsVsProjection_pcn <- function(metaData, weights, cells = NULL){
 #' Evaluates the significance of each meta data factor signature vs. a
 #' single projections weights
 #' @importFrom stats chisq.test
-#' @importFrom parallel mclapply
+#' @importFrom pbmcapply pbmclapply
 #' @param metaData data.frame of meta-data for cells
 #' @param weights numeric matrix of dimension N_SAMPLES x N_SAMPLES
 #' @param cells list of cell names.  Subsets anlysis to provided cells.
@@ -535,7 +535,7 @@ sigsVsProjection_pcf <- function(metaData, weights, cells = NULL){
 
   factorMeta <- names(factorMeta)[factorMeta]
 
-  results <- mclapply(factorMeta, function(metaName) {
+  results <- pbmclapply(factorMeta, function(metaName) {
 
     scores <- metaData[[metaName]]
 

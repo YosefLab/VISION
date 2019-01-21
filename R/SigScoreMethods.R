@@ -12,7 +12,7 @@
 #' @param sig_score_method either "naive" or "weighted_avg"
 #' @param eData numeric Matrix Genes x Cells
 #' @param weights Weight matrix computed through FNR curve
-#' @importFrom parallel mclapply
+#' @importFrom pbmcapply pbmclapply
 #' @return matrix of signature scores, cells X signatures
 batchSigEval <- function(sigs, sig_score_method, eData, weights) {
 
@@ -34,7 +34,7 @@ batchSigEval <- function(sigs, sig_score_method, eData, weights) {
     n_workers <- if (is.null(n_workers)) 2 else n_workers
     sigBatches <- batchify(sigs, 1200, n_workers = n_workers)
 
-    allScoresBatches <- parallel::mclapply(sigBatches, function(sigBatch) {
+    allScoresBatches <- pbmclapply(sigBatches, function(sigBatch) {
         scores <- innerEvalSignatureBatch(expr_weights, sigBatch, weights)
         return(scores)
     })

@@ -373,7 +373,7 @@ analyzeTrajectoryCorrelations <- function(object, signatureBackground = NULL) {
 
 #' Compute Ranksums Test, for all factor meta data.  One level vs all others
 #'
-#' @importFrom parallel mclapply
+#' @importFrom pbmcapply pbmclapply
 #' @importFrom matrixStats colRanks
 #' @param object the VISION object
 #' @return the VISION object with values set for the analysis results
@@ -433,7 +433,7 @@ clusterSigScores <- function(object) {
         numericMetaRanks <- numericMeta
     }
 
-    out <- lapply(clusterMeta, function(variable){
+    out <- pbmclapply(clusterMeta, function(variable){
         values <- metaData[[variable]]
         var_levels <- levels(values)
 
@@ -461,7 +461,7 @@ clusterSigScores <- function(object) {
         result <- result[order(var_levels)]
 
         return(result)
-    })
+    }, mc.cores = 1)
 
     object@ClusterSigScores <- out
     return(object)
@@ -472,6 +472,7 @@ clusterSigScores <- function(object) {
 #'
 #' Populations the PCAnnotatorData slot of the VISION object
 #'
+#' @importFrom pbmcapply pbmclapply
 #' @param object the VISION object
 #' @return pearsonCorr numeric matrix N_Signatures x N_PCs
 calculatePearsonCorr <- function(object){
@@ -503,7 +504,7 @@ calculatePearsonCorr <- function(object){
       )
   )
 
-  for (i in seq_len(ncol(computedSigMatrix))) {
+  pbmclapply(seq_len(ncol(computedSigMatrix)), function(i) {
       for (j in seq_len(ncol(latentSpace))) {
            ss <- computedSigMatrix[, i];
            pc <- latentSpace[, j];
@@ -516,7 +517,7 @@ calculatePearsonCorr <- function(object){
                pearsonCorr[i, j] <- pc_result$estimate
            }
       }
-  }
+  }, mc.cores = 1)
 
   pcaAnnotData <- PCAnnotatorData(pearsonCorr = pearsonCorr)
   object@PCAnnotatorData <- pcaAnnotData

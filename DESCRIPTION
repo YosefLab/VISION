@@ -17,6 +17,7 @@ Imports:
 	loe,
 	logging,
     parallel,
+    pbmcapply (>= 1.3.1),
 	Matrix,
 	matrixStats,
 	mclust,
