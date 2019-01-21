@@ -27,15 +27,6 @@ registerMethods <- function(projection_methods, numCells) {
 #' @return list of Projection objects
 generateProjectionsInner <- function(expr, latentSpace, projection_genes=NULL, projection_methods = NULL) {
 
-    if (!is.null(projection_genes)) {
-        exprData <- expr[projection_genes, ]
-    } else {
-        exprData <- expr
-    }
-
-    exprData <- matLog2(exprData)
-
-
     NUM_CELLS <- nrow(latentSpace)
     methodList <- registerMethods(projection_methods, NUM_CELLS)
 
@@ -44,15 +35,28 @@ generateProjectionsInner <- function(expr, latentSpace, projection_genes=NULL, p
     projections[["PCA: 1,2"]] <- latentSpace[, c(1, 2)]
     projections[["PCA: 1,3"]] <- latentSpace[, c(1, 3)]
     projections[["PCA: 2,3"]] <- latentSpace[, c(2, 3)]
-    for (method in names(methodList)){
-    message(method)
-    ## run on raw data
-    if (method == "ICA" || method == "RBF Kernel PCA") {
-        res <- methodList[[method]](exprData)
-        projections[[method]] <- res
-    } else { ## run on reduced data
-        res <- methodList[[method]](t(latentSpace))
-        projections[[method]] <- res
+    N <- length(methodList)
+    for (i in seq(N)){
+        method <- names(methodList)[i]
+        message(
+            sprintf("  Running method %i/%i: %s ...", i, N, method)
+        )
+        ## run on raw data
+        if (method == "ICA" || method == "RBFPCA") {
+
+            if (!is.null(projection_genes)) {
+                exprData <- expr[projection_genes, ]
+            } else {
+                exprData <- expr
+            }
+
+            exprData <- matLog2(exprData)
+
+            res <- methodList[[method]](exprData)
+            projections[[method]] <- res
+        } else { ## run on reduced data
+            res <- methodList[[method]](t(latentSpace))
+            projections[[method]] <- res
         }
     }
 

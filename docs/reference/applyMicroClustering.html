@@ -156,7 +156,7 @@
 
     <pre class="usage"><span class='fu'>applyMicroClustering</span>(<span class='no'>exprData</span>, <span class='kw'>cellsPerPartition</span> <span class='kw'>=</span> <span class='fl'>100</span>,
   <span class='kw'>filterInput</span> <span class='kw'>=</span> <span class='st'>"fano"</span>, <span class='kw'>filterThreshold</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/Round'>round</a></span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/nrow'>ncol</a></span>(<span class='no'>exprData</span>) * <span class='fl'>0.2</span>),
-  <span class='kw'>preserve_clusters</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>latentSpace</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
+  <span class='kw'>latentSpace</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -179,10 +179,6 @@ genes to use when computing projections.</p></td>
       <td><p>Threshold to apply when using the 'threshold' projection genes filter.
 If greater than 1, this specifies the number of cells in which a gene must be detected
 for it to be used when computing PCA. If less than 1, this instead specifies the proportion of cells needed</p></td>
-    </tr>
-    <tr>
-      <th>preserve_clusters</th>
-      <td><p>named factor vector denoted cluster boundaries to preserve</p></td>
     </tr>
     <tr>
       <th>latentSpace</th>

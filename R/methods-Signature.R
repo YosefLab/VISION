@@ -104,6 +104,8 @@ createGeneSignature <- function(name, sigData, metadata="") {
 #'     groups
 calculateSignatureBackground <- function(object, num) {
 
+    message("Computing background distribution for signature scores...")
+
     if (length(object@sigData) == 0) {
         return(
             list(
@@ -133,6 +135,8 @@ calculateSignatureBackground <- function(object, num) {
         sigsInGroup <- names(randomSigs[[groupName]])
         randomSigScoresGroups[[groupName]] <- randomSigScores[, sigsInGroup, drop = FALSE]
     }
+
+    message("")
 
     return(list(
                 randomSigs = randomSigScoresGroups,

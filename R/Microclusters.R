@@ -17,7 +17,6 @@
 #' @param filterThreshold Threshold to apply when using the 'threshold' projection genes filter.
 #' If greater than 1, this specifies the number of cells in which a gene must be detected
 #' for it to be used when computing PCA. If less than 1, this instead specifies the proportion of cells needed
-#' @param preserve_clusters named factor vector denoted cluster boundaries to preserve
 #' @param latentSpace (Optional) Latent space to be used instead of PCA numeric matrix cells x components
 #' @importFrom Matrix tcrossprod
 #' @importFrom Matrix rowMeans
@@ -26,15 +25,22 @@
 applyMicroClustering <- function(
                          exprData, cellsPerPartition=100,
                          filterInput = "fano",
-                         filterThreshold = round(ncol(exprData)*0.2),
-                         preserve_clusters = NULL,
+                         filterThreshold = round(ncol(exprData) * 0.2),
                          latentSpace = NULL) {
 
     if (is.null(latentSpace) || all(dim(latentSpace) == c(1, 1))) {
         exprData <- matLog2(exprData)
-        gene_passes <- applyFilters(exprData, filterThreshold, filterInput)
+
+
+        if (length(filterInput > 1)){
+            gene_passes <- filterInput
+        } else {
+            gene_passes <- applyFilters(exprData, filterThreshold, filterInput)
+        }
+
         fexpr <- exprData[gene_passes, ]
 
+        message("    Computing a latent space for microclustering using PCA...")
         # Compute wcov using matrix operations to avoid
         # creating a large dense matrix
 
@@ -56,36 +62,33 @@ applyMicroClustering <- function(
         res <- t(res) # avoid transposing many times below
     } else {
         res <- latentSpace
+        message(
+            sprintf("    Using supplied latent space with %i components", ncol(res))
+            )
     }
 
-    # If 'preserve_clusters' is provided, use these as the pre-clustering
-    #   Otherwise, compute clusters using knn graph and louvain
-    if (!is.null(preserve_clusters)) {
-        cluster_names <- levels(preserve_clusters)
-        cl <- lapply(cluster_names, function(level){
-            cells_at_level <- names(preserve_clusters)[preserve_clusters == level]
-            return(cells_at_level)
-        })
-        names(cl) <- cluster_names
+    message("    Performing initial coarse-clustering...")
 
-    } else {
+    n_workers <- getOption("mc.cores")
+    n_workers <- if (is.null(n_workers)) 2 else n_workers
 
-        n_workers <- getOption("mc.cores")
-        n_workers <- if (is.null(n_workers)) 2 else n_workers
+    kn <- ball_tree_knn(res,
+                        min(round(sqrt(nrow(res))), 30),
+                        n_workers)
 
-        kn <- ball_tree_knn(res,
-                            min(round(sqrt(nrow(res))), 30),
-                            n_workers)
+    cl <- louvainCluster(kn, res)
 
-        cl <- louvainCluster(kn, res)
-    }
-
+    message("    Further partitioning coarse clusters...")
     pools <- readjust_clusters(cl, res, cellsPerPartition = cellsPerPartition)
 
     # Rename clusters
     cn <- paste0("microcluster ", 1:length(pools))
     names(pools) <- cn
 
+    message(
+        sprintf("    Micro-pooling completed reducing %i cells into %i pools",
+            nrow(res), length(pools))
+        )
     return(pools)
 
 }
@@ -355,7 +358,7 @@ poolMatrixRows <- function(data, pools) {
 
     data <- t(data)
 
-    pooled_data <- poolMatrixCols(pools, data)
+    pooled_data <- poolMatrixCols(data, pools)
 
     pooled_data <- t(pooled_data)
 

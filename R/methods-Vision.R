@@ -485,28 +485,22 @@ setMethod("Vision", signature(data = "seurat"),
 #' }
 setMethod("analyze", signature(object="Vision"),
             function(object) {
-    message("Beginning Analysis")
-
-    if (object@cluster_variable == "") {
-        object <- clusterCells(object)
-    }
+    message("Beginning Analysis\n")
 
     if (object@pool || length(object@pools) > 0) {
         object <- poolCells(object)
     }
 
-    object <- filterData(object)
     object <- convertToDense(object)
-
     object <- calcWeights(object)
-
-    # Populates @sigScores
-    object <- calcSignatureScores(object)
 
     # Populates @latentSpace
     if (all(dim(object@latentSpace) == c(1, 1))) {
+        object <- filterData(object)
         object <- computeLatentSpace(object)
     }
+
+    object <- clusterCells(object)
 
     # Populates @Projections
     object <- generateProjections(object)
@@ -519,7 +513,9 @@ setMethod("analyze", signature(object="Vision"),
                                         )
     }
 
-    message("Computing background distribution for signature scores...")
+    # Populates @sigScores
+    object <- calcSignatureScores(object)
+
     signatureBackground <- calculateSignatureBackground(object, num = 3000)
 
     # Populates @SigConsistencyScores
@@ -537,7 +533,7 @@ setMethod("analyze", signature(object="Vision"),
     object <- calculatePearsonCorr(object)
 
 
-    message("Analysis Complete!")
+    message("Analysis Complete!\n")
 
     return(object)
 })
