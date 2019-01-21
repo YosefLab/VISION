@@ -315,7 +315,6 @@ Right_Content.prototype.update = function(updates)
     if (!needsUpdate) return $.Deferred().resolve().promise()
 
     var main_vis = get_global_status('main_vis');
-    var projection = get_global_data('sig_projection_coordinates')
 
     var autoZoom = false
 
@@ -324,6 +323,12 @@ Right_Content.prototype.update = function(updates)
        'main_vis' in updates) {
 
         autoZoom = true
+        var projection;
+        if (get_global_status('main_vis') === 'tree'){
+            projection = get_global_data('tree_projection_coordinates')
+        } else {
+            projection = get_global_data('sig_projection_coordinates')
+        }
 
         // If the projection is changing, then we need to change all the plots
         var allPlotData = this.getAllPlotData()
@@ -481,16 +486,14 @@ Right_Content.prototype.draw_sigvp = function(scatter, item_key, item_type, valu
  * item_key: string - name of plotted item
  * item_type: string - one of 'signature', 'meta', 'gene', or 'signature-gene'
  * values: sample name (str) -> int/str - values to plot
- * projection: sample name (str) -> [x, y] - coordinates for each sample
+ * projection: list
+ *             [0]: sample name (str) -> [x, y] - coordinates for each sample
+ *             [1]: Milestone coordiantes (list), [vData, adjMat]
  * autoZoom: bool - whether or not to re-zoom the plot
  */
 Right_Content.prototype.draw_tree = function(scatter, item_key, item_type, values, projection, autoZoom) {
 
     var self = this;
-
-    var proj_key = get_global_status('plotted_trajectory');
-
-    var milestonePromise = api.tree.milestones(proj_key);
 
     var isFactor = (typeof(_.values(values)[0]) === 'string') &&
                    (_.values(values)[0] !== "NA")
@@ -514,67 +517,65 @@ Right_Content.prototype.draw_tree = function(scatter, item_key, item_type, value
         values = self.rank_values(values)
     }
 
-    return $.when(milestonePromise) // Runs when both are completed
-        .then(function(milestoneCoordinates){
+    var milestoneCoordinates = projection[1]
+    var projection = projection[0]
 
-            var treep = milestoneCoordinates[0]
-            var treel = milestoneCoordinates[1]
+    var treep = milestoneCoordinates[0]
+    var treel = milestoneCoordinates[1]
 
-            // Massage treep for easier D3 binding
+    // Massage treep for easier D3 binding
 
-            tree_points = []
+    tree_points = []
 
-            var points = [];
-            var sample_labels = Object.keys(values).sort()
-            var selected_cells = get_global_status('selected_cell')
-            var selected_cells_map = _.keyBy(selected_cells, x => x)
-            if(selected_cells.length == 1){ // Just a single cell
-                selected_cells_map = {} // Don't style anything
-            }
+    var points = [];
+    var sample_labels = Object.keys(values).sort()
+    var selected_cells = get_global_status('selected_cell')
+    var selected_cells_map = _.keyBy(selected_cells, x => x)
+    if(selected_cells.length == 1){ // Just a single cell
+        selected_cells_map = {} // Don't style anything
+    }
 
-            _.each(sample_labels, (sample_label) => {
-                var x = projection[sample_label][0]
-                var y = projection[sample_label][1]
-                var sig_score = values[sample_label]
-                var selected = sample_label in selected_cells_map
+    _.each(sample_labels, (sample_label) => {
+        var x = projection[sample_label][0]
+        var y = projection[sample_label][1]
+        var sig_score = values[sample_label]
+        var selected = sample_label in selected_cells_map
 
-                points.push({
-                    x: x, y: y,
-                    value: sig_score, label: sample_label,
-                    selected: selected,
-                });
-            })
-
-            var tree_points = [];
-            for (var i = 0; i < treep.length; i++) {
-                var x = treep[i][0];
-                var y = treep[i][1];
-                tree_points.push([x, y, "Node " + i]);
-            }
-
-            // Change tree adjacency list into a list of pairs
-            var tree_adj = []
-
-            for (var i = 0; i < treel.length; i++) {
-                for (var j = i+1; j < treel[i].length; j++) {
-                    if (treel[i][j] == 1) {
-                        tree_adj.push([i, j])
-                    }
-                }
-            }
-
-            scatter.setData({
-                points: points,
-                isFactor: isFactor,
-                full_color_range: full_color_range,
-                diverging_colormap: diverging_colormap,
-                tree_points: tree_points,
-                tree_adj: tree_adj,
-                title: item_key,
-                autozoom: autoZoom,
-            });
-
+        points.push({
+            x: x, y: y,
+            value: sig_score, label: sample_label,
+            selected: selected,
         });
+    })
+
+    var tree_points = [];
+    for (var i = 0; i < treep.length; i++) {
+        var x = treep[i][0];
+        var y = treep[i][1];
+        tree_points.push([x, y, "Node " + i]);
+    }
+
+    // Change tree adjacency list into a list of pairs
+    var tree_adj = []
+
+    for (var i = 0; i < treel.length; i++) {
+        for (var j = i+1; j < treel[i].length; j++) {
+            if (treel[i][j] == 1) {
+                tree_adj.push([i, j])
+            }
+        }
+    }
+
+    scatter.setData({
+        points: points,
+        isFactor: isFactor,
+        full_color_range: full_color_range,
+        diverging_colormap: diverging_colormap,
+        tree_points: tree_points,
+        tree_adj: tree_adj,
+        title: item_key,
+        autozoom: autoZoom,
+    });
 }
 
 

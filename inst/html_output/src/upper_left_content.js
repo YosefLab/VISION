@@ -815,10 +815,7 @@ Meta_Table.prototype.render = function()
                 if(main_vis === 'pcannotator'){
                     tooltip_str = "corr = " + d.zscore.toFixed(2)
                 } else {
-                    if(main_vis === 'clusters' && i > 0)
-                        tooltip_str = "p<" + _pval_format(d.pval)
-                    else
-                        tooltip_str = "z=" + d.zscore.toFixed(2) + ", p<" + _pval_format(d.pval)
+                    tooltip_str = "p<" + _pval_format(d.pval)
                 }
                 createTooltip(self.tooltip, this, tooltip_str)
                 hoverRowCol(header_row, this, matrix.proj_labels[d.col])

@@ -283,21 +283,22 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         out <- toJSON(proj_names)
         return(out)
       }) %>%
-      get("/Tree/Projections/(?<proj_name3>.*)/milestones", function(req, res, err) {
-        proj <- URLdecode(req$params$proj_name3)
+      get("/Tree/Projections/(?<proj_name4>.*)/coordinates", function(req, res, err) {
+        proj <- URLdecode(req$params$proj_name4)
 
+        coords <- object@TrajectoryProjections[[proj]]@pData
         C <- object@TrajectoryProjections[[proj]]@vData
         W <- object@TrajectoryProjections[[proj]]@adjMat
 
-        out <- list(C, W)
+        coords <- as.data.frame(coords)
+        coords["sample_labels"] <- rownames(coords)
+        rownames(coords) <- NULL
 
-        return(toJSON(out))
-      }) %>%
-      get("/Tree/Projections/(?<proj_name4>.*)/coordinates", function(req, res, err) {
-        proj <- URLdecode(req$params$proj_name4)
-        coords <- object@TrajectoryProjections[[proj]]@pData
+        out <- list(coords, C, W)
 
-        out <- coordinatesToJSON(coords)
+        out <- toJSON(out, force = TRUE, pretty = TRUE,
+                      auto_unbox = TRUE, dataframe = "values")
+
         compressJSONResponse(out, res, req)
 
       }) %>%

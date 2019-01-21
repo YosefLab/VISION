@@ -654,7 +654,7 @@ geary_sig_v_proj <- function(values, indices, weights){
 #' }
 clusterSignatures <- function(sigMatrix, metaData, pvals, consistency, clusterMeta) {
 
-  significant <- apply(pvals, 1, function(x) min(x) < -1.3)
+  significant <- apply(pvals, 1, function(x) min(x) < .05)
 
   # Additionally, threshold on the Geary's C' itself
   large <- consistency[, 1] > 0.2
