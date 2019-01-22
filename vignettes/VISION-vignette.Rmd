@@ -23,14 +23,14 @@ set.seed(6473) ## for reproducibility
 
 # Preliminaries
 
-If you have yet to install VISION, we recommend installing the package from github to install this pacakge. Full source code can be found at the VISION github repository, available [here](http://www.github.com/YosefLab/VISION). 
+If you have yet to install VISION, we recommend installing the package from Github to install this package. Full source code can be found at the VISION Github repository, available [here](http://www.github.com/YosefLab/VISION).
 
 ```r
 require(devtools)
 install_github("YosefLab/VISION")
 ```
 
-Once VISION and R are installed, you may load in VISION using `library(VISION)`. 
+Once VISION and R are installed, you may load in VISION using `library(VISION)`.
 
 # Using VISION
 
@@ -64,8 +64,8 @@ scaled_counts <- t(t(counts) / n.umi) * median(n.umi)
 # Read in meta data (Cells x Vars)
 meta = read.table("data/glio_meta.txt.gz", sep='\t', header=T, row.names=1)
 
-vis <- Vision(scaled_counts, 
-              signatures = c("data/h.all.v5.2.symbols.gmt"), 
+vis <- Vision(scaled_counts,
+              signatures = c("data/h.all.v5.2.symbols.gmt"),
               meta = meta)
 ```
 
@@ -77,7 +77,7 @@ The expression data should not be log-transformed prior to loading into VISION.
 
 **Signatures**
 
-Signatures can be provided as a list of paths to signature files (\*.gmt) or Signature objects.  
+Signatures can be provided as a list of paths to signature files (\*.gmt) or Signature objects.
 
 See [the signature vignette](Signatures.html) for more information on finding or creating gene Signatures.
 
@@ -110,7 +110,7 @@ With the processed Vision object, a dynamic web report can be generated with the
 viewResults(vis)
 ```
 
-This will launch a browser running the interactive report.  
+This will launch a browser running the interactive report.
 
 Other options (port, host, browser) can be provided to control how this occurs.  For example, if you are launching a report on a remote server (such as an AWS instance) and want to make it accessible to others, run this with `host="0.0.0.0"`, some selected port number (e.g. `port=8888`), and `browser=FALSE` (so a browser isn't auto-opened).  Then the report should be available at "\<your instance IP address\>:8888".  (Note:  You will also likely need to enable inbound traffic on your selected port for this to work correctly).
 
@@ -142,7 +142,7 @@ By default, this is calculated via PCA on a subset of the genes.  A few argument
 
 - `projection_genes` - controls how genes are selected for PCA.  Options are:
     - `"threshold"` - use a threshold to select genes.  The `threshold` argument specifies either the number or proportion of genes in which a cell must be expressed to be included.
-    - `"fano"` - first the "threshold" filter is applied.  Then genes are ordered by mean expression into 30 bins and within each bin, genes with a high fano factor (2 MAD above the median) are retained
+    - `"fano"` - first the "threshold" filter is applied.  Then genes are ordered by mean expression into 30 bins and within each bin, genes with a high Fano factor (2 MAD above the median) are retained
     - character vector of gene names - specify the genes to use directly
 
 ### Specifying a Custom Latent Space
@@ -151,7 +151,7 @@ Alternately, if a latent space has been computed elsewhere (either via PCA, or o
 
 ## Micropooling
 
-scRNA-seq experiments have grown in size over the past couple of years, and as such we have provided an algorithm for pooling together similar cells and continuing with analysis, thus reducing the cell-wise time complexity of the VISION pipeline. For more information, please see our micropooling vignette. 
+scRNA-seq experiments have grown in size over the past couple of years, and as such we have provided an algorithm for pooling together similar cells and continuing with analysis, thus reducing the cell-wise time complexity of the VISION pipeline. For more information, please see our micropooling vignette.
 
 You can control the parameters of the micropooling algorithm using two arguments:
 
@@ -165,7 +165,7 @@ Two-dimensional projections are used to visualize the data in the output report.
 
 By default, VISION computes tSNE on the latent space for visualization.  However, other options are availabled via the `projection_methods` argument.
 
-Often times, users will have pre-computed projections that they would like to use for visualizing their data (e.g. a pre-computed tSNE, or UMAP projetction). In this case, the `addProjection()` method can be used to add this view of the data to the output report.
+Often times, users will have pre-computed projections that they would like to use for visualizing their data (e.g. a pre-computed tSNE, or UMAP projection). In this case, the `addProjection()` method can be used to add this view of the data to the output report.
 
 ```{r, collapse=T, message=F, results=F, eval=F}
 projection <- read.csv("umap_results.csv")

@@ -148,7 +148,7 @@
 <li>‘weights’ between measurements indicating how similar (e.g., nearby in the latent model) cells are to one another</li>
 <li>values to be compared against these weights</li>
 </ul>
-<p>The values consist of the <a href="Signatures.html">signature scores</a>. To calculate the weights, first the nearest <span class="math inline">\(k\)</span> neighbors are determined for each cell in the latent model. If a latent space is provided as the latent model (or if it is computed using PCA), then nearest neighbors are determined using euclidean distance. If a trajectory model is instead provided, neighbors are determined using the distance between cells along the trajectory. Weights are then computed by applying a gaussian kernel to the distances between nearest neighbors such that higher weights are assigned to similar cells and the weight between distant cells is reduced to zero.</p>
+<p>The values consist of the <a href="Signatures.html">signature scores</a>. To calculate the weights, first the nearest <span class="math inline">\(k\)</span> neighbors are determined for each cell in the latent model. If a latent space is provided as the latent model (or if it is computed using PCA), then nearest neighbors are determined using euclidean distance. If a trajectory model is instead provided, neighbors are determined using the distance between cells along the trajectory. Weights are then computed by applying a Gaussian kernel to the distances between nearest neighbors such that higher weights are assigned to similar cells and the weight between distant cells is reduced to zero.</p>
 <p>Finally, the autocorrelation statistic, C’ is computed as:</p>
 <p><span class="math display">\[
 C' = 1-\frac{

@@ -28,7 +28,7 @@ build the neighborhood graph.  By default, VISION runs PCA and uses euclidean di
 space for this purpose.  However, if the cells' variation is better modeled by a trajectory (either
 linear or tree-like), then distances along the trajectory structure can be used instead.
 
-Many tools exist to perform trajectory inference in single cells.  The [Dynverse](https://github.com/dynverse) 
+Many tools exist to perform trajectory inference in single cells.  The [Dynverse](https://github.com/dynverse)
 project has developed wrappers for 59 recently-published methods and VISION is able to accept
 the wrapped output of these methods as an input trajectory model.
 
@@ -41,7 +41,7 @@ each cell is only present on a single edge.
 
 ## Installation
 
-You should have a working installation of [VISION](https://github.com/YosefLab/VISION), [dyno](https://github.com/dynverse/dyno), and [tidyverse](https://github.com/tidyverse/tidyverse). 
+You should have a working installation of [VISION](https://github.com/YosefLab/VISION), [dyno](https://github.com/dynverse/dyno), and [tidyverse](https://github.com/tidyverse/tidyverse).
 
 ```{r, collapse=F, message=T, eval=F}
 devtools::install_github("YosefLab/VISION")
@@ -51,7 +51,7 @@ install.packages('tidyverse')
 
 ## Data
 
-In this vignette, we'll be analyzing a set of ~5,000 cells during haematopoiesis ([Tusi et al, Nature 2018](https://www.nature.com/articles/nature25741)). 
+In this vignette, we'll be analyzing a set of ~5,000 cells during haematopoiesis ([Tusi et al, Nature 2018](https://www.nature.com/articles/nature25741)).
 
 # Workflow
 
@@ -67,7 +67,7 @@ library(tidyverse)
 counts = as.matrix(read.table("data/hemato_counts.csv.gz", sep=',', header=T, row.names=1))
 ```
 
-We'll now follow the [dyno vignette](https://github.com/dynverse/dyno) in the github README. You'll need to make sure you have [Docker](https://docs.docker.com/install/) installed. Although we use Slingshot here, there is a wide variety of methods that can be used, as listed on the [Dynmethods page](https://github.com/dynverse/dynmethods). 
+We'll now follow the [dyno vignette](https://github.com/dynverse/dyno) in the github README. You'll need to make sure you have [Docker](https://docs.docker.com/install/) installed. Although we use Slingshot here, there is a wide variety of methods that can be used, as listed on the [Dynmethods page](https://github.com/dynverse/dynmethods).
 
 Before running the model, we'll need to perform some gene filtering. We first only select the genes used in the original Tusi et al study, then for further efficiency, we further filter using VISION's Fano filtering.
 
@@ -98,18 +98,18 @@ model <- infer_trajectory(dataset, "projected_slingshot", verbose=T)
 model <- model %>% add_dimred(dyndimred::dimred_mds, expression_source = dataset$expression)
 
 plot_dimred(
-  model, 
+  model,
   expression_source = dataset$expression
 )
 ```
 
-Now, with this model saved we can pass it to VISION via the `latentTrajectory` parameter. The model will automatically be analzyed with the same signatures passed to the VISION object, and with this model, the `Trajectory` tab will be activated in the VISION output report. 
+Now, with this model saved we can pass it to VISION via the `latentTrajectory` parameter. The model will automatically be analyzed with the same signatures passed to the VISION object, and with this model, the `Trajectory` tab will be activated in the VISION output report.
 
 ```{r, collapse=F, eval=F}
 meta <- read.table("data/hemato_covariates.txt.gz", sep='\t', header=T, row.names=1)
 meta <- meta[colnames(expr), -1]
 
-vis <- Vision(expr, signatures = c("data/h.all.v5.2.symbols.gmt"), 
+vis <- Vision(expr, signatures = c("data/h.all.v5.2.symbols.gmt"),
             meta = meta, latentTrajectory = model)
 
 vis <- addProjection(vis, "MDS", model$dimred[,c(1,2)])

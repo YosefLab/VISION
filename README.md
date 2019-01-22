@@ -16,7 +16,7 @@ require(devtools)
 install_github("YosefLab/VISION", build_vignettes=T)
 ```
 
-We recommend using the build_vignettes argument to view vignettes from R (use the `vignette()` function). 
+We recommend using the build_vignettes argument to view vignettes from R (use the `vignette()` function).
 
 See the DESCRIPTION file for a complete list of R dependencies.  If the R dependencies are already installed, installation should finish in a few minutes.
 

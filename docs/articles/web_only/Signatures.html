@@ -169,9 +169,9 @@
 <h2 class="hasAnchor">
 <a href="#create-your-own--gmt-files" class="anchor"></a>2. Create your own .gmt files</h2>
 <p>Signature files are supported in the .gmt format - a textual format which is easy to create and view</p>
-<p>The file is tab-deliminted and contains one signature per line, (however ‘positive’ and ‘negative’ genes are split into two lines)</p>
+<p>The file is tab-delimited and contains one signature per line, (however ‘positive’ and ‘negative’ genes are split into two lines)</p>
 <p>Each line should look like this:</p>
-<pre><code>&lt;Signature Name&gt; TAB &lt;Signature Description&gt; TAB &lt;Gene1&gt; TAB &lt;Gene2&gt; … (etc) </code></pre>
+<pre><code>&lt;Signature Name&gt; TAB &lt;Signature Description&gt; TAB &lt;Gene1&gt; TAB &lt;Gene2&gt; … (etc)</code></pre>
 <p>To denote signed signatures, use two lines to show the signature, with the “positive” genes in one line and the “negative” genes in the other. Add "_plus" to the signature name on the line with the positive genes and "_minus" to the signature name on the line with the negative genes.</p>
 <p>For example:</p>
 <pre><code>MEMORY_VS_NAIVE_CD8_TCELL_plus    GSE16522   RHOC    OFD1     MLF1   ...
@@ -196,7 +196,7 @@ BCELL_VS_LUPUS_BCELL_minus        GSE10325   VAMP5   WSB2     CCR2   ...</code><
 <li>
 <span class="math inline">\(G_{pos}\)</span> and <span class="math inline">\(G_{neg}\)</span> are the set of ‘positive’ and ‘negative’ signature genes respectively</li>
 </ul>
-<p>VISION expects the input expression data to already be scaled (i.e., the gene counts in each cell are divided by the total number of counts in the cell and multiplied by some constant such as 10,000 or the median number of umi across cells) and normalized (significant technical confounders regressed-out). Internally, VISION additionally log-transforms (<span class="math inline">\(log_2(x+1)\)</span>) the expression data to compress the dynamic range. This is done so that genes which are naturally expressed at higher magnitudes don’t dominate the signature score as heavily.</p>
+<p>VISION expects the input expression data to already be scaled (i.e., the gene counts in each cell are divided by the total number of counts in the cell and multiplied by some constant such as 10,000 or the median number of UMI across cells) and normalized (significant technical confounders regressed-out). Internally, VISION additionally log-transforms (<span class="math inline">\(log_2(x+1)\)</span>) the expression data to compress the dynamic range. This is done so that genes which are naturally expressed at higher magnitudes don’t dominate the signature score as heavily.</p>
 <p>However, with just the above formulation, we have observed that depending on the scaling or normalization method, signature scores can still be highly correlated with cell-level metrics such as the number of UMI per cell. To account for this, we note that the expected value of a randomly-drawn signature in cell <em>j</em> is:</p>
 <p><span class="math display">\[ \frac{|G_{pos}| - |G_{neg}|}{|G_{pos}| + |G_{neg}|} \bar{X_j} \]</span></p>
 <p>And the expected variance of a random signature score is:</p>

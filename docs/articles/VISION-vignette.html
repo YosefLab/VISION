@@ -119,9 +119,9 @@
 <div id="preliminaries" class="section level1">
 <h1 class="hasAnchor">
 <a href="#preliminaries" class="anchor"></a>Preliminaries</h1>
-<p>If you have yet to install VISION, we recommend installing the package from github to install this pacakge. Full source code can be found at the VISION github repository, available <a href="http://www.github.com/YosefLab/VISION">here</a>.</p>
+<p>If you have yet to install VISION, we recommend installing the package from Github to install this package. Full source code can be found at the VISION Github repository, available <a href="http://www.github.com/YosefLab/VISION">here</a>.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">require</a></span>(devtools)</a>
-<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="kw"><a href="https://www.rdocumentation.org/packages/devtools/topics/install_github">install_github</a></span>(<span class="st">"YosefLab/VISION"</span>)</a></code></pre></div>
+<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="kw"><a href="https://www.rdocumentation.org/packages/devtools/topics/reexports">install_github</a></span>(<span class="st">"YosefLab/VISION"</span>)</a></code></pre></div>
 <p>Once VISION and R are installed, you may load in VISION using <code><a href="https://www.rdocumentation.org/packages/base/topics/library">library(VISION)</a></code>.</p>
 </div>
 <div id="using-vision" class="section level1">
@@ -155,8 +155,8 @@
 <a class="sourceLine" id="cb2-15" data-line-number="15"><span class="co"># Read in meta data (Cells x Vars)</span></a>
 <a class="sourceLine" id="cb2-16" data-line-number="16">meta =<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/read.table">read.table</a></span>(<span class="st">"data/glio_meta.txt.gz"</span>, <span class="dt">sep=</span><span class="st">'</span><span class="ch">\t</span><span class="st">'</span>, <span class="dt">header=</span>T, <span class="dt">row.names=</span><span class="dv">1</span>)</a>
 <a class="sourceLine" id="cb2-17" data-line-number="17"></a>
-<a class="sourceLine" id="cb2-18" data-line-number="18">vis &lt;-<span class="st"> </span><span class="kw"><a href="../reference/VISION-class.html">Vision</a></span>(scaled_counts, </a>
-<a class="sourceLine" id="cb2-19" data-line-number="19">              <span class="dt">signatures =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"data/h.all.v5.2.symbols.gmt"</span>), </a>
+<a class="sourceLine" id="cb2-18" data-line-number="18">vis &lt;-<span class="st"> </span><span class="kw"><a href="../reference/VISION-class.html">Vision</a></span>(scaled_counts,</a>
+<a class="sourceLine" id="cb2-19" data-line-number="19">              <span class="dt">signatures =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"data/h.all.v5.2.symbols.gmt"</span>),</a>
 <a class="sourceLine" id="cb2-20" data-line-number="20">              <span class="dt">meta =</span> meta)</a></code></pre></div>
 <p><strong>Expression Data</strong></p>
 <p>The provided expression data should be scaled and normalized. The example above shows just a simple UMI-scaling, but it is recommended to apply more advanced normalization procedures such as batch correction or removal of technical confounders.</p>
@@ -213,7 +213,7 @@
 <li>
 <code>"threshold"</code> - use a threshold to select genes. The <code>threshold</code> argument specifies either the number or proportion of genes in which a cell must be expressed to be included.</li>
 <li>
-<code>"fano"</code> - first the “threshold” filter is applied. Then genes are ordered by mean expression into 30 bins and within each bin, genes with a high fano factor (2 MAD above the median) are retained</li>
+<code>"fano"</code> - first the “threshold” filter is applied. Then genes are ordered by mean expression into 30 bins and within each bin, genes with a high Fano factor (2 MAD above the median) are retained</li>
 <li>character vector of gene names - specify the genes to use directly</li>
 </ul>
 </li>
@@ -241,7 +241,7 @@
 <a href="#adding-2d-projections" class="anchor"></a>Adding 2d Projections</h2>
 <p>Two-dimensional projections are used to visualize the data in the output report.</p>
 <p>By default, VISION computes tSNE on the latent space for visualization. However, other options are availabled via the <code>projection_methods</code> argument.</p>
-<p>Often times, users will have pre-computed projections that they would like to use for visualizing their data (e.g. a pre-computed tSNE, or UMAP projetction). In this case, the <code><a href="../reference/addProjection-Vision-method.html">addProjection()</a></code> method can be used to add this view of the data to the output report.</p>
+<p>Often times, users will have pre-computed projections that they would like to use for visualizing their data (e.g. a pre-computed tSNE, or UMAP projection). In this case, the <code><a href="../reference/addProjection-Vision-method.html">addProjection()</a></code> method can be used to add this view of the data to the output report.</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" data-line-number="1">projection &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/read.table">read.csv</a></span>(<span class="st">"umap_results.csv"</span>)</a>
 <a class="sourceLine" id="cb6-2" data-line-number="2"></a>
 <a class="sourceLine" id="cb6-3" data-line-number="3"><span class="co"># projection is a matirx or data.frame of dimension (Cells x 2)</span></a>

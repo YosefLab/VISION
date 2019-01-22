@@ -23,9 +23,9 @@ set.seed(6473) ## for reproducibility
 
 # Introduction
 
-To accommodate datasets that exceed available memory and CPU resources, VISION creates pooled cells using a custom micropooling algorithm. In standard use cases, the users provide the entire expression matrix and VISION will create pooled cells with the user-defined cellsPerPartition argument as supplied to the VISION object constructor. Analysis will resume on the pooled data matrix, where each pooled cell has at most cellsPerPartition cells per pool. This significantly reduces the run time, producing results from 500K cells in just under around an hour. We also find that the local autocorrelation scores run in the latent space as computed from the pooled cells is consistent with that when these scores are computed from the entire dataset. 
+To accommodate datasets that exceed available memory and CPU resources, VISION creates pooled cells using a custom micropooling algorithm. In standard use cases, the users provide the entire expression matrix and VISION will create pooled cells with the user-defined cellsPerPartition argument as supplied to the VISION object constructor. Analysis will resume on the pooled data matrix, where each pooled cell has at most cellsPerPartition cells per pool. This significantly reduces the run time, producing results from 500K cells in just under around an hour. We also find that the local autocorrelation scores run in the latent space as computed from the pooled cells is consistent with that when these scores are computed from the entire dataset.
 
-# The Algorithm 
+# The Algorithm
 
 The micropooling algorithm relies on iterative clustering of the latent space. Specifically, given an expression matrix and a cellsPerPartition target size, we use the following procedure:
 
@@ -42,7 +42,7 @@ By default, VISION does not allow micropooling within discrete classes (e.g. cel
 
 ## Data
 
-In this vignette, we'll be analyzing a set of ~5,000 cells during haematopoiesis ([Tusi et al, Nature 2018](https://www.nature.com/articles/nature25741)). 
+In this vignette, we'll be analyzing a set of ~5,000 cells during haematopoiesis ([Tusi et al, Nature 2018](https://www.nature.com/articles/nature25741)).
 
 ## Workflow
 
@@ -57,7 +57,7 @@ counts = as.matrix(read.table("data/hemato_counts.csv.gz", sep=',', header=T, ro
 scale.factor = median(colSums(counts))
 scaled.counts = t(t(counts) / colSums(counts)) * scale.factor
 
-# read in meta data 
+# read in meta data
 meta = read.table("data/hemato_covariates.txt.gz", sep='\t', header=T, row.names=1)
 meta = meta[colnames(scaled.counts), -1]
 
@@ -88,7 +88,7 @@ vis <- Vision(pooledExpression, meta = pooledMeta
               signatures = c("data/h.all.v5.2.symbols.gmt"))
 ```
 
-Alternately, if you already have a latent space computed and wish to use this (instead of PCA) when pooling *outside* of the normal 
+Alternately, if you already have a latent space computed and wish to use this (instead of PCA) when pooling *outside* of the normal
 Vision pipeline, you can provide it when calling `applyMicroClustering()` and later pool the latent space.
 
 This is demonstrated below:

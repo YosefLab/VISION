@@ -36,7 +36,7 @@ As a measure of autocorrelation, we use the [Geary's C](https://en.wikipedia.org
 * 'weights' between measurements indicating how similar (e.g., nearby in the latent model) cells are to one another
 * values to be compared against these weights
 
-The values consist of the [signature scores](Signatures.html).  To calculate the weights, first the nearest $k$ neighbors are determined for each cell in the latent model.  If a latent space is provided as the latent model (or if it is computed using PCA), then nearest neighbors are determined using euclidean distance.  If a trajectory model is instead provided, neighbors are determined using the distance between cells along the trajectory.  Weights are then computed by applying a gaussian kernel to the distances between nearest neighbors such that higher weights are assigned to similar cells and the weight between distant cells is reduced to zero.
+The values consist of the [signature scores](Signatures.html).  To calculate the weights, first the nearest $k$ neighbors are determined for each cell in the latent model.  If a latent space is provided as the latent model (or if it is computed using PCA), then nearest neighbors are determined using euclidean distance.  If a trajectory model is instead provided, neighbors are determined using the distance between cells along the trajectory.  Weights are then computed by applying a Gaussian kernel to the distances between nearest neighbors such that higher weights are assigned to similar cells and the weight between distant cells is reduced to zero.
 
 Finally, the autocorrelation statistic, C' is computed as:
 

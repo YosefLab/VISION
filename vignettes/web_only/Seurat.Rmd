@@ -35,7 +35,7 @@ The above call would take the "pca" dimensionality reduction from `seurat.obj` i
 
 ```{r, collapse=T, eval=F}
 vision.obj <- Vision(seurat.obj,
-    signatures = signatures, 
+    signatures = signatures,
     dimRed <- "dm")
 ```
 
@@ -43,7 +43,7 @@ Any of the other `Vision()` constructor parameters can also be passed here.  For
 
 ```{r, collapse=T, eval=F}
 vision.obj <- Vision(seurat.obj,
-    signatures = signatures, 
+    signatures = signatures,
     pool = T, cellsPerPartition = 5
     )
 ```
@@ -52,6 +52,6 @@ By default, Vision will still run tSNE as part of the main analysis pipeline.  Y
 
 ```{r, collapse=T, eval=F}
 vision.obj <- Vision(seurat.obj,
-    signatures = signatures, 
+    signatures = signatures,
     projection_methods = NULL)
 ```

@@ -156,16 +156,16 @@
 <a class="sourceLine" id="cb1-7" data-line-number="7"><span class="kw"><a href="../../reference/viewResults.html">viewResults</a></span>(vision.obj)</a></code></pre></div>
 <p>The above call would take the “pca” dimensionality reduction from <code>seurat.obj</code> if it is defined. If you instead had run a Diffusion Map using Seurat and wanted to use that as your latent space, you could specify that like this:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1">vision.obj &lt;-<span class="st"> </span><span class="kw"><a href="../../reference/VISION-class.html">Vision</a></span>(seurat.obj,</a>
-<a class="sourceLine" id="cb2-2" data-line-number="2">    <span class="dt">signatures =</span> signatures, </a>
+<a class="sourceLine" id="cb2-2" data-line-number="2">    <span class="dt">signatures =</span> signatures,</a>
 <a class="sourceLine" id="cb2-3" data-line-number="3">    dimRed &lt;-<span class="st"> "dm"</span>)</a></code></pre></div>
 <p>Any of the other <code><a href="../../reference/VISION-class.html">Vision()</a></code> constructor parameters can also be passed here. For example, if you wanted to enable microclustering with 5 cells per micropool:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1">vision.obj &lt;-<span class="st"> </span><span class="kw"><a href="../../reference/VISION-class.html">Vision</a></span>(seurat.obj,</a>
-<a class="sourceLine" id="cb3-2" data-line-number="2">    <span class="dt">signatures =</span> signatures, </a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">    <span class="dt">signatures =</span> signatures,</a>
 <a class="sourceLine" id="cb3-3" data-line-number="3">    <span class="dt">pool =</span> T, <span class="dt">cellsPerPartition =</span> <span class="dv">5</span></a>
 <a class="sourceLine" id="cb3-4" data-line-number="4">    )</a></code></pre></div>
 <p>By default, Vision will still run tSNE as part of the main analysis pipeline. You may wish to skip this if a visualization has already been run in Seurat. To instruction VISION to not run any additional visualization projections, set <code>projection_methods = NULL</code> like so:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" data-line-number="1">vision.obj &lt;-<span class="st"> </span><span class="kw"><a href="../../reference/VISION-class.html">Vision</a></span>(seurat.obj,</a>
-<a class="sourceLine" id="cb4-2" data-line-number="2">    <span class="dt">signatures =</span> signatures, </a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">    <span class="dt">signatures =</span> signatures,</a>
 <a class="sourceLine" id="cb4-3" data-line-number="3">    <span class="dt">projection_methods =</span> <span class="ot">NULL</span>)</a></code></pre></div>
 </div>
   </div>
