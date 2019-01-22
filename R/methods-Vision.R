@@ -126,7 +126,7 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                 .Object@unnormalizedData <- unnormalizedData
 
             } else {
-                .Object@unnormalizedData <- .Object@exprData
+                .Object@unnormalizedData <- matrix(NA, 1, 1)
             }
 
             if (is.null(housekeeping)) {

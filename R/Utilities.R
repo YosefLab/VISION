@@ -416,3 +416,18 @@ read_10x_h5 <- function(h5_file, ensToSymbol = TRUE){
 
     return(counts)
 }
+
+
+#' Tests for Unnormalized Data
+#'
+#' Determines if the VISION object is storing unnormalized data
+#'
+#' @param object VISION object
+#' @return bool whether or not there is unnormalize data
+hasUnnormalizedData <- function(object) {
+    if (all(dim(object@unnormalizedData) == 1)){
+        return(FALSE)
+    }
+
+    return(TRUE)
+}

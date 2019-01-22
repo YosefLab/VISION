@@ -367,7 +367,11 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       }) %>%
       get("/Expression/Genes/List", function(req, res, err) {
 
-        data <- object@unnormalizedData
+        if (hasUnnormalizedData(object)) {
+            data <- object@unnormalizedData
+        } else {
+            data <- object@exprData
+        }
         genes <- rownames(data)
 
         result <- toJSON(
@@ -381,7 +385,14 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       get("/Expression/Gene/(?<gene_name2>.*)", function(req, res, err) {
 
         gene_name <- URLdecode(req$params$gene_name2)
-        data <- log2(object@unnormalizedData[gene_name, ] + 1)
+
+        if (hasUnnormalizedData(object)) {
+            data <- object@unnormalizedData
+        } else {
+            data <- object@exprData
+        }
+
+        data <- log2(data[gene_name, ] + 1)
 
         out <- list(cells = names(data), values = data)
 

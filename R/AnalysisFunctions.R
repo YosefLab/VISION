@@ -76,8 +76,10 @@ poolCells <- function(object,
     pooled_cells <- poolMatrixCols(object@exprData, object@pools)
     object@exprData <- pooled_cells
 
-    pooled_unnorm <- poolMatrixCols(object@unnormalizedData, object@pools)
-    object@unnormalizedData <- pooled_unnorm
+    if (hasUnnormalizedData(object)) {
+        pooled_unnorm <- poolMatrixCols(object@unnormalizedData, object@pools)
+        object@unnormalizedData <- pooled_unnorm
+    }
 
     if (!all(dim(object@latentSpace) == c(1, 1))) {
         pooled_latent <- poolMatrixRows(object@latentSpace, object@pools)
