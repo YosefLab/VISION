@@ -42,8 +42,7 @@ Suggests:
 	knitr,
 	rmarkdown,
     testthat,
-    ggplot2,
-    Seurat
+    ggplot2
 biocViews:
 	GeneExpression,
 	RNASeq,
