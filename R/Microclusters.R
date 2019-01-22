@@ -3,9 +3,9 @@
 #' Merges similar transcriptional profiles into representative 'pools'
 #'
 #' A latent space is computed for the expression data via PCA after
-#' filtering on genes (using parameters `filterInput` and `filterThreshold`).
+#' filtering on genes (using parameters \code{filterInput} and \code{filterThreshold}).
 #'
-#' Alternately, a latent space can be supplied via the `latentSpace` argument
+#' Alternately, a latent space can be supplied via the \code{latentSpace} argument
 #'
 #' Euclidean distance within the latent space is then used to create cell pools
 #'
@@ -17,7 +17,6 @@
 #' @param filterThreshold Threshold to apply when using the 'threshold' projection genes filter.
 #' If greater than 1, this specifies the number of cells in which a gene must be detected
 #' for it to be used when computing PCA. If less than 1, this instead specifies the proportion of cells needed
-#' @param preserve_clusters named factor vector denoted cluster boundaries to preserve
 #' @param latentSpace (Optional) Latent space to be used instead of PCA numeric matrix cells x components
 #' @importFrom Matrix tcrossprod
 #' @importFrom Matrix rowMeans
@@ -26,15 +25,22 @@
 applyMicroClustering <- function(
                          exprData, cellsPerPartition=100,
                          filterInput = "fano",
-                         filterThreshold = round(ncol(exprData)*0.2),
-                         preserve_clusters = NULL,
+                         filterThreshold = round(ncol(exprData) * 0.2),
                          latentSpace = NULL) {
 
     if (is.null(latentSpace) || all(dim(latentSpace) == c(1, 1))) {
         exprData <- matLog2(exprData)
-        gene_passes <- applyFilters(exprData, filterThreshold, filterInput)
+
+
+        if (length(filterInput > 1)){
+            gene_passes <- filterInput
+        } else {
+            gene_passes <- applyFilters(exprData, filterThreshold, filterInput)
+        }
+
         fexpr <- exprData[gene_passes, ]
 
+        message("    Computing a latent space for microclustering using PCA...")
         # Compute wcov using matrix operations to avoid
         # creating a large dense matrix
 
@@ -56,36 +62,33 @@ applyMicroClustering <- function(
         res <- t(res) # avoid transposing many times below
     } else {
         res <- latentSpace
+        message(
+            sprintf("    Using supplied latent space with %i components", ncol(res))
+            )
     }
 
-    # If 'preserve_clusters' is provided, use these as the pre-clustering
-    #   Otherwise, compute clusters using knn graph and louvain
-    if (!is.null(preserve_clusters)) {
-        cluster_names <- levels(preserve_clusters)
-        cl <- lapply(cluster_names, function(level){
-            cells_at_level <- names(preserve_clusters)[preserve_clusters == level]
-            return(cells_at_level)
-        })
-        names(cl) <- cluster_names
+    message("    Performing initial coarse-clustering...")
 
-    } else {
+    n_workers <- getOption("mc.cores")
+    n_workers <- if (is.null(n_workers)) 2 else n_workers
 
-        n_workers <- getOption("mc.cores")
-        n_workers <- if (is.null(n_workers)) 2 else n_workers
+    kn <- ball_tree_knn(res,
+                        min(round(sqrt(nrow(res))), 30),
+                        n_workers)
 
-        kn <- ball_tree_knn(res,
-                            min(round(sqrt(nrow(res))), 30),
-                            n_workers)
+    cl <- louvainCluster(kn, res)
 
-        cl <- louvainCluster(kn, res)
-    }
-
+    message("    Further partitioning coarse clusters...")
     pools <- readjust_clusters(cl, res, cellsPerPartition = cellsPerPartition)
 
     # Rename clusters
     cn <- paste0("microcluster ", 1:length(pools))
     names(pools) <- cn
 
+    message(
+        sprintf("    Micro-pooling completed reducing %i cells into %i pools",
+            nrow(res), length(pools))
+        )
     return(pools)
 
 }
@@ -93,11 +96,26 @@ applyMicroClustering <- function(
 
 #' Aggregate meta-data for cells in pools
 #'
+#' Used to pool a meta-data data.frame which may contain a mixture
+#' of numeric and factor variables
+#'
+#' For numerical variables, the pooled value is just the average of
+#' the value for cells in the pool
+#'
+#' For factors, the pooled factor value represents the majority level
+#' across cells in the pool.  If there is no simple majority (e.g. no
+#' factor level > 50\%), then the level '~' is substituted.
+#'
+#' Additionally, for factor variables, a new variable of the form
+#' \code{<Variable>_<Level>} is created for each level in the factor with a value
+#' equal to the proportion of cells in the pool with that factor level.
+#'
 #' @param metaData data.frame of meta-data for cells
 #' @param pools named list of character vector describing cell ids
 #' in each pool
-#' @return a data.frame of new meta-data
-createPooledMetaData <- function(metaData, pools) {
+#' @return A data.frame of pooled meta-data
+#' @export
+poolMetaData <- function(metaData, pools) {
 
     poolMetaData <- data.frame(row.names = names(pools))
 
@@ -290,41 +308,72 @@ readjust_clusters <- function(clusters, data, cellsPerPartition=100) {
     return(clusters)
 }
 
-
-#' create "super-cells" by pooling together single cells
+#' Pools columns of a numeric matrix
 #'
-#' This function calls createPools on batches of clusters in parallel
+#' Uses the provided pools to merge columns of the supplied data matrix
 #'
-#' @param cl cluster association of each cell
-#' @param expr expression data
+#' This would typically be used on a gene expression matrix (genes X cells) to
+#' pool cells.
+#'
+#' The \code{pools} argument is obtained by running \code{applyMicroClustering}
+#'
+#' @param data data.frame or matrix to pool
+#' @param pools named list of character vector describing cell ids
+#' in each pool
 #' @importFrom parallel mclapply
-#' @return a matrx of expression data for the pooled cells
-createPoolsBatch <- function(cl, expr) {
+#' @return Matrix of pooled data
+#' @export
+poolMatrixCols <- function(data, pools) {
 
     n_workers <- getOption("mc.cores")
     n_workers <- if (is.null(n_workers)) 2 else n_workers
 
-    cl_batches <- batchify(cl, 500, n_workers = n_workers)
+    cl_batches <- batchify(pools, 500, n_workers = n_workers)
 
     pool_batches <- parallel::mclapply(cl_batches, function(cl_batch) {
-                       pool_expression <- createPools(cl_batch, expr)
-                       return(pool_expression)
+                       pooled_batch <- poolMatrixCols_Inner(data, cl_batch)
+                       return(pooled_batch)
     })
 
-    pool_data <- do.call(cbind, pool_batches)
+    pooled_data <- do.call(cbind, pool_batches)
 
-    return(pool_data)
+    return(pooled_data)
+}
+
+
+#' Pools rows of a numeric matrix
+#'
+#' Uses the provided pools to merge rows of the supplied data matrix
+#'
+#' Same as poolMatrixCols only operates on rows.
+#'
+#' The \code{pools} argument is obtained by running \code{applyMicroClustering}
+#'
+#' @param data data.frame or matrix to pool
+#' @param pools named list of character vector describing cell ids
+#' in each pool
+#' @return Matrix of pooled data
+#' @export
+poolMatrixRows <- function(data, pools) {
+
+    data <- t(data)
+
+    pooled_data <- poolMatrixCols(data, pools)
+
+    pooled_data <- t(pooled_data)
+
+    return(pooled_data)
 }
 
 #' create "super-cells" by pooling together single cells
-#' @param cl cluster association of each cell (list of vector of column names)
 #' @param expr expression data (genes x cells matrix)
+#' @param pools cluster association of each cell
 #' @return a matrx of expression data for the pooled cells (genes x pools)
-createPools <- function(cl, expr) {
+poolMatrixCols_Inner <- function(expr, pools) {
 
     # Need to construct a large cells x pools matrix
-    cl_data <- lapply(seq(length(cl)), function(i) {
-        cluster <- cl[[i]]
+    cl_data <- lapply(seq(length(pools)), function(i) {
+        cluster <- pools[[i]]
         cell_indices <- match(cluster, colnames(expr))
         pool_indices <- rep(i, length(cell_indices))
         return(list(cell_indices, pool_indices))
@@ -335,16 +384,16 @@ createPools <- function(cl, expr) {
 
     dimnames <- list(
                      colnames(expr),
-                     names(cl)
+                     names(pools)
                      )
-    dims <- c(ncol(expr), length(cl))
+    dims <- c(ncol(expr), length(pools))
 
     poolSparseMatrix <- sparseMatrix(i = i, j = j,
                                     dims = dims,
                                     dimnames = dimnames)
     pool_data <- as.matrix(expr %*% poolSparseMatrix)
-    cl_sizes <- vapply(cl, length, FUN.VALUE = 1)
-    pool_data <- t(t(pool_data) / cl_sizes)  # BAH, maybe use sparse values here?
+    cl_sizes <- vapply(pools, length, FUN.VALUE = 1)
+    pool_data <- t(t(pool_data) / cl_sizes)
 
     return(pool_data)
 }

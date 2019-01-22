@@ -12,13 +12,6 @@
 #' @return character vector of gene names passing filter
 applyFilters <- function(expr, threshold, filterInput) {
 
-    # If the filterInput is a list of items, assume it's a list
-    # of genes and just use that to filter the matrix
-    if (length(filterInput) > 1) {
-        gene_passes <- filterInput
-        return(filterInput)
-    }
-
     for (filter in filterInput) {
         if (tolower(filter) == "novar") {
             gene_passes <- filterGenesNovar(expr)
@@ -56,7 +49,9 @@ filterGenesNovar <- function(data) {
 #' @param threshold (int) threshold value to filter by
 #' @return character vector of gene names passing filter
 filterGenesThreshold <- function(data, threshold) {
-    message("Applying threshold filter...", appendLF = FALSE)
+    message(
+        sprintf("    Applying Threshold filter...removing genes detected in less than %i cells", 2343)
+    )
 
     if ( is(data, "sparseMatrix") ){
         valid_rows <- rowSums(data > 0) > threshold
@@ -66,7 +61,9 @@ filterGenesThreshold <- function(data, threshold) {
 
     genes_passing <- rownames(data)[valid_rows]
 
-    message(paste(length(genes_passing), "Genes Retained"))
+    message(
+        sprintf("      Genes Retained: %i", length(genes_passing))
+    )
 
     return(genes_passing)
 }
@@ -85,7 +82,9 @@ filterGenesFano <- function(data, num_mad=2, plot=FALSE) {
         }
     }
 
-    message("Applying fano filter...", appendLF=FALSE)
+    message(
+        sprintf("    Applying Fano filter...removing genes with Fano < %.1f MAD in each of 30 bins", num_mad)
+    )
 
     sub_data <- data
     # if too many samples, subsample for fano filter
@@ -134,7 +133,10 @@ filterGenesFano <- function(data, num_mad=2, plot=FALSE) {
     gene_passes <- gene_passes[order(aa)]
 
     gene_pass_names <- names(unlist(genePassList))
-    message(paste(length(gene_pass_names), "Genes Retained"))
+
+    message(
+        sprintf("      Genes Retained: %i", length(gene_pass_names))
+    )
 
     if(plot) {
         g <- ggplot2::ggplot() + ggplot2::aes(x=mu, y=fano, color=gene_passes) +

@@ -93,7 +93,6 @@ setMethod("Vision", signature(data = "matrixORSparse"),
             }
 
             rownames(data) <- toupper(rownames(data))
-            .Object@initialExprData <- data
             .Object@exprData <- data
 
             if (!is.null(unnormalizedData)){
@@ -125,11 +124,9 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                 }
 
                 .Object@unnormalizedData <- unnormalizedData
-                .Object@initialUnnormalizedData <- unnormalizedData
 
             } else {
-                .Object@unnormalizedData <- .Object@exprData
-                .Object@initialUnnormalizedData <- .Object@initialExprData
+                .Object@unnormalizedData <- matrix(NA, 1, 1)
             }
 
             if (is.null(housekeeping)) {
@@ -149,7 +146,11 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                                return(readSignaturesInput(sig))
                            }
                 })
-                .Object@sigData <- do.call(c, sigs)
+                if (length(sigs) > 0){
+                    .Object@sigData <- do.call(c, sigs)
+                } else {
+                    .Object@sigData <- sigs
+                }
                 names(.Object@sigData) <- vapply(.Object@sigData,
                                             function(x){x@name}, "")
             } else if (is.character(signatures)) {
@@ -193,7 +194,6 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                     }
 
                     .Object@metaData <- meta[sampleLabels, , drop = FALSE]
-                    .Object@initialMetaData <- .Object@metaData
                 } else {
                     stop("meta input argument should be a matrix or dataframe")
                 }
@@ -201,7 +201,6 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                 .Object@metaData <- data.frame(
                                         row.names = colnames(.Object@exprData)
                                     )
-                .Object@initialMetaData <- .Object@metaData
             }
 
             if (!is.null(weights)) {
@@ -229,6 +228,9 @@ setMethod("Vision", signature(data = "matrixORSparse"),
             check <- sapply(projection_methods, function(x) x %in% valid_projections)
             if (! all(check)) {
                 stop("Bad value in 'projection_methods'. Please choose from tSNE10, tSNE30, ICA, ISOMap, or RBFPCA.")
+            }
+            if(length(projection_methods) == 0){
+                projection_methods <- character()
             }
             .Object@projection_methods <- projection_methods
 
@@ -286,7 +288,6 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                 colnames(latentSpace) <- NULL
 
                 .Object@latentSpace <- latentSpace
-                .Object@initialLatentSpace <- latentSpace
             }
 
             if (!is.null(latentTrajectory)) {
@@ -314,7 +315,6 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                 newMeta <- newMeta[rownames(.Object@metaData), ]
 
                 .Object@metaData <- cbind(.Object@metaData, newMeta)
-                .Object@initialMetaData <- .Object@metaData
             }
 
             .Object@pools <- pools
@@ -357,6 +357,106 @@ setMethod("Vision", signature(data = "SummarizedExperiment"),
           }
 )
 
+#' Create Vision object form a Seurat object
+#'
+#' Initializes a Vision object from an existing Seurat object taking any existing
+#' expression data, meta-data, and dimensionality reductions if they exist already
+#'
+#' @rdname VISION-class
+#' @param dimRed Dimensionality reduction to use for the latentSpace.  Default is to
+#' look for "pca" and use that if it exists
+#' @param dimRedComponents number of components to use for the selected dimensionality
+#' reduction.  Default is to use all components
+#' @export
+setMethod("Vision", signature(data = "seurat"),
+          function(data, dimRed = NULL, dimRedComponents = NULL, ...) {
+
+              if (!requireNamespace("Seurat", quietly = TRUE)){
+                  stop("Package \"Seurat\" needed to load this data object.  Please install it.",
+                       call. = FALSE)
+              }
+
+              obj <- data
+              args <- list(...)
+
+              # Get Unnormalized Data
+              message("Importing Raw Data from obj@raw.data ...")
+              unnormData <- obj@raw.data
+              totals <- colSums(unnormData)
+              scalefactor <- median(totals)
+              unnormData <- t(t(unnormData) / totals * scalefactor)
+
+              args[["unnormalizedData"]] <- unnormData
+
+
+              # Get Expression Data from seurat object
+              exprData <- NULL
+              if (!is.null(obj@scale.data)){
+                  message("Importing Expression Data from obj@scale.data ...")
+                  exprData <- ilog1p(obj@scale.data)
+              } else {
+                  # Can't just check obj@data because this could be the raw
+                  # data if NormalizeData hadn't been run and we would risk
+                  # exponentiated non log-scale data
+                  if ("NormalizeData" %in% names(obj@calc.params)){
+                      message("Importing Expression Data from obj@data ...")
+                      exprData <- ilog1p(obj@data)
+                  } else {
+                      exprData <- unnormData
+                  }
+              }
+
+              args[["data"]] <- exprData
+
+              # Get meta data
+              if (!("meta" %in% names(args))){
+                  message("Importing Meta Data from obj@meta ...")
+                  args[["meta"]] <- obj@meta.data
+              }
+
+              # Get latent space
+              if (is.null(dimRed) && "pca" %in% names(obj@dr)) {
+                  dimRed <- "pca"
+              }
+
+              if (!("latentSpace" %in% names(args))){
+
+                  message(
+                      sprintf("Importing latent space from reduction.type='%s' using first '%i' components",
+                          dimRed, dimRedComponents
+                          ))
+
+                  latentSpace <- GetCellEmbeddings(obj,
+                      reduction.type = dimRed,
+                      dims.use = dimRedComponents
+                  )
+
+                  args[["latentSpace"]] <- latentSpace
+
+              }
+
+              vis <- do.call(Vision, args)
+
+              for (method in names(obj@dr)){
+                  name <- paste0("Seurat_", method)
+
+                  message(sprintf("Adding Visualization: %s", name))
+
+                  coordinates <- GetCellEmbeddings(obj,
+                      reduction.type = method,
+                      dims.use = 1:2
+                      )
+                  vis <- addProjection(vis,
+                      name, coordinates
+                      )
+              }
+
+              return(vis)
+          }
+)
+
+
+
 #' Main entry point for running VISION Analysis
 #'
 #' The main analysis function. Runs the entire VISION analysis pipeline
@@ -378,28 +478,22 @@ setMethod("Vision", signature(data = "SummarizedExperiment"),
 #' }
 setMethod("analyze", signature(object="Vision"),
             function(object) {
-    message("Beginning Analysis")
-
-    if (object@cluster_variable == "") {
-        object <- clusterCells(object)
-    }
+    message("Beginning Analysis\n")
 
     if (object@pool || length(object@pools) > 0) {
         object <- poolCells(object)
     }
 
-    object <- filterData(object)
     object <- convertToDense(object)
-
     object <- calcWeights(object)
-
-    # Populates @sigScores
-    object <- calcSignatureScores(object)
 
     # Populates @latentSpace
     if (all(dim(object@latentSpace) == c(1, 1))) {
+        object <- filterData(object)
         object <- computeLatentSpace(object)
     }
+
+    object <- clusterCells(object)
 
     # Populates @Projections
     object <- generateProjections(object)
@@ -412,11 +506,13 @@ setMethod("analyze", signature(object="Vision"),
                                         )
     }
 
-    message("Computing background distribution for signature scores...")
+    # Populates @sigScores
+    object <- calcSignatureScores(object)
+
     signatureBackground <- calculateSignatureBackground(object, num = 3000)
 
     # Populates @SigConsistencyScores
-    object <- analyzeSpatialCorrelations(object, signatureBackground)
+    object <- analyzeLocalCorrelations(object, signatureBackground)
 
     # Populates @TrajectoryConsistencyScores
     if (!is.null(object@latentTrajectory)) {
@@ -430,7 +526,7 @@ setMethod("analyze", signature(object="Vision"),
     object <- calculatePearsonCorr(object)
 
 
-    message("Analysis Complete!")
+    message("Analysis Complete!\n")
 
     return(object)
 })
@@ -506,13 +602,15 @@ setMethod("addProjection", signature(object = "Vision"),
 #'     saveRDS(vis, 'vision_results.rds')
 #'     viewResults(vis)
 #'
-#' @param vis VISION object
+#' @param object VISION object
 #' @param ofile the path to save the object in. If NULL, the object is saved
 #' in the working directory [default:NULL]
 #' @param port The port on which to serve the output viewer.  If omitted, a
 #' random port between 8000 and 9999 is chosen.
 #' @param host The host used to serve the output viewer. If omitted, "127.0.0.1"
 #' is used.
+#' @param browser Whether or not to launch the browser automatically (default=TRUE)
+#' @param name Name for the sample - is shown at the top of the output report
 #' @return the path of the saved file
 #' @aliases saveAndViewResults
 #' @export
@@ -616,20 +714,23 @@ setMethod("viewResults", signature(object = "character"),
 
 #' Get saved selections
 #'
-#' Groups of cells can be selected and saved using the interactive output report
-#' This method allows you to retrieve these selections later in R for downstream analyses
+#' Access saved groups of cell IDs defined while using the interactive output report
+#'
+#' This method allows you to retrieve saved selections later in R for downstream analyses
 #'
 #' Note:  In order for selections to correctly save when launching the report, the report
 #'        must be run by storing the results back into the object.
-#         E.g.
-#'                  vis <- viewResults(vis)
-#'        and not
-#'                  viewResults(vis)
+#'
+#' E.g.
+#' \preformatted{vis <- viewResults(vis)}
+#' and not
+#' \preformatted{viewResults(vis)}
 #'
 #'
 #' @param object VISION object
-#' @return list Named list of selections.  Each selection is a character vector of cell/pool IDs
+#' @return Named list of selections.  Each selection is a character vector of cell/pool IDs
 #' @export
+#' @aliases getSelections
 #' @rdname getSelections
 #' @examples
 #' \dontrun{
@@ -644,3 +745,305 @@ setMethod("getSelections", signature(object = "Vision"),
           function(object) {
               return(object@selections)
           })
+
+
+#' Get 2D views of the expression data
+#'
+#' This method provides access to the 2d projections that are used
+#' to display results in the output report
+#'
+#' @param object VISION object
+#' @return List of matrix (Cells x 2)
+#' @export
+#' @aliases getProjections
+#' @rdname getProjections
+#' @examples
+#' \dontrun{
+#'
+#' # After running 'analyze'
+#' # Retrieve tSNE30 (tSNE with perplexity 30) and plot it
+#'
+#' tsne <- getProjections(vis)[["tSNE30"]]
+#'
+#' plot(tsne[, 1], tsne[, 2])
+#'
+#' # To see the names of available projections, just run:
+#'
+#' names(getProjections(vis))
+#'
+#' }
+setMethod("getProjections", signature(object = "Vision"),
+          function(object) {
+              return(object@Projections)
+          })
+
+
+#' Get Latent Space
+#'
+#' Provides access to the latent space used for
+#' local autocorrelation analysis
+#'
+#' If a latent trajectory was supplied, access it by using \code{getLatentTrajectory}
+#' instead
+#'
+#' @param object VISION object
+#' @return the latent space as a matrix of dimension (Cells x Components)
+#' @export
+#' @aliases getLatentSpace
+#' @rdname getLatentSpace
+setMethod("getLatentSpace", signature(object = "Vision"),
+          function(object) {
+              return(object@latentSpace)
+          })
+
+
+#' Get Latent Trajectory
+#'
+#' Provides access to the latent trajectory used for
+#' local autocorrelation analysis
+#'
+#' If a latent space was supplied, access it by using \code{getLatentSpace}
+#' instead
+#'
+#' @param object VISION object
+#' @return Trajectory object
+#' @export
+#' @aliases getLatentTrajectory
+#' @rdname getLatentTrajectory
+#' @examples
+#' \dontrun{
+#'
+#' trajectory <- getLatentTrajectory(vis)
+#'
+#' # MxM connectivity for network milestones
+#' trajectory@adjMat
+#'
+#' # data.frame with the position of cells between milestones
+#' # Columns are:
+#' #    cell
+#' #    from (milestone)
+#' #    to (milestone)
+#' #    position (0 to 1)
+#' trajectory@progressions
+#'
+#' }
+setMethod("getLatentTrajectory", signature(object = "Vision"),
+          function(object) {
+              return(object@latentTrajectory)
+          })
+
+
+#' Get Signature Scores
+#'
+#' Access to the signature scores computed by VISION
+#'
+#' @param object VISION object
+#' @return Signature scores as a (Cells x Signature) matrix
+#' @export
+#' @aliases getSignatureScores
+#' @rdname getSignatureScores
+setMethod("getSignatureScores", signature(object = "Vision"),
+          function(object) {
+              return(object@sigScores)
+          })
+
+
+#' Get Signature Autocorrelation Scores
+#'
+#' Access the local autocorrelation scores computed for signatures
+#'
+#' Local autocorrelation scores are calculated from the input latent
+#' space (default's to PCA) or the input trajectory model (if provided)
+#'
+#' @param object VISION object
+#' @return data.frame with columns 'C', 'pValue', and 'FDR'
+#' @export
+#' @aliases getSignatureAutocorrelation
+#' @rdname getSignatureAutocorrelation
+setMethod("getSignatureAutocorrelation", signature(object = "Vision"),
+          function(object) {
+              if (is.null(object@TrajectoryConsistencyScores)){
+                  localData <- object@SigConsistencyScores
+              } else {
+                  localData <- object@TrajectoryConsistencyScores
+              }
+
+              # Remove meta-variables
+              metaVars <- colnames(object@metaData)
+
+              fdr <- localData@FDR[, 1]
+              pVals <- localData@pValue[, 1]
+              consistency <- localData@Consistency[, 1]
+
+              sigs <- setdiff(names(pVals), metaVars)
+
+              pVals <- pVals[sigs]
+              consistency <- consistency[sigs]
+              fdr <- fdr[sigs]
+
+              out <- data.frame(
+                  C = consistency,
+                  pValue = pVals,
+                  FDR = fdr,
+                  row.names = sigs
+              )
+
+              out <- out[order(out$pValue, out$C * -1), ]
+
+              return(out)
+
+          })
+
+
+#' Get MetaData Autocorrelation Scores
+#'
+#' Access the local autocorrelation scores computed for meta-data variables
+#'
+#' Local autocorrelation scores are calculated from the input latent
+#' space (default's to PCA) or the input trajectory model (if provided)
+#'
+#' @param object VISION object
+#' @return data.frame with columns 'C', 'pValue', and 'FDR'
+#' @export
+#' @aliases getMetaAutocorrelation
+#' @rdname getMetaAutocorrelation
+setMethod("getMetaAutocorrelation", signature(object = "Vision"),
+          function(object) {
+              if (is.null(object@TrajectoryConsistencyScores)){
+                  localData <- object@SigConsistencyScores
+              } else {
+                  localData <- object@TrajectoryConsistencyScores
+              }
+
+              # Remove non meta-variables
+              metaVars <- colnames(object@metaData)
+
+              fdr <- localData@FDR[, 1]
+              pVals <- localData@pValue[, 1]
+              consistency <- localData@Consistency[, 1]
+
+              sigs <- intersect(names(pVals), metaVars)
+
+              pVals <- pVals[sigs]
+              consistency <- consistency[sigs]
+              fdr <- fdr[sigs]
+
+              out <- data.frame(
+                  C = consistency,
+                  pValue = pVals,
+                  FDR = fdr,
+                  row.names = sigs
+              )
+
+              out <- out[order(out$pValue, out$C * -1), ]
+
+              return(out)
+
+          })
+
+
+#' Get Results of One-vs-All Differential Signature Tests
+#'
+#' Returns the results of running one-vs-all differential signature
+#' tests for each level of every factor meta-variable.
+#'
+#' The 'stat' variable refers to the AUC
+#'
+#' The output object has a nested structure:
+#'
+#' List of meta-data variables -> List of variable levels -> Results Dataframe
+#'
+#' The results dataframe has three columns: "stat", "pValue", "FDR"
+#'
+#' @param object VISION object
+#' @return nested list of list of data.frame (see details)
+#' @export
+#' @aliases getSignatureDifferential
+#' @rdname getSignatureDifferential
+setMethod("getSignatureDifferential", signature(object = "Vision"),
+          function(object) {
+
+              # This is almost what we want to output, but needs some massaging
+              ClusterSigScores <- object@ClusterSigScores
+
+              metaVars <- colnames(object@metaData)
+
+              if (is.null(ClusterSigScores)){
+                  return(ClusterSigScores)
+              }
+
+              to_keep <- setdiff(
+                  rownames(ClusterSigScores[[1]][[1]]),
+                  metaVars
+                  )
+
+              ClusterSigScores <- lapply(ClusterSigScores, function(var_res){
+                  var_res <- lapply(var_res, function(var_level_res){
+                      var_level_res <- var_level_res[to_keep, , drop = FALSE]
+                  })
+              })
+
+              return(ClusterSigScores)
+          })
+
+
+#' Get Results of One-vs-All Differential Tests with Metadata Variables
+#'
+#' Returns the results of running one-vs-all differential
+#' tests for each level of every factor meta-variable.
+#'
+#' For numeric meta-variables, the 'stat' is the AUC. For factor meta-variables
+#' the stat is the chisq statistic comparing the two groups
+#'
+#' The output object has a nested structure:
+#'
+#' List of meta-data variables -> List of variable levels -> Results Dataframe
+#'
+#' The results dataframe has three columns: "stat", "pValue", "FDR"
+#'
+#' @param object VISION object
+#' @return nested list of list of data.frame (see details)
+#' @export
+#' @aliases getMetaDifferential
+#' @rdname getMetaDifferential
+setMethod("getMetaDifferential", signature(object = "Vision"),
+          function(object) {
+
+              # This is almost what we want to output, but needs some massaging
+              ClusterSigScores <- object@ClusterSigScores
+
+              metaVars <- colnames(object@metaData)
+
+              if (is.null(ClusterSigScores)){
+                  return(ClusterSigScores)
+              }
+
+              to_keep <- intersect(
+                  rownames(ClusterSigScores[[1]][[1]]),
+                  metaVars
+                  )
+
+              ClusterSigScores <- lapply(ClusterSigScores, function(var_res){
+                  var_res <- lapply(var_res, function(var_level_res){
+                      var_level_res <- var_level_res[to_keep, , drop = FALSE]
+                  })
+              })
+
+              return(ClusterSigScores)
+          })
+
+# Some Printing methods
+format.Vision <- function(vis) {
+    nGenes <- nrow(vis@exprData)
+    nCells <- ncol(vis@exprData)
+    msg <- sprintf("<A 'Vision' object with %i Genes and %i Cells>", nGenes, nCells)
+    return(msg)
+}
+
+print.Vision <- function(vis) {
+    print(format(vis))
+}
+
+setMethod("show", "Vision",
+    function(object) print(object)
+)

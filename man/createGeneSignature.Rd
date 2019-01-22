@@ -26,8 +26,7 @@ using the createGeneSignature method, users may programmatically define
 signatures from within R.
 }
 \examples{
-
-
+\dontrun{
 sig1 <- createGeneSignature(
            name = "CD8 Markers",
            sigData = c(CD8A=1, CD8B=1, GZMK=1, GZMB=1,
@@ -41,6 +40,5 @@ cc_sigs <- "path/to/cell_cycle.gmt"
 sigs <- c(sig1, cc_sigs)
 
 vis <- Vision(data = expMat, signatures = sigs)
-
-
+}
 }

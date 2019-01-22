@@ -162,6 +162,7 @@ compressJSONResponse <- function(json, res, req){
 #' random port between 8000 and 9999 is chosen.
 #' @param host The host used to serve the output viewer. If omitted, "127.0.0.1"
 #' is used.
+#' @param browser Whether or not to launch the web browser
 #' @return object
 launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
@@ -282,21 +283,22 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         out <- toJSON(proj_names)
         return(out)
       }) %>%
-      get("/Tree/Projections/(?<proj_name3>.*)/milestones", function(req, res, err) {
-        proj <- URLdecode(req$params$proj_name3)
+      get("/Tree/Projections/(?<proj_name4>.*)/coordinates", function(req, res, err) {
+        proj <- URLdecode(req$params$proj_name4)
 
+        coords <- object@TrajectoryProjections[[proj]]@pData
         C <- object@TrajectoryProjections[[proj]]@vData
         W <- object@TrajectoryProjections[[proj]]@adjMat
 
-        out <- list(C, W)
+        coords <- as.data.frame(coords)
+        coords["sample_labels"] <- rownames(coords)
+        rownames(coords) <- NULL
 
-        return(toJSON(out))
-      }) %>%
-      get("/Tree/Projections/(?<proj_name4>.*)/coordinates", function(req, res, err) {
-        proj <- URLdecode(req$params$proj_name4)
-        coords <- object@TrajectoryProjections[[proj]]@pData
+        out <- list(coords, C, W)
 
-        out <- coordinatesToJSON(coords)
+        out <- toJSON(out, force = TRUE, pretty = TRUE,
+                      auto_unbox = TRUE, dataframe = "values")
+
         compressJSONResponse(out, res, req)
 
       }) %>%
@@ -313,8 +315,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         sigs <- c(sigs, meta_n)
 
         out <- sigProjMatrixToJSON(
-                                  object@TrajectoryConsistencyScores@sigProjMatrix,
-                                  object@TrajectoryConsistencyScores@emp_pMatrix,
+                                  object@TrajectoryConsistencyScores@Consistency,
+                                  object@TrajectoryConsistencyScores@FDR,
                                   sigs)
         return(out)
       }) %>%
@@ -322,8 +324,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         sigs <- colnames(object@metaData)
         out <- sigProjMatrixToJSON(
-                                  object@TrajectoryConsistencyScores@sigProjMatrix,
-                                  object@TrajectoryConsistencyScores@emp_pMatrix,
+                                  object@TrajectoryConsistencyScores@Consistency,
+                                  object@TrajectoryConsistencyScores@FDR,
                                   sigs)
         return(out)
       }) %>%
@@ -365,7 +367,11 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       }) %>%
       get("/Expression/Genes/List", function(req, res, err) {
 
-        data <- object@unnormalizedData
+        if (hasUnnormalizedData(object)) {
+            data <- object@unnormalizedData
+        } else {
+            data <- object@exprData
+        }
         genes <- rownames(data)
 
         result <- toJSON(
@@ -379,7 +385,14 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       get("/Expression/Gene/(?<gene_name2>.*)", function(req, res, err) {
 
         gene_name <- URLdecode(req$params$gene_name2)
-        data <- log2(object@unnormalizedData[gene_name, ] + 1)
+
+        if (hasUnnormalizedData(object)) {
+            data <- object@unnormalizedData
+        } else {
+            data <- object@exprData
+        }
+
+        data <- log2(data[gene_name, ] + 1)
 
         out <- list(cells = names(data), values = data)
 
@@ -421,19 +434,30 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         sigs <- c(sigs, meta_n)
 
         cluster_variable <- URLdecode(req$params$cluster_variable2)
-        pvals <- object@SigConsistencyScores@emp_pMatrix
-        zscores <- object@SigConsistencyScores@sigProjMatrix
+        pvals <- object@SigConsistencyScores@FDR
+        stat <- object@SigConsistencyScores@Consistency
 
-        cluster_pvals <- object@ClusterSigScores[[cluster_variable]]$pvals
-        cluster_zscores <- object@ClusterSigScores[[cluster_variable]]$zscores
+        var_res <- object@ClusterSigScores[[cluster_variable]]
 
-        pvals <- pvals[rownames(cluster_pvals), , drop = F]
-        zscores <- zscores[rownames(cluster_zscores), , drop = F]
+        cluster_pval <- lapply(var_res, function(var_level_res){
+            var_level_res["FDR"]
+        })
+        cluster_pval <- as.matrix(do.call(cbind, cluster_pval))
+        colnames(cluster_pval) <- names(var_res)
 
-        pvals <- cbind(pvals, cluster_pvals)
-        zscores <- cbind(zscores, cluster_zscores)
+        cluster_stat <- lapply(var_res, function(var_level_res){
+            var_level_res["stat"]
+        })
+        cluster_stat <- as.matrix(do.call(cbind, cluster_stat))
+        colnames(cluster_stat) <- names(var_res)
 
-        out <- sigProjMatrixToJSON(zscores, pvals, sigs)
+        cluster_pval <- cluster_pval[rownames(pvals), , drop = F]
+        cluster_stat <- cluster_stat[rownames(pvals), , drop = F]
+
+        pvals <- cbind(pvals, cluster_pval)
+        stat <- cbind(stat, cluster_stat)
+
+        out <- sigProjMatrixToJSON(stat, pvals, sigs)
         return(out)
       }) %>%
       get("/Clusters/(?<cluster_variable3>.*)/SigProjMatrix/Meta", function(req, res, err) {
@@ -441,19 +465,30 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         sigs <- colnames(object@metaData)
 
         cluster_variable <- URLdecode(req$params$cluster_variable3)
-        pvals <- object@SigConsistencyScores@emp_pMatrix
-        zscores <- object@SigConsistencyScores@sigProjMatrix
+        pvals <- object@SigConsistencyScores@FDR
+        stat <- object@SigConsistencyScores@Consistency
 
-        cluster_pvals <- object@ClusterSigScores[[cluster_variable]]$pvals
-        cluster_zscores <- object@ClusterSigScores[[cluster_variable]]$zscores
+        var_res <- object@ClusterSigScores[[cluster_variable]]
 
-        pvals <- pvals[rownames(cluster_pvals), , drop = F]
-        zscores <- zscores[rownames(cluster_zscores), , drop = F]
+        cluster_pval <- lapply(var_res, function(var_level_res){
+            var_level_res["FDR"]
+        })
+        cluster_pval <- as.matrix(do.call(cbind, cluster_pval))
+        colnames(cluster_pval) <- names(var_res)
 
-        pvals <- cbind(pvals, cluster_pvals)
-        zscores <- cbind(zscores, cluster_zscores)
+        cluster_stat <- lapply(var_res, function(var_level_res){
+            var_level_res["stat"]
+        })
+        cluster_stat <- as.matrix(do.call(cbind, cluster_stat))
+        colnames(cluster_stat) <- names(var_res)
 
-        out <- sigProjMatrixToJSON(zscores, pvals, sigs)
+        cluster_pval <- cluster_pval[rownames(pvals), , drop = F]
+        cluster_stat <- cluster_stat[rownames(pvals), , drop = F]
+
+        pvals <- cbind(pvals, cluster_pval)
+        stat <- cbind(stat, cluster_stat)
+
+        out <- sigProjMatrixToJSON(stat, pvals, sigs)
 
         return(out)
       }) %>%
@@ -490,7 +525,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
      }) %>%
      get("/Cell/(?<cell_id1>.*)/Meta", function(req, res, err) {
          cell_id <- URLdecode(req$params$cell_id1)
-         cell_meta <- as.list(object@initialMetaData[cell_id, ])
+         cell_meta <- as.list(object@metaData[cell_id, ])
          out <- toJSON(cell_meta, auto_unbox = TRUE)
          return(out)
      }) %>%
@@ -505,7 +540,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
              cells <- subset
          }
 
-         metaSubset <- object@initialMetaData[cells, ]
+         metaSubset <- object@metaData[cells, ]
 
          numericMeta <- vapply(metaSubset, is.numeric, FUN.VALUE = TRUE)
 

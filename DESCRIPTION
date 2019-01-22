@@ -1,6 +1,6 @@
 Package: VISION
 Title: Functional interpretation of single cell RNA-seq latent manifolds
-Version: 0.99.6
+Version: 1.0.0
 Authors@R: c(person("Matt", "Jones", email = "mattjones315@gmail.com", role = c("aut", "cre")),
 			 person("David", "Detomaso", email = "david.detomaso@berkeley.edu", role = c("aut", "cre")),
 			 person("Tal", "Ashuach", email = "tal_ashuach@berkeley.edu", role = c("aut")),
@@ -17,6 +17,7 @@ Imports:
 	loe,
 	logging,
     parallel,
+    pbmcapply (>= 1.3.1),
 	Matrix,
 	matrixStats,
 	mclust,
@@ -32,6 +33,7 @@ LinkingTo: Rcpp
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
+URL: https://yoseflab.github.io/VISION, https://github.com/yoseflab/VISION
 BugReports: https://github.com/YosefLab/VISION/issues
 RoxygenNote: 6.1.1
 Suggests:
@@ -39,9 +41,8 @@ Suggests:
 	BiocStyle,
 	knitr,
 	rmarkdown,
-	SummarizedExperiment,
     testthat,
-    ggplot2,
+    ggplot2
 biocViews:
 	GeneExpression,
 	RNASeq,

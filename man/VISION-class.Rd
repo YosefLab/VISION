@@ -7,6 +7,7 @@
 \alias{Vision,data.frame-method}
 \alias{Vision,ExpressionSet-method}
 \alias{Vision,SummarizedExperiment-method}
+\alias{Vision,seurat-method}
 \title{Initializes a new VISION object.}
 \usage{
 Vision(data, ...)
@@ -27,6 +28,9 @@ Vision(data, ...)
 \S4method{Vision}{ExpressionSet}(data, ...)
 
 \S4method{Vision}{SummarizedExperiment}(data, ...)
+
+\S4method{Vision}{seurat}(data, dimRed = NULL, dimRedComponents = NULL,
+  ...)
 }
 \arguments{
 \item{data}{expression data - can be one of these: \itemize{
@@ -95,12 +99,19 @@ with dimensions CELLS x COMPONENTS}
 
 \item{latentTrajectory}{trajectory to model cell progression.  Wrapped result
 of a trajectory inference method by the dynverse/dynwrap library}
+
+\item{dimRed}{Dimensionality reduction to use for the latentSpace.  Default is to
+look for "pca" and use that if it exists}
+
+\item{dimRedComponents}{number of components to use for the selected dimensionality
+reduction.  Default is to use all components}
 }
 \value{
 A VISION object
 }
 \description{
-Initializes a new VISION object.
+Initializes a Vision object from an existing Seurat object taking any existing
+expression data, meta-data, and dimensionality reductions if they exist already
 }
 \examples{
 \dontrun{

@@ -1,0 +1,23 @@
+---
+title: "How To: Loading 10x CellRanger Outputs"
+---
+
+VISION provides some convenience methods for loading gene expression data output from the 10x CellRanger pipeline.
+
+The `read_10x()` and `read_10x_h5()` functions load count data from 10x and perform the ID conversion from Ensembl IDs to Gene Symbols.  This is performed as most signature libraries refer to genes using symbols.  The expression of genes whose symbols map to multiple Ensembl IDs are combined by summation.  The resulting count matrix can then be scaled and input into VISION:
+
+
+```{r, collapse=F, message=T, eval=F}
+# Read in expression counts (Genes X Cells)
+counts <- read_10x(
+    expression = "outs/filtered_gene_bc_matrices/mm10/matrix.mtx",
+    genes = "outs/filtered_gene_bc_matrices/mm10/genes.tsv",
+    barcodes = "outs/filtered_gene_bc_matrices/mm10/barcodes.tsv"
+    )
+
+# Scale counts within a sample
+n.umi <- colSums(counts)
+scaled_counts <- t(t(counts) / n.umi) * median(n.umi)
+
+vis <- Vision(scaled_counts, signatures = c("data/h.all.v5.2.symbols.gmt"))
+```

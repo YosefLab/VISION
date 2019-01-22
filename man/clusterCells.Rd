@@ -2,7 +2,7 @@
 % Please edit documentation in R/AnalysisFunctions.R
 \name{clusterCells}
 \alias{clusterCells}
-\title{Creates an initial clustering of the cells}
+\title{Creates clustering of the cells}
 \usage{
 clusterCells(object)
 }
@@ -14,5 +14,4 @@ the VISION object modifed as described above
 }
 \description{
 Results of this are stored as a new variabe in the object's metaData
-and 'cluster_variable' is populated with its name
 }

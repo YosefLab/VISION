@@ -1,20 +1,19 @@
-#' Wrapper for storing all relevant information for a given projection.
+#' Wrapper for storing all relevant information for a given consistency test
 #'
-#' Stores a list of Projection objects
+#' Stores a list of consistency test results
 #' Also stores clusters, a signature to projection matrix
 
-#' Initializes a ProjectionData object for neatly storing all relevant data to a given projection section
+#' Initializes a ProjectionData object for storing the consistency test results
 #'
-#' @param projections List of Projection objects to be stored
-#' @param sigProjMatrix Matrix storing the median consistency score per projection, signature pair
-#' @param pMatrix Matrix storing the p values for each projection, signature pair
+#' @param Consistency Matrix storing the consistency score per signature pair
+#' @param pValue Matrix storing the p values for each projection, signature pair
+#' @param FDR Matrix storing the FDR for each p-value (BH method)
 #' @param sigClusters the signature clusters
 #' @return ProjectionData object
-ProjectionData <- function(sigProjMatrix, pMatrix, sigClusters, emp_pMatrix) {
+ProjectionData <- function(Consistency, pValue, FDR, sigClusters) {
 
-            .Object <- new("ProjectionData", sigProjMatrix = sigProjMatrix,
-                           pMatrix = pMatrix, sigClusters = sigClusters,
-                           emp_pMatrix = emp_pMatrix)
+            .Object <- new("ProjectionData", Consistency = Consistency,
+                           pValue = pValue, FDR = FDR, sigClusters = sigClusters)
 
             return(.Object)
             }

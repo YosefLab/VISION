@@ -66,8 +66,7 @@ Signature <- function(sigDict, name, source, metaData="") {
 #' @export
 #' @return a Signature object
 #' @examples
-#'
-#'
+#' \dontrun{
 #' sig1 <- createGeneSignature(
 #'            name = "CD8 Markers",
 #'            sigData = c(CD8A=1, CD8B=1, GZMK=1, GZMB=1,
@@ -81,8 +80,7 @@ Signature <- function(sigDict, name, source, metaData="") {
 #' sigs <- c(sig1, cc_sigs)
 #'
 #' vis <- Vision(data = expMat, signatures = sigs)
-#'
-#'
+#' }
 createGeneSignature <- function(name, sigData, metadata="") {
   return(new("Signature", sigDict=sigData, name=name, metaData=metadata,
              source="user-defined"))
@@ -105,6 +103,8 @@ createGeneSignature <- function(name, sigData, metadata="") {
 #'   sigAssignments: named factor vector assigning signatures to random background
 #'     groups
 calculateSignatureBackground <- function(object, num) {
+
+    message("Computing background distribution for signature scores...")
 
     if (length(object@sigData) == 0) {
         return(
@@ -135,6 +135,8 @@ calculateSignatureBackground <- function(object, num) {
         sigsInGroup <- names(randomSigs[[groupName]])
         randomSigScoresGroups[[groupName]] <- randomSigScores[, sigsInGroup, drop = FALSE]
     }
+
+    message("")
 
     return(list(
                 randomSigs = randomSigScoresGroups,
@@ -255,7 +257,6 @@ generatePermutationNull <- function(num, eData, sigData) {
 #'
 #'   sigAssignments: named factor vector assigning signatures to random background
 #'     groups
-#' @param fdrCorrect logical, whether or not to FDR correct p-values
 #' @return list:
 #' \itemize{
 #'     \item sigProbMatrix: the vector of consistency z-scores
@@ -263,8 +264,7 @@ generatePermutationNull <- function(num, eData, sigData) {
 #'     \item emp_pVals: pvalues for the scores
 #' }
 sigConsistencyScores <- function(latentSpace, sigScoresData,
-                                      metaData, randomSigData,
-                                      fdrCorrect = TRUE) {
+                                      metaData, randomSigData) {
 
     signatureNames <- c(colnames(sigScoresData), colnames(metaData))
 
@@ -283,40 +283,27 @@ sigConsistencyScores <- function(latentSpace, sigScoresData,
               svp_pcn$pvals,
               svp_pcf$pvals)
 
-    emp_pvals <- c(svp_n$empvals,
-                  svp_pcn$pvals,
-                  svp_pcf$pvals)
-
     consistency <- consistency[signatureNames]
     pvals <- pvals[signatureNames]
-    emp_pvals <- emp_pvals[signatureNames]
 
     consistency <- as.matrix(consistency)
     pvals <- as.matrix(pvals)
-    emp_pvals <- as.matrix(emp_pvals)
 
     colnames(consistency) <- c("Consistency")
     colnames(pvals) <- c("Consistency")
-    colnames(emp_pvals) <- c("Consistency")
-
-    # Cast to 1-column matrices so its consistent with other ProjectionData outputs
 
     # FDR-correct and log-transform p-values
-    if (fdrCorrect && nrow(pvals) > 1){
-        pvals <- apply(pvals, MARGIN = 2,
+    if (nrow(pvals) > 1){
+        fdr <- apply(pvals, MARGIN = 2,
                                     FUN = p.adjust, method = "BH")
-        pvals[pvals == 0] <- 10 ^ (-300)
-        pvals <- log10(pvals)
-
-        emp_pvals <- apply(emp_pvals, MARGIN = 2,
-                                       FUN = p.adjust, method = "BH")
-        emp_pvals[emp_pvals == 0] <- 10 ^ (-300)
-        emp_pvals <- log10(emp_pvals)
+    } else {
+        fdr <- matrix(nrow = 0, ncol = 1)
+        colnames(fdr) <- "Consistency"
     }
 
     return(list(sigProjMatrix = consistency,
                 pVals = pvals,
-                emp_pVals = emp_pvals)
+                fdr = fdr)
     )
 }
 
@@ -325,7 +312,7 @@ sigConsistencyScores <- function(latentSpace, sigScoresData,
 #' single projections weights
 #'
 #' @importFrom matrixStats colMedians
-#' @importFrom parallel mclapply
+#' @importFrom pbmcapply pbmclapply
 #' @param sigData numeric matrix of signature scores
 #' size is cells x signatures
 #' @param randomSigData A list with two items:
@@ -378,7 +365,7 @@ sigsVsProjection_n <- function(sigData, randomSigData,
     randomSigScores <- randomSigData$randomSigs
     sigAssignments <- randomSigData$sigAssignments
 
-    groupedResults <- mclapply(names(randomSigScores), function(group) {
+    groupedResults <- pbmclapply(names(randomSigScores), function(group) {
 
         # Build a matrix of random background signatures for this group
         randomSigScoreMatrix <- randomSigScores[[group]]
@@ -408,12 +395,6 @@ sigsVsProjection_n <- function(sigData, randomSigData,
         # Calculate scores for random signatures
         geary_c_bg <- geary_sig_v_proj(randomSigScoreMatrix, weights$indices, weights$weights)
 
-        mu <- mean(geary_c_bg)
-        sigma <- sd(geary_c_bg)
-
-        #Create CDF function for medDissmilarityPrime and apply CDF function to
-        pvals <- pnorm( (geary_c - mu) / sigma)
-
         N <- length(geary_c_bg)
         empvals <- vapply(geary_c, function(x) {
                               comp <- sum(geary_c_bg < x)
@@ -422,25 +403,21 @@ sigsVsProjection_n <- function(sigData, randomSigData,
        }, FUN.VALUE = 0.0)
 
 
-        return(list(consistency = 1 - geary_c, pvals = pvals,
-                    empvals = empvals))
+        return(list(consistency = 1 - geary_c, pvals = empvals))
 
     })
 
 
     consistency <- do.call(c, lapply(groupedResults, function(x) x$consistency))
     pvals <- do.call(c, lapply(groupedResults, function(x) x$pvals))
-    empvals <- do.call(c, lapply(groupedResults, function(x) x$empvals))
 
-
-    return(list(consistency = consistency, pvals = pvals,
-                empvals = empvals))
+    return(list(consistency = consistency, pvals = pvals))
 }
 
 #' Evaluates the significance of each meta data numeric signature vs. a
 #' single projections weights
 #' @importFrom stats pnorm
-#' @importFrom parallel mclapply
+#' @importFrom pbmcapply pbmclapply
 #' @param metaData data.frame of meta-data for cells
 #' @param weights numeric matrix of dimension N_SAMPLES x N_SAMPLES
 #' @param cells list of cell names.  Subsets anlysis to provided cells.
@@ -470,7 +447,7 @@ sigsVsProjection_pcn <- function(metaData, weights, cells = NULL){
 
   numericMeta <- names(numericMeta)[numericMeta]
 
-  results <- mclapply(numericMeta, function(metaName) {
+  results <- pbmclapply(numericMeta, function(metaName) {
 
     scores <- metaData[[metaName]]
 
@@ -517,7 +494,7 @@ sigsVsProjection_pcn <- function(metaData, weights, cells = NULL){
 #' Evaluates the significance of each meta data factor signature vs. a
 #' single projections weights
 #' @importFrom stats chisq.test
-#' @importFrom parallel mclapply
+#' @importFrom pbmcapply pbmclapply
 #' @param metaData data.frame of meta-data for cells
 #' @param weights numeric matrix of dimension N_SAMPLES x N_SAMPLES
 #' @param cells list of cell names.  Subsets anlysis to provided cells.
@@ -558,7 +535,7 @@ sigsVsProjection_pcf <- function(metaData, weights, cells = NULL){
 
   factorMeta <- names(factorMeta)[factorMeta]
 
-  results <- mclapply(factorMeta, function(metaName) {
+  results <- pbmclapply(factorMeta, function(metaName) {
 
     scores <- metaData[[metaName]]
 
@@ -677,7 +654,7 @@ geary_sig_v_proj <- function(values, indices, weights){
 #' }
 clusterSignatures <- function(sigMatrix, metaData, pvals, consistency, clusterMeta) {
 
-  significant <- apply(pvals, 1, function(x) min(x) < -1.3)
+  significant <- apply(pvals, 1, function(x) min(x) < .05)
 
   # Additionally, threshold on the Geary's C' itself
   large <- consistency[, 1] > 0.2

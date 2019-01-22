@@ -4,8 +4,7 @@
 \alias{sigConsistencyScores}
 \title{Evaluates the significance of each signature in each cluster}
 \usage{
-sigConsistencyScores(latentSpace, sigScoresData, metaData, randomSigData,
-  fdrCorrect = TRUE)
+sigConsistencyScores(latentSpace, sigScoresData, metaData, randomSigData)
 }
 \arguments{
 \item{latentSpace}{numeric matrix N_Cells x N_Components}
@@ -23,8 +22,6 @@ size is cells x signatures}
 
   sigAssignments: named factor vector assigning signatures to random background
     groups}
-
-\item{fdrCorrect}{logical, whether or not to FDR correct p-values}
 }
 \value{
 list:

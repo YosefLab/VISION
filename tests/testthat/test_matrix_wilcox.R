@@ -23,8 +23,7 @@ test_that("Calculation is correct, no NA", {
                       n2 <- sum(!is.na(b))
                       test <- wilcox.test(a, b, alternative = "two.sided", exact = FALSE)
                       AUC <- test$statistic / (n1 * n2)
-                      stat <- (AUC - .5) * 2
-                      return(list(pval = test$p.value, stat = stat))
+                      return(list(pval = test$p.value, stat = AUC))
     })
 
     p_correct <- vapply(out, function(x) x$pval, FUN.VALUE = 0.0)
@@ -60,8 +59,7 @@ test_that("Calculation is correct with ties, no NA", {
                       n2 <- sum(!is.na(b))
                       test <- wilcox.test(a, b, alternative = "two.sided", exact = FALSE)
                       AUC <- test$statistic / (n1 * n2)
-                      stat <- (AUC - .5) * 2
-                      return(list(pval = test$p.value, stat = stat))
+                      return(list(pval = test$p.value, stat = AUC))
     })
 
     p_correct <- vapply(out, function(x) x$pval, FUN.VALUE = 0.0)
@@ -99,8 +97,7 @@ test_that("Calculation is correct with NAs", {
                       n2 <- sum(!is.na(b))
                       test <- wilcox.test(a, b, alternative = "two.sided", exact = FALSE)
                       AUC <- test$statistic / (n1 * n2)
-                      stat <- (AUC - .5) * 2
-                      return(list(pval = test$p.value, stat = stat))
+                      return(list(pval = test$p.value, stat = AUC))
     })
 
     p_correct <- vapply(out, function(x) x$pval, FUN.VALUE = 0.0)
@@ -158,13 +155,13 @@ test_that("Edge cases produce expected outputs", {
                          check_na = FALSE, check_ties = FALSE)
 
     expect_equal(out$pval, rep(1, 10))
-    expect_equal(out$stat, rep(0, 10))
+    expect_equal(out$stat, rep(0.5, 10))
 
     out <- matrix_wilcox(test_mat_rank, cluster_ii,
                          check_na = TRUE, check_ties = TRUE)
 
     expect_equal(out$pval, rep(1, 10))
-    expect_equal(out$stat, rep(0, 10))
+    expect_equal(out$stat, rep(0.5, 10))
 
     # full cluster_ii
     cluster_ii <- seq(5)
@@ -173,12 +170,12 @@ test_that("Edge cases produce expected outputs", {
                          check_na = FALSE, check_ties = FALSE)
 
     expect_equal(out$pval, rep(1, 10))
-    expect_equal(out$stat, rep(0, 10))
+    expect_equal(out$stat, rep(0.5, 10))
 
     out <- matrix_wilcox(test_mat_rank, cluster_ii,
                          check_na = TRUE, check_ties = TRUE)
 
     expect_equal(out$pval, rep(1, 10))
-    expect_equal(out$stat, rep(0, 10))
+    expect_equal(out$stat, rep(0.5, 10))
 
 })

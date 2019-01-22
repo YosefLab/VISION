@@ -2,24 +2,24 @@
 % Please edit documentation in R/methods-ProjectionData.R
 \name{ProjectionData}
 \alias{ProjectionData}
-\title{Wrapper for storing all relevant information for a given projection.}
+\title{Wrapper for storing all relevant information for a given consistency test}
 \usage{
-ProjectionData(sigProjMatrix, pMatrix, sigClusters, emp_pMatrix)
+ProjectionData(Consistency, pValue, FDR, sigClusters)
 }
 \arguments{
-\item{sigProjMatrix}{Matrix storing the median consistency score per projection, signature pair}
+\item{Consistency}{Matrix storing the consistency score per signature pair}
 
-\item{pMatrix}{Matrix storing the p values for each projection, signature pair}
+\item{pValue}{Matrix storing the p values for each projection, signature pair}
+
+\item{FDR}{Matrix storing the FDR for each p-value (BH method)}
 
 \item{sigClusters}{the signature clusters}
-
-\item{projections}{List of Projection objects to be stored}
 }
 \value{
 ProjectionData object
 }
 \description{
-Stores a list of Projection objects
+Stores a list of consistency test results
 Also stores clusters, a signature to projection matrix
-Initializes a ProjectionData object for neatly storing all relevant data to a given projection section
+Initializes a ProjectionData object for storing the consistency test results
 }

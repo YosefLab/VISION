@@ -142,18 +142,11 @@ var api = (function(){
 
     output.tree = {}
 
-    // Get milestones and connectivity for this 2d projection
-    output.tree.milestones = function(projection) {
-        var query = prefix.concat("Tree/Projections/");
-        query = query.concat(encodeURI(projection), "/milestones");
-        return $.ajax(query, {dataType: "json"}).then(x => x)
-    }
-
     // Get cell coordinates for this 2d projection
     output.tree.coordinates = function(projection) {
         var query = prefix.concat("Tree/Projections/");
         query = query.concat(encodeURI(projection), "/coordinates")
-        return $.ajax(query, {dataType: "json"}).then(x => fix_coordinates(x))
+        return $.ajax(query, {dataType: "json"}).then(x => [fix_coordinates(x[0]), [x[1], x[2]]])
     }
 
 

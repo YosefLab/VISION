@@ -6,7 +6,7 @@
 # on the different types of data.
 
 setClassUnion('numericORNULL', members=c('numeric', 'NULL'))
-setClassUnion('matrixORSparse', members=c("matrix", "dgCMatrix", "dgTMatrix"))
+setClassUnion('matrixORSparse', members=c("matrix", "dgeMatrix", "dgCMatrix", "dgTMatrix"))
 
 Cluster <- setClass("Cluster",
     slots = c(
@@ -19,10 +19,10 @@ Cluster <- setClass("Cluster",
 
 ProjectionData <- setClass("ProjectionData",
     slots = c(
-    sigProjMatrix = "matrix",
-    pMatrix = "matrix",
-    sigClusters = "list",
-    emp_pMatrix = "matrix"
+    Consistency = "matrix",
+    pValue = "matrix",
+    FDR = "matrix",
+    sigClusters = "list"
 ))
 
 PCAnnotatorData <- setClass("PCAnnotatorData",
@@ -83,13 +83,10 @@ Vision <- setClass("Vision",
         sig_norm_method = "character",
         sig_score_method = "character",
         exprData = "matrixORSparse",
-        initialExprData = "matrixORSparse",
         unnormalizedData = "matrixORSparse",
-        initialUnnormalizedData = "matrixORSparse",
         housekeepingData = "character",
         sigData = "list",
         metaData = "data.frame",
-        initialMetaData = "data.frame",
         perm_wPCA = "logical",
         pool = "logical",
         sigScores = "matrix",
@@ -104,10 +101,8 @@ Vision <- setClass("Vision",
         pools = "list",
         inputProjections = "list",
         name = "character",
-        cluster_variable = "character",
         latentSpace = "matrix",
         latentTrajectory = "Trajectory",
-        initialLatentSpace = "matrix",
         version = "numeric",
         selections = "list"),
     prototype = list(
@@ -116,13 +111,10 @@ Vision <- setClass("Vision",
         threshold = 0,
         sig_norm_method = "znorm_rows",
         exprData = matrix(NA, 1, 1),
-        initialExprData = matrix(NA, 1, 1),
         unnormalizedData = matrix(NA, 1, 1),
-        initialUnnormalizedData = matrix(NA, 1, 1),
         housekeepingData = character(),
         sigData = list(),
         metaData = data.frame(),
-        initialMetaData = data.frame(),
         perm_wPCA = FALSE,
         pool = FALSE,
         sigScores = matrix(NA, 1, 1),
@@ -137,10 +129,8 @@ Vision <- setClass("Vision",
         pools = list(),
         inputProjections = list(),
         name = "",
-        cluster_variable = "",
         latentSpace = matrix(NA, 1, 1),
         latentTrajectory = NULL,
-        initialLatentSpace = matrix(NA, 1, 1),
-        version = 1.0,
+        version = 1.1,
         selections = list()
 ))

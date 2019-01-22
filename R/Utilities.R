@@ -101,6 +101,38 @@ matLog2 <- function(spmat, scale = FALSE, scaleFactor = 1e6) {
 
 }
 
+
+#' inverse log-scale transform a dense OR sparse matrix
+#'
+#' This avoids the creation of a dense intermediate matrix when
+#' operating on sparse matrices
+#'
+#' Performs result <- exp(spmat) - 1
+#'
+#' @importFrom Matrix sparseMatrix
+#' @importFrom Matrix summary
+#' @param spmat sparse Matrix
+#' @return logmat sparse Matrix
+ilog1p <- function(spmat) {
+
+
+    if (is(spmat, "sparseMatrix")) {
+        matsum <- summary(spmat)
+
+        ilogx <- exp(matsum$x) - 1
+
+        ilogmat <- sparseMatrix(i = matsum$i, j = matsum$j,
+                                x = ilogx, dims = dim(spmat),
+                                dimnames = dimnames(spmat))
+    } else {
+        ilogmat <- exp(spmat) - 1
+    }
+
+
+    return(ilogmat)
+
+}
+
 #' Vectorized wilcox rank-sums test
 #'
 #' Given indices in cluster_ii, compute the ranksums test
@@ -146,7 +178,6 @@ matrix_wilcox <- function(ranks, cluster_ii,
     AUC <- u / (n1 * n2)
     AUC <- ifelse(is.infinite(AUC), .5, AUC) # Edge case n2 == 0
     AUC <- ifelse(is.na(AUC), .5, AUC) # Edge case, n1 == 0
-    stat <- (AUC - .5) * 2  # translates (0.5, 1) to (0, 1)
 
     # u to z-score
     m_u <- (n1 * n2) / 2
@@ -183,7 +214,7 @@ matrix_wilcox <- function(ranks, cluster_ii,
 
     p[p > 1] <- 1  # Can happen due to continuity correction
 
-    return(list(pval = p, stat = stat))
+    return(list(pval = p, stat = AUC))
 }
 
 #' Perform 1vAll factor analysis given a factor matrix and group definition
@@ -231,4 +262,172 @@ matrix_chisq <- function(factorDF, cluster_ii) {
     stat <- vapply(out, function(x) x$stat, FUN.VALUE = 0.0)
 
     return(list(pval = pvals, stat = stat))
+}
+
+
+#' Change Gene Identifiers
+#'
+#' Changes gene identifiers by aggregating expression measures (sum).  This
+#' is mainly useful when changing from Ensembl IDs to Gene Symbols
+#'
+#' This method is made fast by the use of sparse matrix multiplication
+#'
+#' i.e.: (newIds x oldIds) x (oldIds x cells) = (newIds x cells)
+#'
+#' @importFrom Matrix sparseMatrix
+#' @param exp expression matrix (genes x cells)
+#' @param newIds character vector specifying the new identifer that corresponds
+#' with each row of the input \code{exp} matrix
+#' @return a matrix in which rows with duplicate 'newIds' have been
+#' summed together
+#' @export
+#' @examples
+#'
+#' exp <- matrix(c(1, 1, 1, 2, 2, 2, 3, 3, 3), nrow=3)
+#' colnames(exp) <- c("Cell1", "Cell2", "Cell3")
+#' print(exp)
+#'
+#' newIds <- c("GeneA", "GeneA", "GeneB")
+#'
+#' result <- convertGeneIds(exp, newIds)
+#' print(result)
+#'
+convertGeneIds <- function(exp, newIds){
+
+    if (length(newIds) != nrow(exp)){
+        stop("`newIds` must have same length as number of rows in `exp`")
+    }
+
+    unique_symbols <- sort(unique(newIds))
+
+    ens_id <- seq(nrow(exp)) # index of the ensemble id
+    unique_id <- match(newIds, unique_symbols)
+
+    aggMat <- sparseMatrix(i = unique_id, j = ens_id,
+                           dims = c(length(unique_symbols), nrow(exp)),
+                           dimnames = list(unique_symbols, NULL))
+
+    exp_sym <- aggMat %*% exp
+
+    return(exp_sym)
+}
+
+
+#' Read 10x Output
+#'
+#' Loads 10x output counts and converts expression to gene symbols
+#'
+#' This version takes in three files as inputs:
+#' \enumerate{
+#'   \item matrix.mtx
+#'   \item genes.tsv
+#'   \item barcodes.tsv
+#' }
+#'
+#' These files are found in the output of "cellranger count" in a folder
+#' that looks like:
+#'
+#' \code{outs/filtered_gene_bc_matrices/mm10}
+#'
+#' though with the name of whichever genome you are using instead of 'mm10'
+#'
+#' @param expression path to matrix.mtx
+#' @param genes path to genes.tsv
+#' @param barcodes path to barcodes.tsv
+#' @param ensToSymbol bool denoting whether or not to perform label conversion
+#' @importFrom Matrix readMM
+#' @return sparse count matrix with appropriate row/column names
+#' @export
+read_10x <- function(expression, genes, barcodes, ensToSymbol = TRUE){
+
+    counts <- readMM(expression)
+
+    gene_data <- read.table(genes, header=FALSE)
+    symbols <- gene_data$V2
+
+    barcodes <- readLines(barcodes)
+    colnames(counts) <- barcodes
+    rownames(counts) <- gene_data$V1
+
+    if (ensToSymbol){
+        counts <- convertGeneIds(counts, symbols)
+    }
+
+    return(counts)
+}
+
+
+
+#' Read 10x HDF5 Output
+#'
+#' Loads 10x output counts and converts expression to gene symbols
+#'
+#' This version uses the h5 file produced by "cellranger count"
+#'
+#' This file is typically in a folder that looks like:
+#'
+#' \code{outs/filtered_gene_bc_matrices_h5.h5}
+#'
+#' @param h5_file path to h5 file
+#' @param ensToSymbol bool denoting whether or not to perform label conversion
+#' @importFrom Matrix sparseMatrix
+#' @return sparse count matrix with appropriate row/column names
+#' @export
+read_10x_h5 <- function(h5_file, ensToSymbol = TRUE){
+    if (!requireNamespace("hdf5r", quietly = TRUE)){
+      stop("Package \"hdf5r\" needed to load this data object.  Please install it.",
+           call. = FALSE)
+    }
+
+    h5 <- hdf5r::H5File$new(h5_file)
+    tryCatch({
+        genomes <- names(h5)
+
+        if (length(genomes) > 1){
+            stop("The supplied h5 file has multiple genomes.  Loading this is not supported by this function")
+        }
+
+        genome <- genomes[1]
+
+        data <- h5[[paste0(genome, "/data")]][]
+        data <- as.numeric(data)
+
+        indices <- h5[[paste0(genome, "/indices")]][]
+        indptr <- h5[[paste0(genome, "/indptr")]][]
+        dims <- h5[[paste0(genome, "/shape")]][]
+        ensIds <- h5[[paste0(genome, "/genes")]][]
+        symbols <- h5[[paste0(genome, "/gene_names")]][]
+        barcodes <- h5[[paste0(genome, "/barcodes")]][]
+
+        dimnames <- list(ensIds, barcodes)
+
+        counts <- sparseMatrix(i = indices + 1,
+            p = indptr, x = data, dims = dims,
+            dimnames = dimnames
+        )
+        if (ensToSymbol){
+            counts <- convertGeneIds(counts, symbols)
+        }
+        },
+    finally = {
+        h5$close_all()
+    })
+
+
+    return(counts)
+}
+
+
+#' Tests for Unnormalized Data
+#'
+#' Determines if the VISION object is storing unnormalized data
+#'
+#' @param object VISION object
+#' @return bool whether or not there is unnormalize data
+hasUnnormalizedData <- function(object) {
+    if (all(dim(object@unnormalizedData) == 1)){
+        return(FALSE)
+    }
+
+    return(TRUE)
 }

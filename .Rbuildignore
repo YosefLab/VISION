@@ -3,3 +3,4 @@
 ^\.travis\.yml$
 ^build_whitelist.sh$
 ^docs/.*$
+^.*.eslintrc.json

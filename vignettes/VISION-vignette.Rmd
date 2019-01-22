@@ -1,7 +1,5 @@
 ---
 title: "Introduction to VISION"
-author: "Matthew Jones and David DeTomaso"
-date: "`r BiocStyle::doc_date()`"
 package: "`r BiocStyle::pkg_ver('BiocStyle')`"
 output: BiocStyle::html_document
 vignette: >
@@ -9,16 +7,6 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
-
-<style>
-pre.bluecars {
-    background-color: #aabbff !important;
-}
-pre.redcars {
-    background-color: #ffbbbb !important;
-}
-</style>
-
 
 ``` {r options, include=F, cache=F, results='hide', message=F}
 
@@ -38,8 +26,8 @@ set.seed(6473) ## for reproducibility
 If you have yet to install VISION, we recommend installing the package from github to install this pacakge. Full source code can be found at the VISION github repository, available [here](http://www.github.com/YosefLab/VISION). 
 
 ```r
-> require(devtools)
-> install_github("YosefLab/VISION")
+require(devtools)
+install_github("YosefLab/VISION")
 ```
 
 Once VISION and R are installed, you may load in VISION using `library(VISION)`. 
@@ -108,7 +96,6 @@ Other options and inputs can be provided to customize how VISION runs.  For info
 To run an analysis, simply call the analyze function:
 
 ```{r, collapse=T, message=F, eval=F}
-
 # Set the number of threads when running parallel computations
 options(mc.cores = 2)
 
@@ -117,7 +104,7 @@ vis <- analyze(vis)
 
 ## Viewing Results
 
-With the processed Vision object, a dynamic web report can be generated with the `viewResults` function.
+With the processed Vision object, a dynamic web report can be generated with the `viewResults()` function.
 
 ```{r, collapse=T, message=F, results=F, eval=F}
 viewResults(vis)
@@ -178,7 +165,7 @@ Two-dimensional projections are used to visualize the data in the output report.
 
 By default, VISION computes tSNE on the latent space for visualization.  However, other options are availabled via the `projection_methods` argument.
 
-Often times, users will have pre-computed projections that they would like to use for visualizing their data (e.g. a pre-computed tSNE, or UMAP projetction). In this case, the `addProjection` method can be used to add this view of the data to the output report.
+Often times, users will have pre-computed projections that they would like to use for visualizing their data (e.g. a pre-computed tSNE, or UMAP projetction). In this case, the `addProjection()` method can be used to add this view of the data to the output report.
 
 ```{r, collapse=T, message=F, results=F, eval=F}
 projection <- read.csv("umap_results.csv")

@@ -1,11 +1,9 @@
 ---
-title: "Trajectory Inference and VISION"
-author: "Matthew Jones"
-date: "`r BiocStyle::doc_date()`"
+title: "Incorporating a Trajectory Model"
 package: "`r BiocStyle::pkg_ver('BiocStyle')`"
 output: BiocStyle::html_document
 vignette: >
-  %\VignetteIndexEntry{Introduction to VISION}
+  %\VignetteIndexEntry{Incorporating a Trajectory Model}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -25,18 +23,21 @@ set.seed(6473) ## for reproducibility
 
 # Introduction
 
-VISION can be used as a downstream tool for analyzing the biological significance of
-trajectories. The tool interfaces with the objects output from [Dynverse](https://github.com/dynverse).
-Briefly, Dynverse objects are general wrappers for any trajectory method, and VISION specifically
-depends on two components in particular:
+To compute Signature consistency scores, VISION needs a cell-cell similarity metric in order to
+build the neighborhood graph.  By default, VISION runs PCA and uses euclidean distances in the reduced
+space for this purpose.  However, if the cells' variation is better modeled by a trajectory (either
+linear or tree-like), then distances along the trajectory structure can be used instead.
 
-- The milestone network (essentially the topology of the trajectory produced from your
+Many tools exist to perform trajectory inference in single cells.  The [Dynverse](https://github.com/dynverse) 
+project has developed wrappers for 59 recently-published methods and VISION is able to accept
+the wrapped output of these methods as an input trajectory model.
+
+Within the Dynverse trajectory object, VISION depends on two components:
+
+- The **milestone network** (essentially the topology of the trajectory produced from your
 favorite trajectory method)
-- The progression of cells along each edge in the milestone network. We expect that
+- The **progression** of cells along each edge in the milestone network. We expect that
 each cell is only present on a single edge.
-
-This amounts to a latent space, which describes relationships between cells, and can be used
-for calculating signature consistency scores in the default pipeline.
 
 ## Installation
 
@@ -63,33 +64,31 @@ library(tidyverse)
 ```
 
 ```{r, collapse=F, message=T, eval=F}
-
 counts = as.matrix(read.table("data/hemato_counts.csv.gz", sep=',', header=T, row.names=1))
-
 ```
 
-We'll now follow the [dyno vignette](https://github.com/dynverse/dyno) in the github README. You'll need to make sure you have [Docker](https://docs.docker.com/install/) installed. Although we use Monocle2 here, there is a wide variety of methods that can be used, as listed on the [Dynmethods page](https://github.com/dynverse/dynmethods). 
+We'll now follow the [dyno vignette](https://github.com/dynverse/dyno) in the github README. You'll need to make sure you have [Docker](https://docs.docker.com/install/) installed. Although we use Slingshot here, there is a wide variety of methods that can be used, as listed on the [Dynmethods page](https://github.com/dynverse/dynmethods). 
 
 Before running the model, we'll need to perform some gene filtering. We first only select the genes used in the original Tusi et al study, then for further efficiency, we further filter using VISION's Fano filtering.
 
 ```{r, collapse=F, message=T, eval=F}
 k.genes = read.table("data/bBM.filtered_gene_list.paper.txt.gz", sep=',')[,1]
-filt.counts = counts[k.genes,]
+filt.counts = counts[k.genes, ]
 
 f.genes = VISION:::filterGenesFano(filt.counts)
-filt.counts = filt.counts[f.genes,]
+filt.counts = filt.counts[f.genes, ]
 
 ```
 
 Now, resuming the workflow recommended on the dyno vignette,
 
 ```{r, collapse=F, message=T, eval=F}
+umis <- colSums(counts)
+scale.factor <- median(umis)
+expr <- t(t(counts) / umis) * scale.factor
+filt.expr <-  log(1 + expr[f.genes,])
 
-scale.factor = median(colSums(counts))
-expr = apply(counts, 2, function(x) (x * scale.factor) / (sum(x) + 1))
-filt.expr = log(1 + expr[f.genes,])
-
-dataset = wrap_expression(
+dataset <- wrap_expression(
   counts = t(filt.counts),
   expression = t(filt.expr)
 )
@@ -97,29 +96,26 @@ dataset = wrap_expression(
 model <- infer_trajectory(dataset, "projected_slingshot", verbose=T)
 
 model <- model %>% add_dimred(dyndimred::dimred_mds, expression_source = dataset$expression)
+
 plot_dimred(
   model, 
   expression_source = dataset$expression
 )
-
 ```
 
-Now, with this model saved we can pass it to VISION via the `latentTrajectory` parameter. The model will automatically be analzyed with the same signatures passed to the FastProjectR object, and with this model, the `Trajectory` tab will be activated in the VISION output report. 
+Now, with this model saved we can pass it to VISION via the `latentTrajectory` parameter. The model will automatically be analzyed with the same signatures passed to the VISION object, and with this model, the `Trajectory` tab will be activated in the VISION output report. 
 
 ```{r, collapse=F, eval=F}
-covar = read.table("data/hemato_covariates.txt.gz", sep='\t', header=T, row.names=1)
-covar = covar[colnames(expr), -1]
-vis <- Vision(expr, 
-            c("data/h.all.v5.2.symbols.gmt"), 
-            projection_genes = f.genes, 
-            meta=covar, 
-            latentTrajectory = model, 
-            sig_norm_method="znorm_columns")
+meta <- read.table("data/hemato_covariates.txt.gz", sep='\t', header=T, row.names=1)
+meta <- meta[colnames(expr), -1]
+
+vis <- Vision(expr, signatures = c("data/h.all.v5.2.symbols.gmt"), 
+            meta = meta, latentTrajectory = model)
+
 vis <- addProjection(vis, "MDS", model$dimred[,c(1,2)])
 
 vis <- analyze(vis)
 ```
-
 
 
 # Session Info

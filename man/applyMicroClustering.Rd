@@ -6,7 +6,7 @@
 \usage{
 applyMicroClustering(exprData, cellsPerPartition = 100,
   filterInput = "fano", filterThreshold = round(ncol(exprData) * 0.2),
-  preserve_clusters = NULL, latentSpace = NULL)
+  latentSpace = NULL)
 }
 \arguments{
 \item{exprData}{the expression data matrix}
@@ -20,8 +20,6 @@ genes to use when computing projections.}
 If greater than 1, this specifies the number of cells in which a gene must be detected
 for it to be used when computing PCA. If less than 1, this instead specifies the proportion of cells needed}
 
-\item{preserve_clusters}{named factor vector denoted cluster boundaries to preserve}
-
 \item{latentSpace}{(Optional) Latent space to be used instead of PCA numeric matrix cells x components}
 }
 \value{
@@ -32,9 +30,9 @@ Merges similar transcriptional profiles into representative 'pools'
 }
 \details{
 A latent space is computed for the expression data via PCA after
-filtering on genes (using parameters `filterInput` and `filterThreshold`).
+filtering on genes (using parameters \code{filterInput} and \code{filterThreshold}).
 
-Alternately, a latent space can be supplied via the `latentSpace` argument
+Alternately, a latent space can be supplied via the \code{latentSpace} argument
 
 Euclidean distance within the latent space is then used to create cell pools
 }

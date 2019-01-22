@@ -11,6 +11,8 @@ localhost}
   port = NULL, host = NULL, browser = TRUE, name = NULL)
 }
 \arguments{
+\item{object}{VISION object}
+
 \item{ofile}{the path to save the object in. If NULL, the object is saved
 in the working directory [default:NULL]}
 
@@ -20,7 +22,9 @@ random port between 8000 and 9999 is chosen.}
 \item{host}{The host used to serve the output viewer. If omitted, "127.0.0.1"
 is used.}
 
-\item{vis}{VISION object}
+\item{browser}{Whether or not to launch the browser automatically (default=TRUE)}
+
+\item{name}{Name for the sample - is shown at the top of the output report}
 }
 \value{
 the path of the saved file
