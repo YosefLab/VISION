@@ -43,8 +43,7 @@ Suggests:
 	rmarkdown,
     testthat,
     ggplot2,
-    Seurat,
-    hdf5r
+    Seurat
 biocViews:
 	GeneExpression,
 	RNASeq,

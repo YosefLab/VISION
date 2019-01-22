@@ -7,11 +7,6 @@ r:
     - bioc-release
     - bioc-devel
 
-addons:
-    apt:
-        packages:
-            - libhdf5-dev
-
 sudo: false
 
 ## Turn this to true before submission to CRAN/Bioconductor
