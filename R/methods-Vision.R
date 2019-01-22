@@ -93,7 +93,6 @@ setMethod("Vision", signature(data = "matrixORSparse"),
             }
 
             rownames(data) <- toupper(rownames(data))
-            .Object@initialExprData <- data
             .Object@exprData <- data
 
             if (!is.null(unnormalizedData)){
@@ -125,11 +124,9 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                 }
 
                 .Object@unnormalizedData <- unnormalizedData
-                .Object@initialUnnormalizedData <- unnormalizedData
 
             } else {
                 .Object@unnormalizedData <- .Object@exprData
-                .Object@initialUnnormalizedData <- .Object@initialExprData
             }
 
             if (is.null(housekeeping)) {
@@ -197,7 +194,6 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                     }
 
                     .Object@metaData <- meta[sampleLabels, , drop = FALSE]
-                    .Object@initialMetaData <- .Object@metaData
                 } else {
                     stop("meta input argument should be a matrix or dataframe")
                 }
@@ -205,7 +201,6 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                 .Object@metaData <- data.frame(
                                         row.names = colnames(.Object@exprData)
                                     )
-                .Object@initialMetaData <- .Object@metaData
             }
 
             if (!is.null(weights)) {
@@ -293,7 +288,6 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                 colnames(latentSpace) <- NULL
 
                 .Object@latentSpace <- latentSpace
-                .Object@initialLatentSpace <- latentSpace
             }
 
             if (!is.null(latentTrajectory)) {
@@ -321,7 +315,6 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                 newMeta <- newMeta[rownames(.Object@metaData), ]
 
                 .Object@metaData <- cbind(.Object@metaData, newMeta)
-                .Object@initialMetaData <- .Object@metaData
             }
 
             .Object@pools <- pools

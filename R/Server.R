@@ -514,7 +514,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
      }) %>%
      get("/Cell/(?<cell_id1>.*)/Meta", function(req, res, err) {
          cell_id <- URLdecode(req$params$cell_id1)
-         cell_meta <- as.list(object@initialMetaData[cell_id, ])
+         cell_meta <- as.list(object@metaData[cell_id, ])
          out <- toJSON(cell_meta, auto_unbox = TRUE)
          return(out)
      }) %>%
@@ -529,7 +529,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
              cells <- subset
          }
 
-         metaSubset <- object@initialMetaData[cells, ]
+         metaSubset <- object@metaData[cells, ]
 
          numericMeta <- vapply(metaSubset, is.numeric, FUN.VALUE = TRUE)
 
