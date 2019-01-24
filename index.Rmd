@@ -11,7 +11,7 @@ VISION aids in the interpretation of single-cell RNA-seq (scRNA-seq) data by sel
 We recommend installing VISION via github using devtools:
 
 ```r
-require(devtools)
+library(devtools)
 install_github("YosefLab/VISION")
 ```
 
@@ -30,7 +30,7 @@ VISION generally follows the same pipeline from iteration to iteration, where mi
 
 ## How to run VISION
 
-You can refer to the [Getting Started page](/articles/VISION-vignette.html) for instructions on running VISION. Additional vignettes are available in the Tutorials menu above.
+You can refer to the [Getting Started page](https://yoseflab.github.io/VISION/articles/VISION-vignette.html) for instructions on running VISION. Additional vignettes are available in the Tutorials menu above.
 
 ## Sample Output
 

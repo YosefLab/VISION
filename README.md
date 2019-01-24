@@ -12,7 +12,7 @@ VISION aids in the interpretation of single-cell RNA-seq (scRNA-seq) data by sel
 We recommend installing VISION via github using devtools:
 
 ```r
-require(devtools)
+library(devtools)
 install_github("YosefLab/VISION")
 ```
 
