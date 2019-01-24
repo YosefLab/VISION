@@ -36,7 +36,7 @@ generateProjectionsInner <- function(expr, latentSpace, projection_genes=NULL, p
     projections[["PCA: 1,3"]] <- latentSpace[, c(1, 3)]
     projections[["PCA: 2,3"]] <- latentSpace[, c(2, 3)]
     N <- length(methodList)
-    for (i in seq(N)){
+    for (i in seq_len(N)){
         method <- names(methodList)[i]
         message(
             sprintf("  Running method %i/%i: %s ...", i, N, method)
