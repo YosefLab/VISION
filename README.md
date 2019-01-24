@@ -13,10 +13,8 @@ We recommend installing VISION via github using devtools:
 
 ```r
 require(devtools)
-install_github("YosefLab/VISION", build_vignettes=T)
+install_github("YosefLab/VISION")
 ```
-
-We recommend using the build_vignettes argument to view vignettes from R (use the `vignette()` function).
 
 See the DESCRIPTION file for a complete list of R dependencies.  If the R dependencies are already installed, installation should finish in a few minutes.
 
@@ -33,9 +31,9 @@ VISION generally follows the same pipeline from iteration to iteration, where mi
 
 ## How to run VISION
 
-You can refer to the [vignettes](/vignettes) to run VISION. To note, there is an extra vignette detailing how
-to properly interface with [Dynverse](https://github.com/dynverse) for incorporating VISION into your
-trajectory inference pipeline.
+For general instructions on running VISION, see the [Getting Started](https://yoseflab.github.io/VISION/articles/VISION-vignette.html) vignette.
+
+More information can be found throughout the rest of the tutorials on the [Documentation](https://yoseflab.github.io/VISION/) site.
 
 ## Sample Output
 
