@@ -568,11 +568,19 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
      }) %>%
      get("/Cells/Selections", function(req, res, err) {
+
+         # Disable caching for this request
+         res$set_header("Cache-Control", NULL)
+
          selectionNames <- as.character(names(object@selections))
          out <- toJSON(selectionNames)
          return(out)
      }) %>%
      get("/Cells/Selections/(?<selection_id1>.*)", function(req, res, err) {
+
+         # Disable caching for this request
+         res$set_header("Cache-Control", NULL)
+
          selection_id <- URLdecode(req$params$selection_id1)
          selectionCells <- object@selections[[selection_id]]
          out <- toJSON(selectionCells, auto_unbox = TRUE)
