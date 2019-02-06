@@ -34,10 +34,10 @@
 #' or "rank_norm_columns"
 #' @param sig_score_method Method to apply when calculating signature scores.
 #' Either "naive" (default) or "weighted_avg"
-#' @param pool indicates whether or not to create supercells. Acceptable values
+#' @param pool indicates whether or not to pool cells into supercells. Acceptable values
 #' are TRUE, FALSE, or 'auto', the last of which is the default and enables
 #' pooling if there are more than 15000 cells.
-#' @param cellsPerPartition the minimum number of cells to put into a cluster
+#' @param cellsPerPartition the target number of cells to put into a supercell when pooling
 #' @param latentSpace latent space for expression data. Numeric matrix or dataframe
 #' with dimensions CELLS x COMPONENTS
 #' @param latentTrajectory trajectory to model cell progression.  Wrapped result
@@ -78,7 +78,7 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                                         "znorm_rows_then_columns",
                                         "rank_norm_columns"),
                     sig_score_method=c("naive", "weighted_avg"),
-                    pool="auto", cellsPerPartition=100, name=NULL,
+                    pool="auto", cellsPerPartition=10, name=NULL,
                     latentSpace = NULL, latentTrajectory = NULL, pools=list()) {
 
             .Object <- new("Vision")

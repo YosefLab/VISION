@@ -156,7 +156,7 @@ scRNA-seq experiments have grown in size over the past couple of years, and as s
 You can control the parameters of the micropooling algorithm using two arguments:
 
 - `pool` - boolean specifying whether or not to apply micropooling.  By default this is set to 'auto' and micropooling is run when the number of cells exceeds 15,000.
-- `cellsPerPartition` - integer specifying the maximum number of cells per micropool.
+- `cellsPerPartition` - integer specifying the target number of cells per micropool.
 
 
 ## Adding 2d Projections

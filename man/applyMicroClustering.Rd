@@ -11,7 +11,7 @@ applyMicroClustering(exprData, cellsPerPartition = 10,
 \arguments{
 \item{exprData}{the expression data matrix}
 
-\item{cellsPerPartition}{control over the minimum number of cells to put into each supercell}
+\item{cellsPerPartition}{control over the target number of cells to put into each supercell}
 
 \item{filterInput}{name of filtering method ('threshold' or 'fano') or list of
 genes to use when computing projections.}

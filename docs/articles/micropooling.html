@@ -119,12 +119,12 @@
 <div id="introduction" class="section level1">
 <h1 class="hasAnchor">
 <a href="#introduction" class="anchor"></a>Introduction</h1>
-<p>To accommodate datasets that exceed available memory and CPU resources, VISION creates pooled cells using a custom micropooling algorithm. In standard use cases, the users provide the entire expression matrix and VISION will create pooled cells with the user-defined cellsPerPartition argument as supplied to the VISION object constructor. Analysis will resume on the pooled data matrix, where each pooled cell has at most cellsPerPartition cells per pool. This significantly reduces the run time, producing results from 500K cells in just under around an hour. We also find that the local autocorrelation scores run in the latent space as computed from the pooled cells is consistent with that when these scores are computed from the entire dataset.</p>
+<p>To accommodate datasets that exceed available memory and CPU resources, VISION creates pooled cells using a custom micropooling algorithm. In standard use cases, the users provide the entire expression matrix and VISION will create pooled cells with the user-defined <code>cellsPerPartition</code> argument as supplied to the VISION object constructor. Analysis will resume on the pooled data matrix, where each pooled cell has, on average, <code>cellsPerPartition</code> cells per pool. This significantly reduces the run time, producing results from 500K cells in just under around an hour. We also find that the local autocorrelation scores run in the latent space as computed from the pooled cells is consistent with that when these scores are computed from the entire dataset.</p>
 </div>
 <div id="the-algorithm" class="section level1">
 <h1 class="hasAnchor">
 <a href="#the-algorithm" class="anchor"></a>The Algorithm</h1>
-<p>The micropooling algorithm relies on iterative clustering of the latent space. Specifically, given an expression matrix and a cellsPerPartition target size, we use the following procedure:</p>
+<p>The micropooling algorithm relies on iterative clustering of the latent space. Specifically, given an expression matrix and a <code>cellsPerPartition</code> target size, we use the following procedure:</p>
 <ul>
 <li>Form a latent space using the first 30 components from PCA
 <ul>
@@ -133,7 +133,7 @@
 </li>
 <li>Compute a KNN graph, where edge weights are determined by applying a Gaussian kernel to the euclidean distances in the latent model</li>
 <li>Perform Louvain Clustering on KNN graph</li>
-<li>Iteratively perform K-means clustering within the louvain clusters until we have at most <code>cellsPerPartition</code> cells per cluster.</li>
+<li>Iteratively perform K-means clustering within the louvain clusters until we have about <code>cellsPerPartition</code> cells per cluster.</li>
 <li>Collapse cells into pooled cells by computing the gene-wise mean for all cells in each cluster.</li>
 </ul>
 <p>By default, VISION does not allow micropooling within discrete classes (e.g. cell types, or batch) as we find that unbiased clusterings are the most sensible and reflective of the data. Instead, in the output report, pooled cells report their percent consistency of each discrete meta data item (e.g. a pooled cell is 80% CD4+ T cell and 20% CD8+ T cell). In this way, users may develop an intuition of the phenotype of each pooled cell. To note, users may also elect to perform clusterings outside of the VISION analysis pipeline and provide it to the VISION object constructor as pooled data - this allows users to perform micorclustering within discrete classes if they so wish.</p>
