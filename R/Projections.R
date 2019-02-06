@@ -45,7 +45,7 @@ generateProjectionsInner <- function(expr, latentSpace, projection_genes=NULL, p
         if (method == "ICA" || method == "RBFPCA") {
 
             if (!is.null(projection_genes)) {
-                exprData <- expr[projection_genes, ]
+                exprData <- expr[projection_genes, , drop = FALSE]
             } else {
                 exprData <- expr
             }

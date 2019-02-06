@@ -11,10 +11,10 @@
 #'
 #'
 #' @param exprData the expression data matrix
-#' @param cellsPerPartition control over the minimum number of cells to put into each supercell
+#' @param cellsPerPartition control over the target number of cells to put into each supercell
 #' @param filterInput name of filtering method ('threshold' or 'fano') or list of
 #' genes to use when computing projections.
-#' @param filterThreshold Threshold to apply when using the 'threshold' projection genes filter.
+#' @param filterThreshold Threshold to apply when using the 'threshold' or 'fano' projection genes filter.
 #' If greater than 1, this specifies the number of cells in which a gene must be detected
 #' for it to be used when computing PCA. If less than 1, this instead specifies the proportion of cells needed
 #' @param latentSpace (Optional) Latent space to be used instead of PCA numeric matrix cells x components
@@ -23,27 +23,46 @@
 #' @return pooled cells - named list of vectors - cells in each supercell
 #' @export
 applyMicroClustering <- function(
-                         exprData, cellsPerPartition=100,
+                         exprData, cellsPerPartition=10,
                          filterInput = "fano",
-                         filterThreshold = round(ncol(exprData) * 0.2),
+                         filterThreshold = round(ncol(exprData) * 0.05),
                          latentSpace = NULL) {
+
+    if (is.data.frame(exprData)){
+        exprData <- data.matrix(exprData)
+    }
 
     if (is.null(latentSpace) || all(dim(latentSpace) == c(1, 1))) {
         exprData <- matLog2(exprData)
 
 
-        if (length(filterInput > 1)){
-            gene_passes <- filterInput
+        message("    Computing a latent space for microclustering using PCA...")
+        if (length(filterInput) > 1){
+            gene_passes <- intersect(filterInput, rownames(exprData))
+            if (length(gene_passes) == 0){
+                stop("Supplied list of genes in `filterInput` does not match any rows of `exprData`")
+            } else {
+                message(
+                    sprintf("    Using supplied list of genes: Found %i/%i matches", length(gene_passes), length(filterInput))
+                    )
+            }
         } else {
+            message("    Determining lateng space genes...")
             gene_passes <- applyFilters(exprData, filterThreshold, filterInput)
+
+            if (length(gene_passes) == 0){
+                stop(
+                    sprintf("Filtering with (filterInput=\"%s\", filterThreshold=%i) results in 0 genes\n  Set a lower threshold and re-run", filterInput, filterThreshold)
+                    )
+            }
         }
 
-        fexpr <- exprData[gene_passes, ]
+        fexpr <- exprData[gene_passes, , drop = FALSE]
 
-        message("    Computing a latent space for microclustering using PCA...")
         # Compute wcov using matrix operations to avoid
         # creating a large dense matrix
 
+        message("    Performing PCA...")
         N <- ncol(fexpr)
         wcov <- tcrossprod(fexpr) / N
 

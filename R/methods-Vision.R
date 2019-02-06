@@ -23,7 +23,7 @@
 #' supplied expression matrix are removed.
 #' @param weights Precomputed weights for each coordinate. Normally computed
 #' from the FNR curve.
-#' @param threshold Threshold to apply when using the 'threshold' projection genes filter.
+#' @param threshold Threshold to apply when using the 'threshold' or 'fano' projection genes filter.
 #' If greater than 1, this specifies the number of cells in which a gene must be detected
 #' for it to be used when computing PCA. If less than 1, this instead specifies the proportion of cells needed
 #' @param perm_wPCA If TRUE, apply permutation procedure to calculate significant

@@ -121,15 +121,40 @@ filterData <- function(object,
     object@projection_genes <- projection_genes
     object@threshold <- threshold
 
+    message("Determining projection genes...")
+
     if (length(object@projection_genes) == 1){
-        message("Determining projection genes...")
 
         exprData <- matLog2(object@exprData)
-        object@projection_genes <- applyFilters(
+        projection_genes <- applyFilters(
                     exprData,
                     object@threshold,
                     object@projection_genes)
+
+        if (length(projection_genes) == 0){
+            stop(
+                sprintf("Filtering with (projection_genes=\"%s\", threshold=%i) results in 0 genes\n  Set a lower threshold and re-run",
+                    object@projection_genes, object@threshold)
+                )
+        }
+    } else {
+        projection_genes <- intersect(
+            object@projection_genes, rownames(object@exprData))
+
+        if (length(projection_genes) == 0){
+            stop("Supplied list of genes in `projection_genes` does not match any rows of expression data")
+        } else {
+            message(
+                sprintf("    Using supplied list of genes: Found %i/%i matches",
+                    length(projection_genes), length(object@projection_genes)
+                    )
+                )
+        }
     }
+
+    message()
+
+    object@projection_genes <- projection_genes
 
 
     return(object)
@@ -228,7 +253,7 @@ computeLatentSpace <- function(object, projection_genes = NULL,
     perm_wPCA <- object@perm_wPCA
 
     if (!is.null(projection_genes)) {
-        exprData <- expr[projection_genes, ]
+        exprData <- expr[projection_genes, , drop = FALSE]
     } else {
         exprData <- expr
     }
