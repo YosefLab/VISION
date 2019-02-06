@@ -101,7 +101,7 @@ applyMicroClustering <- function(
     pools <- readjust_clusters(cl, res, cellsPerPartition = cellsPerPartition)
 
     # Rename clusters
-    cn <- paste0("microcluster ", 1:length(pools))
+    cn <- paste0("microcluster_", 1:length(pools))
     names(pools) <- cn
 
     message(
