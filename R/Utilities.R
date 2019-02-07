@@ -35,15 +35,15 @@ batchify <- function(items, per_batch, n_workers = 1) {
 }
 
 
-#' Check's the version of the FastProject object and displays error if necessary
+#' Checks the version of the Vision object and displays error if necessary
 #'
-#' @param object FastProject object
+#' @param object Vision object
 #' @return NULL
 versionCheck <- function(object) {
 
     templateStr <- paste0(
-        "This FastProject object was created with an older version of the library.",
-        "  To view, either install an older version (commit #COMMIT) from GitHub (www.github.com/YosefLab/FastProjectR) or",
+        "This Vision object was created with an older version of the library.",
+        "  To view, either install an older version (commit #COMMIT) from GitHub (www.github.com/YosefLab/Vision) or",
         " recreate the object and re-run analyze"
     )
 
@@ -54,6 +54,11 @@ versionCheck <- function(object) {
 
     if(object@version < 1.0) {
         msg <- gsub("#COMMIT", "0cd5268", templateStr)
+        stop(msg, call. = FALSE)
+    }
+
+    if(object@version < 1.1) {
+        msg <- gsub("#COMMIT", "2db4552", templateStr)
         stop(msg, call. = FALSE)
     }
 
