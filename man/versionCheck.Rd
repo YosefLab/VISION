@@ -2,13 +2,13 @@
 % Please edit documentation in R/Utilities.R
 \name{versionCheck}
 \alias{versionCheck}
-\title{Check's the version of the FastProject object and displays error if necessary}
+\title{Checks the version of the Vision object and displays error if necessary}
 \usage{
 versionCheck(object)
 }
 \arguments{
-\item{object}{FastProject object}
+\item{object}{Vision object}
 }
 \description{
-Check's the version of the FastProject object and displays error if necessary
+Checks the version of the Vision object and displays error if necessary
 }

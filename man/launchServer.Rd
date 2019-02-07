@@ -7,8 +7,7 @@
 launchServer(object, port = NULL, host = NULL, browser = TRUE)
 }
 \arguments{
-\item{object}{FastProject object or path to a file containing such an
-object (saved using saveAndViewResults, or directly using saveRDS)}
+\item{object}{Vision object}
 
 \item{port}{The port on which to serve the output viewer.  If omitted, a
 random port between 8000 and 9999 is chosen.}

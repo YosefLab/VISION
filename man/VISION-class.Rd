@@ -20,7 +20,7 @@ Vision(data, ...)
   sig_norm_method = c("znorm_columns", "none", "znorm_rows",
   "znorm_rows_then_columns", "rank_norm_columns"),
   sig_score_method = c("naive", "weighted_avg"), pool = "auto",
-  cellsPerPartition = 100, name = NULL, latentSpace = NULL,
+  cellsPerPartition = 10, name = NULL, latentSpace = NULL,
   latentTrajectory = NULL, pools = list())
 
 \S4method{Vision}{data.frame}(data, ...)
@@ -62,7 +62,7 @@ supplied expression matrix are removed.}
 \item{weights}{Precomputed weights for each coordinate. Normally computed
 from the FNR curve.}
 
-\item{threshold}{Threshold to apply when using the 'threshold' projection genes filter.
+\item{threshold}{Threshold to apply when using the 'threshold' or 'fano' projection genes filter.
 If greater than 1, this specifies the number of cells in which a gene must be detected
 for it to be used when computing PCA. If less than 1, this instead specifies the proportion of cells needed}
 
@@ -86,11 +86,11 @@ or "rank_norm_columns"}
 \item{sig_score_method}{Method to apply when calculating signature scores.
 Either "naive" (default) or "weighted_avg"}
 
-\item{pool}{indicates whether or not to create supercells. Acceptable values
+\item{pool}{indicates whether or not to pool cells into supercells. Acceptable values
 are TRUE, FALSE, or 'auto', the last of which is the default and enables
 pooling if there are more than 15000 cells.}
 
-\item{cellsPerPartition}{the minimum number of cells to put into a cluster}
+\item{cellsPerPartition}{the target number of cells to put into a supercell when pooling}
 
 \item{name}{a name for the sample - shown on the output report}
 

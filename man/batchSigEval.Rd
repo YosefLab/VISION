@@ -19,11 +19,11 @@ batchSigEval(sigs, sig_score_method, eData, weights)
 matrix of signature scores, cells X signatures
 }
 \description{
-EAch method should have the same signature so they can be swapped
+Each method should have the same signature so they can be swapped
 }
 \details{
 Right now, each takes in a wrapped data object and signature object
 
-Specified by FastProject argument (sig_score_method), default = naiveEvalSignature
+Specified by Vision argument (sig_score_method), default = "naive"
 Evaluate signature scores efficiently in batches
 }

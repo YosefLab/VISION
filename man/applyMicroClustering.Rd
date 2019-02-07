@@ -4,19 +4,19 @@
 \alias{applyMicroClustering}
 \title{Pool cells into microclusters}
 \usage{
-applyMicroClustering(exprData, cellsPerPartition = 100,
-  filterInput = "fano", filterThreshold = round(ncol(exprData) * 0.2),
+applyMicroClustering(exprData, cellsPerPartition = 10,
+  filterInput = "fano", filterThreshold = round(ncol(exprData) * 0.05),
   latentSpace = NULL)
 }
 \arguments{
 \item{exprData}{the expression data matrix}
 
-\item{cellsPerPartition}{control over the minimum number of cells to put into each supercell}
+\item{cellsPerPartition}{control over the target number of cells to put into each supercell}
 
 \item{filterInput}{name of filtering method ('threshold' or 'fano') or list of
 genes to use when computing projections.}
 
-\item{filterThreshold}{Threshold to apply when using the 'threshold' projection genes filter.
+\item{filterThreshold}{Threshold to apply when using the 'threshold' or 'fano' projection genes filter.
 If greater than 1, this specifies the number of cells in which a gene must be detected
 for it to be used when computing PCA. If less than 1, this instead specifies the proportion of cells needed}
 

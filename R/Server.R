@@ -31,7 +31,7 @@ ServerSigProjMatrix <- function(zscores, pvals, proj_labels, sig_labels) {
 #' @return JSON formatted Signature object.
 signatureToJSON <- function(sig) {
 
-    # Pass in a Signature object from a FastProject Object to be converted into a JSON object
+    # Pass in a Signature object from an R Object to be converted into a JSON object
     sig@sigDict <- as.list(sig@sigDict)
 
     json <- toJSON(sig, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
@@ -100,7 +100,7 @@ coordinatesToJSON <- function(p) {
     return(json)
 }
 
-#' Converts a sigProjMatrix from a FastProject Object to a JSON object
+#' Converts a sigProjMatrix from an R Object to a JSON object
 #' @importFrom jsonlite toJSON
 #' @param sigzscores Matrix of signature z-scores
 #' @param sigpvals Matrix of signature p-values
@@ -156,8 +156,7 @@ compressJSONResponse <- function(json, res, req){
 #' Lanch the server
 #' @importFrom jsonlite fromJSON
 #' @importFrom utils browseURL URLdecode stack
-#' @param object FastProject object or path to a file containing such an
-#' object (saved using saveAndViewResults, or directly using saveRDS)
+#' @param object Vision object
 #' @param port The port on which to serve the output viewer.  If omitted, a
 #' random port between 8000 and 9999 is chosen.
 #' @param host The host used to serve the output viewer. If omitted, "127.0.0.1"

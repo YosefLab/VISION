@@ -17,6 +17,14 @@ var api = (function(){
 
     var prefix = location.pathname.replace("Results.html", "")
 
+    // This is needed to clear the cache
+    // Each time the page is loaded, a new random version is chosen so that
+    // the first call to every api endpoint is not cached
+    var version = Math.floor(Math.random() * parseInt("ffffff", 16)).toString(16)
+    var postProcess = function(x){
+        return prefix + x + "?v=" + version
+    }
+
     var fix_coordinates = function(x){
 
         var ii = x[0].length - 1;
@@ -36,40 +44,45 @@ var api = (function(){
     output.signature = {}
 
     output.signature.info = function(sig_name){
-        var query = prefix.concat("Signature/Info/")
+        var query = "Signature/Info/"
         query = query.concat(encodeURI(sig_name));
+        query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
     output.signature.scores = function(sig_name){
-        var query = prefix.concat("Signature/Scores/")
+        var query = "Signature/Scores/"
         query = query.concat(encodeURI(sig_name))
+        query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => {
             return _.fromPairs(_.zip(x['cells'], x['values']))
         })
     }
 
     output.signature.meta = function(meta_name){
-        var query = prefix.concat("Signature/Meta/")
+        var query = "Signature/Meta/"
         query = query.concat(encodeURI(meta_name))
+        query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => {
             return _.fromPairs(_.zip(x['cells'], x['values']))
         })
     }
 
     output.signature.expression = function(sig_name){
-        var query = prefix.concat("Signature/Expression/")
+        var query = "Signature/Expression/"
         query = query.concat(encodeURI(sig_name))
+        query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
     output.signature.clusters = function(meta) {
         var query
         if (meta) {
-            query = prefix.concat("FilterGroup/SigClusters/Meta");
+            query = "FilterGroup/SigClusters/Meta"
         } else {
-            query = prefix.concat("FilterGroup/SigClusters/Normal");
+            query = "FilterGroup/SigClusters/Normal"
         }
+        query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
@@ -79,45 +92,50 @@ var api = (function(){
 
     output.clusters.sigProjMatrix = function(cluster_variable, meta)
     {
-        var query = prefix.concat("Clusters/")
+        var query = "Clusters/"
         query = query.concat(cluster_variable)
         if (meta) {
             query = query.concat("/SigProjMatrix/Meta")
         } else {
             query = query.concat("/SigProjMatrix/Normal")
         }
+        query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
     output.clusters.cells = function(cluster_variable) {
-        var query = prefix.concat("Clusters/")
+        var query = "Clusters/"
         query = query.concat(cluster_variable)
         query = query.concat("/Cells")
+        query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => {
             return _.fromPairs(_.zip(x['cells'], x['values']))
         })
     }
 
     output.clusters.list = function() {
-        var query = prefix.concat("Clusters/list")
+        var query = "Clusters/list"
+        query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
     output.filterGroup = {}
 
     output.filterGroup.pCorr = function(meta) {
-        var query = prefix;
+        var query;
         if (meta) {
-            query = query.concat("PearsonCorr/Meta");
+            query = "PearsonCorr/Meta"
         } else {
-            query = query.concat("PearsonCorr/Normal");
+            query = "PearsonCorr/Normal"
         }
+        query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
     output.filterGroup.listPCs = function()
     {
-        var query = prefix.concat("PearsonCorr/list")
+        var query = "PearsonCorr/list"
+        query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
@@ -127,14 +145,16 @@ var api = (function(){
 
     output.projections.coordinates = function(projection_name)
     {
-        var query = prefix.concat("Projections/")
+        var query = "Projections/"
         query = query.concat(encodeURI(projection_name), "/coordinates")
+        query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => fix_coordinates(x))
     }
 
     output.projections.list = function()
     {
-        var query = prefix.concat("Projections/list")
+        var query = "Projections/list"
+        query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
@@ -144,26 +164,29 @@ var api = (function(){
 
     // Get cell coordinates for this 2d projection
     output.tree.coordinates = function(projection) {
-        var query = prefix.concat("Tree/Projections/");
+        var query = "Tree/Projections/"
         query = query.concat(encodeURI(projection), "/coordinates")
+        query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => [fix_coordinates(x[0]), [x[1], x[2]]])
     }
 
 
     output.tree.list = function()
     {
-        var query = prefix.concat("Tree/Projections/list")
+        var query = "Tree/Projections/list"
+        query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
     output.tree.sigProjMatrix = function(meta)
     {
-        var query = prefix.concat("Tree")
+        var query = "Tree"
         if (meta) {
             query = query.concat("/SigProjMatrix/Meta")
         } else {
             query = query.concat("/SigProjMatrix/Normal")
         }
+        query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
@@ -174,7 +197,8 @@ var api = (function(){
     output.pc = {}
 
     output.pc.coordinates = function() {
-        var query = prefix.concat("PCA/Coordinates")
+        var query = "PCA/Coordinates"
+        query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => fix_coordinates(x))
     }
 
@@ -184,8 +208,9 @@ var api = (function(){
     output.expression = {}
 
     output.expression.gene = function(gene_name) {
-        var query = prefix.concat("Expression/Gene/");
+        var query = "Expression/Gene/"
         query = query.concat(encodeURI(gene_name));
+        query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => {
             return _.fromPairs(_.zip(x['cells'], x['values']))
         })
@@ -193,7 +218,8 @@ var api = (function(){
 
     output.expression.genes = {}
     output.expression.genes.list = function() {
-        var query = prefix.concat("Expression/Genes/List");
+        var query = "Expression/Genes/List"
+        query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
@@ -202,7 +228,8 @@ var api = (function(){
     output.analysis = {}
 
     output.analysis.run = function(subset) {
-        var query = prefix.concat("Analysis/Run/");
+        var query = "Analysis/Run/"
+        query = postProcess(query)
         return $.ajax({
             type: "POST",
             url: query,
@@ -215,8 +242,9 @@ var api = (function(){
     output.cell = {}
 
     output.cell.meta = function(cellId){
-        var query = prefix + "Cell/" + cellId + "/Meta"
+        var query = "Cell/" + cellId + "/Meta"
 
+        query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
@@ -225,8 +253,9 @@ var api = (function(){
     output.cells = {}
 
     output.cells.meta = function(subset) {
-        var query = prefix.concat("Cells/Meta");
+        var query = "Cells/Meta"
 
+        query = postProcess(query)
         return $.ajax(query, {
             type: "POST",
             data: JSON.stringify(subset),
@@ -236,8 +265,9 @@ var api = (function(){
     }
 
     output.cells.saveSelection = function(selectionName, subset) {
-        var query = prefix.concat("Cells/Selections/" + selectionName);
+        var query = "Cells/Selections/" + selectionName
 
+        query = postProcess(query)
         return $.ajax(query, {
             type: "POST",
             data: JSON.stringify(subset),
@@ -247,13 +277,15 @@ var api = (function(){
     }
 
     output.cells.getSelection = function(selectionName) {
-        var query = prefix.concat("Cells/Selections/" + selectionName);
+        var query = "Cells/Selections/" + selectionName
+        query = postProcess(query)
         return $.ajax(query, {dataType: "json" }).then(x => x);
 
     }
 
     output.cells.listSelections = function() {
-        var query = prefix.concat("Cells/Selections");
+        var query = "Cells/Selections"
+        query = postProcess(query)
         return $.ajax(query, {dataType: "json" }).then(x => x);
 
     }
@@ -261,7 +293,8 @@ var api = (function(){
     // Session Info Api
 
     output.sessionInfo = function() {
-        var query = prefix.concat("SessionInfo")
+        var query = "SessionInfo"
+        query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 

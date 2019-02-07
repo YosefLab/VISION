@@ -50,13 +50,13 @@ filterGenesNovar <- function(data) {
 #' @return character vector of gene names passing filter
 filterGenesThreshold <- function(data, threshold) {
     message(
-        sprintf("    Applying Threshold filter...removing genes detected in less than %i cells", 2343)
+        sprintf("    Applying Threshold filter...removing genes detected in less than %i cells", threshold)
     )
 
     if ( is(data, "sparseMatrix") ){
-        valid_rows <- rowSums(data > 0) > threshold
+        valid_rows <- rowSums(data > 0) >= threshold
     } else {
-        valid_rows <- matrixStats::rowCounts(data > 0) > threshold
+        valid_rows <- matrixStats::rowCounts(data > 0) >= threshold
     }
 
     genes_passing <- rownames(data)[valid_rows]

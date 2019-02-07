@@ -75,7 +75,7 @@ expression data, meta-data, and dimensionality reductions if they exist already"
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">VISION</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.1</span>
       </span>
     </div>
 
@@ -167,7 +167,7 @@ expression data, meta-data, and dimensionality reductions if they exist already<
   <span class='kw'>sig_norm_method</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"znorm_columns"</span>, <span class='st'>"none"</span>, <span class='st'>"znorm_rows"</span>,
   <span class='st'>"znorm_rows_then_columns"</span>, <span class='st'>"rank_norm_columns"</span>),
   <span class='kw'>sig_score_method</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"naive"</span>, <span class='st'>"weighted_avg"</span>), <span class='kw'>pool</span> <span class='kw'>=</span> <span class='st'>"auto"</span>,
-  <span class='kw'>cellsPerPartition</span> <span class='kw'>=</span> <span class='fl'>100</span>, <span class='kw'>name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>latentSpace</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>cellsPerPartition</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>latentSpace</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>latentTrajectory</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>pools</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/list'>list</a></span>())
 
 <span class='co'># S4 method for data.frame</span>
@@ -232,7 +232,7 @@ from the FNR curve.</p></td>
     </tr>
     <tr>
       <th>threshold</th>
-      <td><p>Threshold to apply when using the 'threshold' projection genes filter.
+      <td><p>Threshold to apply when using the 'threshold' or 'fano' projection genes filter.
 If greater than 1, this specifies the number of cells in which a gene must be detected
 for it to be used when computing PCA. If less than 1, this instead specifies the proportion of cells needed</p></td>
     </tr>
@@ -265,13 +265,13 @@ Either "naive" (default) or "weighted_avg"</p></td>
     </tr>
     <tr>
       <th>pool</th>
-      <td><p>indicates whether or not to create supercells. Acceptable values
+      <td><p>indicates whether or not to pool cells into supercells. Acceptable values
 are TRUE, FALSE, or 'auto', the last of which is the default and enables
 pooling if there are more than 15000 cells.</p></td>
     </tr>
     <tr>
       <th>cellsPerPartition</th>
-      <td><p>the minimum number of cells to put into a cluster</p></td>
+      <td><p>the target number of cells to put into a supercell when pooling</p></td>
     </tr>
     <tr>
       <th>name</th>
