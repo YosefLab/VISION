@@ -918,7 +918,8 @@ Gene_Select.prototype.init = function()
             });
 
             geneSelect.chosen({
-                'width': '150px'
+                'width': '150px',
+                'max_shown_results': 1000,
             })
                 .on('change', function () {
                     set_global_status({
@@ -1148,9 +1149,8 @@ function _pval_format(p) {
 }
 
 function _auc_format(x) {
-    // x is on range -1 to 1
-    // Convert to AUC
-    var auc = x/2 + 0.5
-    auc = Math.max(auc, 1-auc)
+    // x is on range 0 to 1
+    // Convert to positive 0.5-1 AUC
+    var auc = Math.max(x, 1-x)
     return auc.toFixed(2)
 }
