@@ -918,7 +918,8 @@ Gene_Select.prototype.init = function()
             });
 
             geneSelect.chosen({
-                'width': '150px'
+                'width': '150px',
+                'max_shown_results': 1000,
             })
                 .on('change', function () {
                     set_global_status({
