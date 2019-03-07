@@ -311,6 +311,9 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                     stop("Supplied progressions for latentTrajectory must have cell_ids that match sample/cell names")
                 }
 
+                .Object@latentTrajectory@progressions <-
+                    .Object@latentTrajectory@progressions[sample_names, , drop = FALSE]
+
                 newMeta <- createTrajectoryMetaData(.Object@latentTrajectory)
                 newMeta <- newMeta[rownames(.Object@metaData), ]
 
