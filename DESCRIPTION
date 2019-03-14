@@ -28,6 +28,7 @@ Imports:
 	Rtsne,
 	utils,
 	vegan,
+	uwot,
 	wordspace
 LinkingTo: Rcpp
 License: MIT + file LICENSE
