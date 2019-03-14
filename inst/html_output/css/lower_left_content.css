@@ -13,13 +13,15 @@
 #lower-left-content .tab-content {
     flex-grow: 1;
     display: flex;
-    flex-direction: column
+    flex-direction: column;
+    min-height: 0;
 }
 
 #lower-left-content .tab-content > div{
     flex-grow: 1;
     overflow-y: auto;
     overflow-x: auto;
+    min-height: 0;
 }
 
 #lower-left-content .tab-content > div.active{
