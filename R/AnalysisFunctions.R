@@ -521,30 +521,24 @@ calculatePearsonCorr <- function(object){
 
   computedSigMatrix <- cbind(sigMatrix, numericMeta)
 
-  pearsonCorr <- matrix(
-      0,
-      nrow = ncol(computedSigMatrix),
-      ncol = ncol(latentSpace),
-      dimnames = list(
-          colnames(computedSigMatrix),
-          colnames(latentSpace)
-      )
-  )
+  pearsonCorr <- pbmclapply(seq_len(ncol(computedSigMatrix)), function(i) {
+      ss <- computedSigMatrix[, i];
 
-  pbmclapply(seq_len(ncol(computedSigMatrix)), function(i) {
-      for (j in seq_len(ncol(latentSpace))) {
-           ss <- computedSigMatrix[, i];
-           pc <- latentSpace[, j];
+      ls_col_cor <- apply(latentSpace, 2, function(pc){
            suppressWarnings({
                pc_result <- cor.test(ss, pc)
            })
-           if (is.na(pc_result$estimate)) {  # happens is std dev is 0 for a sig
-               pearsonCorr[i, j] <- 0
+           if (is.na(pc_result$estimate)) {  # happens i std dev is 0 for a sig
+               return(0)
            } else {
-               pearsonCorr[i, j] <- pc_result$estimate
+               return(pc_result$estimate)
            }
-      }
-  }, mc.cores = 1)
+      })
+      return(ls_col_cor)
+  })
+
+  pearsonCorr <- do.call(rbind, pearsonCorr)
+  rownames(pearsonCorr) <- colnames(computedSigMatrix)
 
   pcaAnnotData <- PCAnnotatorData(pearsonCorr = pearsonCorr)
   object@PCAnnotatorData <- pcaAnnotData
