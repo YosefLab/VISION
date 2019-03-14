@@ -6,9 +6,9 @@
 
 .upper-left-section-content {
     flex-grow: 1;
-    min-height: 0; /* This prevents flex from growing to full size of children */
     display: flex;
     flex-direction: column;
+    min-height: 0; /* This prevents flex from growing to full size of children */
 }
 
 .tab-content.upper-left-section-content > .active {
@@ -19,6 +19,7 @@
     display: flex;
     flex-direction: column;
     flex-grow: 1;
+    min-height: 0;
 }
 
 .upper-left-section-content .sig-tables-header{
@@ -160,7 +161,7 @@ table.collapsible tr > td:first-child > .sig-row-label {
 
 /* Wrap long signature names */
 table.collapsible tr > td:first-child > .sig-row-label > div {
-    word-break: break-word;
+    word-break: break-all;
 }
 
 /* Add spacing for un-collapsed rows so they line up with the top row */

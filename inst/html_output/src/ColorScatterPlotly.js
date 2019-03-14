@@ -574,7 +574,7 @@ ColorScatter.prototype.plotlyBug = function(newData) {
 
     var plotBug = false
     for(var i = 0; i < oldSizes.length; i++) {
-        if ((oldSizes[i] > 10000) && (newSizes[i] <= 10000)) {
+        if ((oldSizes[i] > 100000) && (newSizes[i] <= 100000)) {
             plotBug = true
         }
     }
