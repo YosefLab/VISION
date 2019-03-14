@@ -247,18 +247,24 @@ applySpectralEmbedding <- function(exprData) {
 
 #' Performs UMAP on data
 #'
-#' @importFrom uwot umap
-#'
 #' @param exprData Expression data, NUM_GENES x NUM_SAMPLES
 #'
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
-applyUMAP <- function(exprData) { 
+applyUMAP <- function(exprData) {
 
-	ndataT = t(exprData)
+    if (!requireNamespace("uwot", quietly = TRUE)){
+        stop("Package \"uwot\" needed to run UMAP.  Please install it using:\n\n   devtools::install_github(\"jlmelville/uwot\")\n\n",
+            call. = FALSE)
+    }
+
+	ndataT <- t(exprData)
     n_workers <- getOption("mc.cores")
     n_workers <- if (is.null(n_workers)) 2 else n_workers
-	res <- umap(ndataT, n_neighbors = round(sqrt(ncol(exprData))), n_threads=n_workers, ret_nn = T)
-	res = res$embedding
+	res <- uwot::umap(
+        ndataT, n_neighbors = round(sqrt(ncol(exprData))),
+        n_threads = n_workers, ret_nn = T
+    )
+	res <- res$embedding
 	rownames(res) <- colnames(exprData)
 
 	return(res)

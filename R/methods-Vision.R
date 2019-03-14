@@ -48,7 +48,7 @@
 #'    \item ICA
 #'    \item ISOMap
 #'    \item RBFPCA
-#'	  \item UMAP
+#'    \item UMAP
 #'}
 #' By default will perform tSNE and PCA on the data.
 #' @param name a name for the sample - shown on the output report
@@ -225,10 +225,16 @@ setMethod("Vision", signature(data = "matrixORSparse"),
             .Object@sig_score_method <- match.arg(sig_score_method)
             .Object@perm_wPCA <- perm_wPCA
 
-            valid_projections <- c("tSNE10", "tSNE30", "ICA", "ISOMap", "RBFPCA, UMAP")
+            valid_projections <- c("tSNE10", "tSNE30", "ICA", "ISOMap", "RBFPCA", "UMAP")
             check <- sapply(projection_methods, function(x) x %in% valid_projections)
             if (! all(check)) {
                 stop("Bad value in 'projection_methods'. Please choose from tSNE10, tSNE30, ICA, ISOMap, UMAP, or RBFPCA.")
+            }
+            if ("UMAP" %in% projection_methods){
+              if (!requireNamespace("uwot", quietly = TRUE)){
+                  stop("Package \"uwot\" needed to run UMAP.  Please install it using:\n\n   devtools::install_github(\"jlmelville/uwot\")\n\n",
+                       call. = FALSE)
+              }
             }
             if(length(projection_methods) == 0){
                 projection_methods <- character()
