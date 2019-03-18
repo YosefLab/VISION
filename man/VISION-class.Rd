@@ -75,6 +75,7 @@ number of PCs when running PCA.  If FALSE (default), retain the top 30.}
    \item ICA
    \item ISOMap
    \item RBFPCA
+   \item UMAP
 }
 By default will perform tSNE and PCA on the data.}
 
