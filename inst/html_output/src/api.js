@@ -119,6 +119,18 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
+    //Yanay
+    output.de = function(type_n, group_num, type_d, group_denom) {
+        var query = "DE/"
+        query = query.concat(type_n + "/")
+        query = query.concat(group_num + "/")
+        query = query.concat(type_d + "/")
+        query = query.concat(group_denom + "/")
+
+        query = postProcess(query)
+        return $.ajax(query, {dataType: "json"}).then(x => x)
+    }
+
     output.filterGroup = {}
 
     output.filterGroup.pCorr = function(meta) {

@@ -75,6 +75,9 @@
                             <li class="nav-item">
                                 <a class="nav-link" id="genes-table-tab" data-toggle="tab" href="#genes-table" role="tab" aria-controls="genes-table" aria-selected="false">Genes</a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="de-table-tab" data-toggle="tab" href="#de-table" role="tab" aria-controls="de-table" aria-selected="false">DE</a>
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -133,6 +136,31 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="tab-pane" id="de-table" role="tabpanel" aria-labelledby="de-table-tab">
+                        <div>
+                            <table class='label-table'>
+                                <tr>
+                                    <td style='font-size: 1.2em'>Numerator:</td>
+                                    <td><select id="num" class="form-control"></select></td>
+                                </tr>
+                                <tr>
+                                    <td style='font-size: 1.2em'>Denominator:</td>
+                                    <td><select id="denom" class="form-control"></select></td>
+                                </tr>
+                                <tr>
+                                    <td style='font-size: 1.2em'><button id="submit_de" class="form-control">Calculate DE</submit></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div id='de-results'>
+                            <div class='label1'>Results:</div>
+                            <div id='de-results'>
+                            </div>
+                        </div>
+                    </div>
+
+
                 </div>
 
             </div> <!-- End of upper-left-content -->

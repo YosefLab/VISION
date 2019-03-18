@@ -403,6 +403,40 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         compressJSONResponse(result, res, req)
 
       }) %>%
+      get("/DE/(?<type_n>.*)/(?<group_num>.*)/(?<type_d>.*)/(?<group_denom>.*)/", function(req, res, err) {
+        # Yanay
+        # Params
+        type_n <- URLdecode(req$params$type_n)
+        type_d <- URLdecode(req$params$type_d)
+        
+        group_num <- URLdecode(req$params$group_num)
+        group_denom <- URLdecode(req$params$group_num)
+        
+        if (type_n == "saved_selection") {
+          group_num <- object@selections[[group_num]]
+        }
+        
+        if (group_denom == "Remainder") {
+          group_denom <- colnames(vis@exprData)[!colnames(vis@exprData) %in% group_num]
+        } else if(type_d == "saved_selection") {
+          group_denom <- object@selections[[group_denom]]
+        }
+      
+        # Subset the object
+        subset <- t(object@exprData[, union(group_denom, group_num)])
+        
+        ranks <- colRanks(subset)
+        cluster_ii <- which(colnames(vis@exprData) %in% group_num)
+        
+        out <- matrix_wilcox(ranks=ranks, cluster_ii=cluster_ii, check_ties = TRUE)
+        result <- toJSON(
+          out,
+          force = TRUE, pretty = TRUE, auto_unbox = TRUE
+        )
+        
+        compressJSONResponse(result, res, req)
+        
+      }) %>%
       get("/Clusters/list", function(req, res, err) {
         cluster_vars <- names(object@ClusterSigScores)
         out <- toJSON(cluster_vars,

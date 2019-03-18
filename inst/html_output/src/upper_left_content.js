@@ -37,6 +37,15 @@ Upper_Left_Content.prototype.init = function()
 
     var gene_select_promise = gene_select.init()
 
+
+    // De select Promise
+    var de_select = new DE_Select()
+    this.children.push(de_select)
+    this.de_select = de_select
+
+    var de_select_promise = de_select.init()
+
+
     this.setLoadingStatus = createLoadingFunction(
         document.getElementById("upper-left-content")
     );
@@ -70,7 +79,7 @@ Upper_Left_Content.prototype.init = function()
     }
 
 
-    return $.when(sig_table_promise, pc_table_promise, gene_select_promise);
+    return $.when(sig_table_promise, pc_table_promise, gene_select_promise, de_select_promise);
 
 }
 
@@ -984,6 +993,141 @@ Gene_Select.prototype.render_recent_genes = function()
 
     recent_genes_div.show()
 }
+
+
+// START YANAY
+
+
+
+function DE_Select()
+{
+    this.dom_node = document.getElementById("de-table");
+    //this.recent_genes = [];
+}
+
+DE_Select.prototype.init = function()
+{
+    var selections_promise = api.cells.listSelections().then(data => {
+
+            var numSelect = $('#num');
+            var denomSelect = $('#denom');
+            var submit_de = $('#submit_de');
+
+              _.each(data, (name, i) => {
+                numSelect.append(
+                    $('<option>', {
+                        value: name,
+                        text: name
+                    }));
+                denomSelect.append(
+                    $('<option>', {
+                        value: name,
+                        text: name
+                    }));
+            });
+
+            denomSelect.append(
+                $('<option>', {
+                    value: "Remainder",
+                    text: "Remainder"
+                }));
+
+
+            denomSelect.chosen({
+              'width': '150px',
+              'max_shown_results': 1000,
+            }).on('change', function () {
+              set_global_status({
+                'de_denom':$(this).val()
+              });
+            });
+
+            numSelect.chosen({
+              'width': '150px',
+              'max_shown_results': 1000,
+            }).on('change', function () {
+              set_global_status({
+                'de_num':$(this).val()
+              });
+            });
+
+
+            submit_de.on('click', function () {
+              api.de("saved_selection", get_global_status('de_num'), "saved_selection", get_global_status('de_denom')).then(data => {
+                console.log(data);
+              });
+            });
+
+        });
+
+
+
+    return $.when(selections_promise);
+
+}
+
+DE_Select.prototype.update = function(updates)
+{
+    // Update the 'recent-genes' list
+    if('plotted_item' in updates){
+        var gene = get_global_status('plotted_item')
+        var plotted_item_type = get_global_status('plotted_item_type')
+        if(plotted_item_type === 'gene'){
+            if(this.recent_genes.indexOf(gene) === -1){
+                this.recent_genes.unshift(gene)
+
+                if(this.recent_genes.length > 20){
+                    this.recent_genes.pop();
+                }
+
+                this.render_recent_genes()
+            }
+        }
+    }
+}
+
+DE_Select.prototype.render_recent_genes = function()
+{
+    var recent_genes_div = $(this.dom_node).find('#recent-genes-div')
+    var recent_genes_list = $(this.dom_node).find('#recent-genes-list')
+
+    if(this.recent_genes.length == 0){
+        recent_genes_div.hide()
+        return
+    }
+
+    recent_genes_list.children().remove()
+
+    this.recent_genes.forEach(function (gene) {
+        recent_genes_list.append(
+            $('<div>',{'class': 'recent-gene'}).text(gene)
+        )
+    })
+
+    recent_genes_list.children().on('click', function() {
+        var gene = $(this).text()
+        set_global_status({
+            'plotted_item_type': 'gene',
+            'plotted_item': gene
+        })
+    });
+
+    recent_genes_div.show()
+}
+
+
+// END YANAY
+
+
+
+
+
+
+
+
+
+
+
 
 Signature_Table.prototype.doneTyping = function()
 {
