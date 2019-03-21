@@ -410,25 +410,33 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         type_d <- URLdecode(req$params$type_d)
         
         group_num <- URLdecode(req$params$group_num)
-        group_denom <- URLdecode(req$params$group_num)
+        group_denom <- URLdecode(req$params$group_denom)
+        
+        print(typeof(group_num))
+        print(group_num)
         
         if (type_n == "saved_selection") {
           group_num <- object@selections[[group_num]]
+        } else {
+          group_num <- unlist(strsplit(group_num, ","))
         }
         
+        print(typeof(group_num))
+        print(group_num)
+        
         if (group_denom == "Remainder") {
-          group_denom <- colnames(vis@exprData)[!colnames(vis@exprData) %in% group_num]
+          group_denom <- colnames(vis@exprData)[! (colnames(vis@exprData) %in% group_num)]
         } else if(type_d == "saved_selection") {
           group_denom <- object@selections[[group_denom]]
         }
-      
+       
         # Subset the object
         subset <- t(object@exprData[, union(group_denom, group_num)])
+        ranks <- colRanks(subset, preserveShape = TRUE, ties.method="average")
+        cluster_ii <- 1:length(group_num)
         
-        ranks <- colRanks(subset)
-        cluster_ii <- which(colnames(vis@exprData) %in% group_num)
-        
-        out <- matrix_wilcox(ranks=ranks, cluster_ii=cluster_ii, check_ties = TRUE)
+        out <- matrix_wilcox(ranks=ranks, cluster_ii=cluster_ii, check_ties = FALSE)
+        out$genes <- colnames(subset)
         result <- toJSON(
           out,
           force = TRUE, pretty = TRUE, auto_unbox = TRUE

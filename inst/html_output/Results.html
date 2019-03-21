@@ -138,25 +138,33 @@
                     </div>
 
                     <div class="tab-pane" id="de-table" role="tabpanel" aria-labelledby="de-table-tab">
-                        <div>
-                            <table class='label-table'>
-                                <tr>
-                                    <td style='font-size: 1.2em'>Numerator:</td>
-                                    <td><select id="num" class="form-control"></select></td>
-                                </tr>
-                                <tr>
-                                    <td style='font-size: 1.2em'>Denominator:</td>
-                                    <td><select id="denom" class="form-control"></select></td>
-                                </tr>
-                                <tr>
-                                    <td style='font-size: 1.2em'><button id="submit_de" class="form-control">Calculate DE</submit></td>
-                                </tr>
-                            </table>
+                        <div class="row">
+                          <div class="col-md-4">
+                            <label>Numerator:</label>
+                            <select id="num" class="form-control"></select>
+                          </div>
+
+                          <div class="col-md-4">
+                            <label>Denominator:</label>
+                            <select id="denom" class="form-control"></select>
+                          </div>
+                          <div class="col-md-4 text-center">
+                            <button type="button" class="btn btn-default btn-outline-primary" id="submit_de" class="form-control">Calculate DE</button>
+                          </div>
                         </div>
                         <div id='de-results'>
-                            <div class='label1'>Results:</div>
-                            <div id='de-results'>
-                            </div>
+                          <table id="de_table" class="compact stripe hover">
+                            <thead id="de_head" style="display:none">
+                              <tr>
+                                <th>Gene</th>
+                                <th>Stat</th>
+                                <th>Pval</th>
+                              </tr>
+                            </thead>
+                            <tbody id="de_body">
+
+                            </tbody>
+                          </table>
                         </div>
                     </div>
 

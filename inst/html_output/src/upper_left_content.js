@@ -1001,17 +1001,34 @@ Gene_Select.prototype.render_recent_genes = function()
 
 function DE_Select()
 {
-    this.dom_node = document.getElementById("de-table");
     //this.recent_genes = [];
 }
 
 DE_Select.prototype.init = function()
 {
+
+
+
+
     var selections_promise = api.cells.listSelections().then(data => {
 
             var numSelect = $('#num');
             var denomSelect = $('#denom');
             var submit_de = $('#submit_de');
+
+
+              numSelect.append(
+                $('<option>', {
+                    value: "Current",
+                    text: "Current Selection"
+                }));
+              denomSelect.append(
+              $('<option>', {
+                  value: "Remainder",
+                  text: "Remainder"
+              }));
+
+
 
               _.each(data, (name, i) => {
                 numSelect.append(
@@ -1019,6 +1036,7 @@ DE_Select.prototype.init = function()
                         value: name,
                         text: name
                     }));
+
                 denomSelect.append(
                     $('<option>', {
                         value: name,
@@ -1026,11 +1044,8 @@ DE_Select.prototype.init = function()
                     }));
             });
 
-            denomSelect.append(
-                $('<option>', {
-                    value: "Remainder",
-                    text: "Remainder"
-                }));
+            set_global_status({'de_num':"Current"});
+            set_global_status({'de_denom':"Remainder"});
 
 
             denomSelect.chosen({
@@ -1053,8 +1068,16 @@ DE_Select.prototype.init = function()
 
 
             submit_de.on('click', function () {
-              api.de("saved_selection", get_global_status('de_num'), "saved_selection", get_global_status('de_denom')).then(data => {
-                console.log(data);
+              upper_left_content.setLoadingStatus(true);
+              num_val = get_global_status('de_num');
+              num_type = "saved_selection"
+              if (get_global_status('de_num') === "Current") {
+                num_type = "selection"
+                num_val = get_global_status("selected_cell")
+              }
+
+              api.de(num_type, num_val, "saved_selection", get_global_status('de_denom')).then(data => {
+                set_global_status({"de":data})
               });
             });
 
@@ -1069,50 +1092,43 @@ DE_Select.prototype.init = function()
 DE_Select.prototype.update = function(updates)
 {
     // Update the 'recent-genes' list
-    if('plotted_item' in updates){
-        var gene = get_global_status('plotted_item')
-        var plotted_item_type = get_global_status('plotted_item_type')
-        if(plotted_item_type === 'gene'){
-            if(this.recent_genes.indexOf(gene) === -1){
-                this.recent_genes.unshift(gene)
-
-                if(this.recent_genes.length > 20){
-                    this.recent_genes.pop();
-                }
-
-                this.render_recent_genes()
-            }
-        }
+    if('de' in updates){
+      this.render_de();
     }
 }
 
-DE_Select.prototype.render_recent_genes = function()
+DE_Select.prototype.render_de = function()
 {
-    var recent_genes_div = $(this.dom_node).find('#recent-genes-div')
-    var recent_genes_list = $(this.dom_node).find('#recent-genes-list')
 
-    if(this.recent_genes.length == 0){
-        recent_genes_div.hide()
-        return
-    }
+    var genes = get_global_status('de')["genes"]
+    var pvals = get_global_status('de')["pval"]
+    var stats = get_global_status('de')["stat"]
 
-    recent_genes_list.children().remove()
 
-    this.recent_genes.forEach(function (gene) {
-        recent_genes_list.append(
-            $('<div>',{'class': 'recent-gene'}).text(gene)
-        )
+    var de_results_table = $('#de_body')
+    $('#de_table').dataTable().fnDestroy()
+    de_results_table.children().remove()
+
+    genes.forEach(function (gene, i) {
+        var stat = stats[i];
+        var pval = pvals[i];
+        var row = "<tr><td>" + gene + "</td><td>" + stat.toString() + "</td><td>" + pval.toString() + "</td></tr>";
+        de_results_table.append(row);
+
     })
 
-    recent_genes_list.children().on('click', function() {
-        var gene = $(this).text()
+    de_results_table.on('click', "tr", function() {
+        var gene = $(this).find("td:first").text()
         set_global_status({
-            'plotted_item_type': 'gene',
-            'plotted_item': gene
-        })
+                    'plotted_item_type': 'gene',
+                    'plotted_item': gene
+                })
     });
 
-    recent_genes_div.show()
+
+    $('#de_head').show();
+    $('#de_table').DataTable({"pageLength":10, "destroy":true, "scrollY":125, "order":[[1, "desc"]]});
+    upper_left_content.setLoadingStatus(false);
 }
 
 

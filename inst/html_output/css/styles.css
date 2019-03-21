@@ -64,7 +64,7 @@ body {
 }
 
 #left-content{
-    width: 500px;
+    width: 575px;
     display: flex;
     flex-direction: column;
 }
