@@ -18,6 +18,7 @@
 #' If greater than 1, this specifies the number of cells in which a gene must be detected
 #' for it to be used when computing PCA. If less than 1, this instead specifies the proportion of cells needed
 #' @param latentSpace (Optional) Latent space to be used instead of PCA numeric matrix cells x components
+#' @param K Number of neighbors to use for finding pools. 
 #' @importFrom Matrix tcrossprod
 #' @importFrom Matrix rowMeans
 #' @return pooled cells - named list of vectors - cells in each supercell
@@ -26,7 +27,7 @@ applyMicroClustering <- function(
                          exprData, cellsPerPartition=10,
                          filterInput = "fano",
                          filterThreshold = round(ncol(exprData) * 0.05),
-                         latentSpace = NULL) {
+                         latentSpace = NULL, K=round(sqrt(ncol(exprData)))) {
 
     if (is.data.frame(exprData)){
         exprData <- data.matrix(exprData)
@@ -92,7 +93,7 @@ applyMicroClustering <- function(
     n_workers <- if (is.null(n_workers)) 2 else n_workers
 
     kn <- ball_tree_knn(res,
-                        min(round(sqrt(nrow(res))), 30),
+                        min(K, 30),
                         n_workers)
 
     cl <- louvainCluster(kn, res)
