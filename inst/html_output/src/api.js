@@ -1,13 +1,5 @@
 var api = (function(){
 
-    /* Coordinates come in in the form:
-     * [
-     *  [x, y, sample_name],
-     *  [x, y, sample_name2],
-     *  ...
-     * ]
-     * Converting back to the format we want is faster in Javascript than in R
-     */
 
     // location.pathname is either:
     // this is either "/" or "/Results.html" if running normally
@@ -25,6 +17,14 @@ var api = (function(){
         return prefix + x + "?v=" + version
     }
 
+    /* Coordinates come in in the form:
+     * [
+     *  [x, y, sample_name],
+     *  [x, y, sample_name2],
+     *  ...
+     * ]
+     * Converting back to the format we want is faster in Javascript than in R
+     */
     var fix_coordinates = function(x){
 
         var ii = x[0].length - 1;
@@ -32,6 +32,16 @@ var api = (function(){
         var result =  _(x)
             .keyBy(x => x[ii])
             .mapValues(x => x.slice(0, ii))
+            .value();
+
+        return result;
+    }
+
+    var fix_coordinates_1d = function(x){
+
+        var result =  _(x)
+            .keyBy(x => x[1])
+            .mapValues(x => x[0])
             .value();
 
         return result;
@@ -143,12 +153,12 @@ var api = (function(){
 
     output.projections = {}
 
-    output.projections.coordinates = function(projection_name)
+    output.projections.coordinates = function(projection_name, projection_column)
     {
         var query = "Projections/"
-        query = query.concat(encodeURI(projection_name), "/coordinates")
+        query = query.concat(encodeURI(projection_name), "/coordinates/", encodeURI(projection_column))
         query = postProcess(query)
-        return $.ajax(query, {dataType: "json"}).then(x => fix_coordinates(x))
+        return $.ajax(query, {dataType: "json"}).then(x => fix_coordinates_1d(x))
     }
 
     output.projections.list = function()
