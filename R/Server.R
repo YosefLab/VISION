@@ -343,13 +343,6 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
                                   sigs)
         return(out)
       }) %>%
-      get("/PCA/Coordinates", function(req, res, err) {
-
-        pc <- object@latentSpace
-        out <- coordinatesToJSON(pc)
-        compressJSONResponse(out, res, req)
-
-      }) %>%
       get("/PearsonCorr/Normal", function(req, res, err) {
 
           pc <- object@PCAnnotatorData@pearsonCorr[, 1:10]

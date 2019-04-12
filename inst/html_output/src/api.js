@@ -201,17 +201,6 @@ var api = (function(){
     }
 
 
-
-    // PC API
-
-    output.pc = {}
-
-    output.pc.coordinates = function() {
-        var query = "PCA/Coordinates"
-        query = postProcess(query)
-        return $.ajax(query, {dataType: "json"}).then(x => fix_coordinates(x))
-    }
-
     // Expression API
 
 

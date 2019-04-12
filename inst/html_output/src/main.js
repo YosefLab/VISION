@@ -83,20 +83,6 @@ function set_global_status(update){
     lower_left_content.setLoadingStatus(true);
     upper_left_content.setLoadingStatus(true);
 
-    // Just get all the PC's using one call
-    if('main_vis' in update && get_global_status('main_vis') === 'pcannotator' &&
-        _.isEmpty(global_data.pca_projection_coordinates))
-    {
-        var pc_promise = api.pc.coordinates()
-            .then(function(projection){
-                global_data.pca_projection_coordinates = projection;
-            });
-
-        all_promises.push(pc_promise);
-        right_content_promises.push(pc_promise);
-        lower_left_content_promises.push(pc_promise);
-    }
-
     if(('plotted_trajectory' in update && get_global_status('main_vis') === 'tree') ||
        ('main_vis' in update && get_global_status('main_vis') === 'tree')
     ){
