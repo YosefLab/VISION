@@ -103,7 +103,7 @@ var api = (function(){
     output.clusters.sigProjMatrix = function(cluster_variable, meta)
     {
         var query = "Clusters/"
-        query = query.concat(cluster_variable)
+        query = query.concat(encodeURI(cluster_variable))
         if (meta) {
             query = query.concat("/SigProjMatrix/Meta")
         } else {
@@ -115,7 +115,7 @@ var api = (function(){
 
     output.clusters.cells = function(cluster_variable) {
         var query = "Clusters/"
-        query = query.concat(cluster_variable)
+        query = query.concat(encodeURI(cluster_variable))
         query = query.concat("/Cells")
         query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => {
@@ -241,7 +241,7 @@ var api = (function(){
     output.cell = {}
 
     output.cell.meta = function(cellId){
-        var query = "Cell/" + cellId + "/Meta"
+        var query = "Cell/" + encodeURI(cellId) + "/Meta"
 
         query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
@@ -264,7 +264,8 @@ var api = (function(){
     }
 
     output.cells.saveSelection = function(selectionName, subset) {
-        var query = "Cells/Selections/" + selectionName
+        var query = "Cells/Selections/"
+        query = query.concat(encodeURI(selectionName))
 
         query = postProcess(query)
         return $.ajax(query, {
@@ -276,7 +277,8 @@ var api = (function(){
     }
 
     output.cells.getSelection = function(selectionName) {
-        var query = "Cells/Selections/" + selectionName
+        var query = "Cells/Selections/"
+        query = query.concat(encodeURI(selectionName))
         query = postProcess(query)
         return $.ajax(query, {dataType: "json" }).then(x => x);
 
