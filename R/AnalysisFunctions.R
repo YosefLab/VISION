@@ -13,8 +13,9 @@ clusterCells <- function(object) {
     n_workers <- getOption("mc.cores")
     n_workers <- if (is.null(n_workers)) 2 else n_workers
 
+    K <- min(object@num_neighbors, 30)
     kn <- ball_tree_knn(res,
-                        min(round(sqrt(nrow(res))), 30),
+                        K,
                         n_workers)
 
     cl <- louvainCluster(kn, res)
@@ -67,7 +68,8 @@ poolCells <- function(object,
                                               cellsPerPartition = object@cellsPerPartition,
                                               filterInput = object@projection_genes,
                                               filterThreshold = object@threshold,
-                                              latentSpace = object@latentSpace)
+                                              latentSpace = object@latentSpace, 
+                                              K = object@num_neighbors)
 
         object@pools <- pools
     }
@@ -302,7 +304,8 @@ generateProjections <- function(object) {
   projections <- generateProjectionsInner(object@exprData,
                                      object@latentSpace,
                                      projection_genes = object@projection_genes,
-                                     projection_methods = object@projection_methods)
+                                     projection_methods = object@projection_methods, 
+                                     K = object@num_neighbors)
 
   # Add inputProjections
   for (proj in names(object@inputProjections)){
@@ -347,7 +350,8 @@ analyzeLocalCorrelations <- function(object, signatureBackground = NULL) {
                                 object@latentSpace,
                                 object@sigScores,
                                 object@metaData,
-                                signatureBackground)
+                                signatureBackground,
+                                object@num_neighbors)
 
   message("Clustering signatures...\n")
   sigClusters <- clusterSignatures(object@sigScores,
