@@ -122,13 +122,13 @@ var api = (function(){
     //Yanay
     output.de = function(type_n, group_num, type_d, group_denom) {
         var query = "DE/"
-        query = query.concat(type_n + "/")
-        query = query.concat(group_num + "/")
-        query = query.concat(type_d + "/")
-        query = query.concat(group_denom + "/")
 
         query = postProcess(query)
-        return $.ajax(query, {dataType: "json"}).then(x => x)
+        return $.ajax(query, {
+            type: "POST",
+            data: JSON.stringify({"type_n":type_n, "type_d":type_d, "group_num":group_num, "group_denom":group_denom}),
+            dataType: "json"
+        }).then(x => x);
     }
 
     output.filterGroup = {}

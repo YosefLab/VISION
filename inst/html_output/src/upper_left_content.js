@@ -1008,84 +1008,191 @@ DE_Select.prototype.init = function()
 {
 
 
+    var numControl = $('#num_control');
+    var denomControl = $('#denom_control');
+    var numSelect = $('#num');
+    var denomSelect = $('#denom');
+    var submit_de = $('#submit_de');
+    var denomDiv = $('#denom_div');
+    var numDiv = $('#num_div');
+
+    var clusters = get_global_data("cluster_variables");
+    var cluster_names = get_global_data("clusters");
+
+    _.each(clusters, (name, i) => {
+      numControl.append(
+          $('<option>', {
+              value: i,
+              text: name
+          }));
+      denomControl.append(
+          $('<option>', {
+              value: i,
+              text: name
+          }));
+    });
 
 
-    var selections_promise = api.cells.listSelections().then(data => {
+    function addClusters(select, cluster) {
+      var cluster_names = get_global_data("clusters");
+      var data = Array.from(new Set(Object.values(cluster_names)));
 
-            var numSelect = $('#num');
-            var denomSelect = $('#denom');
-            var submit_de = $('#submit_de');
+      _.each(data, (name, i) => {
+        select.append(
+            $('<option>', {
+                value: name,
+                text: name
+            }));
+      });
+
+      select.chosen({
+        'width': '150px',
+        'max_shown_results': 1000,
+      }).on('change', function () {
+        if (select === numSelect) {
+          set_global_status({
+            'de_num_type':"cluster",
+            'de_num':$(this).val()
+          });
+        }
+        else {
+          set_global_status({
+            'de_denom_type':"cluster",
+            'de_denom':$(this).val()
+          });
+        }
+      });
+    }
 
 
-              numSelect.append(
+
+
+    async function addSelections(select) {
+
+      var selections_promise = api.cells.listSelections().then(data => {
+
+            if (select === numSelect) {
+              select.append(
                 $('<option>', {
                     value: "Current",
                     text: "Current Selection"
                 }));
-              denomSelect.append(
-              $('<option>', {
-                  value: "Remainder",
-                  text: "Remainder"
-              }));
 
+                set_global_status({'de_num':"Current"});
+            } else {
+              select.append(
+                $('<option>', {
+                    value: "Remainder",
+                    text: "Remainder"
+                }));
+                set_global_status({'de_denom':"Remainder"});
+            }
 
-
-              _.each(data, (name, i) => {
-                numSelect.append(
-                    $('<option>', {
-                        value: name,
-                        text: name
-                    }));
-
-                denomSelect.append(
-                    $('<option>', {
-                        value: name,
-                        text: name
-                    }));
+            _.each(data, (name, i) => {
+              select.append(
+                  $('<option>', {
+                      value: name,
+                      text: name
+                  }));
             });
 
-            set_global_status({'de_num':"Current"});
-            set_global_status({'de_denom':"Remainder"});
-
-
-            denomSelect.chosen({
+            select.chosen({
               'width': '150px',
               'max_shown_results': 1000,
             }).on('change', function () {
-              set_global_status({
-                'de_denom':$(this).val()
-              });
-            });
 
-            numSelect.chosen({
-              'width': '150px',
-              'max_shown_results': 1000,
-            }).on('change', function () {
-              set_global_status({
-                'de_num':$(this).val()
-              });
-            });
-
-
-            submit_de.on('click', function () {
-              upper_left_content.setLoadingStatus(true);
-              num_val = get_global_status('de_num');
-              num_type = "saved_selection"
-              if (get_global_status('de_num') === "Current") {
-                num_type = "selection"
-                num_val = get_global_status("selected_cell")
+              if (select === numSelect) {
+                if ($(this).val() == "Current") {
+                  set_global_status({"de_num_type":"selection", "de_num":"current"})
+                } else {
+                  set_global_status({
+                    "de_num_type":"saved_selection",
+                    'de_num':$(this).val()
+                  });
+                }
+              }
+              else {
+                set_global_status({
+                  'de_denom':$(this).val(),
+                  'de_denom_type':"saved_selection"
+                });
               }
 
-              api.de(num_type, num_val, "saved_selection", get_global_status('de_denom')).then(data => {
-                set_global_status({"de":data})
-              });
             });
 
         });
 
 
+      }
 
-    return $.when(selections_promise);
+    submit_de.on('click', function () {
+      upper_left_content.setLoadingStatus(true);
+
+      if (get_global_status('de_num_type') === "selection") {
+        set_global_status({"de_num":get_global_status("selected_cell")})
+      }
+
+      api.de(get_global_status('de_num_type'), get_global_status('de_num'), get_global_status('de_denom_type'), get_global_status('de_denom')).then(data => {
+        set_global_status({"de":data})
+      });
+    });
+
+
+
+    numControl.chosen({
+      'width': '150px',
+      'max_shown_results': 1000,
+    }).on('change', function () {
+      set_global_status({
+        'de_num_control':$(this).val()
+      });
+
+      numDiv.empty();
+      numDiv.append('<select id="num" class="form-control"></select>');
+      numSelect = $('#num');
+
+      if ($(this).val() === "selections") {
+        // add selection values
+        addSelections(numSelect);
+        set_global_status({"de_num_type":"saved_selection"})
+
+
+      }  else {
+        // genotype
+        addClusters(numSelect, $(this).val())
+        set_global_status({"de_num_type":"cluster_selection"})
+      }
+    });
+
+
+    denomControl.chosen({
+      'width': '150px',
+      'max_shown_results': 1000,
+    }).on('change', function () {
+      set_global_status({
+        'de_denom_control':$(this).val()
+      });
+
+      denomDiv.empty();
+      denomDiv.append('<select id="denom" class="form-control"></select>')
+      denomSelect = $('#denom');
+      if ($(this).val() === "selections") {
+        // add selection values
+        addSelections(denomSelect);
+        set_global_status({"de_denom_type":"saved_selection"})
+
+      } else {
+        // cluster
+        addClusters(denomSelect, $(this).val())
+        set_global_status({"de_denom_type":"cluster_selection"})
+      }
+    });
+
+
+addSelections(numSelect)
+addSelections(denomSelect)
+
+
 
 }
 
@@ -1103,7 +1210,7 @@ DE_Select.prototype.render_de = function()
     var genes = get_global_status('de')["genes"]
     var pvals = get_global_status('de')["pval"]
     var stats = get_global_status('de')["stat"]
-
+    var logFCs = get_global_status('de')["logFC"]
 
     var de_results_table = $('#de_body')
     $('#de_table').dataTable().fnDestroy()
@@ -1112,7 +1219,8 @@ DE_Select.prototype.render_de = function()
     genes.forEach(function (gene, i) {
         var stat = stats[i];
         var pval = pvals[i];
-        var row = "<tr><td>" + gene + "</td><td>" + stat.toString() + "</td><td>" + pval.toString() + "</td></tr>";
+        var logFC = logFCs[i];
+        var row = "<tr><td>" + gene + "</td><td>" + logFC.toString() + "</td><td>" + stat.toString() + "</td><td>" + pval.toString() + "</td></tr>";
         de_results_table.append(row);
 
     })
@@ -1123,11 +1231,12 @@ DE_Select.prototype.render_de = function()
                     'plotted_item_type': 'gene',
                     'plotted_item': gene
                 })
+        //Plotly.restyle("scatter-div", {selectedpoints: [null]});
     });
 
 
     $('#de_head').show();
-    $('#de_table').DataTable({"pageLength":10, "destroy":true, "scrollY":125, "order":[[1, "desc"]]});
+    $('#de_table').DataTable({"pageLength":10, "destroy":true, "scrollY":125, "order":[[2, "desc"]]});
     upper_left_content.setLoadingStatus(false);
 }
 

@@ -403,40 +403,50 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         compressJSONResponse(result, res, req)
 
       }) %>%
-      get("/DE/(?<type_n>.*)/(?<group_num>.*)/(?<type_d>.*)/(?<group_denom>.*)/", function(req, res, err) {
+      post("/DE/", function(req, res, err) {
         # Yanay
         # Params
-        type_n <- URLdecode(req$params$type_n)
-        type_d <- URLdecode(req$params$type_d)
+        body <- fromJSON(req$body)
         
-        group_num <- URLdecode(req$params$group_num)
-        group_denom <- URLdecode(req$params$group_denom)
+        type_n <- body$type_n
+        type_d <- body$type_d
         
-        print(typeof(group_num))
-        print(group_num)
-        
+        group_num <- body$group_num
+        group_denom <- body$group_denom
+      
+    
         if (type_n == "saved_selection") {
           group_num <- object@selections[[group_num]]
-        } else {
+        } else if (type_n == "selection") {
           group_num <- unlist(strsplit(group_num, ","))
+        } else if (type_n == "cluster") {
+          group_num <- rownames(object@metaData)[which(object@metaData == group_num)]
+        } else {
+          print("ERROR! Num type unrecognized")
         }
-        
-        print(typeof(group_num))
-        print(group_num)
-        
+       
         if (group_denom == "Remainder") {
           group_denom <- colnames(vis@exprData)[! (colnames(vis@exprData) %in% group_num)]
         } else if(type_d == "saved_selection") {
           group_denom <- object@selections[[group_denom]]
-        }
+        } else if (type_d == "cluster") {
+          group_denom <- rownames(object@metaData)[which(object@metaData == group_denom)]
+        } 
        
+    
         # Subset the object
         subset <- t(object@exprData[, union(group_denom, group_num)])
         ranks <- colRanks(subset, preserveShape = TRUE, ties.method="average")
-        cluster_ii <- 1:length(group_num)
+        cluster_ii <- cluster_ii <- match(group_num, rownames(subset))
         
         out <- matrix_wilcox(ranks=ranks, cluster_ii=cluster_ii, check_ties = FALSE)
+        
+        out$pval <- p.adjust(out$pval, method="fdr")
+        out$stat <- pmax(out$stat, 1 - out$stat)
         out$genes <- colnames(subset)
+        
+        out$logFC <- log2(rowMeans(object@exprData[,group_num]) / rowMeans(object@exprData[,group_denom]))
+        
         result <- toJSON(
           out,
           force = TRUE, pretty = TRUE, auto_unbox = TRUE
@@ -555,7 +565,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         info[["ncells"]] <- nrow(object@metaData)
 
         info[["has_sigs"]] <- length(object@sigData) > 0
-
+        
+        
         result <- toJSON(
                          info,
                          force = TRUE, pretty = TRUE, auto_unbox = TRUE

@@ -270,6 +270,8 @@ window.onload = function()
         global_status.ncells = info.ncells
         global_status.has_tree = info.has_tree
         global_status.has_sigs = info.has_sigs
+
+        global_data.clusters_unique = info.clusters
     })
 
     var cellClustersPromise = api.clusters.list()
