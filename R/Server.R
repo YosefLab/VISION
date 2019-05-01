@@ -411,6 +411,9 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         type_n <- body$type_n
         type_d <- body$type_d
         
+        subtype_n <- body$subtype_n
+        subtype_d <- body$subtype_d
+        
         group_num <- body$group_num
         group_denom <- body$group_denom
       
@@ -419,19 +422,21 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
           group_num <- object@selections[[group_num]]
         } else if (type_n == "selection") {
           group_num <- unlist(strsplit(group_num, ","))
-        } else if (type_n == "cluster") {
-          group_num <- rownames(object@metaData)[which(object@metaData == group_num)]
+        } else if (type_n == "meta") {
+          group_num <- rownames(object@metaData)[which(object@metaData[[subtype_n]] == group_num)]
         } else {
-          print("ERROR! Num type unrecognized")
+          print("ERROR! Num type unrecognized: " +type_n)
         }
        
         if (group_denom == "Remainder") {
           group_denom <- colnames(vis@exprData)[! (colnames(vis@exprData) %in% group_num)]
         } else if(type_d == "saved_selection") {
           group_denom <- object@selections[[group_denom]]
-        } else if (type_d == "cluster") {
-          group_denom <- rownames(object@metaData)[which(object@metaData == group_denom)]
-        } 
+        } else if (type_d == "meta") {
+          group_denom <- rownames(object@metaData)[which(object@metaData[[subtype_d]] == group_denom)]
+        } else {
+          print("ERROR! Denom type unrecognized: " + type_d)
+        }
        
     
         # Subset the object
@@ -445,7 +450,11 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         out$stat <- pmax(out$stat, 1 - out$stat)
         out$genes <- colnames(subset)
         
-        out$logFC <- log2(rowMeans(object@exprData[,group_num]) / rowMeans(object@exprData[,group_denom]))
+        numMean = rowMeans(object@exprData[,group_num])
+        denomMean = rowMeans(object@exprData[,group_denom])
+        bias = 1 / sqrt(length(group_num) * length(group_denom))
+        
+        out$logFC <- log2((numMean + bias) / (denomMean + bias))
         
         result <- toJSON(
           out,
@@ -472,6 +481,22 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             return("No Clusters!")
         }
       }) %>%
+      
+      
+      get("/Clusters/MetaLevels", function(req, res, err) {
+        metaData <- object@metaData
+        for (cluster_variable in names(object@ClusterSigScores)) {
+          out[[cluster_variable]] <- unique(metaData[[cluster_variable]])
+        }
+        
+        result <- toJSON(
+          out,
+          force = TRUE, pretty = TRUE, auto_unbox = TRUE
+        )
+        return(compressJSONResponse(result, res, req))
+      }) %>%
+      
+      
       get("/Clusters/(?<cluster_variable2>.*)/SigProjMatrix/Normal", function(req, res, err) {
 
         sigs <- colnames(object@sigScores)

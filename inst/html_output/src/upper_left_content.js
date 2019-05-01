@@ -1034,8 +1034,8 @@ DE_Select.prototype.init = function()
 
 
     function addClusters(select, cluster) {
-      var cluster_names = get_global_data("clusters");
-      var data = Array.from(new Set(Object.values(cluster_names)));
+      var cluster_vals = get_global_data("meta_levels")[cluster];
+      var data = Array.from(new Set(Object.values(cluster_vals)));
 
       _.each(data, (name, i) => {
         select.append(
@@ -1051,13 +1051,15 @@ DE_Select.prototype.init = function()
       }).on('change', function () {
         if (select === numSelect) {
           set_global_status({
-            'de_num_type':"cluster",
+            'de_num_type':"meta",
+            'de_num_subtype':cluster,
             'de_num':$(this).val()
           });
         }
         else {
           set_global_status({
-            'de_denom_type':"cluster",
+            'de_denom_type':"meta",
+            'de_denom_subtype':cluster,
             'de_denom':$(this).val()
           });
         }
@@ -1126,13 +1128,36 @@ DE_Select.prototype.init = function()
       }
 
     submit_de.on('click', function () {
-      upper_left_content.setLoadingStatus(true);
 
-      if (get_global_status('de_num_type') === "selection") {
-        set_global_status({"de_num":get_global_status("selected_cell")})
+
+      upper_left_content.setLoadingStatus(true);
+      if (!get_global_status('de_num_type')) {
+        set_global_status({"de_num_type":"selection"});
       }
 
-      api.de(get_global_status('de_num_type'), get_global_status('de_num'), get_global_status('de_denom_type'), get_global_status('de_denom')).then(data => {
+      if (!get_global_status('de_denom_type')) {
+        set_global_status({"de_denom_type":"saved_selection", "de_denom":"Remainder"});
+
+      }
+
+
+      if (get_global_status('de_num_type') === "selection") {
+        set_global_status({"de_num":get_global_status("selected_cell")});
+      }
+
+      if (!get_global_status("de_num_subtype")) {
+        var num_subtype = "";
+      } else {
+        var num_subtype = get_global_status("de_num_subtype");
+      }
+
+      if (!get_global_status("de_denom_subtype")) {
+        var denom_subtype = "";
+      } else {
+        var denom_subtype = get_global_status("de_denom_subtype");
+      }
+
+      api.de(get_global_status('de_num_type'), num_subtype, get_global_status('de_num'), get_global_status('de_denom_type'), denom_subtype, get_global_status('de_denom')).then(data => {
         set_global_status({"de":data})
       });
     });
@@ -1157,10 +1182,11 @@ DE_Select.prototype.init = function()
         set_global_status({"de_num_type":"saved_selection"})
 
 
+
       }  else {
         // genotype
-        addClusters(numSelect, $(this).val())
-        set_global_status({"de_num_type":"cluster_selection"})
+        addClusters(numSelect, clusters[$(this).val()])
+        set_global_status({"de_num_type":"meta"})
       }
     });
 
@@ -1179,18 +1205,19 @@ DE_Select.prototype.init = function()
       if ($(this).val() === "selections") {
         // add selection values
         addSelections(denomSelect);
-        set_global_status({"de_denom_type":"saved_selection"})
+        set_global_status({"de_denom_type":"saved_selection", "de_denom":"Remainder"});
 
       } else {
         // cluster
-        addClusters(denomSelect, $(this).val())
-        set_global_status({"de_denom_type":"cluster_selection"})
+        addClusters(denomSelect, clusters[$(this).val()])
+        set_global_status({"de_denom_type":"meta"})
       }
     });
 
 
 addSelections(numSelect)
 addSelections(denomSelect)
+
 
 
 

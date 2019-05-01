@@ -280,6 +280,12 @@ window.onload = function()
             global_status.cluster_var = global_data.cluster_variables[0];
         })
 
+    var allCellClustersPromise = api.clusters.meta_levels()
+        .then(function(data) {
+            global_data.meta_levels = data;
+        })
+
+
     var combinedPromise = $.when(sessionInfoPromise, cellClustersPromise)
         .then(function(){
             return upper_left_content.init();
@@ -294,7 +300,7 @@ window.onload = function()
 
 
     // When it's all done, run this
-    $.when(right_promise, lower_left_promise, combinedPromise)
+    $.when(right_promise, lower_left_promise, combinedPromise, allCellClustersPromise)
         .then(function(){
             var has_tree = get_global_status('has_tree')
             var update0 = {'main_vis': (has_tree ? 'tree': 'clusters')}
