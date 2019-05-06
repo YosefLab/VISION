@@ -484,6 +484,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       
       
       get("/Clusters/MetaLevels", function(req, res, err) {
+        out <- list()
         metaData <- object@metaData
         for (cluster_variable in names(object@ClusterSigScores)) {
           out[[cluster_variable]] <- unique(metaData[[cluster_variable]])
