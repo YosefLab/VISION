@@ -197,7 +197,7 @@
                         <table class='label-table' style='margin-left: 30px;'>
                             <tr style='font-size: 1.2em;'>
                                 <td></td>
-                                <td style="width: 100%;"><span id="values-title"></span></td>
+                                <td style="width: 100%;"><span id="values-title" style="display: inline-block; width: 300px; word-wrap: break-word;"></span></td>
                             </tr>
                         </table>
 
@@ -271,13 +271,27 @@
             <div id="sigvp-scatter-div">
                 <div id="plot-title-div">
                     <div class="titles">
-                        <div class="subtitle" id="plot-subtitle-latent">
-                            <span style="margin-right: 10px">Projection:</span>
-                            <select id="SelectProjScatter" class="form-control"></select>
+                        <div id="plot-subtitle-latent">
+                            <div>
+                                <div class="labeled-select">
+                                    <span class="label">View:</span>
+                                    <select id="SelectProjScatter" class="form-control"></select>
+                                </div>
+                                <div class="labeled-select">
+                                    <span class="label">X:</span>
+                                    <select id="SelectProjScatterX" class="form-control"></select>
+                                </div>
+                            </div>
+                            <div class="labeled-select">
+                                <span class="label">Y:</span>
+                                <select id="SelectProjScatterY" class="form-control"></select>
+                            </div>
                         </div>
-                        <div class="subtitle" id="plot-subtitle-trajectory" style="display: none">
-                            <span style="margin-right: 10px">Projection:</span>
-                            <select id="SelectTrajectoryProjScatter" class="form-control"></select>
+                        <div id="plot-subtitle-trajectory" style="display: none">
+                            <div class="labeled-select">
+                                <span class="label">Projection:</span>
+                                <select id="SelectTrajectoryProjScatter" class="form-control"></select>
+                            </div>
                         </div>
                     </div>
                     <div class="color-options" >

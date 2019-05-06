@@ -48,9 +48,11 @@
 #'    \item ICA
 #'    \item ISOMap
 #'    \item RBFPCA
+#'    \item UMAP
 #'}
 #' By default will perform tSNE and PCA on the data.
 #' @param name a name for the sample - shown on the output report
+#' @param num_neighbors the number of neighbors to consider for downstream analyses.'
 #' @return A VISION object
 #' @rdname VISION-class
 #' @export
@@ -78,7 +80,7 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                                         "znorm_rows_then_columns",
                                         "rank_norm_columns"),
                     sig_score_method=c("naive", "weighted_avg"),
-                    pool="auto", cellsPerPartition=10, name=NULL,
+                    pool="auto", cellsPerPartition=10, name=NULL, num_neighbors = NULL, 
                     latentSpace = NULL, latentTrajectory = NULL, pools=list()) {
 
             .Object <- new("Vision")
@@ -224,10 +226,16 @@ setMethod("Vision", signature(data = "matrixORSparse"),
             .Object@sig_score_method <- match.arg(sig_score_method)
             .Object@perm_wPCA <- perm_wPCA
 
-            valid_projections <- c("tSNE10", "tSNE30", "ICA", "ISOMap", "RBFPCA")
+            valid_projections <- c("tSNE10", "tSNE30", "ICA", "ISOMap", "RBFPCA", "UMAP")
             check <- sapply(projection_methods, function(x) x %in% valid_projections)
             if (! all(check)) {
-                stop("Bad value in 'projection_methods'. Please choose from tSNE10, tSNE30, ICA, ISOMap, or RBFPCA.")
+                stop("Bad value in 'projection_methods'. Please choose from tSNE10, tSNE30, ICA, ISOMap, UMAP, or RBFPCA.")
+            }
+            if ("UMAP" %in% projection_methods){
+              if (!requireNamespace("uwot", quietly = TRUE)){
+                  stop("Package \"uwot\" needed to run UMAP.  Please install it using:\n\n   devtools::install_github(\"jlmelville/uwot\")\n\n",
+                       call. = FALSE)
+              }
             }
             if(length(projection_methods) == 0){
                 projection_methods <- character()
@@ -321,6 +329,12 @@ setMethod("Vision", signature(data = "matrixORSparse"),
             }
 
             .Object@pools <- pools
+
+            if (!is.null(num_neighbors)) {
+                .Object@num_neighbors = num_neighbors
+            } else {
+                .Object@num_neighbors = round((sqrt(ncol(.Object@exprData))))
+            }
 
             return(.Object)
     }
@@ -582,10 +596,6 @@ setMethod("addProjection", signature(object = "Vision"),
 
     if (!SAME_SIZE || !SAME_NAMES){
         stop("Supplied coordinates must have rowlabels that match sample/cell names")
-    }
-
-    if (dim(coordinates)[2] != 2){
-        stop("Projection must have exactly 2 components")
     }
 
     object@inputProjections[[name]] <- coordinates

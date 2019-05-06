@@ -7,7 +7,8 @@ global_status.main_vis = "clusters"; // Selected from 4 options on top
 */
 
 // Determine the projected coordinates
-global_status.plotted_projection = "";
+global_status.plotted_projectionX = [null, null];  // [Name of projection dataframe, Name of column]
+global_status.plotted_projectionY = [null, null];
 global_status.plotted_trajectory = "";
 
 // Indicate whether or not we have pooled data
@@ -29,8 +30,8 @@ global_status.selection_name = "Selection"; // For plot legends
 
 var global_data = {};
 
-global_data.sig_projection_coordinates = {};
-global_data.pca_projection_coordinates = {};
+global_data.sig_projection_coordinatesX = {};
+global_data.sig_projection_coordinatesY = {};
 global_data.tree_projection_coordinates = {};
 global_data.plotted_values = {}; // Holds gene expression, signature scores/ranks, etc...
 global_data.sig_info = {};  // Holds the information for the last plotted signature
@@ -82,20 +83,6 @@ function set_global_status(update){
     lower_left_content.setLoadingStatus(true);
     upper_left_content.setLoadingStatus(true);
 
-    // Just get all the PC's using one call
-    if('main_vis' in update && get_global_status('main_vis') === 'pcannotator' &&
-        _.isEmpty(global_data.pca_projection_coordinates))
-    {
-        var pc_promise = api.pc.coordinates()
-            .then(function(projection){
-                global_data.pca_projection_coordinates = projection;
-            });
-
-        all_promises.push(pc_promise);
-        right_content_promises.push(pc_promise);
-        lower_left_content_promises.push(pc_promise);
-    }
-
     if(('plotted_trajectory' in update && get_global_status('main_vis') === 'tree') ||
        ('main_vis' in update && get_global_status('main_vis') === 'tree')
     ){
@@ -110,14 +97,31 @@ function set_global_status(update){
         upper_left_content_promises.push(proj_promise);
     }
 
-    if('plotted_projection' in update || 'main_vis' in update){
+    if('plotted_projectionX' in update || 'main_vis' in update){
         if( get_global_status('main_vis') === 'clusters' ||
             get_global_status('main_vis') === 'pcannotator'){
 
-            var proj_key = get_global_status('plotted_projection');
-            var proj_promise = api.projections.coordinates(proj_key)
+            var proj_key = get_global_status('plotted_projectionX');
+            var proj_promise = api.projections.coordinates(proj_key[0], proj_key[1])
                 .then(function(projection){
-                    global_data.sig_projection_coordinates = projection;
+                    global_data.sig_projection_coordinatesX = projection;
+                });
+
+            all_promises.push(proj_promise);
+            right_content_promises.push(proj_promise);
+            upper_left_content_promises.push(proj_promise);
+
+        }
+    }
+
+    if('plotted_projectionY' in update || 'main_vis' in update){
+        if( get_global_status('main_vis') === 'clusters' ||
+            get_global_status('main_vis') === 'pcannotator'){
+
+            var proj_key = get_global_status('plotted_projectionY');
+            var proj_promise = api.projections.coordinates(proj_key[0], proj_key[1])
+                .then(function(projection){
+                    global_data.sig_projection_coordinatesY = projection;
                 });
 
             all_promises.push(proj_promise);

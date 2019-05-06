@@ -5,6 +5,7 @@
 html {
     height: 100%;
     width: 100%;
+    overflow: hidden; /* suppresses scrolllbar for off-screen hidden elements */
 }
 
 body {
@@ -61,6 +62,7 @@ body {
     display: flex;
     flex-direction: row;
     align-items: stretch;
+    min-height: 0;
 }
 
 #left-content{

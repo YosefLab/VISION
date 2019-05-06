@@ -13,8 +13,9 @@ clusterCells <- function(object) {
     n_workers <- getOption("mc.cores")
     n_workers <- if (is.null(n_workers)) 2 else n_workers
 
+    K <- min(object@num_neighbors, 30)
     kn <- ball_tree_knn(res,
-                        min(round(sqrt(nrow(res))), 30),
+                        K,
                         n_workers)
 
     cl <- louvainCluster(kn, res)
@@ -67,7 +68,8 @@ poolCells <- function(object,
                                               cellsPerPartition = object@cellsPerPartition,
                                               filterInput = object@projection_genes,
                                               filterThreshold = object@threshold,
-                                              latentSpace = object@latentSpace)
+                                              latentSpace = object@latentSpace, 
+                                              K = object@num_neighbors)
 
         object@pools <- pools
     }
@@ -302,12 +304,23 @@ generateProjections <- function(object) {
   projections <- generateProjectionsInner(object@exprData,
                                      object@latentSpace,
                                      projection_genes = object@projection_genes,
-                                     projection_methods = object@projection_methods)
+                                     projection_methods = object@projection_methods, 
+                                     K = object@num_neighbors)
 
   # Add inputProjections
   for (proj in names(object@inputProjections)){
       projections[[proj]] <- object@inputProjections[[proj]]
   }
+
+  # Make sure all projections have column names
+  n <- names(projections)
+  projections <- lapply(setNames(n, n), function(pname){
+      proj <- projections[[pname]]
+      if (is.null(colnames(proj))){
+          colnames(proj) <- paste0(pname, "-", seq_len(ncol(proj)))
+      }
+      return(proj)
+  })
 
   object@Projections <- projections
 
@@ -337,7 +350,8 @@ analyzeLocalCorrelations <- function(object, signatureBackground = NULL) {
                                 object@latentSpace,
                                 object@sigScores,
                                 object@metaData,
-                                signatureBackground)
+                                signatureBackground,
+                                object@num_neighbors)
 
   message("Clustering signatures...\n")
   sigClusters <- clusterSignatures(object@sigScores,
@@ -521,30 +535,24 @@ calculatePearsonCorr <- function(object){
 
   computedSigMatrix <- cbind(sigMatrix, numericMeta)
 
-  pearsonCorr <- matrix(
-      0,
-      nrow = ncol(computedSigMatrix),
-      ncol = ncol(latentSpace),
-      dimnames = list(
-          colnames(computedSigMatrix),
-          colnames(latentSpace)
-      )
-  )
+  pearsonCorr <- pbmclapply(seq_len(ncol(computedSigMatrix)), function(i) {
+      ss <- computedSigMatrix[, i];
 
-  pbmclapply(seq_len(ncol(computedSigMatrix)), function(i) {
-      for (j in seq_len(ncol(latentSpace))) {
-           ss <- computedSigMatrix[, i];
-           pc <- latentSpace[, j];
+      ls_col_cor <- apply(latentSpace, 2, function(pc){
            suppressWarnings({
                pc_result <- cor.test(ss, pc)
            })
-           if (is.na(pc_result$estimate)) {  # happens is std dev is 0 for a sig
-               pearsonCorr[i, j] <- 0
+           if (is.na(pc_result$estimate)) {  # happens i std dev is 0 for a sig
+               return(0)
            } else {
-               pearsonCorr[i, j] <- pc_result$estimate
+               return(pc_result$estimate)
            }
-      }
-  }, mc.cores = 1)
+      })
+      return(ls_col_cor)
+  })
+
+  pearsonCorr <- do.call(rbind, pearsonCorr)
+  rownames(pearsonCorr) <- colnames(computedSigMatrix)
 
   pcaAnnotData <- PCAnnotatorData(pearsonCorr = pearsonCorr)
   object@PCAnnotatorData <- pcaAnnotData

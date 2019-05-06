@@ -177,6 +177,18 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         warning("Package 'gzmem' not installed:\n    For faster network communication install gzmem with command: \n    > devtools::install_github(\"hrbrmstr/gzmem\")")
     }
 
+    # Make sure all projections have column names
+    projections <- object@Projections
+    n <- names(projections)
+    projections <- lapply(setNames(n, n), function(pname){
+        proj <- projections[[pname]]
+        if (is.null(colnames(proj))){
+            colnames(proj) <- paste0(pname, "-", seq_len(ncol(proj)))
+        }
+        return(proj)
+    })
+    object@Projections <- projections
+
     # Load the static file whitelist
     whitelist_file <- system.file("html_output/whitelist.txt",
                                   package = "VISION")
@@ -262,14 +274,17 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         out <- toJSON(cls, auto_unbox=TRUE)
         return(out)
       }) %>%
-      get("/Projections/(?<proj_name1>.*)/coordinates", function(req, res, err) {
+      get("/Projections/(?<proj_name1>.*)/coordinates/(?<proj_col1>.*)", function(req, res, err) {
         proj <- URLdecode(req$params$proj_name1)
-        out <- coordinatesToJSON(object@Projections[[proj]])
+        col <- URLdecode(req$params$proj_col1)
+
+        coords <- object@Projections[[proj]][, col, drop = FALSE]
+        out <- coordinatesToJSON(coords)
         compressJSONResponse(out, res, req)
       }) %>%
       get("/Projections/list", function(req, res, err) {
-        proj_names <- names(object@Projections)
-        proj_names <- sort(proj_names, decreasing=TRUE) # hack to make tsne on top
+        proj_names <- lapply(object@Projections, colnames)
+        proj_names <- proj_names[order(names(proj_names), decreasing = TRUE)] # hack to make tsne on top
         out <- toJSON(proj_names)
         return(out)
       }) %>%
@@ -327,13 +342,6 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
                                   object@TrajectoryConsistencyScores@FDR,
                                   sigs)
         return(out)
-      }) %>%
-      get("/PCA/Coordinates", function(req, res, err) {
-
-        pc <- object@latentSpace
-        out <- coordinatesToJSON(pc)
-        compressJSONResponse(out, res, req)
-
       }) %>%
       get("/PearsonCorr/Normal", function(req, res, err) {
 
