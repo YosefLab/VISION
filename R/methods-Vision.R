@@ -526,6 +526,9 @@ setMethod("analyze", signature(object="Vision"),
     # Populates @sigScores
     object <- calcSignatureScores(object)
 
+    # Populates @SigGeneImportance
+    object <- evalSigGeneImportance(object)
+
     signatureBackground <- calculateSignatureBackground(object, num = 3000)
 
     # Populates @SigConsistencyScores

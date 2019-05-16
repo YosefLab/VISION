@@ -234,6 +234,77 @@ calcSignatureScores <- function(object,
     return(object)
 }
 
+
+#' calculate gene-signature importance
+#'
+#' For each signature, the contribution of each gene to the signature score
+#' is evaluated by calculating the covariance between signature scores and expression
+#' The correlation of genes with a negative sign in the signature are inverted.
+#'
+#' @importFrom pbmcapply pbmclapply
+#' @importFrom matrixStats colSds
+#' @importFrom matrixStats rowSds
+#'
+#' @param object the VISION object
+#' @return the VISION object, with SigGeneImportance slot populated
+evalSigGeneImportance <- function(object){
+
+    message("Evaluating signature-gene importance...\n")
+
+    sigScores <- object@sigScores
+
+    if (length(sigScores) <= 1){
+        stop(
+            sprintf("Signature scores have not yet been computed.  `calcSignatureScores` must be run before running `evalSigGeneImportance`")
+            )
+    }
+
+    normExpr <- getNormalizedCopy(object@exprData, object@sig_norm_method)
+
+    # Center each column of sigScores first
+
+    mu <- colMeans(sigScores)
+
+    sigScores <- t(sigScores)
+    sigScores <- (sigScores - mu)
+    sigScores <- t(sigScores)
+
+    # Center each row of normExpr
+    mu <- rowMeans(normExpr)
+
+    normExpr <- (normExpr - mu)
+
+    # Compute Covariances
+    sigData <- object@sigData
+
+    sigGene <- function(signame) {
+        sigdata <- sigData[[signame]]
+
+        genes <- sigdata@sigDict
+
+        sigvals <- sigScores[, signame]
+
+        geneIndices <- match(names(genes), rownames(normExpr))
+
+        corr <- sigGeneInner(sigvals, normExpr, geneIndices)
+
+        names(corr) <- names(genes)
+
+        corr <- corr * genes
+
+        return(corr)
+    }
+
+    sigs <- colnames(sigScores)
+    res <- pbmclapply(setNames(sigs, sigs), sigGene)
+
+    object@SigGeneImportance <- res
+
+
+    return(object)
+}
+
+
 #' Computes the latent space of the expression matrix using PCA
 #'
 #' @param object the VISION object for which compute the latent space

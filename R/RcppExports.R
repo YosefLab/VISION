@@ -41,3 +41,7 @@ multMat <- function(X, Y) {
     .Call('_VISION_multMat', PACKAGE = 'VISION', X, Y)
 }
 
+sigGeneInner <- function(sigScores, exp, geneIndices) {
+    .Call('_VISION_sigGeneInner', PACKAGE = 'VISION', sigScores, exp, geneIndices)
+}
+

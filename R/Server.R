@@ -28,13 +28,20 @@ ServerSigProjMatrix <- function(zscores, pvals, proj_labels, sig_labels) {
 #' Converts Signature object to JSON
 #' @importFrom jsonlite toJSON
 #' @param sig Signature object
+#' @param geneImportance named numeric vector with gene correlations
 #' @return JSON formatted Signature object.
-signatureToJSON <- function(sig) {
+signatureToJSON <- function(sig, geneImportance) {
 
     # Pass in a Signature object from an R Object to be converted into a JSON object
-    sig@sigDict <- as.list(sig@sigDict)
+    out <- list()
 
-    json <- toJSON(sig, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
+    out$sigDict <- as.list(sig@sigDict)
+    out$name <- sig@name
+    out$source <- sig@source
+    out$metaData <- sig@metaData
+    out$geneImportance <- as.list(geneImportance)
+
+    json <- toJSON(out, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
     return(json)
 
 }
@@ -239,7 +246,14 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         out <- "Signature does not exist!"
         if (name %in% names(signatures)) {
           sig <- signatures[[name]]
-          out <- signatureToJSON(sig)
+
+          if (.hasSlot(object, "SigGeneImportance")) {
+              geneImportance <- object@SigGeneImportance[[name]]
+          } else {
+              geneImportance <- sig@sigDict * 0
+          }
+
+          out <- signatureToJSON(sig, geneImportance)
         }
         return(out)
       }) %>%
