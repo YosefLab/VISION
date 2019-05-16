@@ -400,7 +400,7 @@ clipBottom <- function(x, mi) {
 #'          weights: matrix, cells X neighbors
 #'              Corresponding weights to nearest neighbors
 setMethod("computeKNNWeights", signature(object = "matrix"),
-    function(object, K = round(sqrt(ncol(object)))) {
+    function(object, K = round(sqrt(nrow(object)))) {
 
         print(K)
         n_workers <- getOption("mc.cores")
