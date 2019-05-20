@@ -155,7 +155,7 @@
     </div>
 
     <pre class="usage"><span class='fu'>generateProjectionsInner</span>(<span class='no'>expr</span>, <span class='no'>latentSpace</span>, <span class='kw'>projection_genes</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>projection_methods</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
+  <span class='kw'>projection_methods</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>K</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/Round'>round</a></span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/MathFun'>sqrt</a></span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/nrow'>ncol</a></span>(<span class='no'>expr</span>))))</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -175,6 +175,10 @@
     <tr>
       <th>projection_methods</th>
       <td><p>character vector of projection methods to use</p></td>
+    </tr>
+    <tr>
+      <th>K</th>
+      <td><p>Number of neighbors to use in projections.</p></td>
     </tr>
     </table>
     

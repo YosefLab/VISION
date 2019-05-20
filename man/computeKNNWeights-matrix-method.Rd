@@ -11,7 +11,7 @@
 \arguments{
 \item{object}{matrix to use for KNN}
 
-\item{K}{number of neighbors to compute this for}
+\item{K}{Number of neighbors to consider.}
 }
 \value{
 a list of two items:

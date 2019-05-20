@@ -167,8 +167,8 @@ expression data, meta-data, and dimensionality reductions if they exist already<
   <span class='kw'>sig_norm_method</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"znorm_columns"</span>, <span class='st'>"none"</span>, <span class='st'>"znorm_rows"</span>,
   <span class='st'>"znorm_rows_then_columns"</span>, <span class='st'>"rank_norm_columns"</span>),
   <span class='kw'>sig_score_method</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"naive"</span>, <span class='st'>"weighted_avg"</span>), <span class='kw'>pool</span> <span class='kw'>=</span> <span class='st'>"auto"</span>,
-  <span class='kw'>cellsPerPartition</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>latentSpace</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>latentTrajectory</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>pools</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/list'>list</a></span>())
+  <span class='kw'>cellsPerPartition</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>num_neighbors</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>latentSpace</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>latentTrajectory</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>pools</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/list'>list</a></span>())
 
 <span class='co'># S4 method for data.frame</span>
 <span class='fu'>Vision</span>(<span class='no'>data</span>, <span class='no'>...</span>)
@@ -249,6 +249,7 @@ number of PCs when running PCA.  If FALSE (default), retain the top 30.</p></td>
 <li><p>ICA</p></li>
 <li><p>ISOMap</p></li>
 <li><p>RBFPCA</p></li>
+<li><p>UMAP</p></li>
 </ul><p>By default will perform tSNE and PCA on the data.</p></td>
     </tr>
     <tr>
@@ -276,6 +277,10 @@ pooling if there are more than 15000 cells.</p></td>
     <tr>
       <th>name</th>
       <td><p>a name for the sample - shown on the output report</p></td>
+    </tr>
+    <tr>
+      <th>num_neighbors</th>
+      <td><p>the number of neighbors to consider for downstream analyses.'</p></td>
     </tr>
     <tr>
       <th>latentSpace</th>
