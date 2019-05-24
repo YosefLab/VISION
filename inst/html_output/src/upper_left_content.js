@@ -995,9 +995,6 @@ Gene_Select.prototype.render_recent_genes = function()
 }
 
 
-// START YANAY
-
-
 
 function DE_Select()
 {
@@ -1013,214 +1010,213 @@ DE_Select.prototype.init = function()
     var numSelect = $('#num');
     var denomSelect = $('#denom');
     var submit_de = $('#submit_de');
-    var denomDiv = $('#denom_div');
-    var numDiv = $('#num_div');
 
     var clusters = get_global_data("cluster_variables");
-    var cluster_names = get_global_data("clusters");
 
-    _.each(clusters, (name, i) => {
+    numControl.append(
+        $('<option>', {
+            value: "current",
+            text: "Current Selection"
+        }));
+
+    numControl.append(
+        $('<option>', {
+            value: "saved_selection",
+            text: "Saved Selections"
+        }));
+
+    denomControl.append(
+        $('<option>', {
+            value: "remainder",
+            text: "Remainder"
+        }));
+
+    denomControl.append(
+        $('<option>', {
+            value: "saved_selection",
+            text: "Saved Selections"
+        }));
+
+    _.each(clusters, name => {
       numControl.append(
           $('<option>', {
-              value: i,
-              text: name
+              value: name,
+              text: name,
           }));
       denomControl.append(
           $('<option>', {
-              value: i,
-              text: name
+              value: name,
+              text: name,
           }));
     });
 
 
-    function addClusters(select, cluster) {
-      var cluster_vals = get_global_data("meta_levels")[cluster];
-      var data = Array.from(new Set(Object.values(cluster_vals)));
-
-      _.each(data, (name, i) => {
-        select.append(
-            $('<option>', {
-                value: name,
-                text: name
-            }));
-      });
-
-      select.chosen({
+    numSelect.chosen({
         'width': '150px',
         'max_shown_results': 1000,
-      }).on('change', function () {
-        if (select === numSelect) {
-          set_global_status({
-            'de_num_type':"meta",
-            'de_num_subtype':cluster,
-            'de_num':$(this).val()
-          });
-        }
-        else {
-          set_global_status({
-            'de_denom_type':"meta",
-            'de_denom_subtype':cluster,
-            'de_denom':$(this).val()
-          });
-        }
-      });
+        'placeholder_text_single': 'N/A',
+        'disable_search': true,
+    });
+
+    numSelect
+        .prop('disabled', true)
+        .trigger('chosen:updated')
+
+    denomSelect.chosen({
+        'width': '150px',
+        'max_shown_results': 1000,
+        'placeholder_text_single': 'N/A',
+        'disable_search': true,
+    });
+
+    denomSelect
+        .prop('disabled', true)
+        .trigger('chosen:updated')
+
+    function addClusters(select, cluster) {
+        var cluster_vals = get_global_data("meta_levels")[cluster];
+        var data = Array.from(new Set(Object.values(cluster_vals)));
+
+        _.each(data, (name, i) => {
+            select.append(
+                $('<option>', {
+                    value: name,
+                    text: name
+                }));
+        });
+
+        select.trigger('chosen:updated')
     }
 
-
-
+    compute_button_state = function(){
+        if (
+            (numSelect.children().length == 0 && numControl.val() !== 'current') ||
+            (denomSelect.children().length == 0 && denomControl.val() !== 'remainder')
+        ){
+                submit_de.prop('disabled', true)
+        } else {
+                submit_de.prop('disabled', false)
+        }
+    }
 
     async function addSelections(select) {
 
-      var selections_promise = api.cells.listSelections().then(data => {
-
-            if (select === numSelect) {
-              select.append(
-                $('<option>', {
-                    value: "Current",
-                    text: "Current Selection"
-                }));
-
-                set_global_status({'de_num':"Current"});
-            } else {
-              select.append(
-                $('<option>', {
-                    value: "Remainder",
-                    text: "Remainder"
-                }));
-                set_global_status({'de_denom':"Remainder"});
-            }
+        var selections_promise = api.cells.listSelections().then(data => {
 
             _.each(data, (name, i) => {
-              select.append(
-                  $('<option>', {
-                      value: name,
-                      text: name
-                  }));
+                select.append(
+                    $('<option>', {
+                        value: name,
+                        text: name
+                    }));
             });
 
-            select.chosen({
-              'width': '150px',
-              'max_shown_results': 1000,
-            }).on('change', function () {
-
-              if (select === numSelect) {
-                if ($(this).val() == "Current") {
-                  set_global_status({"de_num_type":"selection", "de_num":"current"})
-                } else {
-                  set_global_status({
-                    "de_num_type":"saved_selection",
-                    'de_num':$(this).val()
-                  });
-                }
-              }
-              else {
-                set_global_status({
-                  'de_denom':$(this).val(),
-                  'de_denom_type':"saved_selection"
-                });
-              }
-
-            });
+            if (data.length === 0){
+                select.prop('disabled', true)
+            }
+            select.trigger('chosen:updated')
+            compute_button_state()
 
         });
-
 
       }
 
     submit_de.on('click', function () {
 
+        upper_left_content.setLoadingStatus(true, 0);
 
-      upper_left_content.setLoadingStatus(true);
-      if (!get_global_status('de_num_type')) {
-        set_global_status({"de_num_type":"selection"});
-      }
+        var type_n, group_num;
+        var type_d, group_denom;
 
-      if (!get_global_status('de_denom_type')) {
-        set_global_status({"de_denom_type":"saved_selection", "de_denom":"Remainder"});
+        var subtype_n = ""
+        var subtype_d = ""
 
-      }
+        if (numControl.val() === 'current') {
+            type_n = 'selection';
+            group_num = get_global_status("selected_cell");
+        } else if (numControl.val() == 'saved_selection') {
+            type_n = 'saved_selection';
+            group_num = numSelect.val();
+        } else {
+            type_n = 'meta';
+            subtype_n = numControl.val();
+            group_num = numSelect.val();
+        }
 
+        if (denomControl.val() == 'remainder') {
+            type_d = 'remainder';
+            group_denom = '';
+        } else if (denomControl.val() == 'saved_selection') {
+            type_d = 'saved_selection';
+            group_denom = denomSelect.val();
+        } else {
+            type_d = 'meta';
+            subtype_d = denomControl.val();
+            group_denom = denomSelect.val();
+        }
 
-      if (get_global_status('de_num_type') === "selection") {
-        set_global_status({"de_num":get_global_status("selected_cell")});
-      }
+        api.de(
+            type_n, subtype_n, group_num,
+            type_d, subtype_d, group_denom
+        ).then(data => {
+            set_global_status({"de":data})
+        });
 
-      if (!get_global_status("de_num_subtype")) {
-        var num_subtype = "";
-      } else {
-        var num_subtype = get_global_status("de_num_subtype");
-      }
-
-      if (!get_global_status("de_denom_subtype")) {
-        var denom_subtype = "";
-      } else {
-        var denom_subtype = get_global_status("de_denom_subtype");
-      }
-
-      api.de(get_global_status('de_num_type'), num_subtype, get_global_status('de_num'), get_global_status('de_denom_type'), denom_subtype, get_global_status('de_denom')).then(data => {
-        set_global_status({"de":data})
-      });
     });
 
 
-
     numControl.chosen({
-      'width': '150px',
-      'max_shown_results': 1000,
+        'width': '150px',
+        'max_shown_results': 1000,
+        'disable_search': true,
     }).on('change', function () {
-      set_global_status({
-        'de_num_control':$(this).val()
-      });
 
-      numDiv.empty();
-      numDiv.append('<select id="num" class="form-control"></select>');
-      numSelect = $('#num');
+        numSelect = $('#num');
+        numSelect.children().remove()
 
-      if ($(this).val() === "selections") {
-        // add selection values
-        addSelections(numSelect);
-        set_global_status({"de_num_type":"saved_selection"})
+        var val = $(this).val();
 
-
-
-      }  else {
-        // genotype
-        addClusters(numSelect, clusters[$(this).val()])
-        set_global_status({"de_num_type":"meta"})
-      }
+        if (val === "current"){
+            numSelect.prop('disabled', true)
+            numSelect.trigger('chosen:updated')
+        } else if (val === "saved_selection") {
+            // add selection values
+            numSelect.prop('disabled', false)
+            addSelections(numSelect);
+        }  else {
+            // genotype
+            numSelect.prop('disabled', false)
+            addClusters(numSelect, val)
+        }
+        compute_button_state()
     });
 
 
     denomControl.chosen({
-      'width': '150px',
-      'max_shown_results': 1000,
+        'width': '150px',
+        'max_shown_results': 1000,
+        'disable_search': true,
     }).on('change', function () {
-      set_global_status({
-        'de_denom_control':$(this).val()
-      });
 
-      denomDiv.empty();
-      denomDiv.append('<select id="denom" class="form-control"></select>')
-      denomSelect = $('#denom');
-      if ($(this).val() === "selections") {
-        // add selection values
-        addSelections(denomSelect);
-        set_global_status({"de_denom_type":"saved_selection", "de_denom":"Remainder"});
+        denomSelect = $('#denom');
+        denomSelect.children().remove()
 
-      } else {
-        // cluster
-        addClusters(denomSelect, clusters[$(this).val()])
-        set_global_status({"de_denom_type":"meta"})
-      }
+        var val = $(this).val();
+
+        if (val === "current"){
+            denomSelect.prop('disabled', true)
+            denomSelect.trigger('chosen:updated')
+        } else if (val === "saved_selection") {
+            // add selection values
+            denomSelect.prop('disabled', false)
+            addSelections(denomSelect);
+        } else {
+            // cluster
+            denomSelect.prop('disabled', false)
+            addClusters(denomSelect, val)
+        }
+        compute_button_state()
     });
-
-
-addSelections(numSelect)
-addSelections(denomSelect)
-
-
-
-
 }
 
 DE_Select.prototype.update = function(updates)
@@ -1234,7 +1230,7 @@ DE_Select.prototype.update = function(updates)
 DE_Select.prototype.render_de = function()
 {
 
-    var genes = get_global_status('de')["genes"]
+    var genes = get_global_status('de')["gene"]
     var pvals = get_global_status('de')["pval"]
     var stats = get_global_status('de')["stat"]
     var logFCs = get_global_status('de')["logFC"]
@@ -1263,22 +1259,9 @@ DE_Select.prototype.render_de = function()
 
 
     $('#de_head').show();
-    $('#de_table').DataTable({"pageLength":10, "destroy":true, "scrollY":125, "order":[[2, "desc"]]});
+    $('#de_table').DataTable({"pageLength":10, "destroy":true, "scrollY":125, "order":[[3, "desc"]]});
     upper_left_content.setLoadingStatus(false);
 }
-
-
-// END YANAY
-
-
-
-
-
-
-
-
-
-
 
 
 Signature_Table.prototype.doneTyping = function()

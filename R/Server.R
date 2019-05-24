@@ -412,65 +412,69 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
       }) %>%
       post("/DE/", function(req, res, err) {
-        # Yanay
         # Params
         body <- fromJSON(req$body)
-        
+
+        exprData <- object@exprData
+
         type_n <- body$type_n
         type_d <- body$type_d
-        
+
         subtype_n <- body$subtype_n
         subtype_d <- body$subtype_d
-        
+
         group_num <- body$group_num
         group_denom <- body$group_denom
-      
-    
-        if (type_n == "saved_selection") {
-          group_num <- object@selections[[group_num]]
-        } else if (type_n == "selection") {
-          group_num <- unlist(strsplit(group_num, ","))
+
+        if (type_n == "current") {
+            cells_num <- unlist(strsplit(group_num, ","))
+        } else if (type_n == "saved_selection") {
+            cells_num <- object@selections[[group_num]]
         } else if (type_n == "meta") {
-          group_num <- rownames(object@metaData)[which(object@metaData[[subtype_n]] == group_num)]
+            cells_num <- rownames(object@metaData)[
+                which(object@metaData[[subtype_n]] == group_num)
+                ]
         } else {
-          print("ERROR! Num type unrecognized: " +type_n)
+            print("ERROR! Num type unrecognized: " + type_n)
         }
-       
-        if (group_denom == "Remainder") {
-          group_denom <- colnames(vis@exprData)[! (colnames(vis@exprData) %in% group_num)]
-        } else if(type_d == "saved_selection") {
-          group_denom <- object@selections[[group_denom]]
+
+        if (type_d == "remainder") {
+            cells_denom <- setdiff(colnames(exprData), cells_num)
+        } else if (type_d == "saved_selection") {
+            cells_denom <- object@selections[[group_denom]]
         } else if (type_d == "meta") {
-          group_denom <- rownames(object@metaData)[which(object@metaData[[subtype_d]] == group_denom)]
+            cells_denom <- rownames(object@metaData)[
+                which(object@metaData[[subtype_d]] == group_denom)
+                ]
         } else {
-          print("ERROR! Denom type unrecognized: " + type_d)
+            print("ERROR! Denom type unrecognized: " + type_d)
         }
-       
-    
-        # Subset the object
-        subset <- t(object@exprData[, union(group_denom, group_num)])
-        ranks <- colRanks(subset, preserveShape = TRUE, ties.method="average")
-        cluster_ii <- cluster_ii <- match(group_num, rownames(subset))
-        
-        out <- matrix_wilcox(ranks=ranks, cluster_ii=cluster_ii, check_ties = FALSE)
-        
-        out$pval <- p.adjust(out$pval, method="fdr")
-        out$stat <- pmax(out$stat, 1 - out$stat)
-        out$genes <- colnames(subset)
-        
-        numMean = rowMeans(object@exprData[,group_num])
-        denomMean = rowMeans(object@exprData[,group_denom])
-        bias = 1 / sqrt(length(group_num) * length(group_denom))
-        
-        out$logFC <- log2((numMean + bias) / (denomMean + bias))
-        
+
+
+        cluster_num <- match(cells_num, colnames(exprData))
+        cluster_denom <- match(cells_denom, colnames(exprData))
+
+        out <- matrix_wilcox_cpp(exprData, cluster_num, cluster_denom)
+
+        out$pval <- p.adjust(out$pval, method = "fdr")
+        out$stat <- pmax(out$AUC, 1 - out$AUC)
+
+        numMean <- rowMeans(exprData[, cluster_num])
+        denomMean <- rowMeans(exprData[, cluster_denom])
+        bias <- 1 / sqrt(length(cluster_num) * length(cluster_denom))
+
+        out$logFC <- log2( (numMean + bias) / (denomMean + bias) )
+
+        out <- out[, c("gene", "logFC", "stat", "pval"), drop = FALSE]
+        out <- as.list(out)
+
         result <- toJSON(
           out,
-          force = TRUE, pretty = TRUE, auto_unbox = TRUE
+          force = TRUE, pretty = TRUE, auto_unbox = TRUE, use_signif = TRUE
         )
-        
+
         compressJSONResponse(result, res, req)
-        
+
       }) %>%
       get("/Clusters/list", function(req, res, err) {
         cluster_vars <- names(object@ClusterSigScores)
@@ -495,7 +499,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         out <- list()
         metaData <- object@metaData
         for (cluster_variable in names(object@ClusterSigScores)) {
-          out[[cluster_variable]] <- unique(metaData[[cluster_variable]])
+          out[[cluster_variable]] <- levels(metaData[[cluster_variable]])
         }
         
         result <- toJSON(
