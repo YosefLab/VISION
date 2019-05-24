@@ -98,9 +98,13 @@ var detect_browser_scrollbar_width = (function()
  * loadingFun(false) // stop loading
  *
  */
-function createLoadingFunction(node){
+function createLoadingFunction(node, timeoutlen){
     var timer = -1;
     var loadingDiv;
+
+    if (timeoutlen === undefined){
+        timeoutlen = 1000
+    }
 
     var loadFun = function(loadState){
 
@@ -119,7 +123,7 @@ function createLoadingFunction(node){
                     });
                     img.appendTo(loadingDiv);
                     $(node).parent().append(loadingDiv);
-                }, 1000);
+                }, timeoutlen);
             }
         } else {
             if(timer !== -1){

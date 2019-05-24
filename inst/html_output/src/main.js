@@ -381,4 +381,10 @@ window.onload = function()
         set_global_status(update)
     });
 
+    // Pre-cache loading spinner
+    var img = $('<img />', {
+        src: 'css/loading.svg',
+        alt: 'loading-spinner'
+    });
+
 };
