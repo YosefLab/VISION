@@ -4,6 +4,11 @@
     padding: 10px 10px 10px 10px;
 }
 
+#upper-left-content .label {
+    font-size: 0.9em;
+    font-weight: bold;
+}
+
 .upper-left-section-content {
     flex-grow: 1;
     display: flex;
@@ -216,6 +221,34 @@ table.collapsible.collapsed tr:first-child > td:first-child > .sig-row-label::be
     color: white;
     cursor: pointer;
 }
+
+#de-table > .controls {
+    display: flex;
+    flex-direction: row;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    justify-content: space-around;
+    align-items: center;
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+
+#de-table > .controls > div {
+    display: flex;
+    flex-direction: column;
+}
+
+#de-table > .controls select,
+#de-table > .controls .chosen-container {
+    margin-top: 5px;
+}
+
+#de-table > #de-results {
+    flex-grow: 1;
+    flex-shrink: 0;
+}
+
+
 
 /* Stying for d3 tooltips on the scatter */
 .d3-tip {

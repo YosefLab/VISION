@@ -138,50 +138,39 @@
                     </div>
 
                     <div class="tab-pane" id="de-table" role="tabpanel" aria-labelledby="de-table-tab">
-                      <div class="row">
-                        <div class="col-md-4">
+                      <div class="controls">
+                          <div>
+                              <div class="label">Numerator</div>
+                              <select id="num_control" class="form-control"></select>
+                              <select id="num" class="form-control"></select>
+                          </div>
 
-                          <select id="num_control" class="form-control">
-                            <option value="selections">Selections</option>
+                          <div>
+                              <div class="label">Denominator</div>
+                              <select id="denom_control" class="form-control"></select>
+                              <select id="denom" class="form-control"></select>
+                          </div>
 
-                          </select>
-                        </div>
-
-                        <div class="col-md-4">
-                          <select id="denom_control" class="form-control">
-                            <option value="selections">Selections</option>
-
-                          </select>
-                        </div>
+                          <div>
+                              <div class="label" style="height: 1em"></div>
+                              <button type="button" class="btn btn-default btn-outline-primary" id="submit_de" class="form-control">Calculate DE</button>
+                          </div>
                       </div>
 
-                      <div class="row">
-                        <div class="col-md-4" id="num_div">
-                          <select id="num" class="form-control"></select>
-                        </div>
-                        <div class="col-md-4" id="denom_div">
-                          <select id="denom" class="form-control"></select>
-                        </div>
-                        <div class="col-md-4 text-center">
-                          <button type="button" class="btn btn-default btn-outline-primary" id="submit_de" class="form-control">Calculate DE</button>
-                        </div>
-                      </div>
                       <div id='de-results'>
-                        <table id="de_table" class="compact stripe hover">
-                          <thead id="de_head" style="display:none">
-                            <tr>
-                              <th>Gene</th>
-                              <th>logFC</th>
-                              <th>AUC</th>
-                              <th>FDR</th>
-                            </tr>
-                          </thead>
-                          <tbody id="de_body">
-
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
+                          <table id="de_table" class="compact stripe hover">
+                              <thead id="de_head" style="display:none">
+                                  <tr>
+                                      <th>Gene</th>
+                                      <th>logFC</th>
+                                      <th>AUC</th>
+                                      <th>FDR</th>
+                                  </tr>
+                              </thead>
+                              <tbody id="de_body"></tbody>
+                          </table>
+                      </div> <!-- End #de-results -->
+                  </div> <!-- End #de-table -->
                 </div>
             </div> <!-- End of upper-left-content -->
             <div id="lower-left-content">
