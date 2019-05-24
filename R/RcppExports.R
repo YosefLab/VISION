@@ -41,3 +41,7 @@ multMat <- function(X, Y) {
     .Call('_VISION_multMat', PACKAGE = 'VISION', X, Y)
 }
 
+wilcox_subset <- function(vals, indicesA, indicesB) {
+    .Call('_VISION_wilcox_subset', PACKAGE = 'VISION', vals, indicesA, indicesB)
+}
+

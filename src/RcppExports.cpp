@@ -130,6 +130,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// wilcox_subset
+List wilcox_subset(NumericVector vals, NumericVector indicesA, NumericVector indicesB);
+RcppExport SEXP _VISION_wilcox_subset(SEXP valsSEXP, SEXP indicesASEXP, SEXP indicesBSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type vals(valsSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type indicesA(indicesASEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type indicesB(indicesBSEXP);
+    rcpp_result_gen = Rcpp::wrap(wilcox_subset(vals, indicesA, indicesB));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_VISION_geary", (DL_FUNC) &_VISION_geary, 2},
@@ -142,6 +155,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_VISION_load_in_knn", (DL_FUNC) &_VISION_load_in_knn, 2},
     {"_VISION_point_mult", (DL_FUNC) &_VISION_point_mult, 2},
     {"_VISION_multMat", (DL_FUNC) &_VISION_multMat, 2},
+    {"_VISION_wilcox_subset", (DL_FUNC) &_VISION_wilcox_subset, 3},
     {NULL, NULL, 0}
 };
 
