@@ -250,6 +250,7 @@ matrix_wilcox_cpp <- function(data, cluster_num, cluster_denom) {
 
     res$pval <- pnorm(res$Z) * 2
     res$pval[res$pval > 1] <- 1 # Can happen due to continuity correction
+    res$pval[is.na(res$pval)] <- 1 # Can happen when no expression in either group
 
     return(res)
 }
