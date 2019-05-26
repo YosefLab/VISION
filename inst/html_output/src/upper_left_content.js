@@ -999,19 +999,59 @@ Gene_Select.prototype.render_recent_genes = function()
 function DE_Select()
 {
     //this.recent_genes = [];
+    this.dom_node = document.getElementById("de-table");
+    this.filterSig = $(this.dom_node).find('#sig_filt_input')
+    this.numControl = $(this.dom_node).find('#num_control');
+    this.denomControl = $(this.dom_node).find('#denom_control');
+    this.numSelect = $(this.dom_node).find('#num');
+    this.denomSelect = $(this.dom_node).find('#denom');
+    this.submit_de = $(this.dom_node).find('#submit_de');
+    this.de_error = $(this.dom_node).find('#de-error');
+    this.de_results = $(this.dom_node).find('#de-results');
+    this.de_table = $(this.dom_node).find('#de-table');
 }
 
 DE_Select.prototype.init = function()
 {
 
+    var self = this;
 
-    var numControl = $('#num_control');
-    var denomControl = $('#denom_control');
-    var numSelect = $('#num');
-    var denomSelect = $('#denom');
-    var submit_de = $('#submit_de');
+    var numControl = this.numControl;
+    var denomControl = this.denomControl;
+    var numSelect = this.numSelect;
+    var denomSelect = this.denomSelect;
+    var submit_de = this.submit_de;
+    var de_error = this.de_error;
+    var de_results = this.de_results;
 
     var clusters = get_global_data("cluster_variables");
+
+    this.setLoadingStatus = createLoadingFunction(this.dom_node);
+
+    this.de_table.DataTable(
+        {
+            'columns': [
+                {'title': 'Gene'},
+                {'title': 'logFC'},
+                {'title': 'AUC'},
+                {'title': 'FDR'},
+            ],
+            "pageLength": 10,
+            "scrollY": 125,
+            "order": [[3, "asc"]]
+        }
+    );
+
+    this.de_table.on('click', "tr", function() {
+        var gene = $(this).find("td:first").text()
+        set_global_status({
+                    'plotted_item_type': 'gene',
+                    'plotted_item': gene
+                })
+        //Plotly.restyle("scatter-div", {selectedpoints: [null]});
+    });
+
+
 
     numControl.append(
         $('<option>', {
@@ -1088,17 +1128,6 @@ DE_Select.prototype.init = function()
         select.trigger('chosen:updated')
     }
 
-    compute_button_state = function(){
-        if (
-            (numSelect.children().length == 0 && numControl.val() !== 'current') ||
-            (denomSelect.children().length == 0 && denomControl.val() !== 'remainder')
-        ){
-                submit_de.prop('disabled', true)
-        } else {
-                submit_de.prop('disabled', false)
-        }
-    }
-
     async function addSelections(select) {
 
         var selections_promise = api.cells.listSelections().then(data => {
@@ -1115,7 +1144,6 @@ DE_Select.prototype.init = function()
                 select.prop('disabled', true)
             }
             select.trigger('chosen:updated')
-            compute_button_state()
 
         });
 
@@ -1123,7 +1151,7 @@ DE_Select.prototype.init = function()
 
     submit_de.on('click', function () {
 
-        upper_left_content.setLoadingStatus(true, 0);
+        de_error.hide();
 
         var type_n, group_num;
         var type_d, group_denom;
@@ -1132,11 +1160,23 @@ DE_Select.prototype.init = function()
         var subtype_d = ""
 
         if (numControl.val() === 'current') {
-            type_n = 'selection';
+            type_n = 'current';
             group_num = get_global_status("selected_cell");
+            if (group_num.length === 0){
+                de_error.html("No cells currently selected<br>Make a selection using the lasso tool on the scatter plot");
+                de_error.show();
+                de_results.hide();
+                return;
+            }
         } else if (numControl.val() == 'saved_selection') {
             type_n = 'saved_selection';
             group_num = numSelect.val();
+            if (group_num === null){
+                de_error.html("No saved selections<br>To save a selection, first select cells on the scatter plot using the lasso tool.  Then click 'Save' above the plot and give the selection a name.");
+                de_error.show();
+                de_results.hide();
+                return;
+            }
         } else {
             type_n = 'meta';
             subtype_n = numControl.val();
@@ -1149,11 +1189,19 @@ DE_Select.prototype.init = function()
         } else if (denomControl.val() == 'saved_selection') {
             type_d = 'saved_selection';
             group_denom = denomSelect.val();
+            if (group_denom === null){
+                de_error.html("No saved selections<br>To save a selection, first select cells on the scatter plot using the lasso tool.  Then click 'Save' above the plot and give the selection a name.");
+                de_error.show();
+                de_results.hide();
+                return;
+            }
         } else {
             type_d = 'meta';
             subtype_d = denomControl.val();
             group_denom = denomSelect.val();
         }
+
+        self.setLoadingStatus(true, 0);
 
         api.de(
             type_n, subtype_n, group_num,
@@ -1170,6 +1218,8 @@ DE_Select.prototype.init = function()
         'max_shown_results': 1000,
         'disable_search': true,
     }).on('change', function () {
+
+        de_error.hide();
 
         numSelect = $('#num');
         numSelect.children().remove()
@@ -1188,7 +1238,6 @@ DE_Select.prototype.init = function()
             numSelect.prop('disabled', false)
             addClusters(numSelect, val)
         }
-        compute_button_state()
     });
 
 
@@ -1198,12 +1247,14 @@ DE_Select.prototype.init = function()
         'disable_search': true,
     }).on('change', function () {
 
+        de_error.hide();
+
         denomSelect = $('#denom');
         denomSelect.children().remove()
 
         var val = $(this).val();
 
-        if (val === "current"){
+        if (val === "remainder"){
             denomSelect.prop('disabled', true)
             denomSelect.trigger('chosen:updated')
         } else if (val === "saved_selection") {
@@ -1215,7 +1266,6 @@ DE_Select.prototype.init = function()
             denomSelect.prop('disabled', false)
             addClusters(denomSelect, val)
         }
-        compute_button_state()
     });
 }
 
@@ -1224,6 +1274,10 @@ DE_Select.prototype.update = function(updates)
     // Update the 'recent-genes' list
     if('de' in updates){
       this.render_de();
+    }
+
+    if ('selected_cell' in updates || 'selection_type' in updates){
+        this.de_error.hide();
     }
 }
 
@@ -1235,32 +1289,16 @@ DE_Select.prototype.render_de = function()
     var stats = get_global_status('de')["stat"]
     var logFCs = get_global_status('de')["logFC"]
 
-    var de_results_table = $('#de_body')
-    $('#de_table').dataTable().fnDestroy()
-    de_results_table.children().remove()
+    var dataSet = _.map(genes, (g, i) => [genes[i], logFCs[i], stats[i], pvals[i]]);
 
-    genes.forEach(function (gene, i) {
-        var stat = stats[i];
-        var pval = pvals[i];
-        var logFC = logFCs[i];
-        var row = "<tr><td>" + gene + "</td><td>" + logFC.toString() + "</td><td>" + stat.toString() + "</td><td>" + pval.toString() + "</td></tr>";
-        de_results_table.append(row);
+    this.de_results.show();
 
-    })
+    this.de_table.DataTable().clear()
+        .rows.add(dataSet)
+        .columns.adjust() // Needed or else column headers don't align
+        .draw()
 
-    de_results_table.on('click', "tr", function() {
-        var gene = $(this).find("td:first").text()
-        set_global_status({
-                    'plotted_item_type': 'gene',
-                    'plotted_item': gene
-                })
-        //Plotly.restyle("scatter-div", {selectedpoints: [null]});
-    });
-
-
-    $('#de_head').show();
-    $('#de_table').DataTable({"pageLength":10, "destroy":true, "scrollY":125, "order":[[3, "desc"]]});
-    upper_left_content.setLoadingStatus(false);
+    this.setLoadingStatus(false);
 }
 
 

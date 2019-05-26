@@ -118,7 +118,7 @@ div.label-row > span:first-child, div.label-row > div:first-child{
     font-size: 1.2em;
 }
 
-.loading {
+.loading > *:not(.loadingSpinner){
     -webkit-filter: grayscale(100%) blur(5px);
     filter: grayscale(100%) blur(5px);
 }

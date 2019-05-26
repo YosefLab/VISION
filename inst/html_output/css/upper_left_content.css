@@ -248,6 +248,13 @@ table.collapsible.collapsed tr:first-child > td:first-child > .sig-row-label::be
     flex-shrink: 0;
 }
 
+#de-table #de-error {
+    margin: 30px 20px 30px 20px;
+    text-align: center;
+    line-height: 2em;
+    color: crimson;
+}
+
 
 
 /* Stying for d3 tooltips on the scatter */

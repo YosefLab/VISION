@@ -97,16 +97,20 @@ var detect_browser_scrollbar_width = (function()
  * loadingFun(true) // start loading after delay
  * loadingFun(false) // stop loading
  *
+ * Can also specify a timeout length (default 1000 ms)
+ *
+ * loadingFun(true, 0) // starts loading immediately
+ *
  */
-function createLoadingFunction(node, timeoutlen){
+function createLoadingFunction(node){
     var timer = -1;
     var loadingDiv;
 
-    if (timeoutlen === undefined){
-        timeoutlen = 1000
-    }
+    var loadFun = function(loadState, timeoutlen){
 
-    var loadFun = function(loadState){
+        if (timeoutlen === undefined){
+            timeoutlen = 1000
+        }
 
         if(loadState === true){
             if(timer === -1){ // don't overwrite an existing timer and lose it
@@ -122,7 +126,7 @@ function createLoadingFunction(node, timeoutlen){
                         alt: 'loading-spinner'
                     });
                     img.appendTo(loadingDiv);
-                    $(node).parent().append(loadingDiv);
+                    $(node).prepend(loadingDiv);
                 }, timeoutlen);
             }
         } else {
