@@ -37,5 +37,5 @@ More information can be found throughout the rest of the tutorials on the [Docum
 
 ## Sample Output
 
-[Click here for an example output report of ~9,000 CBMC's sequenced with the CITE-seq protocol](http://s124.millennium.berkeley.edu:7703/)
+[Click here for an example output report of ~9,000 CBMC's sequenced with the CITE-seq protocol](http://s133.millennium.berkeley.edu:7703/)
 ![Screenshot of report](https://github.com/YosefLab/VISION/blob/master/docs/example_report.png)
