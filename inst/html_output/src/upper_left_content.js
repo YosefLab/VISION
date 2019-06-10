@@ -78,6 +78,15 @@ Upper_Left_Content.prototype.init = function()
         metaTableTab.click()
     }
 
+    $(this.dom_node).find('.nav-link')
+        .on('click', function(e) {
+            if (e.target.id === "genes-table-tab" || e.target.id === "de-table-tab") {
+                clust_dropdown.prop('disabled', true)
+            } else {
+                clust_dropdown.prop('disabled', false)
+            }
+        });
+
 
     return $.when(sig_table_promise, pc_table_promise, gene_select_promise, de_select_promise);
 
@@ -1002,13 +1011,14 @@ function DE_Select()
     this.dom_node = document.getElementById("de-table");
     this.filterSig = $(this.dom_node).find('#sig_filt_input')
     this.numControl = $(this.dom_node).find('#num_control');
-    this.denomControl = $(this.dom_node).find('#denom_control');
     this.numSelect = $(this.dom_node).find('#num');
     this.denomSelect = $(this.dom_node).find('#denom');
     this.submit_de = $(this.dom_node).find('#submit_de');
+    this.new_de = $(this.dom_node).find('#new_de');
     this.de_error = $(this.dom_node).find('#de-error');
     this.de_results = $(this.dom_node).find('#de-results');
-    this.de_table = $(this.dom_node).find('#de-table');
+    this.de_table = $(this.dom_node).find('#de-results-table');
+    this.de_controls = $(this.dom_node).find('.controls');
 }
 
 DE_Select.prototype.init = function()
@@ -1017,12 +1027,13 @@ DE_Select.prototype.init = function()
     var self = this;
 
     var numControl = this.numControl;
-    var denomControl = this.denomControl;
     var numSelect = this.numSelect;
     var denomSelect = this.denomSelect;
     var submit_de = this.submit_de;
+    var new_de = this.new_de;
     var de_error = this.de_error;
     var de_results = this.de_results;
+    var de_controls = this.de_controls;
 
     var clusters = get_global_data("cluster_variables");
 
@@ -1036,9 +1047,11 @@ DE_Select.prototype.init = function()
                 {'title': 'AUC'},
                 {'title': 'FDR'},
             ],
-            "pageLength": 10,
-            "scrollY": 125,
-            "order": [[3, "asc"]]
+            "pageLength": 500,
+            "scrollY": '15vh',
+            "order": [[3, "asc"]],
+            "pagingType": "simple_numbers",
+            "dom": "ftip"
         }
     );
 
@@ -1055,35 +1068,12 @@ DE_Select.prototype.init = function()
 
     numControl.append(
         $('<option>', {
-            value: "current",
-            text: "Current Selection"
-        }));
-
-    numControl.append(
-        $('<option>', {
-            value: "saved_selection",
-            text: "Saved Selections"
-        }));
-
-    denomControl.append(
-        $('<option>', {
-            value: "remainder",
-            text: "Remainder"
-        }));
-
-    denomControl.append(
-        $('<option>', {
-            value: "saved_selection",
-            text: "Saved Selections"
+            value: "selections",
+            text: "Selections"
         }));
 
     _.each(clusters, name => {
       numControl.append(
-          $('<option>', {
-              value: name,
-              text: name,
-          }));
-      denomControl.append(
           $('<option>', {
               value: name,
               text: name,
@@ -1098,10 +1088,6 @@ DE_Select.prototype.init = function()
         'disable_search': true,
     });
 
-    numSelect
-        .prop('disabled', true)
-        .trigger('chosen:updated')
-
     denomSelect.chosen({
         'width': '150px',
         'max_shown_results': 1000,
@@ -1109,13 +1095,18 @@ DE_Select.prototype.init = function()
         'disable_search': true,
     });
 
-    denomSelect
-        .prop('disabled', true)
-        .trigger('chosen:updated')
-
-    function addClusters(select, cluster) {
+    function addClusters(select, cluster, num) {
         var cluster_vals = get_global_data("meta_levels")[cluster];
         var data = Array.from(new Set(Object.values(cluster_vals)));
+
+        if (!num) {
+            select.append(
+                $('<option>', {
+                    value: 'remainder',
+                    text: 'Remainder',
+                })
+            );
+        }
 
         _.each(data, (name, i) => {
             select.append(
@@ -1128,9 +1119,25 @@ DE_Select.prototype.init = function()
         select.trigger('chosen:updated')
     }
 
-    async function addSelections(select) {
+    async function addSelections(select, num) {
 
         var selections_promise = api.cells.listSelections().then(data => {
+
+            if (num) {
+                select.append(
+                    $('<option>', {
+                        value: 'current',
+                        text: 'Current',
+                    })
+                );
+            } else {
+                select.append(
+                    $('<option>', {
+                        value: 'remainder',
+                        text: 'Remainder',
+                    })
+                );
+            }
 
             _.each(data, (name, i) => {
                 select.append(
@@ -1140,9 +1147,6 @@ DE_Select.prototype.init = function()
                     }));
             });
 
-            if (data.length === 0){
-                select.prop('disabled', true)
-            }
             select.trigger('chosen:updated')
 
         });
@@ -1159,47 +1163,50 @@ DE_Select.prototype.init = function()
         var subtype_n = ""
         var subtype_d = ""
 
-        if (numControl.val() === 'current') {
-            type_n = 'current';
-            group_num = get_global_status("selected_cell");
-            if (group_num.length === 0){
-                de_error.html("No cells currently selected<br>Make a selection using the lasso tool on the scatter plot");
-                de_error.show();
-                de_results.hide();
-                return;
+        if (numControl.val() === 'selections') {
+
+            if(numSelect.val() === 'current') {
+                type_n = 'current';
+                group_num = get_global_status("selected_cell");
+                if (group_num.length === 0){
+                    de_error.html("No cells currently selected<br>Make a selection using the lasso tool on the scatter plot");
+                    de_error.show();
+                    return;
+                }
+            } else {
+
+                type_n = 'saved_selection';
+                group_num = numSelect.val();
+                if (group_num === null){
+                    de_error.html("No saved selections<br>To save a selection, first select cells on the scatter plot using the lasso tool.  Then click 'Save' above the plot and give the selection a name.");
+                    de_error.show();
+                    return;
+                }
             }
-        } else if (numControl.val() == 'saved_selection') {
-            type_n = 'saved_selection';
-            group_num = numSelect.val();
-            if (group_num === null){
-                de_error.html("No saved selections<br>To save a selection, first select cells on the scatter plot using the lasso tool.  Then click 'Save' above the plot and give the selection a name.");
-                de_error.show();
-                de_results.hide();
-                return;
-            }
+
         } else {
             type_n = 'meta';
             subtype_n = numControl.val();
             group_num = numSelect.val();
         }
 
-        if (denomControl.val() == 'remainder') {
+        if (denomSelect.val() == 'remainder') {
             type_d = 'remainder';
             group_denom = '';
-        } else if (denomControl.val() == 'saved_selection') {
+        } else if (numControl.val() === 'selections') {
             type_d = 'saved_selection';
             group_denom = denomSelect.val();
             if (group_denom === null){
                 de_error.html("No saved selections<br>To save a selection, first select cells on the scatter plot using the lasso tool.  Then click 'Save' above the plot and give the selection a name.");
                 de_error.show();
-                de_results.hide();
                 return;
             }
         } else {
             type_d = 'meta';
-            subtype_d = denomControl.val();
+            subtype_d = subtype_n;
             group_denom = denomSelect.val();
         }
+
 
         self.setLoadingStatus(true, 0);
 
@@ -1212,6 +1219,11 @@ DE_Select.prototype.init = function()
 
     });
 
+    new_de.on('click', function () {
+        de_results.hide()
+        de_controls.show()
+    })
+
 
     numControl.chosen({
         'width': '150px',
@@ -1221,59 +1233,37 @@ DE_Select.prototype.init = function()
 
         de_error.hide();
 
-        numSelect = $('#num');
+        var val = $(this).val();
+
+        numSelect = self.numSelect
         numSelect.children().remove()
 
-        var val = $(this).val();
-
-        if (val === "current"){
-            numSelect.prop('disabled', true)
-            numSelect.trigger('chosen:updated')
-        } else if (val === "saved_selection") {
-            // add selection values
-            numSelect.prop('disabled', false)
-            addSelections(numSelect);
-        }  else {
-            // genotype
-            numSelect.prop('disabled', false)
-            addClusters(numSelect, val)
-        }
-    });
-
-
-    denomControl.chosen({
-        'width': '150px',
-        'max_shown_results': 1000,
-        'disable_search': true,
-    }).on('change', function () {
-
-        de_error.hide();
-
-        denomSelect = $('#denom');
+        denomSelect = self.denomSelect
         denomSelect.children().remove()
 
-        var val = $(this).val();
-
-        if (val === "remainder"){
-            denomSelect.prop('disabled', true)
-            denomSelect.trigger('chosen:updated')
-        } else if (val === "saved_selection") {
+        if (val === "selections") {
             // add selection values
-            denomSelect.prop('disabled', false)
-            addSelections(denomSelect);
-        } else {
-            // cluster
-            denomSelect.prop('disabled', false)
-            addClusters(denomSelect, val)
+            addSelections(numSelect, true);
+            addSelections(denomSelect, false);
+        }  else {
+            // genotype
+            addClusters(numSelect, val, true)
+            addClusters(denomSelect, val, false)
         }
     });
+
+
+    addSelections(numSelect, true);
+    addSelections(denomSelect, false);
+
 }
 
 DE_Select.prototype.update = function(updates)
 {
     // Update the 'recent-genes' list
     if('de' in updates){
-      this.render_de();
+        this.de_controls.hide();
+        this.render_de();
     }
 
     if ('selected_cell' in updates || 'selection_type' in updates){
@@ -1297,6 +1287,15 @@ DE_Select.prototype.render_de = function()
         .rows.add(dataSet)
         .columns.adjust() // Needed or else column headers don't align
         .draw()
+
+    // Render the title
+    var group = this.numControl.find('option:selected').text()
+    var numText = this.numSelect.find('option:selected').text()
+    var denomText = this.denomSelect.find('option:selected').text()
+
+    var title = group + ": " + numText + " vs. " + denomText
+
+    $(this.de_results).find('#de-results-title').text(title)
 
     this.setLoadingStatus(false);
 }
