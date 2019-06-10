@@ -5,7 +5,8 @@ cache: packages
 
 r:
     - bioc-release
-    - bioc-devel
+    - devel
+    - oldrel
 
 sudo: false
 
