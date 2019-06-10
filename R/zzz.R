@@ -12,7 +12,6 @@
 #' @import Rcpp
 #' @importFrom Rcpp evalCpp sourceCpp
 #' @import methods
-#' @import jug
 #' @import loe
 #' @import stats
 #' @import Matrix
