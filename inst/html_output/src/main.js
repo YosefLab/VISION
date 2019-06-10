@@ -274,6 +274,8 @@ window.onload = function()
         global_status.ncells = info.ncells
         global_status.has_tree = info.has_tree
         global_status.has_sigs = info.has_sigs
+
+        global_data.clusters_unique = info.clusters
     })
 
     var cellClustersPromise = api.clusters.list()
@@ -281,6 +283,12 @@ window.onload = function()
             global_data.cluster_variables = data;
             global_status.cluster_var = global_data.cluster_variables[0];
         })
+
+    var allCellClustersPromise = api.clusters.meta_levels()
+        .then(function(data) {
+            global_data.meta_levels = data;
+        })
+
 
     var combinedPromise = $.when(sessionInfoPromise, cellClustersPromise)
         .then(function(){
@@ -296,7 +304,7 @@ window.onload = function()
 
 
     // When it's all done, run this
-    $.when(right_promise, lower_left_promise, combinedPromise)
+    $.when(right_promise, lower_left_promise, combinedPromise, allCellClustersPromise)
         .then(function(){
             var has_tree = get_global_status('has_tree')
             var update0 = {'main_vis': (has_tree ? 'tree': 'clusters')}
@@ -371,6 +379,12 @@ window.onload = function()
         update['selection_name'] = name;
 
         set_global_status(update)
+    });
+
+    // Pre-cache loading spinner
+    var img = $('<img />', {
+        src: 'css/loading.svg',
+        alt: 'loading-spinner'
     });
 
 };
