@@ -95,6 +95,7 @@ setMethod("Vision", signature(data = "matrixORSparse"),
             }
 
             rownames(data) <- toupper(rownames(data))
+            data <- data[ !duplicated(rownames(data)), , drop = FALSE]
             .Object@exprData <- data
 
             if (!is.null(unnormalizedData)){
