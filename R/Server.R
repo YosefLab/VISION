@@ -28,13 +28,20 @@ ServerSigProjMatrix <- function(zscores, pvals, proj_labels, sig_labels) {
 #' Converts Signature object to JSON
 #' @importFrom jsonlite toJSON
 #' @param sig Signature object
+#' @param geneImportance named numeric vector with gene correlations
 #' @return JSON formatted Signature object.
-signatureToJSON <- function(sig) {
+signatureToJSON <- function(sig, geneImportance) {
 
     # Pass in a Signature object from an R Object to be converted into a JSON object
-    sig@sigDict <- as.list(sig@sigDict)
+    out <- list()
 
-    json <- toJSON(sig, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
+    out$sigDict <- as.list(sig@sigDict)
+    out$name <- sig@name
+    out$source <- sig@source
+    out$metaData <- sig@metaData
+    out$geneImportance <- as.list(geneImportance)
+
+    json <- toJSON(out, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
     return(json)
 
 }
@@ -227,22 +234,6 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         }
     })
 
-    pr$handle("GET", "/Signature/Scores/<sig_name>",
-        function(req, res, sig_name) {
-
-      sigMatrix <- object@sigScores
-      name <- URLdecode(sig_name)
-      if (name %in% colnames(sigMatrix)) {
-          values <- sigMatrix[, name]
-          names <- rownames(sigMatrix)
-          res$body <- sigScoresToJSON(names, values)
-          compressJSONResponse(req, res)
-          return(res)
-      } else {
-          return("Signature does not exist!")
-      }
-    })
-
     pr$handle("GET", "/Signature/Meta/<sig_name>",
         function(req, res, sig_name) {
 
@@ -267,7 +258,14 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       out <- "Signature does not exist!"
       if (name %in% names(signatures)) {
         sig <- signatures[[name]]
-        out <- signatureToJSON(sig)
+
+          if (.hasSlot(object, "SigGeneImportance")) {
+              geneImportance <- object@SigGeneImportance[[name]]
+          } else {
+              geneImportance <- sig@sigDict * 0
+          }
+
+        out <- signatureToJSON(sig, geneImportance)
       }
       res$body <- out
       return(res)
@@ -396,6 +394,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
     pr$handle("GET", "/Tree/SigProjMatrix/Meta", function(req, res) {
 
         sigs <- colnames(object@metaData)
+<<<<<<< HEAD
         res$body <- sigProjMatrixToJSON(
             object@TrajectoryConsistencyScores@Consistency,
             object@TrajectoryConsistencyScores@FDR,
@@ -446,6 +445,44 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
     })
 
     pr$handle("GET", "/Expression/Genes/List", function(req, res) {
+=======
+        out <- sigProjMatrixToJSON(
+                                  object@TrajectoryConsistencyScores@Consistency,
+                                  object@TrajectoryConsistencyScores@FDR,
+                                  sigs)
+        return(out)
+      }) %>%
+      get("/PearsonCorr/Normal", function(req, res, err) {
+
+          pc <- object@PCAnnotatorData@pearsonCorr[, 1:10]
+          sigs <- rownames(pc)
+
+        return(pearsonCorrToJSON(pc, sigs))
+      }) %>%
+      get("/PearsonCorr/Meta", function(req, res, err) {
+
+          sigs <- colnames(object@metaData)
+          numericMeta <- vapply(sigs,
+                                function(x) is.numeric(object@metaData[[x]]),
+                                FUN.VALUE = TRUE)
+          sigs <- sigs[numericMeta]
+
+          pc <- object@PCAnnotatorData@pearsonCorr[, 1:10]
+
+        return(pearsonCorrToJSON(pc, sigs))
+      }) %>%
+      get("/PearsonCorr/list", function(req, res, err) {
+
+          pc <- object@PCAnnotatorData@pearsonCorr
+          pcnames <- seq(ncol(pc))[1:10]
+          result <- toJSON(
+                           pcnames,
+                           force=TRUE, pretty=TRUE
+                           )
+          return(result)
+      }) %>%
+      get("/Expression/Genes/List", function(req, res, err) {
+>>>>>>> 8da22a8
 
         if (hasUnnormalizedData(object)) {
             data <- object@unnormalizedData

@@ -13,8 +13,9 @@ clusterCells <- function(object) {
     n_workers <- getOption("mc.cores")
     n_workers <- if (is.null(n_workers)) 2 else n_workers
 
+    K <- min(object@num_neighbors, 30)
     kn <- ball_tree_knn(res,
-                        min(round(sqrt(nrow(res))), 30),
+                        K,
                         n_workers)
 
     cl <- louvainCluster(kn, res)
@@ -67,7 +68,8 @@ poolCells <- function(object,
                                               cellsPerPartition = object@cellsPerPartition,
                                               filterInput = object@projection_genes,
                                               filterThreshold = object@threshold,
-                                              latentSpace = object@latentSpace)
+                                              latentSpace = object@latentSpace, 
+                                              K = object@num_neighbors)
 
         object@pools <- pools
     }
@@ -232,6 +234,77 @@ calcSignatureScores <- function(object,
     return(object)
 }
 
+
+#' calculate gene-signature importance
+#'
+#' For each signature, the contribution of each gene to the signature score
+#' is evaluated by calculating the covariance between signature scores and expression
+#' The correlation of genes with a negative sign in the signature are inverted.
+#'
+#' @importFrom pbmcapply pbmclapply
+#' @importFrom matrixStats colSds
+#' @importFrom matrixStats rowSds
+#'
+#' @param object the VISION object
+#' @return the VISION object, with SigGeneImportance slot populated
+evalSigGeneImportance <- function(object){
+
+    message("Evaluating signature-gene importance...\n")
+
+    sigScores <- object@sigScores
+
+    if (length(sigScores) <= 1){
+        stop(
+            sprintf("Signature scores have not yet been computed.  `calcSignatureScores` must be run before running `evalSigGeneImportance`")
+            )
+    }
+
+    normExpr <- getNormalizedCopy(object@exprData, object@sig_norm_method)
+
+    # Center each column of sigScores first
+
+    mu <- colMeans(sigScores)
+
+    sigScores <- t(sigScores)
+    sigScores <- (sigScores - mu)
+    sigScores <- t(sigScores)
+
+    # Center each row of normExpr
+    mu <- rowMeans(normExpr)
+
+    normExpr <- (normExpr - mu)
+
+    # Compute Covariances
+    sigData <- object@sigData
+
+    sigGene <- function(signame) {
+        sigdata <- sigData[[signame]]
+
+        genes <- sigdata@sigDict
+
+        sigvals <- sigScores[, signame]
+
+        geneIndices <- match(names(genes), rownames(normExpr))
+
+        corr <- sigGeneInner(sigvals, normExpr, geneIndices)
+
+        names(corr) <- names(genes)
+
+        corr <- corr * genes
+
+        return(corr)
+    }
+
+    sigs <- colnames(sigScores)
+    res <- pbmclapply(setNames(sigs, sigs), sigGene)
+
+    object@SigGeneImportance <- res
+
+
+    return(object)
+}
+
+
 #' Computes the latent space of the expression matrix using PCA
 #'
 #' @param object the VISION object for which compute the latent space
@@ -302,7 +375,8 @@ generateProjections <- function(object) {
   projections <- generateProjectionsInner(object@exprData,
                                      object@latentSpace,
                                      projection_genes = object@projection_genes,
-                                     projection_methods = object@projection_methods)
+                                     projection_methods = object@projection_methods, 
+                                     K = object@num_neighbors)
 
   # Add inputProjections
   for (proj in names(object@inputProjections)){
@@ -347,7 +421,8 @@ analyzeLocalCorrelations <- function(object, signatureBackground = NULL) {
                                 object@latentSpace,
                                 object@sigScores,
                                 object@metaData,
-                                signatureBackground)
+                                signatureBackground,
+                                object@num_neighbors)
 
   message("Clustering signatures...\n")
   sigClusters <- clusterSignatures(object@sigScores,

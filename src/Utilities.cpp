@@ -27,3 +27,29 @@ NumericVector multMat(NumericMatrix X, NumericMatrix Y) {
 	return res;
 
 }
+
+// [[Rcpp::export]]
+NumericVector sigGeneInner(
+        const NumericVector& sigScores,
+        const NumericMatrix& exp,
+        const NumericVector& geneIndices) {
+
+    int n = geneIndices.size();
+    NumericVector corr(n);
+
+    int m = sigScores.size();
+
+    for (int i = 0; i < n; i++) {
+
+        double total = 0;
+        int k = geneIndices[i]-1;
+
+        for (int j = 0; j < m; j++) {
+            total += exp(k, j) * sigScores[j];
+        }
+
+        corr[i] = total / (m-1);
+    }
+
+    return corr;
+}

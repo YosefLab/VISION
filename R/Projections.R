@@ -25,8 +25,9 @@ registerMethods <- function(projection_methods, numCells) {
 #' @param latentSpace numeric matrix cells x components
 #' @param projection_genes character vector of gene names to use for projections
 #' @param projection_methods character vector of projection methods to use
+#' @param K Number of neighbors to use in projections.
 #' @return list of Projection objects
-generateProjectionsInner <- function(expr, latentSpace, projection_genes=NULL, projection_methods = NULL) {
+generateProjectionsInner <- function(expr, latentSpace, projection_genes=NULL, projection_methods = NULL, K = round(sqrt(ncol(expr)))) {
 
     NUM_CELLS <- nrow(latentSpace)
     methodList <- registerMethods(projection_methods, NUM_CELLS)
@@ -53,6 +54,9 @@ generateProjectionsInner <- function(expr, latentSpace, projection_genes=NULL, p
             exprData <- matLog2(exprData)
 
             res <- methodList[[method]](exprData)
+            projections[[method]] <- res
+        } else if (method == "UMAP") {
+            res <- methodList[[method]](t(latentSpace), K)
             projections[[method]] <- res
         } else { ## run on reduced data
             res <- methodList[[method]](t(latentSpace))
@@ -247,10 +251,11 @@ applySpectralEmbedding <- function(exprData) {
 #' Performs UMAP on data
 #'
 #' @param exprData Expression data, NUM_GENES x NUM_SAMPLES
-#'
+#' @param K Number of neighbors to use in UMAP projection.
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
-applyUMAP <- function(exprData) {
+applyUMAP <- function(exprData, K) {
 
+	print(requireNamespace('uwot'))
     if (!requireNamespace("uwot", quietly = TRUE)){
         stop("Package \"uwot\" needed to run UMAP.  Please install it using:\n\n   devtools::install_github(\"jlmelville/uwot\")\n\n",
             call. = FALSE)
@@ -260,7 +265,7 @@ applyUMAP <- function(exprData) {
     n_workers <- getOption("mc.cores")
     n_workers <- if (is.null(n_workers)) 2 else n_workers
 	res <- uwot::umap(
-        ndataT, n_neighbors = round(sqrt(ncol(exprData))),
+        ndataT, n_neighbors = K,
         n_threads = n_workers, ret_nn = T
     )
 	res <- res$embedding
@@ -388,7 +393,7 @@ clipBottom <- function(x, mi) {
 #' @importFrom Matrix sparseMatrix
 #' @importFrom matrixStats rowMaxs
 #' @param object matrix to use for KNN
-#' @param K number of neighbors to compute this for
+#' @param K Number of neighbors to consider.
 #' @return a list of two items:
 #'          indices: matrix, cells X neighbors
 #'              Each row specifies indices of nearest neighbors
@@ -397,6 +402,7 @@ clipBottom <- function(x, mi) {
 setMethod("computeKNNWeights", signature(object = "matrix"),
     function(object, K = round(sqrt(nrow(object)))) {
 
+        print(K)
         n_workers <- getOption("mc.cores")
         n_workers <- if (is.null(n_workers)) 2 else n_workers
 
@@ -405,6 +411,7 @@ setMethod("computeKNNWeights", signature(object = "matrix"),
         d <- k[[2]]
 
         sigma <- rowMaxs(d)
+        sigma[sigma == 0] <- 1.0  # Can happen if all neighbors at same point as cell
         sparse_weights <- exp(-1 * (d * d) / sigma ^ 2)
 
         # Normalize row sums = 1
