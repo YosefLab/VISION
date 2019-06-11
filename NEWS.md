@@ -1,3 +1,11 @@
+# VISION 1.1.0
+
+* Added differential expression testing to the output report
+    * Thanks to @Yanay1 (Yanay Rosen)
+* Added gene-signature importance calculation
+* More flexible projection plotting
+* Added UMAP as a projection method
+
 # VISION 1.0.1
 
 * Bugfixes related to caching in the output report

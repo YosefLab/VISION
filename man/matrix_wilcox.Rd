@@ -18,7 +18,7 @@ matrix_wilcox(ranks, cluster_ii, check_na = FALSE, check_ties = FALSE)
 \value{
 pval - numeric vector, pvalue for each column
 
-stat - numeric vector, test statistic (scaled AUC) for each column
+stat - numeric vector, test statistic (AUC) for each column
 }
 \description{
 Given indices in cluster_ii, compute the ranksums test
