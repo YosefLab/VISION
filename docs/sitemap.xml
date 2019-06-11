@@ -70,6 +70,9 @@
     <loc>https://yoseflab.github.io/VISION//reference/applySpectralEmbedding.html</loc>
   </url>
   <url>
+    <loc>https://yoseflab.github.io/VISION//reference/applyUMAP.html</loc>
+  </url>
+  <url>
     <loc>https://yoseflab.github.io/VISION//reference/applyWeightedPCA.html</loc>
   </url>
   <url>
@@ -149,6 +152,9 @@
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/createTrajectoryMetaData.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/evalSigGeneImportance.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/expressionToJSON.html</loc>

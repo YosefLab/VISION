@@ -4,10 +4,12 @@
 \alias{signatureToJSON}
 \title{Converts Signature object to JSON}
 \usage{
-signatureToJSON(sig)
+signatureToJSON(sig, geneImportance)
 }
 \arguments{
 \item{sig}{Signature object}
+
+\item{geneImportance}{named numeric vector with gene correlations}
 }
 \value{
 JSON formatted Signature object.

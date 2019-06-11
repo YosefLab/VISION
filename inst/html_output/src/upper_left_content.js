@@ -144,7 +144,7 @@ function Signature_Table()
     this.dom_node = document.getElementById("table-div-container");
     this.matrix = {}
     this.clusters = {}
-    this.sorted_column = 'Consistency'
+    this.sorted_column = 'Score'
     this.filterSig = $(this.dom_node).find('#sig_filt_input')
     this.is_filtering = false
     this.is_collapsed = {} // cluster -> boolean, holds whether a cluster is collapsed
@@ -498,16 +498,21 @@ Signature_Table.prototype.update = function(updates)
         var main_vis = get_global_status('main_vis');
         var cluster_var = get_global_status('cluster_var');
 
+        var fix_col_label = true
         if (main_vis == "clusters") {
             matrix_promise = api.clusters.sigProjMatrix(cluster_var, false);
         } else if (main_vis == "tree") {
             matrix_promise = api.tree.sigProjMatrix(false);
         } else {
             matrix_promise = api.filterGroup.pCorr(false);
+            fix_col_label = false
         }
 
         matrix_promise = matrix_promise
             .then(function(matrix) {
+                if (fix_col_label){
+                    matrix.proj_labels[0] = "Score";
+                }
                 self.matrix = matrix;
                 return true;
             });
@@ -610,6 +615,7 @@ Meta_Table.prototype.update = function(updates)
 
         matrix_promise = matrix_promise.then(
             function(matrix){
+                matrix.proj_labels[0] = "Score"
                 self.matrix = matrix
                 return true
             });
@@ -1399,11 +1405,6 @@ function tableClickFunction_clusters(row_key, col_key)
     update['plotted_item_type'] = item_type;
     update['plotted_item'] = row_key;
 
-    if (col_key === 'Consistency')
-    {
-        col_key = '' // This is used to indicate 'no cluster'
-    }
-
     set_global_status(update);
 }
 
@@ -1414,7 +1415,7 @@ function hoverRowCol(header_row, node, col){
 
 
     var hovered_cells;
-    if (col === 'Consistency'){
+    if (col === 'Score'){
         hovered_cells = [];
     } else {
         var clusters = get_global_data('clusters'); // clusters maps cell_id to cluster

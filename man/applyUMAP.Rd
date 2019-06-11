@@ -4,10 +4,12 @@
 \alias{applyUMAP}
 \title{Performs UMAP on data}
 \usage{
-applyUMAP(exprData)
+applyUMAP(exprData, K)
 }
 \arguments{
 \item{exprData}{Expression data, NUM_GENES x NUM_SAMPLES}
+
+\item{K}{Number of neighbors to use in UMAP projection.}
 }
 \value{
 Reduced data NUM_SAMPLES x NUM_COMPONENTS

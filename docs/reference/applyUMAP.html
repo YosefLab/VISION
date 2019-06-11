@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Pool cells into microclusters — applyMicroClustering • VISION</title>
+<title>Performs UMAP on data — applyUMAP • VISION</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -39,9 +39,9 @@
 
   <link href="../extra.css" rel="stylesheet">
   
-<meta property="og:title" content="Pool cells into microclusters — applyMicroClustering" />
+<meta property="og:title" content="Performs UMAP on data — applyUMAP" />
 
-<meta property="og:description" content="Merges similar transcriptional profiles into representative 'pools'" />
+<meta property="og:description" content="Performs UMAP on data" />
 
 <meta property="og:image" content="https://yoseflab.github.io/VISION/logo.png" />
 <meta name="twitter:card" content="summary" />
@@ -143,63 +143,35 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Pool cells into microclusters</h1>
-    <small class="dont-index">Source: <a href='https://github.com/yoseflab/VISION/blob/master/R/Microclusters.R'><code>R/Microclusters.R</code></a></small>
-    <div class="hidden name"><code>applyMicroClustering.Rd</code></div>
+    <h1>Performs UMAP on data</h1>
+    <small class="dont-index">Source: <a href='https://github.com/yoseflab/VISION/blob/master/R/Projections.R'><code>R/Projections.R</code></a></small>
+    <div class="hidden name"><code>applyUMAP.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Merges similar transcriptional profiles into representative 'pools'</p>
+    <p>Performs UMAP on data</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>applyMicroClustering</span>(<span class='no'>exprData</span>, <span class='kw'>cellsPerPartition</span> <span class='kw'>=</span> <span class='fl'>10</span>,
-  <span class='kw'>filterInput</span> <span class='kw'>=</span> <span class='st'>"fano"</span>, <span class='kw'>filterThreshold</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/Round'>round</a></span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/nrow'>ncol</a></span>(<span class='no'>exprData</span>) * <span class='fl'>0.05</span>),
-  <span class='kw'>latentSpace</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>K</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/Round'>round</a></span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/MathFun'>sqrt</a></span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/nrow'>ncol</a></span>(<span class='no'>exprData</span>))))</pre>
+    <pre class="usage"><span class='fu'>applyUMAP</span>(<span class='no'>exprData</span>, <span class='no'>K</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>exprData</th>
-      <td><p>the expression data matrix</p></td>
-    </tr>
-    <tr>
-      <th>cellsPerPartition</th>
-      <td><p>control over the target number of cells to put into each supercell</p></td>
-    </tr>
-    <tr>
-      <th>filterInput</th>
-      <td><p>name of filtering method ('threshold' or 'fano') or list of
-genes to use when computing projections.</p></td>
-    </tr>
-    <tr>
-      <th>filterThreshold</th>
-      <td><p>Threshold to apply when using the 'threshold' or 'fano' projection genes filter.
-If greater than 1, this specifies the number of cells in which a gene must be detected
-for it to be used when computing PCA. If less than 1, this instead specifies the proportion of cells needed</p></td>
-    </tr>
-    <tr>
-      <th>latentSpace</th>
-      <td><p>(Optional) Latent space to be used instead of PCA numeric matrix cells x components</p></td>
+      <td><p>Expression data, NUM_GENES x NUM_SAMPLES</p></td>
     </tr>
     <tr>
       <th>K</th>
-      <td><p>Number of neighbors to use for finding pools.</p></td>
+      <td><p>Number of neighbors to use in UMAP projection.</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>pooled cells - named list of vectors - cells in each supercell</p>
-    
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
-
-    <p>A latent space is computed for the expression data via PCA after
-filtering on genes (using parameters <code>filterInput</code> and <code>filterThreshold</code>).</p>
-<p>Alternately, a latent space can be supplied via the <code>latentSpace</code> argument</p>
-<p>Euclidean distance within the latent space is then used to create cell pools</p>
+    <p>Reduced data NUM_SAMPLES x NUM_COMPONENTS</p>
     
 
   </div>
@@ -209,8 +181,6 @@ filtering on genes (using parameters <code>filterInput</code> and <code>filterTh
       <li><a href="#arguments">Arguments</a></li>
       
       <li><a href="#value">Value</a></li>
-
-      <li><a href="#details">Details</a></li>
           </ul>
 
   </div>

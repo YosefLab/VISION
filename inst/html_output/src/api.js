@@ -137,7 +137,7 @@ var api = (function(){
 
     //Yanay
     output.de = function(type_n, subtype_n, group_num, type_d, subtype_d, group_denom) {
-        var query = "DE/"
+        var query = "DE"
 
         query = postProcess(query)
         return $.ajax(query, {
