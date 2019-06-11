@@ -176,6 +176,18 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         warning("Package 'gzmem' not installed:\n    For faster network communication install gzmem with command: \n    > devtools::install_github(\"hrbrmstr/gzmem\")")
     }
 
+    # Make sure all projections have column names
+    projections <- object@Projections
+    n <- names(projections)
+    projections <- lapply(setNames(n, n), function(pname){
+        proj <- projections[[pname]]
+        if (is.null(colnames(proj))){
+            colnames(proj) <- paste0(pname, "-", seq_len(ncol(proj)))
+        }
+        return(proj)
+    })
+    object@Projections <- projections
+
     # Load the static file whitelist
     whitelist_file <- system.file("html_output/whitelist.txt",
                                   package = "VISION")
@@ -299,12 +311,17 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         return(res)
     })
 
-    pr$handle("GET", "/Projections/<proj_name>/coordinates",
-        function(req, res, proj_name) {
+    pr$handle("GET", "/Projections/<proj_name>/coordinates/<proj_col>",
+        function(req, res, proj_name, proj_col) {
 
         proj <- URLdecode(proj_name)
-        res$body <- coordinatesToJSON(object@Projections[[proj]])
+        col <- URLdecode(proj_col)
+
+        coords <- object@Projections[[proj]][, col, drop = FALSE]
+
+        res$body <- coordinatesToJSON(coords)
         compressJSONResponse(req, res)
+
         return(res)
 
     })
@@ -312,8 +329,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
     pr$handle("GET", "/Projections/list",
         function(req, res) {
 
-        proj_names <- names(object@Projections)
-        proj_names <- sort(proj_names, decreasing = TRUE) # hack to make tsne on top
+        proj_names <- lapply(object@Projections, colnames)
+        proj_names <- proj_names[order(names(proj_names), decreasing = TRUE)] # hack to make tsne on top
         res$body <- toJSON(proj_names)
         return(res)
 
@@ -327,6 +344,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         } else {
             proj_names <- names(object@TrajectoryProjections)
         }
+
         res$body <- toJSON(proj_names)
         return(res)
     })

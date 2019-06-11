@@ -309,6 +309,16 @@ generateProjections <- function(object) {
       projections[[proj]] <- object@inputProjections[[proj]]
   }
 
+  # Make sure all projections have column names
+  n <- names(projections)
+  projections <- lapply(setNames(n, n), function(pname){
+      proj <- projections[[pname]]
+      if (is.null(colnames(proj))){
+          colnames(proj) <- paste0(pname, "-", seq_len(ncol(proj)))
+      }
+      return(proj)
+  })
+
   object@Projections <- projections
 
   message("")

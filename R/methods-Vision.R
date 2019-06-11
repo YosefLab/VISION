@@ -591,10 +591,6 @@ setMethod("addProjection", signature(object = "Vision"),
         stop("Supplied coordinates must have rowlabels that match sample/cell names")
     }
 
-    if (dim(coordinates)[2] != 2){
-        stop("Projection must have exactly 2 components")
-    }
-
     object@inputProjections[[name]] <- coordinates
 
     return(object)
