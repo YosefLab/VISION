@@ -8,6 +8,16 @@ html {
     overflow: hidden; /* suppresses scrolllbar for off-screen hidden elements */
 }
 
+/* 2.0 dpr */
+/* Hack for high-dpi laptops */
+@media
+(-webkit-min-device-pixel-ratio: 2.0),
+(min-resolution: 192dpi){
+    html {
+        zoom: 0.75;
+    }
+}
+
 body {
     height: 100%;
     width: 100%;
@@ -118,7 +128,7 @@ div.label-row > span:first-child, div.label-row > div:first-child{
     font-size: 1.2em;
 }
 
-.loading {
+.loading > *:not(.loadingSpinner){
     -webkit-filter: grayscale(100%) blur(5px);
     filter: grayscale(100%) blur(5px);
 }

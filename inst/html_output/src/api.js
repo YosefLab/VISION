@@ -123,10 +123,28 @@ var api = (function(){
         })
     }
 
+    output.clusters.meta_levels = function() {
+        var query = "Clusters/MetaLevels"
+        query = postProcess(query)
+        return $.ajax(query, {dataType: "json"}).then(x => x)
+    }
+
     output.clusters.list = function() {
         var query = "Clusters/list"
         query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
+    }
+
+    //Yanay
+    output.de = function(type_n, subtype_n, group_num, type_d, subtype_d, group_denom) {
+        var query = "DE/"
+
+        query = postProcess(query)
+        return $.ajax(query, {
+            type: "POST",
+            data: JSON.stringify({"type_n":type_n, "type_d":type_d, "subtype_n":subtype_n, "subtype_d":subtype_d,  "group_num":group_num, "group_denom":group_denom}),
+            dataType: "json"
+        }).then(x => x);
     }
 
     output.filterGroup = {}

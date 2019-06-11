@@ -394,22 +394,12 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
     pr$handle("GET", "/Tree/SigProjMatrix/Meta", function(req, res) {
 
         sigs <- colnames(object@metaData)
-<<<<<<< HEAD
         res$body <- sigProjMatrixToJSON(
             object@TrajectoryConsistencyScores@Consistency,
             object@TrajectoryConsistencyScores@FDR,
             sigs)
 
         return(res)
-    })
-
-    pr$handle("GET", "/PCA/Coordinates", function(req, res) {
-
-       pc <- object@latentSpace
-       res$body <- coordinatesToJSON(pc)
-       compressJSONResponse(req, res)
-       return(res)
-
     })
 
     pr$handle("GET", "/PearsonCorr/Normal", function(req, res) {
@@ -445,44 +435,6 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
     })
 
     pr$handle("GET", "/Expression/Genes/List", function(req, res) {
-=======
-        out <- sigProjMatrixToJSON(
-                                  object@TrajectoryConsistencyScores@Consistency,
-                                  object@TrajectoryConsistencyScores@FDR,
-                                  sigs)
-        return(out)
-      }) %>%
-      get("/PearsonCorr/Normal", function(req, res, err) {
-
-          pc <- object@PCAnnotatorData@pearsonCorr[, 1:10]
-          sigs <- rownames(pc)
-
-        return(pearsonCorrToJSON(pc, sigs))
-      }) %>%
-      get("/PearsonCorr/Meta", function(req, res, err) {
-
-          sigs <- colnames(object@metaData)
-          numericMeta <- vapply(sigs,
-                                function(x) is.numeric(object@metaData[[x]]),
-                                FUN.VALUE = TRUE)
-          sigs <- sigs[numericMeta]
-
-          pc <- object@PCAnnotatorData@pearsonCorr[, 1:10]
-
-        return(pearsonCorrToJSON(pc, sigs))
-      }) %>%
-      get("/PearsonCorr/list", function(req, res, err) {
-
-          pc <- object@PCAnnotatorData@pearsonCorr
-          pcnames <- seq(ncol(pc))[1:10]
-          result <- toJSON(
-                           pcnames,
-                           force=TRUE, pretty=TRUE
-                           )
-          return(result)
-      }) %>%
-      get("/Expression/Genes/List", function(req, res, err) {
->>>>>>> 8da22a8
 
         if (hasUnnormalizedData(object)) {
             data <- object@unnormalizedData
@@ -529,6 +481,74 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         return(res)
     })
 
+    pr$handle("POST", "/DE", function(req, res) {
+        # Params
+        body <- fromJSON(req$postBody)
+
+        exprData <- object@exprData
+
+        type_n <- body$type_n
+        type_d <- body$type_d
+
+        subtype_n <- body$subtype_n
+        subtype_d <- body$subtype_d
+
+        group_num <- body$group_num
+        group_denom <- body$group_denom
+
+        if (type_n == "current") {
+            cells_num <- unlist(strsplit(group_num, ","))
+        } else if (type_n == "saved_selection") {
+            cells_num <- object@selections[[group_num]]
+        } else if (type_n == "meta") {
+            cells_num <- rownames(object@metaData)[
+                which(object@metaData[[subtype_n]] == group_num)
+                ]
+        } else {
+            print("ERROR! Num type unrecognized: " + type_n)
+        }
+
+        if (type_d == "remainder") {
+            cells_denom <- setdiff(colnames(exprData), cells_num)
+        } else if (type_d == "saved_selection") {
+            cells_denom <- object@selections[[group_denom]]
+        } else if (type_d == "meta") {
+            cells_denom <- rownames(object@metaData)[
+                which(object@metaData[[subtype_d]] == group_denom)
+                ]
+        } else {
+            print("ERROR! Denom type unrecognized: " + type_d)
+        }
+
+
+        cluster_num <- match(cells_num, colnames(exprData))
+        cluster_denom <- match(cells_denom, colnames(exprData))
+
+        out <- matrix_wilcox_cpp(exprData, cluster_num, cluster_denom)
+
+        out$pval <- p.adjust(out$pval, method = "fdr")
+        out$stat <- pmax(out$AUC, 1 - out$AUC)
+
+        numMean <- rowMeans(exprData[, cluster_num])
+        denomMean <- rowMeans(exprData[, cluster_denom])
+        bias <- 1 / sqrt(length(cluster_num) * length(cluster_denom))
+
+        out$logFC <- log2( (numMean + bias) / (denomMean + bias) )
+
+        out <- out[, c("gene", "logFC", "stat", "pval"), drop = FALSE]
+        out <- as.list(out)
+
+        result <- toJSON(
+          out,
+          force = TRUE, pretty = TRUE, auto_unbox = TRUE, use_signif = TRUE
+        )
+
+        res$body <- result
+        compressJSONResponse(req, res)
+        return(res)
+
+    })
+
     pr$handle("GET", "/Clusters/<cluster_variable>/Cells",
         function(req, res, cluster_variable) {
 
@@ -545,7 +565,22 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             return("No Clusters!")
         }
     })
-
+      
+    pr$handle("GET", "/Clusters/MetaLevels", function(req, res) {
+        out <- list()
+        metaData <- object@metaData
+        for (cluster_variable in names(object@ClusterSigScores)) {
+            out[[cluster_variable]] <- levels(metaData[[cluster_variable]])
+        }
+        
+        res$body <- toJSON(
+            out,
+            force = TRUE, pretty = TRUE, auto_unbox = TRUE
+        )
+        compressJSONResponse(req, res)
+        return(res)
+    })
+      
     pr$handle("GET", "/Clusters/<cluster_variable>/SigProjMatrix/Normal",
         function(req, res, cluster_variable) {
 
