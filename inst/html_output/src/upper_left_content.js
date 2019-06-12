@@ -605,17 +605,21 @@ Meta_Table.prototype.update = function(updates)
         var main_vis = get_global_status('main_vis');
         var cluster_var = get_global_status('cluster_var');
 
+        var fix_col_label = true
         if (main_vis == "clusters") {
             matrix_promise = api.clusters.sigProjMatrix(cluster_var, true);
         } else if (main_vis === "tree") {
             matrix_promise = api.tree.sigProjMatrix(true);
         } else {
             matrix_promise = api.filterGroup.pCorr(true);
+            fix_col_label = false
         }
 
         matrix_promise = matrix_promise.then(
             function(matrix){
-                matrix.proj_labels[0] = "Score"
+                if (fix_col_label){
+                    matrix.proj_labels[0] = "Score";
+                }
                 self.matrix = matrix
                 return true
             });

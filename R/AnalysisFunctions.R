@@ -253,6 +253,11 @@ evalSigGeneImportance <- function(object){
 
     sigScores <- object@sigScores
 
+    if (length(object@sigData) == 0) {
+        object@SigGeneImportance <- list()
+        return(object)
+    }
+
     if (length(sigScores) <= 1){
         stop(
             sprintf("Signature scores have not yet been computed.  `calcSignatureScores` must be run before running `evalSigGeneImportance`")
