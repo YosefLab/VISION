@@ -5,7 +5,7 @@
 \title{Projects data into 2 dimensions using a variety of linear and non-linear methods.}
 \usage{
 generateProjectionsInner(expr, latentSpace, projection_genes = NULL,
-  projection_methods = NULL)
+  projection_methods = NULL, K = round(sqrt(ncol(expr))))
 }
 \arguments{
 \item{expr}{numeric matrix of gene expression}
@@ -15,6 +15,8 @@ generateProjectionsInner(expr, latentSpace, projection_genes = NULL,
 \item{projection_genes}{character vector of gene names to use for projections}
 
 \item{projection_methods}{character vector of projection methods to use}
+
+\item{K}{Number of neighbors to use in projections.}
 }
 \value{
 list of Projection objects

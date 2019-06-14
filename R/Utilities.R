@@ -150,7 +150,7 @@ ilog1p <- function(spmat) {
 #' @param check_na - whether or not to check for NA values (slows computation)
 #' @param check_ties - whether or not to check for ties in ranks (slows computation)
 #' @return pval - numeric vector, pvalue for each column
-#' @return stat - numeric vector, test statistic (scaled AUC) for each column
+#' @return stat - numeric vector, test statistic (AUC) for each column
 matrix_wilcox <- function(ranks, cluster_ii,
                           check_na = FALSE, check_ties = FALSE){
 
@@ -160,7 +160,7 @@ matrix_wilcox <- function(ranks, cluster_ii,
         stat <- numeric()
         return(list(pval = p, stat = stat))
     }
-
+    
     subset <- ranks[cluster_ii, , drop = FALSE]
 
     not_cluster_ii = setdiff(seq(nrow(ranks)), cluster_ii)
@@ -221,6 +221,40 @@ matrix_wilcox <- function(ranks, cluster_ii,
 
     return(list(pval = p, stat = AUC))
 }
+
+
+#' C++ wilcox rank-sums test
+#'
+#' Given indices in cluster_num, and cluster_denom, compute the ranksums test
+#' on every row for values in cluster_num vs cluster_denom.
+#'
+#' Ties are handled correctly but values are assumed to contain no NAs
+#'
+#' @importFrom parallel mclapply
+#' @param data matrix of values, each row representing a separate variable
+#' @param cluster_num numeric vector - indices denoting the group to be compared
+#' @param cluster_denum numeric vector - indices denoting the other group to be compared
+#' @return pval - numeric vector, pvalue for each row
+#' @return stat - numeric vector, test statistic (AUC) for each row
+matrix_wilcox_cpp <- function(data, cluster_num, cluster_denom) {
+
+    res <- mclapply(seq_len(nrow(data)), function(i) {
+        uz <- wilcox_subset(data[i, ], cluster_num, cluster_denom)
+        return(unlist(uz))
+    })
+
+    res <- as.data.frame(do.call(rbind, res))
+    res$gene <- rownames(data)
+
+    res$AUC <- res$U / (length(cluster_num) * length(cluster_denom))
+
+    res$pval <- pnorm(res$Z) * 2
+    res$pval[res$pval > 1] <- 1 # Can happen due to continuity correction
+    res$pval[is.na(res$pval)] <- 1 # Can happen when no expression in either group
+
+    return(res)
+}
+
 
 #' Perform 1vAll factor analysis given a factor matrix and group definition
 #'

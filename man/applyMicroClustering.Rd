@@ -6,7 +6,7 @@
 \usage{
 applyMicroClustering(exprData, cellsPerPartition = 10,
   filterInput = "fano", filterThreshold = round(ncol(exprData) * 0.05),
-  latentSpace = NULL)
+  latentSpace = NULL, K = round(sqrt(ncol(exprData))))
 }
 \arguments{
 \item{exprData}{the expression data matrix}
@@ -21,6 +21,8 @@ If greater than 1, this specifies the number of cells in which a gene must be de
 for it to be used when computing PCA. If less than 1, this instead specifies the proportion of cells needed}
 
 \item{latentSpace}{(Optional) Latent space to be used instead of PCA numeric matrix cells x components}
+
+\item{K}{Number of neighbors to use for finding pools.}
 }
 \value{
 pooled cells - named list of vectors - cells in each supercell

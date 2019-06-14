@@ -20,8 +20,8 @@ Vision(data, ...)
   sig_norm_method = c("znorm_columns", "none", "znorm_rows",
   "znorm_rows_then_columns", "rank_norm_columns"),
   sig_score_method = c("naive", "weighted_avg"), pool = "auto",
-  cellsPerPartition = 10, name = NULL, latentSpace = NULL,
-  latentTrajectory = NULL, pools = list())
+  cellsPerPartition = 10, name = NULL, num_neighbors = NULL,
+  latentSpace = NULL, latentTrajectory = NULL, pools = list())
 
 \S4method{Vision}{data.frame}(data, ...)
 
@@ -94,6 +94,8 @@ pooling if there are more than 15000 cells.}
 \item{cellsPerPartition}{the target number of cells to put into a supercell when pooling}
 
 \item{name}{a name for the sample - shown on the output report}
+
+\item{num_neighbors}{the number of neighbors to consider for downstream analyses.'}
 
 \item{latentSpace}{latent space for expression data. Numeric matrix or dataframe
 with dimensions CELLS x COMPONENTS}

@@ -37,6 +37,15 @@ Upper_Left_Content.prototype.init = function()
 
     var gene_select_promise = gene_select.init()
 
+
+    // De select Promise
+    var de_select = new DE_Select()
+    this.children.push(de_select)
+    this.de_select = de_select
+
+    var de_select_promise = de_select.init()
+
+
     this.setLoadingStatus = createLoadingFunction(
         document.getElementById("upper-left-content")
     );
@@ -69,8 +78,17 @@ Upper_Left_Content.prototype.init = function()
         metaTableTab.click()
     }
 
+    $(this.dom_node).find('.nav-link')
+        .on('click', function(e) {
+            if (e.target.id === "genes-table-tab" || e.target.id === "de-table-tab") {
+                clust_dropdown.prop('disabled', true)
+            } else {
+                clust_dropdown.prop('disabled', false)
+            }
+        });
 
-    return $.when(sig_table_promise, pc_table_promise, gene_select_promise);
+
+    return $.when(sig_table_promise, pc_table_promise, gene_select_promise, de_select_promise);
 
 }
 
@@ -126,7 +144,7 @@ function Signature_Table()
     this.dom_node = document.getElementById("table-div-container");
     this.matrix = {}
     this.clusters = {}
-    this.sorted_column = 'Consistency'
+    this.sorted_column = 'Score'
     this.filterSig = $(this.dom_node).find('#sig_filt_input')
     this.is_filtering = false
     this.is_collapsed = {} // cluster -> boolean, holds whether a cluster is collapsed
@@ -480,16 +498,21 @@ Signature_Table.prototype.update = function(updates)
         var main_vis = get_global_status('main_vis');
         var cluster_var = get_global_status('cluster_var');
 
+        var fix_col_label = true
         if (main_vis == "clusters") {
             matrix_promise = api.clusters.sigProjMatrix(cluster_var, false);
         } else if (main_vis == "tree") {
             matrix_promise = api.tree.sigProjMatrix(false);
         } else {
             matrix_promise = api.filterGroup.pCorr(false);
+            fix_col_label = false
         }
 
         matrix_promise = matrix_promise
             .then(function(matrix) {
+                if (fix_col_label){
+                    matrix.proj_labels[0] = "Score";
+                }
                 self.matrix = matrix;
                 return true;
             });
@@ -582,16 +605,21 @@ Meta_Table.prototype.update = function(updates)
         var main_vis = get_global_status('main_vis');
         var cluster_var = get_global_status('cluster_var');
 
+        var fix_col_label = true
         if (main_vis == "clusters") {
             matrix_promise = api.clusters.sigProjMatrix(cluster_var, true);
         } else if (main_vis === "tree") {
             matrix_promise = api.tree.sigProjMatrix(true);
         } else {
             matrix_promise = api.filterGroup.pCorr(true);
+            fix_col_label = false
         }
 
         matrix_promise = matrix_promise.then(
             function(matrix){
+                if (fix_col_label){
+                    matrix.proj_labels[0] = "Score";
+                }
                 self.matrix = matrix
                 return true
             });
@@ -985,6 +1013,304 @@ Gene_Select.prototype.render_recent_genes = function()
     recent_genes_div.show()
 }
 
+
+
+function DE_Select()
+{
+    //this.recent_genes = [];
+    this.dom_node = document.getElementById("de-table");
+    this.filterSig = $(this.dom_node).find('#sig_filt_input')
+    this.numControl = $(this.dom_node).find('#num_control');
+    this.numSelect = $(this.dom_node).find('#num');
+    this.denomSelect = $(this.dom_node).find('#denom');
+    this.submit_de = $(this.dom_node).find('#submit_de');
+    this.new_de = $(this.dom_node).find('#new_de');
+    this.de_error = $(this.dom_node).find('#de-error');
+    this.de_results = $(this.dom_node).find('#de-results');
+    this.de_table = $(this.dom_node).find('#de-results-table');
+    this.de_controls = $(this.dom_node).find('.controls');
+}
+
+DE_Select.prototype.init = function()
+{
+
+    var self = this;
+
+    var numControl = this.numControl;
+    var numSelect = this.numSelect;
+    var denomSelect = this.denomSelect;
+    var submit_de = this.submit_de;
+    var new_de = this.new_de;
+    var de_error = this.de_error;
+    var de_results = this.de_results;
+    var de_controls = this.de_controls;
+
+    var clusters = get_global_data("cluster_variables");
+
+    this.setLoadingStatus = createLoadingFunction(this.dom_node);
+
+    this.de_table.DataTable(
+        {
+            'columns': [
+                {'title': 'Gene'},
+                {'title': 'logFC'},
+                {'title': 'AUC'},
+                {'title': 'FDR'},
+            ],
+            "pageLength": 500,
+            "scrollY": '15vh',
+            "order": [[3, "asc"]],
+            "pagingType": "simple_numbers",
+            "dom": "ftip"
+        }
+    );
+
+    this.de_table.on('click', "tr", function() {
+        var gene = $(this).find("td:first").text()
+        set_global_status({
+                    'plotted_item_type': 'gene',
+                    'plotted_item': gene
+                })
+        //Plotly.restyle("scatter-div", {selectedpoints: [null]});
+    });
+
+
+
+    numControl.append(
+        $('<option>', {
+            value: "selections",
+            text: "Selections"
+        }));
+
+    _.each(clusters, name => {
+      numControl.append(
+          $('<option>', {
+              value: name,
+              text: name,
+          }));
+    });
+
+
+    numSelect.chosen({
+        'width': '150px',
+        'max_shown_results': 1000,
+        'placeholder_text_single': 'N/A',
+        'disable_search': true,
+    });
+
+    denomSelect.chosen({
+        'width': '150px',
+        'max_shown_results': 1000,
+        'placeholder_text_single': 'N/A',
+        'disable_search': true,
+    });
+
+    function addClusters(select, cluster, num) {
+        var cluster_vals = get_global_data("meta_levels")[cluster];
+        var data = Array.from(new Set(Object.values(cluster_vals)));
+
+        if (!num) {
+            select.append(
+                $('<option>', {
+                    value: 'remainder',
+                    text: 'Remainder',
+                })
+            );
+        }
+
+        _.each(data, (name, i) => {
+            select.append(
+                $('<option>', {
+                    value: name,
+                    text: name
+                }));
+        });
+
+        select.trigger('chosen:updated')
+    }
+
+    async function addSelections(select, num) {
+
+        var selections_promise = api.cells.listSelections().then(data => {
+
+            if (num) {
+                select.append(
+                    $('<option>', {
+                        value: 'current',
+                        text: 'Current',
+                    })
+                );
+            } else {
+                select.append(
+                    $('<option>', {
+                        value: 'remainder',
+                        text: 'Remainder',
+                    })
+                );
+            }
+
+            _.each(data, (name, i) => {
+                select.append(
+                    $('<option>', {
+                        value: name,
+                        text: name
+                    }));
+            });
+
+            select.trigger('chosen:updated')
+
+        });
+
+      }
+
+    submit_de.on('click', function () {
+
+        de_error.hide();
+
+        var type_n, group_num;
+        var type_d, group_denom;
+
+        var subtype_n = ""
+        var subtype_d = ""
+
+        if (numControl.val() === 'selections') {
+
+            if(numSelect.val() === 'current') {
+                type_n = 'current';
+                group_num = get_global_status("selected_cell");
+                if (group_num.length === 0){
+                    de_error.html("No cells currently selected<br>Make a selection using the lasso tool on the scatter plot");
+                    de_error.show();
+                    return;
+                }
+            } else {
+
+                type_n = 'saved_selection';
+                group_num = numSelect.val();
+                if (group_num === null){
+                    de_error.html("No saved selections<br>To save a selection, first select cells on the scatter plot using the lasso tool.  Then click 'Save' above the plot and give the selection a name.");
+                    de_error.show();
+                    return;
+                }
+            }
+
+        } else {
+            type_n = 'meta';
+            subtype_n = numControl.val();
+            group_num = numSelect.val();
+        }
+
+        if (denomSelect.val() == 'remainder') {
+            type_d = 'remainder';
+            group_denom = '';
+        } else if (numControl.val() === 'selections') {
+            type_d = 'saved_selection';
+            group_denom = denomSelect.val();
+            if (group_denom === null){
+                de_error.html("No saved selections<br>To save a selection, first select cells on the scatter plot using the lasso tool.  Then click 'Save' above the plot and give the selection a name.");
+                de_error.show();
+                return;
+            }
+        } else {
+            type_d = 'meta';
+            subtype_d = subtype_n;
+            group_denom = denomSelect.val();
+        }
+
+
+        self.setLoadingStatus(true, 0);
+
+        api.de(
+            type_n, subtype_n, group_num,
+            type_d, subtype_d, group_denom
+        ).then(data => {
+            set_global_status({"de":data})
+        });
+
+    });
+
+    new_de.on('click', function () {
+        de_results.hide()
+        de_controls.show()
+    })
+
+
+    numControl.chosen({
+        'width': '150px',
+        'max_shown_results': 1000,
+        'disable_search': true,
+    }).on('change', function () {
+
+        de_error.hide();
+
+        var val = $(this).val();
+
+        numSelect = self.numSelect
+        numSelect.children().remove()
+
+        denomSelect = self.denomSelect
+        denomSelect.children().remove()
+
+        if (val === "selections") {
+            // add selection values
+            addSelections(numSelect, true);
+            addSelections(denomSelect, false);
+        }  else {
+            // genotype
+            addClusters(numSelect, val, true)
+            addClusters(denomSelect, val, false)
+        }
+    });
+
+
+    addSelections(numSelect, true);
+    addSelections(denomSelect, false);
+
+}
+
+DE_Select.prototype.update = function(updates)
+{
+    // Update the 'recent-genes' list
+    if('de' in updates){
+        this.de_controls.hide();
+        this.render_de();
+    }
+
+    if ('selected_cell' in updates || 'selection_type' in updates){
+        this.de_error.hide();
+    }
+}
+
+DE_Select.prototype.render_de = function()
+{
+
+    var genes = get_global_status('de')["gene"]
+    var pvals = get_global_status('de')["pval"]
+    var stats = get_global_status('de')["stat"]
+    var logFCs = get_global_status('de')["logFC"]
+
+    var dataSet = _.map(genes, (g, i) => [genes[i], logFCs[i], stats[i], pvals[i]]);
+
+    this.de_results.show();
+
+    this.de_table.DataTable().clear()
+        .rows.add(dataSet)
+        .columns.adjust() // Needed or else column headers don't align
+        .draw()
+
+    // Render the title
+    var group = this.numControl.find('option:selected').text()
+    var numText = this.numSelect.find('option:selected').text()
+    var denomText = this.denomSelect.find('option:selected').text()
+
+    var title = group + ": " + numText + " vs. " + denomText
+
+    $(this.de_results).find('#de-results-title').text(title)
+
+    this.setLoadingStatus(false);
+}
+
+
 Signature_Table.prototype.doneTyping = function()
 {
     var self = this;
@@ -1083,11 +1409,6 @@ function tableClickFunction_clusters(row_key, col_key)
     update['plotted_item_type'] = item_type;
     update['plotted_item'] = row_key;
 
-    if (col_key === 'Consistency')
-    {
-        col_key = '' // This is used to indicate 'no cluster'
-    }
-
     set_global_status(update);
 }
 
@@ -1098,7 +1419,7 @@ function hoverRowCol(header_row, node, col){
 
 
     var hovered_cells;
-    if (col === 'Consistency'){
+    if (col === 'Score'){
         hovered_cells = [];
     } else {
         var clusters = get_global_data('clusters'); // clusters maps cell_id to cluster

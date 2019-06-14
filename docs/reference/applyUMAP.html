@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Applies filters to the inputted expression data (may remove rows) — applyFilters • VISION</title>
+<title>Performs UMAP on data — applyUMAP • VISION</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -39,9 +39,9 @@
 
   <link href="../extra.css" rel="stylesheet">
   
-<meta property="og:title" content="Applies filters to the inputted expression data (may remove rows) — applyFilters" />
+<meta property="og:title" content="Performs UMAP on data — applyUMAP" />
 
-<meta property="og:description" content="Applies filters to the inputted expression data (may remove rows)" />
+<meta property="og:description" content="Performs UMAP on data" />
 
 <meta property="og:image" content="https://yoseflab.github.io/VISION/logo.png" />
 <meta name="twitter:card" content="summary" />
@@ -143,39 +143,35 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Applies filters to the inputted expression data (may remove rows)</h1>
-    <small class="dont-index">Source: <a href='https://github.com/yoseflab/VISION/blob/master/R/Filters.R'><code>R/Filters.R</code></a></small>
-    <div class="hidden name"><code>applyFilters.Rd</code></div>
+    <h1>Performs UMAP on data</h1>
+    <small class="dont-index">Source: <a href='https://github.com/yoseflab/VISION/blob/master/R/Projections.R'><code>R/Projections.R</code></a></small>
+    <div class="hidden name"><code>applyUMAP.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Applies filters to the inputted expression data (may remove rows)</p>
+    <p>Performs UMAP on data</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>applyFilters</span>(<span class='no'>expr</span>, <span class='no'>threshold</span>, <span class='no'>filterInput</span>)</pre>
+    <pre class="usage"><span class='fu'>applyUMAP</span>(<span class='no'>exprData</span>, <span class='no'>K</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>expr</th>
-      <td><p>a numeric expression matrix (genes x cells)</p></td>
+      <th>exprData</th>
+      <td><p>Expression data, NUM_GENES x NUM_SAMPLES</p></td>
     </tr>
     <tr>
-      <th>threshold</th>
-      <td><p>minimum number of samples gene must be detected in to pass</p></td>
-    </tr>
-    <tr>
-      <th>filterInput</th>
-      <td><p>list of filters to compute</p></td>
+      <th>K</th>
+      <td><p>Number of neighbors to use in UMAP projection.</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>character vector of gene names passing filter</p>
+    <p>Reduced data NUM_SAMPLES x NUM_COMPONENTS</p>
     
 
   </div>

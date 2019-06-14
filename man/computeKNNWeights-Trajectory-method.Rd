@@ -5,13 +5,10 @@
 \alias{computeKNNWeights,Trajectory-method}
 \title{Compute KNN weights based on geodesic distances for Trajectory objects}
 \usage{
-\S4method{computeKNNWeights}{Trajectory}(object,
-  K = round(sqrt(nrow(object@progressions))))
+\S4method{computeKNNWeights}{Trajectory}(object)
 }
 \arguments{
 \item{object}{a Trajectory object}
-
-\item{K}{the number of nearest neighbors to look at}
 }
 \value{
 a list of two items:

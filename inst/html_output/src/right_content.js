@@ -137,10 +137,10 @@ Right_Content.prototype.init = function()
         var selectedCells = get_global_status('selected_cell')
 
         api.cells.saveSelection(selectionName, selectedCells)
+
         set_global_status({
             'selection_name': selectionName
         })
-
         saveSelectionModal.modal('hide')
 
     })
@@ -221,27 +221,80 @@ Right_Content.prototype.init = function()
         .then(function(proj_names) {
 
             var projSelect = self.dom_node.find('#SelectProjScatter')
+            var projSelectX = self.dom_node.find('#SelectProjScatterX')
+            var projSelectY = self.dom_node.find('#SelectProjScatterY')
             projSelect.children().remove()
 
-            _.each(proj_names, function (proj) {
+            _.each(proj_names, function (val, key) {
                 projSelect.append(
                     $('<option>', {
-                        value: proj,
-                        text: proj
+                        value: key,
+                        text: key
                     }));
             });
 
-            projSelect.chosen({
-                'width': '110px',
+            var update_axes_dropdowns = function(){
+                var selected_proj = $(projSelect).val()
+
+                projSelectX.children().remove()
+                projSelectY.children().remove()
+
+                _.each(proj_names[selected_proj], function (val) {
+                    projSelectX.append(
+                        $('<option>', {
+                            value: val,
+                            text: val
+                        }));
+                    projSelectY.append(
+                        $('<option>', {
+                            value: val,
+                            text: val
+                        }));
+                });
+
+                $(projSelectX).val(proj_names[selected_proj][0])
+                $(projSelectY).val(proj_names[selected_proj][1])
+                projSelectX.trigger('chosen:updated')
+                projSelectY.trigger('chosen:updated')
+            }
+
+            projSelectX.chosen({
+                'width': '150px',
                 'disable_search_threshold': 99,
             })
                 .off('change')
                 .on('change', function () {
                     set_global_status({
-                        'plotted_projection':$(this).val(),
+                        'plotted_projectionX': [$(projSelect).val(), $(this).val()],
+                    });
+                })
+
+            projSelectY.chosen({
+                'width': '150px',
+                'disable_search_threshold': 99,
+            })
+                .off('change')
+                .on('change', function () {
+                    set_global_status({
+                        'plotted_projectionY': [$(projSelect).val(), $(this).val()],
+                    });
+                })
+
+            projSelect.chosen({
+                'width': '150px',
+                'disable_search_threshold': 99,
+            })
+                .off('change')
+                .on('change', function () {
+                    update_axes_dropdowns()
+                    set_global_status({
+                        'plotted_projectionX': [$(this).val(), $(projSelectX).val()],
+                        'plotted_projectionY': [$(this).val(), $(projSelectY).val()],
                     });
                 })
                 .trigger('chosen:updated')
+
+            update_axes_dropdowns()
 
         });
 
@@ -308,7 +361,8 @@ Right_Content.prototype.update = function(updates)
     var needsUpdate = ('main_vis' in updates) ||
         ('plotted_item' in updates) ||
         ('plotted_item_type' in updates) ||
-        ('plotted_projection' in updates) ||
+        ('plotted_projectionX' in updates) ||
+        ('plotted_projectionY' in updates) ||
         ('plotted_trajectory' in updates) ||
         ('colorScatterOption' in updates);
 
@@ -318,7 +372,8 @@ Right_Content.prototype.update = function(updates)
 
     var autoZoom = false
 
-    if('plotted_projection' in updates ||
+    if('plotted_projectionX' in updates ||
+       'plotted_projectionY' in updates ||
        'plotted_trajectory' in updates ||
        'main_vis' in updates) {
 
@@ -327,7 +382,11 @@ Right_Content.prototype.update = function(updates)
         if (get_global_status('main_vis') === 'tree'){
             projection = get_global_data('tree_projection_coordinates')
         } else {
-            projection = get_global_data('sig_projection_coordinates')
+            var projectionX = get_global_data('sig_projection_coordinatesX')
+            var projectionY = get_global_data('sig_projection_coordinatesY')
+            var keys = _.keys(projectionX)
+            var values = _.map(keys, key => [projectionX[key], projectionY[key]])
+            projection = _.zipObject(keys, values)
         }
 
         // If the projection is changing, then we need to change all the plots
@@ -371,22 +430,6 @@ Right_Content.prototype.update = function(updates)
         }
     }
 
-    // Update the dropdown if plotted projection changes elsewhere
-    if('plotted_projection' in updates) {
-        var proj_key = get_global_status('plotted_projection');
-        var projSelect = self.dom_node.find('#SelectProjScatter')
-        projSelect.val(proj_key)
-        projSelect.trigger('chosen:updated') // Changes shown item, but doesn't fire update event
-    }
-
-    // Update the dropdown if plotted trajectory changes elsewhere
-    if('plotted_trajectory' in updates) {
-        var proj_key = get_global_status('plotted_trajectory');
-        var projSelect = self.dom_node.find('#SelectTrajectoryProjScatter')
-        projSelect.val(proj_key)
-        projSelect.trigger('chosen:updated') // Changes shown item, but doesn't fire update event
-    }
-
     // Show either the Projection or Tree lists
     if('main_vis' in updates){
         $('#plot-subtitle-latent').hide()
@@ -405,11 +448,14 @@ Right_Content.prototype.update = function(updates)
 
 Right_Content.prototype.select_default_proj = function()
 {
-    var proj = $(this.dom_node.find('#SelectProjScatter')).val()
+    var proj_name = $(this.dom_node.find('#SelectProjScatter')).val()
+    var proj_X = $(this.dom_node.find('#SelectProjScatterX')).val()
+    var proj_Y = $(this.dom_node.find('#SelectProjScatterY')).val()
     var traj = $(this.dom_node.find('#SelectTrajectoryProjScatter')).val()
 
     var update = {}
-    update['plotted_projection'] = proj
+    update['plotted_projectionX'] = [proj_name, proj_X]
+    update['plotted_projectionY'] = [proj_name, proj_Y]
     update['plotted_trajectory'] = traj
     return update;
 }

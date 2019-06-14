@@ -1,6 +1,6 @@
 Package: VISION
 Title: Functional interpretation of single cell RNA-seq latent manifolds
-Version: 1.0.1
+Version: 1.1.0
 Authors@R: c(person("Matt", "Jones", email = "mattjones315@gmail.com", role = c("aut", "cre")),
 			 person("David", "Detomaso", email = "david.detomaso@berkeley.edu", role = c("aut", "cre")),
 			 person("Tal", "Ashuach", email = "tal_ashuach@berkeley.edu", role = c("aut")),
@@ -13,7 +13,6 @@ Imports:
 	fastICA,
 	igraph,
 	jsonlite,
-	jug,
 	loe,
 	logging,
     parallel,
@@ -22,6 +21,7 @@ Imports:
 	matrixStats,
 	mclust,
 	methods,
+    plumber,
 	Rcpp,
 	rsvd,
 	stats,

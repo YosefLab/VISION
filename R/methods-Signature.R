@@ -257,6 +257,7 @@ generatePermutationNull <- function(num, eData, sigData) {
 #'
 #'   sigAssignments: named factor vector assigning signatures to random background
 #'     groups
+#' @param K Number of neighbors to consider.
 #' @return list:
 #' \itemize{
 #'     \item sigProbMatrix: the vector of consistency z-scores
@@ -264,11 +265,11 @@ generatePermutationNull <- function(num, eData, sigData) {
 #'     \item emp_pVals: pvalues for the scores
 #' }
 sigConsistencyScores <- function(latentSpace, sigScoresData,
-                                      metaData, randomSigData) {
+                                      metaData, randomSigData, K) {
 
     signatureNames <- c(colnames(sigScoresData), colnames(metaData))
 
-    weights <- computeKNNWeights(latentSpace)
+    weights <- computeKNNWeights(latentSpace, K)
 
     svp_n <- sigsVsProjection_n(sigScoresData,
                                 randomSigData, weights)

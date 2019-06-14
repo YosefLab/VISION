@@ -28,13 +28,20 @@ ServerSigProjMatrix <- function(zscores, pvals, proj_labels, sig_labels) {
 #' Converts Signature object to JSON
 #' @importFrom jsonlite toJSON
 #' @param sig Signature object
+#' @param geneImportance named numeric vector with gene correlations
 #' @return JSON formatted Signature object.
-signatureToJSON <- function(sig) {
+signatureToJSON <- function(sig, geneImportance) {
 
     # Pass in a Signature object from an R Object to be converted into a JSON object
-    sig@sigDict <- as.list(sig@sigDict)
+    out <- list()
 
-    json <- toJSON(sig, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
+    out$sigDict <- as.list(sig@sigDict)
+    out$name <- sig@name
+    out$source <- sig@source
+    out$metaData <- sig@metaData
+    out$geneImportance <- as.list(geneImportance)
+
+    json <- toJSON(out, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
     return(json)
 
 }
@@ -138,24 +145,23 @@ pearsonCorrToJSON <- function(pc, sigs) {
 
 }
 
-compressJSONResponse <- function(json, res, req){
+compressJSONResponse <- function(req, res){
 
-    res$set_header("Content-Type", "application/json")
+    res$headers[["Content-type"]] <- "application/json"
 
     if (requireNamespace("gzmem", quietly = TRUE) &&
-        !is.null(req$get_header("accept_encoding")) &&
-        grepl("gzip", req$get_header("accept_encoding"), ignore.case = TRUE)
-   ){
-        res$set_header("Content-Encoding", "gzip")
-        res$body <- gzmem::mem_compress(charToRaw(json), format = "gzip")
-    } else {
-        res$body <- json
+        !is.null(req$HTTP_ACCEPT_ENCODING) &&
+        grepl("gzip", req$HTTP_ACCEPT_ENCODING, ignore.case = TRUE)
+    ){
+        res$setHeader("Content-Encoding", "gzip")
+        res$body <- gzmem::mem_compress(charToRaw(res$body), format = "gzip")
     }
 }
 
 #' Lanch the server
 #' @importFrom jsonlite fromJSON
 #' @importFrom utils browseURL URLdecode stack
+#' @importFrom plumber plumber forward
 #' @param object Vision object
 #' @param port The port on which to serve the output viewer.  If omitted, a
 #' random port between 8000 and 9999 is chosen.
@@ -177,6 +183,18 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         warning("Package 'gzmem' not installed:\n    For faster network communication install gzmem with command: \n    > devtools::install_github(\"hrbrmstr/gzmem\")")
     }
 
+    # Make sure all projections have column names
+    projections <- object@Projections
+    n <- names(projections)
+    projections <- lapply(setNames(n, n), function(pname){
+        proj <- projections[[pname]]
+        if (is.null(colnames(proj))){
+            colnames(proj) <- paste0(pname, "-", seq_len(ncol(proj)))
+        }
+        return(proj)
+    })
+    object@Projections <- projections
+
     # Load the static file whitelist
     whitelist_file <- system.file("html_output/whitelist.txt",
                                   package = "VISION")
@@ -190,50 +208,74 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         browseURL(url)
     }
 
-    # Launch the server
-    jug() %>%
-      get(".*", function(req, res, err) {
-          # Enable caching
-          res$set_header("Cache-Control", "max-age=7200")
-          return(NULL)
-      }) %>%
-      get("/Signature/Scores/(?<sig_name1>.*)", function(req, res, err) {
+    # Define the API
+
+    pr <- plumber$new()
+
+    pr$filter("defaultHeaders", function(req, res){
+        res$setHeader("Cache-Control", "max-age=7200")
+        res$setHeader("Content-type", "application/json")
+        forward()
+    })
+
+    pr$handle("GET", "/Signature/Scores/<sig_name>",
+        function(req, res, sig_name) {
+
         sigMatrix <- object@sigScores
-        name <- URLdecode(req$params$sig_name1)
+        name <- URLdecode(sig_name)
         if (name %in% colnames(sigMatrix)) {
             values <- sigMatrix[, name]
             names <- rownames(sigMatrix)
-            out <- sigScoresToJSON(names, values)
-            compressJSONResponse(out, res, req)
+            res$body <- sigScoresToJSON(names, values)
+            compressJSONResponse(req, res)
+            return(res)
         } else {
             return("Signature does not exist!")
         }
-      }) %>%
-      get("/Signature/Meta/(?<sig_name3>.*)", function(req, res, err) {
-        metaData <- object@metaData
-        name <- URLdecode(req$params$sig_name3)
-        if (name %in% colnames(metaData)) {
-            names <- rownames(metaData)
-            values <- metaData[[name]]
-            out <- sigScoresToJSON(names, values)
-            compressJSONResponse(out, res, req)
-        } else {
-            return("Signature does not exist!")
-        }
-      }) %>%
-      get("/Signature/Info/(?<sig_name2>.*)", function(req, res, err){
-        signatures <- object@sigData
-        name <- URLdecode(req$params$sig_name2)
-        out <- "Signature does not exist!"
-        if (name %in% names(signatures)) {
-          sig <- signatures[[name]]
-          out <- signatureToJSON(sig)
-        }
-        return(out)
-      }) %>%
-      get("/Signature/Expression/(?<sig_name4>.*)", function(req, res, err) {
-        all_names <- vapply(object@sigData, function(x){ return(x@name) }, "")
-        name <- URLdecode(req$params$sig_name4)
+    })
+
+    pr$handle("GET", "/Signature/Meta/<sig_name>",
+        function(req, res, sig_name) {
+
+      metaData <- object@metaData
+      name <- URLdecode(sig_name)
+      if (name %in% colnames(metaData)) {
+          names <- rownames(metaData)
+          values <- metaData[[name]]
+          res$body <- sigScoresToJSON(names, values)
+          compressJSONResponse(req, res)
+          return(res)
+      } else {
+          return("Signature does not exist!")
+      }
+    })
+
+    pr$handle("GET", "/Signature/Info/<sig_name>",
+        function(req, res, sig_name){
+
+      signatures <- object@sigData
+      name <- URLdecode(sig_name)
+      out <- "Signature does not exist!"
+      if (name %in% names(signatures)) {
+        sig <- signatures[[name]]
+
+          if (.hasSlot(object, "SigGeneImportance")) {
+              geneImportance <- object@SigGeneImportance[[name]]
+          } else {
+              geneImportance <- sig@sigDict * 0
+          }
+
+        out <- signatureToJSON(sig, geneImportance)
+      }
+      res$body <- out
+      return(res)
+    })
+
+    pr$handle("GET", "/Signature/Expression/<sig_name>",
+        function(req, res, sig_name) {
+
+        all_names <- vapply(object@sigData, function(x) x@name, "")
+        name <- URLdecode(sig_name)
         index <- match(name, all_names)
         if (is.na(index)){
             return("Signature does not exist!")
@@ -242,48 +284,73 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             sig <- object@sigData[[index]]
             genes <- names(sig@sigDict)
             expMat <- object@exprData
-            out <- expressionToJSON(expMat, genes, zscore=TRUE)
-            compressJSONResponse(out, res, req)
+            res$body <- expressionToJSON(expMat, genes, zscore = TRUE)
+            compressJSONResponse(req, res)
+            return(res)
         }
-      }) %>%
-      get("/FilterGroup/SigClusters/Normal", function(req, res, err) {
+    })
+
+    pr$handle("GET", "/FilterGroup/SigClusters/Normal", function(req, res) {
 
         cls <- object@SigConsistencyScores@sigClusters
         cls <- cls$Computed
 
-        out <- toJSON(cls, auto_unbox=TRUE)
-        return(out)
-      }) %>%
-      get("/FilterGroup/SigClusters/Meta", function(req, res, err) {
+        res$body <- toJSON(cls, auto_unbox = TRUE)
+        return(res)
+
+    })
+
+    pr$handle("GET", "/FilterGroup/SigClusters/Meta", function(req, res) {
 
         cls <- object@SigConsistencyScores@sigClusters
         cls <- cls$Meta
 
-        out <- toJSON(cls, auto_unbox=TRUE)
-        return(out)
-      }) %>%
-      get("/Projections/(?<proj_name1>.*)/coordinates", function(req, res, err) {
-        proj <- URLdecode(req$params$proj_name1)
-        out <- coordinatesToJSON(object@Projections[[proj]])
-        compressJSONResponse(out, res, req)
-      }) %>%
-      get("/Projections/list", function(req, res, err) {
-        proj_names <- names(object@Projections)
-        proj_names <- sort(proj_names, decreasing=TRUE) # hack to make tsne on top
-        out <- toJSON(proj_names)
-        return(out)
-      }) %>%
-      get("/Tree/Projections/list", function(req, res, err) {
+        res$body <- toJSON(cls, auto_unbox = TRUE)
+        return(res)
+    })
+
+    pr$handle("GET", "/Projections/<proj_name>/coordinates/<proj_col>",
+        function(req, res, proj_name, proj_col) {
+
+        proj <- URLdecode(proj_name)
+        col <- URLdecode(proj_col)
+
+        coords <- object@Projections[[proj]][, col, drop = FALSE]
+
+        res$body <- coordinatesToJSON(coords)
+        compressJSONResponse(req, res)
+
+        return(res)
+
+    })
+
+    pr$handle("GET", "/Projections/list",
+        function(req, res) {
+
+        proj_names <- lapply(object@Projections, colnames)
+        proj_names <- proj_names[order(names(proj_names), decreasing = TRUE)] # hack to make tsne on top
+        res$body <- toJSON(proj_names)
+        return(res)
+
+    })
+
+    pr$handle("GET", "/Tree/Projections/list",
+        function(req, res) {
+
         if (is.null(object@TrajectoryProjections)){
             proj_names <- character()
         } else {
             proj_names <- names(object@TrajectoryProjections)
         }
-        out <- toJSON(proj_names)
-        return(out)
-      }) %>%
-      get("/Tree/Projections/(?<proj_name4>.*)/coordinates", function(req, res, err) {
-        proj <- URLdecode(req$params$proj_name4)
+
+        res$body <- toJSON(proj_names)
+        return(res)
+    })
+
+    pr$handle("GET", "/Tree/Projections/<proj_name>/coordinates",
+        function(req, res, proj_name) {
+
+        proj <- URLdecode(proj_name)
 
         coords <- object@TrajectoryProjections[[proj]]@pData
         C <- object@TrajectoryProjections[[proj]]@vData
@@ -295,76 +362,79 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         out <- list(coords, C, W)
 
-        out <- toJSON(out, force = TRUE, pretty = TRUE,
-                      auto_unbox = TRUE, dataframe = "values")
+        res$body <- toJSON(out, force = TRUE, pretty = TRUE,
+                           auto_unbox = TRUE, dataframe = "values")
 
-        compressJSONResponse(out, res, req)
+        compressJSONResponse(req, res)
 
-      }) %>%
-      get("/Tree/SigProjMatrix/Normal", function(req, res, err) {
+        return(res)
+
+    })
+
+    pr$handle("GET", "/Tree/SigProjMatrix/Normal", function(req, res) {
 
         sigs <- colnames(object@sigScores)
 
         metaData <- object@metaData
-        meta_n <- vapply(names(metaData), function(metaName) {
-                  is.numeric(metaData[, metaName])
-              }, FUN.VALUE = TRUE)
+        meta_n <- vapply(names(metaData),
+            function(metaName) is.numeric(metaData[, metaName]),
+            FUN.VALUE = TRUE)
 
         meta_n <- colnames(metaData)[meta_n]
         sigs <- c(sigs, meta_n)
 
-        out <- sigProjMatrixToJSON(
-                                  object@TrajectoryConsistencyScores@Consistency,
-                                  object@TrajectoryConsistencyScores@FDR,
-                                  sigs)
-        return(out)
-      }) %>%
-      get("/Tree/SigProjMatrix/Meta", function(req, res, err) {
+        res$body <- sigProjMatrixToJSON(
+            object@TrajectoryConsistencyScores@Consistency,
+            object@TrajectoryConsistencyScores@FDR,
+            sigs)
+
+        return(res)
+    })
+
+    pr$handle("GET", "/Tree/SigProjMatrix/Meta", function(req, res) {
 
         sigs <- colnames(object@metaData)
-        out <- sigProjMatrixToJSON(
-                                  object@TrajectoryConsistencyScores@Consistency,
-                                  object@TrajectoryConsistencyScores@FDR,
-                                  sigs)
-        return(out)
-      }) %>%
-      get("/PCA/Coordinates", function(req, res, err) {
+        res$body <- sigProjMatrixToJSON(
+            object@TrajectoryConsistencyScores@Consistency,
+            object@TrajectoryConsistencyScores@FDR,
+            sigs)
 
-        pc <- object@latentSpace
-        out <- coordinatesToJSON(pc)
-        compressJSONResponse(out, res, req)
+        return(res)
+    })
 
-      }) %>%
-      get("/PearsonCorr/Normal", function(req, res, err) {
+    pr$handle("GET", "/PearsonCorr/Normal", function(req, res) {
 
-          pc <- object@PCAnnotatorData@pearsonCorr[, 1:10]
-          sigs <- rownames(pc)
+        pc <- object@PCAnnotatorData@pearsonCorr[, 1:10]
+        sigs <- rownames(pc)
 
-        return(pearsonCorrToJSON(pc, sigs))
-      }) %>%
-      get("/PearsonCorr/Meta", function(req, res, err) {
+        res$body <- pearsonCorrToJSON(pc, sigs)
 
-          sigs <- colnames(object@metaData)
-          numericMeta <- vapply(sigs,
-                                function(x) is.numeric(object@metaData[[x]]),
-                                FUN.VALUE = TRUE)
-          sigs <- sigs[numericMeta]
+        return(res)
+    })
 
-          pc <- object@PCAnnotatorData@pearsonCorr[, 1:10]
+    pr$handle("GET", "/PearsonCorr/Meta", function(req, res) {
 
-        return(pearsonCorrToJSON(pc, sigs))
-      }) %>%
-      get("/PearsonCorr/list", function(req, res, err) {
+        sigs <- colnames(object@metaData)
+        numericMeta <- vapply(sigs,
+                              function(x) is.numeric(object@metaData[[x]]),
+                              FUN.VALUE = TRUE)
+        sigs <- sigs[numericMeta]
 
-          pc <- object@PCAnnotatorData@pearsonCorr
-          pcnames <- seq(ncol(pc))[1:10]
-          result <- toJSON(
-                           pcnames,
-                           force=TRUE, pretty=TRUE
-                           )
-          return(result)
-      }) %>%
-      get("/Expression/Genes/List", function(req, res, err) {
+        pc <- object@PCAnnotatorData@pearsonCorr[, 1:10]
+
+        res$body <- pearsonCorrToJSON(pc, sigs)
+        return(res)
+    })
+
+    pr$handle("GET", "/PearsonCorr/list", function(req, res) {
+
+        pc <- object@PCAnnotatorData@pearsonCorr
+        pcnames <- seq(ncol(pc))[1:10]
+        res$body <- toJSON(pcnames, force = TRUE, pretty = TRUE)
+        return(res)
+    })
+
+    pr$handle("GET", "/Expression/Genes/List", function(req, res) {
 
         if (hasUnnormalizedData(object)) {
             data <- object@unnormalizedData
@@ -373,17 +443,17 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         }
         genes <- rownames(data)
 
-        result <- toJSON(
-                         genes,
-                         force=TRUE, pretty=TRUE
-                         )
+        res$body <- toJSON(genes, force = TRUE, pretty = TRUE)
 
-        compressJSONResponse(result, res, req)
+        compressJSONResponse(req, res)
 
-      }) %>%
-      get("/Expression/Gene/(?<gene_name2>.*)", function(req, res, err) {
+        return(res)
+    })
 
-        gene_name <- URLdecode(req$params$gene_name2)
+    pr$handle("GET", "/Expression/Gene/<gene_name>",
+        function(req, res, gene_name) {
+
+        gene_name <- URLdecode(gene_name)
 
         if (hasUnnormalizedData(object)) {
             data <- object@unnormalizedData
@@ -395,44 +465,136 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         out <- list(cells = names(data), values = data)
 
-        result <- toJSON(
-                         out,
-                         force = TRUE, pretty = TRUE, auto_unbox = TRUE
-                         )
+        res$body <- toJSON(
+            out, force = TRUE, pretty = TRUE, auto_unbox = TRUE)
 
-        compressJSONResponse(result, res, req)
+        compressJSONResponse(req, res)
 
-      }) %>%
-      get("/Clusters/list", function(req, res, err) {
+        return(res)
+    })
+
+    pr$handle("GET", "/Clusters/list",
+        function(req, res) {
+
         cluster_vars <- names(object@ClusterSigScores)
-        out <- toJSON(cluster_vars,
-                      force = TRUE, pretty = TRUE)
-        return(out)
-      }) %>%
-      get("/Clusters/(?<cluster_variable1>.*)/Cells", function(req, res, err) {
+        res$body <- toJSON(cluster_vars, force = TRUE, pretty = TRUE)
+        return(res)
+    })
+
+    pr$handle("POST", "/DE", function(req, res) {
+        # Params
+        body <- fromJSON(req$postBody)
+
+        exprData <- object@exprData
+
+        type_n <- body$type_n
+        type_d <- body$type_d
+
+        subtype_n <- body$subtype_n
+        subtype_d <- body$subtype_d
+
+        group_num <- body$group_num
+        group_denom <- body$group_denom
+
+        if (type_n == "current") {
+            cells_num <- unlist(strsplit(group_num, ","))
+        } else if (type_n == "saved_selection") {
+            cells_num <- object@selections[[group_num]]
+        } else if (type_n == "meta") {
+            cells_num <- rownames(object@metaData)[
+                which(object@metaData[[subtype_n]] == group_num)
+                ]
+        } else {
+            print("ERROR! Num type unrecognized: " + type_n)
+        }
+
+        if (type_d == "remainder") {
+            cells_denom <- setdiff(colnames(exprData), cells_num)
+        } else if (type_d == "saved_selection") {
+            cells_denom <- object@selections[[group_denom]]
+        } else if (type_d == "meta") {
+            cells_denom <- rownames(object@metaData)[
+                which(object@metaData[[subtype_d]] == group_denom)
+                ]
+        } else {
+            print("ERROR! Denom type unrecognized: " + type_d)
+        }
+
+
+        cluster_num <- match(cells_num, colnames(exprData))
+        cluster_denom <- match(cells_denom, colnames(exprData))
+
+        out <- matrix_wilcox_cpp(exprData, cluster_num, cluster_denom)
+
+        out$pval <- p.adjust(out$pval, method = "fdr")
+        out$stat <- pmax(out$AUC, 1 - out$AUC)
+
+        numMean <- rowMeans(exprData[, cluster_num])
+        denomMean <- rowMeans(exprData[, cluster_denom])
+        bias <- 1 / sqrt(length(cluster_num) * length(cluster_denom))
+
+        out$logFC <- log2( (numMean + bias) / (denomMean + bias) )
+
+        out <- out[, c("gene", "logFC", "stat", "pval"), drop = FALSE]
+        out <- as.list(out)
+
+        result <- toJSON(
+          out,
+          force = TRUE, pretty = TRUE, auto_unbox = TRUE, use_signif = TRUE
+        )
+
+        res$body <- result
+        compressJSONResponse(req, res)
+        return(res)
+
+    })
+
+    pr$handle("GET", "/Clusters/<cluster_variable>/Cells",
+        function(req, res, cluster_variable) {
+
         metaData <- object@metaData
-        cluster_variable <- URLdecode(req$params$cluster_variable1)
+        cluster_variable <- URLdecode(cluster_variable)
         if (cluster_variable %in% colnames(metaData)) {
-            out <- sigScoresToJSON(names = rownames(metaData),
-                                            values = metaData[[cluster_variable]])
-            compressJSONResponse(out, res, req)
+            res$body <- sigScoresToJSON(
+                names = rownames(metaData),
+                values = metaData[[cluster_variable]]
+                )
+            compressJSONResponse(req, res)
+            return(res)
         } else {
             return("No Clusters!")
         }
-      }) %>%
-      get("/Clusters/(?<cluster_variable2>.*)/SigProjMatrix/Normal", function(req, res, err) {
+    })
+      
+    pr$handle("GET", "/Clusters/MetaLevels", function(req, res) {
+        out <- list()
+        metaData <- object@metaData
+        for (cluster_variable in names(object@ClusterSigScores)) {
+            out[[cluster_variable]] <- levels(metaData[[cluster_variable]])
+        }
+        
+        res$body <- toJSON(
+            out,
+            force = TRUE, pretty = TRUE, auto_unbox = TRUE
+        )
+        compressJSONResponse(req, res)
+        return(res)
+    })
+      
+    pr$handle("GET", "/Clusters/<cluster_variable>/SigProjMatrix/Normal",
+        function(req, res, cluster_variable) {
 
         sigs <- colnames(object@sigScores)
 
         metaData <- object@metaData
-        meta_n <- vapply(names(metaData), function(metaName) {
-                  is.numeric(metaData[, metaName])
-              }, FUN.VALUE = TRUE)
+        meta_n <- vapply(names(metaData),
+            function(metaName) is.numeric(metaData[, metaName]),
+            FUN.VALUE = TRUE)
 
         meta_n <- colnames(metaData)[meta_n]
         sigs <- c(sigs, meta_n)
 
-        cluster_variable <- URLdecode(req$params$cluster_variable2)
+        cluster_variable <- URLdecode(cluster_variable)
         pvals <- object@SigConsistencyScores@FDR
         stat <- object@SigConsistencyScores@Consistency
 
@@ -456,14 +618,16 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         pvals <- cbind(pvals, cluster_pval)
         stat <- cbind(stat, cluster_stat)
 
-        out <- sigProjMatrixToJSON(stat, pvals, sigs)
-        return(out)
-      }) %>%
-      get("/Clusters/(?<cluster_variable3>.*)/SigProjMatrix/Meta", function(req, res, err) {
+        res$body <- sigProjMatrixToJSON(stat, pvals, sigs)
+        return(res)
+    })
+
+    pr$handle("GET", "/Clusters/<cluster_variable>/SigProjMatrix/Meta",
+        function(req, res, cluster_variable) {
 
         sigs <- colnames(object@metaData)
 
-        cluster_variable <- URLdecode(req$params$cluster_variable3)
+        cluster_variable <- URLdecode(cluster_variable)
         pvals <- object@SigConsistencyScores@FDR
         stat <- object@SigConsistencyScores@Consistency
 
@@ -487,11 +651,12 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         pvals <- cbind(pvals, cluster_pval)
         stat <- cbind(stat, cluster_stat)
 
-        out <- sigProjMatrixToJSON(stat, pvals, sigs)
+        res$body <- sigProjMatrixToJSON(stat, pvals, sigs)
 
-        return(out)
-      }) %>%
-      get("/SessionInfo", function(req, res, err) {
+        return(res)
+    })
+
+    pr$handle("GET", "/SessionInfo", function(req, res) {
 
         info <- list()
 
@@ -514,121 +679,136 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         info[["has_sigs"]] <- length(object@sigData) > 0
 
-        result <- toJSON(
-                         info,
-                         force = TRUE, pretty = TRUE, auto_unbox = TRUE
-                         )
+        res$body <- toJSON(info, force = TRUE,
+            pretty = TRUE, auto_unbox = TRUE)
 
-        return(result)
+        return(res)
 
-     }) %>%
-     get("/Cell/(?<cell_id1>.*)/Meta", function(req, res, err) {
-         cell_id <- URLdecode(req$params$cell_id1)
-         cell_meta <- as.list(object@metaData[cell_id, ])
-         out <- toJSON(cell_meta, auto_unbox = TRUE)
-         return(out)
-     }) %>%
-     post("/Cells/Meta", function(req, res, err) {
+    })
 
-         subset <- fromJSON(req$body)
-         subset <- subset[!is.na(subset)]
+    pr$handle("GET", "/Cell/<cell_id>/Meta",
+        function(req, res, cell_id) {
 
-         if (object@pool){
-             cells <- unname(unlist(object@pools[subset]))
-         } else {
-             cells <- subset
-         }
+        cell_id <- URLdecode(cell_id)
+        cell_meta <- as.list(object@metaData[cell_id, ])
+        res$body <- toJSON(cell_meta, auto_unbox = TRUE)
 
-         metaSubset <- object@metaData[cells, ]
+        return(res)
+    })
 
-         numericMeta <- vapply(metaSubset, is.numeric, FUN.VALUE = TRUE)
+    pr$handle("POST", "/Cells/Meta", function(req, res) {
 
-         metaSummaryNumeric <-
-             lapply(metaSubset[numericMeta], function(item){
-                vals <- quantile(item, probs = c(0, .5, 1), na.rm = TRUE)
-                names(vals) <- c("Min", "Median", "Max")
-                return(as.list(vals))
-             })
+        subset <- fromJSON(req$postBody)
+        subset <- subset[!is.na(subset)]
 
-         metaSummaryFactor <-
-             lapply(metaSubset[!numericMeta], function(item){
-                vals <- sort(table(droplevels(item)),
-                             decreasing = TRUE)
-                vals <- vals / length(item) * 100
-                return(as.list(vals))
-             })
+        if (object@pool){
+            cells <- unname(unlist(object@pools[subset]))
+        } else {
+            cells <- subset
+        }
 
-         metaSummary <- list(numeric = metaSummaryNumeric,
-                             factor = metaSummaryFactor
-                            )
+        metaSubset <- object@metaData[cells, ]
 
-         out <- toJSON(metaSummary, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
-         return(out)
+        numericMeta <- vapply(metaSubset, is.numeric, FUN.VALUE = TRUE)
 
-     }) %>%
-     get("/Cells/Selections", function(req, res, err) {
+        metaSummaryNumeric <-
+            lapply(metaSubset[numericMeta], function(item){
+               vals <- quantile(item, probs = c(0, .5, 1), na.rm = TRUE)
+               names(vals) <- c("Min", "Median", "Max")
+               return(as.list(vals))
+            })
 
-         # Disable caching for this request
-         res$set_header("Cache-Control", NULL)
+        metaSummaryFactor <-
+            lapply(metaSubset[!numericMeta], function(item){
+               vals <- sort(table(droplevels(item)),
+                            decreasing = TRUE)
+               vals <- vals / length(item) * 100
+               return(as.list(vals))
+            })
 
-         selectionNames <- as.character(names(object@selections))
-         out <- toJSON(selectionNames)
-         return(out)
-     }) %>%
-     get("/Cells/Selections/(?<selection_id1>.*)", function(req, res, err) {
+        metaSummary <- list(numeric = metaSummaryNumeric,
+                            factor = metaSummaryFactor
+                           )
 
-         # Disable caching for this request
-         res$set_header("Cache-Control", NULL)
+        res$body <- toJSON(
+            metaSummary, force = TRUE, pretty = TRUE, auto_unbox = TRUE)
 
-         selection_id <- URLdecode(req$params$selection_id1)
-         selectionCells <- object@selections[[selection_id]]
-         out <- toJSON(selectionCells, auto_unbox = TRUE)
-         return(out)
-     }) %>%
-     post("/Cells/Selections/(?<selection_id2>.*)", function(req, res, err) {
-         selection_id <- URLdecode(req$params$selection_id2)
-         cell_ids <- fromJSON(req$body)
-         object@selections[[selection_id]] <<- cell_ids # Super assignment!
-         out <- ""  # Empty body for successful POST
-         return(out)
-     }) %>%
-     get(path = NULL, function(req, res, err) {
+        return(res)
 
-         if (req$path == "/") {
-             path <- "Results.html"
-         } else {
-             path <- substring(req$path, 2) # remove first / character
-         }
-         path <- paste0("html_output/", path)
-         file_index <- match(path, static_whitelist)
+    })
 
-         if (is.na(file_index)) {
-             res$set_status(404)
-             return(NULL)
-         }
+    pr$handle("GET", "/Cells/Selections", function(req, res) {
 
-         file_path <- system.file(static_whitelist[file_index],
-                        package = "VISION")
+        # Disable caching for this request
+        res$headers[["Cache-Control"]] <- NULL
 
-         mime_type <- mime::guess_type(file_path)
-         res$content_type(mime_type)
+        selectionNames <- as.character(names(object@selections))
+        res$body <- toJSON(selectionNames)
+        return(res)
+    })
 
-         data <- readBin(file_path, "raw", n = file.info(file_path)$size)
+    pr$handle("GET", "/Cells/Selections/<selection_id>",
+        function(req, res, selection_id) {
 
-         if (grepl("image|octet|pdf", mime_type)) {
-             return(data)
-         } else {
-             return(rawToChar(data))
-         }
-      }) %>%
-      simple_error_handler_json() -> jug_app
+        # Disable caching for this request
+        res$headers[["Cache-Control"]] <- NULL
 
-      tryCatch({
-          serve_it(jug_app, host = host, port = port)
-      },
-      interrupt = function(i){
-          message("Server Exited")
-      })
+        selection_id <- URLdecode(selection_id)
+        selectionCells <- object@selections[[selection_id]]
+        res$body <- toJSON(selectionCells, auto_unbox = TRUE)
+        return(res)
 
-      return(object)
+    })
+
+    pr$handle("POST", "/Cells/Selections/<selection_id>",
+        function(req, res, selection_id) {
+
+        selection_id <- URLdecode(selection_id)
+        cell_ids <- fromJSON(req$postBody)
+        object@selections[[selection_id]] <<- cell_ids # Super assignment!
+        res$body <- ""  # Empty body for successful POST
+        return(res)
+    })
+
+    # Assume all other paths are files or 404
+
+    pr$filter("filterFilter", function(req, res) {
+
+        if (req$PATH_INFO == "/") {
+            path <- "Results.html"
+        } else {
+            path <- substring(req$PATH_INFO, 2) # remove first / character
+        }
+        path <- paste0("html_output/", path)
+        file_index <- match(path, static_whitelist)
+
+        if (is.na(file_index)) {
+            forward()
+            return()
+        }
+
+        file_path <- system.file(static_whitelist[file_index],
+                       package = "VISION")
+
+        mime_type <- mime::guess_type(file_path)
+        res$headers[["Content-type"]] <- mime_type
+
+        data <- readBin(file_path, "raw", n = file.info(file_path)$size)
+
+        if (grepl("image|octet|pdf", mime_type)) {
+            res$body <- data
+        } else {
+            res$body <- rawToChar(data)
+        }
+        return(res)
+    })
+
+    tryCatch({
+        pr$run(host = host, port = port, swagger = FALSE)
+    },
+    interrupt = function(i){
+        message("Server Exited")
+    })
+
+    return(object)
 }

@@ -1,8 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head lang="en">
+
     <meta charset="UTF-8">
+
     <title>VISION Report</title>
+
 
     <link rel="stylesheet" href="thirdparty/chosen/chosen.min.css">
     <link rel="stylesheet" href="thirdparty/bootstrap/bootstrap.min.css">
@@ -45,10 +48,10 @@
         </div>
         <ul class="nav nav-pills justify-content-end inv">
             <li class="nav-item">
-                <a class="nav-link active" href="#" data-main-vis="clusters">Local Consistency</a>
+                <a class="nav-link active" href="#" data-main-vis="clusters">Autocorrelation</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#" data-main-vis="pcannotator">PC Annotator</a>
+                <a class="nav-link" href="#" data-main-vis="pcannotator">LC Annotator</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link disabled" href="#" data-main-vis="tree">Trajectories</a>
@@ -74,6 +77,9 @@
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" id="genes-table-tab" data-toggle="tab" href="#genes-table" role="tab" aria-controls="genes-table" aria-selected="false">Genes</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="de-table-tab" data-toggle="tab" href="#de-table" role="tab" aria-controls="de-table" aria-selected="false">DE</a>
                             </li>
                         </ul>
                     </div>
@@ -133,8 +139,55 @@
                             </div>
                         </div>
                     </div>
-                </div>
 
+                    <div class="tab-pane" id="de-table" role="tabpanel" aria-labelledby="de-table-tab">
+
+                        <div class="controls">
+                            <div class="group-control">
+                                <div class="label">Group</div>
+                                <select id="num_control" class="form-control"></select>
+                            </div>
+                            <div class="fgbg">
+                                <div>
+                                    <div class="label">Foreground</div>
+                                    <select id="num" class="form-control"></select>
+                                </div>
+
+                                <div>
+                                    <div class="label">Background</div>
+                                    <select id="denom" class="form-control"></select>
+                                </div>
+
+                                <div>
+                                    <div class="label" style="height: 1em"></div>
+                                    <button type="button" class="btn btn-default btn-outline-primary" id="submit_de" class="form-control">Calculate DE</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id='de-error' style='display: none'></div>
+
+                        <div id='de-results' style='display: none'>
+                            <div class="spacer"></div>
+                            <div id='de-results-title'>Some Title for Comparison</div>
+                            <div class="spacer2"></div>
+                            <div id='de-results-table-div'>
+                                <table id="de-results-table" class="compact stripe hover"></table>
+                            </div>
+                            <div class="spacer2"></div>
+                            <div class='back-button'>
+                                <button type="button" class="btn btn-secondary" id="new_de" class="form-control">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="3" y1="10" x2="18" y2="10" />
+                                        <line x1="3" y1="10" x2="10" y2="5" />
+                                        <line x1="3" y1="10" x2="10" y2="15" />
+                                    </svg>
+                                    New Comparison</button>
+                            </div>
+                            <div class="spacer"></div>
+                        </div> <!-- End #de-results -->
+                  </div> <!-- End #de-table -->
+                </div>
             </div> <!-- End of upper-left-content -->
             <div id="lower-left-content">
                 <div class="nav nav-pills justify-content-center">
@@ -223,13 +276,27 @@
             <div id="sigvp-scatter-div">
                 <div id="plot-title-div">
                     <div class="titles">
-                        <div class="subtitle" id="plot-subtitle-latent">
-                            <span style="margin-right: 10px">Projection:</span>
-                            <select id="SelectProjScatter" class="form-control"></select>
+                        <div id="plot-subtitle-latent">
+                            <div>
+                                <div class="labeled-select">
+                                    <span class="label">View:</span>
+                                    <select id="SelectProjScatter" class="form-control"></select>
+                                </div>
+                                <div class="labeled-select">
+                                    <span class="label">X:</span>
+                                    <select id="SelectProjScatterX" class="form-control"></select>
+                                </div>
+                            </div>
+                            <div class="labeled-select">
+                                <span class="label">Y:</span>
+                                <select id="SelectProjScatterY" class="form-control"></select>
+                            </div>
                         </div>
-                        <div class="subtitle" id="plot-subtitle-trajectory" style="display: none">
-                            <span style="margin-right: 10px">Projection:</span>
-                            <select id="SelectTrajectoryProjScatter" class="form-control"></select>
+                        <div id="plot-subtitle-trajectory" style="display: none">
+                            <div class="labeled-select">
+                                <span class="label">Projection:</span>
+                                <select id="SelectTrajectoryProjScatter" class="form-control"></select>
+                            </div>
                         </div>
                     </div>
                     <div class="color-options" >

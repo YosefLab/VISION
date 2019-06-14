@@ -323,11 +323,18 @@ Sig_Info.prototype.init = function()
                     return "<a href=http://www.genecards.org/cgi-bin/carddisp.pl?gene=" + data + " target='_blank'>&lt;genecards&gt;</a>";
                 }
             },
-            {'title': 'Sign', 'className': 'dt-center'}],
+            {'title': 'Sign', 'className': 'dt-center'},
+            {
+                'title': 'Score',
+                'className': 'dt-center',
+                'render': $.fn.dataTable.render.number(',', '.', 2)
+            },
+        ],
         'paging': false,
         'info': true,
         'scrollY': '15vh',
         'scrollCollapse': true,
+        'order': [[3, 'desc']],
     })
 
 }
@@ -363,12 +370,14 @@ Sig_Info.prototype.update = function(updates)
 
     var dt = $(this.content).find('#sig-info-table')
 
+    var sign;
     var dataSet = _.map(sig_info.sigDict, function (value, key){
         if(value > 0){
-            return [key, key, '+'];
+            sign = '+'
         } else {
-            return [key, key, '-'];
+            sign = '-'
         }
+        return [key, key, sign, sig_info.geneImportance[key]];
     })
 
     dt.DataTable().clear()

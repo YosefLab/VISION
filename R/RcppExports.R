@@ -41,3 +41,11 @@ multMat <- function(X, Y) {
     .Call('_VISION_multMat', PACKAGE = 'VISION', X, Y)
 }
 
+sigGeneInner <- function(sigScores, exp, geneIndices) {
+    .Call('_VISION_sigGeneInner', PACKAGE = 'VISION', sigScores, exp, geneIndices)
+}
+
+wilcox_subset <- function(vals, indicesA, indicesB) {
+    .Call('_VISION_wilcox_subset', PACKAGE = 'VISION', vals, indicesA, indicesB)
+}
+
