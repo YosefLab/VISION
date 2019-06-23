@@ -327,7 +327,7 @@ Sig_Info.prototype.init = function()
             {
                 'title': 'Score',
                 'className': 'dt-center',
-                'render': $.fn.dataTable.render.number(',', '.', 2)
+				'render': $.fn.dataTable.render.number(',', '.', 2)
             },
         ],
         'paging': false,
@@ -426,6 +426,7 @@ Sig_Heatmap.prototype.update = function(updates)
     if(needs_update){
         if($(this.dom_node).hasClass('active')) {
             this.drawHeat()
+            console.log("update here")
         } else {
             this.needs_plot = true;
         }
@@ -436,13 +437,18 @@ Sig_Heatmap.prototype.update = function(updates)
 Sig_Heatmap.prototype.initHeat = function(){
     var self = this;
     var heatmap_div = $(self.dom_node).find('#heatmap-div')
-    var heatmap_width = heatmap_div.parent().parent().width();
+    self.heatmap_width = heatmap_div.parent().parent().width();
     var heatmap_height = heatmap_div.parent().parent().height()-40;
 
-    self.heatmap = new HeatMap('#heatmap-div', heatmap_width, heatmap_height);
-    self.heatmap.click = function(gene, index, value){
-        _setSignatureGene(gene);
-    }
+    // YANAY: change HeatMap method and on click method
+    //self.heatmap = new HeatMap('#heatmap-div', heatmap_width, heatmap_height);
+
+    
+
+
+    // self.heatmap.click = function(gene, index, value){
+    //     _setSignatureGene(gene);
+    // }
 }
 
 Sig_Heatmap.prototype.drawHeat = function(){
@@ -452,10 +458,14 @@ Sig_Heatmap.prototype.drawHeat = function(){
 
     var heatmap_div = $(self.dom_node).find('#heatmap-div')
 
-    if( heatmap_div.children('svg').length === 0)
-    {
-        self.initHeat()
-    }
+    
+    
+
+
+    // if( heatmap_div.children('svg').length === 0)
+    // {
+    //     self.initHeat()
+    // }
 
     var sig_key = this.plotted_signature // kept current by 'update' method
     var sig_info = get_global_data('sig_info');
@@ -479,15 +489,35 @@ Sig_Heatmap.prototype.drawHeat = function(){
                 return sig_info.sigDict[e]
             });
 
-            var assignments = sample_labels.map(sample => clusters[sample]);
+            //var assignments = sample_labels.map(sample => clusters[sample]);
 
-            self.heatmap.setData(dataMat,
-                assignments,
-                gene_labels,
-                gene_signs,
-                sample_labels);
+            //self.heatmap.setData(dataMat,
+            //    assignments,
+            //    gene_labels,
+            //    gene_signs,
+            //    sample_labels);
 
             self.needs_plot = false
+
+            // yanay morpheus
+            var json = {}
+            json["rows"] = dataMat.length
+            json["columns"] = dataMat[0].length
+            json["seriesNames"] =  ["foo"]
+
+            json["seriesArrays"] = [dataMat]
+            json["seriesDataTypes"] = ["Float32"]
+
+
+            json["rowMetadataModel"] = {"vectors":[{"name":"gene", "array":gene_labels}]}
+            console.log("here draw")
+            $('#heatmap-div').children().remove()
+
+            new morpheus.HeatMap({
+                el: heatmap_div,
+                dataset: morpheus.Dataset.fromJSON(json),
+                width: self.heatmap_width * 2,
+	        });
 
         }).always(function() {
             heatmap_div.removeClass('loading');
@@ -497,9 +527,9 @@ Sig_Heatmap.prototype.drawHeat = function(){
 Sig_Heatmap.prototype.resize = function()
 {
     var heatmap_div = $(this.dom_node).find('#heatmap-div')
-    heatmap_div.find('svg').remove();
-    this.initHeat()
-    this.drawHeat()
+    
+    // fix this line
+    
 }
 
 function Cell_Info()

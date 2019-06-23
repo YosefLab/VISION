@@ -285,6 +285,9 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             genes <- names(sig@sigDict)
             expMat <- object@exprData
             res$body <- expressionToJSON(expMat, genes, zscore = TRUE)
+            
+            
+            # Yanay 
             compressJSONResponse(req, res)
             return(res)
         }
