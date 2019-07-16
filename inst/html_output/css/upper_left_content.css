@@ -43,12 +43,10 @@
 .upper-left-section-content .sig-tables-wrapper{
     overflow-y: scroll;
     overflow-x: auto;
-    padding-right: 10px;
 }
 
 .sig-table-div{
     display: table;
-    padding-right: 12px;
 }
 
 .sig-table-div:not(:first-child){
