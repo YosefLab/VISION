@@ -426,7 +426,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
     pr$handle("GET", "/PearsonCorr/Normal", function(req, res) {
 
-        pc <- object@PCAnnotatorData@pearsonCorr[, 1:10]
+        pc <- object@PCAnnotatorData@pearsonCorr
         sigs <- rownames(pc)
 
         res$body <- pearsonCorrToJSON(pc, sigs)
@@ -442,7 +442,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
                               FUN.VALUE = TRUE)
         sigs <- sigs[numericMeta]
 
-        pc <- object@PCAnnotatorData@pearsonCorr[, 1:10]
+        pc <- object@PCAnnotatorData@pearsonCorr
 
         res$body <- pearsonCorrToJSON(pc, sigs)
         return(res)
