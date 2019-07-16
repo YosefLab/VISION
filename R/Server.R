@@ -153,12 +153,18 @@ compressJSONResponse <- function(req, res){
 
     res$headers[["Content-type"]] <- "application/json"
 
-    if (requireNamespace("gzmem", quietly = TRUE) &&
-        !is.null(req$HTTP_ACCEPT_ENCODING) &&
+    if (!is.null(req$HTTP_ACCEPT_ENCODING) &&
         grepl("gzip", req$HTTP_ACCEPT_ENCODING, ignore.case = TRUE)
     ){
         res$setHeader("Content-Encoding", "gzip")
-        res$body <- gzmem::mem_compress(charToRaw(res$body), format = "gzip")
+        GZIP_HEADER <- as.raw(c(31, 139, 8, 0, 0, 0, 0, 0, 4, 3))
+        compressed <- memCompress(charToRaw(res$body))
+        compressed <- compressed[-c(1, 2)]
+        compressed <- compressed[- (
+                (length(compressed) - 3):length(compressed)
+        )]
+        compressed <- c(GZIP_HEADER, compressed)
+        res$body <- compressed
     }
 }
 
@@ -180,11 +186,6 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
     }
     if (is.null(host)) {
         host <- "127.0.0.1"
-    }
-
-    # Check for gzmem
-    if (!requireNamespace("gzmem", quietly = TRUE)){
-        warning("Package 'gzmem' not installed:\n    For faster network communication install gzmem with command: \n    > devtools::install_github(\"hrbrmstr/gzmem\")")
     }
 
     # Make sure all projections have column names
