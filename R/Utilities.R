@@ -470,3 +470,31 @@ hasUnnormalizedData <- function(object) {
 
     return(TRUE)
 }
+
+
+#' Gets parameters with defaults
+#'
+#' Used to get analysis parameters and supply defaults if needed
+#'
+#' @param object VISION object
+#' @param param name of parameter that is desired
+#' @return bool whether or not there is unnormalize data
+getParam <- function(object, param) {
+
+    useDefault <- tryCatch({
+        !(param %in% names(object@params))
+    }, error = function(err){
+        return(TRUE)
+    })
+
+    if (!useDefault){
+        return(object@params[[param]])
+    } else {
+        res <- switch(param,
+            "latentSpaceName" = "Latent Space",
+            stop(paste0("Unrecognized parameter name - ", param))
+        )
+        return(res)
+    }
+
+}

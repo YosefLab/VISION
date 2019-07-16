@@ -134,8 +134,12 @@ sigProjMatrixToJSON <- function(sigzscores, sigpvals, sigs) {
 #' @return Subsetted pearson correlations converted to JSON
 pearsonCorrToJSON <- function(pc, sigs) {
 
-    pc <- pc[sigs, ,drop = FALSE]
-    cn <- paste("PC", 1:ncol(pc))
+    pc <- pc[sigs, , drop = FALSE]
+    cn <- colnames(pc)
+
+    if (is.null(cn)){
+        cn <- paste0("Comp ", seq_len(ncol(pc)))
+    }
 
     sPC <- ServerSigProjMatrix(unname(pc), unname(pc), cn, sigs)
 
@@ -193,7 +197,16 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         }
         return(proj)
     })
+
+    if (object@version < 1.11 && "Latent Space" %in% names(projections)){
+        projections[["Latent Space"]] <- NULL
+    }
     object@Projections <- projections
+
+    # Make sure latent space columns have names
+    if (is.null(colnames(object@latentSpace))) {
+        colnames(object@latentSpace) <- paste0("Comp ", seq_len(ncol(object@latentSpace)))
+    }
 
     # Load the static file whitelist
     whitelist_file <- system.file("html_output/whitelist.txt",
@@ -315,7 +328,11 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         proj <- URLdecode(proj_name)
         col <- URLdecode(proj_col)
 
-        coords <- object@Projections[[proj]][, col, drop = FALSE]
+        if (proj %in% names(object@Projections)) {
+            coords <- object@Projections[[proj]][, col, drop = FALSE]
+        } else {
+            coords <- object@latentSpace[, col, drop = FALSE]
+        }
 
         res$body <- coordinatesToJSON(coords)
         compressJSONResponse(req, res)
@@ -328,6 +345,10 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         function(req, res) {
 
         proj_names <- lapply(object@Projections, colnames)
+
+        latentSpaceName <- getParam(object, "latentSpaceName")
+        proj_names[[latentSpaceName]] <- colnames(object@latentSpace)
+
         proj_names <- proj_names[order(names(proj_names), decreasing = TRUE)] # hack to make tsne on top
         res$body <- toJSON(proj_names)
         return(res)

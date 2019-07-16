@@ -34,8 +34,6 @@ generateProjectionsInner <- function(expr, latentSpace, projection_genes=NULL, p
 
     projections <- list()
 
-    projections[["Latent Space"]] <- latentSpace
-
     N <- length(methodList)
     for (i in seq_len(N)){
         method <- names(methodList)[i]

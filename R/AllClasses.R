@@ -106,7 +106,8 @@ Vision <- setClass("Vision",
         latentSpace = "matrix",
         latentTrajectory = "Trajectory",
         version = "numeric",
-        selections = "list"),
+        selections = "list",
+        params = "list"),
     prototype = list(
         nomodel = FALSE,
         weights = matrix(NA, 1, 1),
@@ -135,6 +136,7 @@ Vision <- setClass("Vision",
         num_neighbors = NULL, 
         latentSpace = matrix(NA, 1, 1),
         latentTrajectory = NULL,
-        version = 1.1,
-        selections = list()
+        version = 1.11,
+        selections = list(),
+        params = list()
 ))
