@@ -1483,8 +1483,9 @@ DE_Select.prototype.init = function()
             "pageLength": 500,
             "scrollY": '15vh',
             "order": [[3, "asc"]],
+            "buttons": ["csvHtml5"],
             "pagingType": "simple_numbers",
-            "dom": "ftip"
+            "dom": "Bftip"
         }
     );
 

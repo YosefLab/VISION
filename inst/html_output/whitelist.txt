@@ -21,11 +21,11 @@ html_output/thirdparty/chosen/chosen.jquery.min.js
 html_output/thirdparty/chosen/chosen.min.css
 html_output/thirdparty/d3/d3.min.js
 html_output/thirdparty/d3/d3tip.js
-html_output/thirdparty/datatables/DataTables-1.10.16/images/sort_asc.png
-html_output/thirdparty/datatables/DataTables-1.10.16/images/sort_asc_disabled.png
-html_output/thirdparty/datatables/DataTables-1.10.16/images/sort_both.png
-html_output/thirdparty/datatables/DataTables-1.10.16/images/sort_desc.png
-html_output/thirdparty/datatables/DataTables-1.10.16/images/sort_desc_disabled.png
+html_output/thirdparty/datatables/DataTables-1.10.18/images/sort_asc.png
+html_output/thirdparty/datatables/DataTables-1.10.18/images/sort_asc_disabled.png
+html_output/thirdparty/datatables/DataTables-1.10.18/images/sort_both.png
+html_output/thirdparty/datatables/DataTables-1.10.18/images/sort_desc.png
+html_output/thirdparty/datatables/DataTables-1.10.18/images/sort_desc_disabled.png
 html_output/thirdparty/datatables/datatables.min.css
 html_output/thirdparty/datatables/datatables.min.js
 html_output/thirdparty/jquery/jquery-2.1.4.min.js
