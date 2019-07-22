@@ -444,10 +444,10 @@ Sig_Heatmap.prototype.initHeat = function(){
     var heatmap_width = heatmap_div.parent().parent().width();
     var heatmap_height = heatmap_div.parent().parent().height()-40;
 
-    self.heatmap = new HeatMap('#heatmap-div', heatmap_width, heatmap_height);
-    self.heatmap.click = function(gene, index, value){
-        _setSignatureGene(gene);
-    }
+    //self.heatmap = new HeatMap('#heatmap-div', heatmap_width, heatmap_height);
+    // self.heatmap.click = function(gene, index, value){
+    //     _setSignatureGene(gene);
+    // }
 }
 
 Sig_Heatmap.prototype.drawHeat = function(){
@@ -478,6 +478,9 @@ Sig_Heatmap.prototype.drawHeat = function(){
             var dataMat = sig_expression.data;
             var gene_labels = sig_expression.gene_labels;
             var sample_labels = sig_expression.sample_labels;
+
+
+
             var clusters = get_global_data('clusters')
 
             var gene_signs = gene_labels.map(function(e){
@@ -485,12 +488,50 @@ Sig_Heatmap.prototype.drawHeat = function(){
             });
 
             var assignments = sample_labels.map(sample => clusters[sample]);
+            console.log(dataMat);
+            console.log(assignments);
+            console.log(gene_labels);
+            console.log(gene_signs);
+            console.log(sample_labels);
 
-            self.heatmap.setData(dataMat,
-                assignments,
-                gene_labels,
-                gene_signs,
-                sample_labels);
+            var colorscaleValue = [[0, 'rgb(0, 0, 255))'],
+            [0.5, 'rgb(255, 255, 255)'],
+            [1, 'rgb(255, 0, 0))']];
+
+            var data = [{
+              z:  dataMat,
+              y:  gene_labels,
+              x:  sample_labels,
+              type: 'heatmap',
+              "zmin" : -1,
+              "zmax": 1,
+              "colorscale": colorscaleValue,
+
+            }];
+
+            var layout = {
+              //title: 'Heatmap with Unequal Block Sizes',
+              margin: {
+                t: 25,
+                r: 0,
+                b: 0,
+                l: 0
+              },
+              showlegend: true,
+              
+
+              //width: 500,
+              //height: 500,
+              //autosize: true
+            };
+
+            Plotly.newPlot('heatmap-div', data, layout);
+
+            // self.heatmap.setData(dataMat,
+            //     assignments,
+            //     gene_labels,
+            //     gene_signs,
+            //     sample_labels);
 
             self.needs_plot = false
 

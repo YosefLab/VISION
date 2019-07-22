@@ -1495,6 +1495,29 @@ DE_Select.prototype.init = function()
         }
     );
 
+      $.fn.dataTable.ext.search.push(
+      function( settings, data, dataIndex ) {
+          var min = 0;
+          var max = parseFloat( $('#max').val(), 10 );
+          var fdr = parseFloat( data[3] ) || 0; // use data for the age column
+          if ( ( isNaN( min ) && isNaN( max ) ) ||
+               ( isNaN( min ) && fdr <= max ) ||
+               ( min <= fdr   && isNaN( max ) ) ||
+               ( min <= fdr   && fdr <= max ) )
+          {
+              return true;
+          }
+          return false;
+      }
+    );
+
+    $('#max').off();
+    $('#max').keyup( function() {
+      console.log("updated")
+        $('#de-results-table').DataTable().draw();
+    } );
+
+
     this.de_table.on('click', "tr", function() {
         var gene = $(this).find("td:first").text()
         set_global_status({
@@ -1740,6 +1763,7 @@ DE_Select.prototype.render_de = function()
         .rows.add(dataSet)
         .columns.adjust() // Needed or else column headers don't align
         .draw()
+
 
     // Render the title
     var group = this.numControl.find('option:selected').text()
