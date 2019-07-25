@@ -26,7 +26,6 @@ processSignatures <- function(sigData, expressionGenes, minSignatureGenes){
 }
 
 #' Initialize a new Signature object.
-#' Should not be called directly, instead use the `new` syntax
 #'
 #' @param sigDict Named list of signs for each gene in the signature
 #' @param name Name of the signature
@@ -82,8 +81,9 @@ Signature <- function(sigDict, name, source, metaData="") {
 #' vis <- Vision(data = expMat, signatures = sigs)
 #' }
 createGeneSignature <- function(name, sigData, metadata="") {
-  return(new("Signature", sigDict=sigData, name=name, metaData=metadata,
-             source="user-defined"))
+    return(
+        Signature(sigData, name, source = "user-defined", metaData = metadata)
+    )
 }
 
 #' calculate background signature scores
