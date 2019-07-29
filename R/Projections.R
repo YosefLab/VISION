@@ -65,6 +65,50 @@ generateProjectionsInner <- function(expr, latentSpace, projection_genes=NULL, p
     return(projections)
 }
 
+#' Performs PCA on data
+#'
+#' @param exprData Expression matrix
+#' @param weights Weights to use for each coordinate in data
+#' @param maxComponents Maximum number of components to calculate
+#' @return PCA data
+#' @return Variance of each component
+#' @return Eigenvectors of covariance matrix, aka the variable loadings
+applyPCA <- function(exprData, weights, maxComponents=200) {
+    if (all(dim(weights) == c(1, 1))){
+        return(applyNormalPCA(exprData, maxComponents))
+    } else {
+        return(applyWeightedPCA(exprData, weights, maxComponents))
+    }
+}
+
+#' Performs PCA on data
+#'
+#' @importFrom irlba irlba
+#' @importFrom Matrix rowMeans
+#'
+#' @param exprData Expression matrix
+#' @param maxComponents Maximum number of components to calculate
+#' @return PCA data
+#' @return Variance of each component
+#' @return Eigenvectors of covariance matrix, aka the variable loadings
+applyNormalPCA <- function(exprData, maxComponents=200) {
+
+    rM <- rowMeans(exprData)
+    res <- irlba(t(exprData), nv = maxComponents, center = rM)
+
+    pcaData <- res$u %*% diag(res$d)
+    pcaData <- t(pcaData)
+
+    eval <- res$d
+    totalVar <- sum(exprData ** 2) - ncol(exprData) * sum(rM ** 2)
+    eval <- eval**2 / totalVar
+
+    evec <- res$v
+    rownames(evec) <- rownames(exprData)
+    colnames(pcaData) <- colnames(exprData)
+
+    return(list(pcaData, eval, evec))
+}
 
 #' Performs weighted PCA on data
 #'
@@ -106,8 +150,8 @@ applyWeightedPCA <- function(exprData, weights, maxComponents=200) {
     # Project down using computed eigenvectors
     wpcaData <- evec %*% dataCentered
 
-    eval <- rowVars(wpcaData)
-    totalVar <- sum(rowVars(projData))
+    eval <- rowVarsSp(wpcaData)
+    totalVar <- sum(rowVarsSp(projData))
     eval <- eval / totalVar
 
     colnames(evec) <- rownames(exprData)
@@ -139,7 +183,7 @@ applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05) 
 
     NUM_REPEATS <- 20;
 
-    w <- applyWeightedPCA(expr, weights, comp)
+    w <- applyPCA(expr, weights, comp)
     wPCA <- w[[1]]
     eval <- w[[2]]
     evec <- w[[3]]
@@ -159,7 +203,7 @@ applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05) 
         bg_weights[j,] <- weights[j,random_i]
     }
 
-    bg = applyWeightedPCA(bg_data, bg_weights, comp)
+    bg = applyPCA(bg_data, bg_weights, comp)
     bg_vals[i,] = bg[[2]]
     permMats[[i]] <- bg[[1]]
     }
@@ -189,24 +233,6 @@ applyPermutationWPCA <- function(expr, weights, components=50, p_threshold=.05) 
     permMats <- lapply(permMats, function(m) {m[1:thresholdComponent, ]})
 
     return(list(wPCA = wPCA, eval = eval, evec = evec, permuteMatrices = permMats))
-}
-
-#' Performs PCA on data
-#' @importFrom  utils tail
-#' @importFrom stats prcomp
-#' @param exprData Expression data
-#' @param N Number of components to retain. Default is 0
-#' @param variance_proportion Retain top X PC's such that this much variance is retained; if N=0, then apply this method
-#' @return Matrix containing N components for each sample.
-applyPCA <- function(exprData, N=0, variance_proportion=1.0) {
-    res <- prcomp(x=t(exprData), retx=TRUE, center=TRUE)
-
-    if(N == 0) {
-    total_var <- as.matrix(cumsum(res$sdev^2 / sum(res$sdev^2)))
-    last_i <- tail(which(total_var <= variance_proportion), n=1)
-    N <- last_i
-    }
-    return(list(t(res$x[,1:N])*-1, t(res$rotation)))
 }
 
 #' Performs ICA on data

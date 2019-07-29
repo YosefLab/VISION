@@ -174,6 +174,11 @@ calcWeights <- function(object,
     clustered <- (ncol(object@exprData) > 15000 || object@pool)
     if (!clustered && !object@nomodel) {
         message("Computing weights from False Negative Rate curves...")
+
+        if (is(object@exprData, "sparseMatrix")){
+            stop("FNR weights not supported for sparse expression data.  Use 'as.matrix' to convert your expression data to dense format before creating the Vision object")
+        }
+
         falseneg_out <- createFalseNegativeMap(object@exprData,
                                                object@housekeepingData)
 
@@ -351,7 +356,7 @@ computeLatentSpace <- function(object, projection_genes = NULL,
         res <- applyPermutationWPCA(exprData, weights, components = 30)
         pca_res <- res[[1]]
     } else {
-        res <- applyWeightedPCA(exprData, weights, maxComponents = 30)
+        res <- applyPCA(exprData, weights, maxComponents = 30)
         pca_res <- res[[1]]
     }
 

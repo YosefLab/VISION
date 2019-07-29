@@ -6,7 +6,7 @@
 # on the different types of data.
 
 setClassUnion('numericORNULL', members=c('numeric', 'NULL'))
-setClassUnion('matrixORSparse', members=c("matrix", "dgeMatrix", "dgCMatrix", "dgTMatrix"))
+setClassUnion('matrixORSparse', members=c("matrix", "dgCMatrix"))
 
 Cluster <- setClass("Cluster",
     slots = c(
@@ -15,6 +15,23 @@ Cluster <- setClass("Cluster",
     centers = "matrix",
     data = "matrixORSparse"
     )
+)
+
+NormData <- setClass("NormData",
+    slots = c(
+    colOffsets = "numeric",
+    colScaleFactors = "numeric",
+    rowOffsets = "numeric",
+    rowScaleFactors = "numeric",
+    data = "matrixORSparse"
+    ),
+    validity = function(obj){
+        isValid <- nrow(obj@data) == length(obj@rowOffsets)
+        isValid <- isValid && (nrow(obj@data) == length(obj@rowScaleFactors))
+        isValid <- isValid && (ncol(obj@data) == length(obj@colOffsets))
+        isValid <- isValid && (ncol(obj@data) == length(obj@colScaleFactors))
+        return(isValid)
+    },
 )
 
 ProjectionData <- setClass("ProjectionData",
