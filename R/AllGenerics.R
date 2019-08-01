@@ -67,3 +67,7 @@ setGeneric("getMetaAutocorrelation", function(object, ...) {
 setGeneric("getMetaDifferential", function(object, ...) {
     standardGeneric("getMetaDifferential")
 })
+
+setGeneric("hasFeatureBarcodeData", function(object, ...) {
+    standardGeneric("hasFeatureBarcodeData")
+})

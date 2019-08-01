@@ -304,6 +304,22 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         }
     })
 
+    pr$handle("GET", "/Features/<feature_name>/Values",
+        function(req, res, feature_name) {
+
+        featureMatrix <- object@featureBarcodeData
+        name <- URLdecode(feature_name)
+        if (name %in% colnames(featureMatrix)) {
+            values <- featureMatrix[, name]
+            names <- rownames(featureMatrix)
+            res$body <- sigScoresToJSON(names, values)
+            compressJSONResponse(req, res)
+            return(res)
+        } else {
+            return("Feature does not exist!")
+        }
+    })
+
     pr$handle("GET", "/FilterGroup/SigClusters/Normal", function(req, res) {
 
         cls <- object@SigConsistencyScores@sigClusters
@@ -312,6 +328,16 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         res$body <- toJSON(cls, auto_unbox = TRUE)
         return(res)
 
+    })
+
+    pr$handle("GET", "/FilterGroup/SigClusters/Features", function(req, res) {
+
+        # Everything is in cluster 1
+        cls <- as.list(numeric(nrow(object@FeatureBarcodeConsistencyScores))+1)
+        names(cls) <- rownames(object@FeatureBarcodeConsistencyScores)
+
+        res$body <- toJSON(cls, auto_unbox = TRUE)
+        return(res)
     })
 
     pr$handle("GET", "/FilterGroup/SigClusters/Meta", function(req, res) {
@@ -413,6 +439,18 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         return(res)
     })
 
+    pr$handle("GET", "/Tree/FeatureMatrix", function(req, res) {
+
+        features <- colnames(object@featureBarcodeData)
+
+        res$body <- sigProjMatrixToJSON(
+            object@TrajectoryConsistencyScoresFeatures@Consistency,
+            object@TrajectoryConsistencyScoresFeatures@FDR,
+            features)
+
+        return(res)
+    })
+
     pr$handle("GET", "/Tree/SigProjMatrix/Meta", function(req, res) {
 
         sigs <- colnames(object@metaData)
@@ -434,6 +472,16 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         return(res)
     })
 
+    pr$handle("GET", "/PearsonCorr/Features", function(req, res) {
+
+        pc <- object@PCAnnotatorData@pearsonCorrFeatures
+        sigs <- rownames(pc)
+
+        res$body <- pearsonCorrToJSON(pc, sigs)
+
+        return(res)
+    })
+
     pr$handle("GET", "/PearsonCorr/Meta", function(req, res) {
 
         sigs <- colnames(object@metaData)
@@ -445,14 +493,6 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         pc <- object@PCAnnotatorData@pearsonCorr
 
         res$body <- pearsonCorrToJSON(pc, sigs)
-        return(res)
-    })
-
-    pr$handle("GET", "/PearsonCorr/list", function(req, res) {
-
-        pc <- object@PCAnnotatorData@pearsonCorr
-        pcnames <- seq(ncol(pc))[1:10]
-        res$body <- toJSON(pcnames, force = TRUE, pretty = TRUE)
         return(res)
     })
 
@@ -678,6 +718,43 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         return(res)
     })
 
+    pr$handle("GET", "/Clusters/<cluster_variable>/FeatureMatrix",
+        function(req, res, cluster_variable) {
+
+        features <- colnames(object@featureBarcodeData)
+
+        cluster_variable <- URLdecode(cluster_variable)
+        pvals <- object@FeatureBarcodeConsistencyScores[, "FDR", drop = FALSE]
+        stat <- object@FeatureBarcodeConsistencyScores[, "C", drop = FALSE]
+        colnames(stat) <- "Score"
+        colnames(pvals) <- "Score"
+        stat <- as.matrix(stat)
+        pvals <- as.matrix(pvals)
+
+        var_res <- object@ClusterFeatureBarcodeScores[[cluster_variable]]
+
+        cluster_pval <- lapply(var_res, function(var_level_res){
+            var_level_res["FDR"]
+        })
+        cluster_pval <- as.matrix(do.call(cbind, cluster_pval))
+        colnames(cluster_pval) <- names(var_res)
+
+        cluster_stat <- lapply(var_res, function(var_level_res){
+            var_level_res["stat"]
+        })
+        cluster_stat <- as.matrix(do.call(cbind, cluster_stat))
+        colnames(cluster_stat) <- names(var_res)
+
+        cluster_pval <- cluster_pval[rownames(pvals), , drop = F]
+        cluster_stat <- cluster_stat[rownames(pvals), , drop = F]
+
+        pvals <- cbind(pvals, cluster_pval)
+        stat <- cbind(stat, cluster_stat)
+
+        res$body <- sigProjMatrixToJSON(stat, pvals, features)
+        return(res)
+    })
+
     pr$handle("GET", "/SessionInfo", function(req, res) {
 
         info <- list()
@@ -700,6 +777,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         info[["ncells"]] <- nrow(object@metaData)
 
         info[["has_sigs"]] <- length(object@sigData) > 0
+
+        info[["has_features"]] <- hasFeatureBarcodeData(object)
 
         res$body <- toJSON(info, force = TRUE,
             pretty = TRUE, auto_unbox = TRUE)

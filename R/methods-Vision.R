@@ -13,6 +13,8 @@
 #' Signature objects.  See the createGeneSignature(...) method for information
 #' on creating Signature objects.
 #' @param housekeeping vector of gene names
+#' @param featureBarcodeData additional feature barcode data (such as ADT counts).
+#' Can be either a data.frame or numeric matrix.  Should be of shape (CELLS x FEATURES)
 #' @param meta data.frame with meta-data for cells. Rows in this data.frame should correspond
 #' with columns in the expression data matrix
 #' @param nomodel if TRUE, no fnr curve calculated and all weights equal to 1.
@@ -72,6 +74,7 @@
 #' }
 setMethod("Vision", signature(data = "matrixORSparse"),
             function(data, signatures=list(), housekeeping=NULL,
+                    featureBarcodeData=NULL,
                     unnormalizedData = NULL, meta=NULL, nomodel=TRUE,
                     projection_genes=c("fano"), min_signature_genes=5,
                     weights=NULL, threshold=.05, perm_wPCA=FALSE,
@@ -80,7 +83,7 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                                         "znorm_rows_then_columns",
                                         "rank_norm_columns"),
                     sig_score_method=c("naive", "weighted_avg"),
-                    pool="auto", cellsPerPartition=10, name=NULL, num_neighbors = NULL, 
+                    pool="auto", cellsPerPartition=10, name=NULL, num_neighbors = NULL,
                     latentSpace = NULL, latentSpaceName = NULL, latentTrajectory = NULL, pools=list()) {
 
             .Object <- new("Vision")
@@ -130,6 +133,32 @@ setMethod("Vision", signature(data = "matrixORSparse"),
 
             } else {
                 .Object@unnormalizedData <- matrix(NA, 1, 1)
+            }
+
+            if (!is.null(featureBarcodeData)){
+
+                if (is.data.frame(featureBarcodeData)){
+                    featureBarcodeData <- data.matrix(featureBarcodeData)
+                }
+
+                HAS_CORRECT_CELLS <- length(setdiff(
+                                           colnames(.Object@exprData),
+                                           rownames(featureBarcodeData)
+                                           )) == 0
+                if (!HAS_CORRECT_CELLS) {
+                    stop("featureBarcodeData must have a row for all cells in data. rownames(featureBarcodeData) must contain all labels in colnames(data)")
+                }
+
+                if (!all(rownames(featureBarcodeData) == colnames(.Object@exprData))){
+                    featureBarcodeData <- featureBarcodeData[colnames(.Object@exprData), , drop = FALSE]
+                }
+
+                colnames(featureBarcodeData) <- make.unique(colnames(featureBarcodeData))
+
+                .Object@featureBarcodeData <- featureBarcodeData
+
+            } else {
+                .Object@featureBarcodeData <- matrix(NA, 1, 1)
             }
 
             if (is.null(housekeeping)) {
@@ -538,7 +567,7 @@ setMethod("analyze", signature(object="Vision"),
 
     signatureBackground <- calculateSignatureBackground(object, num = 3000)
 
-    # Populates @SigConsistencyScores
+    # Populates @SigConsistencyScores and @FeatureBarcodeConsistencyScores
     object <- analyzeLocalCorrelations(object, signatureBackground)
 
     # Populates @TrajectoryConsistencyScores
@@ -546,7 +575,7 @@ setMethod("analyze", signature(object="Vision"),
         object <- analyzeTrajectoryCorrelations(object, signatureBackground)
     }
 
-    # Populates @ClusterSigScores
+    # Populates @ClusterSigScores and @ClusterFeatureBarcodeScores
     object <- clusterSigScores(object)
 
     # Populates #PCAnnotatorData
@@ -1069,4 +1098,10 @@ print.Vision <- function(vis) {
 
 setMethod("show", "Vision",
     function(object) print(object)
+)
+
+setMethod("hasFeatureBarcodeData", "Vision",
+    function(object) {
+        return(!all(dim(object@featureBarcodeData) == 1))
+    }
 )

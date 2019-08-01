@@ -245,7 +245,7 @@ generatePermutationNull <- function(num, eData, sigData) {
 #' Evaluates the significance of each signature in each cluster
 #'
 #' @importFrom stats p.adjust
-#' @param latentSpace numeric matrix N_Cells x N_Components
+#' @param weights output of computeKNNWeights
 #' @param sigScoresData numeric matrix of signature scores
 #' size is cells x signatures
 #' @param metaData data.frame of meta-data for cells
@@ -257,19 +257,16 @@ generatePermutationNull <- function(num, eData, sigData) {
 #'
 #'   sigAssignments: named factor vector assigning signatures to random background
 #'     groups
-#' @param K Number of neighbors to consider.
 #' @return list:
 #' \itemize{
 #'     \item sigProbMatrix: the vector of consistency z-scores
 #'     \item pVals: pvalues for the scores
 #'     \item emp_pVals: pvalues for the scores
 #' }
-sigConsistencyScores <- function(latentSpace, sigScoresData,
-                                      metaData, randomSigData, K) {
+sigConsistencyScores <- function(weights, sigScoresData,
+                                      metaData, randomSigData) {
 
     signatureNames <- c(colnames(sigScoresData), colnames(metaData))
-
-    weights <- computeKNNWeights(latentSpace, K)
 
     svp_n <- sigsVsProjection_n(sigScoresData,
                                 randomSigData, weights)
@@ -306,6 +303,34 @@ sigConsistencyScores <- function(latentSpace, sigScoresData,
                 pVals = pvals,
                 fdr = fdr)
     )
+}
+
+
+#' Evaluates the significance of each feature barcode
+#'
+#' @importFrom stats p.adjust
+#' @param weights output of computeKNNWeights
+#' @param featureBarcodeData numeric matrix of feature barcode counts
+#' size is cells x features
+#' @return dataframe with columns "C", "pValue", and "FDR"
+fbConsistencyScores <- function(weights, featureBarcodeData) {
+
+    featureNames <- colnames(featureBarcodeData)
+    svp_pcn <- sigsVsProjection_pcn(featureBarcodeData, weights, computePval = FALSE)
+
+    consistency <- svp_pcn$consistency
+
+    pvals <- svp_pcn$pvals
+
+    consistency <- consistency[featureNames]
+    pvals <- pvals[featureNames]
+
+    result <- data.frame(
+        C = consistency, pValue = pvals
+    )
+    result$FDR <- p.adjust(result$pValue, method = "BH")
+
+    return(result)
 }
 
 
@@ -428,7 +453,7 @@ sigsVsProjection_n <- function(sigData, randomSigData,
 #'     \item consistency: consistency scores
 #'     \item pvals: pvalues
 #' }
-sigsVsProjection_pcn <- function(metaData, weights, cells = NULL){
+sigsVsProjection_pcn <- function(metaData, weights, cells = NULL, computePval = TRUE){
   # Calculate significance for meta data numerical signatures
   # This is done separately because there are likely to be many repeats
   # (e.g. for a time coordinate)
@@ -441,16 +466,20 @@ sigsVsProjection_pcn <- function(metaData, weights, cells = NULL){
 
   N_SAMPLES <- nrow(weights$indices)
 
-  numericMeta <- vapply(names(metaData),
-                         function(metaName) {
-                             is.numeric(metaData[, metaName])
-                         }, FUN.VALUE = TRUE)
+  if (is.data.frame(metaData)){
+      numericMeta <- vapply(names(metaData),
+                             function(metaName) {
+                                 is.numeric(metaData[, metaName])
+                             }, FUN.VALUE = TRUE)
 
-  numericMeta <- names(numericMeta)[numericMeta]
+      numericMeta <- names(numericMeta)[numericMeta]
+  } else { # If it's a matrix, assume all numeric
+      numericMeta <- colnames(metaData)
+  }
 
   results <- pbmclapply(numericMeta, function(metaName) {
 
-    scores <- metaData[[metaName]]
+    scores <- metaData[, metaName]
 
     sigScores <- rank(scores, ties.method = "average")
     if (all(sigScores == sigScores[1])) {
@@ -466,16 +495,20 @@ sigsVsProjection_pcn <- function(metaData, weights, cells = NULL){
                                          weights$weights)
 
     #Compute a background for numerical signatures
-    NUM_REPLICATES <- 3000
-    bgValues <- replicate(NUM_REPLICATES, sample(sigScores))
-    rownames(bgValues) <- rownames(sigScores)
-    randomScores <- geary_sig_v_proj(bgValues,
-                                         weights$indices,
-                                         weights$weights)
+    if (computePval) {
+        NUM_REPLICATES <- 3000
+        bgValues <- replicate(NUM_REPLICATES, sample(sigScores))
+        rownames(bgValues) <- rownames(sigScores)
+        randomScores <- geary_sig_v_proj(bgValues,
+                                             weights$indices,
+                                             weights$weights)
 
-    N <- length(randomScores)
-    comp <- sum(randomScores < geary_c)
-    pval <- (comp + 1) / (N + 1)
+        N <- length(randomScores)
+        comp <- sum(randomScores < geary_c)
+        pval <- (comp + 1) / (N + 1)
+    } else {
+        pval <- numeric(length(geary_c)) + 1.0
+    }
 
     return(list(consistency = 1 - geary_c, pval = pval))
 

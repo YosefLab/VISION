@@ -13,6 +13,10 @@
     opacity: 0.5;
 }
 
+#upper-left-content .nav-link {
+    padding: .5rem .5rem; /* Override to fit more nav items in */
+}
+
 .upper-left-section-content {
     flex-grow: 1;
     display: flex;

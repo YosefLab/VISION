@@ -88,6 +88,11 @@ poolCells <- function(object,
         object@latentSpace <- pooled_latent
     }
 
+    if (hasFeatureBarcodeData(object)) {
+        pooled_fbc <- poolMatrixRows(object@featureBarcodeData, object@pools)
+        object@featureBarcodeData <- pooled_fbc
+    }
+
     poolMeta <- poolMetaData(object@metaData, object@pools)
     object@metaData <- poolMeta
 
@@ -424,12 +429,18 @@ analyzeLocalCorrelations <- function(object, signatureBackground = NULL) {
 
   message("Evaluating local consistency of signatures in latent space...\n")
 
+  weights <- computeKNNWeights(object@latentSpace, object@num_neighbors)
+
   sigConsistencyScores <- sigConsistencyScores(
-                                object@latentSpace,
+                                weights,
                                 object@sigScores,
                                 object@metaData,
-                                signatureBackground,
-                                object@num_neighbors)
+                                signatureBackground)
+
+  if (hasFeatureBarcodeData(object)) {
+      fbcs <- fbConsistencyScores(weights, object@featureBarcodeData)
+      object@FeatureBarcodeConsistencyScores <- fbcs
+  }
 
   message("Clustering signatures...\n")
   sigClusters <- clusterSignatures(object@sigScores,
@@ -466,10 +477,18 @@ analyzeTrajectoryCorrelations <- function(object, signatureBackground = NULL) {
   }
 
   message("Evaluating local consistency of signatures within trajectory model...\n")
-  sigVTreeProj <- sigConsistencyScores(object@latentTrajectory,
+
+  weights <- computeKNNWeights(object@latentTrajectory, object@num_neighbors)
+
+  sigVTreeProj <- sigConsistencyScores(weights,
                                        object@sigScores,
                                        object@metaData,
                                        signatureBackground)
+
+  if (hasFeatureBarcodeData(object)) {
+      fbcs <- fbConsistencyScores(weights, object@featureBarcodeData)
+      object@TrajectoryConsistencyScoresFeatures <- fbcs
+  }
 
   message("Clustering signatures...\n")
   sigTreeClusters <- clusterSignatures(object@sigScores,
@@ -583,6 +602,40 @@ clusterSigScores <- function(object) {
     }, mc.cores = 1)
 
     object@ClusterSigScores <- out
+
+    if (hasFeatureBarcodeData(object)){
+        fbRanks <- colRanks(object@featureBarcodeData,
+                            preserveShape = TRUE,
+                            ties.method = "average")
+        dimnames(fbRanks) <- dimnames(object@featureBarcodeData)
+        out_fb <- pbmclapply(clusterMeta, function(variable){
+            values <- metaData[[variable]]
+            var_levels <- levels(values)
+
+            result <- lapply(var_levels, function(var_level){
+                cluster_ii <- which(values == var_level)
+
+                rr <- matrix_wilcox(fbRanks, cluster_ii,
+                                    check_na = TRUE, check_ties = TRUE)
+
+                pval <- rr$pval
+                stat <- rr$stat
+                fdr <- p.adjust(pval, method = "BH")
+                out <- data.frame(
+                    stat = stat, pValue = pval, FDR = fdr
+                )
+                return(out)
+            })
+
+            names(result) <- var_levels
+            result <- result[order(var_levels)]
+
+            return(result)
+        }, mc.cores = 1)
+
+        object@ClusterFeatureBarcodeScores <- out_fb
+    }
+
     return(object)
 
 }
@@ -596,7 +649,7 @@ clusterSigScores <- function(object) {
 #' @return pearsonCorr numeric matrix N_Signatures x N_PCs
 calculatePearsonCorr <- function(object){
 
-  message("Computing correlations between signatures and expression PCs...\n")
+  message("Computing correlations between signatures and latent space components...\n")
   sigMatrix <- object@sigScores
   metaData <- object@metaData
   latentSpace <- object@latentSpace
@@ -620,7 +673,7 @@ calculatePearsonCorr <- function(object){
            suppressWarnings({
                pc_result <- cor.test(ss, pc)
            })
-           if (is.na(pc_result$estimate)) {  # happens i std dev is 0 for a sig
+           if (is.na(pc_result$estimate)) {  # happens if std dev is 0 for a sig
                return(0)
            } else {
                return(pc_result$estimate)
@@ -634,7 +687,37 @@ calculatePearsonCorr <- function(object){
   rownames(pearsonCorr) <- colnames(computedSigMatrix)
   colnames(pearsonCorr) <- colnames(latentSpace)
 
-  pcaAnnotData <- PCAnnotatorData(pearsonCorr = pearsonCorr)
+  if (hasFeatureBarcodeData(object)) {
+      featureBarcodeData <- object@featureBarcodeData
+      pearsonCorrFeatures <- pbmclapply(
+          seq_len(ncol(featureBarcodeData)), function(i) {
+          ss <- featureBarcodeData[, i];
+
+          ls_col_cor <- apply(latentSpace, 2, function(pc){
+               suppressWarnings({
+                   pc_result <- cor.test(ss, pc)
+               })
+               if (is.na(pc_result$estimate)) {  # happens if std dev is 0 for a feature
+                   return(0)
+               } else {
+                   return(pc_result$estimate)
+               }
+          })
+
+          return(ls_col_cor)
+      })
+
+      pearsonCorrFeatures <- do.call(rbind, pearsonCorrFeatures)
+      rownames(pearsonCorrFeatures) <- colnames(featureBarcodeData)
+      colnames(pearsonCorrFeatures) <- colnames(latentSpace)
+  } else {
+      pearsonCorrFeatures <- NULL
+  }
+
+
+  pcaAnnotData <- PCAnnotatorData(
+      pearsonCorr = pearsonCorr, pearsonCorrFeatures = pearsonCorrFeatures
+  )
   object@PCAnnotatorData <- pcaAnnotData
 
   return(object)

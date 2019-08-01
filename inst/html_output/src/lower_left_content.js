@@ -202,6 +202,7 @@ Values_Plot.prototype.update = function(updates)
 
     if(!(
         'plotted_item' in updates ||
+        'plotted_item_type' in updates ||
         'selected_cell' in updates ||
         'selection_type' in updates
     )){

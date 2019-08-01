@@ -96,6 +96,26 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
+    // Features API
+
+    output.features = {}
+
+    output.features.clusters = function() {
+        var query= "FilterGroup/SigClusters/Features"
+        query = postProcess(query)
+        return $.ajax(query, {dataType: "json"}).then(x => x)
+    }
+
+    output.features.values = function(feature_name){
+        var query = "Features/"
+        query = query.concat(encodeURIComponent(feature_name))
+        query = query.concat("/Values")
+        query = postProcess(query)
+        return $.ajax(query, {dataType: "json"}).then(x => {
+            return _.fromPairs(_.zip(x['cells'], x['values']))
+        })
+    }
+
     // Clusters API
 
     output.clusters = {}
@@ -109,6 +129,15 @@ var api = (function(){
         } else {
             query = query.concat("/SigProjMatrix/Normal")
         }
+        query = postProcess(query)
+        return $.ajax(query, {dataType: "json"}).then(x => x)
+    }
+
+    output.clusters.featureMatrix = function(cluster_variable)
+    {
+        var query = "Clusters/"
+        query = query.concat(encodeURIComponent(cluster_variable))
+        query = query.concat("/FeatureMatrix")
         query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
@@ -147,22 +176,24 @@ var api = (function(){
         }).then(x => x);
     }
 
-    output.filterGroup = {}
+    // Pearson Correlations (LCA) api
 
-    output.filterGroup.pCorr = function(meta) {
-        var query;
-        if (meta) {
-            query = "PearsonCorr/Meta"
-        } else {
-            query = "PearsonCorr/Normal"
-        }
+    output.pCorr = {}
+
+    output.pCorr.signatures = function() {
+        var query = "PearsonCorr/Normal"
         query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.filterGroup.listPCs = function()
-    {
-        var query = "PearsonCorr/list"
+    output.pCorr.features = function() {
+        var query = "PearsonCorr/Features"
+        query = postProcess(query)
+        return $.ajax(query, {dataType: "json"}).then(x => x)
+    }
+
+    output.pCorr.meta = function() {
+        var query = "PearsonCorr/Meta"
         query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
@@ -214,6 +245,13 @@ var api = (function(){
         } else {
             query = query.concat("/SigProjMatrix/Normal")
         }
+        query = postProcess(query)
+        return $.ajax(query, {dataType: "json"}).then(x => x)
+    }
+
+    output.tree.featureMatrix = function()
+    {
+        var query = "Tree/FeatureMatrix"
         query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }

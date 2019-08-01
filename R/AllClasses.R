@@ -5,8 +5,11 @@
 # scores, distance matrices, and anything else, is computed
 # on the different types of data.
 
-setClassUnion('numericORNULL', members=c('numeric', 'NULL'))
-setClassUnion('matrixORSparse', members=c("matrix", "dgeMatrix", "dgCMatrix", "dgTMatrix"))
+setClassUnion("numericORNULL", members = c("numeric", "NULL"))
+setClassUnion("matrixORSparse",
+    members = c("matrix", "dgeMatrix", "dgCMatrix", "dgTMatrix"))
+setClassUnion("matrixORNULL", members = c("matrix", "NULL"))
+setClassUnion("dataframeORNULL", members = c("data.frame", "NULL"))
 
 Cluster <- setClass("Cluster",
     slots = c(
@@ -26,7 +29,10 @@ ProjectionData <- setClass("ProjectionData",
 ))
 
 PCAnnotatorData <- setClass("PCAnnotatorData",
-    slots = c(pearsonCorr = "matrix")
+    slots = c(
+        pearsonCorr = "matrix",
+        pearsonCorrFeatures = "matrixORNULL"
+    )
 )
 
 Trajectory <- setClass("Trajectory",
@@ -83,6 +89,7 @@ Vision <- setClass("Vision",
         sig_norm_method = "character",
         sig_score_method = "character",
         exprData = "matrixORSparse",
+        featureBarcodeData = "matrixORSparse",
         unnormalizedData = "matrixORSparse",
         housekeepingData = "character",
         sigData = "list",
@@ -92,8 +99,11 @@ Vision <- setClass("Vision",
         sigScores = "matrix",
         cellsPerPartition = "numeric",
         SigConsistencyScores = "ProjectionDataOrNULL",
+        FeatureBarcodeConsistencyScores = "data.frame",
+        ClusterFeatureBarcodeScores = "list",
         ClusterSigScores = "list",
         TrajectoryConsistencyScores = "ProjectionDataOrNULL",
+        TrajectoryConsistencyScoresFeatures = "dataframeORNULL",
         PCAnnotatorData = "PCAnnotatorDataOrNULL",
         projection_methods = "character",
         Projections = "list",
@@ -114,6 +124,7 @@ Vision <- setClass("Vision",
         threshold = 0,
         sig_norm_method = "znorm_rows",
         exprData = matrix(NA, 1, 1),
+        featureBarcodeData = matrix(NA, 1, 1),
         unnormalizedData = matrix(NA, 1, 1),
         housekeepingData = character(),
         sigData = list(),
@@ -123,8 +134,11 @@ Vision <- setClass("Vision",
         sigScores = matrix(NA, 1, 1),
         cellsPerPartition = 100,
         SigConsistencyScores = NULL,
+        FeatureBarcodeConsistencyScores = data.frame(),
         ClusterSigScores = list(),
+        ClusterFeatureBarcodeScores = list(),
         TrajectoryConsistencyScores = NULL,
+        TrajectoryConsistencyScoresFeatures = NULL,
         PCAnnotatorData = NULL,
         projection_methods = character(),
         Projections = list(),
