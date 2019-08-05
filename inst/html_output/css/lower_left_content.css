@@ -39,6 +39,23 @@
     padding: 5px;
 }
 
+#lower-left-content .meta-expand-table td:first-child{
+    text-align: right;
+}
+
+#selection-info-table-meta td.details-control {
+    cursor: pointer;
+}
+
+#selection-info-table-meta td.details-control::before {
+    content: "\25B6";
+}
+
+#selection-info-table-meta tr.shown td.details-control::before {
+    content: "\25BC";
+}
+
+
 #lower-left-content #dist-div{
     overflow: hidden;
 }

@@ -232,8 +232,9 @@
                             <span>Cell ID:</span>
                             <span id="cell-id-span"></span>
                         </div>
-                        <table id="cell-info-table" class='meta-table'>
-                        </table>
+                        <div style="margin: 0 20px">
+                            <table id="cell-info-table" class="display" width="100%"> </table>
+                        </div>
                     </div>
                     <div id="selection-info" class="tab-pane" role="tabpanel" aria-labelledby="SelectionButton">
                         <div class='label-row' style='margin-left: 30px; margin-bottom: 20px; display: flex; flex-shrink: 0; align-items: center;'>
@@ -249,24 +250,11 @@
                                 </svg>
                             </div>
                         </div>
-                        <table id="selection-info-table" class='meta-table'>
-                            <thead>
-                                <tr>
-                                    <th></th>
-                                    <th>Min</th>
-                                    <th>Median</th>
-                                    <th>Max</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                        <table id="selection-info-table-meta" class='meta-table'>
-                            <thead>
-                                <th style="width: 100px"></th>
-                                <th></th>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
+                        <div style="margin: 0 20px;">
+                            <table id="selection-info-table" class='display' width="100%"></table>
+                            <div style="min-height: 20px"></div>
+                            <table id="selection-info-table-meta" class='display' width="100%"></table>
+                        </div>
                     </div>
                 </div> <!-- End of .tab-content -->
             </div> <!-- End of lower-left-content -->
