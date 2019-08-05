@@ -16,6 +16,10 @@ html {
     html {
         zoom: 0.75;
     }
+
+    .js-plotly-plot {
+        zoom: 1.33333;
+    }
 }
 
 body {
