@@ -96,18 +96,18 @@ poolCells <- function(object,
     poolMeta <- poolMetaData(object@metaData, object@pools)
     object@metaData <- poolMeta
 
-    if (length(object@inputProjections) > 0){
+    if (length(object@Projections) > 0){
 
-        newInputProjections <- lapply(
-            object@inputProjections,
+        newProjections <- lapply(
+            object@Projections,
             function(proj) {
                 new_coords <- poolMatrixRows(proj, object@pools)
                 return(new_coords)
             })
 
-        names(newInputProjections) <- names(object@inputProjections)
+        names(newProjections) <- names(object@Projections)
 
-        object@inputProjections <- newInputProjections
+        object@Projections <- newProjections
 
     }
 
@@ -390,9 +390,9 @@ generateProjections <- function(object) {
                                      projection_methods = object@projection_methods, 
                                      K = object@num_neighbors)
 
-  # Add inputProjections
-  for (proj in names(object@inputProjections)){
-      projections[[proj]] <- object@inputProjections[[proj]]
+  # Add already-input projections
+  for (proj in names(object@Projections)){
+      projections[[proj]] <- object@Projections[[proj]]
   }
 
   # Make sure all projections have column names

@@ -156,6 +156,7 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                 colnames(featureBarcodeData) <- make.unique(colnames(featureBarcodeData))
 
                 .Object@featureBarcodeData <- featureBarcodeData
+                .Object@Projections[["Feature Barcodes"]] <- featureBarcodeData
 
             } else {
                 .Object@featureBarcodeData <- matrix(NA, 1, 1)
@@ -637,7 +638,11 @@ setMethod("addProjection", signature(object = "Vision"),
         stop("Supplied coordinates must have rowlabels that match sample/cell names")
     }
 
-    object@inputProjections[[name]] <- coordinates
+    if (is.null(colnames(coordinates))){
+        colnames(coordinates) <- paste0(name, "-", seq_len(ncol(coordinates)))
+    }
+
+    object@Projections[[name]] <- coordinates
 
     return(object)
 })
