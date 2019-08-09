@@ -187,12 +187,15 @@ function Values_Plot()
     this.dom_node = document.getElementById("value-plot");
     this.title = $(this.dom_node).find('#values-title').get(0);
     this.chart = $(this.dom_node).find('#dist-div').get(0);
+    this.logCheck = $(this.dom_node).find('#log-check').get(0);
     this.needs_resize = false
     this.needs_plot = false
 }
 
 Values_Plot.prototype.init = function()
 {
+    var self = this;
+    $(this.logCheck).on("change", () => self.plot())
 }
 
 Values_Plot.prototype.update = function(updates)
@@ -228,6 +231,7 @@ Values_Plot.prototype.update = function(updates)
 Values_Plot.prototype.plot = function()
 {
     var plotted_values_object = get_global_data('plotted_values')
+    var logScale = $(this.logCheck).is(':checked')
 
     if(get_global_status('selection_type') === 'cells' ||
         get_global_status('selection_type') === 'pools'){
@@ -236,10 +240,10 @@ Values_Plot.prototype.plot = function()
         var selection_name = get_global_status('selection_name')
         var selected_values = _.values(_.pick(plotted_values_object, selected_cells))
         var remainder_values = _.values(_.omit(plotted_values_object, selected_cells))
-        drawDistChartSelection(this.chart, selected_values, remainder_values, selection_name)
+        drawDistChartSelection(this.chart, selected_values, remainder_values, selection_name, logScale)
     } else {
         var plotted_values = _.values(plotted_values_object)
-        drawDistChart(this.chart, plotted_values)
+        drawDistChart(this.chart, plotted_values, logScale)
     }
 
     this.needs_plot = false
@@ -864,7 +868,7 @@ Cell_Info.prototype.update = function()
 }
 */
 
-function drawDistChart(node, values) {
+function drawDistChart(node, values, logScale) {
 
     var isFactor = (typeof(values[0]) === "string") &&
                    (values[0] !== "NA")
@@ -905,6 +909,11 @@ function drawDistChart(node, values) {
         bargap: .1,
         dragmode: 'select',
         selectdirection: 'h',
+        yaxis: {
+            type: logScale ? 'log': 'linear',
+            nticks: 6,
+            tickmode: 'auto',
+        }
     }
     var options = {
         'displaylogo': false,
@@ -944,7 +953,7 @@ function drawDistChart(node, values) {
     });
 }
 
-function drawDistChartSelection(node, selected_values, remainder_values, selection_name) {
+function drawDistChartSelection(node, selected_values, remainder_values, selection_name, logScale) {
 
     var isFactor = (typeof(selected_values[0]) === "string") &&
                    (selected_values[0] !== "NA")
@@ -1023,6 +1032,11 @@ function drawDistChartSelection(node, selected_values, remainder_values, selecti
         bargap: .1,
         dragmode: 'select',
         barmode: barmode,
+        yaxis: {
+            type: logScale ? 'log': 'linear',
+            nticks: 6,
+            tickmode: 'auto',
+        }
     }
     var options = {
         'displaylogo': false,

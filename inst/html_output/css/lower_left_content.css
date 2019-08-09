@@ -47,6 +47,20 @@
     margin-left: 80px
 }
 
+.checkbox-label{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.checkbox-label *:first-child {
+    margin-right: 5px;
+}
+
+.checkbox-label label{
+    margin-bottom: 0; /* undo bootstrap styling /*
+}
+
 /* Hack stuff for data-tables columns */
 
 #lower-left-content .dataTables_scrollHead .dataTables_scrollHeadInner{
