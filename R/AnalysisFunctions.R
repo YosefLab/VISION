@@ -167,36 +167,6 @@ filterData <- function(object,
     return(object)
 }
 
-#' Calculate weights based on the false negative rates, computed using the
-#' provided housekeeping genes
-#' @param object the VISION object
-#' @param nomodel (optional) if TRUE, no fnr curve calculated and all weights
-#' equal to 1. Else FNR and weights calculated.
-#' @return the VISION object with populated weights slot
-calcWeights <- function(object,
-                        nomodel=object@nomodel) {
-    object@nomodel <- nomodel
-    clustered <- (ncol(object@exprData) > 15000 || object@pool)
-    if (!clustered && !object@nomodel) {
-        message("Computing weights from False Negative Rate curves...")
-
-        if (is(object@exprData, "sparseMatrix")){
-            stop("FNR weights not supported for sparse expression data.  Use 'as.matrix' to convert your expression data to dense format before creating the Vision object")
-        }
-
-        falseneg_out <- createFalseNegativeMap(object@exprData,
-                                               object@housekeepingData)
-
-        object@weights <- computeWeights(falseneg_out[[1]], falseneg_out[[2]],
-                                         object@exprData)
-
-        rownames(object@weights) <- rownames(object@exprData)
-        colnames(object@weights) <- colnames(object@exprData)
-
-    }
-
-    return(object)
-}
 
 #' calculate signature scores
 #'
@@ -210,13 +180,11 @@ calcWeights <- function(object,
 #' @param metaData a list of existing cell-signatures
 #' @param sig_norm_method (optional) Method to apply to normalize the expression
 #' matrix before calculating signature scores
-#' @param sig_score_method the scoring method to use
 #' @return the VISION object, with signature score slots populated
 calcSignatureScores <- function(object,
                                 sigData=object@sigData,
                                 metaData=object@metaData,
-                                sig_norm_method=object@sig_norm_method,
-                                sig_score_method=object@sig_score_method) {
+                                sig_norm_method=object@sig_norm_method) {
 
     message("Evaluating signature scores on cells...\n")
 
@@ -224,7 +192,6 @@ calcSignatureScores <- function(object,
     if (!is.null(sigData)) object@sigData <- sigData
     if (!is.null(metaData)) object@metaData <- metaData
     object@sig_norm_method <- sig_norm_method
-    object@sig_score_method <- sig_score_method
 
     if (length(object@sigData) == 0) {
         sigScores <- matrix(nrow = ncol(object@exprData), ncol = 0,
@@ -236,8 +203,7 @@ calcSignatureScores <- function(object,
 
     normExpr <- getNormalizedCopySparse(object@exprData, object@sig_norm_method)
 
-    sigScores <- batchSigEvalNorm(
-        object@sigData, object@sig_score_method, normExpr)
+    sigScores <- batchSigEvalNorm(object@sigData, normExpr)
 
     object@sigScores <- sigScores
 
@@ -722,11 +688,4 @@ calculatePearsonCorr <- function(object){
   object@PCAnnotatorData <- pcaAnnotData
 
   return(object)
-}
-
-convertToDense <- function(object) {
-
-    object@exprData <- as.matrix(object@exprData)
-
-    return(object)
 }

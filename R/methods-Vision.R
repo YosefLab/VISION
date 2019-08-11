@@ -12,19 +12,14 @@
 #' @param signatures list of file paths to signature files (.gmt or .txt) or
 #' Signature objects.  See the createGeneSignature(...) method for information
 #' on creating Signature objects.
-#' @param housekeeping vector of gene names
 #' @param featureBarcodeData additional feature barcode data (such as ADT counts).
 #' Can be either a data.frame or numeric matrix.  Should be of shape (CELLS x FEATURES)
 #' @param meta data.frame with meta-data for cells. Rows in this data.frame should correspond
 #' with columns in the expression data matrix
-#' @param nomodel if TRUE, no fnr curve calculated and all weights equal to 1.
-#' Else FNR and weights calculated. [Default:TRUE]
 #' @param projection_genes name of filtering method ('threshold' or 'fano') or list of
 #' genes to use when computing projections.
 #' @param min_signature_genes Signature that match less than this number of genes in the
 #' supplied expression matrix are removed.
-#' @param weights Precomputed weights for each coordinate. Normally computed
-#' from the FNR curve.
 #' @param threshold Threshold to apply when using the 'threshold' or 'fano' projection genes filter.
 #' If greater than 1, this specifies the number of cells in which a gene must be detected
 #' for it to be used when computing PCA. If less than 1, this instead specifies the proportion of cells needed
@@ -34,8 +29,6 @@
 #' before calculating signature scores. Valid options are:
 #' "znorm_columns" (default), "none", "znorm_rows", "znorm_rows_then_columns",
 #' or "rank_norm_columns"
-#' @param sig_score_method Method to apply when calculating signature scores.
-#' Either "naive" (default) or "weighted_avg"
 #' @param pool indicates whether or not to pool cells into supercells. Acceptable values
 #' are TRUE, FALSE, or 'auto', the last of which is the default and enables
 #' pooling if there are more than 100000 cells.
@@ -73,16 +66,15 @@
 #'               meta = meta)
 #' }
 setMethod("Vision", signature(data = "matrixORSparse"),
-            function(data, signatures=list(), housekeeping=NULL,
+            function(data, signatures=list(),
                     featureBarcodeData=NULL,
-                    unnormalizedData = NULL, meta=NULL, nomodel=TRUE,
+                    unnormalizedData = NULL, meta=NULL,
                     projection_genes=c("fano"), min_signature_genes=5,
-                    weights=NULL, threshold=.05, perm_wPCA=FALSE,
+                    threshold=.05, perm_wPCA=FALSE,
                     projection_methods = c("tSNE30"),
                     sig_norm_method = c("znorm_columns", "none", "znorm_rows",
                                         "znorm_rows_then_columns",
                                         "rank_norm_columns"),
-                    sig_score_method=c("naive", "weighted_avg"),
                     pool="auto", cellsPerPartition=10, name=NULL, num_neighbors = NULL,
                     latentSpace = NULL, latentSpaceName = NULL, latentTrajectory = NULL, pools=list()) {
 
@@ -169,15 +161,6 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                 .Object@featureBarcodeData <- matrix(NA, 1, 1)
             }
 
-            if (is.null(housekeeping)) {
-                .Object@housekeepingData <- character()
-                .Object@nomodel = TRUE
-            } else {
-                .Object@housekeepingData <- vapply(housekeeping,
-                                                   toupper, "",
-                                                   USE.NAMES = FALSE)
-            }
-
             if (is.list(signatures)) {
                 sigs <- lapply(signatures, function(sig){
                            if (is(sig, "Signature")){
@@ -243,13 +226,6 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                                     )
             }
 
-            if (!is.null(weights)) {
-                .Object@weights <- weights
-            }
-
-            if (!.Object@nomodel) {
-                .Object@nomodel <- nomodel
-            }
             .Object@projection_genes <- vapply(projection_genes,
                                                toupper, "",
                                                USE.NAMES = FALSE)
@@ -261,7 +237,6 @@ setMethod("Vision", signature(data = "matrixORSparse"),
 
             .Object@threshold <- threshold
             .Object@sig_norm_method <- match.arg(sig_norm_method)
-            .Object@sig_score_method <- match.arg(sig_score_method)
             .Object@perm_wPCA <- perm_wPCA
 
             valid_projections <- c("tSNE10", "tSNE30", "ICA", "ISOMap", "RBFPCA", "UMAP")
@@ -563,9 +538,6 @@ setMethod("analyze", signature(object="Vision"),
     if (object@pool || length(object@pools) > 0) {
         object <- poolCells(object)
     }
-
-    object <- convertToDense(object)
-    object <- calcWeights(object)
 
     # Populates @latentSpace
     if (all(dim(object@latentSpace) == c(1, 1))) {

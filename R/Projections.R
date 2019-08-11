@@ -96,7 +96,7 @@ applyPCA <- function(exprData, maxComponents=200) {
 }
 
 
-#' Applies pemutation method to return the most significant components of weighted PCA data
+#' Applies pemutation method to return the most significant components of PCA data
 #'
 #' @details Based on the method proposed by Buja and Eyuboglu (1992), PCA is performed on the data
 #' then a permutation procedure is used to assess the significance of components
@@ -109,7 +109,7 @@ applyPCA <- function(exprData, maxComponents=200) {
 #' \itemize{
 #'     \item wPCA: weighted PCA data
 #'     \item eval: the proortinal variance of each component
-#'     \item evec: the eigenvectors of the weighted covariance matrix
+#'     \item evec: the eigenvectors of the covariance matrix
 #'     \item permuteMatrices: the permuted matrices generated as the null distrbution
 #' }
 applyPermutationWPCA <- function(expr, components=50, p_threshold=.05) {

@@ -1,22 +1,13 @@
-#' Different ways to evalutate the signature score
-#'
-#' Each method should have the same signature so they can be swapped
-#'
-#' Right now, each takes in a wrapped data object and signature object
-#'
-#' Specified by Vision argument (sig_score_method), default = "naive"
-
 #' Evaluate signature scores efficiently in batches
 #'
 #' This version uses the NormData object to operate
 #' without inflating sparse matrices
 #'
 #' @param sigs list of Signature(s) to be evalauting
-#' @param sig_score_method either "naive" or "weighted_avg"
 #' @param normData NormData object
 #' @importFrom pbmcapply pbmclapply
 #' @return matrix of signature scores, cells X signatures
-batchSigEvalNorm <- function(sigs, sig_score_method, normData) {
+batchSigEvalNorm <- function(sigs, normData) {
 
     # Partition signatures into batches
     # 1200 seems to be an ok batch size goal
