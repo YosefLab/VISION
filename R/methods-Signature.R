@@ -86,64 +86,6 @@ createGeneSignature <- function(name, sigData, metadata="") {
     )
 }
 
-#' calculate background signature scores
-#'
-#' For each signature-cell pair, compute a score that captures the level of
-#' correspondence between the cell and the signature.
-#' To estimate significance of these scores, a set of random gene signatures is
-#' generated to create a null distribution
-#'
-#' @param object the VISION object
-#' @param num the number of signatures to generate
-#' @return A list with two items:
-#'
-#'   randomSigs: a list of lists of SignatureScore objects.  Each sub-list
-#'     represents permutation signatures generated for a specific size/balance
-#'
-#'   sigAssignments: named factor vector assigning signatures to random background
-#'     groups
-calculateSignatureBackground <- function(object, num) {
-
-    message("Computing background distribution for signature scores...")
-
-    if (length(object@sigData) == 0) {
-        return(
-            list(
-                randomSigs = list(),
-                sigAssignments = numeric()
-                )
-        )
-    }
-
-    # Construct random signatures for background distribution
-    out <- generatePermutationNull(num, object@exprData, object@sigData)
-    randomSigs <- out$randomSigs
-    sigAssignments <- out$sigAssignments
-
-    normExpr <- getNormalizedCopy(object@exprData, object@sig_norm_method)
-
-    randomSigScores <- batchSigEval(
-                            unlist(randomSigs, recursive = FALSE),
-                            object@sig_score_method,
-                            normExpr)
-
-    # randomSigScores is matrix of cells x signatures
-    # need to make a list of matrices, one for each signature group
-    # by background group number
-    randomSigScoresGroups <- list()
-    for (groupName in names(randomSigs)) {
-        sigsInGroup <- names(randomSigs[[groupName]])
-        randomSigScoresGroups[[groupName]] <- randomSigScores[, sigsInGroup, drop = FALSE]
-    }
-
-    message("")
-
-    return(list(
-                randomSigs = randomSigScoresGroups,
-                sigAssignments = sigAssignments))
-
-}
-
 #' Generate random signatures for a null distribution by permuting the data
 #'
 #' @param eData the data to use for the permutations

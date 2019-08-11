@@ -8,44 +8,6 @@
 
 #' Evaluate signature scores efficiently in batches
 #'
-#' @param sigs list of Signature(s) to be evalauting
-#' @param sig_score_method either "naive" or "weighted_avg"
-#' @param eData numeric Matrix Genes x Cells
-#' @importFrom pbmcapply pbmclapply
-#' @return matrix of signature scores, cells X signatures
-batchSigEval <- function(sigs, sig_score_method, eData) {
-
-    if (sig_score_method == "naive") {
-        weights <- matrix(NA, 1, 1)
-    }
-
-    # Need to perform this multiply here so it doesn't occupy memory
-    # in all of the sub-processes
-    if (!all(dim(weights) == c(1, 1))) {
-        expr_weights <- eData * weights
-    } else {
-        expr_weights <- eData
-    }
-
-    # Partition signatures into batches
-    # 1200 seems to be an ok batch size goal
-    n_workers <- getOption("mc.cores")
-    n_workers <- if (is.null(n_workers)) 2 else n_workers
-    sigBatches <- batchify(sigs, 1200, n_workers = n_workers)
-
-    allScoresBatches <- pbmclapply(sigBatches, function(sigBatch) {
-        scores <- innerEvalSignatureBatch(expr_weights, sigBatch, weights)
-        return(scores)
-    })
-
-    # allScoresBatches is list of sig x cell matrices
-    sigScores <- t(do.call(rbind, allScoresBatches))
-
-    return(sigScores)
-}
-
-#' Evaluate signature scores efficiently in batches
-#'
 #' This version uses the NormData object to operate
 #' without inflating sparse matrices
 #'
@@ -108,27 +70,7 @@ sigsToSparseMatrix <- function(sigs, expression) {
 }
 
 
-#' Used in inner loop of batchSigEval
-#'
-#' @param exprData numeric Matrix Genes x Cells
-#' @param sigs List of Signature to be evalauting
-#' @return matrix containing signature values (sigs x cells)
-innerEvalSignatureBatch <- function(exprData, sigs) {
-
-    sigSparseMatrix <- sigsToSparseMatrix(sigs, exprData)
-
-    sigScores <- sigSparseMatrix %*% exprData
-    sigScores <- as.matrix(sigScores)
-
-    denom <- rowSums(abs(sigSparseMatrix)) # denom is vector of length N_sigs
-
-    sigScores <- sigScores / denom
-
-    return (sigScores)
-}
-
-
-#' Used in inner loop of batchSigEval
+#' Used in inner loop of batchSigEvalNorm
 #'
 #' Computes signature scores without inflating the genes/cells matrix
 #'
