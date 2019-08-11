@@ -562,14 +562,12 @@ setMethod("analyze", signature(object="Vision"),
     # Populates @SigGeneImportance
     object <- evalSigGeneImportance(object)
 
-    signatureBackground <- calculateSignatureBackground(object, num = 3000)
-
     # Populates @SigConsistencyScores
-    object <- analyzeLocalCorrelations(object, signatureBackground)
+    object <- analyzeLocalCorrelations(object)
 
     # Populates @TrajectoryConsistencyScores
     if (!is.null(object@latentTrajectory)) {
-        object <- analyzeTrajectoryCorrelations(object, signatureBackground)
+        object <- analyzeTrajectoryCorrelations(object)
     }
 
     # Populates @ClusterSigScores

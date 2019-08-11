@@ -216,23 +216,23 @@ calcSignatureScores <- function(object,
     message("Evaluating signature scores on cells...\n")
 
     ## override object parameters
-    if(!is.null(sigData)) object@sigData <- sigData
-    if(!is.null(metaData)) object@metaData <- metaData
+    if (!is.null(sigData)) object@sigData <- sigData
+    if (!is.null(metaData)) object@metaData <- metaData
     object@sig_norm_method <- sig_norm_method
     object@sig_score_method <- sig_score_method
 
     if (length(object@sigData) == 0) {
-        sigScores <- matrix(nrow=ncol(object@exprData), ncol=0,
+        sigScores <- matrix(nrow = ncol(object@exprData), ncol = 0,
                             dimnames = list(colnames(object@exprData), NULL)
                             )
         object@sigScores <- sigScores
         return(object)
     }
 
-    normExpr <- getNormalizedCopy(object@exprData, object@sig_norm_method)
+    normExpr <- getNormalizedCopySparse(object@exprData, object@sig_norm_method)
 
-    sigScores <- batchSigEval(object@sigData, object@sig_score_method,
-                              normExpr, object@weights)
+    sigScores <- batchSigEvalNorm(
+        object@sigData, object@sig_score_method, normExpr)
 
     object@sigScores <- sigScores
 
@@ -331,7 +331,6 @@ computeLatentSpace <- function(object, projection_genes = NULL,
     if (!is.null(perm_wPCA)) object@perm_wPCA <- perm_wPCA
 
     expr <- object@exprData
-    weights <- object@weights
     projection_genes <- object@projection_genes
     perm_wPCA <- object@perm_wPCA
 
@@ -341,22 +340,13 @@ computeLatentSpace <- function(object, projection_genes = NULL,
         exprData <- expr
     }
 
-    if (all(dim(weights) == c(1, 1))){
-        weights <- matrix(1, nrow = nrow(exprData), ncol = ncol(exprData),
-                          dimnames = list(
-                                          rownames(exprData),
-                                          colnames(exprData)
-                                         )
-                         )
-    }
-
     exprData <- matLog2(exprData)
 
     if (perm_wPCA) {
-        res <- applyPermutationWPCA(exprData, weights, components = 30)
+        res <- applyPermutationWPCA(exprData, components = 30)
         pca_res <- res[[1]]
     } else {
-        res <- applyPCA(exprData, weights, maxComponents = 30)
+        res <- applyPCA(exprData, maxComponents = 30)
         pca_res <- res[[1]]
     }
 
@@ -419,13 +409,14 @@ generateProjections <- function(object) {
 #' consistency of the resulting space with the signature scores is computed
 #' to find signals that are captured succesfully by the projections.
 #' @param object the VISION object
-#' @param signatureBackground as returned by `calculateSignatureBackground`
 #' @return the VISION object with values set for the analysis results
-analyzeLocalCorrelations <- function(object, signatureBackground = NULL) {
+analyzeLocalCorrelations <- function(object) {
 
-  if (is.null(signatureBackground)){
-      signatureBackground <- calculateSignatureBackground(object, num = 3000)
-  }
+  signatureBackground <- generatePermutationNull(
+      object@exprData, object@sigData, num = 3000
+  )
+
+  normExpr <- getNormalizedCopySparse(object@exprData, object@sig_norm_method)
 
   message("Evaluating local consistency of signatures in latent space...\n")
 
@@ -434,6 +425,7 @@ analyzeLocalCorrelations <- function(object, signatureBackground = NULL) {
                                 object@sigScores,
                                 object@metaData,
                                 signatureBackground,
+                                normExpr,
                                 object@num_neighbors)
 
   message("Clustering signatures...\n")
@@ -462,19 +454,22 @@ analyzeLocalCorrelations <- function(object, signatureBackground = NULL) {
 #' consistency of the resulting space with the signature scores is computed
 #' to find signals that are captured succesfully by the projections.
 #' @param object the VISION object
-#' @param signatureBackground as returned by `calculateSignatureBackground`
 #' @return the VISION object with values set for the analysis results
-analyzeTrajectoryCorrelations <- function(object, signatureBackground = NULL) {
+analyzeTrajectoryCorrelations <- function(object) {
 
-  if (is.null(signatureBackground)){
-      signatureBackground <- calculateSignatureBackground(object, num = 3000)
-  }
+  signatureBackground <- generatePermutationNull(
+      object@exprData, object@sigData, num = 3000
+  )
+
+  normExpr <- getNormalizedCopySparse(object@exprData, object@sig_norm_method)
 
   message("Evaluating local consistency of signatures within trajectory model...\n")
   sigVTreeProj <- sigConsistencyScores(object@latentTrajectory,
                                        object@sigScores,
                                        object@metaData,
-                                       signatureBackground)
+                                       signatureBackground,
+                                       normExpr,
+                                       object@num_neighbors)
 
   message("Clustering signatures...\n")
   sigTreeClusters <- clusterSignatures(object@sigScores,

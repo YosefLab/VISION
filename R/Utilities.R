@@ -239,7 +239,7 @@ matrix_wilcox <- function(ranks, cluster_ii,
 matrix_wilcox_cpp <- function(data, cluster_num, cluster_denom) {
 
     res <- mclapply(seq_len(nrow(data)), function(i) {
-        uz <- wilcox_subset(data[i, ], cluster_num, cluster_denom)
+        uz <- wilcox_subset(as.numeric(data[i, ]), cluster_num, cluster_denom)
         return(unlist(uz))
     })
 

@@ -11,10 +11,9 @@
 #' @param sigs list of Signature(s) to be evalauting
 #' @param sig_score_method either "naive" or "weighted_avg"
 #' @param eData numeric Matrix Genes x Cells
-#' @param weights Weight matrix computed through FNR curve
 #' @importFrom pbmcapply pbmclapply
 #' @return matrix of signature scores, cells X signatures
-batchSigEval <- function(sigs, sig_score_method, eData, weights) {
+batchSigEval <- function(sigs, sig_score_method, eData) {
 
     if (sig_score_method == "naive") {
         weights <- matrix(NA, 1, 1)
@@ -36,6 +35,35 @@ batchSigEval <- function(sigs, sig_score_method, eData, weights) {
 
     allScoresBatches <- pbmclapply(sigBatches, function(sigBatch) {
         scores <- innerEvalSignatureBatch(expr_weights, sigBatch, weights)
+        return(scores)
+    })
+
+    # allScoresBatches is list of sig x cell matrices
+    sigScores <- t(do.call(rbind, allScoresBatches))
+
+    return(sigScores)
+}
+
+#' Evaluate signature scores efficiently in batches
+#'
+#' This version uses the NormData object to operate
+#' without inflating sparse matrices
+#'
+#' @param sigs list of Signature(s) to be evalauting
+#' @param sig_score_method either "naive" or "weighted_avg"
+#' @param normData NormData object
+#' @importFrom pbmcapply pbmclapply
+#' @return matrix of signature scores, cells X signatures
+batchSigEvalNorm <- function(sigs, sig_score_method, normData) {
+
+    # Partition signatures into batches
+    # 1200 seems to be an ok batch size goal
+    n_workers <- getOption("mc.cores")
+    n_workers <- if (is.null(n_workers)) 2 else n_workers
+    sigBatches <- batchify(sigs, 1200, n_workers = n_workers)
+
+    allScoresBatches <- pbmclapply(sigBatches, function(sigBatch) {
+        scores <- innerEvalSignatureBatchNorm(normData, sigs)
         return(scores)
     })
 
@@ -84,22 +112,57 @@ sigsToSparseMatrix <- function(sigs, expression) {
 #'
 #' @param exprData numeric Matrix Genes x Cells
 #' @param sigs List of Signature to be evalauting
-#' @param weights numeric Matrix Genes x Cells
 #' @return matrix containing signature values (sigs x cells)
-innerEvalSignatureBatch <- function(exprData, sigs, weights = matrix(NA, 1, 1)) {
+innerEvalSignatureBatch <- function(exprData, sigs) {
 
     sigSparseMatrix <- sigsToSparseMatrix(sigs, exprData)
 
     sigScores <- sigSparseMatrix %*% exprData
     sigScores <- as.matrix(sigScores)
 
-    if (!all(dim(weights) == c(1, 1))) {
-        denom <- abs(sigSparseMatrix) %*% weights # denom is N_sigs X N_cells
-        denom <- as.matrix(denom)
-        denom[denom == 0] <- 1
-    } else  {
-        denom <- rowSums(abs(sigSparseMatrix)) # denom is vector of length N_sigs
-    }
+    denom <- rowSums(abs(sigSparseMatrix)) # denom is vector of length N_sigs
+
+    sigScores <- sigScores / denom
+
+    return (sigScores)
+}
+
+
+#' Used in inner loop of batchSigEval
+#'
+#' Computes signature scores without inflating the genes/cells matrix
+#'
+#' @importFrom Matrix Matrix
+#' @importFrom Matrix Diagonal
+#'
+#' @param normData NormData row/column normalization factors
+#' @param sigs List of Signature to be evalauting
+#' @return matrix containing signature values (sigs x cells)
+innerEvalSignatureBatchNorm <- function(normData, sigs) {
+
+    sigSparseMatrix <- sigsToSparseMatrix(sigs, normData@data)
+
+    NCells <- ncol(normData@data)
+    NGenes <- nrow(normData@data)
+    Rs <- Diagonal(x = normData@rowScaleFactors)
+    Cs <- Diagonal(x = normData@colScaleFactors)
+    Rog <- Matrix(normData@rowOffsets, ncol = 1)
+    Roc <- Matrix(1, nrow = 1, ncol = NCells)
+
+    SRs <- (sigSparseMatrix %*% Rs)
+    SRsE <- SRs %*% normData@data
+    SRsRo <- (SRs %*% Rog) %*% Roc
+
+    Cog <- Matrix(1, ncol = 1, nrow = NGenes)
+    Coc <- Matrix(normData@colOffsets, nrow = 1)
+
+    SCo <- (sigSparseMatrix %*% Cog) %*% Coc
+
+    C <- (SRsE + SRsRo + SCo) %*% Cs
+
+    sigScores <- as.matrix(C)
+
+    denom <- rowSums(abs(sigSparseMatrix)) # denom is vector of length N_sigs
 
     sigScores <- sigScores / denom
 
