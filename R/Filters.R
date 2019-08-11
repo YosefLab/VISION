@@ -38,7 +38,7 @@ applyFilters <- function(expr, threshold, filterInput) {
 #' @return character vector of gene names passing filter
 filterGenesNovar <- function(data) {
     message("Applying no variance filter...", appendLF = FALSE)
-    genes_passing <- rownames(data)[rowVars(data) != 0]
+    genes_passing <- rownames(data)[rowVarsSp(data) != 0]
     message(paste(length(genes_passing), "Genes Retained"))
     return(genes_passing)
 }
@@ -98,7 +98,7 @@ filterGenesFano <- function(data, num_mad=2, plot=FALSE) {
     }
 
     mu <- Matrix::rowMeans(sub_data)
-    fano <- rowVars(sub_data) / mu
+    fano <- rowVarsSp(sub_data) / mu
 
 
     aa <- order(mu)
@@ -148,8 +148,4 @@ filterGenesFano <- function(data, num_mad=2, plot=FALSE) {
     }
     return(gene_pass_names)
 
-}
-
-rowVars <- function(x) {
-    return (rowSums(( x - Matrix::rowMeans(x))^2) / (ncol(x) - 1))
 }

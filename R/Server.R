@@ -58,6 +58,8 @@ expressionToJSON <- function(expr, geneList=NULL, zscore=FALSE) {
         expr <- expr[geneList,, drop=FALSE]
     }
 
+    expr <- as.matrix(expr)
+
     if (zscore) {
         rm <- matrixStats::rowMeans2(expr)
         rsd <- matrixStats::rowSds(expr)
@@ -172,6 +174,7 @@ compressJSONResponse <- function(req, res){
 #' @importFrom jsonlite fromJSON
 #' @importFrom utils browseURL URLdecode stack
 #' @importFrom plumber plumber forward
+#' @importFrom Matrix rowMeans
 #' @param object Vision object
 #' @param port The port on which to serve the output viewer.  If omitted, a
 #' random port between 8000 and 9999 is chosen.
@@ -523,7 +526,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             data <- object@exprData
         }
 
-        data <- log2(data[gene_name, ] + 1)
+        data <- log2(as.numeric(data[gene_name, ]) + 1)
 
         out <- list(cells = names(data), values = data)
 

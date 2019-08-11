@@ -38,7 +38,7 @@
 #' Either "naive" (default) or "weighted_avg"
 #' @param pool indicates whether or not to pool cells into supercells. Acceptable values
 #' are TRUE, FALSE, or 'auto', the last of which is the default and enables
-#' pooling if there are more than 15000 cells.
+#' pooling if there are more than 100000 cells.
 #' @param cellsPerPartition the target number of cells to put into a supercell when pooling
 #' @param latentSpace latent space for expression data. Numeric matrix or dataframe
 #' with dimensions CELLS x COMPONENTS
@@ -105,6 +105,13 @@ setMethod("Vision", signature(data = "matrixORSparse"),
 
                 if (is.data.frame(unnormalizedData)){
                     unnormalizedData <- data.matrix(unnormalizedData)
+                }
+
+                if (is(unnormalizedData, "sparseMatrix")) {
+                    unnormalizedData <- as(unnormalizedData, "dgCMatrix")
+                }
+                if (is(unnormalizedData, "dgeMatrix")) {
+                    unnormalizedData <- as.matrix(unnormalizedData)
                 }
                 # unnormalizedData might have more genes than exprData
                 # and it might have more cells than exprData
@@ -273,7 +280,7 @@ setMethod("Vision", signature(data = "matrixORSparse"),
             }
             .Object@projection_methods <- projection_methods
 
-            LOTS_OF_CELLS <- ncol(.Object@exprData) > 15000
+            LOTS_OF_CELLS <- ncol(.Object@exprData) > 100000
 
             if (is.character(pool))
             {
@@ -283,7 +290,7 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                     if(LOTS_OF_CELLS) {
                         pool <- TRUE
                         message(paste(
-                          "Over 15000 input cells detected.  Enabling micropooling with max",
+                          "Over 100000 input cells detected.  Enabling micropooling with max",
                           cellsPerPartition, "cells per pool."
                           )
                         )
@@ -385,6 +392,25 @@ setMethod("Vision", signature(data = "data.frame"),
             return(Vision(data, ...))
             }
 )
+
+#' @rdname VISION-class
+#' @export
+setMethod("Vision", signature(data = "sparseMatrix"),
+            function(data, ...) {
+                data <- as(data, "dgCMatrix")
+            return(Vision(data, ...))
+            }
+)
+
+#' @rdname VISION-class
+#' @export
+setMethod("Vision", signature(data = "dgeMatrix"),
+            function(data, ...) {
+                data <- as.matrix(data)
+            return(Vision(data, ...))
+            }
+)
+
 
 #' @rdname VISION-class
 #' @export
@@ -566,14 +592,12 @@ setMethod("analyze", signature(object="Vision"),
     # Populates @SigGeneImportance
     object <- evalSigGeneImportance(object)
 
-    signatureBackground <- calculateSignatureBackground(object, num = 3000)
-
     # Populates @SigConsistencyScores and @FeatureBarcodeConsistencyScores
-    object <- analyzeLocalCorrelations(object, signatureBackground)
+    object <- analyzeLocalCorrelations(object)
 
     # Populates @TrajectoryConsistencyScores
     if (!is.null(object@latentTrajectory)) {
-        object <- analyzeTrajectoryCorrelations(object, signatureBackground)
+        object <- analyzeTrajectoryCorrelations(object)
     }
 
     # Populates @ClusterSigScores and @ClusterFeatureBarcodeScores

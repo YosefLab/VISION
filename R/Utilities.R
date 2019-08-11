@@ -239,7 +239,7 @@ matrix_wilcox <- function(ranks, cluster_ii,
 matrix_wilcox_cpp <- function(data, cluster_num, cluster_denom) {
 
     res <- mclapply(seq_len(nrow(data)), function(i) {
-        uz <- wilcox_subset(data[i, ], cluster_num, cluster_denom)
+        uz <- wilcox_subset(as.numeric(data[i, ]), cluster_num, cluster_denom)
         return(unlist(uz))
     })
 
@@ -497,4 +497,37 @@ getParam <- function(object, param) {
         return(res)
     }
 
+}
+
+#' Compute row-wise variance on matrix without densifying
+#'
+#' @importFrom Matrix rowMeans
+#' @importFrom Matrix rowSums
+#'
+#' @param x expression matrix
+#' @return numeric vector row-wise variance
+rowVarsSp <- function(x) {
+    rm <- Matrix::rowMeans(x)
+    out <- Matrix::rowSums(x ^ 2)
+    out <- out - 2 * Matrix::rowSums(x * rm)
+    out <- out + ncol(x) * rm ^ 2
+    out <- out / (ncol(x) - 1)
+    return(out)
+}
+
+#' Compute col-wise variance on matrix without densifying
+#'
+#' @importFrom Matrix colMeans
+#' @importFrom Matrix colSums
+#' @importFrom Matrix rowSums
+#'
+#' @param x expression matrix
+#' @return numeric vector col-wise variance
+colVarsSp <- function(x) {
+    rm <- Matrix::colMeans(x)
+    out <- Matrix::colSums(x ^ 2)
+    out <- out - 2 * Matrix::rowSums(t(x) * rm)
+    out <- out + nrow(x) * rm ^ 2
+    out <- out / (nrow(x) - 1)
+    return(out)
 }
