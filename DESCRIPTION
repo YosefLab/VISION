@@ -12,6 +12,7 @@ Depends: R (>= 3.4)
 Imports:
 	fastICA,
 	igraph,
+    irlba,
 	jsonlite,
 	loe,
 	logging,
