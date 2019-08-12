@@ -4,12 +4,10 @@
 \alias{analyzeLocalCorrelations}
 \title{Compute local correlations for all signatures}
 \usage{
-analyzeLocalCorrelations(object, signatureBackground = NULL)
+analyzeLocalCorrelations(object)
 }
 \arguments{
 \item{object}{the VISION object}
-
-\item{signatureBackground}{as returned by `calculateSignatureBackground`}
 }
 \value{
 the VISION object with values set for the analysis results

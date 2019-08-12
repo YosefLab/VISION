@@ -4,11 +4,11 @@
 \alias{sigConsistencyScores}
 \title{Evaluates the significance of each signature in each cluster}
 \usage{
-sigConsistencyScores(latentSpace, sigScoresData, metaData, randomSigData,
-  K)
+sigConsistencyScores(weights, sigScoresData, metaData, randomSigData,
+  normExpr)
 }
 \arguments{
-\item{latentSpace}{numeric matrix N_Cells x N_Components}
+\item{weights}{output of computeKNNWeights}
 
 \item{sigScoresData}{numeric matrix of signature scores
 size is cells x signatures}
@@ -24,7 +24,7 @@ size is cells x signatures}
   sigAssignments: named factor vector assigning signatures to random background
     groups}
 
-\item{K}{Number of neighbors to consider.}
+\item{normExpr}{NormData object used to generate random background sigs}
 }
 \value{
 list:

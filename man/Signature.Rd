@@ -2,8 +2,7 @@
 % Please edit documentation in R/methods-Signature.R
 \name{Signature}
 \alias{Signature}
-\title{Initialize a new Signature object.
-Should not be called directly, instead use the `new` syntax}
+\title{Initialize a new Signature object.}
 \usage{
 Signature(sigDict, name, source, metaData = "")
 }
@@ -21,5 +20,4 @@ Signature object
 }
 \description{
 Initialize a new Signature object.
-Should not be called directly, instead use the `new` syntax
 }

@@ -5,7 +5,8 @@
 \title{Evaluates the significance of each meta data numeric signature vs. a
 single projections weights}
 \usage{
-sigsVsProjection_pcn(metaData, weights, cells = NULL)
+sigsVsProjection_pcn(metaData, weights, cells = NULL,
+  computePval = TRUE)
 }
 \arguments{
 \item{metaData}{data.frame of meta-data for cells}

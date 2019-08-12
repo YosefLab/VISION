@@ -2,15 +2,12 @@
 % Please edit documentation in R/Projections.R
 \name{applyPermutationWPCA}
 \alias{applyPermutationWPCA}
-\title{Applies pemutation method to return the most significant components of weighted PCA data}
+\title{Applies pemutation method to return the most significant components of PCA data}
 \usage{
-applyPermutationWPCA(expr, weights, components = 50,
-  p_threshold = 0.05)
+applyPermutationWPCA(expr, components = 50, p_threshold = 0.05)
 }
 \arguments{
 \item{expr}{Expression data}
-
-\item{weights}{Weights to apply to each coordinate in data}
 
 \item{components}{Maximum components to calculate. Default is 50.}
 
@@ -21,12 +18,12 @@ applyPermutationWPCA(expr, weights, components = 50,
 \itemize{
     \item wPCA: weighted PCA data
     \item eval: the proortinal variance of each component
-    \item evec: the eigenvectors of the weighted covariance matrix
+    \item evec: the eigenvectors of the covariance matrix
     \item permuteMatrices: the permuted matrices generated as the null distrbution
 }
 }
 \description{
-Applies pemutation method to return the most significant components of weighted PCA data
+Applies pemutation method to return the most significant components of PCA data
 }
 \details{
 Based on the method proposed by Buja and Eyuboglu (1992), PCA is performed on the data

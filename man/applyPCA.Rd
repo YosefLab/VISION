@@ -4,17 +4,19 @@
 \alias{applyPCA}
 \title{Performs PCA on data}
 \usage{
-applyPCA(exprData, N = 0, variance_proportion = 1)
+applyPCA(exprData, maxComponents = 200)
 }
 \arguments{
-\item{exprData}{Expression data}
+\item{exprData}{Expression matrix}
 
-\item{N}{Number of components to retain. Default is 0}
-
-\item{variance_proportion}{Retain top X PC's such that this much variance is retained; if N=0, then apply this method}
+\item{maxComponents}{Maximum number of components to calculate}
 }
 \value{
-Matrix containing N components for each sample.
+PCA data
+
+Variance of each component
+
+Eigenvectors of covariance matrix, aka the variable loadings
 }
 \description{
 Performs PCA on data

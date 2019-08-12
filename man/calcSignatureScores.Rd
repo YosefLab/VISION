@@ -4,9 +4,8 @@
 \alias{calcSignatureScores}
 \title{calculate signature scores}
 \usage{
-calcSignatureScores(object, sigData = object@sigData,
-  metaData = object@metaData, sig_norm_method = object@sig_norm_method,
-  sig_score_method = object@sig_score_method)
+calcSignatureScores(object, sigData = NULL, metaData = NULL,
+  sig_norm_method = NULL)
 }
 \arguments{
 \item{object}{the VISION object}
@@ -17,8 +16,6 @@ calcSignatureScores(object, sigData = object@sigData,
 
 \item{sig_norm_method}{(optional) Method to apply to normalize the expression
 matrix before calculating signature scores}
-
-\item{sig_score_method}{the scoring method to use}
 }
 \value{
 the VISION object, with signature score slots populated

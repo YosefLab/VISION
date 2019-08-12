@@ -4,8 +4,7 @@
 \alias{filterData}
 \title{filter data accourding to the provided filters}
 \usage{
-filterData(object, threshold = object@threshold,
-  projection_genes = object@projection_genes)
+filterData(object, threshold = NULL, projection_genes = NULL)
 }
 \arguments{
 \item{object}{the VISION object}
