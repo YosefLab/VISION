@@ -298,6 +298,99 @@ evalSigGeneImportance <- function(object){
 }
 
 
+#' calculate gene-signature importance
+#'
+#' For each signature, the contribution of each gene to the signature score
+#' is evaluated by calculating the covariance between signature scores and expression
+#' The correlation of genes with a negative sign in the signature are inverted.
+#'
+#' This version is made to avoid inflating sparse matrices
+#'
+#' @importFrom pbmcapply pbmclapply
+#' @importFrom matrixStats colSds
+#' @importFrom matrixStats rowSds
+#' @importFrom Matrix Matrix
+#' @importFrom Matrix Diagonal
+#'
+#' @param object the VISION object
+#' @return the VISION object, with SigGeneImportance slot populated
+evalSigGeneImportanceSparse <- function(object){
+
+    message("Evaluating signature-gene importance...\n")
+
+    sigScores <- object@SigScores
+
+    if (length(object@sigData) == 0) {
+        object@SigGeneImportance <- list()
+        return(object)
+    }
+
+    if (length(sigScores) <= 1){
+        stop(
+            sprintf("Signature scores have not yet been computed.  `calcSignatureScores` must be run before running `evalSigGeneImportance`")
+            )
+    }
+
+    normExpr <- getNormalizedCopySparse(
+        object@exprData,
+        object@params$signatures$sigNormMethod)
+
+    # Center each column of sigScores first
+
+    mu <- colMeans(sigScores)
+
+    sigScores <- t(sigScores)
+    sigScores <- (sigScores - mu)
+    sigScores <- t(sigScores)
+
+    # Precompute some matrices we'll need later
+    NGenes <- nrow(normExpr@data)
+    NCells <- ncol(normExpr@data)
+    Cog <- Matrix(1, ncol = 1, nrow = NGenes)
+    Coc <- Matrix(normExpr@colOffsets, nrow = 1)
+    Cs <- Diagonal(x = normExpr@colScaleFactors)
+    Roc <- Matrix(1, nrow = 1, ncol = NCells)
+    C1 <- t(Roc)
+
+    RM <- normExpr@data %*% (Cs %*% C1) + Cog %*% (Coc %*% (Cs %*% C1))
+    RM <- RM / NCells
+    RM <- RM[, 1]
+
+    # Compute Covariances
+    sigData <- object@sigData
+
+    sigGene <- function(signame) {
+        sigdata <- sigData[[signame]]
+
+        genes <- sigdata@sigDict
+
+        S <- sigScores[, signame, drop = F]
+        geneIndices <- rownames(normExpr@data) %in% names(genes)
+
+        E <- normExpr@data[geneIndices, , drop = FALSE]
+
+        Rog <- Matrix(RM[geneIndices], ncol = 1)
+        Cog <- Matrix(1, ncol = 1, nrow = length(genes))
+
+        geneCov <- E %*% Cs %*% S - Rog %*% (Roc %*% S) + Cog %*% (Coc %*% (Cs %*% S))
+        geneCov <- geneCov / (NCells - 1)
+        geneCov <- geneCov[, 1]
+        geneCov <- geneCov[names(genes)]
+
+        geneCov <- geneCov * genes # invert sign for negative genes
+
+        return(geneCov)
+    }
+
+    sigs <- colnames(sigScores)
+    res <- pbmclapply(setNames(sigs, sigs), sigGene)
+
+    object@SigGeneImportance <- res
+
+    return(object)
+}
+
+
 #' Computes the latent space of the expression matrix using PCA
 #'
 #' @param object the VISION object for which compute the latent space

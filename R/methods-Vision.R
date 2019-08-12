@@ -568,7 +568,7 @@ setMethod("analyze", signature(object="Vision"),
     object <- calcSignatureScores(object)
 
     # Populates @SigGeneImportance
-    object <- evalSigGeneImportance(object)
+    object <- evalSigGeneImportanceSparse(object)
 
     # Populates @LocalAutocorrelation
     object <- analyzeLocalCorrelations(object)
