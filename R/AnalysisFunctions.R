@@ -8,12 +8,12 @@ clusterCells <- function(object) {
 
     message("Clustering cells...", appendLF = FALSE)
 
-    res <- object@latentSpace
+    res <- object@LatentSpace
 
     n_workers <- getOption("mc.cores")
     n_workers <- if (is.null(n_workers)) 2 else n_workers
 
-    K <- min(object@num_neighbors, 30)
+    K <- min(object@params$numNeighbors, 30)
     kn <- ball_tree_knn(res,
                         K,
                         n_workers)
@@ -46,16 +46,18 @@ clusterCells <- function(object) {
 #' @param object the VISION object for which to cluster the cells
 #' @param cellsPerPartition the minimum number of cells to put into a cluster
 #' @return the VISION with pooled cells
-poolCells <- function(object,
-                      cellsPerPartition=object@cellsPerPartition) {
-    object@cellsPerPartition <- cellsPerPartition
+poolCells <- function(object, cellsPerPartition = NULL) {
 
-    if (length(object@pools) == 0) {
+    if (!is.null(cellsPerPartition)){
+        object@params$micropooling$cellsPerPartition <- cellsPerPartition
+    }
+
+    if (length(object@Pools) == 0) {
         message(paste(
           "Performing micro-pooling on",
           ncol(object@exprData),
           "cells with a target pool size of",
-          object@cellsPerPartition
+          object@params$micropooling$cellsPerPartition
         ))
     } else {
       message("Performing micro-pooling using precomputed pools")
@@ -63,37 +65,38 @@ poolCells <- function(object,
 
     preserve_clusters <- NULL
 
-    if (length(object@pools) == 0) {
-        pools <- applyMicroClustering(object@exprData,
-                                              cellsPerPartition = object@cellsPerPartition,
-                                              filterInput = object@projection_genes,
-                                              filterThreshold = object@threshold,
-                                              latentSpace = object@latentSpace, 
-                                              K = object@num_neighbors)
+    if (length(object@Pools) == 0) {
+        pools <- applyMicroClustering(
+            object@exprData,
+            cellsPerPartition = object@params$micropooling$cellsPerPartition,
+            filterInput = object@params$latentSpace$projectionGenes,
+            filterThreshold = object@params$latentSpace$threshold,
+            latentSpace = object@LatentSpace,
+            K = object@params$numNeighbors)
 
-        object@pools <- pools
+        object@Pools <- pools
     }
 
     message("    Aggregating data using assigned pools...", appendLF = FALSE)
-    pooled_cells <- poolMatrixCols(object@exprData, object@pools)
+    pooled_cells <- poolMatrixCols(object@exprData, object@Pools)
     object@exprData <- pooled_cells
 
     if (hasUnnormalizedData(object)) {
-        pooled_unnorm <- poolMatrixCols(object@unnormalizedData, object@pools)
+        pooled_unnorm <- poolMatrixCols(object@unnormalizedData, object@Pools)
         object@unnormalizedData <- pooled_unnorm
     }
 
-    if (!all(dim(object@latentSpace) == c(1, 1))) {
-        pooled_latent <- poolMatrixRows(object@latentSpace, object@pools)
-        object@latentSpace <- pooled_latent
+    if (!all(dim(object@LatentSpace) == c(1, 1))) {
+        pooled_latent <- poolMatrixRows(object@LatentSpace, object@Pools)
+        object@LatentSpace <- pooled_latent
     }
 
     if (hasFeatureBarcodeData(object)) {
-        pooled_fbc <- poolMatrixRows(object@featureBarcodeData, object@pools)
+        pooled_fbc <- poolMatrixRows(object@featureBarcodeData, object@Pools)
         object@featureBarcodeData <- pooled_fbc
     }
 
-    poolMeta <- poolMetaData(object@metaData, object@pools)
+    poolMeta <- poolMetaData(object@metaData, object@Pools)
     object@metaData <- poolMeta
 
     if (length(object@Projections) > 0){
@@ -101,7 +104,7 @@ poolCells <- function(object,
         newProjections <- lapply(
             object@Projections,
             function(proj) {
-                new_coords <- poolMatrixRows(proj, object@pools)
+                new_coords <- poolMatrixRows(proj, object@Pools)
                 return(new_coords)
             })
 
@@ -122,38 +125,43 @@ poolCells <- function(object,
 #' @param projection_genes either a list of genes or a method to select genes
 #' @return the VISION object, populated with filtered data
 filterData <- function(object,
-                       threshold=object@threshold,
-                       projection_genes=object@projection_genes) {
+                       threshold = NULL,
+                       projection_genes = NULL) {
 
-    object@projection_genes <- projection_genes
-    object@threshold <- threshold
+    if (!is.null(threshold)){
+        object@params$latentSpace$threshold <- threshold
+    }
+
+    if (!is.null(projection_genes)){
+        object@params$latentSpace$projectionGenes <- projection_genes
+    }
 
     message("Determining projection genes...")
 
-    if (length(object@projection_genes) == 1){
+    if (length(object@params$latentSpace$projectionGenes) == 1){
 
         exprData <- matLog2(object@exprData)
         projection_genes <- applyFilters(
                     exprData,
-                    object@threshold,
-                    object@projection_genes)
+                    object@params$latentSpace$threshold,
+                    object@params$latentSpace$projectionGenes)
 
         if (length(projection_genes) == 0){
             stop(
                 sprintf("Filtering with (projection_genes=\"%s\", threshold=%i) results in 0 genes\n  Set a lower threshold and re-run",
-                    object@projection_genes, object@threshold)
+                    object@params$latentSpace$projectionGenes, object@params$latentSpace$threshold)
                 )
         }
     } else {
         projection_genes <- intersect(
-            object@projection_genes, rownames(object@exprData))
+            object@params$latentSpace$projectionGenes, rownames(object@exprData))
 
         if (length(projection_genes) == 0){
             stop("Supplied list of genes in `projection_genes` does not match any rows of expression data")
         } else {
             message(
                 sprintf("    Using supplied list of genes: Found %i/%i matches",
-                    length(projection_genes), length(object@projection_genes)
+                    length(projection_genes), length(object@params$latentSpace$projectionGenes)
                     )
                 )
         }
@@ -161,7 +169,7 @@ filterData <- function(object,
 
     message()
 
-    object@projection_genes <- projection_genes
+    object@params$latentSpace$projectionGenes <- projection_genes
 
 
     return(object)
@@ -181,31 +189,33 @@ filterData <- function(object,
 #' @param sig_norm_method (optional) Method to apply to normalize the expression
 #' matrix before calculating signature scores
 #' @return the VISION object, with signature score slots populated
-calcSignatureScores <- function(object,
-                                sigData=object@sigData,
-                                metaData=object@metaData,
-                                sig_norm_method=object@sig_norm_method) {
+calcSignatureScores <- function(
+    object, sigData = NULL,
+    metaData = NULL, sig_norm_method = NULL) {
 
     message("Evaluating signature scores on cells...\n")
 
     ## override object parameters
     if (!is.null(sigData)) object@sigData <- sigData
     if (!is.null(metaData)) object@metaData <- metaData
-    object@sig_norm_method <- sig_norm_method
+    if (!is.null(sig_norm_method)) object@params$signatures$sigNormMethod <- sig_norm_method
 
     if (length(object@sigData) == 0) {
         sigScores <- matrix(nrow = ncol(object@exprData), ncol = 0,
                             dimnames = list(colnames(object@exprData), NULL)
                             )
-        object@sigScores <- sigScores
+        object@SigScores <- sigScores
         return(object)
     }
 
-    normExpr <- getNormalizedCopySparse(object@exprData, object@sig_norm_method)
+    normExpr <- getNormalizedCopySparse(
+        object@exprData,
+        object@params$signatures$sigNormMethod
+    )
 
     sigScores <- batchSigEvalNorm(object@sigData, normExpr)
 
-    object@sigScores <- sigScores
+    object@SigScores <- sigScores
 
     return(object)
 }
@@ -227,7 +237,7 @@ evalSigGeneImportance <- function(object){
 
     message("Evaluating signature-gene importance...\n")
 
-    sigScores <- object@sigScores
+    sigScores <- object@SigScores
 
     if (length(object@sigData) == 0) {
         object@SigGeneImportance <- list()
@@ -240,7 +250,9 @@ evalSigGeneImportance <- function(object){
             )
     }
 
-    normExpr <- getNormalizedCopy(object@exprData, object@sig_norm_method)
+    normExpr <- getNormalizedCopy(
+        object@exprData,
+        object@params$signatures$sigNormMethod)
 
     # Center each column of sigScores first
 
@@ -298,12 +310,12 @@ computeLatentSpace <- function(object, projection_genes = NULL,
 
     message("Computing a latent space for expression data...\n")
 
-    if (!is.null(projection_genes)) object@projection_genes <- projection_genes
-    if (!is.null(perm_wPCA)) object@perm_wPCA <- perm_wPCA
+    if (!is.null(projection_genes)) object@params$latentSpace$projectionGenes <- projection_genes
+    if (!is.null(perm_wPCA)) object@params$latentSpace$permPCA <- perm_wPCA
 
     expr <- object@exprData
-    projection_genes <- object@projection_genes
-    perm_wPCA <- object@perm_wPCA
+    projection_genes <- object@params$latentSpace$projectionGenes
+    perm_wPCA <- object@params$latentSpace$permPCA
 
     if (!is.null(projection_genes)) {
         exprData <- expr[projection_genes, , drop = FALSE]
@@ -321,9 +333,9 @@ computeLatentSpace <- function(object, projection_genes = NULL,
         pca_res <- res[[1]]
     }
 
-    object@latentSpace <- t(pca_res)
-    colnames(object@latentSpace) <- paste0("PC ", seq_len(ncol(object@latentSpace)))
-    object@params[["latentSpaceName"]] <- "PCA"
+    object@LatentSpace <- t(pca_res)
+    colnames(object@LatentSpace) <- paste0("PC ", seq_len(ncol(object@LatentSpace)))
+    object@params$latentSpace$name <- "PCA"
     return(object)
 }
 
@@ -340,16 +352,16 @@ generateProjections <- function(object) {
 
   # Some projection methods operate on the full expression matrix
   # If using one of these, we need to compute 'projection_genes'
-  projection_methods <- object@projection_methods
+  projection_methods <- object@params$projectionMethods
   if ("ICA" %in% projection_methods || "RBFPCA" %in% projection_methods) {
       object <- filterData(object)
   }
 
   projections <- generateProjectionsInner(object@exprData,
-                                     object@latentSpace,
-                                     projection_genes = object@projection_genes,
-                                     projection_methods = object@projection_methods, 
-                                     K = object@num_neighbors)
+                                     object@LatentSpace,
+                                     projection_genes = object@params$latentSpace$projectionGenes,
+                                     projection_methods = object@params$projectionMethods,
+                                     K = object@params$numNeighbors)
 
   # Add already-input projections
   for (proj in names(object@Projections)){
@@ -387,39 +399,50 @@ analyzeLocalCorrelations <- function(object) {
       object@exprData, object@sigData, num = 3000
   )
 
-  normExpr <- getNormalizedCopySparse(object@exprData, object@sig_norm_method)
+  normExpr <- getNormalizedCopySparse(
+      object@exprData,
+      object@params$signatures$sigNormMethod)
 
   message("Evaluating local consistency of signatures in latent space...\n")
 
-  weights <- computeKNNWeights(object@latentSpace, object@num_neighbors)
+  weights <- computeKNNWeights(object@LatentSpace, object@params$numNeighbors)
 
   sigConsistencyScores <- sigConsistencyScores(
                                 weights,
-                                object@sigScores,
+                                object@SigScores,
                                 object@metaData,
                                 signatureBackground,
-                                normExpr,
-                                object@num_neighbors)
+                                normExpr)
 
   if (hasFeatureBarcodeData(object)) {
       fbcs <- fbConsistencyScores(weights, object@featureBarcodeData)
-      object@FeatureBarcodeConsistencyScores <- fbcs
+  } else {
+      fbcs <- NULL
   }
 
   message("Clustering signatures...\n")
-  sigClusters <- clusterSignatures(object@sigScores,
+  sigClusters <- clusterSignatures(object@SigScores,
                                    object@metaData,
-                                   sigConsistencyScores$fdr,
-                                   sigConsistencyScores$sigProjMatrix,
-                                   clusterMeta = object@pool)
+                                   sigConsistencyScores,
+                                   clusterMeta = object@params$micropooling$pool)
 
-  sigConsistencyScoresData <- ProjectionData(
-                             Consistency = sigConsistencyScores$sigProjMatrix,
-                             pValue = sigConsistencyScores$pVals,
-                             FDR = sigConsistencyScores$fdr,
-                             sigClusters = sigClusters)
+  metaConsistencyScores <- sigConsistencyScores[
+      colnames(object@metaData), , drop = FALSE
+  ]
 
-  object@SigConsistencyScores <- sigConsistencyScoresData
+  sigConsistencyScores <- sigConsistencyScores[
+      colnames(object@SigScores), , drop = FALSE
+  ]
+
+
+  LocalAutocorrelation <- list(
+      "Signatures" = sigConsistencyScores,
+      "Meta" = metaConsistencyScores,
+      "Features" = fbcs,
+      "Clusters" = sigClusters
+  )
+
+  object@LocalAutocorrelation <- LocalAutocorrelation
 
   return(object)
 }
@@ -439,38 +462,48 @@ analyzeTrajectoryCorrelations <- function(object) {
       object@exprData, object@sigData, num = 3000
   )
 
-  normExpr <- getNormalizedCopySparse(object@exprData, object@sig_norm_method)
+  normExpr <- getNormalizedCopySparse(
+      object@exprData,
+      object@params$signatures$sigNormMethod)
 
   message("Evaluating local consistency of signatures within trajectory model...\n")
 
-  weights <- computeKNNWeights(object@latentTrajectory, object@num_neighbors)
+  weights <- computeKNNWeights(object@LatentTrajectory, object@params$numNeighbors)
 
   sigVTreeProj <- sigConsistencyScores(weights,
-                                       object@sigScores,
+                                       object@SigScores,
                                        object@metaData,
                                        signatureBackground,
-                                       normExpr,
-                                       object@num_neighbors)
+                                       normExpr)
 
   if (hasFeatureBarcodeData(object)) {
       fbcs <- fbConsistencyScores(weights, object@featureBarcodeData)
-      object@TrajectoryConsistencyScoresFeatures <- fbcs
+  } else {
+      fbcs <- NULL
   }
 
   message("Clustering signatures...\n")
-  sigTreeClusters <- clusterSignatures(object@sigScores,
+  sigTreeClusters <- clusterSignatures(object@SigScores,
                                        object@metaData,
-                                       sigVTreeProj$pVals,
-                                       sigVTreeProj$sigProjMatrix,
-                                       clusterMeta = object@pool)
+                                       sigVTreeProj,
+                                       clusterMeta = object@params$micropooling$pool)
 
-  TrajectoryConsistencyScores <- ProjectionData(
-      Consistency = sigVTreeProj$sigProjMatrix,
-      pValue = sigVTreeProj$pVals,
-      FDR = sigVTreeProj$fdr,
-      sigClusters = sigTreeClusters)
+  metaConsistencyScores <- sigVTreeProj[
+      colnames(object@metaData), , drop = FALSE
+  ]
 
-  object@TrajectoryConsistencyScores <- TrajectoryConsistencyScores
+  sigConsistencyScores <- sigVTreeProj[
+      colnames(object@SigScores), , drop = FALSE
+  ]
+
+  TrajectoryAutocorrelation <- list(
+      "Signatures" = sigConsistencyScores,
+      "Meta" = metaConsistencyScores,
+      "Features" = fbcs,
+      "Clusters" = sigClusters
+  )
+
+  object@TrajectoryAutocorrelation <- TrajectoryAutocorrelation
 
   return(object)
 }
@@ -486,7 +519,7 @@ clusterSigScores <- function(object) {
 
     message("Computing differential signature tests...\n")
 
-    sigScores <- object@sigScores
+    sigScores <- object@SigScores
     metaData <- object@metaData
 
     metaData <- metaData[rownames(sigScores), , drop = FALSE]
@@ -508,6 +541,46 @@ clusterSigScores <- function(object) {
         }, FUN.VALUE = "")
     clusterMeta <- clusterMeta[clusterMeta != ""]
 
+    ClusterComparisons <- list()
+
+    # Comparisons for Signatures
+    if (ncol(sigScores) > 0){
+        sigScoreRanks <- colRanks(sigScores,
+                                  preserveShape = TRUE,
+                                  ties.method = "average")
+        dimnames(sigScoreRanks) <- dimnames(sigScores)
+    } else {
+        sigScoreRanks <- sigScores
+    }
+
+    out <- pbmclapply(clusterMeta, function(variable){
+        values <- metaData[[variable]]
+        var_levels <- levels(values)
+
+        result <- lapply(var_levels, function(var_level){
+            cluster_ii <- which(values == var_level)
+
+            r1 <- matrix_wilcox(sigScoreRanks, cluster_ii,
+                                check_na = FALSE, check_ties = FALSE)
+
+            pval <- r1$pval
+            stat <- r1$stat
+            fdr <- p.adjust(pval, method = "BH")
+            out <- data.frame(
+                stat = stat, pValue = pval, FDR = fdr
+            )
+            return(out)
+        })
+
+        names(result) <- var_levels
+        result <- result[order(var_levels)]
+
+        return(result)
+    }, mc.cores = 1)
+
+    ClusterComparisons[["Signatures"]] <- out
+
+    # Comparisons for Meta data
     # Split meta into numeric and factor
     numericMeta <- vapply(seq_len(ncol(metaData)),
                           function(i) is.numeric(metaData[[i]]),
@@ -519,15 +592,6 @@ clusterSigScores <- function(object) {
                           function(i) is.factor(metaData[[i]]),
                           FUN.VALUE = TRUE)
     factorMeta <- metaData[, factorMeta, drop = F]
-
-    if (ncol(sigScores) > 0){
-        sigScoreRanks <- colRanks(sigScores,
-                                  preserveShape = TRUE,
-                                  ties.method = "average")
-        dimnames(sigScoreRanks) <- dimnames(sigScores)
-    } else {
-        sigScoreRanks <- sigScores
-    }
 
     if (ncol(numericMeta) > 0){
         numericMetaRanks <- colRanks(numericMeta,
@@ -545,16 +609,13 @@ clusterSigScores <- function(object) {
         result <- lapply(var_levels, function(var_level){
             cluster_ii <- which(values == var_level)
 
-            r1 <- matrix_wilcox(sigScoreRanks, cluster_ii,
-                                check_na = FALSE, check_ties = FALSE)
-
             r2 <- matrix_wilcox(numericMetaRanks, cluster_ii,
                                 check_na = TRUE, check_ties = TRUE)
 
             r3 <- matrix_chisq(factorMeta, cluster_ii)
 
-            pval <- c(r1$pval, r2$pval, r3$pval)
-            stat <- c(r1$stat, r2$stat, r3$stat)
+            pval <- c(r2$pval, r3$pval)
+            stat <- c(r2$stat, r3$stat)
             fdr <- p.adjust(pval, method = "BH")
             out <- data.frame(
                 stat = stat, pValue = pval, FDR = fdr
@@ -568,8 +629,9 @@ clusterSigScores <- function(object) {
         return(result)
     }, mc.cores = 1)
 
-    object@ClusterSigScores <- out
+    ClusterComparisons[["Meta"]] <- out
 
+    # Comparisons for Features
     if (hasFeatureBarcodeData(object)){
         fbRanks <- colRanks(object@featureBarcodeData,
                             preserveShape = TRUE,
@@ -600,8 +662,12 @@ clusterSigScores <- function(object) {
             return(result)
         }, mc.cores = 1)
 
-        object@ClusterFeatureBarcodeScores <- out_fb
+        ClusterComparisons[["Features"]] <- out_fb
+    } else {
+        ClusterComparisons[["Features"]] <- NULL
     }
+
+    object@ClusterComparisons <- ClusterComparisons
 
     return(object)
 
@@ -617,9 +683,9 @@ clusterSigScores <- function(object) {
 calculatePearsonCorr <- function(object){
 
   message("Computing correlations between signatures and latent space components...\n")
-  sigMatrix <- object@sigScores
+  sigMatrix <- object@SigScores
   metaData <- object@metaData
-  latentSpace <- object@latentSpace
+  latentSpace <- object@LatentSpace
 
   ## combined gene signs and numeric meta variables
 

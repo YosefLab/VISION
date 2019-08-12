@@ -221,7 +221,7 @@ sigConsistencyScores <- function(weights, sigScoresData,
     signatureNames <- c(colnames(sigScoresData), colnames(metaData))
 
     svp_n <- sigsVsProjection_n(
-        sigScoresData, randomSigData, normData, weights)
+        sigScoresData, randomSigData, normExpr, weights)
     svp_pcn <- sigsVsProjection_pcn(metaData, weights)
     svp_pcf <- sigsVsProjection_pcf(metaData, weights)
 
@@ -236,25 +236,20 @@ sigConsistencyScores <- function(weights, sigScoresData,
     consistency <- consistency[signatureNames]
     pvals <- pvals[signatureNames]
 
-    consistency <- as.matrix(consistency)
-    pvals <- as.matrix(pvals)
-
-    colnames(consistency) <- c("Consistency")
-    colnames(pvals) <- c("Consistency")
-
     # FDR-correct and log-transform p-values
-    if (nrow(pvals) > 1){
-        fdr <- apply(pvals, MARGIN = 2,
-                                    FUN = p.adjust, method = "BH")
+    if (length(pvals) > 1){
+        fdr <- p.adjust(pvals, method = "BH")
     } else {
-        fdr <- matrix(nrow = 0, ncol = 1)
-        colnames(fdr) <- "Consistency"
+        fdr <- numeric(0)
     }
 
-    return(list(sigProjMatrix = consistency,
-                pVals = pvals,
-                fdr = fdr)
+    df <- data.frame(
+        C = consistency,
+        pValue = pvals,
+        FDR = fdr
     )
+
+    return(df)
 }
 
 
@@ -622,20 +617,20 @@ geary_sig_v_proj <- function(values, indices, weights){
 #' @importFrom rsvd rsvd
 #' @param sigMatrix matrix of signatures scores, NUM_SAMPLES x NUM_SIGNATURES
 #' @param metaData data.frame of meta-data for cells
-#' @param pvals the corresponding P-values for each signature
-#' NUM_SIGNATURES x NUM_SAMPLES
+#' @param data.frame autocorrelation results
 #' @return a list:
 #' \itemize{
 #'     \item Computed: a list of clusters of computed signatures
 #'     \item Meta: a list of clusters of meta data signatures
 #' }
-clusterSignatures <- function(sigMatrix, metaData, pvals, consistency, clusterMeta) {
+clusterSignatures <- function(sigMatrix, metaData, autocorrelation, clusterMeta) {
 
-  significant <- apply(pvals, 1, function(x) min(x) < .05)
+  significant <- autocorrelation$FDR < .05
 
   # Additionally, threshold on the Geary's C' itself
-  large <- consistency[, 1] > 0.2
+  large <- autocorrelation$C > 0.2
   significant <- significant & large
+  names(significant) <- rownames(autocorrelation)
 
   meta_n <- vapply(names(metaData), function(metaName) {
 			is.numeric(metaData[, metaName]) && !any(is.na(metaData[, metaName]))

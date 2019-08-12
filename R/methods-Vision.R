@@ -89,6 +89,11 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                 colnames(data) <- paste0("cell", seq(ncol(data)))
             }
 
+            # Initialize parameter structure
+            .Object@params$latentSpace <- list()
+            .Object@params$signatures <- list()
+            .Object@params$micropooling <- list()
+
             rownames(data) <- toupper(rownames(data))
             data <- data[ !duplicated(rownames(data)), , drop = FALSE]
             .Object@exprData <- data
@@ -226,18 +231,17 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                                     )
             }
 
-            .Object@projection_genes <- vapply(projection_genes,
-                                               toupper, "",
-                                               USE.NAMES = FALSE)
+            .Object@params$latentSpace$projectionGenes <- vapply(
+                projection_genes, toupper, "", USE.NAMES = FALSE)
 
             if (threshold < 1) {
                 num_samples <- ncol(.Object@exprData)
                 threshold <- round(threshold * num_samples)
             }
 
-            .Object@threshold <- threshold
-            .Object@sig_norm_method <- match.arg(sig_norm_method)
-            .Object@perm_wPCA <- perm_wPCA
+            .Object@params$signatures$sigNormMethod <- match.arg(sig_norm_method)
+            .Object@params$latentSpace$threshold <- threshold
+            .Object@params$latentSpace$permPCA <- perm_wPCA
 
             valid_projections <- c("tSNE10", "tSNE30", "ICA", "ISOMap", "RBFPCA", "UMAP")
             check <- sapply(projection_methods, function(x) x %in% valid_projections)
@@ -253,7 +257,7 @@ setMethod("Vision", signature(data = "matrixORSparse"),
             if(length(projection_methods) == 0){
                 projection_methods <- character()
             }
-            .Object@projection_methods <- projection_methods
+            .Object@params$projectionMethods <- projection_methods
 
             LOTS_OF_CELLS <- ncol(.Object@exprData) > 100000
 
@@ -286,11 +290,13 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                 )
             }
 
-            .Object@pool = pool
-            .Object@cellsPerPartition = cellsPerPartition
+            .Object@params$micropooling$pool = pool
+            .Object@params$micropooling$cellsPerPartition = cellsPerPartition
 
             if (!is.null(name)) {
-                .Object@name <- name
+                .Object@params$name <- name
+            } else {
+                .Object@params$name <- ""
             }
 
             if (!is.null(latentSpace)) {
@@ -308,7 +314,7 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                 latentSpace <- latentSpace[colnames(.Object@exprData), ]
                 colnames(latentSpace) <- NULL
 
-                .Object@latentSpace <- latentSpace
+                .Object@LatentSpace <- latentSpace
             }
 
             if (!is.null(latentTrajectory)) {
@@ -320,39 +326,39 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                     stop("latentTrajectory must be a wrapped method using the dynverse/dynmethods library.")
                 }
 
-                .Object@latentTrajectory <- Trajectory(latentTrajectory)
+                .Object@LatentTrajectory <- Trajectory(latentTrajectory)
 
                 sample_names <- colnames(.Object@exprData)
                 if (length(
                         setdiff(
                             sample_names,
-                            rownames(.Object@latentTrajectory@progressions)
+                            rownames(.Object@LatentTrajectory@progressions)
                             )
                         ) > 0) {
                     stop("Supplied progressions for latentTrajectory must have cell_ids that match sample/cell names")
                 }
 
-                .Object@latentTrajectory@progressions <-
-                    .Object@latentTrajectory@progressions[sample_names, , drop = FALSE]
+                .Object@LatentTrajectory@progressions <-
+                    .Object@LatentTrajectory@progressions[sample_names, , drop = FALSE]
 
-                newMeta <- createTrajectoryMetaData(.Object@latentTrajectory)
+                newMeta <- createTrajectoryMetaData(.Object@LatentTrajectory)
                 newMeta <- newMeta[rownames(.Object@metaData), ]
 
                 .Object@metaData <- cbind(.Object@metaData, newMeta)
             }
 
-            .Object@pools <- pools
+            .Object@Pools <- pools
 
             if (!is.null(num_neighbors)) {
-                .Object@num_neighbors = num_neighbors
+                .Object@params$numNeighbors <- num_neighbors
             } else {
-                .Object@num_neighbors = round((sqrt(ncol(.Object@exprData))))
+                .Object@params$numNeighbors <- round( (sqrt(ncol(.Object@exprData))))
             }
 
             if (is.null(latentSpaceName)){
-                .Object@params[["latentSpaceName"]] <- NULL
+                .Object@params$latentSpace$Name <- NULL
             } else {
-                .Object@params[["latentSpaceName"]] <- latentSpaceName
+                .Object@params$latentSpace$Name <- latentSpaceName
             }
 
             return(.Object)
@@ -535,12 +541,12 @@ setMethod("analyze", signature(object="Vision"),
             function(object) {
     message("Beginning Analysis\n")
 
-    if (object@pool || length(object@pools) > 0) {
+    if (object@params$micropooling$pool || length(object@Pools) > 0) {
         object <- poolCells(object)
     }
 
-    # Populates @latentSpace
-    if (all(dim(object@latentSpace) == c(1, 1))) {
+    # Populates @LatentSpace
+    if (all(dim(object@LatentSpace) == c(1, 1))) {
         object <- filterData(object)
         object <- computeLatentSpace(object)
     }
@@ -551,28 +557,28 @@ setMethod("analyze", signature(object="Vision"),
     object <- generateProjections(object)
 
     # Populates @TrajectoryProjections
-    if (!is.null(object@latentTrajectory)) {
+    if (!is.null(object@LatentTrajectory)) {
 
         object@TrajectoryProjections <- generateTrajectoryProjections(
-                                            object@latentTrajectory
+                                            object@LatentTrajectory
                                         )
     }
 
-    # Populates @sigScores
+    # Populates @SigScores
     object <- calcSignatureScores(object)
 
     # Populates @SigGeneImportance
     object <- evalSigGeneImportance(object)
 
-    # Populates @SigConsistencyScores and @FeatureBarcodeConsistencyScores
+    # Populates @LocalAutocorrelation
     object <- analyzeLocalCorrelations(object)
 
-    # Populates @TrajectoryConsistencyScores
-    if (!is.null(object@latentTrajectory)) {
+    # Populates @TrajectoryAutocorrelation
+    if (!is.null(object@LatentTrajectory)) {
         object <- analyzeTrajectoryCorrelations(object)
     }
 
-    # Populates @ClusterSigScores and @ClusterFeatureBarcodeScores
+    # Populates @ClusterComparisons
     object <- clusterSigScores(object)
 
     # Populates #PCAnnotatorData
@@ -726,7 +732,7 @@ setMethod("viewResults", signature(object = "Vision"),
           function(object, port=NULL, host=NULL, browser=TRUE, name=NULL) {
 
             if (!is.null(name)) {
-                object@name <- name
+                object@params$name <- name
             }
 
             versionCheck(object)
@@ -737,10 +743,6 @@ setMethod("viewResults", signature(object = "Vision"),
 
             if (is.null(object@PCAnnotatorData)) {
                 stop("Error: This object contains no PCAnnotatorData.")
-            }
-
-            if (!.hasSlot(object, "selections")) {
-                object@selections <- list()
             }
 
             message("Launching the server...")
@@ -796,7 +798,11 @@ setMethod("viewResults", signature(object = "character"),
 #' }
 setMethod("getSelections", signature(object = "Vision"),
           function(object) {
-              return(object@selections)
+              if ("selections" %in% object@Viewer){
+                  return(object@Viewer$selections)
+              } else {
+                  return(list())
+              }
           })
 
 
@@ -846,7 +852,7 @@ setMethod("getProjections", signature(object = "Vision"),
 #' @rdname getLatentSpace
 setMethod("getLatentSpace", signature(object = "Vision"),
           function(object) {
-              return(object@latentSpace)
+              return(object@LatentSpace)
           })
 
 
@@ -882,7 +888,7 @@ setMethod("getLatentSpace", signature(object = "Vision"),
 #' }
 setMethod("getLatentTrajectory", signature(object = "Vision"),
           function(object) {
-              return(object@latentTrajectory)
+              return(object@LatentTrajectory)
           })
 
 
@@ -897,7 +903,7 @@ setMethod("getLatentTrajectory", signature(object = "Vision"),
 #' @rdname getSignatureScores
 setMethod("getSignatureScores", signature(object = "Vision"),
           function(object) {
-              return(object@sigScores)
+              return(object@SigScores)
           })
 
 
@@ -915,31 +921,12 @@ setMethod("getSignatureScores", signature(object = "Vision"),
 #' @rdname getSignatureAutocorrelation
 setMethod("getSignatureAutocorrelation", signature(object = "Vision"),
           function(object) {
-              if (is.null(object@TrajectoryConsistencyScores)){
-                  localData <- object@SigConsistencyScores
+
+              if (is.null(object@TrajectoryAutocorrelation)){
+                  out <- object@LocalAutocorrelation$Signatures
               } else {
-                  localData <- object@TrajectoryConsistencyScores
+                  out <- object@TrajectoryAutocorrelation$Signatures
               }
-
-              # Remove meta-variables
-              metaVars <- colnames(object@metaData)
-
-              fdr <- localData@FDR[, 1]
-              pVals <- localData@pValue[, 1]
-              consistency <- localData@Consistency[, 1]
-
-              sigs <- setdiff(names(pVals), metaVars)
-
-              pVals <- pVals[sigs]
-              consistency <- consistency[sigs]
-              fdr <- fdr[sigs]
-
-              out <- data.frame(
-                  C = consistency,
-                  pValue = pVals,
-                  FDR = fdr,
-                  row.names = sigs
-              )
 
               out <- out[order(out$pValue, out$C * -1), ]
 
@@ -962,31 +949,12 @@ setMethod("getSignatureAutocorrelation", signature(object = "Vision"),
 #' @rdname getMetaAutocorrelation
 setMethod("getMetaAutocorrelation", signature(object = "Vision"),
           function(object) {
-              if (is.null(object@TrajectoryConsistencyScores)){
-                  localData <- object@SigConsistencyScores
+
+              if (is.null(object@TrajectoryAutocorrelation)){
+                  out <- object@LocalAutocorrelation$Meta
               } else {
-                  localData <- object@TrajectoryConsistencyScores
+                  out <- object@TrajectoryAutocorrelation$Meta
               }
-
-              # Remove non meta-variables
-              metaVars <- colnames(object@metaData)
-
-              fdr <- localData@FDR[, 1]
-              pVals <- localData@pValue[, 1]
-              consistency <- localData@Consistency[, 1]
-
-              sigs <- intersect(names(pVals), metaVars)
-
-              pVals <- pVals[sigs]
-              consistency <- consistency[sigs]
-              fdr <- fdr[sigs]
-
-              out <- data.frame(
-                  C = consistency,
-                  pValue = pVals,
-                  FDR = fdr,
-                  row.names = sigs
-              )
 
               out <- out[order(out$pValue, out$C * -1), ]
 
@@ -1017,26 +985,13 @@ setMethod("getSignatureDifferential", signature(object = "Vision"),
           function(object) {
 
               # This is almost what we want to output, but needs some massaging
-              ClusterSigScores <- object@ClusterSigScores
+              ClusterComparisons <- object@ClusterComparisons
 
-              metaVars <- colnames(object@metaData)
-
-              if (is.null(ClusterSigScores)){
-                  return(ClusterSigScores)
+              if (length(ClusterComparisons) == 0){
+                  return(ClusterComparisons)
               }
 
-              to_keep <- setdiff(
-                  rownames(ClusterSigScores[[1]][[1]]),
-                  metaVars
-                  )
-
-              ClusterSigScores <- lapply(ClusterSigScores, function(var_res){
-                  var_res <- lapply(var_res, function(var_level_res){
-                      var_level_res <- var_level_res[to_keep, , drop = FALSE]
-                  })
-              })
-
-              return(ClusterSigScores)
+              return(ClusterComparisons$Signatures)
           })
 
 
@@ -1063,26 +1018,13 @@ setMethod("getMetaDifferential", signature(object = "Vision"),
           function(object) {
 
               # This is almost what we want to output, but needs some massaging
-              ClusterSigScores <- object@ClusterSigScores
+              ClusterComparisons <- object@ClusterComparisons
 
-              metaVars <- colnames(object@metaData)
-
-              if (is.null(ClusterSigScores)){
-                  return(ClusterSigScores)
+              if (length(ClusterComparisons) == 0){
+                  return(ClusterComparisons)
               }
 
-              to_keep <- intersect(
-                  rownames(ClusterSigScores[[1]][[1]]),
-                  metaVars
-                  )
-
-              ClusterSigScores <- lapply(ClusterSigScores, function(var_res){
-                  var_res <- lapply(var_res, function(var_level_res){
-                      var_level_res <- var_level_res[to_keep, , drop = FALSE]
-                  })
-              })
-
-              return(ClusterSigScores)
+              return(ClusterComparisons$Meta)
           })
 
 # Some Printing methods

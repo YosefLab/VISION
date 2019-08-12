@@ -208,8 +208,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
     object@Projections <- projections
 
     # Make sure latent space columns have names
-    if (is.null(colnames(object@latentSpace))) {
-        colnames(object@latentSpace) <- paste0("Comp ", seq_len(ncol(object@latentSpace)))
+    if (is.null(colnames(object@LatentSpace))) {
+        colnames(object@LatentSpace) <- paste0("Comp ", seq_len(ncol(object@LatentSpace)))
     }
 
     # Load the static file whitelist
@@ -238,7 +238,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
     pr$handle("GET", "/Signature/Scores/<sig_name>",
         function(req, res, sig_name) {
 
-        sigMatrix <- object@sigScores
+        sigMatrix <- object@SigScores
         name <- URLdecode(sig_name)
         if (name %in% colnames(sigMatrix)) {
             values <- sigMatrix[, name]
@@ -325,7 +325,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
     pr$handle("GET", "/FilterGroup/SigClusters/Normal", function(req, res) {
 
-        cls <- object@SigConsistencyScores@sigClusters
+        cls <- object@LocalAutocorrelation$Clusters
         cls <- cls$Computed
 
         res$body <- toJSON(cls, auto_unbox = TRUE)
@@ -336,8 +336,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
     pr$handle("GET", "/FilterGroup/SigClusters/Features", function(req, res) {
 
         # Everything is in cluster 1
-        cls <- as.list(numeric(nrow(object@FeatureBarcodeConsistencyScores))+1)
-        names(cls) <- rownames(object@FeatureBarcodeConsistencyScores)
+        cls <- as.list(numeric(nrow(object@LocalAutocorrelation$Features)) + 1)
+        names(cls) <- rownames(object@LocalAutocorrelation$Features)
 
         res$body <- toJSON(cls, auto_unbox = TRUE)
         return(res)
@@ -345,7 +345,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
     pr$handle("GET", "/FilterGroup/SigClusters/Meta", function(req, res) {
 
-        cls <- object@SigConsistencyScores@sigClusters
+        cls <- object@LocalAutocorrelation$Clusters
         cls <- cls$Meta
 
         res$body <- toJSON(cls, auto_unbox = TRUE)
@@ -361,7 +361,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         if (proj %in% names(object@Projections)) {
             coords <- object@Projections[[proj]][, col, drop = FALSE]
         } else {
-            coords <- object@latentSpace[, col, drop = FALSE]
+            coords <- object@LatentSpace[, col, drop = FALSE]
         }
 
         res$body <- coordinatesToJSON(coords)
@@ -376,8 +376,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         proj_names <- lapply(object@Projections, colnames)
 
-        latentSpaceName <- getParam(object, "latentSpaceName")
-        proj_names[[latentSpaceName]] <- colnames(object@latentSpace)
+        latentSpaceName <- getParam(object, "latentSpace", "name")
+        proj_names[[latentSpaceName]] <- colnames(object@LatentSpace)
 
         proj_names <- proj_names[order(names(proj_names), decreasing = TRUE)] # hack to make tsne on top
         res$body <- toJSON(proj_names)
@@ -424,43 +424,56 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
     pr$handle("GET", "/Tree/SigProjMatrix/Normal", function(req, res) {
 
-        sigs <- colnames(object@sigScores)
-
         metaData <- object@metaData
         meta_n <- vapply(names(metaData),
             function(metaName) is.numeric(metaData[, metaName]),
             FUN.VALUE = TRUE)
 
         meta_n <- colnames(metaData)[meta_n]
-        sigs <- c(sigs, meta_n)
 
-        res$body <- sigProjMatrixToJSON(
-            object@TrajectoryConsistencyScores@Consistency,
-            object@TrajectoryConsistencyScores@FDR,
-            sigs)
+        data <- object@TrajectoryAutocorrelation$Signatures
+        stat_s <- as.matrix(data[, "C", drop = F])
+        pval_s <- as.matrix(data[, "FDR", drop = F])
+
+        data <- object@TrajectoryAutocorrelation$Meta[meta_n, , drop = F]
+        stat_p <- as.matrix(data[, "C", drop = F])
+        pval_p <- as.matrix(data[, "FDR", drop = F])
+
+        stat <- rbind(stat_s, stat_p)
+        pval <- rbind(pval_s, pval_p)
+
+        colnames(stat) <- "Score"
+        colnames(pval) <- "Score"
+
+        res$body <- sigProjMatrixToJSON(stat, pval, sigs = rownames(stat))
 
         return(res)
     })
 
     pr$handle("GET", "/Tree/FeatureMatrix", function(req, res) {
 
-        features <- colnames(object@featureBarcodeData)
+        data <- object@TrajectoryAutocorrelation$Features
+        stat <- as.matrix(data[, "C", drop = F])
+        pval <- as.matrix(data[, "FDR", drop = F])
 
-        res$body <- sigProjMatrixToJSON(
-            object@TrajectoryConsistencyScoresFeatures@Consistency,
-            object@TrajectoryConsistencyScoresFeatures@FDR,
-            features)
+        colnames(stat) <- "Score"
+        colnames(pval) <- "Score"
+
+        res$body <- sigProjMatrixToJSON(stat, pval, sigs = rownames(stat))
 
         return(res)
     })
 
     pr$handle("GET", "/Tree/SigProjMatrix/Meta", function(req, res) {
 
-        sigs <- colnames(object@metaData)
-        res$body <- sigProjMatrixToJSON(
-            object@TrajectoryConsistencyScores@Consistency,
-            object@TrajectoryConsistencyScores@FDR,
-            sigs)
+        data <- object@TrajectoryAutocorrelation$Meta
+        stat <- as.matrix(data[, "C", drop = F])
+        pval <- as.matrix(data[, "FDR", drop = F])
+
+        colnames(stat) <- "Score"
+        colnames(pval) <- "Score"
+
+        res$body <- sigProjMatrixToJSON(stat, pval, sigs = rownames(stat))
 
         return(res)
     })
@@ -526,9 +539,10 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             data <- object@exprData
         }
 
+        cells <- colnames(data)
         data <- log2(as.numeric(data[gene_name, ]) + 1)
 
-        out <- list(cells = names(data), values = data)
+        out <- list(cells = cells, values = data)
 
         res$body <- toJSON(
             out, force = TRUE, pretty = TRUE, auto_unbox = TRUE)
@@ -541,7 +555,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
     pr$handle("GET", "/Clusters/list",
         function(req, res) {
 
-        cluster_vars <- names(object@ClusterSigScores)
+        cluster_vars <- names(object@ClusterComparisons[[1]])
+
         res$body <- toJSON(cluster_vars, force = TRUE, pretty = TRUE)
         return(res)
     })
@@ -561,10 +576,12 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         group_num <- body$group_num
         group_denom <- body$group_denom
 
+        selections <- getSelections(object)
+
         if (type_n == "current") {
             cells_num <- unlist(strsplit(group_num, ","))
         } else if (type_n == "saved_selection") {
-            cells_num <- object@selections[[group_num]]
+            cells_num <- selections[[group_num]]
         } else if (type_n == "meta") {
             cells_num <- rownames(object@metaData)[
                 which(object@metaData[[subtype_n]] == group_num)
@@ -576,7 +593,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         if (type_d == "remainder") {
             cells_denom <- setdiff(colnames(exprData), cells_num)
         } else if (type_d == "saved_selection") {
-            cells_denom <- object@selections[[group_denom]]
+            cells_denom <- selections[[group_denom]]
         } else if (type_d == "meta") {
             cells_denom <- rownames(object@metaData)[
                 which(object@metaData[[subtype_d]] == group_denom)
@@ -630,14 +647,14 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             return("No Clusters!")
         }
     })
-      
+
     pr$handle("GET", "/Clusters/MetaLevels", function(req, res) {
         out <- list()
         metaData <- object@metaData
-        for (cluster_variable in names(object@ClusterSigScores)) {
+        for (cluster_variable in names(object@ClusterComparisons[[1]])) {
             out[[cluster_variable]] <- levels(metaData[[cluster_variable]])
         }
-        
+
         res$body <- toJSON(
             out,
             force = TRUE, pretty = TRUE, auto_unbox = TRUE
@@ -645,11 +662,12 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         compressJSONResponse(req, res)
         return(res)
     })
-      
+
     pr$handle("GET", "/Clusters/<cluster_variable>/SigProjMatrix/Normal",
         function(req, res, cluster_variable) {
 
-        sigs <- colnames(object@sigScores)
+        # Gather signatures and numeric meta-data names
+        sigs <- colnames(object@SigScores)
 
         metaData <- object@metaData
         meta_n <- vapply(names(metaData),
@@ -657,46 +675,78 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             FUN.VALUE = TRUE)
 
         meta_n <- colnames(metaData)[meta_n]
-        sigs <- c(sigs, meta_n)
+
+        pvals_s <- object@LocalAutocorrelation$Signatures[sigs, "FDR", drop = F]
+        stat_s <- object@LocalAutocorrelation$Signatures[sigs, "C", drop = F]
+
+        pvals_p <- object@LocalAutocorrelation$Meta[meta_n, "FDR", drop = F]
+        stat_p <- object@LocalAutocorrelation$Meta[meta_n, "C", drop = F]
+
+        pvals <- rbind(pvals_s, pvals_p)
+        stat <- rbind(stat_s, stat_p)
+        colnames(stat) <- "Score"
+        colnames(pvals) <- "Score"
+        stat <- as.matrix(stat)
+        pvals <- as.matrix(pvals)
 
         cluster_variable <- URLdecode(cluster_variable)
-        pvals <- object@SigConsistencyScores@FDR
-        stat <- object@SigConsistencyScores@Consistency
 
-        var_res <- object@ClusterSigScores[[cluster_variable]]
+        # Get Signature Cluster Comparisons
+        var_res <- object@ClusterComparisons$Signatures[[cluster_variable]]
 
-        cluster_pval <- lapply(var_res, function(var_level_res){
+        cluster_pval_s <- lapply(var_res, function(var_level_res){
             var_level_res["FDR"]
         })
-        cluster_pval <- as.matrix(do.call(cbind, cluster_pval))
-        colnames(cluster_pval) <- names(var_res)
+        cluster_pval_s <- as.matrix(do.call(cbind, cluster_pval_s))
+        colnames(cluster_pval_s) <- names(var_res)
 
-        cluster_stat <- lapply(var_res, function(var_level_res){
+        cluster_stat_s <- lapply(var_res, function(var_level_res){
             var_level_res["stat"]
         })
-        cluster_stat <- as.matrix(do.call(cbind, cluster_stat))
-        colnames(cluster_stat) <- names(var_res)
+        cluster_stat_s <- as.matrix(do.call(cbind, cluster_stat_s))
+        colnames(cluster_stat_s) <- names(var_res)
 
+        # Get Meta Cluster Comparisons
+        var_res <- object@ClusterComparisons$Meta[[cluster_variable]]
+
+        cluster_pval_p <- lapply(var_res, function(var_level_res){
+            var_level_res["FDR"]
+        })
+        cluster_pval_p <- as.matrix(do.call(cbind, cluster_pval_p))
+        colnames(cluster_pval_p) <- names(var_res)
+
+        cluster_stat_p <- lapply(var_res, function(var_level_res){
+            var_level_res["stat"]
+        })
+        cluster_stat_p <- as.matrix(do.call(cbind, cluster_stat_p))
+        colnames(cluster_stat_p) <- names(var_res)
+
+        # Combine together
+        cluster_pval <- rbind(cluster_pval_s, cluster_pval_p)
+        cluster_stat <- rbind(cluster_stat_s, cluster_stat_p)
         cluster_pval <- cluster_pval[rownames(pvals), , drop = F]
         cluster_stat <- cluster_stat[rownames(pvals), , drop = F]
 
         pvals <- cbind(pvals, cluster_pval)
         stat <- cbind(stat, cluster_stat)
 
-        res$body <- sigProjMatrixToJSON(stat, pvals, sigs)
+        res$body <- sigProjMatrixToJSON(stat, pvals, sigs = rownames(stat))
         return(res)
     })
 
     pr$handle("GET", "/Clusters/<cluster_variable>/SigProjMatrix/Meta",
         function(req, res, cluster_variable) {
 
-        sigs <- colnames(object@metaData)
-
         cluster_variable <- URLdecode(cluster_variable)
-        pvals <- object@SigConsistencyScores@FDR
-        stat <- object@SigConsistencyScores@Consistency
 
-        var_res <- object@ClusterSigScores[[cluster_variable]]
+        pvals <- object@LocalAutocorrelation$Meta[, "FDR", drop = F]
+        stat <- object@LocalAutocorrelation$Meta[, "C", drop = F]
+        colnames(stat) <- "Score"
+        colnames(pvals) <- "Score"
+        stat <- as.matrix(stat)
+        pvals <- as.matrix(pvals)
+
+        var_res <- object@ClusterComparisons$Meta[[cluster_variable]]
 
         cluster_pval <- lapply(var_res, function(var_level_res){
             var_level_res["FDR"]
@@ -716,7 +766,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         pvals <- cbind(pvals, cluster_pval)
         stat <- cbind(stat, cluster_stat)
 
-        res$body <- sigProjMatrixToJSON(stat, pvals, sigs)
+        res$body <- sigProjMatrixToJSON(stat, pvals, sigs = rownames(stat))
 
         return(res)
     })
@@ -727,14 +777,14 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         features <- colnames(object@featureBarcodeData)
 
         cluster_variable <- URLdecode(cluster_variable)
-        pvals <- object@FeatureBarcodeConsistencyScores[, "FDR", drop = FALSE]
-        stat <- object@FeatureBarcodeConsistencyScores[, "C", drop = FALSE]
+        pvals <- object@LocalAutocorrelation$Features[, "FDR", drop = F]
+        stat <- object@LocalAutocorrelation$Features[, "C", drop = F]
         colnames(stat) <- "Score"
         colnames(pvals) <- "Score"
         stat <- as.matrix(stat)
         pvals <- as.matrix(pvals)
 
-        var_res <- object@ClusterFeatureBarcodeScores[[cluster_variable]]
+        var_res <- object@ClusterComparisons$Features[[cluster_variable]]
 
         cluster_pval <- lapply(var_res, function(var_level_res){
             var_level_res["FDR"]
@@ -762,20 +812,16 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         info <- list()
 
-        if (.hasSlot(object, "name") && !is.null(object@name)) {
-            info["name"] <- object@name
-        } else {
-            info["name"] <- ""
-        }
+        info["name"] <- getParam(object, "name")
 
-        W <- object@latentTrajectory
+        W <- object@LatentTrajectory
         hasTree <- !is.null(W)
 
         info["has_tree"] <- hasTree
 
         info[["meta_sigs"]] <- colnames(object@metaData)
 
-        info[["pooled"]] <- object@pool
+        info[["pooled"]] <- object@params$micropooling$pool
 
         info[["ncells"]] <- nrow(object@metaData)
 
@@ -805,8 +851,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         subset <- fromJSON(req$postBody)
         subset <- subset[!is.na(subset)]
 
-        if (object@pool){
-            cells <- unname(unlist(object@pools[subset]))
+        if (object@params$micropooling$pool){
+            cells <- unname(unlist(object@Pools[subset]))
         } else {
             cells <- subset
         }
@@ -846,7 +892,9 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         # Disable caching for this request
         res$headers[["Cache-Control"]] <- NULL
 
-        selectionNames <- as.character(names(object@selections))
+        selections <- getSelections(object)
+
+        selectionNames <- as.character(names(selections))
         res$body <- toJSON(selectionNames)
         return(res)
     })
@@ -858,7 +906,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         res$headers[["Cache-Control"]] <- NULL
 
         selection_id <- URLdecode(selection_id)
-        selectionCells <- object@selections[[selection_id]]
+        selections <- getSelections(object)
+        selectionCells <- selections[[selection_id]]
         res$body <- toJSON(selectionCells, auto_unbox = TRUE)
         return(res)
 
@@ -868,8 +917,9 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         function(req, res, selection_id) {
 
         selection_id <- URLdecode(selection_id)
+        selections <- getSelections(object)
         cell_ids <- fromJSON(req$postBody)
-        object@selections[[selection_id]] <<- cell_ids # Super assignment!
+        selections[[selection_id]] <<- cell_ids # Super assignment!
         res$body <- ""  # Empty body for successful POST
         return(res)
     })

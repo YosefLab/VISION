@@ -479,25 +479,40 @@ hasUnnormalizedData <- function(object) {
 #' @param object VISION object
 #' @param param name of parameter that is desired
 #' @return bool whether or not there is unnormalize data
-getParam <- function(object, param) {
+getParam <- function(object, param, subparam = NULL) {
 
     useDefault <- tryCatch({
-        !(param %in% names(object@params))
     }, error = function(err){
         return(TRUE)
     })
 
+    useDefault <- !(param %in% names(object@params))
+    if ((!useDefault) && (!is.null(subparam))) {
+        useDefault <- !(subparam %in% names(object@params[[param]]))
+    }
+
     if (!useDefault){
-        return(object@params[[param]])
+        if (is.null(subparam)){
+            return(object@params[[param]])
+        } else {
+            return(object@params[[param]][[subparam]])
+        }
     } else {
         res <- switch(param,
-            "latentSpaceName" = "Latent Space",
+            "latentSpace" = {
+                switch(subparam,
+                    "name" = "Latent Space",
+                    stop(paste0("Unrecognized subparameter name - ", subparam))
+                )
+            },
+            "name" = "",
             stop(paste0("Unrecognized parameter name - ", param))
         )
         return(res)
     }
 
 }
+
 
 #' Compute row-wise variance on matrix without densifying
 #'

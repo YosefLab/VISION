@@ -62,7 +62,7 @@ Trajectory <- function(input) {
 setMethod("computeKNNWeights", signature(object = "Trajectory"),
             function(object) {
 
-            K <- object@num_neighbors
+            K <- object@params$numNeighbors
 
             edgePos <- object@progressions$position
 			names(edgePos) <- rownames(object@progressions)
