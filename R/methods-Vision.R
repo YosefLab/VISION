@@ -81,7 +81,7 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                                         "rank_norm_columns"),
                     sig_score_method=c("naive", "weighted_avg"),
                     pool="auto", cellsPerPartition=10, name=NULL, num_neighbors = NULL, 
-                    latentSpace = NULL, latentTrajectory = NULL, pools=list()) {
+                    latentSpace = NULL, latentSpaceName = NULL, latentTrajectory = NULL, pools=list()) {
 
             .Object <- new("Vision")
 
@@ -335,6 +335,12 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                 .Object@num_neighbors = num_neighbors
             } else {
                 .Object@num_neighbors = round((sqrt(ncol(.Object@exprData))))
+            }
+
+            if (is.null(latentSpaceName)){
+                .Object@params[["latentSpaceName"]] <- NULL
+            } else {
+                .Object@params[["latentSpaceName"]] <- latentSpaceName
             }
 
             return(.Object)

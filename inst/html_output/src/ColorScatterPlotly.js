@@ -503,11 +503,21 @@ ColorScatter.prototype.pointsToRadius = function()
     var height = $(this.node).height()
     var scale_factor = Math.min(width, height)/790
 
+    var A = -1.3026e7
+    var B = 1.9784e4
+    var C = 2.9423
+
+
     var x = 1/this.n_points
+    if (x > -1*B/(2*A)){  // Things get weird past the inflection point
+        x = -1*B/(2*A)
+    }
+
     var circle_radius =
-        -1.3026e7*Math.pow(x, 2) +
-        1.9784e4*Math.pow(x, 1) +
-        2.9423*Math.pow(x, 0)
+        A*Math.pow(x, 2) +
+        B*Math.pow(x, 1) +
+        C*Math.pow(x, 0)
+
 
     circle_radius = Math.min(circle_radius, 12) // Looks silly if it's too big
 

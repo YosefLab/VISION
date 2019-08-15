@@ -134,8 +134,12 @@ sigProjMatrixToJSON <- function(sigzscores, sigpvals, sigs) {
 #' @return Subsetted pearson correlations converted to JSON
 pearsonCorrToJSON <- function(pc, sigs) {
 
-    pc <- pc[sigs, ,drop = FALSE]
-    cn <- paste("PC", 1:ncol(pc))
+    pc <- pc[sigs, , drop = FALSE]
+    cn <- colnames(pc)
+
+    if (is.null(cn)){
+        cn <- paste0("Comp ", seq_len(ncol(pc)))
+    }
 
     sPC <- ServerSigProjMatrix(unname(pc), unname(pc), cn, sigs)
 
@@ -149,12 +153,18 @@ compressJSONResponse <- function(req, res){
 
     res$headers[["Content-type"]] <- "application/json"
 
-    if (requireNamespace("gzmem", quietly = TRUE) &&
-        !is.null(req$HTTP_ACCEPT_ENCODING) &&
+    if (!is.null(req$HTTP_ACCEPT_ENCODING) &&
         grepl("gzip", req$HTTP_ACCEPT_ENCODING, ignore.case = TRUE)
     ){
         res$setHeader("Content-Encoding", "gzip")
-        res$body <- gzmem::mem_compress(charToRaw(res$body), format = "gzip")
+        GZIP_HEADER <- as.raw(c(31, 139, 8, 0, 0, 0, 0, 0, 4, 3))
+        compressed <- memCompress(charToRaw(res$body))
+        compressed <- compressed[-c(1, 2)]
+        compressed <- compressed[- (
+                (length(compressed) - 3):length(compressed)
+        )]
+        compressed <- c(GZIP_HEADER, compressed)
+        res$body <- compressed
     }
 }
 
@@ -178,11 +188,6 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         host <- "127.0.0.1"
     }
 
-    # Check for gzmem
-    if (!requireNamespace("gzmem", quietly = TRUE)){
-        warning("Package 'gzmem' not installed:\n    For faster network communication install gzmem with command: \n    > devtools::install_github(\"hrbrmstr/gzmem\")")
-    }
-
     # Make sure all projections have column names
     projections <- object@Projections
     n <- names(projections)
@@ -193,7 +198,16 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         }
         return(proj)
     })
+
+    if (object@version < 1.11 && "Latent Space" %in% names(projections)){
+        projections[["Latent Space"]] <- NULL
+    }
     object@Projections <- projections
+
+    # Make sure latent space columns have names
+    if (is.null(colnames(object@latentSpace))) {
+        colnames(object@latentSpace) <- paste0("Comp ", seq_len(ncol(object@latentSpace)))
+    }
 
     # Load the static file whitelist
     whitelist_file <- system.file("html_output/whitelist.txt",
@@ -315,7 +329,11 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         proj <- URLdecode(proj_name)
         col <- URLdecode(proj_col)
 
-        coords <- object@Projections[[proj]][, col, drop = FALSE]
+        if (proj %in% names(object@Projections)) {
+            coords <- object@Projections[[proj]][, col, drop = FALSE]
+        } else {
+            coords <- object@latentSpace[, col, drop = FALSE]
+        }
 
         res$body <- coordinatesToJSON(coords)
         compressJSONResponse(req, res)
@@ -328,6 +346,10 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         function(req, res) {
 
         proj_names <- lapply(object@Projections, colnames)
+
+        latentSpaceName <- getParam(object, "latentSpaceName")
+        proj_names[[latentSpaceName]] <- colnames(object@latentSpace)
+
         proj_names <- proj_names[order(names(proj_names), decreasing = TRUE)] # hack to make tsne on top
         res$body <- toJSON(proj_names)
         return(res)
@@ -404,7 +426,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
     pr$handle("GET", "/PearsonCorr/Normal", function(req, res) {
 
-        pc <- object@PCAnnotatorData@pearsonCorr[, 1:10]
+        pc <- object@PCAnnotatorData@pearsonCorr
         sigs <- rownames(pc)
 
         res$body <- pearsonCorrToJSON(pc, sigs)
@@ -420,7 +442,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
                               FUN.VALUE = TRUE)
         sigs <- sigs[numericMeta]
 
-        pc <- object@PCAnnotatorData@pearsonCorr[, 1:10]
+        pc <- object@PCAnnotatorData@pearsonCorr
 
         res$body <- pearsonCorrToJSON(pc, sigs)
         return(res)

@@ -511,6 +511,15 @@ Cell_Info.prototype.init = function()
 {
     this.cell_id_span = $(this.dom_node).find('#cell-id-span')
     this.cell_info_table = $(this.dom_node).find('#cell-info-table')
+
+    this.cell_info_table.DataTable({
+        columns: [
+            {'title': 'Variable'},
+            {'title': 'Value', 'render': _formatNum, 'orderable': false}
+        ],
+        'paging': false,
+        'dom': 't',
+    })
 }
 
 Cell_Info.prototype.update = function(updates)
@@ -530,20 +539,13 @@ Cell_Info.prototype.update = function(updates)
         self.cell_id_span.text(selected_cell)
 
         // Rebuild meta-data table
-        self.cell_info_table.empty()
-        $.each(result, function(property, value){
-            var row = $(document.createElement('tr'))
-            var prop = $(document.createElement('td'))
-            var val = $(document.createElement('td'))
-            prop.text(property+':');
+        var dataSet = _.map(result, function(v, k){ return [k, v]})
 
-            var val_string = _formatNum(value)
+        self.cell_info_table.DataTable()
+            .clear()
+            .rows.add(dataSet)
+            .draw()
 
-            val.text(val_string);
-            row.append(prop)
-            row.append(val)
-            self.cell_info_table.append(row)
-        })
     })
 }
 
@@ -557,7 +559,66 @@ Selection_Info.prototype.init = function()
     this.cell_count_span = $(this.dom_node).find('#selected-cell-count-span')
     this.selection_info_table = $(this.dom_node).find('#selection-info-table')
     this.selection_info_table_meta = $(this.dom_node).find('#selection-info-table-meta')
+
+    this.selection_info_table.DataTable({
+        columns: [
+            {'title': 'Numeric Variables'},
+            {'title': 'Min', 'render': _formatNum},
+            {'title': 'Median', 'render': _formatNum},
+            {'title': 'Max', 'render': _formatNum},
+        ],
+        'paging': false,
+        'dom': 't',
+    })
+
+    var table = this.selection_info_table_meta.DataTable({
+        columns: [
+            {'className': 'details-control', 'orderable': false,
+                'data': null, 'defaultContent': ''},
+            {'title': 'Categorical Variables', 'data': 'Variable'},
+            {'title': 'Top Value', 'data': 'TopValue'},
+            {'title': 'Percent', 'data': 'Percent', 'render': p => p.toFixed(1)+'%'},
+        ],
+        'paging': false,
+        'order': [[1, 'asc']],
+        'dom': 't',
+    })
+
+    var _metaDetailsFormat = function(data){
+        var result = '<table style="margin-right: auto; margin-left: auto;" class="meta-expand-table">'
+        result = result + "<thead><tr><th colspan='2'>"+data.Variable+"</th></tr></thead>"
+        result = result + "<tbody>"
+        _.each(data.OtherLevels, function(ol){
+            var level = ol[0]
+            var percent = ol[1]
+            var rowResult = "<tr>" +
+                "<td>"+level+"</td>" +
+                "<td>"+percent.toFixed(1)+"%</td>" +
+                "</tr>";
+            result = result + rowResult
+        })
+        result = result + "</tbody>"
+        result = result + "</table"
+        return result
+    }
+
+    this.selection_info_table_meta.on('click', 'td.details-control', function(){
+        var tr = $(this).closest('tr')
+        var row = table.row( tr );
+
+        if ( row.child.isShown() ) {
+            // This row is already open - close it
+            row.child.hide();
+            tr.removeClass('shown');
+        }
+        else {
+            // Open this row
+            row.child( _metaDetailsFormat(row.data()) ).show();
+            tr.addClass('shown');
+        }
+    })
 }
+
 
 Selection_Info.prototype.update = function(updates)
 {
@@ -580,57 +641,34 @@ Selection_Info.prototype.update = function(updates)
     return api.cells.meta(selected_cells).then(result => {
 
         // Rebuild meta-data table
-        self.selection_info_table.children('tbody').empty()
-        _.each(result.numeric, function(value, property){
-            var row = $(document.createElement('tr'))
-            var prop = $(document.createElement('td'))
-            var valmin = $(document.createElement('td'))
-            var valmed = $(document.createElement('td'))
-            var valmax = $(document.createElement('td'))
+        var dataSet = _.map(result.numeric, function(v, k){
+            return [k, v['Min'], v['Median'], v['Max']]
+        })
+        self.selection_info_table.DataTable()
+            .clear()
+            .rows.add(dataSet)
+            .draw()
 
-            prop.text(property+':');
+        var dataSetMeta = _.map(result.factor, function(value, property){
+            var levels = _(value)
+                .map(
+                    function(percent, level){ return [level, percent] })
+                .orderBy(1, 'desc')
+                .value()
 
-            // valmin.text(value['Min'].toFixed(1));
-            // valmed.text(value['Median'].toFixed(1));
-            // valmax.text(value['Max'].toFixed(1));
-            valmin.text(_formatNum(value['Min']));
-            valmed.text(_formatNum(value['Median']));
-            valmax.text(_formatNum(value['Max']));
-
-            row.append(prop)
-            row.append(valmin)
-            row.append(valmed)
-            row.append(valmax)
-
-            self.selection_info_table.children('tbody').append(row)
+            var top = levels[0]
+            return {
+                'Variable': property,
+                'TopValue': top[0],
+                'Percent': top[1],
+                'OtherLevels': levels,
+            }
         })
 
-        self.selection_info_table_meta.children('tbody').empty()
-        _.each(result.factor, function(value, property){
-
-            // Header row
-            var row = $(document.createElement('tr'))
-            var prop = $(document.createElement('td'))
-            var empty = $(document.createElement('td'))
-            prop.text(property+':');
-            row.append(prop)
-            row.append(empty)
-            self.selection_info_table_meta.children('tbody').append(row)
-
-            // Row for each factor level
-            _.each(value, function(percent, level){
-                var row = $(document.createElement('tr'))
-                var prop = $(document.createElement('td'))
-                var value = $(document.createElement('td'))
-                prop.text(level);
-                prop.css('font-weight', 'normal')
-                value.text(percent.toFixed(1)+'%');
-
-                row.append(prop)
-                row.append(value)
-                self.selection_info_table_meta.children('tbody').append(row)
-            })
-        })
+        self.selection_info_table_meta.DataTable()
+            .clear()
+            .rows.add(dataSetMeta)
+            .draw()
     })
 }
 

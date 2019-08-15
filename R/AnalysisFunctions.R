@@ -356,6 +356,8 @@ computeLatentSpace <- function(object, projection_genes = NULL,
     }
 
     object@latentSpace <- t(pca_res)
+    colnames(object@latentSpace) <- paste0("PC ", seq_len(ncol(object@latentSpace)))
+    object@params[["latentSpaceName"]] <- "PCA"
     return(object)
 }
 
@@ -624,11 +626,13 @@ calculatePearsonCorr <- function(object){
                return(pc_result$estimate)
            }
       })
+
       return(ls_col_cor)
   })
 
   pearsonCorr <- do.call(rbind, pearsonCorr)
   rownames(pearsonCorr) <- colnames(computedSigMatrix)
+  colnames(pearsonCorr) <- colnames(latentSpace)
 
   pcaAnnotData <- PCAnnotatorData(pearsonCorr = pearsonCorr)
   object@PCAnnotatorData <- pcaAnnotData

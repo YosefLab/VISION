@@ -34,8 +34,6 @@ generateProjectionsInner <- function(expr, latentSpace, projection_genes=NULL, p
 
     projections <- list()
 
-    projections[["Latent Space"]] <- latentSpace
-
     N <- length(methodList)
     for (i in seq_len(N)){
         method <- names(methodList)[i]
@@ -255,7 +253,6 @@ applySpectralEmbedding <- function(exprData) {
 #' @return Reduced data NUM_SAMPLES x NUM_COMPONENTS
 applyUMAP <- function(exprData, K) {
 
-	print(requireNamespace('uwot'))
     if (!requireNamespace("uwot", quietly = TRUE)){
         stop("Package \"uwot\" needed to run UMAP.  Please install it using:\n\n   devtools::install_github(\"jlmelville/uwot\")\n\n",
             call. = FALSE)
@@ -402,7 +399,6 @@ clipBottom <- function(x, mi) {
 setMethod("computeKNNWeights", signature(object = "matrix"),
     function(object, K = round(sqrt(nrow(object)))) {
 
-        print(K)
         n_workers <- getOption("mc.cores")
         n_workers <- if (is.null(n_workers)) 2 else n_workers
 
