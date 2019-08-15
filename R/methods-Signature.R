@@ -392,75 +392,91 @@ sigsVsProjection_n <- function(sigScores, randomSigData,
 #'     \item pvals: pvalues
 #' }
 sigsVsProjection_pcn <- function(metaData, weights, cells = NULL, computePval = TRUE){
-  # Calculate significance for meta data numerical signatures
-  # This is done separately because there are likely to be many repeats
-  # (e.g. for a time coordinate)
+    # Calculate significance for meta data numerical signatures
+    # This is done separately because there are likely to be many repeats
+    # (e.g. for a time coordinate)
 
-  if (!is.null(cells)) {
-      weights$indices <- weights$indices[cells, , drop = FALSE]
-      weights$weights <- weights$weights[cells, , drop = FALSE]
-      metaData <- metaData[cells, , drop = FALSE]
-  }
-
-  N_SAMPLES <- nrow(weights$indices)
-
-  if (is.data.frame(metaData)){
-      numericMeta <- vapply(names(metaData),
-                             function(metaName) {
-                                 is.numeric(metaData[, metaName])
-                             }, FUN.VALUE = TRUE)
-
-      numericMeta <- names(numericMeta)[numericMeta]
-  } else { # If it's a matrix, assume all numeric
-      numericMeta <- colnames(metaData)
-  }
-
-  results <- pbmclapply(numericMeta, function(metaName) {
-
-    scores <- metaData[, metaName]
-
-    sigScores <- rank(scores, ties.method = "average")
-    if (all(sigScores == sigScores[1])) {
-      return(list(consistency = 0.0, pval = 1.0))
+    if (!is.null(cells)) {
+        weights$indices <- weights$indices[cells, , drop = FALSE]
+        weights$weights <- weights$weights[cells, , drop = FALSE]
+        metaData <- metaData[cells, , drop = FALSE]
     }
 
-    sigScores <- matrix(sigScores, ncol=1)
-    rownames(sigScores) <- rownames(metaData)
-    colnames(sigScores) <- metaName
+    if (is.data.frame(metaData)){
+        numericMeta <- vapply(names(metaData),
+                               function(metaName) {
+                                   is.numeric(metaData[, metaName])
+                               }, FUN.VALUE = TRUE)
 
-    geary_c <- geary_sig_v_proj(sigScores,
-                                         weights$indices,
-                                         weights$weights)
+        numericMetaNames <- names(numericMeta)[numericMeta]
+    } else { # If it's a matrix, assume all numeric
+        numericMetaNames <- colnames(metaData)
+    }
 
-    #Compute a background for numerical signatures
+    numericMetaRanks <- matrixStats::colRanks(
+        as.matrix(metaData[, numericMetaNames, drop = FALSE]),
+        preserveShape = TRUE, ties.method = "average"
+    )
+    colnames(numericMetaRanks) <- numericMetaNames
+
+    NUM_REPLICATES <- 3000
+
+    # Generate list of jobs
+    type <- character()
+    col <- numeric()
+    for (i in colnames(numericMetaRanks)) {
+        type <- c(type, "fg")
+        col <- c(col, i)
+        if (computePval){
+            type <- c(type, replicate(NUM_REPLICATES, "bg"))
+            col <- c(col, replicate(NUM_REPLICATES, i))
+        }
+    }
+    jobs <- data.frame(type = type, col = col)
+
+    results <- pbmclapply(seq_len(nrow(jobs)), function(i) {
+
+        type <- jobs[i, "type"]
+        col <- jobs[i, "col"]
+
+
+        sigScores <- numericMetaRanks[, col, drop = FALSE]
+
+        if (all(sigScores == sigScores[1])) {
+            return(0.0)
+        }
+
+        if (type == "bg"){
+            sigScores <- matrix(sample(sigScores), ncol = 1)
+            colnames(sigScores) <- colnames(numericMetaRanks)[col]
+        }
+
+        geary_c <- geary_sig_v_proj(
+            sigScores, weights$indices, weights$weights)
+
+        return(1 - geary_c)
+
+    })
+
+    jobs[["C"]] <- unlist(results)
+
+    results <- jobs[jobs$type == "fg", c("col", "C")]
+    rownames(results) <- results$col
+    results$pval <- 1.0
+
     if (computePval) {
-        NUM_REPLICATES <- 3000
-        bgValues <- replicate(NUM_REPLICATES, sample(sigScores))
-        rownames(bgValues) <- rownames(sigScores)
-        randomScores <- geary_sig_v_proj(bgValues,
-                                             weights$indices,
-                                             weights$weights)
-
-        N <- length(randomScores)
-        comp <- sum(randomScores < geary_c)
-        pval <- (comp + 1) / (N + 1)
-    } else {
-        pval <- numeric(length(geary_c)) + 1.0
+        for (varname in rownames(results)) {
+            bg <- jobs[(jobs$col == varname) & (jobs$type == "bg"), ]
+            comp <- sum(bg$C > results[varname, "C"])
+            pval <- (comp + 1) / (NUM_REPLICATES + 1)
+            results[varname, "pval"] <- pval
+        }
     }
 
-    return(list(consistency = 1 - geary_c, pval = pval))
+    consistency <- setNames(results$C, rownames(results))
+    pvals <- setNames(results$pval, rownames(results))
 
-  })
-
-  names(results) <- numericMeta
-
-  consistency <- vapply(results, function(x) x$consistency,
-                        FUN.VALUE = 0.0)
-
-  pvals <- vapply(results, function(x) x$pval,
-                        FUN.VALUE = 0.0)
-
-  return(list(consistency = consistency, pvals = pvals))
+    return(list(consistency = consistency, pvals = pvals))
 }
 
 #' Evaluates the significance of each meta data factor signature vs. a

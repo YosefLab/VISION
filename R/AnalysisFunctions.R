@@ -496,9 +496,11 @@ analyzeLocalCorrelations <- function(object) {
       object@exprData,
       object@params$signatures$sigNormMethod)
 
-  message("Evaluating local consistency of signatures in latent space...\n")
+  message("Computing KNN Cell Graph in the Trajectory Model...\n")
 
   weights <- computeKNNWeights(object@LatentSpace, object@params$numNeighbors)
+
+  message("Evaluating local consistency of signatures in latent space...\n")
 
   sigConsistencyScores <- sigConsistencyScores(
                                 weights,
@@ -559,9 +561,11 @@ analyzeTrajectoryCorrelations <- function(object) {
       object@exprData,
       object@params$signatures$sigNormMethod)
 
-  message("Evaluating local consistency of signatures within trajectory model...\n")
+  message("Computing KNN Cell Graph in the Latent Space...\n")
 
   weights <- computeKNNWeights(object@LatentTrajectory, object@params$numNeighbors)
+
+  message("Evaluating local consistency of signatures within trajectory model...\n")
 
   sigVTreeProj <- sigConsistencyScores(weights,
                                        object@SigScores,
