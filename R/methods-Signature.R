@@ -124,7 +124,7 @@ generatePermutationNull <- function(eData, sigData, num) {
   if (nrow(sigVars) <= n_components){
       n_components <- nrow(sigVars)
       centers <- sigVars
-      clusters <- as.factor(seq(1:nrow(sigVars)))
+      clusters <- as.factor(seq_len(nrow(sigVars)))
       names(clusters) <- rownames(sigVars)
   } else {
 
@@ -144,7 +144,7 @@ generatePermutationNull <- function(eData, sigData, num) {
 
   centers <- centers[row_i, , drop = FALSE]
   levels(clusters) <- as.character(order(row_i))
-  rownames(centers) <- as.character(seq(n_components))
+  rownames(centers) <- as.character(seq_len(n_components))
 
   # undo the log scaling
   centers[, "sigSize"] <- round(10 ** centers[, "sigSize"])
