@@ -114,6 +114,8 @@
     border-width: 1px;
     border-color: #ffffff;
     overflow: hidden;
+    box-sizing: content-box;
+    padding: 3px;
 }
 
 .scatter-split-plot-div.active {

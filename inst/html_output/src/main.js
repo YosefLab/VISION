@@ -83,55 +83,6 @@ function set_global_status(update){
     lower_left_content.setLoadingStatus(true);
     upper_left_content.setLoadingStatus(true);
 
-    if(('plotted_trajectory' in update && get_global_status('main_vis') === 'tree') ||
-       ('main_vis' in update && get_global_status('main_vis') === 'tree')
-    ){
-        var proj_key = get_global_status('plotted_trajectory');
-        var proj_promise = api.tree.coordinates(proj_key)
-            .then(function(projection){
-                global_data.tree_projection_coordinates = projection;
-            });
-
-        all_promises.push(proj_promise);
-        right_content_promises.push(proj_promise);
-        upper_left_content_promises.push(proj_promise);
-    }
-
-    if('plotted_projectionX' in update || 'main_vis' in update){
-        if( get_global_status('main_vis') === 'clusters' ||
-            get_global_status('main_vis') === 'pcannotator'){
-
-            var proj_key = get_global_status('plotted_projectionX');
-            var proj_promise = api.projections.coordinates(proj_key[0], proj_key[1])
-                .then(function(projection){
-                    global_data.sig_projection_coordinatesX = projection;
-                });
-
-            all_promises.push(proj_promise);
-            right_content_promises.push(proj_promise);
-            upper_left_content_promises.push(proj_promise);
-
-        }
-    }
-
-    if('plotted_projectionY' in update || 'main_vis' in update){
-        if( get_global_status('main_vis') === 'clusters' ||
-            get_global_status('main_vis') === 'pcannotator'){
-
-            var proj_key = get_global_status('plotted_projectionY');
-            var proj_promise = api.projections.coordinates(proj_key[0], proj_key[1])
-                .then(function(projection){
-                    global_data.sig_projection_coordinatesY = projection;
-                });
-
-            all_promises.push(proj_promise);
-            right_content_promises.push(proj_promise);
-            upper_left_content_promises.push(proj_promise);
-
-        }
-    }
-
-
     // Updates plotted item values
     if('plotted_item' in update || 'plotted_item_type' in update) {
 

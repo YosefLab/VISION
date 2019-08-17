@@ -8,6 +8,8 @@ function ColorScatter(node)
     this.firstPlot = true
     this.resize = _.debounce(this._resize, 300)
     this.title = ''
+    this.proj_keyX = ['', '']
+    this.proj_keyY = ['', '']
     this.initialZoom = null
     this.currentZoom = null
     this.n_points = null
@@ -38,6 +40,8 @@ ColorScatter.prototype.setData = function(object)
     var autoZoom = object['autozoom']
 
     this.title = object['title']
+    this.proj_keyX = object['proj_keyX']
+    this.proj_keyY = object['proj_keyY']
     this.n_points = points.length
 
     var x = _.map(points, p => p['x'])
@@ -362,7 +366,11 @@ ColorScatter.prototype.createListeners = function() {
         if (fireEvent) {
             var event = new CustomEvent('scatter_relayout', {
                 bubbles: true,
-                detail: {newLayout: newLayout, origin: self},
+                detail: {
+                    newLayout: newLayout,
+                    projKeyX: self.proj_keyX,
+                    projKeyY: self.proj_keyY,
+                    origin: self},
             })
             self.node.dispatchEvent(event)
         }
@@ -401,6 +409,16 @@ ColorScatter.prototype.getLayout = function() {
         }
     }
 
+    var xlabel = this.proj_keyX[0]
+    var ylabel = this.proj_keyY[0]
+
+    if (this.proj_keyX[1].length > 0){
+        xlabel = xlabel + ": " + this.proj_keyX[1]
+    }
+    if (this.proj_keyY[1].length > 0){
+        ylabel = ylabel + ": " + this.proj_keyY[1]
+    }
+
     var layout = {
         title: titleOpt,
         hovermode: 'closest',
@@ -410,25 +428,32 @@ ColorScatter.prototype.getLayout = function() {
         legend: {
             xanchor: 'right',
             yanchor: 'right',
-            x: 1,
+            x: 1.08,
             y: 1,
             bgcolor: 'rgba(255, 255, 255, .8)',
             bordercolor: 'rgba(0, 87, 82, .5)',
             borderwidth: 1,
         },
         margin: {
-            l: 30,
+            l: 40,
             r: 90,
             t: 50,
-            b: 30,
+            b: 40,
+            autoexpand: false,
         },
         xaxis: {
             zeroline: false,
             range: [this.currentZoom.xmin, this.currentZoom.xmax],
+            title: {
+                'text': xlabel,
+            }
         },
         yaxis: {
             zeroline: false,
             range: [this.currentZoom.ymin, this.currentZoom.ymax],
+            title: {
+                'text': ylabel,
+            }
         },
         modebar: {
             bgcolor: 'rgba(255, 255, 255, 0)',

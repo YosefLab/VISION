@@ -11,6 +11,8 @@ Right_Content.prototype.init = function()
     self.scatterLayoutOptions = $(self.dom_node).find("input[name='scatterLayoutButtons']")
 
     self.selectedLayout = 'full'
+    self.syncCheck = $(this.dom_node).find('#sync-check').get(0);
+    self.treeView = false
 
     // Holds cached plot data -- needed when redrawing all plots
     self.layoutPlotData = {
@@ -71,7 +73,12 @@ Right_Content.prototype.init = function()
 
         var visiblePlotData = self.getVisiblePlotData()
         for (var i = 0; i < visiblePlotData.length; i++){
-            if (e.detail.origin !== visiblePlotData[i]['scatter']){
+            if (e.detail.origin !== visiblePlotData[i]['scatter'] &&
+                e.detail.projKeyX[0] === visiblePlotData[i]['projection_keyX'][0] && // Only sync zoom if same plot
+                e.detail.projKeyX[1] === visiblePlotData[i]['projection_keyX'][1] &&
+                e.detail.projKeyY[0] === visiblePlotData[i]['projection_keyY'][0] &&
+                e.detail.projKeyY[1] === visiblePlotData[i]['projection_keyY'][1]
+            ){
                 promises.push(
                     visiblePlotData[i]['scatter'].relayout(e.detail.newLayout)
                 )
@@ -100,9 +107,11 @@ Right_Content.prototype.init = function()
             $(e.currentTarget).addClass('active')
 
             // Fire the update so the lower-left area changes too
-            //
             var plottedData = self.getSelectedPlotData()
 
+            self.syncSelectedProj()
+
+            // Fire the update so the lower-left area changes too
             var update = {}
             update['plotted_item_type'] = plottedData['item_type'];
             update['plotted_item'] = plottedData['item_key'];
@@ -220,6 +229,7 @@ Right_Content.prototype.init = function()
     var proj_promise = api.projections.list()
         .then(function(proj_names) {
 
+            self.proj_names_scatter = proj_names
             var projSelect = self.dom_node.find('#SelectProjScatter')
             var projSelectX = self.dom_node.find('#SelectProjScatterX')
             var projSelectY = self.dom_node.find('#SelectProjScatterY')
@@ -301,6 +311,7 @@ Right_Content.prototype.init = function()
     var treeproj_promise = api.tree.list()
         .then(function(proj_names) {
 
+            self.proj_names_trajectory = proj_names
             var projSelect = self.dom_node.find('#SelectTrajectoryProjScatter')
             projSelect.children().remove()
 
@@ -339,7 +350,7 @@ Right_Content.prototype.update = function(updates)
 
     // Update the selection status in ALL plots
     if('selected_cell' in updates){
-        var visiblePlotData = this.getVisiblePlotData()
+        var visiblePlotData = self.getVisiblePlotData()
         for (var i = 0; i < visiblePlotData.length; i++){
 
             // Need to check in case it's not initialized
@@ -349,7 +360,7 @@ Right_Content.prototype.update = function(updates)
         }
 
         var selection_type = get_global_status('selection_type')
-        var selection_button = $(this.dom_node).find('#save-selection-button')
+        var selection_button = $(self.dom_node).find('#save-selection-button')
         if (selection_type === 'cells' || selection_type === 'pools'){
             selection_button.attr('disabled', false)
         } else {
@@ -358,62 +369,43 @@ Right_Content.prototype.update = function(updates)
 
     }
 
-    var needsUpdate = ('main_vis' in updates) ||
-        ('plotted_item' in updates) ||
-        ('plotted_item_type' in updates) ||
-        ('plotted_projectionX' in updates) ||
-        ('plotted_projectionY' in updates) ||
-        ('plotted_trajectory' in updates) ||
-        ('colorScatterOption' in updates);
+    // Show either the Projection or Tree lists
+    var treeViewChanged = false
 
-    if (!needsUpdate) return $.Deferred().resolve().promise()
+    if('main_vis' in updates){
 
-    var main_vis = get_global_status('main_vis');
+        var main_vis = get_global_status('main_vis');
 
-    var autoZoom = false
-
-    if('plotted_projectionX' in updates ||
-       'plotted_projectionY' in updates ||
-       'plotted_trajectory' in updates ||
-       'main_vis' in updates) {
-
-        autoZoom = true
-        var projection;
-        if (get_global_status('main_vis') === 'tree'){
-            projection = get_global_data('tree_projection_coordinates')
+        $('#plot-subtitle-latent').hide()
+        $('#plot-subtitle-trajectory').hide()
+        if(main_vis === 'tree'){
+            $('#plot-subtitle-trajectory').show()
+            treeViewChanged = self.treeView === false
+            self.treeView = true
         } else {
-            var projectionX = get_global_data('sig_projection_coordinatesX')
-            var projectionY = get_global_data('sig_projection_coordinatesY')
-            var keys = _.keys(projectionX)
-            var values = _.map(keys, key => [projectionX[key], projectionY[key]])
-            projection = _.zipObject(keys, values)
-        }
-
-        // If the projection is changing, then we need to change all the plots
-        var allPlotData = this.getAllPlotData()
-        for (var i = 0; i < allPlotData.length; i++){
-            allPlotData[i]['projection'] = projection
-            allPlotData[i]['needsUpdate'] = true
+            $('#plot-subtitle-latent').show()
+            treeViewChanged = self.treeView === true
+            self.treeView = false
         }
     }
 
     if ('colorScatterOption' in updates) {
 
         // Mark all plots for update
-        var allPlotData = this.getAllPlotData()
+        var allPlotData = self.getAllPlotData()
         for (var i = 0; i < allPlotData.length; i++){
             allPlotData[i]['needsUpdate'] = true
         }
     }
 
-    var item_key = get_global_status('plotted_item');
-    var item_type = get_global_status('plotted_item_type');
-    var values = get_global_data('plotted_values')
-
     // If this, then we just need to change the selected visualization
     if('plotted_item' in updates ||
        'plotted_item_type' in updates ||
        'plotted_values' in updates) {
+
+        var item_key = get_global_status('plotted_item');
+        var item_type = get_global_status('plotted_item_type');
+        var values = get_global_data('plotted_values')
 
         plotData['item_key'] = item_key
         plotData['item_type'] = item_type
@@ -422,28 +414,95 @@ Right_Content.prototype.update = function(updates)
 
     }
 
-    // Update all visible plots if they need it
-    var visiblePlotData = this.getVisiblePlotData()
-    for (i = 0; i < visiblePlotData.length; i++){
-        if (visiblePlotData[i]['needsUpdate']){
-            this.draw_scatter(visiblePlotData[i], autoZoom)
+    var autoZoom = false
+
+    var update_promise;
+
+    if('plotted_projectionX' in updates ||
+       'plotted_projectionY' in updates ||
+       'plotted_trajectory' in updates) {
+
+        autoZoom = true
+        var proj_promise;
+        var projection;
+        var projection_type;
+
+        if (
+            ('plotted_projectionX' in updates || 'plotted_projectionY' in updates) ||
+            (treeViewChanged && !self.treeView)
+        ){
+
+            var proj_keyX = get_global_status('plotted_projectionX');
+            var proj_keyY = get_global_status('plotted_projectionY');
+            var proj_promiseX = api.projections.coordinates(proj_keyX[0], proj_keyX[1])
+            var proj_promiseY = api.projections.coordinates(proj_keyY[0], proj_keyY[1])
+            proj_promise = $.when(proj_promiseX, proj_promiseY)
+                .then(function(projectionX, projectionY){
+                    var keys = _.keys(projectionX)
+                    var values = _.map(keys, key => [projectionX[key], projectionY[key]])
+                    var projection = _.zipObject(keys, values)
+                    return {
+                        'projection': projection,
+                        'projection_type': 'default',
+                        'projection_keyX': proj_keyX,
+                        'projection_keyY': proj_keyY,
+                    }
+                });
+        } else if (
+            'plotted_trajectory' in updates ||
+            (treeViewChanged && self.treeView)
+        ) {
+            var proj_key = get_global_status('plotted_trajectory');
+            proj_promise = api.tree.coordinates(proj_key)
+                .then(function(projection){
+                    return {
+                        'projection': projection,
+                        'projection_type': 'tree',
+                        'projection_keyX': [proj_key, ''],
+                        'projection_keyY': [proj_key, ''],
+                    }
+                });
         }
+
+        update_promise = proj_promise.then(function(data) {
+            var projection = data['projection']
+            var projection_type = data['projection_type']
+            var projection_keyX = data['projection_keyX']
+            var projection_keyY = data['projection_keyY']
+
+            // If the projection is changing, then we need to change all the plots
+            var synchronized = $(self.syncCheck).is(':checked');
+            if (synchronized || treeViewChanged) {
+                var allPlotData = self.getAllPlotData()
+                for (var i = 0; i < allPlotData.length; i++){
+                    allPlotData[i]['projection'] = projection
+                    allPlotData[i]['projection_type'] = projection_type
+                    allPlotData[i]['projection_keyX'] = projection_keyX
+                    allPlotData[i]['projection_keyY'] = projection_keyY
+                    allPlotData[i]['needsUpdate'] = true
+                }
+            } else {
+                var selectedPlotData = self.getSelectedPlotData()
+                selectedPlotData['projection'] = projection
+                selectedPlotData['projection_type'] = projection_type
+                selectedPlotData['projection_keyX'] = projection_keyX
+                selectedPlotData['projection_keyY'] = projection_keyY
+                selectedPlotData['needsUpdate'] = true
+            }
+        })
+    } else {
+        update_promise = $.Deferred().resolve().promise()
     }
 
-    // Show either the Projection or Tree lists
-    if('main_vis' in updates){
-        $('#plot-subtitle-latent').hide()
-        $('#plot-subtitle-trajectory').hide()
-        if(main_vis === 'tree'){
-            $('#plot-subtitle-trajectory').show()
-        } else {
-            $('#plot-subtitle-latent').show()
+    return update_promise.then(function() {
+        // Update all visible plots if they need it
+        var visiblePlotData = self.getVisiblePlotData()
+        for (i = 0; i < visiblePlotData.length; i++){
+            if (visiblePlotData[i]['needsUpdate']){
+                self.draw_scatter(visiblePlotData[i], autoZoom)
+            }
         }
-    }
-
-    // Need to return a promise
-    return $.Deferred().resolve().promise()
-
+    })
 }
 
 Right_Content.prototype.select_default_proj = function()
@@ -461,6 +520,52 @@ Right_Content.prototype.select_default_proj = function()
 }
 
 /*
+ * This is used to make sure that changing the selected projection
+ * updates the dropdown menus up top accordingly
+ */
+Right_Content.prototype.syncSelectedProj = function()
+{
+    var self = this
+    var plottedData = self.getSelectedPlotData()
+    var proj_keyX = plottedData['projection_keyX']
+    var proj_keyY = plottedData['projection_keyY']
+
+    if (proj_keyX[0] in self.proj_names_scatter) {
+        var projSelect = self.dom_node.find('#SelectProjScatter')
+        var projSelectX = self.dom_node.find('#SelectProjScatterX')
+        var projSelectY = self.dom_node.find('#SelectProjScatterY')
+        $(projSelect).val(proj_keyX[0])
+
+        projSelectX.children().remove()
+        projSelectY.children().remove()
+
+        _.each(self.proj_names_scatter[proj_keyX[0]], function (val) {
+            projSelectX.append(
+                $('<option>', {
+                    value: val,
+                    text: val
+                }));
+            projSelectY.append(
+                $('<option>', {
+                    value: val,
+                    text: val
+                }));
+        });
+
+        $(projSelectX).val(proj_keyX[1])
+        $(projSelectY).val(proj_keyY[1])
+        projSelect.trigger('chosen:updated')
+        projSelectX.trigger('chosen:updated')
+        projSelectY.trigger('chosen:updated')
+    } else {
+        var projSelect = self.dom_node.find('#SelectTrajectoryProjScatter')
+        $(projSelect).val(proj_keyX[0])
+        projSelect.trigger('chosen:updated')
+    }
+
+}
+
+/*
  * scatter: Instance of ColorScatter - which plot to update
  * item_key: string - name of plotted item
  * item_type: string - one of 'signature', 'meta', 'gene', or 'signature-gene'
@@ -468,9 +573,16 @@ Right_Content.prototype.select_default_proj = function()
  * projection: sample name (str) -> [x, y] - coordinates for each sample
  * autoZoom: bool - whether or not to re-zoom the plot
  */
-Right_Content.prototype.draw_sigvp = function(scatter, item_key, item_type, values, projection, autoZoom) {
+Right_Content.prototype.draw_sigvp = function(plotData, autoZoom) {
 
     var self = this;
+    var scatter = plotData['scatter']
+    var item_key = plotData['item_key']
+    var item_type = plotData['item_type']
+    var values = plotData['values']
+    var projection = plotData['projection']
+    var proj_keyX = plotData['projection_keyX']
+    var proj_keyY = plotData['projection_keyY']
 
     var sample_value = _.values(values)[0]
     var isFactor = (typeof(sample_value) === 'string') &&
@@ -522,6 +634,8 @@ Right_Content.prototype.draw_sigvp = function(scatter, item_key, item_type, valu
         diverging_colormap: diverging_colormap,
         title: item_key,
         autozoom: autoZoom,
+        proj_keyX: proj_keyX,
+        proj_keyY: proj_keyY,
     });
 
 }
@@ -537,9 +651,17 @@ Right_Content.prototype.draw_sigvp = function(scatter, item_key, item_type, valu
  *             [1]: Milestone coordiantes (list), [vData, adjMat]
  * autoZoom: bool - whether or not to re-zoom the plot
  */
-Right_Content.prototype.draw_tree = function(scatter, item_key, item_type, values, projection, autoZoom) {
+Right_Content.prototype.draw_tree = function(plotData, autoZoom) {
 
     var self = this;
+
+    var scatter = plotData['scatter']
+    var item_key = plotData['item_key']
+    var item_type = plotData['item_type']
+    var values = plotData['values']
+    var projection = plotData['projection']
+    var proj_keyX = plotData['projection_keyX']
+    var proj_keyY = plotData['projection_keyY']
 
     var isFactor = (typeof(_.values(values)[0]) === 'string') &&
                    (_.values(values)[0] !== "NA")
@@ -621,6 +743,8 @@ Right_Content.prototype.draw_tree = function(scatter, item_key, item_type, value
         tree_adj: tree_adj,
         title: item_key,
         autozoom: autoZoom,
+        proj_keyX: proj_keyX,
+        proj_keyY: proj_keyY,
     });
 }
 
@@ -759,16 +883,15 @@ Right_Content.prototype.changeLayout = function(newLayout)
 
 Right_Content.prototype.draw_scatter = function(plotData, autoZoom)
 {
-    var main_vis = get_global_status('main_vis');
 
-    if(main_vis === 'clusters' || main_vis === "pcannotator"){
-        this.draw_sigvp(plotData['scatter'], plotData['item_key'], plotData['item_type'], plotData['values'], plotData['projection'], autoZoom);
+    if (plotData['projection_type'] === 'default') {
+        this.draw_sigvp(plotData, autoZoom);
 
-    } else if (main_vis === "tree") {
-        this.draw_tree(plotData['scatter'], plotData['item_key'], plotData['item_type'], plotData['values'], plotData['projection'], autoZoom);
+    } else if (plotData['projection_type'] === 'tree') {
+        this.draw_tree(plotData, autoZoom);
 
     } else {
-        throw "Bad main_vis value!";
+        throw "Bad projection_type value!";
     }
 
     plotData['needsUpdate'] = false
