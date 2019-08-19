@@ -646,8 +646,9 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
           # add the calculated results to the object, unless it was a user selection
           if (!skip_cache) {
             object@de_cache[[hashed_body]] <<- out;
-            # add to object body, removing the lru item
-            # storing 10 max
+            # add to object body, removing the first stored item
+            # TODO could implement a lru cache?
+            # storing 10 max TODO decide on max size for cache
             if (length(object@de_cache) > 10) {
               # remove first cached item
               object@de_cache[1] <<- NULL;
