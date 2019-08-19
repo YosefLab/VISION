@@ -290,7 +290,10 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
     pr$handle("GET", "/Signature/Expression/<sig_name>",
         function(req, res, sig_name) {
-
+        # add cluster to api call, 
+          # scale(row mean by cluster(matLog2()))
+          # loop through subsets of clustrs then do row means
+        
         all_names <- vapply(object@sigData, function(x) x@name, "")
         name <- URLdecode(sig_name)
         index <- match(name, all_names)
@@ -585,81 +588,86 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         group_num <- body$group_num
         group_denom <- body$group_denom
-
-        cells_min <- body$cells_min
-        cells_max <- body$cells_max
-
-        hashed_body <- paste(type_n, type_d, subtype_n, subtype_d, group_num,
-            group_denom, cells_max, cells_min, sep = " ")
-
-        selections <- getSelections(object)
-
-        print(hashed_body)
-        if (is.null(object@de_cache[[hashed_body]])) {
-            print("Not cached")
-            print(object@de_cache)
-
-            if (type_n == "current") {
-                cells_num <- unlist(strsplit(group_num, ","))
-            } else if (type_n == "saved_selection") {
-                cells_num <- selections[[group_num]]
-            } else if (type_n == "meta") {
-                cells_num <- rownames(object@metaData)[
-                    which(object@metaData[[subtype_n]] == group_num)
-                    ]
-            } else {
-                print("ERROR! Num type unrecognized: " + type_n)
-            }
-
-            if (type_d == "remainder") {
-                cells_denom <- setdiff(colnames(exprData), cells_num)
-            } else if (type_d == "saved_selection") {
-                cells_denom <- selections[[group_denom]]
-            } else if (type_d == "meta") {
-                cells_denom <- rownames(object@metaData)[
-                    which(object@metaData[[subtype_d]] == group_denom)
-                    ]
-            } else {
-                print("ERROR! Denom type unrecognized: " + type_d)
-            }
-
-            cluster_num <- match(cells_num, colnames(exprData))
-            cluster_denom <- match(cells_denom, colnames(exprData))
-
-            out <- matrix_wilcox_cpp(exprData, cluster_num, cluster_denom)
-
-            out$pval <- p.adjust(out$pval, method = "fdr")
-            out$stat <- pmax(out$AUC, 1 - out$AUC)
-
-            numMean <- rowMeans(exprData[, cluster_num])
-            denomMean <- rowMeans(exprData[, cluster_denom])
-            bias <- 1 / sqrt(length(cluster_num) * length(cluster_denom))
-
-            out$logFC <- log2( (numMean + bias) / (denomMean + bias) )
-
-            out <- out[, c("gene", "logFC", "stat", "pval"), drop = FALSE]
-            out <- as.list(out)
-
-            result <- toJSON(
-                out, force = TRUE, pretty = TRUE,
-                auto_unbox = TRUE, use_signif = TRUE
-            )
-            object@de_cache[hashed_body] <- result;
-            # add to object body
-
-            # if (length(object@de_cache) > 30) {
-            #   object@de_cache.remove(1);
-            # }
-
+        
+        cells_min <- body$cells_min # default 1
+        subsample_cells_max <- body$cells_max # add checkbox
+        
+        # I want to skip caching a manual selection because the hash would be complicated
+        skip_cache = FALSE;
+        if (type_n == "current") {
+          skip_cache <- TRUE;
         } else {
-            # we have a cached result for these exact params
-            print("cached")
-            result <- object@de_cache[hashed_body]
+          # hash by the params as a string
+          hashed_body = paste(type_n,type_d, subtype_n, subtype_d, group_num, group_denom, subsample_cells_max, cells_min, sep= " ")
         }
+        if (skip_cache || is.null(object@de_cache[[hashed_body]])) {
+          # The case where we know the de calculation is not cached, so we have to actually
+          # calculate it.
+          if (type_n == "current") {
+              cells_num <- unlist(strsplit(group_num, ","))
+          } else if (type_n == "saved_selection") {
+              cells_num <- object@selections[[group_num]]
+          } else if (type_n == "meta") {
+              cells_num <- rownames(object@metaData)[
+                  which(object@metaData[[subtype_n]] == group_num)
+                  ]
+          } else {
+              print("ERROR! Num type unrecognized: " + type_n)
+          }
+    
+          if (type_d == "remainder") {
+              cells_denom <- setdiff(colnames(exprData), cells_num)
+          } else if (type_d == "saved_selection") {
+              cells_denom <- object@selections[[group_denom]]
+          } else if (type_d == "meta") {
+              cells_denom <- rownames(object@metaData)[
+                  which(object@metaData[[subtype_d]] == group_denom)
+                  ]
+          } else {
+              print("ERROR! Denom type unrecognized: " + type_d)
+          }
+          
+          cluster_num <- match(cells_num, colnames(exprData))
+          cluster_denom <- match(cells_denom, colnames(exprData))
+    
+          out <- matrix_wilcox_cpp(exprData, cluster_num, cluster_denom)
+    
+          out$pval <- p.adjust(out$pval, method = "fdr")
+          out$stat <- pmax(out$AUC, 1 - out$AUC)
+    
+          numMean <- rowMeans(exprData[, cluster_num])
+          denomMean <- rowMeans(exprData[, cluster_denom])
+          bias <- 1 / sqrt(length(cluster_num) * length(cluster_denom))
+    
+          out$logFC <- log2( (numMean + bias) / (denomMean + bias) )
+    
+          out <- out[, c("gene", "logFC", "stat", "pval"), drop = FALSE]
+          
+          # add the calculated results to the object, unless it was a user selection
+          if (!skip_cache) {
+            object@de_cache[[hashed_body]] <<- out;
+            # add to object body, removing the lru item
+            # storing 10 max
+            if (length(object@de_cache) > 10) {
+              # remove first cached item
+              object@de_cache[1] <<- NULL;
+            }
+          }
+          
+        } else {
+          # we have a cached result for these exact params, return it
+          out = object@de_cache[[hashed_body]]
+        }
+        
+        out <- as.list(out)
+        
+        result <- toJSON(
+          out,
+          force = TRUE, pretty = TRUE, auto_unbox = TRUE, use_signif = TRUE
+        )
         res$body <- result
         compressJSONResponse(req, res)
-
-        print(object@de_cache)
+        
         return(res)
     })
 
