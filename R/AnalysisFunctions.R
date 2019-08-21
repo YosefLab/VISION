@@ -238,24 +238,19 @@ addSignatures <- function(object, signatures, min_signature_genes=5) {
 #'
 #' For each signature-cell pair, compute a score that captures the level of
 #' correspondence between the cell and the signature.
-#' To estimate significance of these scores, a set of random gene signatures is
-#' generated to create a null distribution
 #'
 #' @param object the VISION object
-#' @param sigData a list of Signature objects for which to compute the scores
-#' @param metaData a list of existing cell-signatures
-#' @param sig_norm_method (optional) Method to apply to normalize the expression
-#' matrix before calculating signature scores
-#' @return the VISION object, with signature score slots populated
+#' @param sig_norm_method Method to apply to normalize the expression matrix
+#' before calculating signature scores. Valid options are:
+#' "znorm_columns" (default), "none", "znorm_rows", "znorm_rows_then_columns",
+#' or "rank_norm_columns"
+#' @return the VISION object, with the @SigScores slot populated
 calcSignatureScores <- function(
-    object, sigData = NULL,
-    metaData = NULL, sig_norm_method = NULL) {
+    object, sig_norm_method = NULL) {
 
     message("Evaluating signature scores on cells...\n")
 
     ## override object parameters
-    if (!is.null(sigData)) object@sigData <- sigData
-    if (!is.null(metaData)) object@metaData <- metaData
     if (!is.null(sig_norm_method)) object@params$signatures$sigNormMethod <- sig_norm_method
 
     if (length(object@sigData) == 0) {
@@ -279,7 +274,7 @@ calcSignatureScores <- function(
 }
 
 
-#' calculate gene-signature importance
+#' Calculate gene-signature importance
 #'
 #' For each signature, the contribution of each gene to the signature score
 #' is evaluated by calculating the covariance between signature scores and expression
@@ -790,8 +785,9 @@ analyzeTrajectoryCorrelations <- function(object) {
 #' @importFrom pbmcapply pbmclapply
 #' @importFrom matrixStats colRanks
 #' @param object the VISION object
-#' @return the VISION object with values set for the analysis results
-clusterSigScores <- function(object) {
+#' @param variables which columns of the meta-data to use for comparisons
+#' @return the VISION object with the @ClusterComparisons slot populated
+clusterSigScores <- function(object, variables = "All") {
 
     message("Computing differential signature tests...\n")
 
@@ -800,22 +796,29 @@ clusterSigScores <- function(object) {
 
     metaData <- metaData[rownames(sigScores), , drop = FALSE]
 
-    # Determine which metaData we can run on
-    # Must be a factor with at least 20 levels
-    clusterMeta <- vapply(colnames(metaData), function(x) {
-            scores <- metaData[[x]]
-            if (!is.factor(scores)){
-                return("")
-            }
-            if (length(levels(scores)) > 50){
-                return("")
-            }
-            if (length(unique(scores)) == 1){
-                return("")
-            }
-            return(x)
-        }, FUN.VALUE = "")
-    clusterMeta <- clusterMeta[clusterMeta != ""]
+    if (variables == "All") {
+        # Determine which metaData we can run on
+        # Must be a factor with at least 20 levels
+        clusterMeta <- vapply(colnames(metaData), function(x) {
+                scores <- metaData[[x]]
+                if (!is.factor(scores)){
+                    return("")
+                }
+                if (length(levels(scores)) > 50){
+                    return("")
+                }
+                if (length(unique(scores)) == 1){
+                    return("")
+                }
+                return(x)
+            }, FUN.VALUE = "")
+        clusterMeta <- clusterMeta[clusterMeta != ""]
+    } else {
+        if (!all(variables %in% colnames(metaData))) {
+            stop("Supplied variable names must be column names of object@metaData")
+        }
+        clusterMeta <- variables
+    }
 
     ClusterComparisons <- list()
 

@@ -160,7 +160,7 @@ matrix_wilcox <- function(ranks, cluster_ii,
         stat <- numeric()
         return(list(pval = p, stat = stat))
     }
-    
+
     subset <- ranks[cluster_ii, , drop = FALSE]
 
     not_cluster_ii = setdiff(seq(nrow(ranks)), cluster_ii)
