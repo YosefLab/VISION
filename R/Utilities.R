@@ -396,8 +396,57 @@ read_10x <- function(expression, genes, barcodes, ensToSymbol = TRUE){
 }
 
 
-
 #' Read 10x HDF5 Output
+#'
+#' Loads 10x output counts and converts expression to gene symbols
+#'
+#' This version uses the h5 file produced by "cellranger count"
+#'
+#' This file is typically in a folder that looks like:
+#'
+#' \code{outs/filtered_gene_bc_matrices_h5.h5}
+#'
+#' @param h5_file path to h5 file
+#' @param ensToSymbol bool denoting whether or not to perform label conversion
+#' @importFrom Matrix sparseMatrix
+#' @return Return value depends on whether this is a Cellranger v3 or Cellranger v2 output
+#'     If it is a v2 output, return is a sparse count matrix with gene expression values
+#'     If it is a v3 output, return value is a list with two entries:
+#'         Expression: sparse count matrix with gene expression counts (genes x cells)
+#'         Antibody: sparse count matrix with antibody capture counts (cells x antibodies)
+#' @export
+read_10x_h5 <- function(h5_file, ensToSymbol = TRUE){
+
+    h5 <- hdf5r::H5File$new(h5_file)
+
+    is_v3 <- FALSE
+
+    tryCatch({
+        genomes <- names(h5)
+
+        if (length(genomes) > 1){
+            stop("The supplied h5 file has multiple genomes.  Loading this is not supported by this function")
+        }
+
+        genome <- genomes[1]
+        if ("features" %in% names(h5[[genome]])) {
+            is_v3 <- TRUE
+        }
+        },
+        finally = {
+            h5$close_all()
+        }
+    )
+
+    if (is_v3){
+        return(read_10x_h5_v3(h5_file, ensToSymbol))
+    } else {
+        return(read_10x_h5_v2(h5_file, ensToSymbol))
+    }
+}
+
+
+#' Read 10x HDF5 Output - CellRanger 2.0
 #'
 #' Loads 10x output counts and converts expression to gene symbols
 #'
@@ -412,7 +461,7 @@ read_10x <- function(expression, genes, barcodes, ensToSymbol = TRUE){
 #' @importFrom Matrix sparseMatrix
 #' @return sparse count matrix with appropriate row/column names
 #' @export
-read_10x_h5 <- function(h5_file, ensToSymbol = TRUE){
+read_10x_h5_v2 <- function(h5_file, ensToSymbol = TRUE){
     if (!requireNamespace("hdf5r", quietly = TRUE)){
       stop("Package \"hdf5r\" needed to load this data object.  Please install it.",
            call. = FALSE)
@@ -454,6 +503,96 @@ read_10x_h5 <- function(h5_file, ensToSymbol = TRUE){
 
 
     return(counts)
+}
+
+
+#' Read 10x HDF5 Output - CellRanger 3.0
+#'
+#' Loads 10x output counts and converts expression to gene symbols
+#'
+#' This version uses the h5 file produced by "cellranger count"
+#'
+#' This file is typically in a folder that looks like:
+#'
+#'     \code{outs/filtered_feature_bc_matrices_h5.h5}
+#'
+#' @param h5_file path to h5 file
+#' @param ensToSymbol bool denoting whether or not to perform label conversion
+#' @importFrom Matrix sparseMatrix
+#' @return a list with two items
+#'         Expression: sparse count matrix with gene expression counts
+#'         Antibody: sparse count matrix with antibody capture counts
+#' @export
+read_10x_h5_v3 <- function(h5_file, ensToSymbol = TRUE){
+
+    h5 <- hdf5r::H5File$new(h5_file)
+
+    tryCatch({
+        genomes <- names(h5)
+
+        if (length(genomes) > 1){
+            stop("The supplied h5 file has multiple genomes.  Loading this is not supported by this function")
+        }
+
+        genome <- genomes[1]
+
+        data <- h5[[paste0(genome, "/data")]][]
+        data <- as.numeric(data)
+
+        indices <- h5[[paste0(genome, "/indices")]][]
+        indptr <- h5[[paste0(genome, "/indptr")]][]
+        dims <- h5[[paste0(genome, "/shape")]][]
+        barcodes <- h5[[paste0(genome, "/barcodes")]][]
+
+        features <- h5[[paste0(genome, "/features")]]
+
+        features_df <- data.frame(
+            id = features[["id"]][],
+            name = features[["name"]][],
+            feature_type = features[["feature_type"]][],
+            genome = features[["genome"]][],
+            pattern = features[["pattern"]][],
+            read = features[["read"]][],
+            sequence = features[["sequence"]][]
+        )
+
+        ids <- features_df$id
+        symbols <- features_df$name
+
+        dimnames <- list(ids, barcodes)
+
+        counts <- sparseMatrix(i = indices + 1,
+            p = indptr, x = data, dims = dims,
+            dimnames = dimnames
+        )
+
+        counts_expression <- counts[
+            features_df$feature_type == "Gene Expression",
+        ]
+
+        symbols_expression <- symbols[
+            features_df$feature_type == "Gene Expression"
+        ]
+
+        counts_antibody <- counts[
+            features_df$feature_type == "Antibody Capture",
+        ]
+        counts_antibody <- t(counts_antibody)
+
+        if (ensToSymbol){
+            counts_expression <- convertGeneIds(counts_expression, symbols_expression)
+        }
+        },
+    finally = {
+        h5$close_all()
+    })
+
+    return(
+       list(
+            Expression = counts_expression,
+            Antibody = counts_antibody
+            )
+       )
 }
 
 
