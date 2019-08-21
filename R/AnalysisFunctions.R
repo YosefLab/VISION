@@ -121,15 +121,30 @@ poolCells <- function(object, cellsPerPartition = NULL) {
 
 #' filter data accourding to the provided filters
 #' @param object the VISION object
-#' @param threshold threshold to apply for the threshold filter
+#' @param threshold Threshold to apply when using the 'threshold' or 'fano' projection genes filter.
+#' If greater than 1, this specifies the number of cells in which a gene must be detected
+#' for it to be used when computing PCA. If less than 1, this instead specifies the proportion of cells needed
+#' @param num_mad Number of median absolute deviations to use when selecting highly-variable
+#' genes in each mean-sorted bin of genes
 #' @param projection_genes either a list of genes or a method to select genes
 #' @return the VISION object, populated with filtered data
-filterData <- function(object,
+computeProjectionGenes <- function(object,
                        threshold = NULL,
+                       num_mad = NULL,
                        projection_genes = NULL) {
 
     if (!is.null(threshold)){
+        if (threshold < 1) {
+            num_samples <- ncol(object@exprData)
+            threshold <- round(threshold * num_samples)
+        }
         object@params$latentSpace$threshold <- threshold
+    }
+
+    if (!is.null(num_mad)){
+        object@params$latentSpace$num_mad <- num_mad
+    } else {
+        object@params$latentSpace$num_mad <- 2
     }
 
     if (!is.null(projection_genes)){
@@ -143,8 +158,9 @@ filterData <- function(object,
         exprData <- matLog2(object@exprData)
         projection_genes <- applyFilters(
                     exprData,
+                    object@params$latentSpace$projectionGenes,
                     object@params$latentSpace$threshold,
-                    object@params$latentSpace$projectionGenes)
+                    object@params$latentSpace$num_mad)
 
         if (length(projection_genes) == 0){
             stop(
@@ -394,17 +410,38 @@ evalSigGeneImportanceSparse <- function(object){
 #' Computes the latent space of the expression matrix using PCA
 #'
 #' @param object the VISION object for which compute the latent space
-#' @param projection_genes character vector of gene names to use for projections
+#' @param projection_genes character vector of gene names to use for PCA
+#' @param projection_genes_method name of filtering method ('threshold' or 'fano') or list of
+#' @param filterThreshold Threshold to apply when using the 'threshold' or 'fano' projection genes filter.
+#' If greater than 1, this specifies the number of cells in which a gene must be detected
+#' for it to be used when computing PCA. If less than 1, this instead specifies the proportion of cells needed
+#' @param filterNumMad Number of median absolute deviations to use when selecting highly-variable
+#' genes in each mean-sorted bin of genes
+#' @param num_PCs the number of principal components to retain
 #' @param perm_wPCA If TRUE, apply permutation wPCA to determine significant
 #' number of components. Default is FALSE.
-#' @return the VISION with latentSpace populated
-computeLatentSpace <- function(object, projection_genes = NULL,
-                               perm_wPCA = NULL) {
+#' @return the VISION with @latentSpace slot populated
+computeLatentSpace <- function(
+    object, projection_genes = NULL,
+    filterThreshold = .05, filterNumMad = 2,
+    projection_genes_method = "fano",
+    num_PCs = 30, perm_wPCA = NULL) {
 
     message("Computing a latent space for expression data...\n")
 
-    if (!is.null(projection_genes)) object@params$latentSpace$projectionGenes <- projection_genes
+    if (!is.null(projection_genes)) {
+        object@params$latentSpace$projectionGenes <- projection_genes
+    } else {
+        object <- computeProjectionGenes(
+            object,
+            threshold = filterThreshold,
+            num_mad = filterNumMad,
+            projection_genes = projection_genes_method
+        )
+    }
+
     if (!is.null(perm_wPCA)) object@params$latentSpace$permPCA <- perm_wPCA
+    object@params$latentSpace$numPCs <- num_PCs
 
     expr <- object@exprData
     projection_genes <- object@params$latentSpace$projectionGenes
@@ -419,10 +456,10 @@ computeLatentSpace <- function(object, projection_genes = NULL,
     exprData <- matLog2(exprData)
 
     if (perm_wPCA) {
-        res <- applyPermutationWPCA(exprData, components = 30)
+        res <- applyPermutationWPCA(exprData, components = num_PCs)
         pca_res <- res[[1]]
     } else {
-        res <- applyPCA(exprData, maxComponents = 30)
+        res <- applyPCA(exprData, maxComponents = num_PCs)
         pca_res <- res[[1]]
     }
 
@@ -447,7 +484,7 @@ generateProjections <- function(object) {
   # If using one of these, we need to compute 'projection_genes'
   projection_methods <- object@params$projectionMethods
   if ("ICA" %in% projection_methods || "RBFPCA" %in% projection_methods) {
-      object <- filterData(object)
+      object <- computeProjectionGenes(object)
   }
 
   projections <- generateProjectionsInner(object@exprData,

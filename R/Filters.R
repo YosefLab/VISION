@@ -7,10 +7,11 @@
 #' Applies filters to the inputted expression data (may remove rows)
 #'
 #' @param expr a numeric expression matrix (genes x cells)
-#' @param threshold minimum number of samples gene must be detected in to pass
 #' @param filterInput list of filters to compute
+#' @param threshold minimum number of samples gene must be detected in to pass
+#' @param num_mad number of median absolute deviations to use in fano filter
 #' @return character vector of gene names passing filter
-applyFilters <- function(expr, threshold, filterInput) {
+applyFilters <- function(expr, filterInput, threshold, num_mad) {
 
     for (filter in filterInput) {
         if (tolower(filter) == "novar") {
@@ -20,7 +21,7 @@ applyFilters <- function(expr, threshold, filterInput) {
         } else if (tolower(filter) == "fano") {
             gene_passes <- filterGenesThreshold(expr, threshold)
             t_expr <- expr[gene_passes, ]
-            gene_passes <- filterGenesFano(t_expr)
+            gene_passes <- filterGenesFano(t_expr, num_mad)
         } else {
             stop("Filter not recognized")
         }

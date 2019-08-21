@@ -547,7 +547,6 @@ setMethod("analyze", signature(object="Vision"),
 
     # Populates @LatentSpace
     if (all(dim(object@LatentSpace) == c(1, 1))) {
-        object <- filterData(object)
         object <- computeLatentSpace(object)
     }
 
