@@ -192,6 +192,48 @@ computeProjectionGenes <- function(object,
 }
 
 
+#' Add signatures to VISION object
+#'
+#'
+#' @param object the VISION object
+#' @param signatures list of file paths to signature files (.gmt or .txt) or
+#' Signature objects.  See the createGeneSignature(...) method for information
+#' on creating Signature objects.
+#' @param min_signature_genes Signature that match less than this number of genes in the
+#' supplied expression matrix are removed.
+#' @return the VISION object, with the @sigData slot updated
+addSignatures <- function(object, signatures, min_signature_genes=5) {
+
+    if (is.list(signatures)) {
+        sigs <- lapply(signatures, function(sig){
+                   if (is(sig, "Signature")){
+                       return(sig)
+                   } else {
+                       return(readSignaturesInput(sig))
+                   }
+        })
+
+        if (length(sigs) > 0){
+            sigs <- do.call(c, sigs)
+        }
+
+        names(sigs) <- vapply(sigs, function(x){x@name}, "")
+
+    } else if (is.character(signatures)) {
+        sigs <- readSignaturesInput(signatures)
+    } else {
+        stop("signatures must be paths to signature files or list of
+            Signature objects")
+    }
+
+    sigs <- processSignatures(sigs, rownames(object@exprData), min_signature_genes)
+
+    object@sigData <- c(object@sigData, sigs)
+
+    return(object)
+}
+
+
 #' calculate signature scores
 #'
 #' For each signature-cell pair, compute a score that captures the level of
@@ -469,6 +511,45 @@ computeLatentSpace <- function(
     return(object)
 }
 
+
+#' Add a latent space computed using an external method
+#'
+#' @param object the VISION object for which compute the latent space
+#' @param coordinates matrix with latent space coordinates (cells x dimensions)
+#' @param name a label for the latent space (e.g. "PCA" or "scVI")
+#' @return the VISION with @latentSpace slot populated
+addLatentSpace <- function(object, coordinates, name) {
+
+    if (is.data.frame(coordinates)){
+        coordinates <- data.matrix(coordinates)
+    }
+
+    if (is.null(rownames(coordinates))) {
+        if (nrow(coordinates) != ncol(object@exprData)) {
+            stop("Supplied coordinates must of number of rows equal to number of cells in expression matrix")
+        }
+
+        rownames(coordinates) <- colnames(object@exprData)
+    } else {
+        sample_names <- colnames(object@exprData)
+        common <- intersect(sample_names, rownames(coordinates))
+
+        if (length(common) != nrow(coordinates)){
+            stop("Supplied coordinates for coordinates must have rowlabels that match sample/cell names")
+        }
+        coordinates <- coordinates[colnames(object@exprData), , drop = FALSE]
+    }
+
+    if (is.null(colnames(coordinates))) {
+        colnames(coordinates) <- paste0(name, "-", seq_len(ncol(coordinates)))
+    }
+
+    object@LatentSpace <- coordinates
+    object@params$latentSpace$name <- name
+    return(object)
+}
+
+
 #' generate projections
 #'
 #' Generates 2-dimensional representations of the expression matrix
@@ -513,6 +594,67 @@ generateProjections <- function(object) {
   message("")
 
   return(object)
+}
+
+
+#' Adds a UMAP projection
+#'
+#' @param object the VISION object
+#' @param K Number of neighbors to use in UMAP projection.
+#' @param name label to use for this projection
+#' @param source coordinates to use to compute tSNE
+#'
+#' @return VISION object with the projection added to @Projections slot
+addUMAP <- function(object, K = object@params$numNeighbors,
+                    name = "UMAP", source = "LatentSpace") {
+
+    if (!requireNamespace("uwot", quietly = TRUE)){
+        stop("Package \"uwot\" needed to run UMAP.  Please install it using:\n\n   devtools::install_github(\"jlmelville/uwot\")\n\n",
+            call. = FALSE)
+    }
+
+	data <- object@LatentSpace
+    n_workers <- getOption("mc.cores")
+    n_workers <- if (is.null(n_workers)) 2 else n_workers
+	res <- uwot::umap(
+        data, n_neighbors = K,
+        n_threads = n_workers, ret_nn = T
+    )
+	res <- res$embedding
+
+	rownames(res) <- rownames(data)
+    colnames(res) <- paste0(name, "-", seq_len(ncol(res)))
+    object@Projections[[name]] <- res
+
+    return(object)
+}
+
+
+#' Adds a tSNE projection
+#'
+#' @importFrom Rtsne Rtsne
+#'
+#' @param object the VISION object
+#' @param perplexity parameter for tSNE
+#' @param name label to use for this projection
+#' @param source coordinates to use to compute tSNE
+#'
+#' @return VISION object with the projection added to @Projections slot
+addTSNE <- function(object, perplexity = 30, name = "tSNE", source = "LatentSpace") {
+
+    data <- object@LatentSpace
+
+    res <- Rtsne(
+        data, dims = 2, max_iter = 800, perplexity = perplexity,
+        check_duplicates = FALSE, pca = FALSE)
+    res <- res$Y
+    rownames(res) <- rownames(data)
+    colnames(res) <- paste0(name, "-", seq_len(ncol(res)))
+
+    object@Projections[[name]] <- res
+
+    return(object)
+
 }
 
 #' Compute local correlations for all signatures
