@@ -360,6 +360,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         if (proj %in% names(object@Projections)) {
             coords <- object@Projections[[proj]][, col, drop = FALSE]
+        } else if (proj == "Meta Data") {
+            coords <- object@metaData[, col, drop = FALSE]
         } else {
             coords <- object@LatentSpace[, col, drop = FALSE]
         }
@@ -376,8 +378,16 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         proj_names <- lapply(object@Projections, colnames)
 
+        # Add in Latent Space
         latentSpaceName <- getParam(object, "latentSpace", "name")
         proj_names[[latentSpaceName]] <- colnames(object@LatentSpace)
+
+        # Add in Meta-Data if it's numeric
+        numericMeta <- vapply(seq_len(ncol(object@metaData)),
+                              function(i) is.numeric(object@metaData[[i]]),
+                              FUN.VALUE = TRUE)
+        numericMeta <- colnames(object@metaData)[numericMeta]
+        proj_names[["Meta Data"]] <- numericMeta
 
         proj_names <- proj_names[order(names(proj_names), decreasing = TRUE)] # hack to make tsne on top
         res$body <- toJSON(proj_names)
