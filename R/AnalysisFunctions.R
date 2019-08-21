@@ -817,7 +817,7 @@ clusterSigScores <- function(object, variables = "All") {
         if (!all(variables %in% colnames(metaData))) {
             stop("Supplied variable names must be column names of object@metaData")
         }
-        clusterMeta <- variables
+        clusterMeta <- setNames(variables, variables)
     }
 
     ClusterComparisons <- list()

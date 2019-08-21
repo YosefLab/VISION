@@ -275,7 +275,8 @@ Right_Content.prototype.init = function()
                 .off('change')
                 .on('change', function () {
                     set_global_status({
-                        'plotted_projectionX': [$(projSelect).val(), $(this).val()],
+                        'plotted_projectionX': [$(projSelect).val(), $(projSelectX).val()],
+                        'plotted_projectionY': [$(projSelect).val(), $(projSelectY).val()],
                     });
                 })
 
@@ -286,7 +287,8 @@ Right_Content.prototype.init = function()
                 .off('change')
                 .on('change', function () {
                     set_global_status({
-                        'plotted_projectionY': [$(projSelect).val(), $(this).val()],
+                        'plotted_projectionX': [$(projSelect).val(), $(projSelectX).val()],
+                        'plotted_projectionY': [$(projSelect).val(), $(projSelectY).val()],
                     });
                 })
 

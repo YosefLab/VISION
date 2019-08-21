@@ -740,10 +740,6 @@ setMethod("viewResults", signature(object = "Vision"),
                 stop("Error: This object contains no signature data.")
             }
 
-            if (is.null(object@PCAnnotatorData)) {
-                stop("Error: This object contains no PCAnnotatorData.")
-            }
-
             message("Launching the server...")
             message("Press exit or ctrl c to exit")
             object <- launchServer(object, port, host, browser)

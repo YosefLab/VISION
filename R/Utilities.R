@@ -274,6 +274,7 @@ matrix_chisq <- function(factorDF, cluster_ii) {
                     }
 
                     values <- factorDF[, var, drop = F]
+                    values <- droplevels(values)
 
                     values[, 2] <- 0
                     values[cluster_ii, 2] <- 1
