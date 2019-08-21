@@ -128,5 +128,5 @@ Vision <- setClass("Vision",
         LatentTrajectory = NULL,
         Viewer = list(),
         params = list(),
-        version = 1.11
+        version = 1.2
 ))

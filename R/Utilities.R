@@ -62,6 +62,11 @@ versionCheck <- function(object) {
         stop(msg, call. = FALSE)
     }
 
+    if(object@version < 1.2) {
+        msg <- gsub("#COMMIT", "5c085cb", templateStr)
+        stop(msg, call. = FALSE)
+    }
+
     # Add new commit hashes here as version increases and breaks backward compatibility
 
     return()
