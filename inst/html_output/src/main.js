@@ -17,6 +17,7 @@ global_status.pooled = false;
 // Is trajectory data available?
 global_status.has_tree = false;
 global_status.has_sigs = true;
+global_status.has_lca = false;
 
 // Determine projected values
 global_status.plotted_item = "";  // name of signature, meta or gene that is plotted
@@ -222,10 +223,17 @@ window.onload = function()
                 .removeClass('disabled')
         }
 
+        if(info.has_lca){
+            $('#nav-bar')
+                .find(".nav-link[data-main-vis='pcannotator']")
+                .removeClass('disabled')
+        }
+
         global_data.meta_sigs = info.meta_sigs
         global_status.pooled = info.pooled
         global_status.ncells = info.ncells
         global_status.has_tree = info.has_tree
+        global_status.has_lca = info.has_lca
         global_status.has_sigs = info.has_sigs
         global_status.has_features = info.has_features
 

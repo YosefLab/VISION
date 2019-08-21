@@ -770,13 +770,13 @@ clusterSigScores <- function(object) {
 
 }
 
-#' Compute pearson correlation between signature scores and principle components
+#' Compute pearson correlation between signature scores and components of the Latent Space
 #'
-#' Populations the PCAnnotatorData slot of the VISION object
+#' Enables the LCAnnotator portion of the output report
 #'
 #' @importFrom pbmcapply pbmclapply
 #' @param object the VISION object
-#' @return pearsonCorr numeric matrix N_Signatures x N_PCs
+#' @return object with the @PCAnnotatorData slot populated
 calculatePearsonCorr <- function(object){
 
   message("Computing correlations between signatures and latent space components...\n")

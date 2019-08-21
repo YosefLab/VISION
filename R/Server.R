@@ -829,6 +829,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         info[["has_features"]] <- hasFeatureBarcodeData(object)
 
+        info[["has_lca"]] <- !is.null(object@PCAnnotatorData)
+
         res$body <- toJSON(info, force = TRUE,
             pretty = TRUE, auto_unbox = TRUE)
 
