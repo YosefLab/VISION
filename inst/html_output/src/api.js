@@ -96,19 +96,19 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    // Features API
+    // Protein API
 
-    output.features = {}
+    output.protein = {}
 
-    output.features.clusters = function() {
-        var query= "FilterGroup/SigClusters/Features"
+    output.protein.clusters = function() {
+        var query= "FilterGroup/SigClusters/Proteins"
         query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.features.values = function(feature_name){
-        var query = "Features/"
-        query = query.concat(encodeURIComponent(feature_name))
+    output.protein.values = function(protein_name){
+        var query = "Proteins/"
+        query = query.concat(encodeURIComponent(protein_name))
         query = query.concat("/Values")
         query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => {
@@ -133,11 +133,11 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.clusters.featureMatrix = function(cluster_variable)
+    output.clusters.proteinMatrix = function(cluster_variable)
     {
         var query = "Clusters/"
         query = query.concat(encodeURIComponent(cluster_variable))
-        query = query.concat("/FeatureMatrix")
+        query = query.concat("/ProteinMatrix")
         query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
@@ -186,8 +186,8 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.pCorr.features = function() {
-        var query = "PearsonCorr/Features"
+    output.pCorr.proteins = function() {
+        var query = "PearsonCorr/Proteins"
         query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
@@ -249,9 +249,9 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.tree.featureMatrix = function()
+    output.tree.proteinMatrix = function()
     {
-        var query = "Tree/FeatureMatrix"
+        var query = "Tree/ProteinMatrix"
         query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }

@@ -426,8 +426,6 @@ Right_Content.prototype.update = function(updates)
 
         autoZoom = true
         var proj_promise;
-        var projection;
-        var projection_type;
 
         if (
             ('plotted_projectionX' in updates || 'plotted_projectionY' in updates) ||

@@ -277,7 +277,7 @@ louvainCluster <- function(kn, data) {
 #' @importFrom stats kmeans
 #' @param clusters List of clusters, each entry being a vector of cells in a
 #' cluster.
-#' @param data NUM_SAMPLES x NUM_FEATURES data matrix that was used to generate
+#' @param data NUM_SAMPLES x NUM_PROTEINS data matrix that was used to generate
 #' clusters
 #' @param cellsPerPartition the number of cells for a single partition the
 #' algorithm should aim for

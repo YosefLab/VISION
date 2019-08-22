@@ -253,24 +253,24 @@ sigConsistencyScores <- function(weights, sigScoresData,
 }
 
 
-#' Evaluates the significance of each feature barcode
+#' Evaluates the significance of each protein
 #'
 #' @importFrom stats p.adjust
 #' @param weights output of computeKNNWeights
-#' @param featureBarcodeData numeric matrix of feature barcode counts
-#' size is cells x features
+#' @param proteinData numeric matrix of protein abundance
+#' size is cells x proteins
 #' @return dataframe with columns "C", "pValue", and "FDR"
-fbConsistencyScores <- function(weights, featureBarcodeData) {
+fbConsistencyScores <- function(weights, proteinData) {
 
-    featureNames <- colnames(featureBarcodeData)
-    svp_pcn <- sigsVsProjection_pcn(featureBarcodeData, weights, computePval = FALSE)
+    proteinNames <- colnames(proteinData)
+    svp_pcn <- sigsVsProjection_pcn(proteinData, weights, computePval = FALSE)
 
     consistency <- svp_pcn$consistency
 
     pvals <- svp_pcn$pvals
 
-    consistency <- consistency[featureNames]
-    pvals <- pvals[featureNames]
+    consistency <- consistency[proteinNames]
+    pvals <- pvals[proteinNames]
 
     result <- data.frame(
         C = consistency, pValue = pvals

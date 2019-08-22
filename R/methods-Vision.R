@@ -12,8 +12,8 @@
 #' @param signatures list of file paths to signature files (.gmt or .txt) or
 #' Signature objects.  See the createGeneSignature(...) method for information
 #' on creating Signature objects.
-#' @param featureBarcodeData additional feature barcode data (such as ADT counts).
-#' Can be either a data.frame or numeric matrix.  Should be of shape (CELLS x FEATURES)
+#' @param proteinData additional protein abundance data (such as ADT counts).
+#' Can be either a data.frame or numeric matrix.  Should be of shape (CELLS x PROTEINS)
 #' @param meta data.frame with meta-data for cells. Rows in this data.frame should correspond
 #' with columns in the expression data matrix
 #' @param projection_genes name of filtering method ('threshold' or 'fano') or list of
@@ -67,7 +67,7 @@
 #' }
 setMethod("Vision", signature(data = "matrixORSparse"),
             function(data, signatures=list(),
-                    featureBarcodeData=NULL,
+                    proteinData=NULL,
                     unnormalizedData = NULL, meta=NULL,
                     projection_genes=c("fano"), min_signature_genes=5,
                     threshold=.05, perm_wPCA=FALSE,
@@ -139,31 +139,31 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                 .Object@unnormalizedData <- matrix(NA, 1, 1)
             }
 
-            if (!is.null(featureBarcodeData)){
+            if (!is.null(proteinData)){
 
-                if (is.data.frame(featureBarcodeData)){
-                    featureBarcodeData <- data.matrix(featureBarcodeData)
+                if (is.data.frame(proteinData)){
+                    proteinData <- data.matrix(proteinData)
                 }
 
                 HAS_CORRECT_CELLS <- length(setdiff(
                                            colnames(.Object@exprData),
-                                           rownames(featureBarcodeData)
+                                           rownames(proteinData)
                                            )) == 0
                 if (!HAS_CORRECT_CELLS) {
-                    stop("featureBarcodeData must have a row for all cells in data. rownames(featureBarcodeData) must contain all labels in colnames(data)")
+                    stop("proteinData must have a row for all cells in data. rownames(proteinData) must contain all labels in colnames(data)")
                 }
 
-                if (!all(rownames(featureBarcodeData) == colnames(.Object@exprData))){
-                    featureBarcodeData <- featureBarcodeData[colnames(.Object@exprData), , drop = FALSE]
+                if (!all(rownames(proteinData) == colnames(.Object@exprData))){
+                    proteinData <- proteinData[colnames(.Object@exprData), , drop = FALSE]
                 }
 
-                colnames(featureBarcodeData) <- make.unique(colnames(featureBarcodeData))
+                colnames(proteinData) <- make.unique(colnames(proteinData))
 
-                .Object@featureBarcodeData <- featureBarcodeData
-                .Object@Projections[["Feature Barcodes"]] <- featureBarcodeData
+                .Object@proteinData <- proteinData
+                .Object@Projections[["Proteins"]] <- proteinData
 
             } else {
-                .Object@featureBarcodeData <- matrix(NA, 1, 1)
+                .Object@proteinData <- matrix(NA, 1, 1)
             }
 
             if (is.list(signatures)) {
@@ -580,8 +580,8 @@ setMethod("analyze", signature(object="Vision"),
     # Populates @ClusterComparisons
     object <- clusterSigScores(object)
 
-    # Populates #PCAnnotatorData
-    object <- calculatePearsonCorr(object)
+    # Populates #LCAnnotatorData
+    object <- annotateLatentComponents(object)
 
 
     message("Analysis Complete!\n")
@@ -1038,8 +1038,8 @@ setMethod("show", "Vision",
     function(object) print(object)
 )
 
-setMethod("hasFeatureBarcodeData", "Vision",
+setMethod("hasProteinData", "Vision",
     function(object) {
-        return(!all(dim(object@featureBarcodeData) == 1))
+        return(!all(dim(object@proteinData) == 1))
     }
 )

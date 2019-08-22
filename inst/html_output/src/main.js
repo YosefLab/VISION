@@ -21,7 +21,7 @@ global_status.has_lca = false;
 
 // Determine projected values
 global_status.plotted_item = "";  // name of signature, meta or gene that is plotted
-global_status.plotted_item_type = ""; // either 'signature', 'feature', 'meta', 'gene', or 'signature-gene'
+global_status.plotted_item_type = ""; // either 'signature', 'protein', 'meta', 'gene', or 'signature-gene'
 
 global_status.cluster_var = ""; // which cluster variable are we using
 
@@ -94,8 +94,8 @@ function set_global_status(update){
 
         if(type === 'signature'){
             val_promise = api.signature.scores(sig_key)
-        } else if (type === 'feature') {
-            val_promise = api.features.values(sig_key)
+        } else if (type === 'protein') {
+            val_promise = api.protein.values(sig_key)
         } else if (type === 'meta') {
             val_promise = api.signature.meta(sig_key)
         } else if (type === 'gene' || type === 'signature-gene') {
@@ -235,7 +235,7 @@ window.onload = function()
         global_status.has_tree = info.has_tree
         global_status.has_lca = info.has_lca
         global_status.has_sigs = info.has_sigs
-        global_status.has_features = info.has_features
+        global_status.has_proteins = info.has_proteins
 
         global_data.clusters_unique = info.clusters
     })

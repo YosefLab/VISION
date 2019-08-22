@@ -307,19 +307,19 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         }
     })
 
-    pr$handle("GET", "/Features/<feature_name>/Values",
-        function(req, res, feature_name) {
+    pr$handle("GET", "/Proteins/<protein_name>/Values",
+        function(req, res, protein_name) {
 
-        featureMatrix <- object@featureBarcodeData
-        name <- URLdecode(feature_name)
-        if (name %in% colnames(featureMatrix)) {
-            values <- featureMatrix[, name]
-            names <- rownames(featureMatrix)
+        proteinMatrix <- object@proteinData
+        name <- URLdecode(protein_name)
+        if (name %in% colnames(proteinMatrix)) {
+            values <- proteinMatrix[, name]
+            names <- rownames(proteinMatrix)
             res$body <- sigScoresToJSON(names, values)
             compressJSONResponse(req, res)
             return(res)
         } else {
-            return("Feature does not exist!")
+            return("Proteins does not exist!")
         }
     })
 
@@ -333,11 +333,11 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
     })
 
-    pr$handle("GET", "/FilterGroup/SigClusters/Features", function(req, res) {
+    pr$handle("GET", "/FilterGroup/SigClusters/Proteins", function(req, res) {
 
         # Everything is in cluster 1
-        cls <- as.list(numeric(nrow(object@LocalAutocorrelation$Features)) + 1)
-        names(cls) <- rownames(object@LocalAutocorrelation$Features)
+        cls <- as.list(numeric(nrow(object@LocalAutocorrelation$Proteins)) + 1)
+        names(cls) <- rownames(object@LocalAutocorrelation$Proteins)
 
         res$body <- toJSON(cls, auto_unbox = TRUE)
         return(res)
@@ -460,9 +460,9 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         return(res)
     })
 
-    pr$handle("GET", "/Tree/FeatureMatrix", function(req, res) {
+    pr$handle("GET", "/Tree/ProteinMatrix", function(req, res) {
 
-        data <- object@TrajectoryAutocorrelation$Features
+        data <- object@TrajectoryAutocorrelation$Proteins
         stat <- as.matrix(data[, "C", drop = F])
         pval <- as.matrix(data[, "FDR", drop = F])
 
@@ -490,7 +490,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
     pr$handle("GET", "/PearsonCorr/Normal", function(req, res) {
 
-        pc <- object@PCAnnotatorData@pearsonCorr
+        pc <- object@LCAnnotatorData@pearsonCorr
         sigs <- rownames(pc)
 
         res$body <- pearsonCorrToJSON(pc, sigs)
@@ -498,9 +498,9 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         return(res)
     })
 
-    pr$handle("GET", "/PearsonCorr/Features", function(req, res) {
+    pr$handle("GET", "/PearsonCorr/Proteins", function(req, res) {
 
-        pc <- object@PCAnnotatorData@pearsonCorrFeatures
+        pc <- object@LCAnnotatorData@pearsonCorrProteins
         sigs <- rownames(pc)
 
         res$body <- pearsonCorrToJSON(pc, sigs)
@@ -516,7 +516,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
                               FUN.VALUE = TRUE)
         sigs <- sigs[numericMeta]
 
-        pc <- object@PCAnnotatorData@pearsonCorr
+        pc <- object@LCAnnotatorData@pearsonCorr
 
         res$body <- pearsonCorrToJSON(pc, sigs)
         return(res)
@@ -781,20 +781,20 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         return(res)
     })
 
-    pr$handle("GET", "/Clusters/<cluster_variable>/FeatureMatrix",
+    pr$handle("GET", "/Clusters/<cluster_variable>/ProteinMatrix",
         function(req, res, cluster_variable) {
 
-        features <- colnames(object@featureBarcodeData)
+        proteins <- colnames(object@proteinData)
 
         cluster_variable <- URLdecode(cluster_variable)
-        pvals <- object@LocalAutocorrelation$Features[, "FDR", drop = F]
-        stat <- object@LocalAutocorrelation$Features[, "C", drop = F]
+        pvals <- object@LocalAutocorrelation$Proteins[, "FDR", drop = F]
+        stat <- object@LocalAutocorrelation$Proteins[, "C", drop = F]
         colnames(stat) <- "Score"
         colnames(pvals) <- "Score"
         stat <- as.matrix(stat)
         pvals <- as.matrix(pvals)
 
-        var_res <- object@ClusterComparisons$Features[[cluster_variable]]
+        var_res <- object@ClusterComparisons$Proteins[[cluster_variable]]
 
         cluster_pval <- lapply(var_res, function(var_level_res){
             var_level_res["FDR"]
@@ -814,7 +814,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         pvals <- cbind(pvals, cluster_pval)
         stat <- cbind(stat, cluster_stat)
 
-        res$body <- sigProjMatrixToJSON(stat, pvals, features)
+        res$body <- sigProjMatrixToJSON(stat, pvals, proteins)
         return(res)
     })
 
@@ -837,9 +837,9 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         info[["has_sigs"]] <- length(object@sigData) > 0
 
-        info[["has_features"]] <- hasFeatureBarcodeData(object)
+        info[["has_proteins"]] <- hasProteinData(object)
 
-        info[["has_lca"]] <- !is.null(object@PCAnnotatorData)
+        info[["has_lca"]] <- !is.null(object@LCAnnotatorData)
 
         res$body <- toJSON(info, force = TRUE,
             pretty = TRUE, auto_unbox = TRUE)

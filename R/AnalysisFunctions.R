@@ -91,9 +91,9 @@ poolCells <- function(object, cellsPerPartition = NULL) {
         object@LatentSpace <- pooled_latent
     }
 
-    if (hasFeatureBarcodeData(object)) {
-        pooled_fbc <- poolMatrixRows(object@featureBarcodeData, object@Pools)
-        object@featureBarcodeData <- pooled_fbc
+    if (hasProteinData(object)) {
+        pooled_fbc <- poolMatrixRows(object@proteinData, object@Pools)
+        object@proteinData <- pooled_fbc
     }
 
     poolMeta <- poolMetaData(object@metaData, object@Pools)
@@ -683,8 +683,8 @@ analyzeLocalCorrelations <- function(object) {
                                 signatureBackground,
                                 normExpr)
 
-  if (hasFeatureBarcodeData(object)) {
-      fbcs <- fbConsistencyScores(weights, object@featureBarcodeData)
+  if (hasProteinData(object)) {
+      fbcs <- fbConsistencyScores(weights, object@proteinData)
   } else {
       fbcs <- NULL
   }
@@ -707,7 +707,7 @@ analyzeLocalCorrelations <- function(object) {
   LocalAutocorrelation <- list(
       "Signatures" = sigConsistencyScores,
       "Meta" = metaConsistencyScores,
-      "Features" = fbcs,
+      "Proteins" = fbcs,
       "Clusters" = sigClusters
   )
 
@@ -747,8 +747,8 @@ analyzeTrajectoryCorrelations <- function(object) {
                                        signatureBackground,
                                        normExpr)
 
-  if (hasFeatureBarcodeData(object)) {
-      fbcs <- fbConsistencyScores(weights, object@featureBarcodeData)
+  if (hasProteinData(object)) {
+      fbcs <- fbConsistencyScores(weights, object@proteinData)
   } else {
       fbcs <- NULL
   }
@@ -770,7 +770,7 @@ analyzeTrajectoryCorrelations <- function(object) {
   TrajectoryAutocorrelation <- list(
       "Signatures" = sigConsistencyScores,
       "Meta" = metaConsistencyScores,
-      "Features" = fbcs,
+      "Proteins" = fbcs,
       "Clusters" = sigClusters
   )
 
@@ -910,12 +910,12 @@ clusterSigScores <- function(object, variables = "All") {
 
     ClusterComparisons[["Meta"]] <- out
 
-    # Comparisons for Features
-    if (hasFeatureBarcodeData(object)){
-        fbRanks <- colRanks(object@featureBarcodeData,
+    # Comparisons for Proteins
+    if (hasProteinData(object)){
+        fbRanks <- colRanks(object@proteinData,
                             preserveShape = TRUE,
                             ties.method = "average")
-        dimnames(fbRanks) <- dimnames(object@featureBarcodeData)
+        dimnames(fbRanks) <- dimnames(object@proteinData)
         out_fb <- pbmclapply(clusterMeta, function(variable){
             values <- metaData[[variable]]
             var_levels <- levels(values)
@@ -941,9 +941,9 @@ clusterSigScores <- function(object, variables = "All") {
             return(result)
         }, mc.cores = 1)
 
-        ClusterComparisons[["Features"]] <- out_fb
+        ClusterComparisons[["Proteins"]] <- out_fb
     } else {
-        ClusterComparisons[["Features"]] <- NULL
+        ClusterComparisons[["Proteins"]] <- NULL
     }
 
     object@ClusterComparisons <- ClusterComparisons
@@ -958,8 +958,8 @@ clusterSigScores <- function(object, variables = "All") {
 #'
 #' @importFrom pbmcapply pbmclapply
 #' @param object the VISION object
-#' @return object with the @PCAnnotatorData slot populated
-calculatePearsonCorr <- function(object){
+#' @return object with the @LCAnnotatorData slot populated
+annotateLatentComponents <- function(object){
 
   message("Computing correlations between signatures and latent space components...\n")
   sigMatrix <- object@SigScores
@@ -999,17 +999,17 @@ calculatePearsonCorr <- function(object){
   rownames(pearsonCorr) <- colnames(computedSigMatrix)
   colnames(pearsonCorr) <- colnames(latentSpace)
 
-  if (hasFeatureBarcodeData(object)) {
-      featureBarcodeData <- object@featureBarcodeData
-      pearsonCorrFeatures <- pbmclapply(
-          seq_len(ncol(featureBarcodeData)), function(i) {
-          ss <- featureBarcodeData[, i];
+  if (hasProteinData(object)) {
+      proteinData <- object@proteinData
+      pearsonCorrProteins <- pbmclapply(
+          seq_len(ncol(proteinData)), function(i) {
+          ss <- proteinData[, i];
 
           ls_col_cor <- apply(latentSpace, 2, function(pc){
                suppressWarnings({
                    pc_result <- cor.test(ss, pc)
                })
-               if (is.na(pc_result$estimate)) {  # happens if std dev is 0 for a feature
+               if (is.na(pc_result$estimate)) {  # happens if std dev is 0 for a protein
                    return(0)
                } else {
                    return(pc_result$estimate)
@@ -1019,18 +1019,18 @@ calculatePearsonCorr <- function(object){
           return(ls_col_cor)
       })
 
-      pearsonCorrFeatures <- do.call(rbind, pearsonCorrFeatures)
-      rownames(pearsonCorrFeatures) <- colnames(featureBarcodeData)
-      colnames(pearsonCorrFeatures) <- colnames(latentSpace)
+      pearsonCorrProteins <- do.call(rbind, pearsonCorrProteins)
+      rownames(pearsonCorrProteins) <- colnames(proteinData)
+      colnames(pearsonCorrProteins) <- colnames(latentSpace)
   } else {
-      pearsonCorrFeatures <- NULL
+      pearsonCorrProteins <- NULL
   }
 
 
-  pcaAnnotData <- PCAnnotatorData(
-      pearsonCorr = pearsonCorr, pearsonCorrFeatures = pearsonCorrFeatures
+  pcaAnnotData <- LCAnnotatorData(
+      pearsonCorr = pearsonCorr, pearsonCorrProteins = pearsonCorrProteins
   )
-  object@PCAnnotatorData <- pcaAnnotData
+  object@LCAnnotatorData <- pcaAnnotData
 
   return(object)
 }

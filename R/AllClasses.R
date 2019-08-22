@@ -36,10 +36,10 @@ NormData <- setClass("NormData",
     },
 )
 
-PCAnnotatorData <- setClass("PCAnnotatorData",
+LCAnnotatorData <- setClass("LCAnnotatorData",
     slots = c(
         pearsonCorr = "matrix",
-        pearsonCorrFeatures = "matrixORNULL"
+        pearsonCorrProteins = "matrixORNULL"
     )
 )
 
@@ -85,12 +85,12 @@ Signature <- setClass("Signature",
     metaData = ""
 ))
 
-setClassUnion("PCAnnotatorDataOrNULL", members=c("PCAnnotatorData", "NULL"))
+setClassUnion("LCAnnotatorDataOrNULL", members=c("LCAnnotatorData", "NULL"))
 
 Vision <- setClass("Vision",
     slots = c(
         exprData = "matrixORSparse",
-        featureBarcodeData = "matrixORSparse",
+        proteinData = "matrixORSparse",
         unnormalizedData = "matrixORSparse",
         sigData = "list",
         metaData = "data.frame",
@@ -98,7 +98,7 @@ Vision <- setClass("Vision",
         LocalAutocorrelation = "list",
         TrajectoryAutocorrelation = "list",
         ClusterComparisons = "list",
-        PCAnnotatorData = "PCAnnotatorDataOrNULL",
+        LCAnnotatorData = "LCAnnotatorDataOrNULL",
         Projections = "list",
         TrajectoryProjections = "list", # list of TrajectoryProjection
         SigGeneImportance = "list",
@@ -111,7 +111,7 @@ Vision <- setClass("Vision",
         ),
     prototype = list(
         exprData = matrix(NA, 1, 1),
-        featureBarcodeData = matrix(NA, 1, 1),
+        proteinData = matrix(NA, 1, 1),
         unnormalizedData = matrix(NA, 1, 1),
         sigData = list(),
         metaData = data.frame(),
@@ -119,7 +119,7 @@ Vision <- setClass("Vision",
         LocalAutocorrelation = list(),
         TrajectoryAutocorrelation = list(),
         ClusterComparisons = list(),
-        PCAnnotatorData = NULL,
+        LCAnnotatorData = NULL,
         Projections = list(),
         TrajectoryProjections = list(),
         SigGeneImportance = list(),

@@ -12,7 +12,7 @@ function Upper_Left_Content()
 {
     this.children = []
     this.sig_table = {}
-    this.feature_table = {}
+    this.protein_table = {}
     this.pc_table = {}
     this.gene_select = {}
     this.dom_node = document.getElementById("upper-left-content");
@@ -26,11 +26,11 @@ Upper_Left_Content.prototype.init = function()
 
     var sig_table_promise = sig_table.init();
 
-    var feature_table = new Feature_Table()
-    this.children.push(feature_table)
-    this.feature_table = feature_table
+    var protein_table = new Protein_Table()
+    this.children.push(protein_table)
+    this.protein_table = protein_table
 
-    var feature_table_promise = feature_table.init();
+    var protein_table_promise = protein_table.init();
 
     var pc_table = new Meta_Table()
     this.children.push(pc_table)
@@ -75,25 +75,25 @@ Upper_Left_Content.prototype.init = function()
         })
 
     // If no signatures, need to hide the 'Signatures' nav item
-    // If no features, need to hide the 'Features' nav item
+    // If no proteins, need to hide the 'Proteins' nav item
 
     var has_sigs = get_global_status('has_sigs')
-    var has_features = get_global_status('has_features')
+    var has_proteins = get_global_status('has_proteins')
     var nav = $(this.dom_node).find('.section-nav')
     var sigTableTab = nav.find('#sig-table-tab')
-    var featureTableTab = nav.find('#feature-table-tab')
+    var proteinTableTab = nav.find('#protein-table-tab')
     var metaTableTab = nav.find('#meta-table-tab')
 
     if(!has_sigs){
         sigTableTab.parent().hide()
-        if(!has_features){
+        if(!has_proteins){
             metaTableTab.click()
         } else {
-            featureTableTab.click()
+            proteinTableTab.click()
         }
     }
-    if(!has_features){
-        featureTableTab.parent().hide()
+    if(!has_proteins){
+        proteinTableTab.parent().hide()
     }
 
     $(this.dom_node).find('.nav-link')
@@ -106,7 +106,7 @@ Upper_Left_Content.prototype.init = function()
         });
 
 
-    return $.when(sig_table_promise, feature_table_promise, pc_table_promise, gene_select_promise, de_select_promise);
+    return $.when(sig_table_promise, protein_table_promise, pc_table_promise, gene_select_promise, de_select_promise);
 
 }
 
@@ -129,16 +129,16 @@ Upper_Left_Content.prototype.select_default_sig = function()
     var update = {}
 
     var has_sigs = get_global_status('has_sigs')
-    var has_features = get_global_status('has_features')
+    var has_proteins = get_global_status('has_proteins')
 
     var plotted_item
     var item_type
     if (has_sigs){
         plotted_item = this.sig_table.get_top_sig()
         item_type = 'signature'
-    } else if (has_features) {
-        plotted_item = this.feature_table.get_top_sig()
-        item_type = 'feature'
+    } else if (has_proteins) {
+        plotted_item = this.protein_table.get_top_sig()
+        item_type = 'protein'
     } else {
         plotted_item = this.pc_table.get_top_sig()
         item_type = 'meta'
@@ -562,26 +562,26 @@ Signature_Table.prototype.get_top_sig = function()
 }
 
 
-function Feature_Table()
+function Protein_Table()
 {
-    this.dom_node = document.getElementById("feature-div-container");
+    this.dom_node = document.getElementById("protein-div-container");
     this.matrix = {}
     this.clusters = {}
     this.sorted_column = 'Score'
-    this.filterFeature = $(this.dom_node).find('#feature_filt_input')
+    this.filterProtein = $(this.dom_node).find('#protein_filt_input')
     this.is_filtering = false
     this.is_collapsed = {} // cluster -> boolean, holds whether a cluster is collapsed
     this.tooltip = {} // will contain a Popper.js object
 }
 
 
-Feature_Table.prototype.init = function()
+Protein_Table.prototype.init = function()
 {
 
     var self = this;
 
     var debounced = _.debounce(function(){self.doneTyping()}, 500)
-    self.filterFeature.on('input', debounced)
+    self.filterProtein.on('input', debounced)
 
 
     var popper = document.querySelector('body > #sig-tooltip')
@@ -617,7 +617,7 @@ Feature_Table.prototype.init = function()
 
 }
 
-Feature_Table.prototype.render = function()
+Protein_Table.prototype.render = function()
 {
     var self = this;
     var matrix = self.matrix;
@@ -787,13 +787,13 @@ Feature_Table.prototype.render = function()
             content_row
                 .filter(function(d,i) { return i > 0;})
                 .style('background-color', function(d){return colorScale(d.zscore);})
-                .on("click", function(d){tableClickFunction_PC(matrix.sig_labels[d.row], 'feature')})
+                .on("click", function(d){tableClickFunction_PC(matrix.sig_labels[d.row], 'protein')})
                 .append('div');
 
         } else {
             content_row
                 .filter(function(d,i) { return i > 0;})
-                .on("click", function(d){tableClickFunction_clusters(matrix.sig_labels[d.row], 'feature')})
+                .on("click", function(d){tableClickFunction_clusters(matrix.sig_labels[d.row], 'protein')})
 
             content_row
                 .filter(function(d,i) { return i == 1;})
@@ -875,10 +875,10 @@ Feature_Table.prototype.render = function()
     }
 
     // Trigger existinging filter
-    self.filterFeature.trigger('input');
+    self.filterProtein.trigger('input');
 }
 
-Feature_Table.prototype.clickSummaryRow = function(d){
+Protein_Table.prototype.clickSummaryRow = function(d){
 
     var table_id = $(d).closest('table')
     var cluster_id = table_id.data('cluster')
@@ -893,20 +893,20 @@ Feature_Table.prototype.clickSummaryRow = function(d){
 }
 
 
-Feature_Table.prototype.update = function(updates)
+Protein_Table.prototype.update = function(updates)
 {
     var self = this;
 
-    // If there are no features, don't update
-    var has_features = get_global_status('has_features')
-    if(!has_features){
+    // If there are no proteins, don't update
+    var has_proteins = get_global_status('has_proteins')
+    if(!has_proteins){
         return $.when(null); // Empty promise
     }
 
     var clusters_promise;
     if (_.isEmpty(self.clusters)){
 
-        clusters_promise = api.features.clusters()
+        clusters_promise = api.protein.clusters()
             .then(function(cls){
                 self.clusters = cls;
                 return true;
@@ -922,11 +922,11 @@ Feature_Table.prototype.update = function(updates)
 
         var fix_col_label = true
         if (main_vis == "clusters") {
-            matrix_promise = api.clusters.featureMatrix(cluster_var);
+            matrix_promise = api.clusters.proteinMatrix(cluster_var);
         } else if (main_vis == "tree") {
-            matrix_promise = api.tree.featureMatrix();
+            matrix_promise = api.tree.proteinMatrix();
         } else {
-            matrix_promise = api.pCorr.features();
+            matrix_promise = api.pCorr.proteins();
             fix_col_label = false
         }
 
@@ -951,7 +951,7 @@ Feature_Table.prototype.update = function(updates)
 
 }
 
-Feature_Table.prototype.get_top_sig = function()
+Protein_Table.prototype.get_top_sig = function()
 {
     var matrix = this.matrix;
     var s_i = matrix.zscores.map(function(e){return e[0];}).argMax();
@@ -1795,10 +1795,10 @@ Signature_Table.prototype.doneTyping = function()
     }
 }
 
-Feature_Table.prototype.doneTyping = function()
+Protein_Table.prototype.doneTyping = function()
 {
     var self = this;
-    var val = self.filterFeature.val();
+    var val = self.filterProtein.val();
 
     if (val.length > 0 && !self.is_filtering) {
         // Just started filtering, need to re-render table

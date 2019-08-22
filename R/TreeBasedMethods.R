@@ -15,7 +15,7 @@
 #'          automatically.
 #' @return Information on the fitten tree
 #'      \itemize{
-#'     \item C: spatial positions of the tree nodes in NUM_FEATURES dimensional
+#'     \item C: spatial positions of the tree nodes in NUM_PROTEINS dimensional
 #'     space
 #'     \item W: Unweighted (binary) adjacency matrix of the fitten tree
 #'     \item distMat: distance matrix between each tree node to each datapoint
@@ -159,7 +159,7 @@ applySimplePPT <- function(exprData, numCores, permExprData = NULL,
 #' @param maxIter Maximum number of Iterations ot run the algorithm for
 #' @return (list) Tree characteristics:
 #'      \itemize{
-#'     \item C spatial positions of the tree nodes in NUM_FEATURES dimensional space
+#'     \item C spatial positions of the tree nodes in NUM_PROTEINS dimensional space
 #'     \item unweighted (binary) adjacency matrix
 #'     \item the mean-squared error of the tree
 #'      }
