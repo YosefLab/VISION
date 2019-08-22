@@ -598,6 +598,7 @@ generateProjections <- function(object) {
 #' @param K Number of neighbors to use in UMAP projection.
 #' @param name label to use for this projection
 #' @param source coordinates to use to compute tSNE
+#'   Choices are either "LatentSpace" (default) or "Proteins"
 #'
 #' @return VISION object with the projection added to @Projections slot
 addUMAP <- function(object, K = object@params$numNeighbors,
@@ -608,7 +609,14 @@ addUMAP <- function(object, K = object@params$numNeighbors,
             call. = FALSE)
     }
 
-	data <- object@LatentSpace
+    if (source == "LatentSpace") {
+        data <- object@LatentSpace
+    } else if (source == "Proteins") {
+        data <- object@proteinData
+    } else {
+        stop("Invalid 'source' parameter.  Can be either 'LatentSpace' or 'Proteins'")
+    }
+
     n_workers <- getOption("mc.cores")
     n_workers <- if (is.null(n_workers)) 2 else n_workers
 	res <- uwot::umap(
@@ -633,11 +641,17 @@ addUMAP <- function(object, K = object@params$numNeighbors,
 #' @param perplexity parameter for tSNE
 #' @param name label to use for this projection
 #' @param source coordinates to use to compute tSNE
-#'
+#'   Choices are either "LatentSpace" (default) or "Proteins"
 #' @return VISION object with the projection added to @Projections slot
 addTSNE <- function(object, perplexity = 30, name = "tSNE", source = "LatentSpace") {
 
-    data <- object@LatentSpace
+    if (source == "LatentSpace") {
+        data <- object@LatentSpace
+    } else if (source == "Proteins") {
+        data <- object@proteinData
+    } else {
+        stop("Invalid 'source' parameter.  Can be either 'LatentSpace' or 'Proteins'")
+    }
 
     res <- Rtsne(
         data, dims = 2, max_iter = 800, perplexity = perplexity,
