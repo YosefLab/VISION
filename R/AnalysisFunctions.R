@@ -202,6 +202,7 @@ computeProjectionGenes <- function(object,
 #' @param min_signature_genes Signature that match less than this number of genes in the
 #' supplied expression matrix are removed.
 #' @return the VISION object, with the @sigData slot updated
+#' @export
 addSignatures <- function(object, signatures, min_signature_genes=5) {
 
     if (is.list(signatures)) {
@@ -245,6 +246,7 @@ addSignatures <- function(object, signatures, min_signature_genes=5) {
 #' "znorm_columns" (default), "none", "znorm_rows", "znorm_rows_then_columns",
 #' or "rank_norm_columns"
 #' @return the VISION object, with the @SigScores slot populated
+#' @export
 calcSignatureScores <- function(
     object, sig_norm_method = NULL) {
 
@@ -286,6 +288,7 @@ calcSignatureScores <- function(
 #'
 #' @param object the VISION object
 #' @return the VISION object, with SigGeneImportance slot populated
+#' @export
 evalSigGeneImportance <- function(object){
 
     message("Evaluating signature-gene importance...\n")
@@ -458,6 +461,7 @@ evalSigGeneImportanceSparse <- function(object){
 #' @param perm_wPCA If TRUE, apply permutation wPCA to determine significant
 #' number of components. Default is FALSE.
 #' @return the VISION with @latentSpace slot populated
+#' @export
 computeLatentSpace <- function(
     object, projection_genes = NULL,
     filterThreshold = .05, filterNumMad = 2,
@@ -601,6 +605,7 @@ generateProjections <- function(object) {
 #'   Choices are either "LatentSpace" (default) or "Proteins"
 #'
 #' @return VISION object with the projection added to @Projections slot
+#' @export
 addUMAP <- function(object, K = object@params$numNeighbors,
                     name = "UMAP", source = "LatentSpace") {
 
@@ -643,6 +648,7 @@ addUMAP <- function(object, K = object@params$numNeighbors,
 #' @param source coordinates to use to compute tSNE
 #'   Choices are either "LatentSpace" (default) or "Proteins"
 #' @return VISION object with the projection added to @Projections slot
+#' @export
 addTSNE <- function(object, perplexity = 30, name = "tSNE", source = "LatentSpace") {
 
     if (source == "LatentSpace") {
@@ -674,6 +680,7 @@ addTSNE <- function(object, perplexity = 30, name = "tSNE", source = "LatentSpac
 #' to find signals that are captured succesfully by the projections.
 #' @param object the VISION object
 #' @return the VISION object with values set for the analysis results
+#' @export
 analyzeLocalCorrelations <- function(object) {
 
   signatureBackground <- generatePermutationNull(
@@ -801,6 +808,7 @@ analyzeTrajectoryCorrelations <- function(object) {
 #' @param object the VISION object
 #' @param variables which columns of the meta-data to use for comparisons
 #' @return the VISION object with the @ClusterComparisons slot populated
+#' @export
 clusterSigScores <- function(object, variables = "All") {
 
     message("Computing differential signature tests...\n")
@@ -973,6 +981,7 @@ clusterSigScores <- function(object, variables = "All") {
 #' @importFrom pbmcapply pbmclapply
 #' @param object the VISION object
 #' @return object with the @LCAnnotatorData slot populated
+#' @export
 annotateLatentComponents <- function(object){
 
   message("Computing correlations between signatures and latent space components...\n")

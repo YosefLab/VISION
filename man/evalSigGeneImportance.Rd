@@ -2,7 +2,7 @@
 % Please edit documentation in R/AnalysisFunctions.R
 \name{evalSigGeneImportance}
 \alias{evalSigGeneImportance}
-\title{calculate gene-signature importance}
+\title{Calculate gene-signature importance}
 \usage{
 evalSigGeneImportance(object)
 }

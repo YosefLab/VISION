@@ -2,19 +2,19 @@
 % Please edit documentation in R/methods-Signature.R
 \name{fbConsistencyScores}
 \alias{fbConsistencyScores}
-\title{Evaluates the significance of each feature barcode}
+\title{Evaluates the significance of each protein}
 \usage{
-fbConsistencyScores(weights, featureBarcodeData)
+fbConsistencyScores(weights, proteinData)
 }
 \arguments{
 \item{weights}{output of computeKNNWeights}
 
-\item{featureBarcodeData}{numeric matrix of feature barcode counts
-size is cells x features}
+\item{proteinData}{numeric matrix of protein abundance
+size is cells x proteins}
 }
 \value{
 dataframe with columns "C", "pValue", and "FDR"
 }
 \description{
-Evaluates the significance of each feature barcode
+Evaluates the significance of each protein
 }

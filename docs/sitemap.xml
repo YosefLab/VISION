@@ -7,7 +7,7 @@
     <loc>https://yoseflab.github.io/VISION//reference/Cluster.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/ProjectionData.html</loc>
+    <loc>https://yoseflab.github.io/VISION//reference/NormData.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/ServerExpression.html</loc>
@@ -31,7 +31,19 @@
     <loc>https://yoseflab.github.io/VISION//reference/VISION.html</loc>
   </url>
   <url>
+    <loc>https://yoseflab.github.io/VISION//reference/addLatentSpace.html</loc>
+  </url>
+  <url>
     <loc>https://yoseflab.github.io/VISION//reference/addProjection-Vision-method.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/addSignatures.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/addTSNE.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/addUMAP.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/analyze-Vision-method.html</loc>
@@ -41,6 +53,9 @@
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/analyzeTrajectoryCorrelations.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/annotateLatentComponents.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/applyFilters.html</loc>
@@ -73,16 +88,13 @@
     <loc>https://yoseflab.github.io/VISION//reference/applyUMAP.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/applyWeightedPCA.html</loc>
-  </url>
-  <url>
     <loc>https://yoseflab.github.io/VISION//reference/applytSNE10.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/applytSNE30.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/batchSigEval.html</loc>
+    <loc>https://yoseflab.github.io/VISION//reference/batchSigEvalNorm.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/batchify.html</loc>
@@ -95,15 +107,6 @@
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/calcSignatureScores.html</loc>
-  </url>
-  <url>
-    <loc>https://yoseflab.github.io/VISION//reference/calcWeights.html</loc>
-  </url>
-  <url>
-    <loc>https://yoseflab.github.io/VISION//reference/calculatePearsonCorr.html</loc>
-  </url>
-  <url>
-    <loc>https://yoseflab.github.io/VISION//reference/calculateSignatureBackground.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/calculateTrajectoryDistances.html</loc>
@@ -127,6 +130,9 @@
     <loc>https://yoseflab.github.io/VISION//reference/colRankNormalization.html</loc>
   </url>
   <url>
+    <loc>https://yoseflab.github.io/VISION//reference/colVarsSp.html</loc>
+  </url>
+  <url>
     <loc>https://yoseflab.github.io/VISION//reference/computeKNNWeights-Trajectory-method.html</loc>
   </url>
   <url>
@@ -136,7 +142,7 @@
     <loc>https://yoseflab.github.io/VISION//reference/computeLatentSpace.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/computeWeights.html</loc>
+    <loc>https://yoseflab.github.io/VISION//reference/computeProjectionGenes.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/convertGeneIds.html</loc>
@@ -145,22 +151,25 @@
     <loc>https://yoseflab.github.io/VISION//reference/coordinatesToJSON.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/createFalseNegativeMap.html</loc>
-  </url>
-  <url>
     <loc>https://yoseflab.github.io/VISION//reference/createGeneSignature.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/createTrajectoryMetaData.html</loc>
   </url>
   <url>
+    <loc>https://yoseflab.github.io/VISION//reference/dot-colNormHelper.html</loc>
+  </url>
+  <url>
     <loc>https://yoseflab.github.io/VISION//reference/evalSigGeneImportance.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/evalSigGeneImportanceSparse.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/expressionToJSON.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/filterData.html</loc>
+    <loc>https://yoseflab.github.io/VISION//reference/fbConsistencyScores.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/filterGenesFano.html</loc>
@@ -211,6 +220,12 @@
     <loc>https://yoseflab.github.io/VISION//reference/getNormalizedCopy.html</loc>
   </url>
   <url>
+    <loc>https://yoseflab.github.io/VISION//reference/getNormalizedCopySparse.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/getParam.html</loc>
+  </url>
+  <url>
     <loc>https://yoseflab.github.io/VISION//reference/getProjections.html</loc>
   </url>
   <url>
@@ -229,13 +244,10 @@
     <loc>https://yoseflab.github.io/VISION//reference/hasUnnormalizedData.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/housekeeping.html</loc>
-  </url>
-  <url>
     <loc>https://yoseflab.github.io/VISION//reference/ilog1p.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/innerEvalSignatureBatch.html</loc>
+    <loc>https://yoseflab.github.io/VISION//reference/innerEvalSignatureBatchNorm.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/launchServer.html</loc>
@@ -292,6 +304,12 @@
     <loc>https://yoseflab.github.io/VISION//reference/read_10x_h5.html</loc>
   </url>
   <url>
+    <loc>https://yoseflab.github.io/VISION//reference/read_10x_h5_v2.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/read_10x_h5_v3.html</loc>
+  </url>
+  <url>
     <loc>https://yoseflab.github.io/VISION//reference/readjust_clusters.html</loc>
   </url>
   <url>
@@ -302,6 +320,9 @@
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/rowNormalization.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/rowVarsSp.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/saveAndViewResults-Vision-method.html</loc>

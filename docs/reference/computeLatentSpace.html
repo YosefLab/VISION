@@ -154,7 +154,9 @@
     
     </div>
 
-    <pre class="usage"><span class='fu'>computeLatentSpace</span>(<span class='no'>object</span>, <span class='kw'>projection_genes</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>perm_wPCA</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
+    <pre class="usage"><span class='fu'>computeLatentSpace</span>(<span class='no'>object</span>, <span class='kw'>projection_genes</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>filterThreshold</span> <span class='kw'>=</span> <span class='fl'>0.05</span>, <span class='kw'>filterNumMad</span> <span class='kw'>=</span> <span class='fl'>2</span>,
+  <span class='kw'>projection_genes_method</span> <span class='kw'>=</span> <span class='st'>"fano"</span>, <span class='kw'>num_PCs</span> <span class='kw'>=</span> <span class='fl'>30</span>, <span class='kw'>perm_wPCA</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -165,7 +167,26 @@
     </tr>
     <tr>
       <th>projection_genes</th>
-      <td><p>character vector of gene names to use for projections</p></td>
+      <td><p>character vector of gene names to use for PCA</p></td>
+    </tr>
+    <tr>
+      <th>filterThreshold</th>
+      <td><p>Threshold to apply when using the 'threshold' or 'fano' projection genes filter.
+If greater than 1, this specifies the number of cells in which a gene must be detected
+for it to be used when computing PCA. If less than 1, this instead specifies the proportion of cells needed</p></td>
+    </tr>
+    <tr>
+      <th>filterNumMad</th>
+      <td><p>Number of median absolute deviations to use when selecting highly-variable
+genes in each mean-sorted bin of genes</p></td>
+    </tr>
+    <tr>
+      <th>projection_genes_method</th>
+      <td><p>name of filtering method ('threshold' or 'fano') or list of</p></td>
+    </tr>
+    <tr>
+      <th>num_PCs</th>
+      <td><p>the number of principal components to retain</p></td>
     </tr>
     <tr>
       <th>perm_wPCA</th>
@@ -176,7 +197,7 @@ number of components. Default is FALSE.</p></td>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>the VISION with latentSpace populated</p>
+    <p>the VISION with @latentSpace slot populated</p>
     
 
   </div>

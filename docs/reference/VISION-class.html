@@ -160,17 +160,23 @@ expression data, meta-data, and dimensionality reductions if they exist already<
 
 <span class='co'># S4 method for matrixORSparse</span>
 <span class='fu'>Vision</span>(<span class='no'>data</span>, <span class='kw'>signatures</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/list'>list</a></span>(),
-  <span class='kw'>housekeeping</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>unnormalizedData</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>meta</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>nomodel</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>projection_genes</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"fano"</span>),
-  <span class='kw'>min_signature_genes</span> <span class='kw'>=</span> <span class='fl'>5</span>, <span class='kw'>weights</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>threshold</span> <span class='kw'>=</span> <span class='fl'>0.05</span>,
-  <span class='kw'>perm_wPCA</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>projection_methods</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"tSNE30"</span>),
+  <span class='kw'>proteinData</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>unnormalizedData</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>meta</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>projection_genes</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"fano"</span>), <span class='kw'>min_signature_genes</span> <span class='kw'>=</span> <span class='fl'>5</span>,
+  <span class='kw'>threshold</span> <span class='kw'>=</span> <span class='fl'>0.05</span>, <span class='kw'>perm_wPCA</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>projection_methods</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"tSNE30"</span>),
   <span class='kw'>sig_norm_method</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"znorm_columns"</span>, <span class='st'>"none"</span>, <span class='st'>"znorm_rows"</span>,
-  <span class='st'>"znorm_rows_then_columns"</span>, <span class='st'>"rank_norm_columns"</span>),
-  <span class='kw'>sig_score_method</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"naive"</span>, <span class='st'>"weighted_avg"</span>), <span class='kw'>pool</span> <span class='kw'>=</span> <span class='st'>"auto"</span>,
+  <span class='st'>"znorm_rows_then_columns"</span>, <span class='st'>"rank_norm_columns"</span>), <span class='kw'>pool</span> <span class='kw'>=</span> <span class='st'>"auto"</span>,
   <span class='kw'>cellsPerPartition</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>num_neighbors</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>latentSpace</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>latentTrajectory</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>pools</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/list'>list</a></span>())
+  <span class='kw'>latentSpace</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>latentSpaceName</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>latentTrajectory</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>pools</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/list'>list</a></span>())
 
 <span class='co'># S4 method for data.frame</span>
+<span class='fu'>Vision</span>(<span class='no'>data</span>, <span class='no'>...</span>)
+
+<span class='co'># S4 method for sparseMatrix</span>
+<span class='fu'>Vision</span>(<span class='no'>data</span>, <span class='no'>...</span>)
+
+<span class='co'># S4 method for dgeMatrix</span>
 <span class='fu'>Vision</span>(<span class='no'>data</span>, <span class='no'>...</span>)
 
 <span class='co'># S4 method for ExpressionSet</span>
@@ -202,18 +208,14 @@ Signature objects.  See the createGeneSignature(...) method for information
 on creating Signature objects.</p></td>
     </tr>
     <tr>
-      <th>housekeeping</th>
-      <td><p>vector of gene names</p></td>
+      <th>proteinData</th>
+      <td><p>additional protein abundance data (such as ADT counts).
+Can be either a data.frame or numeric matrix.  Should be of shape (CELLS x PROTEINS)</p></td>
     </tr>
     <tr>
       <th>meta</th>
       <td><p>data.frame with meta-data for cells. Rows in this data.frame should correspond
 with columns in the expression data matrix</p></td>
-    </tr>
-    <tr>
-      <th>nomodel</th>
-      <td><p>if TRUE, no fnr curve calculated and all weights equal to 1.
-Else FNR and weights calculated. [Default:TRUE]</p></td>
     </tr>
     <tr>
       <th>projection_genes</th>
@@ -224,11 +226,6 @@ genes to use when computing projections.</p></td>
       <th>min_signature_genes</th>
       <td><p>Signature that match less than this number of genes in the
 supplied expression matrix are removed.</p></td>
-    </tr>
-    <tr>
-      <th>weights</th>
-      <td><p>Precomputed weights for each coordinate. Normally computed
-from the FNR curve.</p></td>
     </tr>
     <tr>
       <th>threshold</th>
@@ -260,15 +257,10 @@ before calculating signature scores. Valid options are:
 or "rank_norm_columns"</p></td>
     </tr>
     <tr>
-      <th>sig_score_method</th>
-      <td><p>Method to apply when calculating signature scores.
-Either "naive" (default) or "weighted_avg"</p></td>
-    </tr>
-    <tr>
       <th>pool</th>
       <td><p>indicates whether or not to pool cells into supercells. Acceptable values
 are TRUE, FALSE, or 'auto', the last of which is the default and enables
-pooling if there are more than 15000 cells.</p></td>
+pooling if there are more than 100000 cells.</p></td>
     </tr>
     <tr>
       <th>cellsPerPartition</th>

@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Applies pemutation method to return the most significant components of weighted PCA data — applyPermutationWPCA • VISION</title>
+<title>Applies pemutation method to return the most significant components of PCA data — applyPermutationWPCA • VISION</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -39,9 +39,9 @@
 
   <link href="../extra.css" rel="stylesheet">
   
-<meta property="og:title" content="Applies pemutation method to return the most significant components of weighted PCA data — applyPermutationWPCA" />
+<meta property="og:title" content="Applies pemutation method to return the most significant components of PCA data — applyPermutationWPCA" />
 
-<meta property="og:description" content="Applies pemutation method to return the most significant components of weighted PCA data" />
+<meta property="og:description" content="Applies pemutation method to return the most significant components of PCA data" />
 
 <meta property="og:image" content="https://yoseflab.github.io/VISION/logo.png" />
 <meta name="twitter:card" content="summary" />
@@ -143,19 +143,18 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Applies pemutation method to return the most significant components of weighted PCA data</h1>
+    <h1>Applies pemutation method to return the most significant components of PCA data</h1>
     <small class="dont-index">Source: <a href='https://github.com/yoseflab/VISION/blob/master/R/Projections.R'><code>R/Projections.R</code></a></small>
     <div class="hidden name"><code>applyPermutationWPCA.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Applies pemutation method to return the most significant components of weighted PCA data</p>
+    <p>Applies pemutation method to return the most significant components of PCA data</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>applyPermutationWPCA</span>(<span class='no'>expr</span>, <span class='no'>weights</span>, <span class='kw'>components</span> <span class='kw'>=</span> <span class='fl'>50</span>,
-  <span class='kw'>p_threshold</span> <span class='kw'>=</span> <span class='fl'>0.05</span>)</pre>
+    <pre class="usage"><span class='fu'>applyPermutationWPCA</span>(<span class='no'>expr</span>, <span class='kw'>components</span> <span class='kw'>=</span> <span class='fl'>50</span>, <span class='kw'>p_threshold</span> <span class='kw'>=</span> <span class='fl'>0.05</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -163,10 +162,6 @@
     <tr>
       <th>expr</th>
       <td><p>Expression data</p></td>
-    </tr>
-    <tr>
-      <th>weights</th>
-      <td><p>Weights to apply to each coordinate in data</p></td>
     </tr>
     <tr>
       <th>components</th>
@@ -183,7 +178,7 @@
     <p>(list):</p><ul>
 <li><p>wPCA: weighted PCA data</p></li>
 <li><p>eval: the proortinal variance of each component</p></li>
-<li><p>evec: the eigenvectors of the weighted covariance matrix</p></li>
+<li><p>evec: the eigenvectors of the covariance matrix</p></li>
 <li><p>permuteMatrices: the permuted matrices generated as the null distrbution</p></li>
 </ul>
 

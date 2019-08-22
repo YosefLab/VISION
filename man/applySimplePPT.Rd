@@ -29,7 +29,7 @@ between the noise-levels
 \value{
 Information on the fitten tree
      \itemize{
-    \item C: spatial positions of the tree nodes in NUM_FEATURES dimensional
+    \item C: spatial positions of the tree nodes in NUM_PROTEINS dimensional
     space
     \item W: Unweighted (binary) adjacency matrix of the fitten tree
     \item distMat: distance matrix between each tree node to each datapoint

@@ -15,7 +15,7 @@
 Vision(data, ...)
 
 \S4method{Vision}{matrixORSparse}(data, signatures = list(),
-  featureBarcodeData = NULL, unnormalizedData = NULL, meta = NULL,
+  proteinData = NULL, unnormalizedData = NULL, meta = NULL,
   projection_genes = c("fano"), min_signature_genes = 5,
   threshold = 0.05, perm_wPCA = FALSE,
   projection_methods = c("tSNE30"),
@@ -51,8 +51,8 @@ Expression data should be scaled and normalized, but not log-transformed.}
 Signature objects.  See the createGeneSignature(...) method for information
 on creating Signature objects.}
 
-\item{featureBarcodeData}{additional feature barcode data (such as ADT counts).
-Can be either a data.frame or numeric matrix.  Should be of shape (CELLS x FEATURES)}
+\item{proteinData}{additional protein abundance data (such as ADT counts).
+Can be either a data.frame or numeric matrix.  Should be of shape (CELLS x PROTEINS)}
 
 \item{meta}{data.frame with meta-data for cells. Rows in this data.frame should correspond
 with columns in the expression data matrix}

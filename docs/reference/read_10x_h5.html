@@ -171,7 +171,11 @@
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>sparse count matrix with appropriate row/column names</p>
+    <p>Return value depends on whether this is a Cellranger v3 or Cellranger v2 output
+    If it is a v2 output, return is a sparse count matrix with gene expression values
+    If it is a v3 output, return value is a list with two entries:
+        Expression: sparse count matrix with gene expression counts (genes x cells)
+        Antibody: sparse count matrix with antibody capture counts (cells x antibodies)</p>
     
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 

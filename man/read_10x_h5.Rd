@@ -12,7 +12,11 @@ read_10x_h5(h5_file, ensToSymbol = TRUE)
 \item{ensToSymbol}{bool denoting whether or not to perform label conversion}
 }
 \value{
-sparse count matrix with appropriate row/column names
+Return value depends on whether this is a Cellranger v3 or Cellranger v2 output
+    If it is a v2 output, return is a sparse count matrix with gene expression values
+    If it is a v3 output, return value is a list with two entries:
+        Expression: sparse count matrix with gene expression counts (genes x cells)
+        Antibody: sparse count matrix with antibody capture counts (cells x antibodies)
 }
 \description{
 Loads 10x output counts and converts expression to gene symbols
