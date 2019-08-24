@@ -808,7 +808,7 @@ analyzeTrajectoryCorrelations <- function(object) {
       "Signatures" = sigConsistencyScores,
       "Meta" = metaConsistencyScores,
       "Proteins" = fbcs,
-      "Clusters" = sigClusters
+      "Clusters" = sigTreeClusters
   )
 
   object@TrajectoryAutocorrelation <- TrajectoryAutocorrelation

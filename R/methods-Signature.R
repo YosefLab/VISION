@@ -432,7 +432,7 @@ sigsVsProjection_pcn <- function(metaData, weights, cells = NULL, computePval = 
             col <- c(col, replicate(NUM_REPLICATES, i))
         }
     }
-    jobs <- data.frame(type = type, col = col)
+    jobs <- data.frame(type = type, col = col, stringsAsFactors = FALSE)
 
     results <- pbmclapply(seq_len(nrow(jobs)), function(i) {
 
@@ -441,6 +441,10 @@ sigsVsProjection_pcn <- function(metaData, weights, cells = NULL, computePval = 
 
 
         sigScores <- numericMetaRanks[, col, drop = FALSE]
+
+        if (any(is.na(sigScores))){
+            return(0.0)
+        }
 
         if (all(sigScores == sigScores[1])) {
             return(0.0)
@@ -467,7 +471,7 @@ sigsVsProjection_pcn <- function(metaData, weights, cells = NULL, computePval = 
     if (computePval) {
         for (varname in rownames(results)) {
             bg <- jobs[(jobs$col == varname) & (jobs$type == "bg"), ]
-            comp <- sum(bg$C > results[varname, "C"])
+            comp <- sum(bg$C >= results[varname, "C"])
             pval <- (comp + 1) / (NUM_REPLICATES + 1)
             results[varname, "pval"] <- pval
         }

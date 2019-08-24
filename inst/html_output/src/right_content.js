@@ -420,16 +420,22 @@ Right_Content.prototype.update = function(updates)
 
     var update_promise;
 
-    if('plotted_projectionX' in updates ||
-       'plotted_projectionY' in updates ||
-       'plotted_trajectory' in updates) {
+    if(
+        'plotted_projectionX' in updates ||
+        'plotted_projectionY' in updates ||
+        'plotted_trajectory' in updates ||
+        treeViewChanged
+    ) {
 
         autoZoom = true
         var proj_promise;
 
         if (
-            ('plotted_projectionX' in updates || 'plotted_projectionY' in updates) ||
-            (treeViewChanged && !self.treeView)
+            (!self.treeView) &&
+            (
+                ('plotted_projectionX' in updates || 'plotted_projectionY' in updates) ||
+                (treeViewChanged)
+            )
         ){
 
             var proj_keyX = get_global_status('plotted_projectionX');
@@ -449,8 +455,10 @@ Right_Content.prototype.update = function(updates)
                     }
                 });
         } else if (
-            'plotted_trajectory' in updates ||
-            (treeViewChanged && self.treeView)
+            self.treeView && (
+                ('plotted_trajectory' in updates) ||
+                (treeViewChanged)
+            )
         ) {
             var proj_key = get_global_status('plotted_trajectory');
             proj_promise = api.tree.coordinates(proj_key)
@@ -471,6 +479,8 @@ Right_Content.prototype.update = function(updates)
             var projection_keyY = data['projection_keyY']
 
             // If the projection is changing, then we need to change all the plots
+            // Alternately, if we switch the view (e.g. from Trajectories to Scatter)
+            // then we change them all
             var synchronized = $(self.syncCheck).is(':checked');
             if (synchronized || treeViewChanged) {
                 var allPlotData = self.getAllPlotData()
