@@ -65,11 +65,17 @@ poolCells <- function(object, cellsPerPartition = NULL) {
 
     preserve_clusters <- NULL
 
+    if (is.null(object@params$latentSpace$projectionGenes)){
+        filterInput <- object@params$latentSpace$projectionGenesMethod
+    } else {
+        filterInput <- object@params$latentSpace$projectionGenes
+    }
+
     if (length(object@Pools) == 0) {
         pools <- applyMicroClustering(
             object@exprData,
             cellsPerPartition = object@params$micropooling$cellsPerPartition,
-            filterInput = object@params$latentSpace$projectionGenes,
+            filterInput = filterInput,
             filterThreshold = object@params$latentSpace$threshold,
             latentSpace = object@LatentSpace,
             K = object@params$numNeighbors)
@@ -153,19 +159,19 @@ computeProjectionGenes <- function(object,
 
     message("Determining projection genes...")
 
-    if (length(object@params$latentSpace$projectionGenes) == 1){
+    if (is.null(object@params$latentSpace$projectionGenes)){
 
         exprData <- matLog2(object@exprData)
         projection_genes <- applyFilters(
                     exprData,
-                    object@params$latentSpace$projectionGenes,
+                    object@params$latentSpace$projectionGenesMethod,
                     object@params$latentSpace$threshold,
                     object@params$latentSpace$num_mad)
 
         if (length(projection_genes) == 0){
             stop(
                 sprintf("Filtering with (projection_genes=\"%s\", threshold=%i) results in 0 genes\n  Set a lower threshold and re-run",
-                    object@params$latentSpace$projectionGenes, object@params$latentSpace$threshold)
+                    object@params$latentSpace$projectionGenesMethod, object@params$latentSpace$threshold)
                 )
         }
     } else {
@@ -451,7 +457,7 @@ evalSigGeneImportanceSparse <- function(object){
 #'
 #' @param object the VISION object for which compute the latent space
 #' @param projection_genes character vector of gene names to use for PCA
-#' @param projection_genes_method name of filtering method ('threshold' or 'fano') or list of
+#' @param projection_genes_method name of filtering method. Either 'threshold' or 'fano'(default)
 #' @param filterThreshold Threshold to apply when using the 'threshold' or 'fano' projection genes filter.
 #' If greater than 1, this specifies the number of cells in which a gene must be detected
 #' for it to be used when computing PCA. If less than 1, this instead specifies the proportion of cells needed
@@ -465,19 +471,29 @@ evalSigGeneImportanceSparse <- function(object){
 computeLatentSpace <- function(
     object, projection_genes = NULL,
     filterThreshold = .05, filterNumMad = 2,
-    projection_genes_method = "fano",
+    projection_genes_method = NULL,
     num_PCs = 30, perm_wPCA = NULL) {
 
     message("Computing a latent space for expression data...\n")
 
     if (!is.null(projection_genes)) {
         object@params$latentSpace$projectionGenes <- projection_genes
-    } else {
+    }
+    if (!is.null(projection_genes_method)) {
+        object@params$latentSpace$projectionGenesMethod <- projection_genes_method
+    }
+
+    if (is.null(object@params$latentSpace$projectionGenes)) {
         object <- computeProjectionGenes(
             object,
             threshold = filterThreshold,
             num_mad = filterNumMad,
-            projection_genes = projection_genes_method
+            projection_genes = object@params$latentSpace$projectionGenesMethod
+        )
+    } else {
+        object <- computeProjectionGenes(
+            object,
+            projection_genes = object@params$latentSpace$projectionGenes
         )
     }
 
