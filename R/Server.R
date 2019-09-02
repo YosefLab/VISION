@@ -288,12 +288,10 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       return(res)
     })
 
-    pr$handle("GET", "/Signature/Expression/<sig_name>",
-        function(req, res, sig_name) {
-        # add cluster to api call, 
-          # scale(row mean by cluster(matLog2()))
-          # loop through subsets of clustrs then do row means
-        
+    pr$handle("GET", "/Signature/Expression/<sig_name>", function(req, res, sig_name) {
+        # TODO add cluster type to api call, 
+        # scale(row mean by cluster(matLog2()))
+        # yanay heatmap
         all_names <- vapply(object@sigData, function(x) x@name, "")
         name <- URLdecode(sig_name)
         index <- match(name, all_names)
@@ -304,7 +302,16 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             sig <- object@sigData[[index]]
             genes <- names(sig@sigDict)
             expMat <- object@exprData
-            res$body <- expressionToJSON(expMat, genes, zscore = TRUE)
+            # transpose to aggregate
+            expMat <- t(expMat)
+            clusters <- vis@metaData$VISION_Clusters
+            x <- aggregate(expMat, by=list(clusters), mean)
+            # get rid of aggregate artifact and redo transpose
+            y <- t(x[,-c(1)])
+            # add clusters as column names
+            colnames(y) <- unique(clusters)
+            res$body <- expressionToJSON(matLog2(y), genes, zscore = TRUE)
+            # yanay
             compressJSONResponse(req, res)
             return(res)
         }
