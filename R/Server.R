@@ -596,8 +596,9 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         group_num <- body$group_num
         group_denom <- body$group_denom
         
-        cells_min <- body$cells_min # default 1
-        subsample_cells_max <- body$cells_max # add checkbox
+        cells_min <- as.numeric(body$min_cells) # default 1
+        subsample_groups <- body$subsample_groups
+        subsample_cells_n <- body$subsample_N # add checkbox
         
         # I want to skip caching a manual selection because the hash would be complicated
         skip_cache = FALSE;
@@ -605,7 +606,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
           skip_cache <- TRUE;
         } else {
           # hash by the params as a string
-          hashed_body = paste(type_n,type_d, subtype_n, subtype_d, group_num, group_denom, subsample_cells_max, cells_min, sep= " ")
+          hashed_body = paste(type_n,type_d, subtype_n, subtype_d, group_num, group_denom, subsample_cells_n, cells_min, subsample_groups, sep= " ")
         }
         if (skip_cache || is.null(object@de_cache[[hashed_body]])) {
           # The case where we know the de calculation is not cached, so we have to actually
@@ -634,16 +635,36 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
               print("ERROR! Denom type unrecognized: " + type_d)
           }
           
-          cluster_num <- match(cells_num, colnames(exprData))
-          cluster_denom <- match(cells_denom, colnames(exprData))
+          # subsample the numerator and denominator groups 
+          if (subsample_groups) {
+            if (length(cells_num) > subsample_cells_n) {
+              # if possible, the numerator becomes a random sample of size subsample_cells_n
+              cells_num <- sample(cells_num, size=subsample_cells_n)
+            }
+            if (length(cells_denom) > subsample_cells_n) {
+              # if possible, the denominator becomes a random sample of size subsample_cells_n
+              cells_denom <- sample(cells_denom, size=subsample_cells_n)
+            }
+          }
+          
+          # subset to only genes expressed in at least min cells
+          if (cells_min < length(colnames(exprData))) {
+            exprDataSubset <- exprData[rowSums(exprData > 0) >= cells_min,]
+          } else {
+            exprDataSubset <- exprData
+          }
+          
+          
+          cluster_num <- match(cells_num, colnames(exprDataSubset))
+          cluster_denom <- match(cells_denom, colnames(exprDataSubset))
     
-          out <- matrix_wilcox_cpp(exprData, cluster_num, cluster_denom)
+          out <- matrix_wilcox_cpp(exprDataSubset, cluster_num, cluster_denom)
     
           out$pval <- p.adjust(out$pval, method = "fdr")
           out$stat <- pmax(out$AUC, 1 - out$AUC)
     
-          numMean <- rowMeans(exprData[, cluster_num])
-          denomMean <- rowMeans(exprData[, cluster_denom])
+          numMean <- rowMeans(exprDataSubset[, cluster_num])
+          denomMean <- rowMeans(exprDataSubset[, cluster_denom])
           bias <- 1 / sqrt(length(cluster_num) * length(cluster_denom))
     
           out$logFC <- log2( (numMean + bias) / (denomMean + bias) )

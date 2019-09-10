@@ -165,13 +165,13 @@ var api = (function(){
     }
 
     //Yanay
-    output.de = function(type_n, subtype_n, group_num, type_d, subtype_d, group_denom, min_cells, max_cells) {
+    output.de = function(type_n, subtype_n, group_num, type_d, subtype_d, group_denom, min_cells, subsample_groups, subsample_N) {
         var query = "DE"
 
         query = postProcess(query)
         return $.ajax(query, {
             type: "POST",
-            data: JSON.stringify({"type_n":type_n, "type_d":type_d, "subtype_n":subtype_n, "subtype_d":subtype_d,  "group_num":group_num, "group_denom":group_denom, "min_cells":min_cells, "max_cells":max_cells}),
+            data: JSON.stringify({"type_n":type_n, "type_d":type_d, "subtype_n":subtype_n, "subtype_d":subtype_d,  "group_num":group_num, "group_denom":group_denom, "min_cells":min_cells, "subsample_groups":subsample_groups, "subsample_N":subsample_N}),
             dataType: "json"
         }).then(x => x);
     }
