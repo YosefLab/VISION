@@ -1452,6 +1452,9 @@ function DE_Select()
     this.de_results = $(this.dom_node).find('#de-results');
     this.de_table = $(this.dom_node).find('#de-results-table');
     this.de_controls = $(this.dom_node).find('.controls');
+
+    this.min_cells = $(this.dom_node).find('#de_min_cells');
+    this.max_cells = $(this.dom_node).find('#de_max_cells');
 }
 
 DE_Select.prototype.init = function()
@@ -1467,6 +1470,9 @@ DE_Select.prototype.init = function()
     var de_error = this.de_error;
     var de_results = this.de_results;
     var de_controls = this.de_controls;
+
+    var min_cells = this.min_cells;
+    var max_cells = this.max_cells;
 
     var clusters = get_global_data("cluster_variables");
 
@@ -1597,6 +1603,18 @@ DE_Select.prototype.init = function()
         var subtype_n = ""
         var subtype_d = ""
 
+        var min_cells = this.min_cells;
+        var max_cells = this.max_cells;
+
+        if (!min_cells) {
+          min_cells = 0;
+        }
+
+        if (!max_cells) {
+          max_cells = -1;
+        }
+
+
         if (numControl.val() === 'selections') {
 
             if(numSelect.val() === 'current') {
@@ -1646,7 +1664,8 @@ DE_Select.prototype.init = function()
 
         api.de(
             type_n, subtype_n, group_num,
-            type_d, subtype_d, group_denom
+            type_d, subtype_d, group_denom,
+            min_cells, max_cells
         ).then(data => {
             set_global_status({"de":data})
         });

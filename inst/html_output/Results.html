@@ -190,6 +190,19 @@
                                     <button type="button" class="btn btn-default btn-outline-primary" id="submit_de" class="form-control">Calculate DE</button>
                                 </div>
                             </div>
+                            <button class="btn btn-secondary" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                              Advanced Options
+                            </button>
+                            <div class="collapse" id="collapseExample">
+                              <div>
+                                  <div class="label">Gene Minimum Cells Expressed In</div>
+                                  <input type="number" id="de_min_cells" class="form-control"></select>
+                              </div>
+                              <div>
+                                  <div class="label">Maximum Cells Expressed In</div>
+                                  <input type="number" id="de_max_cells" class="form-control"></select>
+                              </div>
+                            </div>
                         </div>
 
                         <div id='de-error' style='display: none'></div>

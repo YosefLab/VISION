@@ -586,59 +586,81 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         group_num <- body$group_num
         group_denom <- body$group_denom
 
+        cells_min <- body$cells_min
+        cells_max <- body$cells_max
+
+        hashed_body <- paste(type_n, type_d, subtype_n, subtype_d, group_num,
+            group_denom, cells_max, cells_min, sep = " ")
+
         selections <- getSelections(object)
 
-        if (type_n == "current") {
-            cells_num <- unlist(strsplit(group_num, ","))
-        } else if (type_n == "saved_selection") {
-            cells_num <- selections[[group_num]]
-        } else if (type_n == "meta") {
-            cells_num <- rownames(object@metaData)[
-                which(object@metaData[[subtype_n]] == group_num)
-                ]
+        print(hashed_body)
+        if (is.null(object@de_cache[[hashed_body]])) {
+            print("Not cached")
+            print(object@de_cache)
+
+            if (type_n == "current") {
+                cells_num <- unlist(strsplit(group_num, ","))
+            } else if (type_n == "saved_selection") {
+                cells_num <- selections[[group_num]]
+            } else if (type_n == "meta") {
+                cells_num <- rownames(object@metaData)[
+                    which(object@metaData[[subtype_n]] == group_num)
+                    ]
+            } else {
+                print("ERROR! Num type unrecognized: " + type_n)
+            }
+
+            if (type_d == "remainder") {
+                cells_denom <- setdiff(colnames(exprData), cells_num)
+            } else if (type_d == "saved_selection") {
+                cells_denom <- selections[[group_denom]]
+            } else if (type_d == "meta") {
+                cells_denom <- rownames(object@metaData)[
+                    which(object@metaData[[subtype_d]] == group_denom)
+                    ]
+            } else {
+                print("ERROR! Denom type unrecognized: " + type_d)
+            }
+
+            cluster_num <- match(cells_num, colnames(exprData))
+            cluster_denom <- match(cells_denom, colnames(exprData))
+
+            out <- matrix_wilcox_cpp(exprData, cluster_num, cluster_denom)
+
+            out$pval <- p.adjust(out$pval, method = "fdr")
+            out$stat <- pmax(out$AUC, 1 - out$AUC)
+
+            numMean <- rowMeans(exprData[, cluster_num])
+            denomMean <- rowMeans(exprData[, cluster_denom])
+            bias <- 1 / sqrt(length(cluster_num) * length(cluster_denom))
+
+            out$logFC <- log2( (numMean + bias) / (denomMean + bias) )
+
+            out <- out[, c("gene", "logFC", "stat", "pval"), drop = FALSE]
+            out <- as.list(out)
+
+            result <- toJSON(
+                out, force = TRUE, pretty = TRUE,
+                auto_unbox = TRUE, use_signif = TRUE
+            )
+            object@de_cache[hashed_body] <- result;
+            # add to object body
+
+            # if (length(object@de_cache) > 30) {
+            #   object@de_cache.remove(1);
+            # }
+
         } else {
-            print("ERROR! Num type unrecognized: " + type_n)
+            # we have a cached result for these exact params
+            print("cached")
+            result <- object@de_cache[hashed_body]
         }
-
-        if (type_d == "remainder") {
-            cells_denom <- setdiff(colnames(exprData), cells_num)
-        } else if (type_d == "saved_selection") {
-            cells_denom <- selections[[group_denom]]
-        } else if (type_d == "meta") {
-            cells_denom <- rownames(object@metaData)[
-                which(object@metaData[[subtype_d]] == group_denom)
-                ]
-        } else {
-            print("ERROR! Denom type unrecognized: " + type_d)
-        }
-
-
-        cluster_num <- match(cells_num, colnames(exprData))
-        cluster_denom <- match(cells_denom, colnames(exprData))
-
-        out <- matrix_wilcox_cpp(exprData, cluster_num, cluster_denom)
-
-        out$pval <- p.adjust(out$pval, method = "fdr")
-        out$stat <- pmax(out$AUC, 1 - out$AUC)
-
-        numMean <- rowMeans(exprData[, cluster_num])
-        denomMean <- rowMeans(exprData[, cluster_denom])
-        bias <- 1 / sqrt(length(cluster_num) * length(cluster_denom))
-
-        out$logFC <- log2( (numMean + bias) / (denomMean + bias) )
-
-        out <- out[, c("gene", "logFC", "stat", "pval"), drop = FALSE]
-        out <- as.list(out)
-
-        result <- toJSON(
-          out,
-          force = TRUE, pretty = TRUE, auto_unbox = TRUE, use_signif = TRUE
-        )
-
         res$body <- result
         compressJSONResponse(req, res)
-        return(res)
 
+        print(object@de_cache)
+        return(res)
     })
 
     pr$handle("GET", "/Clusters/<cluster_variable>/Cells",
