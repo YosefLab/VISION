@@ -255,50 +255,6 @@ Values_Plot.prototype.resize = function()
     this.needs_resize = false
 }
 
-/*
-Values_Plot.prototype.addCellInfo = function() {
-
-    // Need to create it if it isn't there
-    var self = this;
-
-    var cellinfo_div = $(self.dom_node).find('#cell-dist-div')
-    cellinfo_div.show()
-
-    if (self.CellInfo == null) {
-        self.CellInfo = new Cell_Info("gene");
-    }
-
-    var gene_key = get_global_status('plotted_item'); // assume it's a gene
-    var cells = get_global_status("selected_cells");
-
-    // plotted heatmap is based on sig_key
-    // check if we are already showing the right heatmap and don't regenerate
-    var need_plot = false;
-
-    if (self.plotted_cellinfo['gene_key'] !== gene_key){
-        self.plotted_cellinfo['gene_key'] = gene_key
-        need_plot = true;
-    }
-
-    if (self.plotted_cellinfo['cells'] !== cells) {
-        self.plotted_cellinfo['cells'] = cells;
-        need_plot = true;
-    }
-
-    if(!need_plot){
-        return $.when(true);
-    }
-
-    cellinfo_div.addClass('loading')
-
-    self.CellInfo.update()
-
-    cellinfo_div.removeClass("loading");
-
-}
-*/
-
-
 function Sig_Info()
 {
     this.dom_node = document.getElementById("sig-info-default");
@@ -443,11 +399,6 @@ Sig_Heatmap.prototype.initHeat = function(){
     var heatmap_div = $(self.dom_node).find('#heatmap-div')
     var heatmap_width = heatmap_div.parent().parent().width();
     var heatmap_height = heatmap_div.parent().parent().height()-40;
-
-    //self.heatmap = new HeatMap('#heatmap-div', heatmap_width, heatmap_height);
-    // self.heatmap.click = function(gene, index, value){
-    //     _setSignatureGene(gene);
-    // }
 }
 
 Sig_Heatmap.prototype.drawHeat = function(){
@@ -470,29 +421,14 @@ Sig_Heatmap.prototype.drawHeat = function(){
     return $.when(
         api.signature.expression(sig_key))
         .then(function(sig_expression){
-
-
-            //Construct data matrix
-            // TODO: sort genes
-
             var dataMat = sig_expression.data;
             var gene_labels = sig_expression.gene_labels;
             var sample_labels = sig_expression.sample_labels;
-
-
-
             var clusters = get_global_data('clusters')
-
             var gene_signs = gene_labels.map(function(e){
                 return sig_info.sigDict[e]
             });
-
             var assignments = sample_labels.map(sample => clusters[sample]);
-            console.log(dataMat);
-            console.log(assignments);
-            console.log(gene_labels);
-            console.log(gene_signs);
-            console.log(sample_labels);
 
             var colorscaleValue = [[0, 'rgb(0, 0, 255))'],
             [0.5, 'rgb(255, 255, 255)'],
@@ -510,7 +446,6 @@ Sig_Heatmap.prototype.drawHeat = function(){
             }];
 
             var layout = {
-              //title: 'Heatmap with Unequal Block Sizes',
               margin: {
                 t: 25,
                 r: 0,
@@ -518,23 +453,21 @@ Sig_Heatmap.prototype.drawHeat = function(){
                 l: 0
               },
               showlegend: true,
-              
-
-              //width: 500,
-              //height: 500,
-              //autosize: true
             };
 
-            Plotly.newPlot('heatmap-div', data, layout);
+            var heatmapPlot = document.getElementById('heatmap-div');
+            Plotly.newPlot(heatmapPlot, data, layout);
 
-            // self.heatmap.setData(dataMat,
-            //     assignments,
-            //     gene_labels,
-            //     gene_signs,
-            //     sample_labels);
+            $('heatmap-div').off();
+            heatmapPlot.on('plotly_click', function(data){
+              var gene = data.points[0].y;
+              set_global_status({
+                'plotted_item_type': 'gene',
+                'plotted_item': gene
+              });
+            });
 
             self.needs_plot = false
-
         }).always(function() {
             heatmap_div.removeClass('loading');
         });
@@ -698,216 +631,6 @@ function _formatNum(value){
         return value.toString();
     }
 }
-
-/*
-
-function Cell_Info()
-{
-    this.dom_node = document.getElementById("sig-info-cell")
-
-    this.cell_info = null
-    this.plotted_cellinfo = {
-        'sig_key': '',
-        'cells': [],
-    }
-
-    this.CellInfo = null;
-
-}
-
-Cell_Info.prototype.init = function()
-{
-
-    $(self.dom_node).find("#CellInfoButton").on('click', function()
-    {
-        self.addCellInfo()
-    });
-}
-
-Cell_Info.prototype.update = function()
-{
-    if (this.sig_info_cell.hasClass("active")) {
-        this.addCellInfo();
-    }
-}
-
-Cell_Info.prototype.addCellInfo = function(){
-
-    // Need to create it if it isn't there
-    var self = this;
-
-
-
-    var cellinfo_div = $(self.dom_node).find('#cell-dist-div')
-    cellinfo_div.show()
-
-    if (self.CellInfo == null) {
-        self.CellInfo = new Cell_Info("signature");
-    }
-
-    var sig_key = get_global_status('plotted_item'); // assume it's a signature
-    var cells = get_global_status("selected_cells");
-
-    // plotted heatmap is based on sig_key
-    // check if we are already showing the right heatmap and don't regenerate
-    var need_plot = false;
-
-    if (self.plotted_cellinfo['sig_key'] !== sig_key){
-        self.plotted_cellinfo['sig_key'] = sig_key
-        need_plot = true;
-    }
-
-    if (self.plotted_cellinfo['cells'] !== cells) {
-        self.plotted_cellinfo['cells'] = cells;
-        need_plot = true;
-    }
-
-    if(!need_plot){
-        return $.when(true);
-    }
-
-
-    cellinfo_div.addClass('loading')
-
-    self.CellInfo.update()
-
-    cellinfo_div.removeClass("loading");
-
-}
-*/
-
-
-
-/*
-function Cell_Info(data_type)
-{
-    if (data_type == "signature") {
-	       this.dom_node = document.getElementById("sig-info");
-    } else if (data_type == "meta") {
-	       this.dom_node = document.getElementById("meta-info");
-    } else if (data_type == "gene") {
-	       this.dom_node = document.getElementById("gene-info");
-    }
-
-    this.data_type = data_type;
-    this.title = $(this.dom_node).find("#cell-analysis-title");
-    this.source = $(this.dom_node).find('#cell-source');
-    this.chart = $(this.dom_node).find('#cell-dist-div').get(0);
-    this.bound_cell = ""
-    this.cell_table = $(this.dom_node).find("#cell-info-table");
-
-    var celldt = this.cell_table;
-
-    celldt.DataTable( {
-        columns: [
-            { 'title': 'Cell' },
-            {'title': 'Value', 'className': 'dt-center'}],
-        'paging': false,
-        'info': true,
-        'scrollY': '15vh',
-        'scrollCollapse': true,
-    })
-
-}
-
-Cell_Info.prototype.init = function()
-{
-
-}
-
-Cell_Info.prototype.update = function()
-{
-
-    var self = this;
-    if (this.data_type == "signature") {
-
-	var name = get_global_data('sig_info').name;
-
-    } else if (this.data_type == "meta") {
-
-	var name = get_global_status('plotted_item')
-
-    } else if (this.data_type == "gene") {
-
-	var name = get_global_status('plotted_item')
-
-    }
-
-    var item_type = get_global_status('plotted_item_type')
-    var cells = get_global_status('selected_cells')
-
-    if (Object.keys(cells).length > 1) {
-	       this.bound_cell = "Selected Subset";
-    } else {
-	       this.bound_cell = cells[0]
-    }
-
-    $(this.title).text(name)
-    $(this.source).text(this.bound_cell);
-
-    var exp = get_global_data('plotted_values')
-
-    var poolstatus = get_global_status("pooled")
-
-    f_exp = []
-
-    if (poolstatus && (this.data_type == "meta" || this.data_type == "gene")) {
-    	var subset = [];
-    	exp = Object.keys(exp).forEach(function(k) {
-    	    if (cells.indexOf(k) > -1) {
-    		          subset.push(k);
-    	    }
-    	});
-
-        vals_promise = api.pool.values(subset, self.data_type, name);
-        cellname_promise = api.pool.cells(subset);
-
-    	return $.when(vals_promise, cellname_promise)
-                    .then(function(vs, cell_subset) {
-
-
-            if (vs == "[]") {
-                alert("Not a cell property! Please choose another metadata item")
-            }
-
-    	    drawDistChart(self.chart, vs, "Values")
-
-            exp_cells_dict = cell_subset.map(function(e, i) {
-                return [e, vs[i]]
-            });
-
-            var dt = self.cell_table;
-
-            dt.DataTable().clear()
-                .rows.add(exp_cells_dict)
-                .draw();
-
-        });
-
-
-
-    } else {
-    	exp = Object.keys(exp).forEach(function(k) {
-    	    if (cells.indexOf(k) > -1) {
-    		f_exp.push(exp[k]);
-    	   }
-    	})
-
-        drawDistChart(this.chart, f_exp, 'Values')
-
-        exp_cells_dict = cells.map(function(e, i) {
-            return [e, f_exp[i]]
-        });
-
-        var dt = this.cell_table;
-
-        dt.DataTable().clear()
-            .rows.add(exp_cells_dict)
-            .draw()
-
-    }
-}
-*/
 
 function drawDistChart(node, values, logScale) {
 

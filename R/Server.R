@@ -301,8 +301,10 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         else{
             sig <- object@sigData[[index]]
             genes <- names(sig@sigDict)
-            expMat <- object@exprData
+            expMat <- object@exprData[genes,]
             # transpose to aggregate
+            # note only agg over genes in sig
+            # on click gene plots gene
             expMat <- t(expMat)
             clusters <- vis@metaData$VISION_Clusters
             x <- aggregate(expMat, by=list(clusters), mean)
