@@ -212,6 +212,15 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         colnames(object@LatentSpace) <- paste0("Comp ", seq_len(ncol(object@LatentSpace)))
     }
 
+    # Ensure the 'Viewer' list is fully initialized
+    if (!("selections" %in% object@Viewer)){
+        object@Viewer[["selections"]] <- list()
+    }
+    if (!("de_cache" %in% object@Viewer)){
+        object@Viewer[["de_cache"]] <- list()
+    }
+
+
     # Load the static file whitelist
     whitelist_file <- system.file("html_output/whitelist.txt",
                                   package = "VISION")
@@ -399,7 +408,9 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
                               function(i) is.numeric(object@metaData[[i]]),
                               FUN.VALUE = TRUE)
         numericMeta <- colnames(object@metaData)[numericMeta]
-        proj_names[["Meta Data"]] <- numericMeta
+        if (length(numericMeta) > 1){
+            proj_names[["Meta Data"]] <- numericMeta
+        }
 
         proj_names <- proj_names[order(names(proj_names), decreasing = TRUE)] # hack to make tsne on top
         res$body <- toJSON(proj_names)
@@ -597,108 +608,112 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         group_num <- body$group_num
         group_denom <- body$group_denom
-        
+
         cells_min <- as.numeric(body$min_cells) # default 1
         subsample_groups <- body$subsample_groups
         subsample_cells_n <- body$subsample_N # add checkbox
-        
+
         # I want to skip caching a manual selection because the hash would be complicated
-        skip_cache = FALSE;
+        skip_cache <- FALSE;
         if (type_n == "current") {
           skip_cache <- TRUE;
         } else {
           # hash by the params as a string
-          hashed_body = paste(type_n,type_d, subtype_n, subtype_d, group_num, group_denom, subsample_cells_n, cells_min, subsample_groups, sep= " ")
+          hashed_body <- paste(type_n, type_d, subtype_n, subtype_d, group_num,
+              group_denom, subsample_cells_n, cells_min, subsample_groups, sep = " ")
         }
-        if (skip_cache || is.null(object@de_cache[[hashed_body]])) {
-          # The case where we know the de calculation is not cached, so we have to actually
-          # calculate it.
-          if (type_n == "current") {
-              cells_num <- unlist(strsplit(group_num, ","))
-          } else if (type_n == "saved_selection") {
-              cells_num <- object@selections[[group_num]]
-          } else if (type_n == "meta") {
-              cells_num <- rownames(object@metaData)[
-                  which(object@metaData[[subtype_n]] == group_num)
-                  ]
-          } else {
-              print("ERROR! Num type unrecognized: " + type_n)
-          }
-    
-          if (type_d == "remainder") {
-              cells_denom <- setdiff(colnames(exprData), cells_num)
-          } else if (type_d == "saved_selection") {
-              cells_denom <- object@selections[[group_denom]]
-          } else if (type_d == "meta") {
-              cells_denom <- rownames(object@metaData)[
-                  which(object@metaData[[subtype_d]] == group_denom)
-                  ]
-          } else {
-              print("ERROR! Denom type unrecognized: " + type_d)
-          }
-          
-          # subsample the numerator and denominator groups 
-          if (subsample_groups) {
-            if (length(cells_num) > subsample_cells_n) {
-              # if possible, the numerator becomes a random sample of size subsample_cells_n
-              cells_num <- sample(cells_num, size=subsample_cells_n)
+        if (skip_cache || is.null(object@Viewer$de_cache[[hashed_body]])) {
+            # The case where we know the de calculation is not cached, so we have to actually
+            # calculate it.
+
+            selections <- getSelections(object)
+
+            if (type_n == "current") {
+                cells_num <- unlist(strsplit(group_num, ","))
+            } else if (type_n == "saved_selection") {
+                cells_num <- selections[[group_num]]
+            } else if (type_n == "meta") {
+                cells_num <- rownames(object@metaData)[
+                    which(object@metaData[[subtype_n]] == group_num)
+                    ]
+            } else {
+                print("ERROR! Num type unrecognized: " + type_n)
             }
-            if (length(cells_denom) > subsample_cells_n) {
-              # if possible, the denominator becomes a random sample of size subsample_cells_n
-              cells_denom <- sample(cells_denom, size=subsample_cells_n)
+
+            if (type_d == "remainder") {
+                cells_denom <- setdiff(colnames(exprData), cells_num)
+            } else if (type_d == "saved_selection") {
+                cells_denom <- selections[[group_denom]]
+            } else if (type_d == "meta") {
+                cells_denom <- rownames(object@metaData)[
+                    which(object@metaData[[subtype_d]] == group_denom)
+                    ]
+            } else {
+                print("ERROR! Denom type unrecognized: " + type_d)
             }
-          }
-          
-          # subset to only genes expressed in at least min cells
-          if (cells_min < length(colnames(exprData))) {
-            exprDataSubset <- exprData[rowSums(exprData > 0) >= cells_min,]
-          } else {
-            exprDataSubset <- exprData
-          }
-          
-          
-          cluster_num <- match(cells_num, colnames(exprDataSubset))
-          cluster_denom <- match(cells_denom, colnames(exprDataSubset))
-    
-          out <- matrix_wilcox_cpp(exprDataSubset, cluster_num, cluster_denom)
-    
-          out$pval <- p.adjust(out$pval, method = "fdr")
-          out$stat <- pmax(out$AUC, 1 - out$AUC)
-    
-          numMean <- rowMeans(exprDataSubset[, cluster_num])
-          denomMean <- rowMeans(exprDataSubset[, cluster_denom])
-          bias <- 1 / sqrt(length(cluster_num) * length(cluster_denom))
-    
-          out$logFC <- log2( (numMean + bias) / (denomMean + bias) )
-    
-          out <- out[, c("gene", "logFC", "stat", "pval"), drop = FALSE]
-          
-          # add the calculated results to the object, unless it was a user selection
-          if (!skip_cache) {
-            object@de_cache[[hashed_body]] <<- out;
-            # add to object body, removing the first stored item
-            # TODO could implement a lru cache?
-            # storing 10 max TODO decide on max size for cache
-            if (length(object@de_cache) > 10) {
-              # remove first cached item
-              object@de_cache[1] <<- NULL;
+
+            # subsample the numerator and denominator groups
+            if (subsample_groups) {
+                if (length(cells_num) > subsample_cells_n) {
+                    # if possible, the numerator becomes a random sample of size subsample_cells_n
+                    cells_num <- sample(cells_num, size = subsample_cells_n)
+                }
+                if (length(cells_denom) > subsample_cells_n) {
+                    # if possible, the denominator becomes a random sample of size subsample_cells_n
+                    cells_denom <- sample(cells_denom, size = subsample_cells_n)
+                }
             }
-          }
-          
+
+            # subset to only genes expressed in at least min cells
+            if (cells_min < length(colnames(exprData))) {
+                exprDataSubset <- exprData[rowSums(exprData > 0) >= cells_min, , drop = FALSE]
+            } else {
+                exprDataSubset <- exprData
+            }
+
+
+            cluster_num <- match(cells_num, colnames(exprDataSubset))
+            cluster_denom <- match(cells_denom, colnames(exprDataSubset))
+
+            out <- matrix_wilcox_cpp(exprDataSubset, cluster_num, cluster_denom)
+
+            out$pval <- p.adjust(out$pval, method = "fdr")
+            out$stat <- pmax(out$AUC, 1 - out$AUC)
+
+            numMean <- rowMeans(exprDataSubset[, cluster_num])
+            denomMean <- rowMeans(exprDataSubset[, cluster_denom])
+            bias <- 1 / sqrt(length(cluster_num) * length(cluster_denom))
+
+            out$logFC <- log2( (numMean + bias) / (denomMean + bias) )
+
+            out <- out[, c("gene", "logFC", "stat", "pval"), drop = FALSE]
+
+            # add the calculated results to the object, unless it was a user selection
+            if (!skip_cache) {
+                object@Viewer$de_cache[[hashed_body]] <<- out;
+                # add to object body, removing the first stored item
+                # TODO could implement a lru cache?
+                # storing 10 max TODO decide on max size for cache
+                if (length(object@Viewer$de_cache) > 10) {
+                    # remove first cached item
+                    object@Viewer$de_cache[1] <<- NULL;
+                }
+            }
+
         } else {
-          # we have a cached result for these exact params, return it
-          out = object@de_cache[[hashed_body]]
+            # we have a cached result for these exact params, return it
+            out <- object@Viewer$de_cache[[hashed_body]]
         }
-        
+
         out <- as.list(out)
-        
+
         result <- toJSON(
-          out,
-          force = TRUE, pretty = TRUE, auto_unbox = TRUE, use_signif = TRUE
+            out, force = TRUE, pretty = TRUE,
+            auto_unbox = TRUE, use_signif = TRUE
         )
         res$body <- result
         compressJSONResponse(req, res)
-        
+
         return(res)
     })
 
@@ -992,7 +1007,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         selection_id <- URLdecode(selection_id)
         selections <- getSelections(object)
         cell_ids <- fromJSON(req$postBody)
-        selections[[selection_id]] <<- cell_ids # Super assignment!
+        object@Viewer$selections[[selection_id]] <<- cell_ids # Super assignment!
         res$body <- ""  # Empty body for successful POST
         return(res)
     })
