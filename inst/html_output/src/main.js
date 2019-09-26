@@ -36,7 +36,6 @@ global_data.sig_projection_coordinatesY = {};
 global_data.tree_projection_coordinates = {};
 global_data.plotted_values = {}; // Holds gene expression, signature scores/ranks, etc...
 global_data.sig_info = {};  // Holds the information for the last plotted signature
-global_data.clusters = {};  // Maps cell ID to cluster ID
 global_data.cluster_variables = [];
 global_data.meta_sigs = []; // Holds list of sig names that are meta-data
 
@@ -138,19 +137,6 @@ function set_global_status(update){
 
     }
 
-    if('cluster_var' in update) {
-        var cluster_var = get_global_status('cluster_var')
-        var cell_clusters_promise = api.clusters.cells(cluster_var)
-            .then( data => {
-                global_data.clusters = data
-            })
-        all_promises.push(cell_clusters_promise);
-        right_content_promises.push(cell_clusters_promise);
-        lower_left_content_promises.push(cell_clusters_promise);
-        upper_left_content_promises.push(cell_clusters_promise);
-
-    }
-
     $.when.apply($, right_content_promises).then(
         function() {
             right_content.update(update).then(() => {
@@ -209,7 +195,6 @@ window.onload = function()
     right_content = new Right_Content()
 
 
-    var lower_left_promise = lower_left_content.init();
     var right_promise = right_content.init();
 
     var sessionInfoPromise = api.sessionInfo().then(info => {
@@ -243,7 +228,6 @@ window.onload = function()
     var cellClustersPromise = api.clusters.list()
         .then(function(data) {
             global_data.cluster_variables = data;
-            global_status.cluster_var = global_data.cluster_variables[0];
         })
 
     var allCellClustersPromise = api.clusters.meta_levels()
@@ -255,18 +239,15 @@ window.onload = function()
     var combinedPromise = $.when(sessionInfoPromise, cellClustersPromise)
         .then(function(){
             return upper_left_content.init();
-        }).then(function() {
-            var cluster_var = get_global_status('cluster_var')
-            var cell_clusters_promise = api.clusters.cells(cluster_var)
-                .then( data => {
-                    global_data.clusters = data
-                })
-            return cell_clusters_promise
         })
 
+    var combinedPromise2 = $.when(sessionInfoPromise, cellClustersPromise)
+        .then(function(){
+            return lower_left_content.init();
+        })
 
     // When it's all done, run this
-    $.when(right_promise, lower_left_promise, combinedPromise, allCellClustersPromise)
+    $.when(right_promise, combinedPromise, combinedPromise2, allCellClustersPromise)
         .then(function(){
             var has_tree = get_global_status('has_tree')
             var update0 = {'main_vis': (has_tree ? 'tree': 'clusters')}
@@ -289,19 +270,6 @@ window.onload = function()
         set_global_status({
             'main_vis': $(this).data('main-vis')
         })
-    });
-
-    window.addEventListener('hover-cells', function(e) {
-
-        // Disable hover events if there are too many cells
-        // This is necessary for performance
-        var ncells = get_global_status('ncells')
-        if( ncells < 10000){
-            var list_of_cell_ids = e.detail
-            right_content.hover_cells(list_of_cell_ids)
-            upper_left_content.hover_cells(list_of_cell_ids)
-            lower_left_content.hover_cells(list_of_cell_ids)
-        }
     });
 
     window.addEventListener("select-cells", function(e) {

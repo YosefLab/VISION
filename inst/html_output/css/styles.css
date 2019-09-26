@@ -187,3 +187,8 @@ div.vis-icon > svg {
     width: 85%;
     height: 85%;
 }
+
+.label {
+    font-size: .9em;
+    font-weight: bold;
+}

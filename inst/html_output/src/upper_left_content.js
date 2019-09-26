@@ -20,6 +20,28 @@ function Upper_Left_Content()
 
 Upper_Left_Content.prototype.init = function()
 {
+    var self = this
+
+    // Initialize cluster dropdown in the top row
+    // Must happen before initializing child components
+    var clust_dropdown = $(this.dom_node).find('#cluster-group-select');
+    var cluster_variables = get_global_data('cluster_variables')
+
+    clust_dropdown.empty();
+    for(var i=0; i<cluster_variables.length; i++){
+        clust_dropdown.append($("<option />")
+            .val(cluster_variables[i])
+            .text(cluster_variables[i]));
+    }
+    clust_dropdown
+        .on('change', function () {
+            self.update({
+                'cluster_var':$(this).val(),
+            });
+            $(this).blur()
+        })
+
+
     var sig_table = new Signature_Table()
     this.children.push(sig_table)
     this.sig_table = sig_table
@@ -57,23 +79,6 @@ Upper_Left_Content.prototype.init = function()
         document.getElementById("upper-left-content")
     );
 
-    // Initialize cluster dropdown in the top row
-    var clust_dropdown = $(this.dom_node).find('#cluster-group-select');
-    var cluster_variables = get_global_data('cluster_variables')
-
-    clust_dropdown.empty();
-    for(var i=0; i<cluster_variables.length; i++){
-        clust_dropdown.append($("<option />")
-            .val(cluster_variables[i])
-            .text(cluster_variables[i]));
-    }
-    clust_dropdown
-        .on('change', function () {
-            set_global_status({
-                'cluster_var':$(this).val(),
-            });
-        })
-
     // If no signatures, need to hide the 'Signatures' nav item
     // If no proteins, need to hide the 'Proteins' nav item
 
@@ -108,6 +113,13 @@ Upper_Left_Content.prototype.init = function()
 
     return $.when(sig_table_promise, protein_table_promise, pc_table_promise, gene_select_promise, de_select_promise);
 
+}
+
+var _get_cluster_var = function()
+{
+    // Kind of a hack
+    var clust_dropdown = $('#cluster-group-select');
+    return clust_dropdown.val();
 }
 
 Upper_Left_Content.prototype.update = function(updates)
@@ -156,10 +168,6 @@ Upper_Left_Content.prototype.select_default_sig = function()
     update['plotted_item_type'] = item_type
 
     return update;
-}
-
-Upper_Left_Content.prototype.hover_cells = function()
-{
 }
 
 
@@ -520,7 +528,7 @@ Signature_Table.prototype.update = function(updates)
     var matrix_promise;
     if( 'main_vis' in updates || _.isEmpty(self.matrix) || 'cluster_var' in updates){
         var main_vis = get_global_status('main_vis');
-        var cluster_var = get_global_status('cluster_var');
+        var cluster_var = _get_cluster_var();
 
         var fix_col_label = true
         if (main_vis == "clusters") {
@@ -918,7 +926,7 @@ Protein_Table.prototype.update = function(updates)
     var matrix_promise;
     if( 'main_vis' in updates || _.isEmpty(self.matrix) || 'cluster_var' in updates){
         var main_vis = get_global_status('main_vis');
-        var cluster_var = get_global_status('cluster_var');
+        var cluster_var = _get_cluster_var()
 
         var fix_col_label = true
         if (main_vis == "clusters") {
@@ -1026,7 +1034,7 @@ Meta_Table.prototype.update = function(updates)
     var matrix_promise;
     if('main_vis' in updates || _.isEmpty(self.matrix) || 'cluster_var' in updates){
         var main_vis = get_global_status('main_vis');
-        var cluster_var = get_global_status('cluster_var');
+        var cluster_var = _get_cluster_var()
 
         var fix_col_label = true
         if (main_vis == "clusters") {
@@ -1453,9 +1461,9 @@ function DE_Select()
     this.de_table = $(this.dom_node).find('#de-results-table');
     this.de_controls = $(this.dom_node).find('.controls');
 
-    this.min_cells = $('#de_min_cells');
-    this.sub_cells_n = $('#de_sub_cells_n');
-    this.sub_cells = $('#de_sub_cells');
+    this.min_cells = $(this.dom_node).find('#de_min_cells');
+    this.sub_cells_n = $(this.dom_node).find('#de_sub_cells_n');
+    this.sub_cells = $(this.dom_node).find('#de_sub_cells');
 }
 
 DE_Select.prototype.init = function()
@@ -1471,10 +1479,6 @@ DE_Select.prototype.init = function()
     var de_error = this.de_error;
     var de_results = this.de_results;
     var de_controls = this.de_controls;
-
-    var min_cells = this.min_cells;
-    var sub_cells_n = this.sub_cells_n;
-    var sub_cells = this.sub_cells;
 
     var clusters = get_global_data("cluster_variables");
 
@@ -1497,20 +1501,20 @@ DE_Select.prototype.init = function()
         }
     );
 
-      $.fn.dataTable.ext.search.push(
-      function( settings, data, dataIndex ) {
-          var min = 0;
-          var max = parseFloat( $('#max').val(), 10 );
-          var fdr = parseFloat( data[3] ) || 0; // use data for the age column
-          if ( ( isNaN( min ) && isNaN( max ) ) ||
-               ( isNaN( min ) && fdr <= max ) ||
-               ( min <= fdr   && isNaN( max ) ) ||
-               ( min <= fdr   && fdr <= max ) )
-          {
-              return true;
-          }
-          return false;
-      }
+    $.fn.dataTable.ext.search.push(
+        function( settings, data) {
+            var min = 0;
+            var max = parseFloat( $('#max').val(), 10 );
+            var fdr = parseFloat( data[3] ) || 0; // use data for the age column
+            if ( ( isNaN( min ) && isNaN( max ) ) ||
+                 ( isNaN( min ) && fdr <= max ) ||
+                 ( min <= fdr   && isNaN( max ) ) ||
+                 ( min <= fdr   && fdr <= max ) )
+            {
+                return true;
+            }
+            return false;
+        }
     );
 
     $('#max').off();
@@ -1628,12 +1632,12 @@ DE_Select.prototype.init = function()
         var subtype_n = ""
         var subtype_d = ""
 
-        var min_cells = $('#de_min_cells').val();
-        var sub_cells_n = $('#de_sub_cells_n').val();
-        var sub_cells = $('#de_sub_cells').is(":checked")
+        var min_cells = self.min_cells.val();
+        var sub_cells_n = self.sub_cells_n.val();
+        var sub_cells = self.sub_cells.is(":checked")
 
         if (!min_cells) {
-          min_cells = 0;
+            min_cells = 0;
         }
 
         if (numControl.val() === 'selections') {
@@ -1940,34 +1944,11 @@ function tableClickFunction_clusters(row_key, item_type)
 function hoverRowCol(header_row, node, col){
     $(header_row).find('th').filter((i, e) => $(e).text() == col).addClass('highlight')
     $(node).siblings('td:first-child').addClass('highlight')
-
-
-    var hovered_cells;
-    if (col === 'Score'){
-        hovered_cells = [];
-    } else {
-        var clusters = get_global_data('clusters'); // clusters maps cell_id to cluster
-        hovered_cells = _(clusters)
-            .pickBy(val => val === col)
-            .keys()
-            .value();
-    }
-
-    var event = new CustomEvent('hover-cells',
-        { detail: hovered_cells, bubbles: true } )
-
-    node.dispatchEvent(event)
 }
 
 function unhoverRowCol(header_row, node, col){
     $(header_row).find('th').filter((i, e) => $(e).text() == col).removeClass('highlight')
     $(node).siblings('td:first-child').removeClass('highlight')
-
-    var hovered_cells = [];
-    var event = new CustomEvent('hover-cells',
-        { detail: hovered_cells, bubbles: true } )
-
-    node.dispatchEvent(event)
 }
 
 function createTooltip(popper, node, text) {

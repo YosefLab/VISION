@@ -78,9 +78,10 @@ var api = (function(){
         })
     }
 
-    output.signature.expression = function(sig_name){
+    output.signature.expression = function(sig_name, cluster_var){
         var query = "Signature/Expression/"
         query = query.concat(encodeURIComponent(sig_name))
+        query = query.concat("/" + encodeURIComponent(cluster_var))
         query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }

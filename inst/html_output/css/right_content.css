@@ -67,11 +67,6 @@
     display: flex; /* Needed so icons are centered vertically */
 }
 
-#plot-title-div .label{
-    font-size: .9em;
-    font-weight: bold;
-}
-
 #plot-title-div .color-options .btn-group{
     vertical-align: bottom;
 }

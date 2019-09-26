@@ -573,10 +573,6 @@ ColorScatter.prototype.autoZoom = function() {
 
 };
 
-ColorScatter.prototype.hover_cells = function(cell_ids) {
-
-};
-
 ColorScatter.prototype._resize = function()
 {
     var layout = this.getLayout()

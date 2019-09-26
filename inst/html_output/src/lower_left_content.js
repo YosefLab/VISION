@@ -105,7 +105,9 @@ Lower_Left_Content.prototype.update = function(updates)
 
     if('plotted_item_type' in updates){
 
-        if( updates['plotted_item_type'] !== 'signature-gene'){
+        if( updates['plotted_item_type'] !== 'signature-gene' &&
+            updates['plotted_item_type'] !== 'signature'
+        ){
             self.nav['values'].click()
         }
 
@@ -159,10 +161,6 @@ Lower_Left_Content.prototype.update = function(updates)
     }
 
     return $.when.apply($, child_promises)
-}
-
-Lower_Left_Content.prototype.hover_cells = function()
-{
 }
 
 
@@ -364,10 +362,33 @@ function Sig_Heatmap()
     this.plotted_signature = ""
     this.needs_resize = false
     this.needs_plot = true
+    this.cluster_var = ""
+    this.chart = $(this.dom_node).find('#heatmap-div').get(0);
 }
 
 Sig_Heatmap.prototype.init = function()
 {
+    var self = this;
+
+    // Initialize cluster dropdown in the top row
+    // Must happen before initializing child components
+    var clust_dropdown = $(this.dom_node).find('#heatmap-group-select');
+    var cluster_variables = get_global_data('cluster_variables')
+
+    clust_dropdown.empty();
+    for(var i=0; i<cluster_variables.length; i++){
+        clust_dropdown.append($("<option />")
+            .val(cluster_variables[i])
+            .text(cluster_variables[i]));
+    }
+    clust_dropdown
+        .on('change', function () {
+            self.update({
+                'cluster_var':$(this).val(),
+            });
+            $(this).blur()
+        })
+    this.cluster_var = clust_dropdown.val()
 }
 
 Sig_Heatmap.prototype.update = function(updates)
@@ -376,6 +397,10 @@ Sig_Heatmap.prototype.update = function(updates)
         (get_global_status('plotted_item_type') === 'signature')
 
     var needs_update_cluster_var = 'cluster_var' in updates
+
+    if (needs_update_cluster_var) {
+        this.cluster_var = updates['cluster_var']
+    }
 
     // Or else we'll update for signature-gene
     if(needs_update_sig){
@@ -394,77 +419,76 @@ Sig_Heatmap.prototype.update = function(updates)
 
 }
 
-Sig_Heatmap.prototype.initHeat = function(){
-    var self = this;
-    var heatmap_div = $(self.dom_node).find('#heatmap-div')
-    var heatmap_width = heatmap_div.parent().parent().width();
-    var heatmap_height = heatmap_div.parent().parent().height()-40;
-}
-
 Sig_Heatmap.prototype.drawHeat = function(){
 
     // Need to create it if it isn't there
     var self = this;
 
-    var heatmap_div = $(self.dom_node).find('#heatmap-div')
-
-    if( heatmap_div.children('svg').length === 0)
-    {
-        self.initHeat()
-    }
+    var heatmap_div = $(self.chart)
 
     var sig_key = this.plotted_signature // kept current by 'update' method
     var sig_info = get_global_data('sig_info');
+    var cluster_var = this.cluster_var
 
     heatmap_div.addClass('loading')
 
     return $.when(
-        api.signature.expression(sig_key))
+        api.signature.expression(sig_key, cluster_var))
         .then(function(sig_expression){
             var dataMat = sig_expression.data;
             var gene_labels = sig_expression.gene_labels;
             var sample_labels = sig_expression.sample_labels;
-            var clusters = get_global_data('clusters')
             var gene_signs = gene_labels.map(function(e){
                 return sig_info.sigDict[e]
             });
-            var assignments = sample_labels.map(sample => clusters[sample]);
 
-            var colorscaleValue = [[0, 'rgb(0, 0, 255))'],
-            [0.5, 'rgb(255, 255, 255)'],
-            [1, 'rgb(255, 0, 0))']];
+            var colorscaleValue = [
+                [0, 'rgb(0, 0, 255))'],
+                [0.5, 'rgb(255, 255, 255)'],
+                [1, 'rgb(255, 0, 0))']
+            ]
 
             var data = [{
-              z:  dataMat,
-              y:  gene_labels,
-              x:  sample_labels,
-              type: 'heatmap',
-              "zmin" : -1,
-              "zmax": 1,
-              "colorscale": colorscaleValue,
+                z:  dataMat,
+                y:  gene_labels,
+                x:  sample_labels,
+                type: 'heatmap',
+                zmin : -2,
+                zmax: 2,
+                colorscale: colorscaleValue,
+                showscale: false,
 
             }];
 
             var layout = {
-              margin: {
-                t: 25,
-                r: 0,
-                b: 0,
-                l: 0
-              },
-              showlegend: true,
+                margin: {
+                    t: 25,
+                    r: 35,
+                    b: 50,
+                    l: 70,
+                },
+                showlegend: true,
+                hovermode: 'closest',
+                xaxis: {
+                    fixedrange: true  // Makes it so zoom is y-only
+                },
+                modebar: {
+                    orientation: 'v'
+                },
             };
 
-            var heatmapPlot = document.getElementById('heatmap-div');
-            Plotly.newPlot(heatmapPlot, data, layout);
+            var options = {
+                'scrollZoom': true,
+                'displaylogo': false,
+                'modeBarButtons': [[], ['resetScale2d', 'zoom2d', 'pan2d', 'toImage']],
+            }
 
-            $('heatmap-div').off();
-            heatmapPlot.on('plotly_click', function(data){
-              var gene = data.points[0].y;
-              set_global_status({
-                'plotted_item_type': 'gene',
-                'plotted_item': gene
-              });
+            Plotly.newPlot(self.chart, data, layout, options);
+
+            $(self.chart).off();
+            self.chart.on('plotly_click', function(data){
+                var gene = data.points[0].y;
+                _setSignatureGene(gene)
             });
 
             self.needs_plot = false
@@ -475,10 +499,8 @@ Sig_Heatmap.prototype.drawHeat = function(){
 
 Sig_Heatmap.prototype.resize = function()
 {
-    var heatmap_div = $(this.dom_node).find('#heatmap-div')
-    heatmap_div.find('svg').remove();
-    this.initHeat()
-    this.drawHeat()
+    Plotly.Plots.resize(this.chart)
+    this.needs_resize = false
 }
 
 function Cell_Info()

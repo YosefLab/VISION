@@ -46,34 +46,6 @@ signatureToJSON <- function(sig, geneImportance) {
 
 }
 
-#' Convertes expression matrix to JSON
-#' @importFrom jsonlite toJSON
-#' @param expr Expression Matrix
-#' @param geneList optional list of genes to subset from expr
-#' @return (Potentially) subsetted expression matrix
-expressionToJSON <- function(expr, geneList=NULL, zscore=FALSE) {
-
-    if (!is.null(geneList)) {
-        geneList = intersect(geneList, rownames(expr))
-        expr <- expr[geneList,, drop=FALSE]
-    }
-
-    expr <- as.matrix(expr)
-
-    if (zscore) {
-        rm <- matrixStats::rowMeans2(expr)
-        rsd <- matrixStats::rowSds(expr)
-        rsd[rsd == 0] <- 1.0
-        expr_norm <- (expr - rm) / rsd
-    }
-
-    sExpr <- ServerExpression(expr_norm, colnames(expr), rownames(expr))
-
-    ejson <- toJSON(sExpr, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
-
-    return(ejson)
-}
-
 #' Converts row of sigantures score matrix to JSON
 #' @importFrom jsonlite toJSON
 #' @param ss single-column dataframe with scores for a single signature
@@ -297,10 +269,9 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       return(res)
     })
 
-    pr$handle("GET", "/Signature/Expression/<sig_name>", function(req, res, sig_name) {
-        # TODO add cluster type to api call, 
-        # scale(row mean by cluster(matLog2()))
-        # yanay heatmap
+    pr$handle("GET", "/Signature/Expression/<sig_name>/<cluster_var>",
+        function(req, res, sig_name, cluster_var) {
+
         all_names <- vapply(object@sigData, function(x) x@name, "")
         name <- URLdecode(sig_name)
         index <- match(name, all_names)
@@ -310,20 +281,41 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         else{
             sig <- object@sigData[[index]]
             genes <- names(sig@sigDict)
-            expMat <- object@exprData[genes,]
+            expMat <- object@exprData[genes, ]
             # transpose to aggregate
             # note only agg over genes in sig
             # on click gene plots gene
             expMat <- t(expMat)
-            clusters <- vis@metaData$VISION_Clusters
-            x <- aggregate(expMat, by=list(clusters), mean)
+            clusters <- object@metaData[rownames(expMat), cluster_var]
+            x <- aggregate(expMat, by = list(clusters), mean)
+
             # get rid of aggregate artifact and redo transpose
-            y <- t(x[,-c(1)])
-            # add clusters as column names
-            colnames(y) <- unique(clusters)
-            res$body <- expressionToJSON(matLog2(y), genes, zscore = TRUE)
-            # yanay
+            rownames(x) <- x[["Group.1"]]
+            x[["Group.1"]] <- NULL
+            y <- t(x)
+
+            # z-score before cluster
+            rm <- matrixStats::rowMeans2(y)
+            rsd <- matrixStats::rowSds(y)
+            rsd[rsd == 0] <- 1.0
+            y <- (y - rm) / rsd
+
+            # Cluster the rows
+            d <- dist(y, method = "euclidean")
+            fit <- hclust(d, method = "average")
+            y <- y[fit$order, , drop = FALSE]
+
+            # Cluster the columns
+            d <- dist(t(y), method = "euclidean")
+            fit <- hclust(d, method = "average")
+            y <- y[, fit$order, drop = FALSE]
+
+            sExpr <- ServerExpression(y, colnames(y), rownames(y))
+            json_out <- toJSON(sExpr, force = TRUE, pretty = TRUE, auto_unbox = TRUE)
+
+            res$body <- json_out
             compressJSONResponse(req, res)
+
             return(res)
         }
     })

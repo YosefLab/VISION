@@ -4,11 +4,6 @@
     padding: 10px 10px 10px 10px;
 }
 
-#upper-left-content .label {
-    font-size: 0.9em;
-    font-weight: bold;
-}
-
 #upper-left-content #cluster-group-select:disabled {
     opacity: 0.5;
 }
