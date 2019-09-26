@@ -36,7 +36,6 @@ global_data.sig_projection_coordinatesY = {};
 global_data.tree_projection_coordinates = {};
 global_data.plotted_values = {}; // Holds gene expression, signature scores/ranks, etc...
 global_data.sig_info = {};  // Holds the information for the last plotted signature
-global_data.cluster_variables = [];
 global_data.meta_sigs = []; // Holds list of sig names that are meta-data
 
 var lower_left_content;
@@ -225,23 +224,18 @@ window.onload = function()
         global_data.clusters_unique = info.clusters
     })
 
-    var cellClustersPromise = api.clusters.list()
-        .then(function(data) {
-            global_data.cluster_variables = data;
-        })
-
     var allCellClustersPromise = api.clusters.meta_levels()
         .then(function(data) {
             global_data.meta_levels = data;
         })
 
 
-    var combinedPromise = $.when(sessionInfoPromise, cellClustersPromise)
+    var combinedPromise = $.when(sessionInfoPromise, allCellClustersPromise)
         .then(function(){
             return upper_left_content.init();
         })
 
-    var combinedPromise2 = $.when(sessionInfoPromise, cellClustersPromise)
+    var combinedPromise2 = $.when(sessionInfoPromise, allCellClustersPromise)
         .then(function(){
             return lower_left_content.init();
         })

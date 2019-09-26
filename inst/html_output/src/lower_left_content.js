@@ -373,7 +373,7 @@ Sig_Heatmap.prototype.init = function()
     // Initialize cluster dropdown in the top row
     // Must happen before initializing child components
     var clust_dropdown = $(this.dom_node).find('#heatmap-group-select');
-    var cluster_variables = get_global_data('cluster_variables')
+    var cluster_variables = Object.keys(get_global_data('meta_levels'))
 
     clust_dropdown.empty();
     for(var i=0; i<cluster_variables.length; i++){
@@ -388,6 +388,17 @@ Sig_Heatmap.prototype.init = function()
             });
             $(this).blur()
         })
+
+    // 2-level variables are boring
+    var meta_levels = get_global_data('meta_levels')
+    for (var i=0; i < cluster_variables.length; i++) {
+        var cv = cluster_variables[i]
+        if (meta_levels[cv].length > 2) {
+            clust_dropdown.val(cv);
+            break;
+        }
+    }
+
     this.cluster_var = clust_dropdown.val()
 }
 
