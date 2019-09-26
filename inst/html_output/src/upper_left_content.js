@@ -1484,7 +1484,7 @@ DE_Select.prototype.init = function()
 
     this.setLoadingStatus = createLoadingFunction(this.dom_node);
 
-    this.de_table.DataTable(
+    var table = this.de_table.DataTable(
         {
             'columns': [
                 {'title': 'Gene'},
@@ -1495,11 +1495,30 @@ DE_Select.prototype.init = function()
             "pageLength": 500,
             "scrollY": '15vh',
             "order": [[3, "asc"]],
-            "buttons": ["csvHtml5"],
-            "pagingType": "simple_numbers",
-            "dom": "Bftip"
+            "buttons": {
+                dom: {
+                    button: {
+                        className: ''
+                    }
+                },
+                buttons: [
+                    {
+                        extend: 'csvHtml5',
+                        text: 'Export',
+                        className: 'btn btn-secondary',
+                    }
+                ]
+            },
+            "pagingType": "simple",
+            "dom": '<"fdr-filter">ftip'
         }
     );
+
+    table.buttons().container().prependTo($(this.dom_node).find('.button-container'))
+
+    $(this.dom_node).find('.fdr-holder').remove().appendTo(
+        $(this.dom_node).find('.fdr-filter')
+    )
 
     $.fn.dataTable.ext.search.push(
         function( settings, data) {
@@ -1519,7 +1538,6 @@ DE_Select.prototype.init = function()
 
     $('#max').off();
     $('#max').keyup( function() {
-      console.log("updated")
         $('#de-results-table').DataTable().draw();
     } );
 
@@ -1729,6 +1747,15 @@ DE_Select.prototype.init = function()
             addClusters(denomSelect, val, false)
         }
     });
+
+    this.sub_cells.on('change', function() {
+        var checked = $(this).is(":checked")
+        if (checked) {
+            $(this).parent().siblings('.max-control').removeClass('disabled')
+        } else {
+            $(this).parent().siblings('.max-control').addClass('disabled')
+        }
+    })
 
 
     addSelections(numSelect, true);

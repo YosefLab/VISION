@@ -193,15 +193,25 @@
                             <button class="btn btn-secondary" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
                               Advanced Options
                             </button>
-                            <div class="collapse" id="collapseExample">
+                            <div class="collapse collapsed-controls" id="collapseExample">
                               <div>
-                                  <div class="label">Gene Minimum Cells Expressed In</div>
-                                  <input type="number" id="de_min_cells" class="form-control"></input>
+                                  <div class="label">Exclude genes expressed in<br>less than <i>m</i> cells: </div>
+                                  <div class='label-control'>
+                                      <span class="label">m =</span>
+                                      <input type="number" id="de_min_cells" class="form-control" value="0"></input>
+                                  </div>
                               </div>
                               <div>
-                                  <div class="label">Subsample Groups to n Cells</div>
-                                  <input type="number" id="de_sub_cells_n" class="form-control"></input>
-                                  <label><input type="checkbox" id="de_sub_cells" name="sub_groups" value="off">  Subsample Groups?</label>
+                                  <div class='label-control no-select' style="align-items: center">
+                                      <span class="label">
+                                          <label for="de_sub_cells">Subsample Groups?</label>
+                                      </span>
+                                      <input type="checkbox" id="de_sub_cells" name="sub_groups" value="off">
+                                  </div>
+                                  <div class='label-control max-control disabled'>
+                                      <span class="label">Max Size =</span>
+                                      <input type="number" id="de_sub_cells_n" class="form-control" tabindex="-1" value="1000"></input>
+                                  </div>
                               </div>
                             </div>
                         </div>
@@ -212,28 +222,24 @@
                             <div class="spacer"></div>
                             <div id='de-results-title'>Some Title for Comparison</div>
                             <div class="spacer2"></div>
+                            <div class='label-control fdr-holder'>
+                                <span>Maximum FDR: </span>
+                                <input type="search" id="max" name="max" value=".05"></td>
+                            </div>
                             <div id='de-results-table-div'>
-                                <table border="0" cellspacing="5" cellpadding="5">
-                                  <tbody>
-                                  <tr>
-                                    <td>Maximum FDR:</td>
-                                  <td><input type="text" id="max" name="max"></td>
-                                  </tr>
-                                  </tbody>
-                                </table>
-                                <table id="de-results-table" class="compact stripe hover">
-
-                                </table>
+                                <table id="de-results-table" class="compact stripe hover"></table>
                             </div>
                             <div class="spacer2"></div>
-                            <div class='back-button'>
-                                <button type="button" class="btn btn-secondary" id="new_de" class="form-control">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <line x1="3" y1="10" x2="18" y2="10" />
-                                        <line x1="3" y1="10" x2="10" y2="5" />
-                                        <line x1="3" y1="10" x2="10" y2="15" />
-                                    </svg>
-                                    New Comparison</button>
+                            <div class="button-container">
+                                <div class='back-button'>
+                                    <button type="button" class="btn btn-secondary" id="new_de" class="form-control">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="3" y1="10" x2="18" y2="10" />
+                                            <line x1="3" y1="10" x2="10" y2="5" />
+                                            <line x1="3" y1="10" x2="10" y2="15" />
+                                        </svg>
+                                        New Comparison</button>
+                                </div>
                             </div>
                             <div class="spacer"></div>
                         </div> <!-- End #de-results -->
@@ -359,7 +365,7 @@
                                 <select id="SelectTrajectoryProjScatter" class="form-control"></select>
                             </div>
                         </div>
-                        <div class="checkbox-label" style="margin: 5px 0 5px 10px;">
+                        <div class="checkbox-label no-select" style="margin: 5px 0 5px 10px;">
                             <span class="label"><label for="sync-check">Update All?</label></span>
                             <input type="checkbox" value="" id="sync-check" checked>
                         </div>

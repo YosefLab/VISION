@@ -256,6 +256,54 @@ table.collapsible.collapsed tr:first-child > td:first-child > .sig-row-label::be
     margin-top: 5px;
 }
 
+#de-table .collapsed-controls {
+    margin-top: 1em;
+}
+
+#de-table .collapsed-controls > div {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: 1em;
+}
+
+#de-table .collapsed-controls .label-control {
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+}
+
+#de-table .collapsed-controls .label-control .label {
+    padding-right: .5em;
+}
+
+#de-table .collapsed-controls label {
+    margin-bottom: 0; /* undo bootstrap styling */
+}
+
+#de-table .collapsed-controls input[type=number] {
+    width: 5em;
+    text-align: left;
+}
+
+#de-table .collapsed-controls .disabled {
+    opacity: .4;
+    pointer-events: none;
+}
+
+/* Turn off annoying number spinners */
+
+#de-table .collapsed-controls input::-webkit-outer-spin-button,
+#de-table .collapsed-controls input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0; /* <-- Apparently some margin are still there even though it's hidden */
+}
+
+#de-table .collapsed-controls input[type=number] {
+    -moz-appearance:textfield; /* Firefox */
+}
+
 #de-table > #de-results {
     flex-grow: 1;
     flex-shrink: 1;
@@ -277,8 +325,10 @@ table.collapsible.collapsed tr:first-child > td:first-child > .sig-row-label::be
     font-size: 1.5em;
 }
 
-#de-results > .back-button {
-    text-align: right;
+#de-results .button-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
 }
 
 #de-results > div {
@@ -300,6 +350,21 @@ table.collapsible.collapsed tr:first-child > td:first-child > .sig-row-label::be
 #de-results > .spacer2 {
     flex-grow: .5;
     flex-shrink: .5;
+}
+
+#de-results .fdr-filter {
+    float: left;
+    text-align: left;
+}
+
+#de-results .fdr-filter input {
+    width: 8em;
+    margin-left: 0.5em;
+}
+
+#de-results .dataTables_wrapper .dataTables_info {
+    max-width: 20em;
+    min-height: 3em;
 }
 
 

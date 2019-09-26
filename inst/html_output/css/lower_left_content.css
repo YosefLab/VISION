@@ -74,7 +74,7 @@
 }
 
 .checkbox-label label{
-    margin-bottom: 0; /* undo bootstrap styling /*
+    margin-bottom: 0; /* undo bootstrap styling */
 }
 
 /* Hack stuff for data-tables columns */

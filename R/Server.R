@@ -603,7 +603,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         cells_min <- as.numeric(body$min_cells) # default 1
         subsample_groups <- body$subsample_groups
-        subsample_cells_n <- body$subsample_N # add checkbox
+        subsample_cells_n <- as.numeric(body$subsample_N)
 
         # I want to skip caching a manual selection because the hash would be complicated
         skip_cache <- FALSE;
@@ -657,7 +657,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             }
 
             # subset to only genes expressed in at least min cells
-            if (cells_min < length(colnames(exprData))) {
+            if (cells_min < length(colnames(exprData)) && cells_min > 0) {
                 exprDataSubset <- exprData[rowSums(exprData > 0) >= cells_min, , drop = FALSE]
             } else {
                 exprDataSubset <- exprData
@@ -685,8 +685,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
                 object@Viewer$de_cache[[hashed_body]] <<- out;
                 # add to object body, removing the first stored item
                 # TODO could implement a lru cache?
-                # storing 10 max TODO decide on max size for cache
-                if (length(object@Viewer$de_cache) > 10) {
+                # storing 20 max TODO decide on max size for cache
+                if (length(object@Viewer$de_cache) > 20) {
                     # remove first cached item
                     object@Viewer$de_cache[1] <<- NULL;
                 }
