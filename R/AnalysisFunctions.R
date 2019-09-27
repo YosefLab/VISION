@@ -707,7 +707,7 @@ analyzeLocalCorrelations <- function(object) {
       object@exprData,
       object@params$signatures$sigNormMethod)
 
-  message("Computing KNN Cell Graph in the Trajectory Model...\n")
+  message("Computing KNN Cell Graph in the Latent Space...\n")
 
   weights <- computeKNNWeights(object@LatentSpace, object@params$numNeighbors)
 
@@ -772,7 +772,7 @@ analyzeTrajectoryCorrelations <- function(object) {
       object@exprData,
       object@params$signatures$sigNormMethod)
 
-  message("Computing KNN Cell Graph in the Latent Space...\n")
+  message("Computing KNN Cell Graph in the Trajectory Model...\n")
 
   weights <- computeKNNWeights(object@LatentTrajectory, object@params$numNeighbors)
 

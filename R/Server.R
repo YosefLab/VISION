@@ -287,12 +287,17 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             # on click gene plots gene
             expMat <- t(expMat)
             clusters <- object@metaData[rownames(expMat), cluster_var]
-            x <- aggregate(expMat, by = list(clusters), mean)
+            clusters <- as.factor(clusters)
+            onehot <- lapply(setNames(levels(clusters), levels(clusters)),
+                function(level) ifelse(clusters == level, 1, 0)
+            )
+            onehot <- t(do.call(cbind, onehot))
+            onehot <- onehot / rowSums(onehot)
+            x <- onehot %*% expMat
 
             # get rid of aggregate artifact and redo transpose
-            rownames(x) <- x[["Group.1"]]
-            x[["Group.1"]] <- NULL
-            y <- t(x)
+            y <- as.matrix(t(x))
+            rownames(y) <- colnames(expMat)
 
             # z-score before cluster
             rm <- matrixStats::rowMeans2(y)
@@ -666,6 +671,10 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
             cluster_num <- match(cells_num, colnames(exprDataSubset))
             cluster_denom <- match(cells_denom, colnames(exprDataSubset))
+
+            # Needed for sparse subsetting
+            cluster_num <- as.numeric(cluster_num)
+            cluster_denom <- as.numeric(cluster_denom)
 
             out <- matrix_wilcox_cpp(exprDataSubset, cluster_num, cluster_denom)
 

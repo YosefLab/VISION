@@ -21,8 +21,9 @@ batchify <- function(items, per_batch, n_workers = 1) {
         n_batches <- n_iterations * n_workers
     }
     per_batch <- ceiling(length(items) / n_batches)
+    n_batches <- ceiling(length(items) / per_batch)
 
-    out <- lapply(seq(n_batches), function(i) {
+    out <- lapply(seq_len(n_batches), function(i) {
         start_i <- (i - 1) * per_batch + 1
         end_i <- i * per_batch
         if (end_i > length(items)){
@@ -243,10 +244,26 @@ matrix_wilcox <- function(ranks, cluster_ii,
 #' @return stat - numeric vector, test statistic (AUC) for each row
 matrix_wilcox_cpp <- function(data, cluster_num, cluster_denom) {
 
-    res <- mclapply(seq_len(nrow(data)), function(i) {
-        uz <- wilcox_subset(as.numeric(data[i, ]), cluster_num, cluster_denom)
-        return(unlist(uz))
-    })
+    # Subsetting individual rows is bad with a sparse matrix
+    # instead we subset chunks at a time
+
+    if ( is(data, "sparseMatrix")){
+        batches <- batchify(as.numeric(seq_len(nrow(data))), 100)
+        items <- as.numeric(seq_len(nrow(data)))
+        res <- mclapply(batches, function(batch){
+            dsub <- as.matrix(data[batch, , drop = FALSE])
+            res_b <- lapply(seq_len(nrow(dsub)), function(i){
+                uz <- wilcox_subset(dsub[i, ], cluster_num, cluster_denom)
+                return(unlist(uz))
+            })
+            return(do.call(rbind, res_b))
+        })
+    } else {
+        res <- mclapply(seq_len(nrow(data)), function(i) {
+            uz <- wilcox_subset(as.numeric(data[i, ]), cluster_num, cluster_denom)
+            return(unlist(uz))
+        })
+    }
 
     res <- as.data.frame(do.call(rbind, res))
     res$gene <- rownames(data)
