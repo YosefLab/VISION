@@ -195,9 +195,9 @@ List wilcox_subset(
 
     double U = std::min(UA, UB);
 
-    double mU = N1 * N2 / 2;
+    double mU = N1 * N2 / 2.0;
 
-    double sdU = (double)(N1 * N2 / 12) * (N + 1 - (double)tie_groups / (N * (N - 1)));
+    double sdU = (double)(N1 * N2 / 12.0) * (N + 1 - (double)tie_groups / (N * (N - 1)));
     sdU = sqrt(sdU);
 
     double z = (U - mU) / sdU;
@@ -212,7 +212,7 @@ List wilcox_subset(
 
     List out(2);
     out.names() = CharacterVector::create("U", "Z");
-    out[0] = U;
+    out[0] = UA;
     out[1] = z;
 
 

@@ -179,3 +179,31 @@ test_that("Edge cases produce expected outputs", {
     expect_equal(out$stat, rep(0.5, 10))
 
 })
+
+test_that("CPP Wilcox is Correct", {
+
+    test_mat <- matrix(runif(5 * 10), nrow = 5)
+    test_mat[3, c(3, 4, 7)] <- 1 # Add some ties
+    test_mat[4, c(1, 2, 4)] <- 1 # Add some ties
+    test_mat[5, c(2, 3, 4)] <- 1 # Add some ties
+    cluster_ii <- c(1, 2, 5)
+    not_cluster_ii <- which(!(seq(ncol(test_mat)) %in% cluster_ii))
+
+    res <- matrix_wilcox_cpp(test_mat, cluster_ii, not_cluster_ii)
+
+
+    # Compare with R implementation
+    ref <- do.call(rbind,
+        lapply(seq_len(nrow(test_mat)), function(i){
+            x <- test_mat[i, cluster_ii]
+            y <- test_mat[i, not_cluster_ii]
+            ref_i <- wilcox.test(x, y, exact = FALSE, alternative = "two.sided")
+            return(c(U = unname(ref_i$statistic), pval = ref_i$p.value))
+        })
+    )
+
+    ref <- as.data.frame(ref)
+
+    expect_equal(ref$U, res$U)
+    expect_equal(ref$pval, res$pval, tolerance = 1e-8)
+})

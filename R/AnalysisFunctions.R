@@ -955,34 +955,45 @@ clusterSigScores <- function(object, variables = "All") {
 
     # Comparisons for Proteins
     if (hasProteinData(object)){
-        fbRanks <- colRanks(object@proteinData,
-                            preserveShape = TRUE,
-                            ties.method = "average")
-        dimnames(fbRanks) <- dimnames(object@proteinData)
-        out_fb <- pbmclapply(clusterMeta, function(variable){
-            values <- metaData[[variable]]
-            var_levels <- levels(values)
+        fbData <- t(object@proteinData)
 
-            result <- lapply(var_levels, function(var_level){
-                cluster_ii <- which(values == var_level)
-
-                rr <- matrix_wilcox(fbRanks, cluster_ii,
-                                    check_na = TRUE, check_ties = TRUE)
-
-                pval <- rr$pval
-                stat <- rr$stat
-                fdr <- p.adjust(pval, method = "BH")
-                out <- data.frame(
-                    stat = stat, pValue = pval, FDR = fdr
-                )
-                return(out)
+        # gather jobs
+        jobs <- lapply(unname(clusterMeta), function(variable) {
+            lapply(levels(metaData[[variable]]), function(level) {
+                return(c(variable, level))
             })
+        })
+        jobs <- do.call(c, jobs)
 
-            names(result) <- var_levels
-            result <- result[order(var_levels)]
+        results <- pbmclapply(jobs, function(job){
+            variable <- job[1]
+            var_level <- job[2]
+            values <- metaData[[variable]]
+            cluster_ii <- which(values == var_level)
+            not_cluster_ii <- which(values != var_level)
 
-            return(result)
-        }, mc.cores = 1)
+            rr <- matrix_wilcox_cpp(
+                fbData, cluster_ii, not_cluster_ii, jobs = 1)
+
+            pval <- rr$pval
+            stat <- rr$U
+            fdr <- p.adjust(pval, method = "BH")
+            out <- data.frame(
+                stat = stat, pValue = pval, FDR = fdr
+            )
+            return(list(job, out))
+        })
+
+        out_fb <- list()
+        for (res in results){
+            variable <- res[[1]][1]
+            var_level <- res[[1]][2]
+            df <- res[[2]]
+            if (is.null(out_fb[[variable]])){
+                out_fb[[variable]] <- list()
+            }
+            out_fb[[variable]][[var_level]] <- df
+        }
 
         ClusterComparisons[["Proteins"]] <- out_fb
     } else {

@@ -242,7 +242,8 @@ matrix_wilcox <- function(ranks, cluster_ii,
 #' @param cluster_denum numeric vector - indices denoting the other group to be compared
 #' @return pval - numeric vector, pvalue for each row
 #' @return stat - numeric vector, test statistic (AUC) for each row
-matrix_wilcox_cpp <- function(data, cluster_num, cluster_denom) {
+matrix_wilcox_cpp <- function(data, cluster_num, cluster_denom,
+    jobs = getOption("mc.cores", 2L)) {
 
     # Subsetting individual rows is bad with a sparse matrix
     # instead we subset chunks at a time
@@ -257,12 +258,12 @@ matrix_wilcox_cpp <- function(data, cluster_num, cluster_denom) {
                 return(unlist(uz))
             })
             return(do.call(rbind, res_b))
-        })
+        }, mc.cores = jobs)
     } else {
         res <- mclapply(seq_len(nrow(data)), function(i) {
             uz <- wilcox_subset(as.numeric(data[i, ]), cluster_num, cluster_denom)
             return(unlist(uz))
-        })
+        }, mc.cores = jobs)
     }
 
     res <- as.data.frame(do.call(rbind, res))
