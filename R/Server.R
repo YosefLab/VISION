@@ -680,6 +680,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
             out$pval <- p.adjust(out$pval, method = "fdr")
             out$stat <- pmax(out$AUC, 1 - out$AUC)
+            out$gene <- rownames(out)
+            rownames(out) <- NULL
 
             numMean <- rowMeans(exprDataSubset[, cluster_num])
             denomMean <- rowMeans(exprDataSubset[, cluster_denom])

@@ -976,10 +976,11 @@ clusterSigScores <- function(object, variables = "All") {
                 fbData, cluster_ii, not_cluster_ii, jobs = 1)
 
             pval <- rr$pval
-            stat <- rr$U
+            stat <- rr$AUC
             fdr <- p.adjust(pval, method = "BH")
             out <- data.frame(
-                stat = stat, pValue = pval, FDR = fdr
+                stat = stat, pValue = pval, FDR = fdr,
+                row.names = rownames(rr)
             )
             return(list(job, out))
         })

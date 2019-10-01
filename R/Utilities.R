@@ -267,7 +267,7 @@ matrix_wilcox_cpp <- function(data, cluster_num, cluster_denom,
     }
 
     res <- as.data.frame(do.call(rbind, res))
-    res$gene <- rownames(data)
+    rownames(res) <- rownames(data)
 
     res$AUC <- res$U / (length(cluster_num) * length(cluster_denom))
 
