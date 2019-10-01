@@ -65,7 +65,7 @@ poolCells <- function(object, cellsPerPartition = NULL) {
 
     preserve_clusters <- NULL
 
-    if (is.null(object@params$latentSpace$projectionGenes)){
+    if (is.null(object@params$latentSpace[["projectionGenes"]])){
         filterInput <- object@params$latentSpace$projectionGenesMethod
     } else {
         filterInput <- object@params$latentSpace$projectionGenes
@@ -132,11 +132,14 @@ poolCells <- function(object, cellsPerPartition = NULL) {
 #' for it to be used when computing PCA. If less than 1, this instead specifies the proportion of cells needed
 #' @param num_mad Number of median absolute deviations to use when selecting highly-variable
 #' genes in each mean-sorted bin of genes
-#' @param projection_genes either a list of genes or a method to select genes
+#' @param projection_genes_method a method to select genes either 'Threshold' or 'Fano'
+#' @param projection_genes a list of genes to use specifically.
+#' If this is supplied then `projection_genes_method` is ignored
 #' @return the VISION object, populated with filtered data
 computeProjectionGenes <- function(object,
                        threshold = NULL,
                        num_mad = NULL,
+                       projection_genes_method = NULL,
                        projection_genes = NULL) {
 
     if (!is.null(threshold)){
@@ -155,11 +158,17 @@ computeProjectionGenes <- function(object,
 
     if (!is.null(projection_genes)){
         object@params$latentSpace$projectionGenes <- projection_genes
+    } else {
+        object@params$latentSpace$projectionGenes <- NULL
+    }
+
+    if (!is.null(projection_genes_method)){
+        object@params$latentSpace$projectionGenesMethod <- projection_genes_method
     }
 
     message("Determining projection genes...")
 
-    if (is.null(object@params$latentSpace$projectionGenes)){
+    if (is.null(object@params$latentSpace[["projectionGenes"]])){
 
         exprData <- matLog2(object@exprData)
         projection_genes <- applyFilters(
@@ -483,12 +492,13 @@ computeLatentSpace <- function(
         object@params$latentSpace$projectionGenesMethod <- projection_genes_method
     }
 
-    if (is.null(object@params$latentSpace$projectionGenes)) {
+    if (is.null(object@params$latentSpace[["projectionGenes"]])) {
         object <- computeProjectionGenes(
             object,
             threshold = filterThreshold,
             num_mad = filterNumMad,
-            projection_genes = object@params$latentSpace$projectionGenesMethod
+            projection_genes_method =
+                object@params$latentSpace$projectionGenesMethod
         )
     } else {
         object <- computeProjectionGenes(
@@ -501,7 +511,7 @@ computeLatentSpace <- function(
     object@params$latentSpace$numPCs <- num_PCs
 
     expr <- object@exprData
-    projection_genes <- object@params$latentSpace$projectionGenes
+    projection_genes <- object@params$latentSpace[["projectionGenes"]]
     perm_wPCA <- object@params$latentSpace$permPCA
 
     if (!is.null(projection_genes)) {
@@ -585,7 +595,7 @@ generateProjections <- function(object) {
 
   projections <- generateProjectionsInner(object@exprData,
                                      object@LatentSpace,
-                                     projection_genes = object@params$latentSpace$projectionGenes,
+                                     projection_genes = object@params$latentSpace[["projectionGenes"]],
                                      projection_methods = object@params$projectionMethods,
                                      K = object@params$numNeighbors)
 

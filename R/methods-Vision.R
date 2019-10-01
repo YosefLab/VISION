@@ -231,7 +231,7 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                                     )
             }
 
-            if (length(projection_genes) > 1 &&
+            if (length(projection_genes) == 1 &&
                 tolower(projection_genes) %in% c("fano", "threshold")){
                 .Object@params$latentSpace$projectionGenesMethod <- projection_genes
                 .Object@params$latentSpace$projectionGenes <- NULL
