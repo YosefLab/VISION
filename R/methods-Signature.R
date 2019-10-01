@@ -413,6 +413,10 @@ sigsVsProjection_pcn <- function(metaData, weights, cells = NULL, computePval = 
         numericMetaNames <- colnames(metaData)
     }
 
+    if (length(numericMetaNames) == 0) {
+        return(list(consistency = c(), pvals = c()))
+    }
+
     numericMetaRanks <- matrixStats::colRanks(
         as.matrix(metaData[, numericMetaNames, drop = FALSE]),
         preserveShape = TRUE, ties.method = "average"
