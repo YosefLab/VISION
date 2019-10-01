@@ -355,7 +355,7 @@ evalSigGeneImportance <- function(object){
     }
 
     sigs <- colnames(sigScores)
-    res <- pbmclapply(setNames(sigs, sigs), sigGene)
+    res <- pbmclapply(setNames(sigs, sigs), sigGene, mc.preschedule = FALSE)
 
     object@SigGeneImportance <- res
 
@@ -449,7 +449,7 @@ evalSigGeneImportanceSparse <- function(object){
     }
 
     sigs <- colnames(sigScores)
-    res <- pbmclapply(setNames(sigs, sigs), sigGene)
+    res <- pbmclapply(setNames(sigs, sigs), sigGene, mc.preschedule = FALSE)
 
     object@SigGeneImportance <- res
 

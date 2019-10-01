@@ -338,7 +338,7 @@ sigsVsProjection_n <- function(sigScores, randomSigData,
         )
         geary_c <- geary_sig_v_proj(sigScoreMatrixGroup, weights$indices, weights$weights)
         return(geary_c)
-    })
+    }, mc.preschedule = FALSE)
     gearyFG <- unlist(gearyFG)
     names(gearyFG) <- colnames(sigScoreMatrix)
 
@@ -355,7 +355,7 @@ sigsVsProjection_n <- function(sigScores, randomSigData,
         )
         geary_c <- geary_sig_v_proj(randomSigScores, weights$indices, weights$weights)
         return(geary_c)
-    })
+    }, mc.preschedule = FALSE)
     gearyBG <- setNames(unlist(gearyBG), names(randomSigs))
 
     # Compute fg with bg
@@ -460,7 +460,7 @@ sigsVsProjection_pcn <- function(metaData, weights, cells = NULL, computePval = 
 
         return(1 - geary_c)
 
-    })
+    }, mc.preschedule = FALSE)
 
     jobs[["C"]] <- unlist(results)
 
@@ -591,7 +591,7 @@ sigsVsProjection_pcf <- function(metaData, weights, cells = NULL){
 
     return(list(consistency = c_score, pval = pval))
 
-  })
+  }, mc.preschedule = FALSE)
 
   names(results) <- factorMeta
 
