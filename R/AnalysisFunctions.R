@@ -10,13 +10,8 @@ clusterCells <- function(object) {
 
     res <- object@LatentSpace
 
-    n_workers <- getOption("mc.cores")
-    n_workers <- if (is.null(n_workers)) 2 else n_workers
-
     K <- min(object@params$numNeighbors, 30)
-    kn <- ball_tree_knn(res,
-                        K,
-                        n_workers)
+    kn <- find_knn_parallel(res, K)
 
     cl <- louvainCluster(kn, res)
 

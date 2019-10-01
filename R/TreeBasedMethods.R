@@ -383,21 +383,3 @@ calcInterEdgeDistMat <- function(v1.dist, v2.dist, path.length) {
     v2.mat <- t(v2.dist %o% rep(1, length(v1.dist)))
     return((v1.mat + v2.mat) + path.length)
 }
-
-#' Find K nearest neighbors for each vector in query among the vectors in the
-#' given data
-#' @param data the search-space to look for nearest neighbors
-#' @param query the points to find neighbors for (not necessarily in the data)
-#' @param k the number of neighbors to find for each vectors
-#' @return a list of the k neughbors for each of the vectors in `query`
-findNeighbors <- function(data, query, k) {
-
-    n_workers <- getOption("mc.cores")
-    n_workers <- if (is.null(n_workers)) 2 else n_workers
-
-    neighborhood <- lapply(1:ncol(query), function(x) {
-    vkn <- ball_tree_vector_knn(data, query[,x], k, n_workers)
-    return(vkn)
-    })
-    return(neighborhood)
-}

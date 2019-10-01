@@ -357,10 +357,7 @@ clipBottom <- function(x, mi) {
 setMethod("computeKNNWeights", signature(object = "matrix"),
     function(object, K = round(sqrt(nrow(object)))) {
 
-        n_workers <- getOption("mc.cores")
-        n_workers <- if (is.null(n_workers)) 2 else n_workers
-
-        k <- ball_tree_knn(object, K, n_workers)
+        k <- find_knn_parallel(object, K)
         nn <- k[[1]]
         d <- k[[2]]
 

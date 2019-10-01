@@ -708,3 +708,42 @@ colVarsSp <- function(x) {
     out <- out / (nrow(x) - 1)
     return(out)
 }
+
+#' Parallel KNN
+#'
+#' Computes nearest-neighbor indices and distances
+#' in parallel.  Query is over all points and results
+#' do not include the self-distance.
+#'
+#' @importFrom RANN nn2
+#' @importFrom pbmcapply pbmclapply
+#'
+#' @param data a Samples x Dimensions numeric matrix
+#' @param K number of neighbors to query
+#' @return list with two items:
+#'     index: Samples x K matrix of neighbor indices
+#'     dist: Samples x K matrix of neighbor distances
+find_knn_parallel <- function(data, K) {
+
+    workers <- getOption("mc.cores")
+    if (is.null(workers)){
+        workers <- 1
+    }
+
+    per_batch <- round(nrow(data)/workers)
+
+    batches <- batchify(seq_len(nrow(data)), per_batch, n_workers = workers)
+
+    nn_out <- mclapply(batches, function(rows){
+        nd <- RANN::nn2(data, query = data[rows, , drop = FALSE], k = K+1)
+        return(nd)
+    })
+
+    idx <- do.call(rbind, lapply(nn_out, function(nd) nd$nn.idx))
+    dists <- do.call(rbind, lapply(nn_out, function(nd) nd$nn.dists))
+
+    idx <- idx[, -1, drop = FALSE]
+    dists <- dists[, -1, drop = FALSE]
+
+    return(list(index=idx, dist=dists))
+}

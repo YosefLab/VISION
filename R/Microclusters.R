@@ -92,12 +92,7 @@ applyMicroClustering <- function(
 
     message("    Performing initial coarse-clustering...")
 
-    n_workers <- getOption("mc.cores")
-    n_workers <- if (is.null(n_workers)) 2 else n_workers
-
-    kn <- ball_tree_knn(res,
-                        min(K, 30),
-                        n_workers)
+    kn <- find_knn_parallel(res, min(K, 30))
 
     cl <- louvainCluster(kn, res)
 
