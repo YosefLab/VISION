@@ -23,6 +23,7 @@ Imports:
 	mclust,
 	methods,
     plumber,
+    RANN,
 	Rcpp,
 	rsvd,
 	stats,
