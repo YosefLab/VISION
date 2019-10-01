@@ -131,6 +131,9 @@ getNormalizedCopySparse <- function(data, func) {
 
 #' Initialize a new NormData object
 #'
+#' @importFrom Matrix Matrix
+#' @importFrom matrixStats colCounts
+#'
 #' @param data expression data matrix
 #' @param rowOffsets offsets to be subtracted from each row
 #' @param rowScaleFactors factors to scale each row
@@ -154,6 +157,15 @@ NormData <- function(data, rowOffsets = NULL, rowScaleFactors = NULL,
 
     if (is.null(colScaleFactors)){
         colScaleFactors <- numeric(ncol(data)) + 1
+    }
+
+    if (!is(data, "Matrix")) {
+        colFill <- colCounts(data, cols = seq_len(min(ncol(data), 500)), value = 0) / nrow(data)
+        if (mean(colFill) < .5){
+            data <- as(data, "dgCMatrix")
+        } else {
+            data <- as(data, "dgeMatrix")
+        }
     }
 
     .Object <- new("NormData",

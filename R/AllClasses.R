@@ -25,13 +25,20 @@ NormData <- setClass("NormData",
     colScaleFactors = "numeric",
     rowOffsets = "numeric",
     rowScaleFactors = "numeric",
-    data = "matrixORSparse"
+    data = "Matrix"
     ),
-    validity = function(obj){
-        isValid <- nrow(obj@data) == length(obj@rowOffsets)
-        isValid <- isValid && (nrow(obj@data) == length(obj@rowScaleFactors))
-        isValid <- isValid && (ncol(obj@data) == length(obj@colOffsets))
-        isValid <- isValid && (ncol(obj@data) == length(obj@colScaleFactors))
+    validity = function(object){
+        isValid <- nrow(object@data) == length(object@rowOffsets)
+
+        isValid <- isValid && (
+            nrow(object@data) == length(object@rowScaleFactors))
+
+        isValid <- isValid && (
+            ncol(object@data) == length(object@colOffsets))
+
+        isValid <- isValid && (
+            ncol(object@data) == length(object@colScaleFactors))
+
         return(isValid)
     },
 )

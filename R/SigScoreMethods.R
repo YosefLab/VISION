@@ -86,8 +86,11 @@ innerEvalSignatureBatchNorm <- function(normData, sigs) {
     SRsE <- SRs %*% normData@data
     SRsRo <- (SRs %*% Rog) %*% Roc
 
-    Cog <- Matrix(1, ncol = 1, nrow = NGenes)
-    Coc <- Matrix(normData@colOffsets, nrow = 1)
+    # Note: this requires sparse=TRUE so OMP/MKL won't use many threads
+    # for the next multiply (e.g., avoid multiplying dense x dense).  This
+    # is important because this runs inside a parallel loop already
+    Cog <- Matrix(1, ncol = 1, nrow = NGenes, sparse = TRUE)
+    Coc <- Matrix(normData@colOffsets, nrow = 1, sparse = TRUE)
 
     SCo <- (sigSparseMatrix %*% Cog) %*% Coc
 

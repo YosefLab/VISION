@@ -680,15 +680,21 @@ getParam <- function(object, param, subparam = NULL) {
 #'
 #' @importFrom Matrix rowMeans
 #' @importFrom Matrix rowSums
+#' @importFrom matrixStats rowVars
 #'
 #' @param x expression matrix
 #' @return numeric vector row-wise variance
 rowVarsSp <- function(x) {
-    rm <- Matrix::rowMeans(x)
-    out <- Matrix::rowSums(x ^ 2)
-    out <- out - 2 * Matrix::rowSums(x * rm)
-    out <- out + ncol(x) * rm ^ 2
-    out <- out / (ncol(x) - 1)
+    if (is(x, "matrix")) {
+        out <- matrixStats::rowVars(x)
+        names(out) <- rownames(x)
+    } else {
+        rm <- Matrix::rowMeans(x)
+        out <- Matrix::rowSums(x ^ 2)
+        out <- out - 2 * Matrix::rowSums(x * rm)
+        out <- out + ncol(x) * rm ^ 2
+        out <- out / (ncol(x) - 1)
+    }
     return(out)
 }
 
@@ -697,15 +703,21 @@ rowVarsSp <- function(x) {
 #' @importFrom Matrix colMeans
 #' @importFrom Matrix colSums
 #' @importFrom Matrix rowSums
+#' @importFrom matrixStats colVars
 #'
 #' @param x expression matrix
 #' @return numeric vector col-wise variance
 colVarsSp <- function(x) {
-    rm <- Matrix::colMeans(x)
-    out <- Matrix::colSums(x ^ 2)
-    out <- out - 2 * Matrix::rowSums(t(x) * rm)
-    out <- out + nrow(x) * rm ^ 2
-    out <- out / (nrow(x) - 1)
+    if (is(x, "matrix")) {
+        out <- matrixStats::colVars(x)
+        names(out) <- colnames(x)
+    } else {
+        rm <- Matrix::colMeans(x)
+        out <- Matrix::colSums(x ^ 2)
+        out <- out - 2 * Matrix::rowSums(t(x) * rm)
+        out <- out + nrow(x) * rm ^ 2
+        out <- out / (nrow(x) - 1)
+    }
     return(out)
 }
 
