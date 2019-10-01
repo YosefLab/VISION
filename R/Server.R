@@ -678,9 +678,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
             out <- matrix_wilcox_cpp(exprDataSubset, cluster_num, cluster_denom)
 
-            out$pval <- p.adjust(out$pval, method = "fdr")
             out$stat <- pmax(out$AUC, 1 - out$AUC)
-            out$gene <- rownames(out)
+            out$Feature <- rownames(out)
             rownames(out) <- NULL
 
             numMean <- rowMeans(exprDataSubset[, cluster_num])
@@ -689,7 +688,31 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
             out$logFC <- log2( (numMean + bias) / (denomMean + bias) )
 
-            out <- out[, c("gene", "logFC", "stat", "pval"), drop = FALSE]
+            out <- out[, c("Feature", "logFC", "stat", "pval"), drop = FALSE]
+            out$Type <- "Gene"
+
+            if (hasProteinData(object)) {
+                proteinData <- t(object@proteinData)[, colnames(exprData), drop = FALSE]
+                out_p <- matrix_wilcox_cpp(proteinData, cluster_num, cluster_denom)
+
+                out_p$pval <- p.adjust(out_p$pval, method = "fdr")
+                out_p$stat <- pmax(out_p$AUC, 1 - out_p$AUC)
+                out_p$Feature <- rownames(out_p)
+                rownames(out_p) <- NULL
+
+                numMean <- rowMeans(proteinData[, cluster_num])
+                denomMean <- rowMeans(proteinData[, cluster_denom])
+                bias <- 1 / sqrt(length(cluster_num) * length(cluster_denom))
+
+                out_p$logFC <- log2( (numMean + bias) / (denomMean + bias) )
+
+                out_p <- out_p[, c("Feature", "logFC", "stat", "pval"), drop = FALSE]
+                out_p$Type <- "Protein"
+
+                out <- rbind(out, out_p)
+            }
+
+            out$pval <- p.adjust(out$pval, method = "fdr")
 
             # add the calculated results to the object, unless it was a user selection
             if (!skip_cache) {

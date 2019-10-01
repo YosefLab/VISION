@@ -5,6 +5,7 @@
  *    - Signature_Table
  *    - Meta_Table
  *    - Gene_Select
+ *    - DE_Select
  *
  */
 
@@ -1497,14 +1498,15 @@ DE_Select.prototype.init = function()
     var table = this.de_table.DataTable(
         {
             'columns': [
-                {'title': 'Gene'},
+                {'title': 'Feature'},
+                {'title': 'Type'},
                 {'title': 'logFC'},
                 {'title': 'AUC'},
                 {'title': 'FDR'},
             ],
             "pageLength": 500,
             "scrollY": '15vh',
-            "order": [[3, "asc"]],
+            "order": [[4, "asc"]],
             "buttons": {
                 dom: {
                     button: {
@@ -1534,7 +1536,7 @@ DE_Select.prototype.init = function()
         function( settings, data) {
             var min = 0;
             var max = parseFloat( $('#max').val(), 10 );
-            var fdr = parseFloat( data[3] ) || 0; // use data for the age column
+            var fdr = parseFloat( data[4] ) || 0; // use data for the age column
             if ( ( isNaN( min ) && isNaN( max ) ) ||
                  ( isNaN( min ) && fdr <= max ) ||
                  ( min <= fdr   && isNaN( max ) ) ||
@@ -1553,11 +1555,21 @@ DE_Select.prototype.init = function()
 
 
     this.de_table.on('click', "tr", function() {
-        var gene = $(this).find("td:first").text()
-        set_global_status({
-            'plotted_item_type': 'gene',
-            'plotted_item': gene
-        })
+        var cells = $(this).find("td")
+        var feature = cells.eq(0).text()
+        var type = cells.eq(1).text()
+
+        if (type === 'Gene'){
+            set_global_status({
+                'plotted_item_type': 'gene',
+                'plotted_item': feature,
+            })
+        } else {
+            set_global_status({
+                'plotted_item_type': 'protein',
+                'plotted_item': feature,
+            })
+        }
         //Plotly.restyle("scatter-div", {selectedpoints: [null]});
     });
 
@@ -1789,12 +1801,13 @@ DE_Select.prototype.update = function(updates)
 DE_Select.prototype.render_de = function()
 {
 
-    var genes = get_global_status('de')["gene"]
+    var features = get_global_status('de')["Feature"]
+    var types = get_global_status('de')["Type"]
     var pvals = get_global_status('de')["pval"]
     var stats = get_global_status('de')["stat"]
     var logFCs = get_global_status('de')["logFC"]
 
-    var dataSet = _.map(genes, (g, i) => [genes[i], logFCs[i], stats[i], pvals[i]]);
+    var dataSet = _.map(features, (f, i) => [features[i], types[i], logFCs[i], stats[i], pvals[i]]);
 
     this.de_results.show();
 
