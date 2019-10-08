@@ -41,7 +41,9 @@ signatureToJSON <- function(sig, geneImportance) {
     out$metaData <- sig@metaData
     out$geneImportance <- as.list(geneImportance)
 
-    json <- toJSON(out, force=TRUE, pretty=TRUE, auto_unbox=TRUE)
+    json <- toJSON(
+        out, force = TRUE, pretty = TRUE,
+        auto_unbox = TRUE, digits = I(4))
     return(json)
 
 }
@@ -55,9 +57,9 @@ sigScoresToJSON <- function(names, values) {
     out <- list(cells = names, values = values)
 
     json <- toJSON(
-                     out,
-                     force = TRUE, pretty = TRUE, auto_unbox = TRUE
-                     )
+        out, force = TRUE, pretty = TRUE,
+        auto_unbox = TRUE, digits = I(4)
+    )
 
     return(json)
 }
@@ -75,8 +77,11 @@ coordinatesToJSON <- function(p) {
     coord["sample_labels"] <- rownames(coord)
     rownames(coord) <- NULL
 
-    json <- toJSON(coord, force=TRUE, pretty=TRUE,
-                   auto_unbox=TRUE, dataframe="values")
+    json <- toJSON(
+        coord, force = TRUE, pretty = TRUE,
+        auto_unbox = TRUE, dataframe = "values",
+        digits = I(4)
+    )
 
     return(json)
 }
@@ -97,7 +102,7 @@ sigProjMatrixToJSON <- function(sigzscores, sigpvals, sigs) {
 
     sSPM <- ServerSigProjMatrix(unname(sigzscores), unname(sigpvals), colnames(sigpvals), rownames(sigpvals))
 
-    json <- toJSON(sSPM, force=TRUE, pretty=TRUE)
+    json <- toJSON(sSPM, force = TRUE, pretty = TRUE, digits = I(4))
 
     return(json)
 }
@@ -117,7 +122,7 @@ pearsonCorrToJSON <- function(pc, sigs) {
 
     sPC <- ServerSigProjMatrix(unname(pc), unname(pc), cn, sigs)
 
-    json <- toJSON(sPC, force = TRUE, pretty = TRUE)
+    json <- toJSON(sPC, force = TRUE, pretty = TRUE, digits = I(4))
 
     return(json)
 
@@ -316,7 +321,10 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             y <- y[, fit$order, drop = FALSE]
 
             sExpr <- ServerExpression(y, colnames(y), rownames(y))
-            json_out <- toJSON(sExpr, force = TRUE, pretty = TRUE, auto_unbox = TRUE)
+            json_out <- toJSON(
+                sExpr, force = TRUE, pretty = TRUE, auto_unbox = TRUE,
+                digits = I(4)
+            )
 
             res$body <- json_out
             compressJSONResponse(req, res)
@@ -443,8 +451,10 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         out <- list(coords, C, W)
 
-        res$body <- toJSON(out, force = TRUE, pretty = TRUE,
-                           auto_unbox = TRUE, dataframe = "values")
+        res$body <- toJSON(
+            out, force = TRUE, pretty = TRUE,
+            auto_unbox = TRUE, dataframe = "values", digits = I(4)
+        )
 
         compressJSONResponse(req, res)
 
@@ -575,7 +585,9 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         out <- list(cells = cells, values = data)
 
         res$body <- toJSON(
-            out, force = TRUE, pretty = TRUE, auto_unbox = TRUE)
+            out, force = TRUE, pretty = TRUE, auto_unbox = TRUE,
+            digits = I(4)
+        )
 
         compressJSONResponse(req, res)
 
@@ -995,7 +1007,9 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
                            )
 
         res$body <- toJSON(
-            metaSummary, force = TRUE, pretty = TRUE, auto_unbox = TRUE)
+            metaSummary, force = TRUE, pretty = TRUE,
+            auto_unbox = TRUE, digits = I(4)
+        )
 
         return(res)
 
