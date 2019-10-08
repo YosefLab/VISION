@@ -800,7 +800,7 @@ setMethod("viewResults", signature(object = "character"),
 #' }
 setMethod("getSelections", signature(object = "Vision"),
           function(object) {
-              if ("selections" %in% object@Viewer){
+              if ("selections" %in% names(object@Viewer)){
                   return(object@Viewer$selections)
               } else {
                   return(list())
