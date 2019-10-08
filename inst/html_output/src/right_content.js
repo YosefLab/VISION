@@ -146,6 +146,11 @@ Right_Content.prototype.init = function()
         var selectedCells = get_global_status('selected_cell')
 
         api.cells.saveSelection(selectionName, selectedCells)
+            .then(() => {
+                set_global_status({
+                    'selections_changed': true
+                })
+            })
 
         set_global_status({
             'selection_name': selectionName

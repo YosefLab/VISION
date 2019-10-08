@@ -1628,40 +1628,6 @@ DE_Select.prototype.init = function()
         select.trigger('chosen:updated')
     }
 
-    function addSelections(select, num) {
-
-        return api.cells.listSelections().then(data => {
-
-            if (num) {
-                select.append(
-                    $('<option>', {
-                        value: 'current',
-                        text: 'Current',
-                    })
-                );
-            } else {
-                select.append(
-                    $('<option>', {
-                        value: 'remainder',
-                        text: 'Remainder',
-                    })
-                );
-            }
-
-            _.each(data, name => {
-                select.append(
-                    $('<option>', {
-                        value: name,
-                        text: name
-                    }));
-            });
-
-            select.trigger('chosen:updated')
-
-        });
-
-    }
-
     submit_de.on('click', function () {
 
         de_error.hide();
@@ -1761,8 +1727,7 @@ DE_Select.prototype.init = function()
 
         if (val === "selections") {
             // add selection values
-            addSelections(numSelect, true);
-            addSelections(denomSelect, false);
+            self.addSelections(numSelect, denomSelect);
         }  else {
             // genotype
             addClusters(numSelect, val, true)
@@ -1780,10 +1745,50 @@ DE_Select.prototype.init = function()
     })
 
 
-    addSelections(numSelect, true);
-    addSelections(denomSelect, false);
+    this.addSelections(numSelect, denomSelect);
 
 }
+
+DE_Select.prototype.addSelections = function(selectNum, selectDenom) {
+
+    return api.cells.listSelections().then(data => {
+
+        selectNum.append(
+            $('<option>', {
+                value: 'current',
+                text: 'Current',
+            })
+        );
+        selectDenom.append(
+            $('<option>', {
+                value: 'remainder',
+                text: 'Remainder',
+            })
+        );
+
+        _.each(data, name => {
+            selectNum.append(
+                $('<option>', {
+                    value: name,
+                    text: name
+                }));
+        });
+
+        _.each(data, name => {
+            selectDenom.append(
+                $('<option>', {
+                    value: name,
+                    text: name
+                }));
+        });
+
+        selectNum.trigger('chosen:updated')
+        selectDenom.trigger('chosen:updated')
+
+    });
+
+}
+
 
 DE_Select.prototype.update = function(updates)
 {
@@ -1795,6 +1800,22 @@ DE_Select.prototype.update = function(updates)
 
     if ('selected_cell' in updates || 'selection_type' in updates){
         this.de_error.hide();
+    }
+
+    if ('selections_changed' in updates){
+        var numControl = this.numControl;
+        var val = $(numControl).val();
+
+        if (val === "selections") {
+            // add selection values
+
+            var numSelect = this.numSelect
+            numSelect.children().remove()
+
+            var denomSelect = this.denomSelect
+            denomSelect.children().remove()
+            this.addSelections(numSelect, denomSelect);
+        }
     }
 }
 

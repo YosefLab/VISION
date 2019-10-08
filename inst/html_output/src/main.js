@@ -55,7 +55,7 @@ function set_global_status(update){
     // Delete all updates that are not changes
     var toDelete = []
     _.forIn(update, function(value, key) {
-        if (global_status[key] === value)
+        if (global_status[key] === value && !key.endsWith('_changed'))
         {
             toDelete.push(key);
         }

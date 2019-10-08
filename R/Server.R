@@ -1048,7 +1048,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         selections <- getSelections(object)
         cell_ids <- fromJSON(req$postBody)
         object@Viewer$selections[[selection_id]] <<- cell_ids # Super assignment!
-        res$body <- ""  # Empty body for successful POST
+        res$body <- "null"  # Empty body for successful POST
         return(res)
     })
 
