@@ -11,6 +11,11 @@ r:
 
 sudo: false
 
+addons:
+    apt:
+        packages:
+            - libhdf5-dev
+
 ## Turn this to true before submission to CRAN/Bioconductor
 warnings_are_errors: false
 
