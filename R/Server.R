@@ -50,7 +50,8 @@ signatureToJSON <- function(sig, geneImportance) {
 
 #' Converts row of sigantures score matrix to JSON
 #' @importFrom jsonlite toJSON
-#' @param ss single-column dataframe with scores for a single signature
+#' @param names character vector of labels for signatures
+#' @param values numeric vector for signature values
 #' @return Signature scores list to JSON, with names of each entry that of the list names
 sigScoresToJSON <- function(names, values) {
 
@@ -152,6 +153,10 @@ compressJSONResponse <- function(req, res){
 #' @importFrom utils browseURL URLdecode stack
 #' @importFrom plumber plumber forward
 #' @importFrom Matrix rowMeans
+#' @importFrom stats dist
+#' @importFrom stats hclust
+#' @importFrom stats setNames
+#' @importFrom mime guess_type
 #' @param object Vision object
 #' @param port The port on which to serve the output viewer.  If omitted, a
 #' random port between 8000 and 9999 is chosen.

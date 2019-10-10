@@ -7,8 +7,8 @@
 \title{Save the VISION object as an .RDS file and view the results on a
 localhost}
 \usage{
-\S4method{saveAndViewResults}{Vision}(object, ofile = NULL,
-  port = NULL, host = NULL, browser = TRUE, name = NULL)
+\S4method{saveAndViewResults}{Vision}(object, ofile = NULL, port = NULL,
+  host = NULL, browser = TRUE, name = NULL)
 }
 \arguments{
 \item{object}{VISION object}

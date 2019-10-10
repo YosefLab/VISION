@@ -186,6 +186,7 @@ NormData <- function(data, rowOffsets = NULL, rowScaleFactors = NULL,
 #'
 #' @importFrom Matrix Matrix
 #' @importFrom Matrix Diagonal
+#' @importFrom stats setNames
 #'
 #' @param data expression data matrix
 #' @param rowOffsets offsets to be subtracted from each row

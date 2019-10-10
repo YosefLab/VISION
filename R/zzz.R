@@ -13,7 +13,6 @@
 #' @importFrom Rcpp evalCpp sourceCpp
 #' @import methods
 #' @import loe
-#' @import stats
 #' @import Matrix
 #' @useDynLib VISION
 #' @name VISION

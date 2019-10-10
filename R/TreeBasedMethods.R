@@ -290,10 +290,10 @@ projectOnTree <- function(data.pnts, V.pos, princAdj) {
 
 #' Calculate distance matrix between all pairs of ponts based on their projection onto the tree
 #'
-#' @param princPnts (D x K numeric) the spatial locations of the principle points (tree vertices)
-#' @param princAdj (K x K logical) adjacency matrix of the principle graph
+#' @param adjMat (K x K logical) adjacency matrix of the milestones
 #' @param edgeAssoc (2 x N) for each point, the edge it is projected to (represented as (V1,V2), where V1<V2)
 #' @param edgePos (length N, numeric) relative postion on the edge for each point, in range [0,1]
+#' @param latentPnts (D x K numeric) the spatial locations of the milestones
 #'
 #' @return non-negative symmetric matrix in which [i,j] is the tree-based distance between points i, j.
 calculateTrajectoryDistances <- function(adjMat, edgeAssoc, edgePos, latentPnts = NULL) {

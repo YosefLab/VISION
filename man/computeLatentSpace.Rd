@@ -4,9 +4,9 @@
 \alias{computeLatentSpace}
 \title{Computes the latent space of the expression matrix using PCA}
 \usage{
-computeLatentSpace(object, projection_genes = NULL,
-  filterThreshold = 0.05, filterNumMad = 2,
-  projection_genes_method = "fano", num_PCs = 30, perm_wPCA = NULL)
+computeLatentSpace(object, projection_genes = NULL, filterThreshold = 0.05,
+  filterNumMad = 2, projection_genes_method = NULL, num_PCs = 30,
+  perm_wPCA = NULL)
 }
 \arguments{
 \item{object}{the VISION object for which compute the latent space}
@@ -20,7 +20,7 @@ for it to be used when computing PCA. If less than 1, this instead specifies the
 \item{filterNumMad}{Number of median absolute deviations to use when selecting highly-variable
 genes in each mean-sorted bin of genes}
 
-\item{projection_genes_method}{name of filtering method ('threshold' or 'fano') or list of}
+\item{projection_genes_method}{name of filtering method. Either 'threshold' or 'fano'(default)}
 
 \item{num_PCs}{the number of principal components to retain}
 

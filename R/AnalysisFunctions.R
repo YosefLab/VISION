@@ -295,6 +295,7 @@ calcSignatureScores <- function(
 #' @importFrom pbmcapply pbmclapply
 #' @importFrom matrixStats colSds
 #' @importFrom matrixStats rowSds
+#' @importFrom stats setNames
 #'
 #' @param object the VISION object
 #' @return the VISION object, with SigGeneImportance slot populated
@@ -377,6 +378,7 @@ evalSigGeneImportance <- function(object){
 #' @importFrom matrixStats rowSds
 #' @importFrom Matrix Matrix
 #' @importFrom Matrix Diagonal
+#' @importFrom stats setNames
 #'
 #' @param object the VISION object
 #' @return the VISION object, with SigGeneImportance slot populated
@@ -575,6 +577,7 @@ addLatentSpace <- function(object, coordinates, name) {
 #' Generates 2-dimensional representations of the expression matrix
 #' Populates the 'Projections' slot on the VISION object
 #'
+#' @importFrom stats setNames
 #'
 #' @param object the VISION object
 #' @return the VISION object with values set for the analysis results
@@ -826,6 +829,7 @@ analyzeTrajectoryCorrelations <- function(object) {
 #'
 #' @importFrom pbmcapply pbmclapply
 #' @importFrom matrixStats colRanks
+#' @importFrom stats setNames
 #' @param object the VISION object
 #' @param variables which columns of the meta-data to use for comparisons
 #' @return the VISION object with the @ClusterComparisons slot populated
@@ -1012,6 +1016,7 @@ clusterSigScores <- function(object, variables = "All") {
 #' Enables the LCAnnotator portion of the output report
 #'
 #' @importFrom pbmcapply pbmclapply
+#' @importFrom stats cor.test
 #' @param object the VISION object
 #' @return object with the @LCAnnotatorData slot populated
 #' @export

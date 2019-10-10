@@ -5,7 +5,7 @@
 \title{filter data accourding to the provided filters}
 \usage{
 computeProjectionGenes(object, threshold = NULL, num_mad = NULL,
-  projection_genes = NULL)
+  projection_genes_method = NULL, projection_genes = NULL)
 }
 \arguments{
 \item{object}{the VISION object}
@@ -17,7 +17,10 @@ for it to be used when computing PCA. If less than 1, this instead specifies the
 \item{num_mad}{Number of median absolute deviations to use when selecting highly-variable
 genes in each mean-sorted bin of genes}
 
-\item{projection_genes}{either a list of genes or a method to select genes}
+\item{projection_genes_method}{a method to select genes either 'Threshold' or 'Fano'}
+
+\item{projection_genes}{a list of genes to use specifically.
+If this is supplied then `projection_genes_method` is ignored}
 }
 \value{
 the VISION object, populated with filtered data

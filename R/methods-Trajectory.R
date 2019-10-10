@@ -251,6 +251,7 @@ generateTrajectoryProjections <- function(trajectory) {
 #'
 #' Maps cell positions between edges
 #'
+#' @importFrom stats rnorm
 #' @param progressions data.frame describing cell positions between milestones
 #' @param vData Mx2 matrix mapping miletones into 2d
 #' @param edges Edges x 2 matrix describing connectivity between edges

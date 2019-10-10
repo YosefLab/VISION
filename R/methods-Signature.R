@@ -88,6 +88,7 @@ createGeneSignature <- function(name, sigData, metadata="") {
 
 #' Generate random signatures for a null distribution by permuting the data
 #'
+#' @importFrom stats runif
 #' @param eData the data to use for the permutations
 #' @param sigData list of signature objects
 #' random signature sizes
@@ -286,6 +287,7 @@ fbConsistencyScores <- function(weights, proteinData) {
 #'
 #' @importFrom matrixStats colMedians
 #' @importFrom pbmcapply pbmclapply
+#' @importFrom stats setNames
 #' @param sigScores numeric matrix of signature scores
 #' size is cells x signatures
 #' @param randomSigData A list with three items:
@@ -381,11 +383,15 @@ sigsVsProjection_n <- function(sigScores, randomSigData,
 #' Evaluates the significance of each meta data numeric signature vs. a
 #' single projections weights
 #' @importFrom stats pnorm
+#' @importFrom stats setNames
 #' @importFrom pbmcapply pbmclapply
 #' @param metaData data.frame of meta-data for cells
 #' @param weights numeric matrix of dimension N_SAMPLES x N_SAMPLES
 #' @param cells list of cell names.  Subsets anlysis to provided cells.
 #' If omitted, use all cells.
+#' @param computePval bool whether to compute p-values. Set to FALSE to
+#' save computation time for large numbers of numeric signatures. If set
+#' to FALSE, all p-values are reported as 1.0
 #' @return list:
 #' \itemize{
 #'     \item consistency: consistency scores
@@ -636,12 +642,14 @@ geary_sig_v_proj <- function(values, indices, weights){
 }
 
 #' Clusters signatures according to the rank sum
+#'
 #' @importFrom mclust Mclust
 #' @importFrom mclust mclustBIC
 #' @importFrom rsvd rsvd
 #' @param sigMatrix matrix of signatures scores, NUM_SAMPLES x NUM_SIGNATURES
 #' @param metaData data.frame of meta-data for cells
-#' @param data.frame autocorrelation results
+#' @param autocorrelation data.frame autocorrelation results
+#' @param clusterMeta bool whether or not to cluster meta-data (used when pool=TRUE)
 #' @return a list:
 #' \itemize{
 #'     \item Computed: a list of clusters of computed signatures

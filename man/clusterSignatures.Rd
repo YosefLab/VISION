@@ -11,7 +11,9 @@ clusterSignatures(sigMatrix, metaData, autocorrelation, clusterMeta)
 
 \item{metaData}{data.frame of meta-data for cells}
 
-\item{data.frame}{autocorrelation results}
+\item{autocorrelation}{data.frame autocorrelation results}
+
+\item{clusterMeta}{bool whether or not to cluster meta-data (used when pool=TRUE)}
 }
 \value{
 a list:

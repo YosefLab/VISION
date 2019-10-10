@@ -4,10 +4,9 @@
 \alias{applyMicroClustering}
 \title{Pool cells into microclusters}
 \usage{
-applyMicroClustering(exprData, cellsPerPartition = 10,
-  filterInput = "fano", filterThreshold = round(ncol(exprData) * 0.05),
-  filterNumMad = 2, latentSpace = NULL,
-  K = round(sqrt(ncol(exprData))))
+applyMicroClustering(exprData, cellsPerPartition = 10, filterInput = "fano",
+  filterThreshold = round(ncol(exprData) * 0.05), filterNumMad = 2,
+  latentSpace = NULL, K = round(sqrt(ncol(exprData))))
 }
 \arguments{
 \item{exprData}{the expression data matrix}

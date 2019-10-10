@@ -10,6 +10,8 @@ getParam(object, param, subparam = NULL)
 \item{object}{VISION object}
 
 \item{param}{name of parameter that is desired}
+
+\item{subparam}{name of second level parameter that is desired}
 }
 \value{
 bool whether or not there is unnormalize data

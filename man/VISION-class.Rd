@@ -16,14 +16,13 @@ Vision(data, ...)
 
 \S4method{Vision}{matrixORSparse}(data, signatures = list(),
   proteinData = NULL, unnormalizedData = NULL, meta = NULL,
-  projection_genes = c("fano"), min_signature_genes = 5,
-  threshold = 0.05, perm_wPCA = FALSE,
-  projection_methods = c("tSNE30"),
+  projection_genes = c("fano"), min_signature_genes = 5, threshold = 0.05,
+  perm_wPCA = FALSE, projection_methods = c("tSNE30"),
   sig_norm_method = c("znorm_columns", "none", "znorm_rows",
   "znorm_rows_then_columns", "rank_norm_columns"), pool = "auto",
   cellsPerPartition = 10, name = NULL, num_neighbors = NULL,
-  latentSpace = NULL, latentSpaceName = NULL,
-  latentTrajectory = NULL, pools = list())
+  latentSpace = NULL, latentSpaceName = NULL, latentTrajectory = NULL,
+  pools = list())
 
 \S4method{Vision}{data.frame}(data, ...)
 
@@ -35,8 +34,7 @@ Vision(data, ...)
 
 \S4method{Vision}{SummarizedExperiment}(data, ...)
 
-\S4method{Vision}{seurat}(data, dimRed = NULL, dimRedComponents = NULL,
-  ...)
+\S4method{Vision}{seurat}(data, dimRed = NULL, dimRedComponents = NULL, ...)
 }
 \arguments{
 \item{data}{expression data - can be one of these: \itemize{
@@ -47,12 +45,18 @@ Vision(data, ...)
 }
 Expression data should be scaled and normalized, but not log-transformed.}
 
+\item{...}{arguments passed to the base Vision constructor}
+
 \item{signatures}{list of file paths to signature files (.gmt or .txt) or
 Signature objects.  See the createGeneSignature(...) method for information
 on creating Signature objects.}
 
 \item{proteinData}{additional protein abundance data (such as ADT counts).
 Can be either a data.frame or numeric matrix.  Should be of shape (CELLS x PROTEINS)}
+
+\item{unnormalizedData}{data.frame or numeric matrix (dense or sparse) - used
+when displaying gene expression values in the output report.  If supplied
+this overrides the input in `data` but only when visualizing data.}
 
 \item{meta}{data.frame with meta-data for cells. Rows in this data.frame should correspond
 with columns in the expression data matrix}
@@ -98,8 +102,13 @@ pooling if there are more than 100000 cells.}
 \item{latentSpace}{latent space for expression data. Numeric matrix or dataframe
 with dimensions CELLS x COMPONENTS}
 
+\item{latentSpaceName}{a name for the latent space method (used in output report)}
+
 \item{latentTrajectory}{trajectory to model cell progression.  Wrapped result
 of a trajectory inference method by the dynverse/dynwrap library}
+
+\item{pools}{assignments of cell to micropool.  Used when microclustering batches
+separately and then combining.  See vignette for usage.}
 
 \item{dimRed}{Dimensionality reduction to use for the latentSpace.  Default is to
 look for "pca" and use that if it exists}
@@ -111,6 +120,8 @@ reduction.  Default is to use all components}
 A VISION object
 }
 \description{
+Initializes a new VISION object.
+
 Initializes a Vision object from an existing Seurat object taking any existing
 expression data, meta-data, and dimensionality reductions if they exist already
 }

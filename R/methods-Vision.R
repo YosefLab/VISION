@@ -32,9 +32,12 @@
 #' @param pool indicates whether or not to pool cells into supercells. Acceptable values
 #' are TRUE, FALSE, or 'auto', the last of which is the default and enables
 #' pooling if there are more than 100000 cells.
+#' @param pools assignments of cell to micropool.  Used when microclustering batches
+#' separately and then combining.  See vignette for usage.
 #' @param cellsPerPartition the target number of cells to put into a supercell when pooling
 #' @param latentSpace latent space for expression data. Numeric matrix or dataframe
 #' with dimensions CELLS x COMPONENTS
+#' @param latentSpaceName a name for the latent space method (used in output report)
 #' @param latentTrajectory trajectory to model cell progression.  Wrapped result
 #' of a trajectory inference method by the dynverse/dynwrap library
 #' @param projection_methods a character vector specifying which projection methods to apply. Can be: \itemize{
@@ -48,6 +51,9 @@
 #' By default will perform tSNE and PCA on the data.
 #' @param name a name for the sample - shown on the output report
 #' @param num_neighbors the number of neighbors to consider for downstream analyses.'
+#' @param unnormalizedData data.frame or numeric matrix (dense or sparse) - used
+#' when displaying gene expression values in the output report.  If supplied
+#' this overrides the input in `data` but only when visualizing data.
 #' @return A VISION object
 #' @rdname VISION-class
 #' @export
@@ -373,6 +379,7 @@ setMethod("Vision", signature(data = "matrixORSparse"),
 )
 
 #' @rdname VISION-class
+#' @param ... arguments passed to the base Vision constructor
 #' @export
 setMethod("Vision", signature(data = "data.frame"),
             function(data, ...) {
@@ -494,7 +501,7 @@ setMethod("Vision", signature(data = "seurat"),
                           dimRed, dimRedComponents
                           ))
 
-                  latentSpace <- GetCellEmbeddings(obj,
+                  latentSpace <- Seurat::GetCellEmbeddings(obj,
                       reduction.type = dimRed,
                       dims.use = dimRedComponents
                   )
@@ -510,7 +517,7 @@ setMethod("Vision", signature(data = "seurat"),
 
                   message(sprintf("Adding Visualization: %s", name))
 
-                  coordinates <- GetCellEmbeddings(obj,
+                  coordinates <- Seurat::GetCellEmbeddings(obj,
                       reduction.type = method,
                       dims.use = 1:2
                       )

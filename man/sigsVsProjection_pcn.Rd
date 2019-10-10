@@ -5,8 +5,7 @@
 \title{Evaluates the significance of each meta data numeric signature vs. a
 single projections weights}
 \usage{
-sigsVsProjection_pcn(metaData, weights, cells = NULL,
-  computePval = TRUE)
+sigsVsProjection_pcn(metaData, weights, cells = NULL, computePval = TRUE)
 }
 \arguments{
 \item{metaData}{data.frame of meta-data for cells}
@@ -15,6 +14,10 @@ sigsVsProjection_pcn(metaData, weights, cells = NULL,
 
 \item{cells}{list of cell names.  Subsets anlysis to provided cells.
 If omitted, use all cells.}
+
+\item{computePval}{bool whether to compute p-values. Set to FALSE to
+save computation time for large numbers of numeric signatures. If set
+to FALSE, all p-values are reported as 1.0}
 }
 \value{
 list:

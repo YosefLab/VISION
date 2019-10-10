@@ -239,7 +239,9 @@ matrix_wilcox <- function(ranks, cluster_ii,
 #' @importFrom parallel mclapply
 #' @param data matrix of values, each row representing a separate variable
 #' @param cluster_num numeric vector - indices denoting the group to be compared
-#' @param cluster_denum numeric vector - indices denoting the other group to be compared
+#' @param cluster_denom numeric vector - indices denoting the other group to be compared
+#' @param jobs integer specifying number of parallel jobs.  Can be used to override
+#' the default mc.cores option for when running this within an already-parallel loop
 #' @return pval - numeric vector, pvalue for each row
 #' @return stat - numeric vector, test statistic (AUC) for each row
 matrix_wilcox_cpp <- function(data, cluster_num, cluster_denom,
@@ -399,6 +401,7 @@ convertGeneIds <- function(exp, newIds){
 #' @param barcodes path to barcodes.tsv
 #' @param ensToSymbol bool denoting whether or not to perform label conversion
 #' @importFrom Matrix readMM
+#' @importFrom utils read.table
 #' @return sparse count matrix with appropriate row/column names
 #' @export
 read_10x <- function(expression, genes, barcodes, ensToSymbol = TRUE){
@@ -440,6 +443,11 @@ read_10x <- function(expression, genes, barcodes, ensToSymbol = TRUE){
 #'         Antibody: sparse count matrix with antibody capture counts (cells x antibodies)
 #' @export
 read_10x_h5 <- function(h5_file, ensToSymbol = TRUE){
+
+    if (!requireNamespace("hdf5r", quietly = TRUE)){
+      stop("Package \"hdf5r\" needed to load this data object.  Please install it.",
+           call. = FALSE)
+    }
 
     h5 <- hdf5r::H5File$new(h5_file)
 
@@ -486,12 +494,14 @@ read_10x_h5 <- function(h5_file, ensToSymbol = TRUE){
 #' @return sparse count matrix with appropriate row/column names
 #' @export
 read_10x_h5_v2 <- function(h5_file, ensToSymbol = TRUE){
+
     if (!requireNamespace("hdf5r", quietly = TRUE)){
       stop("Package \"hdf5r\" needed to load this data object.  Please install it.",
            call. = FALSE)
     }
 
     h5 <- hdf5r::H5File$new(h5_file)
+
     tryCatch({
         genomes <- names(h5)
 
@@ -548,6 +558,11 @@ read_10x_h5_v2 <- function(h5_file, ensToSymbol = TRUE){
 #'         Antibody: sparse count matrix with antibody capture counts
 #' @export
 read_10x_h5_v3 <- function(h5_file, ensToSymbol = TRUE){
+
+    if (!requireNamespace("hdf5r", quietly = TRUE)){
+      stop("Package \"hdf5r\" needed to load this data object.  Please install it.",
+           call. = FALSE)
+    }
 
     h5 <- hdf5r::H5File$new(h5_file)
 
@@ -641,6 +656,7 @@ hasUnnormalizedData <- function(object) {
 #'
 #' @param object VISION object
 #' @param param name of parameter that is desired
+#' @param subparam name of second level parameter that is desired
 #' @return bool whether or not there is unnormalize data
 getParam <- function(object, param, subparam = NULL) {
 
