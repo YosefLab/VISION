@@ -151,6 +151,10 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                     proteinData <- data.matrix(proteinData)
                 }
 
+                if (is(proteinData, "Matrix")) { # Make sure to use regular matrix
+                    proteinData <- as.matrix(proteinData)
+                }
+
                 HAS_CORRECT_CELLS <- length(setdiff(
                                            colnames(.Object@exprData),
                                            rownames(proteinData)
