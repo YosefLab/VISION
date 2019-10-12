@@ -2,15 +2,24 @@
 % Please edit documentation in R/AnalysisFunctions.R
 \name{evalSigGeneImportanceSparse}
 \alias{evalSigGeneImportanceSparse}
-\title{calculate gene-signature importance}
+\title{Calculate Gene-Signature Importance}
 \usage{
-evalSigGeneImportanceSparse(object)
+evalSigGeneImportanceSparse(sigScores, sigData, normExpr)
 }
 \arguments{
+\item{sigScores}{matrix of signature scores (Cells x Signatures)}
+
+\item{sigData}{list of Signature objects}
+
+\item{normExpr}{output from calling getNormalizedCopySparse}
+
 \item{object}{the VISION object}
 }
 \value{
 the VISION object, with SigGeneImportance slot populated
+
+named list with one item per signature.  Values are named vectors
+of each gene's association (covariance) with the signature.
 }
 \description{
 For each signature, the contribution of each gene to the signature score

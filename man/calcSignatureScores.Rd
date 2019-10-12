@@ -15,7 +15,7 @@ before calculating signature scores. Valid options are:
 or "rank_norm_columns"}
 }
 \value{
-the VISION object, with the @SigScores slot populated
+the VISION object, with the @SigScores and @SigGeneImportance slots populated
 }
 \description{
 For each signature-cell pair, compute a score that captures the level of

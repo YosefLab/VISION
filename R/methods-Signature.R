@@ -601,7 +601,7 @@ sigsVsProjection_pcf <- function(metaData, weights, cells = NULL){
 
     return(list(consistency = c_score, pval = pval))
 
-  }, mc.preschedule = FALSE)
+  })
 
   names(results) <- factorMeta
 

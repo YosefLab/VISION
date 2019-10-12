@@ -255,7 +255,7 @@ addSignatures <- function(object, signatures, min_signature_genes=5) {
 #' before calculating signature scores. Valid options are:
 #' "znorm_columns" (default), "none", "znorm_rows", "znorm_rows_then_columns",
 #' or "rank_norm_columns"
-#' @return the VISION object, with the @SigScores slot populated
+#' @return the VISION object, with the @SigScores and @SigGeneImportance slots populated
 #' @export
 calcSignatureScores <- function(
     object, sig_norm_method = NULL) {
@@ -270,6 +270,7 @@ calcSignatureScores <- function(
                             dimnames = list(colnames(object@exprData), NULL)
                             )
         object@SigScores <- sigScores
+        object@SigGeneImportance <- list()
         return(object)
     }
 
@@ -280,7 +281,12 @@ calcSignatureScores <- function(
 
     sigScores <- batchSigEvalNorm(object@sigData, normExpr)
 
+    sigGeneImportance <- evalSigGeneImportanceSparse(
+        sigScores, object@sigData, normExpr
+    )
+
     object@SigScores <- sigScores
+    object@SigGeneImportance <- sigGeneImportance
 
     return(object)
 }
@@ -297,18 +303,17 @@ calcSignatureScores <- function(
 #' @importFrom matrixStats rowSds
 #' @importFrom stats setNames
 #'
-#' @param object the VISION object
-#' @return the VISION object, with SigGeneImportance slot populated
-#' @export
-evalSigGeneImportance <- function(object){
+#' @param sigScores matrix of signature scores (Cells x Signatures)
+#' @param sigData list of Signature objects
+#' @param normExpr output from calling getNormalizedCopySparse
+#' @return named list with one item per signature.  Values are named vectors
+#' of each gene's association (covariance) with the signature.
+evalSigGeneImportance <- function(sigScores, sigData, normExpr){
 
     message("Evaluating signature-gene importance...\n")
 
-    sigScores <- object@SigScores
-
-    if (length(object@sigData) == 0) {
-        object@SigGeneImportance <- list()
-        return(object)
+    if (length(sigData) == 0) {
+        return(list())
     }
 
     if (length(sigScores) <= 1){
@@ -316,10 +321,6 @@ evalSigGeneImportance <- function(object){
             sprintf("Signature scores have not yet been computed.  `calcSignatureScores` must be run before running `evalSigGeneImportance`")
             )
     }
-
-    normExpr <- getNormalizedCopy(
-        object@exprData,
-        object@params$signatures$sigNormMethod)
 
     # Center each column of sigScores first
 
@@ -335,8 +336,6 @@ evalSigGeneImportance <- function(object){
     normExpr <- (normExpr - mu)
 
     # Compute Covariances
-    sigData <- object@sigData
-
     sigGene <- function(signame) {
         sigdata <- sigData[[signame]]
 
@@ -356,16 +355,13 @@ evalSigGeneImportance <- function(object){
     }
 
     sigs <- colnames(sigScores)
-    res <- pbmclapply(setNames(sigs, sigs), sigGene, mc.preschedule = FALSE)
+    res <- pbmclapply(setNames(sigs, sigs), sigGene)
 
-    object@SigGeneImportance <- res
-
-
-    return(object)
+    return(res)
 }
 
 
-#' calculate gene-signature importance
+#' Calculate Gene-Signature Importance
 #'
 #' For each signature, the contribution of each gene to the signature score
 #' is evaluated by calculating the covariance between signature scores and expression
@@ -382,15 +378,17 @@ evalSigGeneImportance <- function(object){
 #'
 #' @param object the VISION object
 #' @return the VISION object, with SigGeneImportance slot populated
-evalSigGeneImportanceSparse <- function(object){
+#' @param sigScores matrix of signature scores (Cells x Signatures)
+#' @param sigData list of Signature objects
+#' @param normExpr output from calling getNormalizedCopySparse
+#' @return named list with one item per signature.  Values are named vectors
+#' of each gene's association (covariance) with the signature.
+evalSigGeneImportanceSparse <- function(sigScores, sigData, normExpr){
 
     message("Evaluating signature-gene importance...\n")
 
-    sigScores <- object@SigScores
-
-    if (length(object@sigData) == 0) {
-        object@SigGeneImportance <- list()
-        return(object)
+    if (length(sigData) == 0) {
+        return(list())
     }
 
     if (length(sigScores) <= 1){
@@ -399,12 +397,7 @@ evalSigGeneImportanceSparse <- function(object){
             )
     }
 
-    normExpr <- getNormalizedCopySparse(
-        object@exprData,
-        object@params$signatures$sigNormMethod)
-
     # Center each column of sigScores first
-
     mu <- colMeans(sigScores)
 
     sigScores <- t(sigScores)
@@ -425,8 +418,6 @@ evalSigGeneImportanceSparse <- function(object){
     RM <- RM[, 1]
 
     # Compute Covariances
-    sigData <- object@sigData
-
     sigGene <- function(signame) {
         sigdata <- sigData[[signame]]
 
@@ -451,11 +442,9 @@ evalSigGeneImportanceSparse <- function(object){
     }
 
     sigs <- colnames(sigScores)
-    res <- pbmclapply(setNames(sigs, sigs), sigGene, mc.preschedule = FALSE)
+    res <- pbmclapply(setNames(sigs, sigs), sigGene)
 
-    object@SigGeneImportance <- res
-
-    return(object)
+    return(res)
 }
 
 

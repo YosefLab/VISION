@@ -4,13 +4,18 @@
 \alias{evalSigGeneImportance}
 \title{Calculate gene-signature importance}
 \usage{
-evalSigGeneImportance(object)
+evalSigGeneImportance(sigScores, sigData, normExpr)
 }
 \arguments{
-\item{object}{the VISION object}
+\item{sigScores}{matrix of signature scores (Cells x Signatures)}
+
+\item{sigData}{list of Signature objects}
+
+\item{normExpr}{output from calling getNormalizedCopySparse}
 }
 \value{
-the VISION object, with SigGeneImportance slot populated
+named list with one item per signature.  Values are named vectors
+of each gene's association (covariance) with the signature.
 }
 \description{
 For each signature, the contribution of each gene to the signature score
