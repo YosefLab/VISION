@@ -255,10 +255,13 @@ addSignatures <- function(object, signatures, min_signature_genes=5) {
 #' before calculating signature scores. Valid options are:
 #' "znorm_columns" (default), "none", "znorm_rows", "znorm_rows_then_columns",
 #' or "rank_norm_columns"
+#' @param sig_gene_importance whether or not to rank each gene's contribution to
+#' the overall signature score.  Default = TRUE.  This is used for inspecting
+#' genes in a signature in the output report
 #' @return the VISION object, with the @SigScores and @SigGeneImportance slots populated
 #' @export
 calcSignatureScores <- function(
-    object, sig_norm_method = NULL) {
+    object, sig_norm_method = NULL, sig_gene_importance = TRUE) {
 
     message("Evaluating signature scores on cells...\n")
 
@@ -281,9 +284,13 @@ calcSignatureScores <- function(
 
     sigScores <- batchSigEvalNorm(object@sigData, normExpr)
 
-    sigGeneImportance <- evalSigGeneImportanceSparse(
-        sigScores, object@sigData, normExpr
-    )
+    if (sig_gene_importance) {
+        sigGeneImportance <- evalSigGeneImportanceSparse(
+            sigScores, object@sigData, normExpr
+        )
+    } else {
+        sigGeneImportance <- list()
+    }
 
     object@SigScores <- sigScores
     object@SigGeneImportance <- sigGeneImportance

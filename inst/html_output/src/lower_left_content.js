@@ -329,6 +329,11 @@ Sig_Info.prototype.update = function(updates)
 
     var dt = $(this.content).find('#sig-info-table')
 
+    // Toggle the score column visibility
+    var scoreColumnVisible = !_.isEmpty(sig_info.geneImportance)
+    var scoreColumn = dt.DataTable().column("3")
+    scoreColumn.visible(scoreColumnVisible)
+
     var sign;
     var dataSet = _.map(sig_info.sigDict, function (value, key){
         if(value > 0){
@@ -336,7 +341,12 @@ Sig_Info.prototype.update = function(updates)
         } else {
             sign = '-'
         }
-        return [key, key, sign, sig_info.geneImportance[key]];
+        if (scoreColumnVisible){
+            return [key, key, sign, sig_info.geneImportance[key]];
+        } else {
+            return [key, key, sign, 0];
+        }
+
     })
 
     dt.DataTable().clear()
