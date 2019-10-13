@@ -45,9 +45,10 @@ body {
 }
 
 #nav-bar .logo{
-    font-size: 20px;
-    margin-left: 50px;
+    font-size: 1.8em;
     font-weight: bold;
+    display: flex;
+    align-items: center;
 }
 
 #nav-bar .nav{
