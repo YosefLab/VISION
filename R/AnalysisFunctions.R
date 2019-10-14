@@ -1052,7 +1052,14 @@ annotateLatentComponents <- function(object){
       return(ls_col_cor)
   })
 
-  pearsonCorr <- do.call(rbind, pearsonCorr)
+  if (length(pearsonCorr) > 0) {
+      pearsonCorr <- do.call(rbind, pearsonCorr)
+  } else {
+      pearsonCorr <- matrix(
+          nrow = ncol(computedSigMatrix),
+          ncol = ncol(latentSpace)
+      )
+  }
   rownames(pearsonCorr) <- colnames(computedSigMatrix)
   colnames(pearsonCorr) <- colnames(latentSpace)
 
