@@ -199,6 +199,7 @@ window.onload = function()
     var sessionInfoPromise = api.sessionInfo().then(info => {
         if(info.name.length > 0){
             $('#SampleNameSpan').text(' - ' + info.name)
+            document.title = 'VISION - ' + info.name
         }
 
         if(info.has_tree){
