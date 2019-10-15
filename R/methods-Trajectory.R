@@ -60,9 +60,7 @@ Trajectory <- function(input) {
 #'          weights: matrix, cells X neighbors
 #'              Corresponding weights to nearest neighbors
 setMethod("computeKNNWeights", signature(object = "Trajectory"),
-            function(object) {
-
-            K <- object@num_neighbors
+            function(object, K) {
 
             edgePos <- object@progressions$position
 			names(edgePos) <- rownames(object@progressions)

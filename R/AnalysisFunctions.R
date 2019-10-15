@@ -469,7 +469,8 @@ analyzeTrajectoryCorrelations <- function(object, signatureBackground = NULL) {
   sigVTreeProj <- sigConsistencyScores(object@latentTrajectory,
                                        object@sigScores,
                                        object@metaData,
-                                       signatureBackground)
+                                       signatureBackground, 
+                                       K = object@num_neighbors)
 
   message("Clustering signatures...\n")
   sigTreeClusters <- clusterSignatures(object@sigScores,
