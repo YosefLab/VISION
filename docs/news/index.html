@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">VISION</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.1.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.0</span>
       </span>
     </div>
 
@@ -145,6 +145,40 @@
       <small>Source: <a href='https://github.com/yoseflab/VISION/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
+    <div id="vision-2-0-0" class="section level1">
+<h1 class="page-header">
+<a href="#vision-2-0-0" class="anchor"></a>VISION 2.0.0</h1>
+<p>Lots of changes for this version.</p>
+<p>However the object structure has been refactored. This means that any old saved RDS objects will not work with the viewResults function once the code has been upgraded. To resolve this, either re-create the objects or use the latest v1.x release of VISION. Incompatible changes like this will be avoided in the future, but a refactor was long needed.</p>
+<ul>
+<li>Added support for surface protein data (e.g., CITE-seq)
+<ul>
+<li>This data is entered separately using the <code>proteinData</code> argument</li>
+<li>Autocorrelation scores will be computed on protein data</li>
+<li>Differential expression tests will also test protein data</li>
+<li>Can view protein vs. protein (FACS-style) in output report</li>
+</ul>
+</li>
+<li>Improved handling of sparse data
+<ul>
+<li>When inputing sparse expression data, the processing pipeline will no longer expand this data to dense at any stage</li>
+</ul>
+</li>
+<li>Additional improvements for performance and memory usage</li>
+<li>New exported pipeline functions for custom workflows</li>
+<li>UI Improvements
+<ul>
+<li>Can see multiple, different views simultaneously in the output (by unchecking the ‘Update All?’ changes only affect the selected plot</li>
+<li>Y-axis for feature histograms can be log-scaled</li>
+<li>Filtering (FDR) and Export for DE results table</li>
+<li>Caching of DE results to avoid re-running</li>
+<li>Additional DE options (subsampling, gene filtering) for reduced run times</li>
+<li>Improved signature-gene heatmap</li>
+</ul>
+</li>
+</ul>
+<p>Many thanks to <a href='https://github.com/Yanay1'>@Yanay1</a> for improvements to the DE results and heatmap!</p>
+</div>
     <div id="vision-1-1-1" class="section level1">
 <h1 class="page-header">
 <a href="#vision-1-1-1" class="anchor"></a>VISION 1.1.1</h1>
@@ -203,6 +237,7 @@
     <div id="tocnav">
       <h2>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
+        <li><a href="#vision-2-0-0">2.0.0</a></li>
         <li><a href="#vision-1-1-1">1.1.1</a></li>
         <li><a href="#vision-1-1-0">1.1.0</a></li>
         <li><a href="#vision-1-0-1">1.0.1</a></li>

@@ -1,3 +1,28 @@
+# VISION 2.0.0
+
+Lots of changes for this version.
+
+However the object structure has been refactored.  This means that any old saved RDS objects will not work with the viewResults function once the code has been upgraded.  To resolve this, either re-create the objects or use the latest v1.x release of VISION.  Incompatible changes like this will be avoided in the future, but a refactor was long needed.
+
+* Added support for surface protein data (e.g., CITE-seq)
+    * This data is entered separately using the `proteinData` argument
+    * Autocorrelation scores will be computed on protein data
+    * Differential expression tests will also test protein data
+    * Can view protein vs. protein (FACS-style) in output report
+* Improved handling of sparse data
+    * When inputing sparse expression data, the processing pipeline will no longer expand this data to dense at any stage
+* Additional improvements for performance and memory usage
+* New exported pipeline functions for custom workflows
+* UI Improvements
+    * Can see multiple, different views simultaneously in the output (by unchecking the 'Update All?' changes only affect the selected plot
+    * Y-axis for feature histograms can be log-scaled
+    * Filtering (FDR) and Export for DE results table
+    * Caching of DE results to avoid re-running
+    * Additional DE options (subsampling, gene filtering) for reduced run times
+    * Improved signature-gene heatmap
+
+Many thanks to @Yanay1 for improvements to the DE results and heatmap!
+
 # VISION 1.1.1
 
 * Bugfixes
