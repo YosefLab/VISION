@@ -17,10 +17,11 @@ global_status.pooled = false;
 // Is trajectory data available?
 global_status.has_tree = false;
 global_status.has_sigs = true;
+global_status.has_lca = false;
 
 // Determine projected values
 global_status.plotted_item = "";  // name of signature, meta or gene that is plotted
-global_status.plotted_item_type = ""; // either 'signature', 'meta', 'gene', or 'signature-gene'
+global_status.plotted_item_type = ""; // either 'signature', 'protein', 'meta', 'gene', or 'signature-gene'
 
 global_status.cluster_var = ""; // which cluster variable are we using
 
@@ -35,8 +36,6 @@ global_data.sig_projection_coordinatesY = {};
 global_data.tree_projection_coordinates = {};
 global_data.plotted_values = {}; // Holds gene expression, signature scores/ranks, etc...
 global_data.sig_info = {};  // Holds the information for the last plotted signature
-global_data.clusters = {};  // Maps cell ID to cluster ID
-global_data.cluster_variables = [];
 global_data.meta_sigs = []; // Holds list of sig names that are meta-data
 
 var lower_left_content;
@@ -56,7 +55,7 @@ function set_global_status(update){
     // Delete all updates that are not changes
     var toDelete = []
     _.forIn(update, function(value, key) {
-        if (global_status[key] === value)
+        if (global_status[key] === value && !key.endsWith('_changed'))
         {
             toDelete.push(key);
         }
@@ -83,55 +82,6 @@ function set_global_status(update){
     lower_left_content.setLoadingStatus(true);
     upper_left_content.setLoadingStatus(true);
 
-    if(('plotted_trajectory' in update && get_global_status('main_vis') === 'tree') ||
-       ('main_vis' in update && get_global_status('main_vis') === 'tree')
-    ){
-        var proj_key = get_global_status('plotted_trajectory');
-        var proj_promise = api.tree.coordinates(proj_key)
-            .then(function(projection){
-                global_data.tree_projection_coordinates = projection;
-            });
-
-        all_promises.push(proj_promise);
-        right_content_promises.push(proj_promise);
-        upper_left_content_promises.push(proj_promise);
-    }
-
-    if('plotted_projectionX' in update || 'main_vis' in update){
-        if( get_global_status('main_vis') === 'clusters' ||
-            get_global_status('main_vis') === 'pcannotator'){
-
-            var proj_key = get_global_status('plotted_projectionX');
-            var proj_promise = api.projections.coordinates(proj_key[0], proj_key[1])
-                .then(function(projection){
-                    global_data.sig_projection_coordinatesX = projection;
-                });
-
-            all_promises.push(proj_promise);
-            right_content_promises.push(proj_promise);
-            upper_left_content_promises.push(proj_promise);
-
-        }
-    }
-
-    if('plotted_projectionY' in update || 'main_vis' in update){
-        if( get_global_status('main_vis') === 'clusters' ||
-            get_global_status('main_vis') === 'pcannotator'){
-
-            var proj_key = get_global_status('plotted_projectionY');
-            var proj_promise = api.projections.coordinates(proj_key[0], proj_key[1])
-                .then(function(projection){
-                    global_data.sig_projection_coordinatesY = projection;
-                });
-
-            all_promises.push(proj_promise);
-            right_content_promises.push(proj_promise);
-            upper_left_content_promises.push(proj_promise);
-
-        }
-    }
-
-
     // Updates plotted item values
     if('plotted_item' in update || 'plotted_item_type' in update) {
 
@@ -142,6 +92,8 @@ function set_global_status(update){
 
         if(type === 'signature'){
             val_promise = api.signature.scores(sig_key)
+        } else if (type === 'protein') {
+            val_promise = api.protein.values(sig_key)
         } else if (type === 'meta') {
             val_promise = api.signature.meta(sig_key)
         } else if (type === 'gene' || type === 'signature-gene') {
@@ -181,19 +133,6 @@ function set_global_status(update){
             lower_left_content_promises.push(sig_info_promise);
 
         }
-
-    }
-
-    if('cluster_var' in update) {
-        var cluster_var = get_global_status('cluster_var')
-        var cell_clusters_promise = api.clusters.cells(cluster_var)
-            .then( data => {
-                global_data.clusters = data
-            })
-        all_promises.push(cell_clusters_promise);
-        right_content_promises.push(cell_clusters_promise);
-        lower_left_content_promises.push(cell_clusters_promise);
-        upper_left_content_promises.push(cell_clusters_promise);
 
     }
 
@@ -255,12 +194,12 @@ window.onload = function()
     right_content = new Right_Content()
 
 
-    var lower_left_promise = lower_left_content.init();
     var right_promise = right_content.init();
 
     var sessionInfoPromise = api.sessionInfo().then(info => {
         if(info.name.length > 0){
             $('#SampleNameSpan').text(' - ' + info.name)
+            document.title = 'VISION - ' + info.name
         }
 
         if(info.has_tree){
@@ -269,20 +208,22 @@ window.onload = function()
                 .removeClass('disabled')
         }
 
+        if(info.has_lca){
+            $('#nav-bar')
+                .find(".nav-link[data-main-vis='pcannotator']")
+                .removeClass('disabled')
+        }
+
         global_data.meta_sigs = info.meta_sigs
         global_status.pooled = info.pooled
         global_status.ncells = info.ncells
         global_status.has_tree = info.has_tree
+        global_status.has_lca = info.has_lca
         global_status.has_sigs = info.has_sigs
+        global_status.has_proteins = info.has_proteins
 
         global_data.clusters_unique = info.clusters
     })
-
-    var cellClustersPromise = api.clusters.list()
-        .then(function(data) {
-            global_data.cluster_variables = data;
-            global_status.cluster_var = global_data.cluster_variables[0];
-        })
 
     var allCellClustersPromise = api.clusters.meta_levels()
         .then(function(data) {
@@ -290,21 +231,18 @@ window.onload = function()
         })
 
 
-    var combinedPromise = $.when(sessionInfoPromise, cellClustersPromise)
+    var combinedPromise = $.when(sessionInfoPromise, allCellClustersPromise)
         .then(function(){
             return upper_left_content.init();
-        }).then(function() {
-            var cluster_var = get_global_status('cluster_var')
-            var cell_clusters_promise = api.clusters.cells(cluster_var)
-                .then( data => {
-                    global_data.clusters = data
-                })
-            return cell_clusters_promise
         })
 
+    var combinedPromise2 = $.when(sessionInfoPromise, allCellClustersPromise)
+        .then(function(){
+            return lower_left_content.init();
+        })
 
     // When it's all done, run this
-    $.when(right_promise, lower_left_promise, combinedPromise, allCellClustersPromise)
+    $.when(right_promise, combinedPromise, combinedPromise2, allCellClustersPromise)
         .then(function(){
             var has_tree = get_global_status('has_tree')
             var update0 = {'main_vis': (has_tree ? 'tree': 'clusters')}
@@ -327,19 +265,6 @@ window.onload = function()
         set_global_status({
             'main_vis': $(this).data('main-vis')
         })
-    });
-
-    window.addEventListener('hover-cells', function(e) {
-
-        // Disable hover events if there are too many cells
-        // This is necessary for performance
-        var ncells = get_global_status('ncells')
-        if( ncells < 10000){
-            var list_of_cell_ids = e.detail
-            right_content.hover_cells(list_of_cell_ids)
-            upper_left_content.hover_cells(list_of_cell_ids)
-            lower_left_content.hover_cells(list_of_cell_ids)
-        }
     });
 
     window.addEventListener("select-cells", function(e) {

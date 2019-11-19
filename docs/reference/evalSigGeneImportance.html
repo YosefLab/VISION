@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>calculate gene-signature importance — evalSigGeneImportance • VISION</title>
+<title>Calculate gene-signature importance — evalSigGeneImportance • VISION</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -39,7 +39,7 @@
 
   <link href="../extra.css" rel="stylesheet">
   
-<meta property="og:title" content="calculate gene-signature importance — evalSigGeneImportance" />
+<meta property="og:title" content="Calculate gene-signature importance — evalSigGeneImportance" />
 
 <meta property="og:description" content="For each signature, the contribution of each gene to the signature score
 is evaluated by calculating the covariance between signature scores and expression
@@ -145,7 +145,7 @@ The correlation of genes with a negative sign in the signature are inverted." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>calculate gene-signature importance</h1>
+    <h1>Calculate gene-signature importance</h1>
     <small class="dont-index">Source: <a href='https://github.com/yoseflab/VISION/blob/master/R/AnalysisFunctions.R'><code>R/AnalysisFunctions.R</code></a></small>
     <div class="hidden name"><code>evalSigGeneImportance.Rd</code></div>
     </div>
@@ -158,20 +158,29 @@ The correlation of genes with a negative sign in the signature are inverted.</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>evalSigGeneImportance</span>(<span class='no'>object</span>)</pre>
+    <pre class="usage"><span class='fu'>evalSigGeneImportance</span>(<span class='no'>sigScores</span>, <span class='no'>sigData</span>, <span class='no'>normExpr</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>object</th>
-      <td><p>the VISION object</p></td>
+      <th>sigScores</th>
+      <td><p>matrix of signature scores (Cells x Signatures)</p></td>
+    </tr>
+    <tr>
+      <th>sigData</th>
+      <td><p>list of Signature objects</p></td>
+    </tr>
+    <tr>
+      <th>normExpr</th>
+      <td><p>output from calling getNormalizedCopySparse</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>the VISION object, with SigGeneImportance slot populated</p>
+    <p>named list with one item per signature.  Values are named vectors
+of each gene's association (covariance) with the signature.</p>
     
 
   </div>

@@ -42,9 +42,7 @@
 <meta property="og:title" content="calculate signature scores — calcSignatureScores" />
 
 <meta property="og:description" content="For each signature-cell pair, compute a score that captures the level of
-correspondence between the cell and the signature.
-To estimate significance of these scores, a set of random gene signatures is
-generated to create a null distribution" />
+correspondence between the cell and the signature." />
 
 <meta property="og:image" content="https://yoseflab.github.io/VISION/logo.png" />
 <meta name="twitter:card" content="summary" />
@@ -154,15 +152,12 @@ generated to create a null distribution" />
     <div class="ref-description">
     
     <p>For each signature-cell pair, compute a score that captures the level of
-correspondence between the cell and the signature.
-To estimate significance of these scores, a set of random gene signatures is
-generated to create a null distribution</p>
+correspondence between the cell and the signature.</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>calcSignatureScores</span>(<span class='no'>object</span>, <span class='kw'>sigData</span> <span class='kw'>=</span> <span class='no'>object</span>@<span class='kw'>sigData</span>,
-  <span class='kw'>metaData</span> <span class='kw'>=</span> <span class='no'>object</span>@<span class='kw'>metaData</span>, <span class='kw'>sig_norm_method</span> <span class='kw'>=</span> <span class='no'>object</span>@<span class='kw'>sig_norm_method</span>,
-  <span class='kw'>sig_score_method</span> <span class='kw'>=</span> <span class='no'>object</span>@<span class='kw'>sig_score_method</span>)</pre>
+    <pre class="usage"><span class='fu'>calcSignatureScores</span>(<span class='no'>object</span>, <span class='kw'>sig_norm_method</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>sig_gene_importance</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -172,27 +167,23 @@ generated to create a null distribution</p>
       <td><p>the VISION object</p></td>
     </tr>
     <tr>
-      <th>sigData</th>
-      <td><p>a list of Signature objects for which to compute the scores</p></td>
-    </tr>
-    <tr>
-      <th>metaData</th>
-      <td><p>a list of existing cell-signatures</p></td>
-    </tr>
-    <tr>
       <th>sig_norm_method</th>
-      <td><p>(optional) Method to apply to normalize the expression
-matrix before calculating signature scores</p></td>
+      <td><p>Method to apply to normalize the expression matrix
+before calculating signature scores. Valid options are:
+"znorm_columns" (default), "none", "znorm_rows", "znorm_rows_then_columns",
+or "rank_norm_columns"</p></td>
     </tr>
     <tr>
-      <th>sig_score_method</th>
-      <td><p>the scoring method to use</p></td>
+      <th>sig_gene_importance</th>
+      <td><p>whether or not to rank each gene's contribution to
+the overall signature score.  Default = TRUE.  This is used for inspecting
+genes in a signature in the output report</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>the VISION object, with signature score slots populated</p>
+    <p>the VISION object, with the @SigScores and @SigGeneImportance slots populated</p>
     
 
   </div>

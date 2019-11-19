@@ -15,7 +15,7 @@
 #'          automatically.
 #' @return Information on the fitten tree
 #'      \itemize{
-#'     \item C: spatial positions of the tree nodes in NUM_FEATURES dimensional
+#'     \item C: spatial positions of the tree nodes in NUM_PROTEINS dimensional
 #'     space
 #'     \item W: Unweighted (binary) adjacency matrix of the fitten tree
 #'     \item distMat: distance matrix between each tree node to each datapoint
@@ -159,7 +159,7 @@ applySimplePPT <- function(exprData, numCores, permExprData = NULL,
 #' @param maxIter Maximum number of Iterations ot run the algorithm for
 #' @return (list) Tree characteristics:
 #'      \itemize{
-#'     \item C spatial positions of the tree nodes in NUM_FEATURES dimensional space
+#'     \item C spatial positions of the tree nodes in NUM_PROTEINS dimensional space
 #'     \item unweighted (binary) adjacency matrix
 #'     \item the mean-squared error of the tree
 #'      }
@@ -290,10 +290,10 @@ projectOnTree <- function(data.pnts, V.pos, princAdj) {
 
 #' Calculate distance matrix between all pairs of ponts based on their projection onto the tree
 #'
-#' @param princPnts (D x K numeric) the spatial locations of the principle points (tree vertices)
-#' @param princAdj (K x K logical) adjacency matrix of the principle graph
+#' @param adjMat (K x K logical) adjacency matrix of the milestones
 #' @param edgeAssoc (2 x N) for each point, the edge it is projected to (represented as (V1,V2), where V1<V2)
 #' @param edgePos (length N, numeric) relative postion on the edge for each point, in range [0,1]
+#' @param latentPnts (D x K numeric) the spatial locations of the milestones
 #'
 #' @return non-negative symmetric matrix in which [i,j] is the tree-based distance between points i, j.
 calculateTrajectoryDistances <- function(adjMat, edgeAssoc, edgePos, latentPnts = NULL) {
@@ -382,22 +382,4 @@ calcInterEdgeDistMat <- function(v1.dist, v2.dist, path.length) {
     v1.mat <- v1.dist %o% rep(1, length(v2.dist))
     v2.mat <- t(v2.dist %o% rep(1, length(v1.dist)))
     return((v1.mat + v2.mat) + path.length)
-}
-
-#' Find K nearest neighbors for each vector in query among the vectors in the
-#' given data
-#' @param data the search-space to look for nearest neighbors
-#' @param query the points to find neighbors for (not necessarily in the data)
-#' @param k the number of neighbors to find for each vectors
-#' @return a list of the k neughbors for each of the vectors in `query`
-findNeighbors <- function(data, query, k) {
-
-    n_workers <- getOption("mc.cores")
-    n_workers <- if (is.null(n_workers)) 2 else n_workers
-
-    neighborhood <- lapply(1:ncol(query), function(x) {
-    vkn <- ball_tree_vector_knn(data, query[,x], k, n_workers)
-    return(vkn)
-    })
-    return(neighborhood)
 }

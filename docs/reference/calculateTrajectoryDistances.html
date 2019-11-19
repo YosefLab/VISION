@@ -161,6 +161,10 @@
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
+      <th>adjMat</th>
+      <td><p>(K x K logical) adjacency matrix of the milestones</p></td>
+    </tr>
+    <tr>
       <th>edgeAssoc</th>
       <td><p>(2 x N) for each point, the edge it is projected to (represented as (V1,V2), where V1&lt;V2)</p></td>
     </tr>
@@ -169,12 +173,8 @@
       <td><p>(length N, numeric) relative postion on the edge for each point, in range [0,1]</p></td>
     </tr>
     <tr>
-      <th>princPnts</th>
-      <td><p>(D x K numeric) the spatial locations of the principle points (tree vertices)</p></td>
-    </tr>
-    <tr>
-      <th>princAdj</th>
-      <td><p>(K x K logical) adjacency matrix of the principle graph</p></td>
+      <th>latentPnts</th>
+      <td><p>(D x K numeric) the spatial locations of the milestones</p></td>
     </tr>
     </table>
     

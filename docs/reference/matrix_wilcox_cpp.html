@@ -156,7 +156,8 @@ on every row for values in cluster_num vs cluster_denom.</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>matrix_wilcox_cpp</span>(<span class='no'>data</span>, <span class='no'>cluster_num</span>, <span class='no'>cluster_denom</span>)</pre>
+    <pre class="usage"><span class='fu'>matrix_wilcox_cpp</span>(<span class='no'>data</span>, <span class='no'>cluster_num</span>, <span class='no'>cluster_denom</span>,
+  <span class='kw'>jobs</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/options'>getOption</a></span>(<span class='st'>"mc.cores"</span>, <span class='fl'>2L</span>))</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -170,8 +171,13 @@ on every row for values in cluster_num vs cluster_denom.</p>
       <td><p>numeric vector - indices denoting the group to be compared</p></td>
     </tr>
     <tr>
-      <th>cluster_denum</th>
+      <th>cluster_denom</th>
       <td><p>numeric vector - indices denoting the other group to be compared</p></td>
+    </tr>
+    <tr>
+      <th>jobs</th>
+      <td><p>integer specifying number of parallel jobs.  Can be used to override
+the default mc.cores option for when running this within an already-parallel loop</p></td>
     </tr>
     </table>
     

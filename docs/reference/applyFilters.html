@@ -154,7 +154,7 @@
     
     </div>
 
-    <pre class="usage"><span class='fu'>applyFilters</span>(<span class='no'>expr</span>, <span class='no'>threshold</span>, <span class='no'>filterInput</span>)</pre>
+    <pre class="usage"><span class='fu'>applyFilters</span>(<span class='no'>expr</span>, <span class='no'>filterInput</span>, <span class='no'>threshold</span>, <span class='no'>num_mad</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -164,12 +164,16 @@
       <td><p>a numeric expression matrix (genes x cells)</p></td>
     </tr>
     <tr>
+      <th>filterInput</th>
+      <td><p>list of filters to compute</p></td>
+    </tr>
+    <tr>
       <th>threshold</th>
       <td><p>minimum number of samples gene must be detected in to pass</p></td>
     </tr>
     <tr>
-      <th>filterInput</th>
-      <td><p>list of filters to compute</p></td>
+      <th>num_mad</th>
+      <td><p>number of median absolute deviations to use in fano filter</p></td>
     </tr>
     </table>
     

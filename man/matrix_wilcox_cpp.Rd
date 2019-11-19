@@ -4,14 +4,18 @@
 \alias{matrix_wilcox_cpp}
 \title{C++ wilcox rank-sums test}
 \usage{
-matrix_wilcox_cpp(data, cluster_num, cluster_denom)
+matrix_wilcox_cpp(data, cluster_num, cluster_denom,
+  jobs = getOption("mc.cores", 2L))
 }
 \arguments{
 \item{data}{matrix of values, each row representing a separate variable}
 
 \item{cluster_num}{numeric vector - indices denoting the group to be compared}
 
-\item{cluster_denum}{numeric vector - indices denoting the other group to be compared}
+\item{cluster_denom}{numeric vector - indices denoting the other group to be compared}
+
+\item{jobs}{integer specifying number of parallel jobs.  Can be used to override
+the default mc.cores option for when running this within an already-parallel loop}
 }
 \value{
 pval - numeric vector, pvalue for each row

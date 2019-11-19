@@ -5,6 +5,8 @@
 \alias{Vision}
 \alias{Vision,matrixORSparse-method}
 \alias{Vision,data.frame-method}
+\alias{Vision,sparseMatrix-method}
+\alias{Vision,dgeMatrix-method}
 \alias{Vision,ExpressionSet-method}
 \alias{Vision,SummarizedExperiment-method}
 \alias{Vision,seurat-method}
@@ -14,18 +16,21 @@
 Vision(data, ...)
 
 \S4method{Vision}{matrixORSparse}(data, signatures = list(),
-  housekeeping = NULL, unnormalizedData = NULL, meta = NULL,
-  nomodel = TRUE, projection_genes = c("fano"),
-  min_signature_genes = 5, weights = NULL, threshold = 0.05,
-  perm_wPCA = FALSE, projection_methods = c("tSNE30"),
+  proteinData = NULL, unnormalizedData = NULL, meta = NULL,
+  projection_genes = c("fano"), min_signature_genes = 5,
+  threshold = 0.05, perm_wPCA = FALSE,
+  projection_methods = c("tSNE30"),
   sig_norm_method = c("znorm_columns", "none", "znorm_rows",
-  "znorm_rows_then_columns", "rank_norm_columns"),
-  sig_score_method = c("naive", "weighted_avg"), pool = "auto",
+  "znorm_rows_then_columns", "rank_norm_columns"), pool = "auto",
   cellsPerPartition = 10, name = NULL, num_neighbors = NULL,
   latentSpace = NULL, latentSpaceName = NULL,
   latentTrajectory = NULL, pools = list())
 
 \S4method{Vision}{data.frame}(data, ...)
+
+\S4method{Vision}{sparseMatrix}(data, ...)
+
+\S4method{Vision}{dgeMatrix}(data, ...)
 
 \S4method{Vision}{ExpressionSet}(data, ...)
 
@@ -46,26 +51,27 @@ Vision(data, ...)
 }
 Expression data should be scaled and normalized, but not log-transformed.}
 
+\item{...}{arguments passed to the base Vision constructor}
+
 \item{signatures}{list of file paths to signature files (.gmt or .txt) or
 Signature objects.  See the createGeneSignature(...) method for information
 on creating Signature objects.}
 
-\item{housekeeping}{vector of gene names}
+\item{proteinData}{additional protein abundance data (such as ADT counts).
+Can be either a data.frame or numeric matrix.  Should be of shape (CELLS x PROTEINS)}
+
+\item{unnormalizedData}{data.frame or numeric matrix (dense or sparse) - used
+when displaying gene expression values in the output report.  If supplied
+this overrides the input in `data` but only when visualizing data.}
 
 \item{meta}{data.frame with meta-data for cells. Rows in this data.frame should correspond
 with columns in the expression data matrix}
-
-\item{nomodel}{if TRUE, no fnr curve calculated and all weights equal to 1.
-Else FNR and weights calculated. [Default:TRUE]}
 
 \item{projection_genes}{name of filtering method ('threshold' or 'fano') or list of
 genes to use when computing projections.}
 
 \item{min_signature_genes}{Signature that match less than this number of genes in the
 supplied expression matrix are removed.}
-
-\item{weights}{Precomputed weights for each coordinate. Normally computed
-from the FNR curve.}
 
 \item{threshold}{Threshold to apply when using the 'threshold' or 'fano' projection genes filter.
 If greater than 1, this specifies the number of cells in which a gene must be detected
@@ -89,12 +95,9 @@ before calculating signature scores. Valid options are:
 "znorm_columns" (default), "none", "znorm_rows", "znorm_rows_then_columns",
 or "rank_norm_columns"}
 
-\item{sig_score_method}{Method to apply when calculating signature scores.
-Either "naive" (default) or "weighted_avg"}
-
 \item{pool}{indicates whether or not to pool cells into supercells. Acceptable values
 are TRUE, FALSE, or 'auto', the last of which is the default and enables
-pooling if there are more than 15000 cells.}
+pooling if there are more than 100000 cells.}
 
 \item{cellsPerPartition}{the target number of cells to put into a supercell when pooling}
 
@@ -105,8 +108,13 @@ pooling if there are more than 15000 cells.}
 \item{latentSpace}{latent space for expression data. Numeric matrix or dataframe
 with dimensions CELLS x COMPONENTS}
 
+\item{latentSpaceName}{a name for the latent space method (used in output report)}
+
 \item{latentTrajectory}{trajectory to model cell progression.  Wrapped result
 of a trajectory inference method by the dynverse/dynwrap library}
+
+\item{pools}{assignments of cell to micropool.  Used when microclustering batches
+separately and then combining.  See vignette for usage.}
 
 \item{dimRed}{Dimensionality reduction to use for the latentSpace.  Default is to
 look for "pca" and use that if it exists}

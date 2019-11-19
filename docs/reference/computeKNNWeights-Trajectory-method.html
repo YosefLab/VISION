@@ -155,7 +155,8 @@
     </div>
 
     <pre class="usage"><span class='co'># S4 method for Trajectory</span>
-<span class='fu'>computeKNNWeights</span>(<span class='no'>object</span>, <span class='no'>K</span>)</pre>
+<span class='fu'>computeKNNWeights</span>(<span class='no'>object</span>,
+  <span class='kw'>K</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/Round'>round</a></span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/MathFun'>sqrt</a></span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/nrow'>nrow</a></span>(<span class='no'>object</span>))))</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -163,6 +164,10 @@
     <tr>
       <th>object</th>
       <td><p>a Trajectory object</p></td>
+    </tr>
+    <tr>
+      <th>K</th>
+      <td><p>Number of neighbors to consider.</p></td>
     </tr>
     </table>
     

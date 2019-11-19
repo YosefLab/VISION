@@ -154,7 +154,7 @@
     
     </div>
 
-    <pre class="usage"><span class='fu'>clusterSignatures</span>(<span class='no'>sigMatrix</span>, <span class='no'>metaData</span>, <span class='no'>pvals</span>, <span class='no'>consistency</span>, <span class='no'>clusterMeta</span>)</pre>
+    <pre class="usage"><span class='fu'>clusterSignatures</span>(<span class='no'>sigMatrix</span>, <span class='no'>metaData</span>, <span class='no'>autocorrelation</span>, <span class='no'>clusterMeta</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -168,9 +168,12 @@
       <td><p>data.frame of meta-data for cells</p></td>
     </tr>
     <tr>
-      <th>pvals</th>
-      <td><p>the corresponding P-values for each signature
-NUM_SIGNATURES x NUM_SAMPLES</p></td>
+      <th>autocorrelation</th>
+      <td><p>data.frame autocorrelation results</p></td>
+    </tr>
+    <tr>
+      <th>clusterMeta</th>
+      <td><p>bool whether or not to cluster meta-data (used when pool=TRUE)</p></td>
     </tr>
     </table>
     

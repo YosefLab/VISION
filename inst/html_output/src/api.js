@@ -78,9 +78,10 @@ var api = (function(){
         })
     }
 
-    output.signature.expression = function(sig_name){
+    output.signature.expression = function(sig_name, cluster_var){
         var query = "Signature/Expression/"
         query = query.concat(encodeURIComponent(sig_name))
+        query = query.concat("/" + encodeURIComponent(cluster_var))
         query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
@@ -96,6 +97,26 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
+    // Protein API
+
+    output.protein = {}
+
+    output.protein.clusters = function() {
+        var query= "FilterGroup/SigClusters/Proteins"
+        query = postProcess(query)
+        return $.ajax(query, {dataType: "json"}).then(x => x)
+    }
+
+    output.protein.values = function(protein_name){
+        var query = "Proteins/"
+        query = query.concat(encodeURIComponent(protein_name))
+        query = query.concat("/Values")
+        query = postProcess(query)
+        return $.ajax(query, {dataType: "json"}).then(x => {
+            return _.fromPairs(_.zip(x['cells'], x['values']))
+        })
+    }
+
     // Clusters API
 
     output.clusters = {}
@@ -109,6 +130,15 @@ var api = (function(){
         } else {
             query = query.concat("/SigProjMatrix/Normal")
         }
+        query = postProcess(query)
+        return $.ajax(query, {dataType: "json"}).then(x => x)
+    }
+
+    output.clusters.proteinMatrix = function(cluster_variable)
+    {
+        var query = "Clusters/"
+        query = query.concat(encodeURIComponent(cluster_variable))
+        query = query.concat("/ProteinMatrix")
         query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
@@ -136,33 +166,35 @@ var api = (function(){
     }
 
     //Yanay
-    output.de = function(type_n, subtype_n, group_num, type_d, subtype_d, group_denom) {
+    output.de = function(type_n, subtype_n, group_num, type_d, subtype_d, group_denom, min_cells, subsample_groups, subsample_N) {
         var query = "DE"
 
         query = postProcess(query)
         return $.ajax(query, {
             type: "POST",
-            data: JSON.stringify({"type_n":type_n, "type_d":type_d, "subtype_n":subtype_n, "subtype_d":subtype_d,  "group_num":group_num, "group_denom":group_denom}),
+            data: JSON.stringify({"type_n":type_n, "type_d":type_d, "subtype_n":subtype_n, "subtype_d":subtype_d,  "group_num":group_num, "group_denom":group_denom, "min_cells":min_cells, "subsample_groups":subsample_groups, "subsample_N":subsample_N}),
             dataType: "json"
         }).then(x => x);
     }
 
-    output.filterGroup = {}
+    // Pearson Correlations (LCA) api
 
-    output.filterGroup.pCorr = function(meta) {
-        var query;
-        if (meta) {
-            query = "PearsonCorr/Meta"
-        } else {
-            query = "PearsonCorr/Normal"
-        }
+    output.pCorr = {}
+
+    output.pCorr.signatures = function() {
+        var query = "PearsonCorr/Normal"
         query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
 
-    output.filterGroup.listPCs = function()
-    {
-        var query = "PearsonCorr/list"
+    output.pCorr.proteins = function() {
+        var query = "PearsonCorr/Proteins"
+        query = postProcess(query)
+        return $.ajax(query, {dataType: "json"}).then(x => x)
+    }
+
+    output.pCorr.meta = function() {
+        var query = "PearsonCorr/Meta"
         query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
@@ -214,6 +246,13 @@ var api = (function(){
         } else {
             query = query.concat("/SigProjMatrix/Normal")
         }
+        query = postProcess(query)
+        return $.ajax(query, {dataType: "json"}).then(x => x)
+    }
+
+    output.tree.proteinMatrix = function()
+    {
+        var query = "Tree/ProteinMatrix"
         query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }

@@ -81,3 +81,150 @@ getNormalizedCopy <- function(data, func) {
     }
     stop("Normalization method not recognized.")
 }
+
+#' Calculates the specified normalized data matrix
+#'
+#' @importFrom Matrix rowMeans
+#' @importFrom Matrix colMeans
+#'
+#' @param data numeric matrix
+#' @param func normalization method to apply
+#' @return NormData normalized data object that maintains sparse structure
+getNormalizedCopySparse <- function(data, func) {
+
+    data <- matLog2(data)
+
+    if (!(func %in% c(
+                "none", "znorm_columns",
+                "znorm_rows", "znorm_rows_then_columns"
+                ))){
+
+        stop("Normalization method not recognized.")
+    }
+
+    rowOffsets <- NULL
+    colOffsets <- NULL
+    rowScaleFactors <- NULL
+    colScaleFactors <- NULL
+
+    if (func == "znorm_rows" || func == "znorm_rows_then_columns") {
+        rowOffsets <- rowMeans(data) * -1
+        rowScaleFactors <- rowVarsSp(data) ** -0.5
+    }
+
+    if (func == "znorm_columns") {
+        colOffsets <- colMeans(data) * -1
+        colScaleFactors <- colVarsSp(data) ** -0.5
+    }
+
+    if (func == "znorm_rows_then_columns") {
+        result <- .colNormHelper(data, rowOffsets, rowScaleFactors)
+        colOffsets <- result$colOffsets
+        colScaleFactors <- result$colScaleFactors
+    }
+
+    nd <- NormData(data, rowOffsets = rowOffsets, colOffsets = colOffsets,
+        rowScaleFactors = rowScaleFactors, colScaleFactors = colScaleFactors)
+
+    return(nd)
+}
+
+#' Initialize a new NormData object
+#'
+#' @importFrom Matrix Matrix
+#' @importFrom matrixStats colCounts
+#'
+#' @param data expression data matrix
+#' @param rowOffsets offsets to be subtracted from each row
+#' @param rowScaleFactors factors to scale each row
+#' @param colOffsets offsets to be subtracted from each column
+#' @param colScaleFactors factors to scale each column
+#' @return NormData object
+NormData <- function(data, rowOffsets = NULL, rowScaleFactors = NULL,
+    colOffsets = NULL, colScaleFactors = NULL) {
+
+    if (is.null(rowOffsets)){
+        rowOffsets <- numeric(nrow(data))
+    }
+
+    if (is.null(rowScaleFactors)){
+        rowScaleFactors <- numeric(nrow(data)) + 1
+    }
+
+    if (is.null(colOffsets)){
+        colOffsets <- numeric(ncol(data))
+    }
+
+    if (is.null(colScaleFactors)){
+        colScaleFactors <- numeric(ncol(data)) + 1
+    }
+
+    if (!is(data, "Matrix")) {
+        colFill <- colCounts(data, cols = seq_len(min(ncol(data), 500)), value = 0) / nrow(data)
+        if (mean(colFill) < .5){
+            data <- as(data, "dgCMatrix")
+        } else {
+            data <- as(data, "dgeMatrix")
+        }
+    }
+
+    .Object <- new("NormData",
+        data = data,
+        rowOffsets = rowOffsets,
+        colOffsets = colOffsets,
+        rowScaleFactors = rowScaleFactors,
+        colScaleFactors = colScaleFactors
+    )
+
+    return(.Object)
+}
+
+
+#' Calculates the column znormalization after row znormalization
+#'
+#' Helper to do this without inflating the matrix
+#'
+#' @importFrom Matrix Matrix
+#' @importFrom Matrix Diagonal
+#' @importFrom stats setNames
+#'
+#' @param data expression data matrix
+#' @param rowOffsets offsets to be subtracted from each row
+#' @param rowScaleFactors factors to scale each row
+#' @return colOffsets and colScaleFactors
+.colNormHelper <- function(data, rowOffsets, rowScaleFactors) {
+
+    E <- data
+
+    NCells <- ncol(E)
+    NGenes <- nrow(E)
+    Rs <- Diagonal(x = rowScaleFactors)
+    Rog <- Matrix(rowOffsets, ncol = 1)
+    Roc <- Matrix(1, nrow = 1, ncol = NCells)
+
+    C1 <- Matrix(1, nrow = 1, ncol = NGenes)
+
+    C1Rs <- C1 %*% Rs
+    C1RsE <- C1 %*% Rs %*% E
+
+    Co <- ( (C1RsE) + (C1Rs %*% Rog %*% Roc) ) / NGenes * -1
+    Cog <- Matrix(1, ncol = 1, nrow = NGenes)
+    Coc <- Co
+
+    t1 <- C1 %*% (Rs %*% E) ** 2
+    t2 <- 2 * Matrix(rowOffsets * rowScaleFactors, nrow = 1) %*% Rs %*% E
+    t3 <- 2 * (C1RsE) * Co
+    t4 <- Matrix(sum( (rowScaleFactors * rowOffsets) ** 2),
+        nrow = 1, ncol = NCells)
+    t5 <- 2 * Matrix(sum(rowScaleFactors * rowOffsets), nrow = 1, ncol = NCells) * Co
+    t6 <- Co * Co * NGenes
+
+    Cs <- (t1 + t2 + t3 + t4 + t5 + t6) / (NGenes - 1)
+
+    colOffsets <- setNames(as.numeric(Co), colnames(Co))
+    colScaleFactors <- setNames(as.numeric(Cs), colnames(Cs))
+
+    colScaleFactors <- colScaleFactors ** -0.5
+
+    return(list(colOffsets = colOffsets, colScaleFactors = colScaleFactors))
+}

@@ -4,28 +4,25 @@
 \alias{calcSignatureScores}
 \title{calculate signature scores}
 \usage{
-calcSignatureScores(object, sigData = object@sigData,
-  metaData = object@metaData, sig_norm_method = object@sig_norm_method,
-  sig_score_method = object@sig_score_method)
+calcSignatureScores(object, sig_norm_method = NULL,
+  sig_gene_importance = TRUE)
 }
 \arguments{
 \item{object}{the VISION object}
 
-\item{sigData}{a list of Signature objects for which to compute the scores}
+\item{sig_norm_method}{Method to apply to normalize the expression matrix
+before calculating signature scores. Valid options are:
+"znorm_columns" (default), "none", "znorm_rows", "znorm_rows_then_columns",
+or "rank_norm_columns"}
 
-\item{metaData}{a list of existing cell-signatures}
-
-\item{sig_norm_method}{(optional) Method to apply to normalize the expression
-matrix before calculating signature scores}
-
-\item{sig_score_method}{the scoring method to use}
+\item{sig_gene_importance}{whether or not to rank each gene's contribution to
+the overall signature score.  Default = TRUE.  This is used for inspecting
+genes in a signature in the output report}
 }
 \value{
-the VISION object, with signature score slots populated
+the VISION object, with the @SigScores and @SigGeneImportance slots populated
 }
 \description{
 For each signature-cell pair, compute a score that captures the level of
 correspondence between the cell and the signature.
-To estimate significance of these scores, a set of random gene signatures is
-generated to create a null distribution
 }

@@ -4,15 +4,16 @@
 \alias{clusterSignatures}
 \title{Clusters signatures according to the rank sum}
 \usage{
-clusterSignatures(sigMatrix, metaData, pvals, consistency, clusterMeta)
+clusterSignatures(sigMatrix, metaData, autocorrelation, clusterMeta)
 }
 \arguments{
 \item{sigMatrix}{matrix of signatures scores, NUM_SAMPLES x NUM_SIGNATURES}
 
 \item{metaData}{data.frame of meta-data for cells}
 
-\item{pvals}{the corresponding P-values for each signature
-NUM_SIGNATURES x NUM_SAMPLES}
+\item{autocorrelation}{data.frame autocorrelation results}
+
+\item{clusterMeta}{bool whether or not to cluster meta-data (used when pool=TRUE)}
 }
 \value{
 a list:

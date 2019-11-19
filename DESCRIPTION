@@ -12,6 +12,7 @@ Depends: R (>= 3.4)
 Imports:
 	fastICA,
 	igraph,
+    irlba,
 	jsonlite,
 	loe,
 	logging,
@@ -21,8 +22,10 @@ Imports:
 	matrixStats,
 	mclust,
 	methods,
+    mime,
     plumber,
-	Rcpp,
+    RANN,
+	Rcpp (>= 1.0.0),
 	rsvd,
 	stats,
 	Rtsne,
@@ -39,10 +42,13 @@ RoxygenNote: 6.1.1
 Suggests:
 	Biobase,
 	BiocStyle,
+    ggplot2,
+    hdf5r,
 	knitr,
 	rmarkdown,
+    SummarizedExperiment,
     testthat,
-    ggplot2
+    uwot
 biocViews:
 	GeneExpression,
 	RNASeq,

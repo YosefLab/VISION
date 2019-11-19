@@ -7,7 +7,9 @@
 sigScoresToJSON(names, values)
 }
 \arguments{
-\item{ss}{single-column dataframe with scores for a single signature}
+\item{names}{character vector of labels for signatures}
+
+\item{values}{numeric vector for signature values}
 }
 \value{
 Signature scores list to JSON, with names of each entry that of the list names

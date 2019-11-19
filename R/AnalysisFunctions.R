@@ -8,15 +8,10 @@ clusterCells <- function(object) {
 
     message("Clustering cells...", appendLF = FALSE)
 
-    res <- object@latentSpace
+    res <- object@LatentSpace
 
-    n_workers <- getOption("mc.cores")
-    n_workers <- if (is.null(n_workers)) 2 else n_workers
-
-    K <- min(object@num_neighbors, 30)
-    kn <- ball_tree_knn(res,
-                        K,
-                        n_workers)
+    K <- min(object@params$numNeighbors, 30)
+    kn <- find_knn_parallel(res, K)
 
     cl <- louvainCluster(kn, res)
 
@@ -46,16 +41,18 @@ clusterCells <- function(object) {
 #' @param object the VISION object for which to cluster the cells
 #' @param cellsPerPartition the minimum number of cells to put into a cluster
 #' @return the VISION with pooled cells
-poolCells <- function(object,
-                      cellsPerPartition=object@cellsPerPartition) {
-    object@cellsPerPartition <- cellsPerPartition
+poolCells <- function(object, cellsPerPartition = NULL) {
 
-    if (length(object@pools) == 0) {
+    if (!is.null(cellsPerPartition)){
+        object@params$micropooling$cellsPerPartition <- cellsPerPartition
+    }
+
+    if (length(object@Pools) == 0) {
         message(paste(
           "Performing micro-pooling on",
           ncol(object@exprData),
           "cells with a target pool size of",
-          object@cellsPerPartition
+          object@params$micropooling$cellsPerPartition
         ))
     } else {
       message("Performing micro-pooling using precomputed pools")
@@ -63,46 +60,58 @@ poolCells <- function(object,
 
     preserve_clusters <- NULL
 
-    if (length(object@pools) == 0) {
-        pools <- applyMicroClustering(object@exprData,
-                                              cellsPerPartition = object@cellsPerPartition,
-                                              filterInput = object@projection_genes,
-                                              filterThreshold = object@threshold,
-                                              latentSpace = object@latentSpace, 
-                                              K = object@num_neighbors)
+    if (is.null(object@params$latentSpace[["projectionGenes"]])){
+        filterInput <- object@params$latentSpace$projectionGenesMethod
+    } else {
+        filterInput <- object@params$latentSpace$projectionGenes
+    }
 
-        object@pools <- pools
+    if (length(object@Pools) == 0) {
+        pools <- applyMicroClustering(
+            object@exprData,
+            cellsPerPartition = object@params$micropooling$cellsPerPartition,
+            filterInput = filterInput,
+            filterThreshold = object@params$latentSpace$threshold,
+            latentSpace = object@LatentSpace,
+            K = object@params$numNeighbors)
+
+        object@Pools <- pools
     }
 
     message("    Aggregating data using assigned pools...", appendLF = FALSE)
-    pooled_cells <- poolMatrixCols(object@exprData, object@pools)
+    pooled_cells <- poolMatrixCols(object@exprData, object@Pools)
     object@exprData <- pooled_cells
 
     if (hasUnnormalizedData(object)) {
-        pooled_unnorm <- poolMatrixCols(object@unnormalizedData, object@pools)
+        pooled_unnorm <- poolMatrixCols(object@unnormalizedData, object@Pools)
         object@unnormalizedData <- pooled_unnorm
     }
 
-    if (!all(dim(object@latentSpace) == c(1, 1))) {
-        pooled_latent <- poolMatrixRows(object@latentSpace, object@pools)
-        object@latentSpace <- pooled_latent
+    if (!all(dim(object@LatentSpace) == c(1, 1))) {
+        pooled_latent <- poolMatrixRows(object@LatentSpace, object@Pools)
+        object@LatentSpace <- pooled_latent
     }
 
-    poolMeta <- poolMetaData(object@metaData, object@pools)
+    if (hasProteinData(object)) {
+        pooled_fbc <- poolMatrixRows(object@proteinData, object@Pools)
+        object@proteinData <- pooled_fbc
+    }
+
+    poolMeta <- poolMetaData(object@metaData, object@Pools)
     object@metaData <- poolMeta
 
-    if (length(object@inputProjections) > 0){
+    if (length(object@Projections) > 0){
 
-        newInputProjections <- lapply(
-            object@inputProjections,
+        newProjections <- lapply(
+            object@Projections,
             function(proj) {
-                new_coords <- poolMatrixRows(proj, object@pools)
+                new_coords <- poolMatrixRows(proj, object@Pools)
                 return(new_coords)
             })
 
-        names(newInputProjections) <- names(object@inputProjections)
+        names(newProjections) <- names(object@Projections)
 
-        object@inputProjections <- newInputProjections
+        object@Projections <- newProjections
 
     }
 
@@ -113,42 +122,72 @@ poolCells <- function(object,
 
 #' filter data accourding to the provided filters
 #' @param object the VISION object
-#' @param threshold threshold to apply for the threshold filter
-#' @param projection_genes either a list of genes or a method to select genes
+#' @param threshold Threshold to apply when using the 'threshold' or 'fano' projection genes filter.
+#' If greater than 1, this specifies the number of cells in which a gene must be detected
+#' for it to be used when computing PCA. If less than 1, this instead specifies the proportion of cells needed
+#' @param num_mad Number of median absolute deviations to use when selecting highly-variable
+#' genes in each mean-sorted bin of genes
+#' @param projection_genes_method a method to select genes either 'Threshold' or 'Fano'
+#' @param projection_genes a list of genes to use specifically.
+#' If this is supplied then `projection_genes_method` is ignored
 #' @return the VISION object, populated with filtered data
-filterData <- function(object,
-                       threshold=object@threshold,
-                       projection_genes=object@projection_genes) {
+computeProjectionGenes <- function(object,
+                       threshold = NULL,
+                       num_mad = NULL,
+                       projection_genes_method = NULL,
+                       projection_genes = NULL) {
 
-    object@projection_genes <- projection_genes
-    object@threshold <- threshold
+    if (!is.null(threshold)){
+        if (threshold < 1) {
+            num_samples <- ncol(object@exprData)
+            threshold <- round(threshold * num_samples)
+        }
+        object@params$latentSpace$threshold <- threshold
+    }
+
+    if (!is.null(num_mad)){
+        object@params$latentSpace$num_mad <- num_mad
+    } else {
+        object@params$latentSpace$num_mad <- 2
+    }
+
+    if (!is.null(projection_genes)){
+        object@params$latentSpace$projectionGenes <- projection_genes
+    } else {
+        object@params$latentSpace$projectionGenes <- NULL
+    }
+
+    if (!is.null(projection_genes_method)){
+        object@params$latentSpace$projectionGenesMethod <- projection_genes_method
+    }
 
     message("Determining projection genes...")
 
-    if (length(object@projection_genes) == 1){
+    if (is.null(object@params$latentSpace[["projectionGenes"]])){
 
         exprData <- matLog2(object@exprData)
         projection_genes <- applyFilters(
                     exprData,
-                    object@threshold,
-                    object@projection_genes)
+                    object@params$latentSpace$projectionGenesMethod,
+                    object@params$latentSpace$threshold,
+                    object@params$latentSpace$num_mad)
 
         if (length(projection_genes) == 0){
             stop(
                 sprintf("Filtering with (projection_genes=\"%s\", threshold=%i) results in 0 genes\n  Set a lower threshold and re-run",
-                    object@projection_genes, object@threshold)
+                    object@params$latentSpace$projectionGenesMethod, object@params$latentSpace$threshold)
                 )
         }
     } else {
         projection_genes <- intersect(
-            object@projection_genes, rownames(object@exprData))
+            object@params$latentSpace$projectionGenes, rownames(object@exprData))
 
         if (length(projection_genes) == 0){
             stop("Supplied list of genes in `projection_genes` does not match any rows of expression data")
         } else {
             message(
                 sprintf("    Using supplied list of genes: Found %i/%i matches",
-                    length(projection_genes), length(object@projection_genes)
+                    length(projection_genes), length(object@params$latentSpace$projectionGenes)
                     )
                 )
         }
@@ -156,86 +195,111 @@ filterData <- function(object,
 
     message()
 
-    object@projection_genes <- projection_genes
+    object@params$latentSpace$projectionGenes <- projection_genes
 
 
     return(object)
 }
 
-#' Calculate weights based on the false negative rates, computed using the
-#' provided housekeeping genes
+
+#' Add signatures to VISION object
+#'
+#'
 #' @param object the VISION object
-#' @param nomodel (optional) if TRUE, no fnr curve calculated and all weights
-#' equal to 1. Else FNR and weights calculated.
-#' @return the VISION object with populated weights slot
-calcWeights <- function(object,
-                        nomodel=object@nomodel) {
-    object@nomodel <- nomodel
-    clustered <- (ncol(object@exprData) > 15000 || object@pool)
-    if (!clustered && !object@nomodel) {
-        message("Computing weights from False Negative Rate curves...")
-        falseneg_out <- createFalseNegativeMap(object@exprData,
-                                               object@housekeepingData)
+#' @param signatures list of file paths to signature files (.gmt or .txt) or
+#' Signature objects.  See the createGeneSignature(...) method for information
+#' on creating Signature objects.
+#' @param min_signature_genes Signature that match less than this number of genes in the
+#' supplied expression matrix are removed.
+#' @return the VISION object, with the @sigData slot updated
+#' @export
+addSignatures <- function(object, signatures, min_signature_genes=5) {
 
-        object@weights <- computeWeights(falseneg_out[[1]], falseneg_out[[2]],
-                                         object@exprData)
+    if (is.list(signatures)) {
+        sigs <- lapply(signatures, function(sig){
+                   if (is(sig, "Signature")){
+                       return(sig)
+                   } else {
+                       return(readSignaturesInput(sig))
+                   }
+        })
 
-        rownames(object@weights) <- rownames(object@exprData)
-        colnames(object@weights) <- colnames(object@exprData)
+        if (length(sigs) > 0){
+            sigs <- do.call(c, sigs)
+        }
 
+        names(sigs) <- vapply(sigs, function(x){x@name}, "")
+
+    } else if (is.character(signatures)) {
+        sigs <- readSignaturesInput(signatures)
+    } else {
+        stop("signatures must be paths to signature files or list of
+            Signature objects")
     }
 
+    sigs <- processSignatures(sigs, rownames(object@exprData), min_signature_genes)
+
+    object@sigData <- c(object@sigData, sigs)
+
     return(object)
 }
+
 
 #' calculate signature scores
 #'
 #' For each signature-cell pair, compute a score that captures the level of
 #' correspondence between the cell and the signature.
-#' To estimate significance of these scores, a set of random gene signatures is
-#' generated to create a null distribution
 #'
 #' @param object the VISION object
-#' @param sigData a list of Signature objects for which to compute the scores
-#' @param metaData a list of existing cell-signatures
-#' @param sig_norm_method (optional) Method to apply to normalize the expression
-#' matrix before calculating signature scores
-#' @param sig_score_method the scoring method to use
-#' @return the VISION object, with signature score slots populated
-calcSignatureScores <- function(object,
-                                sigData=object@sigData,
-                                metaData=object@metaData,
-                                sig_norm_method=object@sig_norm_method,
-                                sig_score_method=object@sig_score_method) {
+#' @param sig_norm_method Method to apply to normalize the expression matrix
+#' before calculating signature scores. Valid options are:
+#' "znorm_columns" (default), "none", "znorm_rows", "znorm_rows_then_columns",
+#' or "rank_norm_columns"
+#' @param sig_gene_importance whether or not to rank each gene's contribution to
+#' the overall signature score.  Default = TRUE.  This is used for inspecting
+#' genes in a signature in the output report
+#' @return the VISION object, with the @SigScores and @SigGeneImportance slots populated
+#' @export
+calcSignatureScores <- function(
+    object, sig_norm_method = NULL, sig_gene_importance = TRUE) {
 
     message("Evaluating signature scores on cells...\n")
 
     ## override object parameters
-    if(!is.null(sigData)) object@sigData <- sigData
-    if(!is.null(metaData)) object@metaData <- metaData
-    object@sig_norm_method <- sig_norm_method
-    object@sig_score_method <- sig_score_method
+    if (!is.null(sig_norm_method)) object@params$signatures$sigNormMethod <- sig_norm_method
 
     if (length(object@sigData) == 0) {
-        sigScores <- matrix(nrow=ncol(object@exprData), ncol=0,
+        sigScores <- matrix(nrow = ncol(object@exprData), ncol = 0,
                             dimnames = list(colnames(object@exprData), NULL)
                             )
-        object@sigScores <- sigScores
+        object@SigScores <- sigScores
+        object@SigGeneImportance <- list()
         return(object)
     }
 
-    normExpr <- getNormalizedCopy(object@exprData, object@sig_norm_method)
+    normExpr <- getNormalizedCopySparse(
+        object@exprData,
+        object@params$signatures$sigNormMethod
+    )
 
-    sigScores <- batchSigEval(object@sigData, object@sig_score_method,
-                              normExpr, object@weights)
+    sigScores <- batchSigEvalNorm(object@sigData, normExpr)
 
-    object@sigScores <- sigScores
+    if (sig_gene_importance) {
+        sigGeneImportance <- evalSigGeneImportanceSparse(
+            sigScores, object@sigData, normExpr
+        )
+    } else {
+        sigGeneImportance <- list()
+    }
+
+    object@SigScores <- sigScores
+    object@SigGeneImportance <- sigGeneImportance
 
     return(object)
 }
 
 
-#' calculate gene-signature importance
+#' Calculate gene-signature importance
 #'
 #' For each signature, the contribution of each gene to the signature score
 #' is evaluated by calculating the covariance between signature scores and expression
@@ -244,18 +308,19 @@ calcSignatureScores <- function(object,
 #' @importFrom pbmcapply pbmclapply
 #' @importFrom matrixStats colSds
 #' @importFrom matrixStats rowSds
+#' @importFrom stats setNames
 #'
-#' @param object the VISION object
-#' @return the VISION object, with SigGeneImportance slot populated
-evalSigGeneImportance <- function(object){
+#' @param sigScores matrix of signature scores (Cells x Signatures)
+#' @param sigData list of Signature objects
+#' @param normExpr output from calling getNormalizedCopySparse
+#' @return named list with one item per signature.  Values are named vectors
+#' of each gene's association (covariance) with the signature.
+evalSigGeneImportance <- function(sigScores, sigData, normExpr){
 
     message("Evaluating signature-gene importance...\n")
 
-    sigScores <- object@sigScores
-
-    if (length(object@sigData) == 0) {
-        object@SigGeneImportance <- list()
-        return(object)
+    if (length(sigData) == 0) {
+        return(list())
     }
 
     if (length(sigScores) <= 1){
@@ -263,8 +328,6 @@ evalSigGeneImportance <- function(object){
             sprintf("Signature scores have not yet been computed.  `calcSignatureScores` must be run before running `evalSigGeneImportance`")
             )
     }
-
-    normExpr <- getNormalizedCopy(object@exprData, object@sig_norm_method)
 
     # Center each column of sigScores first
 
@@ -280,8 +343,6 @@ evalSigGeneImportance <- function(object){
     normExpr <- (normExpr - mu)
 
     # Compute Covariances
-    sigData <- object@sigData
-
     sigGene <- function(signame) {
         sigdata <- sigData[[signame]]
 
@@ -303,32 +364,148 @@ evalSigGeneImportance <- function(object){
     sigs <- colnames(sigScores)
     res <- pbmclapply(setNames(sigs, sigs), sigGene)
 
-    object@SigGeneImportance <- res
+    return(res)
+}
 
 
-    return(object)
+#' Calculate Gene-Signature Importance
+#'
+#' For each signature, the contribution of each gene to the signature score
+#' is evaluated by calculating the covariance between signature scores and expression
+#' The correlation of genes with a negative sign in the signature are inverted.
+#'
+#' This version is made to avoid inflating sparse matrices
+#'
+#' @importFrom pbmcapply pbmclapply
+#' @importFrom matrixStats colSds
+#' @importFrom matrixStats rowSds
+#' @importFrom Matrix Matrix
+#' @importFrom Matrix Diagonal
+#' @importFrom stats setNames
+#'
+#' @param object the VISION object
+#' @return the VISION object, with SigGeneImportance slot populated
+#' @param sigScores matrix of signature scores (Cells x Signatures)
+#' @param sigData list of Signature objects
+#' @param normExpr output from calling getNormalizedCopySparse
+#' @return named list with one item per signature.  Values are named vectors
+#' of each gene's association (covariance) with the signature.
+evalSigGeneImportanceSparse <- function(sigScores, sigData, normExpr){
+
+    message("Evaluating signature-gene importance...\n")
+
+    if (length(sigData) == 0) {
+        return(list())
+    }
+
+    if (length(sigScores) <= 1){
+        stop(
+            sprintf("Signature scores have not yet been computed.  `calcSignatureScores` must be run before running `evalSigGeneImportance`")
+            )
+    }
+
+    # Center each column of sigScores first
+    mu <- colMeans(sigScores)
+
+    sigScores <- t(sigScores)
+    sigScores <- (sigScores - mu)
+    sigScores <- t(sigScores)
+
+    # Precompute some matrices we'll need later
+    NGenes <- nrow(normExpr@data)
+    NCells <- ncol(normExpr@data)
+    Cog <- Matrix(1, ncol = 1, nrow = NGenes)
+    Coc <- Matrix(normExpr@colOffsets, nrow = 1)
+    Cs <- Diagonal(x = normExpr@colScaleFactors)
+    Roc <- Matrix(1, nrow = 1, ncol = NCells)
+    C1 <- t(Roc)
+
+    RM <- normExpr@data %*% (Cs %*% C1) + Cog %*% (Coc %*% (Cs %*% C1))
+    RM <- RM / NCells
+    RM <- RM[, 1]
+
+    # Compute Covariances
+    sigGene <- function(signame) {
+        sigdata <- sigData[[signame]]
+
+        genes <- sigdata@sigDict
+
+        S <- sigScores[, signame, drop = F]
+        geneIndices <- rownames(normExpr@data) %in% names(genes)
+
+        E <- normExpr@data[geneIndices, , drop = FALSE]
+
+        Rog <- Matrix(RM[geneIndices], ncol = 1)
+        Cog <- Matrix(1, ncol = 1, nrow = length(genes))
+
+        geneCov <- E %*% Cs %*% S - Rog %*% (Roc %*% S) + Cog %*% (Coc %*% (Cs %*% S))
+        geneCov <- geneCov / (NCells - 1)
+        geneCov <- geneCov[, 1]
+        geneCov <- geneCov[names(genes)]
+
+        geneCov <- geneCov * genes # invert sign for negative genes
+
+        return(geneCov)
+    }
+
+    sigs <- colnames(sigScores)
+    res <- pbmclapply(setNames(sigs, sigs), sigGene)
+
+    return(res)
 }
 
 
 #' Computes the latent space of the expression matrix using PCA
 #'
 #' @param object the VISION object for which compute the latent space
-#' @param projection_genes character vector of gene names to use for projections
+#' @param projection_genes character vector of gene names to use for PCA
+#' @param projection_genes_method name of filtering method. Either 'threshold' or 'fano'(default)
+#' @param filterThreshold Threshold to apply when using the 'threshold' or 'fano' projection genes filter.
+#' If greater than 1, this specifies the number of cells in which a gene must be detected
+#' for it to be used when computing PCA. If less than 1, this instead specifies the proportion of cells needed
+#' @param filterNumMad Number of median absolute deviations to use when selecting highly-variable
+#' genes in each mean-sorted bin of genes
+#' @param num_PCs the number of principal components to retain
 #' @param perm_wPCA If TRUE, apply permutation wPCA to determine significant
 #' number of components. Default is FALSE.
-#' @return the VISION with latentSpace populated
-computeLatentSpace <- function(object, projection_genes = NULL,
-                               perm_wPCA = NULL) {
+#' @return the VISION with @latentSpace slot populated
+#' @export
+computeLatentSpace <- function(
+    object, projection_genes = NULL,
+    filterThreshold = .05, filterNumMad = 2,
+    projection_genes_method = NULL,
+    num_PCs = 30, perm_wPCA = NULL) {
 
     message("Computing a latent space for expression data...\n")
 
-    if (!is.null(projection_genes)) object@projection_genes <- projection_genes
-    if (!is.null(perm_wPCA)) object@perm_wPCA <- perm_wPCA
+    if (!is.null(projection_genes)) {
+        object@params$latentSpace$projectionGenes <- projection_genes
+    }
+    if (!is.null(projection_genes_method)) {
+        object@params$latentSpace$projectionGenesMethod <- projection_genes_method
+    }
+
+    if (is.null(object@params$latentSpace[["projectionGenes"]])) {
+        object <- computeProjectionGenes(
+            object,
+            threshold = filterThreshold,
+            num_mad = filterNumMad,
+            projection_genes_method =
+                object@params$latentSpace$projectionGenesMethod
+        )
+    } else {
+        object <- computeProjectionGenes(
+            object,
+            projection_genes = object@params$latentSpace$projectionGenes
+        )
+    }
+
+    if (!is.null(perm_wPCA)) object@params$latentSpace$permPCA <- perm_wPCA
+    object@params$latentSpace$numPCs <- num_PCs
 
     expr <- object@exprData
-    weights <- object@weights
-    projection_genes <- object@projection_genes
-    perm_wPCA <- object@perm_wPCA
+    projection_genes <- object@params$latentSpace[["projectionGenes"]]
+    perm_wPCA <- object@params$latentSpace$permPCA
 
     if (!is.null(projection_genes)) {
         exprData <- expr[projection_genes, , drop = FALSE]
@@ -336,36 +513,67 @@ computeLatentSpace <- function(object, projection_genes = NULL,
         exprData <- expr
     }
 
-    if (all(dim(weights) == c(1, 1))){
-        weights <- matrix(1, nrow = nrow(exprData), ncol = ncol(exprData),
-                          dimnames = list(
-                                          rownames(exprData),
-                                          colnames(exprData)
-                                         )
-                         )
-    }
-
     exprData <- matLog2(exprData)
 
     if (perm_wPCA) {
-        res <- applyPermutationWPCA(exprData, weights, components = 30)
+        res <- applyPermutationWPCA(exprData, components = num_PCs)
         pca_res <- res[[1]]
     } else {
-        res <- applyWeightedPCA(exprData, weights, maxComponents = 30)
+        res <- applyPCA(exprData, maxComponents = num_PCs)
         pca_res <- res[[1]]
     }
 
-    object@latentSpace <- t(pca_res)
-    colnames(object@latentSpace) <- paste0("PC ", seq_len(ncol(object@latentSpace)))
-    object@params[["latentSpaceName"]] <- "PCA"
+    object@LatentSpace <- t(pca_res)
+    colnames(object@LatentSpace) <- paste0("PC ", seq_len(ncol(object@LatentSpace)))
+    object@params$latentSpace$name <- "PCA"
     return(object)
 }
+
+
+#' Add a latent space computed using an external method
+#'
+#' @param object the VISION object for which compute the latent space
+#' @param coordinates matrix with latent space coordinates (cells x dimensions)
+#' @param name a label for the latent space (e.g. "PCA" or "scVI")
+#' @return the VISION with @latentSpace slot populated
+addLatentSpace <- function(object, coordinates, name) {
+
+    if (is.data.frame(coordinates)){
+        coordinates <- data.matrix(coordinates)
+    }
+
+    if (is.null(rownames(coordinates))) {
+        if (nrow(coordinates) != ncol(object@exprData)) {
+            stop("Supplied coordinates must of number of rows equal to number of cells in expression matrix")
+        }
+
+        rownames(coordinates) <- colnames(object@exprData)
+    } else {
+        sample_names <- colnames(object@exprData)
+        common <- intersect(sample_names, rownames(coordinates))
+
+        if (length(common) != nrow(coordinates)){
+            stop("Supplied coordinates for coordinates must have rowlabels that match sample/cell names")
+        }
+        coordinates <- coordinates[colnames(object@exprData), , drop = FALSE]
+    }
+
+    if (is.null(colnames(coordinates))) {
+        colnames(coordinates) <- paste0(name, "-", seq_len(ncol(coordinates)))
+    }
+
+    object@LatentSpace <- coordinates
+    object@params$latentSpace$name <- name
+    return(object)
+}
+
 
 #' generate projections
 #'
 #' Generates 2-dimensional representations of the expression matrix
 #' Populates the 'Projections' slot on the VISION object
 #'
+#' @importFrom stats setNames
 #'
 #' @param object the VISION object
 #' @return the VISION object with values set for the analysis results
@@ -374,20 +582,20 @@ generateProjections <- function(object) {
 
   # Some projection methods operate on the full expression matrix
   # If using one of these, we need to compute 'projection_genes'
-  projection_methods <- object@projection_methods
+  projection_methods <- object@params$projectionMethods
   if ("ICA" %in% projection_methods || "RBFPCA" %in% projection_methods) {
-      object <- filterData(object)
+      object <- computeProjectionGenes(object)
   }
 
   projections <- generateProjectionsInner(object@exprData,
-                                     object@latentSpace,
-                                     projection_genes = object@projection_genes,
-                                     projection_methods = object@projection_methods, 
-                                     K = object@num_neighbors)
+                                     object@LatentSpace,
+                                     projection_genes = object@params$latentSpace[["projectionGenes"]],
+                                     projection_methods = object@params$projectionMethods,
+                                     K = object@params$numNeighbors)
 
-  # Add inputProjections
-  for (proj in names(object@inputProjections)){
-      projections[[proj]] <- object@inputProjections[[proj]]
+  # Add already-input projections
+  for (proj in names(object@Projections)){
+      projections[[proj]] <- object@Projections[[proj]]
   }
 
   # Make sure all projections have column names
@@ -407,6 +615,83 @@ generateProjections <- function(object) {
   return(object)
 }
 
+
+#' Adds a UMAP projection
+#'
+#' @param object the VISION object
+#' @param K Number of neighbors to use in UMAP projection.
+#' @param name label to use for this projection
+#' @param source coordinates to use to compute tSNE
+#'   Choices are either "LatentSpace" (default) or "Proteins"
+#'
+#' @return VISION object with the projection added to @Projections slot
+#' @export
+addUMAP <- function(object, K = object@params$numNeighbors,
+                    name = "UMAP", source = "LatentSpace") {
+
+    if (!requireNamespace("uwot", quietly = TRUE)){
+        stop("Package \"uwot\" needed to run UMAP.  Please install it using:\n\n   devtools::install_github(\"jlmelville/uwot\")\n\n",
+            call. = FALSE)
+    }
+
+    if (source == "LatentSpace") {
+        data <- object@LatentSpace
+    } else if (source == "Proteins") {
+        data <- object@proteinData
+    } else {
+        stop("Invalid 'source' parameter.  Can be either 'LatentSpace' or 'Proteins'")
+    }
+
+    n_workers <- getOption("mc.cores")
+    n_workers <- if (is.null(n_workers)) 2 else n_workers
+	res <- uwot::umap(
+        data, n_neighbors = K,
+        n_threads = n_workers, ret_nn = T
+    )
+	res <- res$embedding
+
+	rownames(res) <- rownames(data)
+    colnames(res) <- paste0(name, "-", seq_len(ncol(res)))
+    object@Projections[[name]] <- res
+
+    return(object)
+}
+
+
+#' Adds a tSNE projection
+#'
+#' @importFrom Rtsne Rtsne
+#'
+#' @param object the VISION object
+#' @param perplexity parameter for tSNE
+#' @param name label to use for this projection
+#' @param source coordinates to use to compute tSNE
+#'   Choices are either "LatentSpace" (default) or "Proteins"
+#' @return VISION object with the projection added to @Projections slot
+#' @export
+addTSNE <- function(object, perplexity = 30, name = "tSNE", source = "LatentSpace") {
+
+    if (source == "LatentSpace") {
+        data <- object@LatentSpace
+    } else if (source == "Proteins") {
+        data <- object@proteinData
+    } else {
+        stop("Invalid 'source' parameter.  Can be either 'LatentSpace' or 'Proteins'")
+    }
+
+    res <- Rtsne(
+        data, dims = 2, max_iter = 800, perplexity = perplexity,
+        check_duplicates = FALSE, pca = FALSE)
+    res <- res$Y
+    rownames(res) <- rownames(data)
+    colnames(res) <- paste0(name, "-", seq_len(ncol(res)))
+
+    object@Projections[[name]] <- res
+
+    return(object)
+
+}
+
 #' Compute local correlations for all signatures
 #'
 #' This is the main analysis function. For each filtered dataset, a set of
@@ -414,37 +699,60 @@ generateProjections <- function(object) {
 #' consistency of the resulting space with the signature scores is computed
 #' to find signals that are captured succesfully by the projections.
 #' @param object the VISION object
-#' @param signatureBackground as returned by `calculateSignatureBackground`
 #' @return the VISION object with values set for the analysis results
-analyzeLocalCorrelations <- function(object, signatureBackground = NULL) {
+#' @export
+analyzeLocalCorrelations <- function(object) {
 
-  if (is.null(signatureBackground)){
-      signatureBackground <- calculateSignatureBackground(object, num = 3000)
-  }
+  signatureBackground <- generatePermutationNull(
+      object@exprData, object@sigData, num = 3000
+  )
+
+  normExpr <- getNormalizedCopySparse(
+      object@exprData,
+      object@params$signatures$sigNormMethod)
+
+  message("Computing KNN Cell Graph in the Latent Space...\n")
+
+  weights <- computeKNNWeights(object@LatentSpace, object@params$numNeighbors)
 
   message("Evaluating local consistency of signatures in latent space...\n")
 
   sigConsistencyScores <- sigConsistencyScores(
-                                object@latentSpace,
-                                object@sigScores,
+                                weights,
+                                object@SigScores,
                                 object@metaData,
                                 signatureBackground,
-                                object@num_neighbors)
+                                normExpr)
+
+  if (hasProteinData(object)) {
+      fbcs <- fbConsistencyScores(weights, object@proteinData)
+  } else {
+      fbcs <- NULL
+  }
 
   message("Clustering signatures...\n")
-  sigClusters <- clusterSignatures(object@sigScores,
+  sigClusters <- clusterSignatures(object@SigScores,
                                    object@metaData,
-                                   sigConsistencyScores$fdr,
-                                   sigConsistencyScores$sigProjMatrix,
-                                   clusterMeta = object@pool)
+                                   sigConsistencyScores,
+                                   clusterMeta = object@params$micropooling$pool)
 
-  sigConsistencyScoresData <- ProjectionData(
-                             Consistency = sigConsistencyScores$sigProjMatrix,
-                             pValue = sigConsistencyScores$pVals,
-                             FDR = sigConsistencyScores$fdr,
-                             sigClusters = sigClusters)
+  metaConsistencyScores <- sigConsistencyScores[
+      colnames(object@metaData), , drop = FALSE
+  ]
 
-  object@SigConsistencyScores <- sigConsistencyScoresData
+  sigConsistencyScores <- sigConsistencyScores[
+      colnames(object@SigScores), , drop = FALSE
+  ]
+
+
+  LocalAutocorrelation <- list(
+      "Signatures" = sigConsistencyScores,
+      "Meta" = metaConsistencyScores,
+      "Proteins" = fbcs,
+      "Clusters" = sigClusters
+  )
+
+  object@LocalAutocorrelation <- LocalAutocorrelation
 
   return(object)
 }
@@ -457,35 +765,57 @@ analyzeLocalCorrelations <- function(object, signatureBackground = NULL) {
 #' consistency of the resulting space with the signature scores is computed
 #' to find signals that are captured succesfully by the projections.
 #' @param object the VISION object
-#' @param signatureBackground as returned by `calculateSignatureBackground`
 #' @return the VISION object with values set for the analysis results
-analyzeTrajectoryCorrelations <- function(object, signatureBackground = NULL) {
+analyzeTrajectoryCorrelations <- function(object) {
 
-  if (is.null(signatureBackground)){
-      signatureBackground <- calculateSignatureBackground(object, num = 3000)
-  }
+  signatureBackground <- generatePermutationNull(
+      object@exprData, object@sigData, num = 3000
+  )
+
+  normExpr <- getNormalizedCopySparse(
+      object@exprData,
+      object@params$signatures$sigNormMethod)
+
+  message("Computing KNN Cell Graph in the Trajectory Model...\n")
+
+  weights <- computeKNNWeights(object@LatentTrajectory, object@params$numNeighbors)
 
   message("Evaluating local consistency of signatures within trajectory model...\n")
-  sigVTreeProj <- sigConsistencyScores(object@latentTrajectory,
-                                       object@sigScores,
+
+  sigVTreeProj <- sigConsistencyScores(weights,
+                                       object@SigScores,
                                        object@metaData,
-                                       signatureBackground, 
-                                       K = object@num_neighbors)
+                                       signatureBackground,
+                                       normExpr)
+
+  if (hasProteinData(object)) {
+      fbcs <- fbConsistencyScores(weights, object@proteinData)
+  } else {
+      fbcs <- NULL
+  }
 
   message("Clustering signatures...\n")
-  sigTreeClusters <- clusterSignatures(object@sigScores,
+  sigTreeClusters <- clusterSignatures(object@SigScores,
                                        object@metaData,
-                                       sigVTreeProj$pVals,
-                                       sigVTreeProj$sigProjMatrix,
-                                       clusterMeta = object@pool)
+                                       sigVTreeProj,
+                                       clusterMeta = object@params$micropooling$pool)
 
-  TrajectoryConsistencyScores <- ProjectionData(
-      Consistency = sigVTreeProj$sigProjMatrix,
-      pValue = sigVTreeProj$pVals,
-      FDR = sigVTreeProj$fdr,
-      sigClusters = sigTreeClusters)
+  metaConsistencyScores <- sigVTreeProj[
+      colnames(object@metaData), , drop = FALSE
+  ]
 
-  object@TrajectoryConsistencyScores <- TrajectoryConsistencyScores
+  sigConsistencyScores <- sigVTreeProj[
+      colnames(object@SigScores), , drop = FALSE
+  ]
+
+  TrajectoryAutocorrelation <- list(
+      "Signatures" = sigConsistencyScores,
+      "Meta" = metaConsistencyScores,
+      "Proteins" = fbcs,
+      "Clusters" = sigTreeClusters
+  )
+
+  object@TrajectoryAutocorrelation <- TrajectoryAutocorrelation
 
   return(object)
 }
@@ -495,34 +825,84 @@ analyzeTrajectoryCorrelations <- function(object, signatureBackground = NULL) {
 #'
 #' @importFrom pbmcapply pbmclapply
 #' @importFrom matrixStats colRanks
+#' @importFrom stats setNames
 #' @param object the VISION object
-#' @return the VISION object with values set for the analysis results
-clusterSigScores <- function(object) {
+#' @param variables which columns of the meta-data to use for comparisons
+#' @return the VISION object with the @ClusterComparisons slot populated
+#' @export
+clusterSigScores <- function(object, variables = "All") {
 
     message("Computing differential signature tests...\n")
 
-    sigScores <- object@sigScores
+    sigScores <- object@SigScores
     metaData <- object@metaData
 
     metaData <- metaData[rownames(sigScores), , drop = FALSE]
 
-    # Determine which metaData we can run on
-    # Must be a factor with at least 20 levels
-    clusterMeta <- vapply(colnames(metaData), function(x) {
-            scores <- metaData[[x]]
-            if (!is.factor(scores)){
-                return("")
-            }
-            if (length(levels(scores)) > 50){
-                return("")
-            }
-            if (length(unique(scores)) == 1){
-                return("")
-            }
-            return(x)
-        }, FUN.VALUE = "")
-    clusterMeta <- clusterMeta[clusterMeta != ""]
+    if (variables == "All") {
+        # Determine which metaData we can run on
+        # Must be a factor with at least 20 levels
+        clusterMeta <- vapply(colnames(metaData), function(x) {
+                scores <- metaData[[x]]
+                if (!is.factor(scores)){
+                    return("")
+                }
+                if (length(levels(scores)) > 50){
+                    return("")
+                }
+                if (length(unique(scores)) == 1){
+                    return("")
+                }
+                return(x)
+            }, FUN.VALUE = "")
+        clusterMeta <- clusterMeta[clusterMeta != ""]
+    } else {
+        if (!all(variables %in% colnames(metaData))) {
+            stop("Supplied variable names must be column names of object@metaData")
+        }
+        clusterMeta <- setNames(variables, variables)
+    }
 
+    ClusterComparisons <- list()
+
+    # Comparisons for Signatures
+    if (ncol(sigScores) > 0){
+        sigScoreRanks <- colRanks(sigScores,
+                                  preserveShape = TRUE,
+                                  ties.method = "average")
+        dimnames(sigScoreRanks) <- dimnames(sigScores)
+    } else {
+        sigScoreRanks <- sigScores
+    }
+
+    out <- pbmclapply(clusterMeta, function(variable){
+        values <- metaData[[variable]]
+        var_levels <- levels(values)
+
+        result <- lapply(var_levels, function(var_level){
+            cluster_ii <- which(values == var_level)
+
+            r1 <- matrix_wilcox(sigScoreRanks, cluster_ii,
+                                check_na = FALSE, check_ties = FALSE)
+
+            pval <- r1$pval
+            stat <- r1$stat
+            fdr <- p.adjust(pval, method = "BH")
+            out <- data.frame(
+                stat = stat, pValue = pval, FDR = fdr
+            )
+            return(out)
+        })
+
+        names(result) <- var_levels
+        result <- result[order(var_levels)]
+
+        return(result)
+    }, mc.cores = 1)
+
+    ClusterComparisons[["Signatures"]] <- out
+
+    # Comparisons for Meta data
     # Split meta into numeric and factor
     numericMeta <- vapply(seq_len(ncol(metaData)),
                           function(i) is.numeric(metaData[[i]]),
@@ -534,15 +914,6 @@ clusterSigScores <- function(object) {
                           function(i) is.factor(metaData[[i]]),
                           FUN.VALUE = TRUE)
     factorMeta <- metaData[, factorMeta, drop = F]
-
-    if (ncol(sigScores) > 0){
-        sigScoreRanks <- colRanks(sigScores,
-                                  preserveShape = TRUE,
-                                  ties.method = "average")
-        dimnames(sigScoreRanks) <- dimnames(sigScores)
-    } else {
-        sigScoreRanks <- sigScores
-    }
 
     if (ncol(numericMeta) > 0){
         numericMetaRanks <- colRanks(numericMeta,
@@ -560,16 +931,13 @@ clusterSigScores <- function(object) {
         result <- lapply(var_levels, function(var_level){
             cluster_ii <- which(values == var_level)
 
-            r1 <- matrix_wilcox(sigScoreRanks, cluster_ii,
-                                check_na = FALSE, check_ties = FALSE)
-
             r2 <- matrix_wilcox(numericMetaRanks, cluster_ii,
                                 check_na = TRUE, check_ties = TRUE)
 
             r3 <- matrix_chisq(factorMeta, cluster_ii)
 
-            pval <- c(r1$pval, r2$pval, r3$pval)
-            stat <- c(r1$stat, r2$stat, r3$stat)
+            pval <- c(r2$pval, r3$pval)
+            stat <- c(r2$stat, r3$stat)
             fdr <- p.adjust(pval, method = "BH")
             out <- data.frame(
                 stat = stat, pValue = pval, FDR = fdr
@@ -583,24 +951,77 @@ clusterSigScores <- function(object) {
         return(result)
     }, mc.cores = 1)
 
-    object@ClusterSigScores <- out
+    ClusterComparisons[["Meta"]] <- out
+
+    # Comparisons for Proteins
+    if (hasProteinData(object)){
+        fbData <- t(object@proteinData)
+
+        # gather jobs
+        jobs <- lapply(unname(clusterMeta), function(variable) {
+            lapply(levels(metaData[[variable]]), function(level) {
+                return(c(variable, level))
+            })
+        })
+        jobs <- do.call(c, jobs)
+
+        results <- pbmclapply(jobs, function(job){
+            variable <- job[1]
+            var_level <- job[2]
+            values <- metaData[[variable]]
+            cluster_ii <- which(values == var_level)
+            not_cluster_ii <- which(values != var_level)
+
+            rr <- matrix_wilcox_cpp(
+                fbData, cluster_ii, not_cluster_ii, jobs = 1)
+
+            pval <- rr$pval
+            stat <- rr$AUC
+            fdr <- p.adjust(pval, method = "BH")
+            out <- data.frame(
+                stat = stat, pValue = pval, FDR = fdr,
+                row.names = rownames(rr)
+            )
+            return(list(job, out))
+        })
+
+        out_fb <- list()
+        for (res in results){
+            variable <- res[[1]][1]
+            var_level <- res[[1]][2]
+            df <- res[[2]]
+            if (is.null(out_fb[[variable]])){
+                out_fb[[variable]] <- list()
+            }
+            out_fb[[variable]][[var_level]] <- df
+        }
+
+        ClusterComparisons[["Proteins"]] <- out_fb
+    } else {
+        ClusterComparisons[["Proteins"]] <- NULL
+    }
+
+    object@ClusterComparisons <- ClusterComparisons
+
     return(object)
 
 }
 
-#' Compute pearson correlation between signature scores and principle components
+#' Compute pearson correlation between signature scores and components of the Latent Space
 #'
-#' Populations the PCAnnotatorData slot of the VISION object
+#' Enables the LCAnnotator portion of the output report
 #'
 #' @importFrom pbmcapply pbmclapply
+#' @importFrom stats cor.test
 #' @param object the VISION object
-#' @return pearsonCorr numeric matrix N_Signatures x N_PCs
-calculatePearsonCorr <- function(object){
+#' @return object with the @LCAnnotatorData slot populated
+#' @export
+annotateLatentComponents <- function(object){
 
-  message("Computing correlations between signatures and expression PCs...\n")
-  sigMatrix <- object@sigScores
+  message("Computing correlations between signatures and latent space components...\n")
+  sigMatrix <- object@SigScores
   metaData <- object@metaData
-  latentSpace <- object@latentSpace
+  latentSpace <- object@LatentSpace
 
   ## combined gene signs and numeric meta variables
 
@@ -621,7 +1042,7 @@ calculatePearsonCorr <- function(object){
            suppressWarnings({
                pc_result <- cor.test(ss, pc)
            })
-           if (is.na(pc_result$estimate)) {  # happens i std dev is 0 for a sig
+           if (is.na(pc_result$estimate)) {  # happens if std dev is 0 for a sig
                return(0)
            } else {
                return(pc_result$estimate)
@@ -631,19 +1052,49 @@ calculatePearsonCorr <- function(object){
       return(ls_col_cor)
   })
 
-  pearsonCorr <- do.call(rbind, pearsonCorr)
+  if (length(pearsonCorr) > 0) {
+      pearsonCorr <- do.call(rbind, pearsonCorr)
+  } else {
+      pearsonCorr <- matrix(
+          nrow = ncol(computedSigMatrix),
+          ncol = ncol(latentSpace)
+      )
+  }
   rownames(pearsonCorr) <- colnames(computedSigMatrix)
   colnames(pearsonCorr) <- colnames(latentSpace)
 
-  pcaAnnotData <- PCAnnotatorData(pearsonCorr = pearsonCorr)
-  object@PCAnnotatorData <- pcaAnnotData
+  if (hasProteinData(object)) {
+      proteinData <- object@proteinData
+      pearsonCorrProteins <- pbmclapply(
+          seq_len(ncol(proteinData)), function(i) {
+          ss <- proteinData[, i];
+
+          ls_col_cor <- apply(latentSpace, 2, function(pc){
+               suppressWarnings({
+                   pc_result <- cor.test(ss, pc)
+               })
+               if (is.na(pc_result$estimate)) {  # happens if std dev is 0 for a protein
+                   return(0)
+               } else {
+                   return(pc_result$estimate)
+               }
+          })
+
+          return(ls_col_cor)
+      })
+
+      pearsonCorrProteins <- do.call(rbind, pearsonCorrProteins)
+      rownames(pearsonCorrProteins) <- colnames(proteinData)
+      colnames(pearsonCorrProteins) <- colnames(latentSpace)
+  } else {
+      pearsonCorrProteins <- NULL
+  }
+
+
+  pcaAnnotData <- LCAnnotatorData(
+      pearsonCorr = pearsonCorr, pearsonCorrProteins = pearsonCorrProteins
+  )
+  object@LCAnnotatorData <- pcaAnnotData
 
   return(object)
-}
-
-convertToDense <- function(object) {
-
-    object@exprData <- as.matrix(object@exprData)
-
-    return(object)
 }

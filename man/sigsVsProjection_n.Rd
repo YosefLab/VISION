@@ -5,20 +5,28 @@
 \title{Evaluates the significance of each numeric signature vs. a
 single projections weights}
 \usage{
-sigsVsProjection_n(sigData, randomSigData, weights, cells = NULL)
+sigsVsProjection_n(sigScores, randomSigData, normExpr, weights,
+  cells = NULL)
 }
 \arguments{
-\item{sigData}{numeric matrix of signature scores
+\item{sigScores}{numeric matrix of signature scores
 size is cells x signatures}
 
-\item{randomSigData}{A list with two items:
+\item{randomSigData}{A list with three items:
 
   randomSigs: a list of signature score matrices.  Each list item
     represents permutation signatures generated for a specific size/balance,
     and is a numeric matrix of size cells X signatures
 
   sigAssignments: named factor vector assigning signatures to random background
-    groups}
+    groups
+
+  randomSigAssignments: named factor vector assigning signatures to random background
+    groups
+
+obtained from calling generatePermutationNull}
+
+\item{normExpr}{NormData object used to generate random background sigs}
 
 \item{weights}{numeric matrix of dimension N_SAMPLES x N_SAMPLES}
 

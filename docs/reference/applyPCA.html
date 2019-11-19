@@ -154,28 +154,26 @@
     
     </div>
 
-    <pre class="usage"><span class='fu'>applyPCA</span>(<span class='no'>exprData</span>, <span class='kw'>N</span> <span class='kw'>=</span> <span class='fl'>0</span>, <span class='kw'>variance_proportion</span> <span class='kw'>=</span> <span class='fl'>1</span>)</pre>
+    <pre class="usage"><span class='fu'>applyPCA</span>(<span class='no'>exprData</span>, <span class='kw'>maxComponents</span> <span class='kw'>=</span> <span class='fl'>200</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>exprData</th>
-      <td><p>Expression data</p></td>
+      <td><p>Expression matrix</p></td>
     </tr>
     <tr>
-      <th>N</th>
-      <td><p>Number of components to retain. Default is 0</p></td>
-    </tr>
-    <tr>
-      <th>variance_proportion</th>
-      <td><p>Retain top X PC's such that this much variance is retained; if N=0, then apply this method</p></td>
+      <th>maxComponents</th>
+      <td><p>Maximum number of components to calculate</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Matrix containing N components for each sample.</p>
+    <p>PCA data</p>
+<p>Variance of each component</p>
+<p>Eigenvectors of covariance matrix, aka the variable loadings</p>
     
 
   </div>

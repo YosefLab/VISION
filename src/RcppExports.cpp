@@ -68,45 +68,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// ball_tree_vector_knn
-List ball_tree_vector_knn(NumericMatrix X, NumericVector Y, int K, int n_threads);
-RcppExport SEXP _VISION_ball_tree_vector_knn(SEXP XSEXP, SEXP YSEXP, SEXP KSEXP, SEXP n_threadsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< int >::type K(KSEXP);
-    Rcpp::traits::input_parameter< int >::type n_threads(n_threadsSEXP);
-    rcpp_result_gen = Rcpp::wrap(ball_tree_vector_knn(X, Y, K, n_threads));
-    return rcpp_result_gen;
-END_RCPP
-}
-// ball_tree_knn
-List ball_tree_knn(NumericMatrix X, int K, int n_threads);
-RcppExport SEXP _VISION_ball_tree_knn(SEXP XSEXP, SEXP KSEXP, SEXP n_threadsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
-    Rcpp::traits::input_parameter< int >::type K(KSEXP);
-    Rcpp::traits::input_parameter< int >::type n_threads(n_threadsSEXP);
-    rcpp_result_gen = Rcpp::wrap(ball_tree_knn(X, K, n_threads));
-    return rcpp_result_gen;
-END_RCPP
-}
-// load_in_knn
-NumericMatrix load_in_knn(NumericMatrix nn, NumericMatrix d);
-RcppExport SEXP _VISION_load_in_knn(SEXP nnSEXP, SEXP dSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type nn(nnSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type d(dSEXP);
-    rcpp_result_gen = Rcpp::wrap(load_in_knn(nn, d));
-    return rcpp_result_gen;
-END_RCPP
-}
 // point_mult
 void point_mult(NumericMatrix& X, NumericVector& Y);
 RcppExport SEXP _VISION_point_mult(SEXP XSEXP, SEXP YSEXP) {
@@ -163,9 +124,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_VISION_geary_sparse_local", (DL_FUNC) &_VISION_geary_sparse_local, 3},
     {"_VISION_geary_all", (DL_FUNC) &_VISION_geary_all, 2},
     {"_VISION_geary_sparse_all", (DL_FUNC) &_VISION_geary_sparse_all, 3},
-    {"_VISION_ball_tree_vector_knn", (DL_FUNC) &_VISION_ball_tree_vector_knn, 4},
-    {"_VISION_ball_tree_knn", (DL_FUNC) &_VISION_ball_tree_knn, 3},
-    {"_VISION_load_in_knn", (DL_FUNC) &_VISION_load_in_knn, 2},
     {"_VISION_point_mult", (DL_FUNC) &_VISION_point_mult, 2},
     {"_VISION_multMat", (DL_FUNC) &_VISION_multMat, 2},
     {"_VISION_sigGeneInner", (DL_FUNC) &_VISION_sigGeneInner, 3},

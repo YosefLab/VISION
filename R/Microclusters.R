@@ -17,8 +17,10 @@
 #' @param filterThreshold Threshold to apply when using the 'threshold' or 'fano' projection genes filter.
 #' If greater than 1, this specifies the number of cells in which a gene must be detected
 #' for it to be used when computing PCA. If less than 1, this instead specifies the proportion of cells needed
+#' @param filterNumMad Number of median absolute deviations to use when selecting highly-variable
+#' genes in each mean-sorted bin of genes
 #' @param latentSpace (Optional) Latent space to be used instead of PCA numeric matrix cells x components
-#' @param K Number of neighbors to use for finding pools. 
+#' @param K Number of neighbors to use for finding pools.
 #' @importFrom Matrix tcrossprod
 #' @importFrom Matrix rowMeans
 #' @return pooled cells - named list of vectors - cells in each supercell
@@ -27,6 +29,7 @@ applyMicroClustering <- function(
                          exprData, cellsPerPartition=10,
                          filterInput = "fano",
                          filterThreshold = round(ncol(exprData) * 0.05),
+                         filterNumMad = 2,
                          latentSpace = NULL, K=round(sqrt(ncol(exprData)))) {
 
     if (is.data.frame(exprData)){
@@ -49,7 +52,7 @@ applyMicroClustering <- function(
             }
         } else {
             message("    Determining lateng space genes...")
-            gene_passes <- applyFilters(exprData, filterThreshold, filterInput)
+            gene_passes <- applyFilters(exprData, filterInput, filterThreshold, filterNumMad)
 
             if (length(gene_passes) == 0){
                 stop(
@@ -89,12 +92,7 @@ applyMicroClustering <- function(
 
     message("    Performing initial coarse-clustering...")
 
-    n_workers <- getOption("mc.cores")
-    n_workers <- if (is.null(n_workers)) 2 else n_workers
-
-    kn <- ball_tree_knn(res,
-                        min(K, 30),
-                        n_workers)
+    kn <- find_knn_parallel(res, min(K, 30))
 
     cl <- louvainCluster(kn, res)
 
@@ -274,7 +272,7 @@ louvainCluster <- function(kn, data) {
 #' @importFrom stats kmeans
 #' @param clusters List of clusters, each entry being a vector of cells in a
 #' cluster.
-#' @param data NUM_SAMPLES x NUM_FEATURES data matrix that was used to generate
+#' @param data NUM_SAMPLES x NUM_PROTEINS data matrix that was used to generate
 #' clusters
 #' @param cellsPerPartition the number of cells for a single partition the
 #' algorithm should aim for

@@ -6,7 +6,8 @@
 \usage{
 applyMicroClustering(exprData, cellsPerPartition = 10,
   filterInput = "fano", filterThreshold = round(ncol(exprData) * 0.05),
-  latentSpace = NULL, K = round(sqrt(ncol(exprData))))
+  filterNumMad = 2, latentSpace = NULL,
+  K = round(sqrt(ncol(exprData))))
 }
 \arguments{
 \item{exprData}{the expression data matrix}
@@ -19,6 +20,9 @@ genes to use when computing projections.}
 \item{filterThreshold}{Threshold to apply when using the 'threshold' or 'fano' projection genes filter.
 If greater than 1, this specifies the number of cells in which a gene must be detected
 for it to be used when computing PCA. If less than 1, this instead specifies the proportion of cells needed}
+
+\item{filterNumMad}{Number of median absolute deviations to use when selecting highly-variable
+genes in each mean-sorted bin of genes}
 
 \item{latentSpace}{(Optional) Latent space to be used instead of PCA numeric matrix cells x components}
 

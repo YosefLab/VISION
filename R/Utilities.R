@@ -21,8 +21,9 @@ batchify <- function(items, per_batch, n_workers = 1) {
         n_batches <- n_iterations * n_workers
     }
     per_batch <- ceiling(length(items) / n_batches)
+    n_batches <- ceiling(length(items) / per_batch)
 
-    out <- lapply(seq(n_batches), function(i) {
+    out <- lapply(seq_len(n_batches), function(i) {
         start_i <- (i - 1) * per_batch + 1
         end_i <- i * per_batch
         if (end_i > length(items)){
@@ -59,6 +60,11 @@ versionCheck <- function(object) {
 
     if(object@version < 1.1) {
         msg <- gsub("#COMMIT", "2db4552", templateStr)
+        stop(msg, call. = FALSE)
+    }
+
+    if(object@version < 1.2) {
+        msg <- gsub("#COMMIT", "5c085cb", templateStr)
         stop(msg, call. = FALSE)
     }
 
@@ -160,7 +166,7 @@ matrix_wilcox <- function(ranks, cluster_ii,
         stat <- numeric()
         return(list(pval = p, stat = stat))
     }
-    
+
     subset <- ranks[cluster_ii, , drop = FALSE]
 
     not_cluster_ii = setdiff(seq(nrow(ranks)), cluster_ii)
@@ -233,18 +239,37 @@ matrix_wilcox <- function(ranks, cluster_ii,
 #' @importFrom parallel mclapply
 #' @param data matrix of values, each row representing a separate variable
 #' @param cluster_num numeric vector - indices denoting the group to be compared
-#' @param cluster_denum numeric vector - indices denoting the other group to be compared
+#' @param cluster_denom numeric vector - indices denoting the other group to be compared
+#' @param jobs integer specifying number of parallel jobs.  Can be used to override
+#' the default mc.cores option for when running this within an already-parallel loop
 #' @return pval - numeric vector, pvalue for each row
 #' @return stat - numeric vector, test statistic (AUC) for each row
-matrix_wilcox_cpp <- function(data, cluster_num, cluster_denom) {
+matrix_wilcox_cpp <- function(data, cluster_num, cluster_denom,
+    jobs = getOption("mc.cores", 2L)) {
 
-    res <- mclapply(seq_len(nrow(data)), function(i) {
-        uz <- wilcox_subset(data[i, ], cluster_num, cluster_denom)
-        return(unlist(uz))
-    })
+    # Subsetting individual rows is bad with a sparse matrix
+    # instead we subset chunks at a time
+
+    if ( is(data, "sparseMatrix")){
+        batches <- batchify(as.numeric(seq_len(nrow(data))), 100)
+        items <- as.numeric(seq_len(nrow(data)))
+        res <- mclapply(batches, function(batch){
+            dsub <- as.matrix(data[batch, , drop = FALSE])
+            res_b <- lapply(seq_len(nrow(dsub)), function(i){
+                uz <- wilcox_subset(dsub[i, ], cluster_num, cluster_denom)
+                return(unlist(uz))
+            })
+            return(do.call(rbind, res_b))
+        }, mc.cores = jobs)
+    } else {
+        res <- mclapply(seq_len(nrow(data)), function(i) {
+            uz <- wilcox_subset(as.numeric(data[i, ]), cluster_num, cluster_denom)
+            return(unlist(uz))
+        }, mc.cores = jobs)
+    }
 
     res <- as.data.frame(do.call(rbind, res))
-    res$gene <- rownames(data)
+    rownames(res) <- rownames(data)
 
     res$AUC <- res$U / (length(cluster_num) * length(cluster_denom))
 
@@ -274,6 +299,7 @@ matrix_chisq <- function(factorDF, cluster_ii) {
                     }
 
                     values <- factorDF[, var, drop = F]
+                    values <- droplevels(values)
 
                     values[, 2] <- 0
                     values[cluster_ii, 2] <- 1
@@ -375,6 +401,7 @@ convertGeneIds <- function(exp, newIds){
 #' @param barcodes path to barcodes.tsv
 #' @param ensToSymbol bool denoting whether or not to perform label conversion
 #' @importFrom Matrix readMM
+#' @importFrom utils read.table
 #' @return sparse count matrix with appropriate row/column names
 #' @export
 read_10x <- function(expression, genes, barcodes, ensToSymbol = TRUE){
@@ -396,8 +423,62 @@ read_10x <- function(expression, genes, barcodes, ensToSymbol = TRUE){
 }
 
 
-
 #' Read 10x HDF5 Output
+#'
+#' Loads 10x output counts and converts expression to gene symbols
+#'
+#' This version uses the h5 file produced by "cellranger count"
+#'
+#' This file is typically in a folder that looks like:
+#'
+#' \code{outs/filtered_gene_bc_matrices_h5.h5}
+#'
+#' @param h5_file path to h5 file
+#' @param ensToSymbol bool denoting whether or not to perform label conversion
+#' @importFrom Matrix sparseMatrix
+#' @return Return value depends on whether this is a Cellranger v3 or Cellranger v2 output
+#'     If it is a v2 output, return is a sparse count matrix with gene expression values
+#'     If it is a v3 output, return value is a list with two entries:
+#'         Expression: sparse count matrix with gene expression counts (genes x cells)
+#'         Antibody: sparse count matrix with antibody capture counts (cells x antibodies)
+#' @export
+read_10x_h5 <- function(h5_file, ensToSymbol = TRUE){
+
+    if (!requireNamespace("hdf5r", quietly = TRUE)){
+      stop("Package \"hdf5r\" needed to load this data object.  Please install it.",
+           call. = FALSE)
+    }
+
+    h5 <- hdf5r::H5File$new(h5_file)
+
+    is_v3 <- FALSE
+
+    tryCatch({
+        genomes <- names(h5)
+
+        if (length(genomes) > 1){
+            stop("The supplied h5 file has multiple genomes.  Loading this is not supported by this function")
+        }
+
+        genome <- genomes[1]
+        if ("features" %in% names(h5[[genome]])) {
+            is_v3 <- TRUE
+        }
+        },
+        finally = {
+            h5$close_all()
+        }
+    )
+
+    if (is_v3){
+        return(read_10x_h5_v3(h5_file, ensToSymbol))
+    } else {
+        return(read_10x_h5_v2(h5_file, ensToSymbol))
+    }
+}
+
+
+#' Read 10x HDF5 Output - CellRanger 2.0
 #'
 #' Loads 10x output counts and converts expression to gene symbols
 #'
@@ -412,13 +493,15 @@ read_10x <- function(expression, genes, barcodes, ensToSymbol = TRUE){
 #' @importFrom Matrix sparseMatrix
 #' @return sparse count matrix with appropriate row/column names
 #' @export
-read_10x_h5 <- function(h5_file, ensToSymbol = TRUE){
+read_10x_h5_v2 <- function(h5_file, ensToSymbol = TRUE){
+
     if (!requireNamespace("hdf5r", quietly = TRUE)){
       stop("Package \"hdf5r\" needed to load this data object.  Please install it.",
            call. = FALSE)
     }
 
     h5 <- hdf5r::H5File$new(h5_file)
+
     tryCatch({
         genomes <- names(h5)
 
@@ -457,6 +540,101 @@ read_10x_h5 <- function(h5_file, ensToSymbol = TRUE){
 }
 
 
+#' Read 10x HDF5 Output - CellRanger 3.0
+#'
+#' Loads 10x output counts and converts expression to gene symbols
+#'
+#' This version uses the h5 file produced by "cellranger count"
+#'
+#' This file is typically in a folder that looks like:
+#'
+#'     \code{outs/filtered_feature_bc_matrices_h5.h5}
+#'
+#' @param h5_file path to h5 file
+#' @param ensToSymbol bool denoting whether or not to perform label conversion
+#' @importFrom Matrix sparseMatrix
+#' @return a list with two items
+#'         Expression: sparse count matrix with gene expression counts
+#'         Antibody: sparse count matrix with antibody capture counts
+#' @export
+read_10x_h5_v3 <- function(h5_file, ensToSymbol = TRUE){
+
+    if (!requireNamespace("hdf5r", quietly = TRUE)){
+      stop("Package \"hdf5r\" needed to load this data object.  Please install it.",
+           call. = FALSE)
+    }
+
+    h5 <- hdf5r::H5File$new(h5_file)
+
+    tryCatch({
+        genomes <- names(h5)
+
+        if (length(genomes) > 1){
+            stop("The supplied h5 file has multiple genomes.  Loading this is not supported by this function")
+        }
+
+        genome <- genomes[1]
+
+        data <- h5[[paste0(genome, "/data")]][]
+        data <- as.numeric(data)
+
+        indices <- h5[[paste0(genome, "/indices")]][]
+        indptr <- h5[[paste0(genome, "/indptr")]][]
+        dims <- h5[[paste0(genome, "/shape")]][]
+        barcodes <- h5[[paste0(genome, "/barcodes")]][]
+
+        features <- h5[[paste0(genome, "/features")]]
+
+        features_df <- data.frame(
+            id = features[["id"]][],
+            name = features[["name"]][],
+            feature_type = features[["feature_type"]][],
+            genome = features[["genome"]][],
+            pattern = features[["pattern"]][],
+            read = features[["read"]][],
+            sequence = features[["sequence"]][]
+        )
+
+        ids <- features_df$id
+        symbols <- features_df$name
+
+        dimnames <- list(ids, barcodes)
+
+        counts <- sparseMatrix(i = indices + 1,
+            p = indptr, x = data, dims = dims,
+            dimnames = dimnames
+        )
+
+        counts_expression <- counts[
+            features_df$feature_type == "Gene Expression",
+        ]
+
+        symbols_expression <- symbols[
+            features_df$feature_type == "Gene Expression"
+        ]
+
+        counts_antibody <- counts[
+            features_df$feature_type == "Antibody Capture",
+        ]
+        counts_antibody <- t(counts_antibody)
+
+        if (ensToSymbol){
+            counts_expression <- convertGeneIds(counts_expression, symbols_expression)
+        }
+        },
+    finally = {
+        h5$close_all()
+    })
+
+    return(
+       list(
+            Expression = counts_expression,
+            Antibody = counts_antibody
+            )
+       )
+}
+
+
 #' Tests for Unnormalized Data
 #'
 #' Determines if the VISION object is storing unnormalized data
@@ -478,23 +656,123 @@ hasUnnormalizedData <- function(object) {
 #'
 #' @param object VISION object
 #' @param param name of parameter that is desired
+#' @param subparam name of second level parameter that is desired
 #' @return bool whether or not there is unnormalize data
-getParam <- function(object, param) {
+getParam <- function(object, param, subparam = NULL) {
 
     useDefault <- tryCatch({
-        !(param %in% names(object@params))
     }, error = function(err){
         return(TRUE)
     })
 
+    useDefault <- !(param %in% names(object@params))
+    if ((!useDefault) && (!is.null(subparam))) {
+        useDefault <- !(subparam %in% names(object@params[[param]]))
+    }
+
     if (!useDefault){
-        return(object@params[[param]])
+        if (is.null(subparam)){
+            return(object@params[[param]])
+        } else {
+            return(object@params[[param]][[subparam]])
+        }
     } else {
         res <- switch(param,
-            "latentSpaceName" = "Latent Space",
+            "latentSpace" = {
+                switch(subparam,
+                    "name" = "Latent Space",
+                    stop(paste0("Unrecognized subparameter name - ", subparam))
+                )
+            },
+            "name" = "",
             stop(paste0("Unrecognized parameter name - ", param))
         )
         return(res)
     }
 
+}
+
+
+#' Compute row-wise variance on matrix without densifying
+#'
+#' @importFrom Matrix rowMeans
+#' @importFrom Matrix rowSums
+#' @importFrom matrixStats rowVars
+#'
+#' @param x expression matrix
+#' @return numeric vector row-wise variance
+rowVarsSp <- function(x) {
+    if (is(x, "matrix")) {
+        out <- matrixStats::rowVars(x)
+        names(out) <- rownames(x)
+    } else {
+        rm <- Matrix::rowMeans(x)
+        out <- Matrix::rowSums(x ^ 2)
+        out <- out - 2 * Matrix::rowSums(x * rm)
+        out <- out + ncol(x) * rm ^ 2
+        out <- out / (ncol(x) - 1)
+    }
+    return(out)
+}
+
+#' Compute col-wise variance on matrix without densifying
+#'
+#' @importFrom Matrix colMeans
+#' @importFrom Matrix colSums
+#' @importFrom Matrix rowSums
+#' @importFrom matrixStats colVars
+#'
+#' @param x expression matrix
+#' @return numeric vector col-wise variance
+colVarsSp <- function(x) {
+    if (is(x, "matrix")) {
+        out <- matrixStats::colVars(x)
+        names(out) <- colnames(x)
+    } else {
+        rm <- Matrix::colMeans(x)
+        out <- Matrix::colSums(x ^ 2)
+        out <- out - 2 * Matrix::rowSums(t(x) * rm)
+        out <- out + nrow(x) * rm ^ 2
+        out <- out / (nrow(x) - 1)
+    }
+    return(out)
+}
+
+#' Parallel KNN
+#'
+#' Computes nearest-neighbor indices and distances
+#' in parallel.  Query is over all points and results
+#' do not include the self-distance.
+#'
+#' @importFrom RANN nn2
+#' @importFrom pbmcapply pbmclapply
+#'
+#' @param data a Samples x Dimensions numeric matrix
+#' @param K number of neighbors to query
+#' @return list with two items:
+#'     index: Samples x K matrix of neighbor indices
+#'     dist: Samples x K matrix of neighbor distances
+find_knn_parallel <- function(data, K) {
+
+    workers <- getOption("mc.cores")
+    if (is.null(workers)){
+        workers <- 1
+    }
+
+    per_batch <- round(nrow(data)/workers)
+
+    batches <- batchify(seq_len(nrow(data)), per_batch, n_workers = workers)
+
+    nn_out <- mclapply(batches, function(rows){
+        nd <- RANN::nn2(data, query = data[rows, , drop = FALSE], k = K+1)
+        return(nd)
+    })
+
+    idx <- do.call(rbind, lapply(nn_out, function(nd) nd$nn.idx))
+    dists <- do.call(rbind, lapply(nn_out, function(nd) nd$nn.dists))
+
+    idx <- idx[, -1, drop = FALSE]
+    dists <- dists[, -1, drop = FALSE]
+
+    return(list(index=idx, dist=dists))
 }

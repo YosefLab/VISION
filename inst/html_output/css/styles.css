@@ -45,9 +45,10 @@ body {
 }
 
 #nav-bar .logo{
-    font-size: 20px;
-    margin-left: 50px;
+    font-size: 1.8em;
     font-weight: bold;
+    display: flex;
+    align-items: center;
 }
 
 #nav-bar .nav{
@@ -190,4 +191,20 @@ div.vis-icon > svg {
     position: absolute;
     width: 85%;
     height: 85%;
+}
+
+.label {
+    font-size: .9em;
+    font-weight: bold;
+}
+
+/* Prevents text from being selected */
+.no-select {
+  -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+     -khtml-user-select: none; /* Konqueror HTML */
+       -moz-user-select: none; /* Old versions of Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome, Opera and Firefox */
 }

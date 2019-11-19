@@ -5,7 +5,7 @@
 \title{create micro-clusters that reduce noise and complexity while maintaining
 the overall signal in the data}
 \usage{
-poolCells(object, cellsPerPartition = object@cellsPerPartition)
+poolCells(object, cellsPerPartition = NULL)
 }
 \arguments{
 \item{object}{the VISION object for which to cluster the cells}

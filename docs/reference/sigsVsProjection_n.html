@@ -159,24 +159,32 @@ single projections weights</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>sigsVsProjection_n</span>(<span class='no'>sigData</span>, <span class='no'>randomSigData</span>, <span class='no'>weights</span>, <span class='kw'>cells</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
+    <pre class="usage"><span class='fu'>sigsVsProjection_n</span>(<span class='no'>sigScores</span>, <span class='no'>randomSigData</span>, <span class='no'>normExpr</span>, <span class='no'>weights</span>,
+  <span class='kw'>cells</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>sigData</th>
+      <th>sigScores</th>
       <td><p>numeric matrix of signature scores
 size is cells x signatures</p></td>
     </tr>
     <tr>
       <th>randomSigData</th>
-      <td><p>A list with two items:</p>
+      <td><p>A list with three items:</p>
 <p>randomSigs: a list of signature score matrices.  Each list item
     represents permutation signatures generated for a specific size/balance,
     and is a numeric matrix of size cells X signatures</p>
 <p>sigAssignments: named factor vector assigning signatures to random background
-    groups</p></td>
+    groups</p>
+<p>randomSigAssignments: named factor vector assigning signatures to random background
+    groups</p>
+<p>obtained from calling generatePermutationNull</p></td>
+    </tr>
+    <tr>
+      <th>normExpr</th>
+      <td><p>NormData object used to generate random background sigs</p></td>
     </tr>
     <tr>
       <th>weights</th>

@@ -7,6 +7,7 @@
     <title>VISION Report</title>
 
 
+    <link rel="icon" type="image/png" href="css/favicon.png">
     <link rel="stylesheet" href="thirdparty/chosen/chosen.min.css">
     <link rel="stylesheet" href="thirdparty/bootstrap/bootstrap.min.css">
     <link rel="stylesheet" href="thirdparty/datatables/datatables.min.css">
@@ -44,14 +45,15 @@
 <body>
     <div id="nav-bar">
         <div class="logo">
-            VISION <span id="SampleNameSpan"></span>
+            <img src="css/logo_HorizontalLogo.svg" alt="VISION" style="width: 200px">
+            <span id="SampleNameSpan"></span>
         </div>
         <ul class="nav nav-pills justify-content-end inv">
             <li class="nav-item">
                 <a class="nav-link active" href="#" data-main-vis="clusters">Autocorrelation</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#" data-main-vis="pcannotator">LC Annotator</a>
+                <a class="nav-link disabled" href="#" data-main-vis="pcannotator">LC Annotator</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link disabled" href="#" data-main-vis="tree">Trajectories</a>
@@ -73,7 +75,10 @@
                                 <a class="nav-link active" id="sig-table-tab" data-toggle="tab" href="#table-div-container" role="tab" aria-controls="sig-table" aria-selected="true">Signatures</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" id="meta-table-tab" data-toggle="tab" href="#meta-table-div" role="tab" aria-controls="meta-table" aria-selected="false">Cell Meta</a>
+                                <a class="nav-link" id="protein-table-tab" data-toggle="tab" href="#protein-div-container" role="tab" aria-controls="protein-table" aria-selected="true">Proteins</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="meta-table-tab" data-toggle="tab" href="#meta-table-div" role="tab" aria-controls="meta-table" aria-selected="false">Meta</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" id="genes-table-tab" data-toggle="tab" href="#genes-table" role="tab" aria-controls="genes-table" aria-selected="false">Genes</a>
@@ -103,6 +108,30 @@
                             </table>
                         </div>
                         <div class="sig-tables-wrapper"></div>
+                    </div>
+                    <div class="tab-pane" id="protein-div-container" role="tabpanel" aria-labelledby="protein-table-tab">
+                        <div class="sig-tables-header">
+                            <table class="sig-table">
+                                <thead>
+                                    <tr class="proj-row">
+                                        <th>
+                                            <div>
+                                            <input id="protein_filt_input" class="form-control"
+                                                   type="text" placeholder="Filter Proteins...">
+                                            </input>
+                                            </div>
+                                        </th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <div class="sig-tables-wrapper">
+                            <div class="sig-table-div">
+                                <table id="protein-table" class="sig-table">
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                     <div class="tab-pane" id="meta-table-div" role="tabpanel" aria-labelledby="meta-table-tab">
                         <div class="sig-tables-header">
@@ -163,6 +192,30 @@
                                     <button type="button" class="btn btn-default btn-outline-primary" id="submit_de" class="form-control">Calculate DE</button>
                                 </div>
                             </div>
+                            <button class="btn btn-secondary" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                              Advanced Options
+                            </button>
+                            <div class="collapse collapsed-controls" id="collapseExample">
+                              <div>
+                                  <div class="label">Exclude genes expressed in<br>less than <i>m</i> cells: </div>
+                                  <div class='label-control'>
+                                      <span class="label">m =</span>
+                                      <input type="number" id="de_min_cells" class="form-control" value="0"></input>
+                                  </div>
+                              </div>
+                              <div>
+                                  <div class='label-control no-select' style="align-items: center">
+                                      <span class="label">
+                                          <label for="de_sub_cells">Subsample Groups?</label>
+                                      </span>
+                                      <input type="checkbox" id="de_sub_cells" name="sub_groups" value="off">
+                                  </div>
+                                  <div class='label-control max-control disabled'>
+                                      <span class="label">Max Size =</span>
+                                      <input type="number" id="de_sub_cells_n" class="form-control" tabindex="-1" value="1000"></input>
+                                  </div>
+                              </div>
+                            </div>
                         </div>
 
                         <div id='de-error' style='display: none'></div>
@@ -171,18 +224,24 @@
                             <div class="spacer"></div>
                             <div id='de-results-title'>Some Title for Comparison</div>
                             <div class="spacer2"></div>
+                            <div class='label-control fdr-holder'>
+                                <span>Maximum FDR: </span>
+                                <input type="search" id="max" name="max" value=".05"></td>
+                            </div>
                             <div id='de-results-table-div'>
                                 <table id="de-results-table" class="compact stripe hover"></table>
                             </div>
                             <div class="spacer2"></div>
-                            <div class='back-button'>
-                                <button type="button" class="btn btn-secondary" id="new_de" class="form-control">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <line x1="3" y1="10" x2="18" y2="10" />
-                                        <line x1="3" y1="10" x2="10" y2="5" />
-                                        <line x1="3" y1="10" x2="10" y2="15" />
-                                    </svg>
-                                    New Comparison</button>
+                            <div class="button-container">
+                                <div class='back-button'>
+                                    <button type="button" class="btn btn-secondary" id="new_de" class="form-control">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="3" y1="10" x2="18" y2="10" />
+                                            <line x1="3" y1="10" x2="10" y2="5" />
+                                            <line x1="3" y1="10" x2="10" y2="15" />
+                                        </svg>
+                                        New Comparison</button>
+                                </div>
                             </div>
                             <div class="spacer"></div>
                         </div> <!-- End #de-results -->
@@ -202,7 +261,13 @@
                         <table class='label-table' style='margin-left: 30px;'>
                             <tr style='font-size: 1.2em;'>
                                 <td></td>
-                                <td style="width: 100%;"><span id="values-title" style="display: inline-block; width: 300px; word-wrap: break-word;"></span></td>
+                                <td><span id="values-title" style="display: inline-block; width: 300px; word-wrap: break-word;"></span></td>
+                                <td>
+                                    <div class="checkbox-label">
+                                        <label for="log-check">Log Scale?</label>
+                                        <input type="checkbox" value="" id="log-check">
+                                    </div>
+                                </td>
                             </tr>
                         </table>
 
@@ -225,6 +290,10 @@
                         </div>
                     </div>
                     <div id="sig-info-cluster" class="tab-pane" role="tabpanel" aria-labelledby="HeatmapButton">
+                        <div>
+                            <span class="label">Grouping Variable:</span>
+                            <select id="heatmap-group-select" class="form-control form-control-sm" style="width: 150px;"></select>
+                        </div>
                         <div id="heatmap-div"></div>
                     </div>
                     <div id="selected-cell-info" class="tab-pane" role="tabpanel" aria-labelledby="CellButton">
@@ -285,6 +354,10 @@
                                 <span class="label">Projection:</span>
                                 <select id="SelectTrajectoryProjScatter" class="form-control"></select>
                             </div>
+                        </div>
+                        <div class="checkbox-label no-select" style="margin: 5px 0 5px 10px;">
+                            <span class="label"><label for="sync-check">Update All?</label></span>
+                            <input type="checkbox" value="" id="sync-check" checked>
                         </div>
                     </div>
                     <div class="color-options" >

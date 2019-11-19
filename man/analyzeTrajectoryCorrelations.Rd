@@ -4,12 +4,10 @@
 \alias{analyzeTrajectoryCorrelations}
 \title{Compute trajectory correlations for all signatures}
 \usage{
-analyzeTrajectoryCorrelations(object, signatureBackground = NULL)
+analyzeTrajectoryCorrelations(object)
 }
 \arguments{
 \item{object}{the VISION object}
-
-\item{signatureBackground}{as returned by `calculateSignatureBackground`}
 }
 \value{
 the VISION object with values set for the analysis results

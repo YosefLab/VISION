@@ -5,8 +5,10 @@
 # scores, distance matrices, and anything else, is computed
 # on the different types of data.
 
-setClassUnion('numericORNULL', members=c('numeric', 'NULL'))
-setClassUnion('matrixORSparse', members=c("matrix", "dgeMatrix", "dgCMatrix", "dgTMatrix"))
+setClassUnion("numericORNULL", members = c("numeric", "NULL"))
+setClassUnion("matrixORSparse", members = c("matrix", "dgCMatrix"))
+setClassUnion("matrixORNULL", members = c("matrix", "NULL"))
+setClassUnion("dataframeORNULL", members = c("data.frame", "NULL"))
 
 Cluster <- setClass("Cluster",
     slots = c(
@@ -17,16 +19,35 @@ Cluster <- setClass("Cluster",
     )
 )
 
-ProjectionData <- setClass("ProjectionData",
+NormData <- setClass("NormData",
     slots = c(
-    Consistency = "matrix",
-    pValue = "matrix",
-    FDR = "matrix",
-    sigClusters = "list"
-))
+    colOffsets = "numeric",
+    colScaleFactors = "numeric",
+    rowOffsets = "numeric",
+    rowScaleFactors = "numeric",
+    data = "Matrix"
+    ),
+    validity = function(object){
+        isValid <- nrow(object@data) == length(object@rowOffsets)
 
-PCAnnotatorData <- setClass("PCAnnotatorData",
-    slots = c(pearsonCorr = "matrix")
+        isValid <- isValid && (
+            nrow(object@data) == length(object@rowScaleFactors))
+
+        isValid <- isValid && (
+            ncol(object@data) == length(object@colOffsets))
+
+        isValid <- isValid && (
+            ncol(object@data) == length(object@colScaleFactors))
+
+        return(isValid)
+    },
+)
+
+LCAnnotatorData <- setClass("LCAnnotatorData",
+    slots = c(
+        pearsonCorr = "matrix",
+        pearsonCorrProteins = "matrixORNULL"
+    )
 )
 
 Trajectory <- setClass("Trajectory",
@@ -71,72 +92,48 @@ Signature <- setClass("Signature",
     metaData = ""
 ))
 
-setClassUnion("ProjectionDataOrNULL", members=c("ProjectionData", "NULL"))
-setClassUnion("PCAnnotatorDataOrNULL", members=c("PCAnnotatorData", "NULL"))
+setClassUnion("LCAnnotatorDataOrNULL", members=c("LCAnnotatorData", "NULL"))
 
 Vision <- setClass("Vision",
     slots = c(
-        nomodel = "logical",
-        projection_genes = "character",
-        weights = "matrix",
-        threshold = "numeric",
-        sig_norm_method = "character",
-        sig_score_method = "character",
         exprData = "matrixORSparse",
+        proteinData = "matrixORSparse",
         unnormalizedData = "matrixORSparse",
-        housekeepingData = "character",
         sigData = "list",
         metaData = "data.frame",
-        perm_wPCA = "logical",
-        pool = "logical",
-        sigScores = "matrix",
-        cellsPerPartition = "numeric",
-        SigConsistencyScores = "ProjectionDataOrNULL",
-        ClusterSigScores = "list",
-        TrajectoryConsistencyScores = "ProjectionDataOrNULL",
-        PCAnnotatorData = "PCAnnotatorDataOrNULL",
-        projection_methods = "character",
+        SigScores = "matrix",
+        LocalAutocorrelation = "list",
+        TrajectoryAutocorrelation = "list",
+        ClusterComparisons = "list",
+        LCAnnotatorData = "LCAnnotatorDataOrNULL",
         Projections = "list",
         TrajectoryProjections = "list", # list of TrajectoryProjection
         SigGeneImportance = "list",
-        pools = "list",
-        inputProjections = "list",
-        name = "character",
-        num_neighbors = "numericORNULL",
-        latentSpace = "matrix",
-        latentTrajectory = "Trajectory",
-        version = "numeric",
-        selections = "list",
-        params = "list"),
+        Pools = "list",
+        LatentSpace = "matrix",
+        LatentTrajectory = "Trajectory",
+        Viewer = "list",
+        params = "list",
+        version = "numeric"
+        ),
     prototype = list(
-        nomodel = FALSE,
-        weights = matrix(NA, 1, 1),
-        threshold = 0,
-        sig_norm_method = "znorm_rows",
         exprData = matrix(NA, 1, 1),
+        proteinData = matrix(NA, 1, 1),
         unnormalizedData = matrix(NA, 1, 1),
-        housekeepingData = character(),
         sigData = list(),
         metaData = data.frame(),
-        perm_wPCA = FALSE,
-        pool = FALSE,
-        sigScores = matrix(NA, 1, 1),
-        cellsPerPartition = 100,
-        SigConsistencyScores = NULL,
-        ClusterSigScores = list(),
-        TrajectoryConsistencyScores = NULL,
-        PCAnnotatorData = NULL,
-        projection_methods = character(),
+        SigScores = matrix(NA, 1, 1),
+        LocalAutocorrelation = list(),
+        TrajectoryAutocorrelation = list(),
+        ClusterComparisons = list(),
+        LCAnnotatorData = NULL,
         Projections = list(),
         TrajectoryProjections = list(),
         SigGeneImportance = list(),
-        pools = list(),
-        inputProjections = list(),
-        name = "",
-        num_neighbors = NULL, 
-        latentSpace = matrix(NA, 1, 1),
-        latentTrajectory = NULL,
-        version = 1.11,
-        selections = list(),
-        params = list()
+        Pools = list(),
+        LatentSpace = matrix(NA, 1, 1),
+        LatentTrajectory = NULL,
+        Viewer = list(),
+        params = list(),
+        version = 1.2
 ))

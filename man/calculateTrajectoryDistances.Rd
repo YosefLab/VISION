@@ -8,13 +8,13 @@ calculateTrajectoryDistances(adjMat, edgeAssoc, edgePos,
   latentPnts = NULL)
 }
 \arguments{
+\item{adjMat}{(K x K logical) adjacency matrix of the milestones}
+
 \item{edgeAssoc}{(2 x N) for each point, the edge it is projected to (represented as (V1,V2), where V1<V2)}
 
 \item{edgePos}{(length N, numeric) relative postion on the edge for each point, in range [0,1]}
 
-\item{princPnts}{(D x K numeric) the spatial locations of the principle points (tree vertices)}
-
-\item{princAdj}{(K x K logical) adjacency matrix of the principle graph}
+\item{latentPnts}{(D x K numeric) the spatial locations of the milestones}
 }
 \value{
 non-negative symmetric matrix in which [i,j] is the tree-based distance between points i, j.

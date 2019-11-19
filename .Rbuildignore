@@ -3,4 +3,5 @@
 ^\.travis\.yml$
 ^build_whitelist.sh$
 ^docs/.*$
+^vignettes/web_only/.*$
 ^.*.eslintrc.json

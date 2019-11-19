@@ -4,13 +4,15 @@
 \alias{clusterSigScores}
 \title{Compute Ranksums Test, for all factor meta data.  One level vs all others}
 \usage{
-clusterSigScores(object)
+clusterSigScores(object, variables = "All")
 }
 \arguments{
 \item{object}{the VISION object}
+
+\item{variables}{which columns of the meta-data to use for comparisons}
 }
 \value{
-the VISION object with values set for the analysis results
+the VISION object with the @ClusterComparisons slot populated
 }
 \description{
 Compute Ranksums Test, for all factor meta data.  One level vs all others

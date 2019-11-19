@@ -12,7 +12,7 @@ test_that("All filters reduce rows, not columns", {
                     sep = "\t", header = TRUE)
 
   filters <- c("fano")
-  genes_passing <- applyFilters(data, 20, filters)
+  genes_passing <- applyFilters(data, filters, 20, 2.0)
 
   expect_true(length(genes_passing) <= nrow(data))
   expect_true(

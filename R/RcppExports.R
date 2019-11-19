@@ -21,18 +21,6 @@ geary_sparse_all <- function(X, ind, W) {
     .Call('_VISION_geary_sparse_all', PACKAGE = 'VISION', X, ind, W)
 }
 
-ball_tree_vector_knn <- function(X, Y, K, n_threads) {
-    .Call('_VISION_ball_tree_vector_knn', PACKAGE = 'VISION', X, Y, K, n_threads)
-}
-
-ball_tree_knn <- function(X, K, n_threads) {
-    .Call('_VISION_ball_tree_knn', PACKAGE = 'VISION', X, K, n_threads)
-}
-
-load_in_knn <- function(nn, d) {
-    .Call('_VISION_load_in_knn', PACKAGE = 'VISION', nn, d)
-}
-
 point_mult <- function(X, Y) {
     invisible(.Call('_VISION_point_mult', PACKAGE = 'VISION', X, Y))
 }

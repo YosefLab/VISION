@@ -86,70 +86,13 @@ createGeneSignature <- function(name, sigData, metadata="") {
     )
 }
 
-#' calculate background signature scores
-#'
-#' For each signature-cell pair, compute a score that captures the level of
-#' correspondence between the cell and the signature.
-#' To estimate significance of these scores, a set of random gene signatures is
-#' generated to create a null distribution
-#'
-#' @param object the VISION object
-#' @param num the number of signatures to generate
-#' @return A list with two items:
-#'
-#'   randomSigs: a list of lists of SignatureScore objects.  Each sub-list
-#'     represents permutation signatures generated for a specific size/balance
-#'
-#'   sigAssignments: named factor vector assigning signatures to random background
-#'     groups
-calculateSignatureBackground <- function(object, num) {
-
-    message("Computing background distribution for signature scores...")
-
-    if (length(object@sigData) == 0) {
-        return(
-            list(
-                randomSigs = list(),
-                sigAssignments = numeric()
-                )
-        )
-    }
-
-    # Construct random signatures for background distribution
-    out <- generatePermutationNull(num, object@exprData, object@sigData)
-    randomSigs <- out$randomSigs
-    sigAssignments <- out$sigAssignments
-
-    normExpr <- getNormalizedCopy(object@exprData, object@sig_norm_method)
-
-    randomSigScores <- batchSigEval(
-                            unlist(randomSigs, recursive = FALSE),
-                            object@sig_score_method,
-                            normExpr, object@weights)
-
-    # randomSigScores is matrix of cells x signatures
-    # need to make a list of matrices, one for each signature group
-    # by background group number
-    randomSigScoresGroups <- list()
-    for (groupName in names(randomSigs)) {
-        sigsInGroup <- names(randomSigs[[groupName]])
-        randomSigScoresGroups[[groupName]] <- randomSigScores[, sigsInGroup, drop = FALSE]
-    }
-
-    message("")
-
-    return(list(
-                randomSigs = randomSigScoresGroups,
-                sigAssignments = sigAssignments))
-
-}
-
 #' Generate random signatures for a null distribution by permuting the data
 #'
-#' @param num the number of signatures to generate
+#' @importFrom stats runif
 #' @param eData the data to use for the permutations
 #' @param sigData list of signature objects
 #' random signature sizes
+#' @param num the number of signatures to generate
 #' @return A list with two items:
 #'
 #'   randomSigs: a list of lists of Signature objects.  Each sub-list represents
@@ -157,7 +100,7 @@ calculateSignatureBackground <- function(object, num) {
 #'
 #'   sigAssignments: named factor vector assigning signatures to random background
 #'     groups
-generatePermutationNull <- function(num, eData, sigData) {
+generatePermutationNull <- function(eData, sigData, num) {
 
   exp_genes <- rownames(eData)
 
@@ -182,7 +125,7 @@ generatePermutationNull <- function(num, eData, sigData) {
   if (nrow(sigVars) <= n_components){
       n_components <- nrow(sigVars)
       centers <- sigVars
-      clusters <- as.factor(seq(1:nrow(sigVars)))
+      clusters <- as.factor(seq_len(nrow(sigVars)))
       names(clusters) <- rownames(sigVars)
   } else {
 
@@ -202,7 +145,7 @@ generatePermutationNull <- function(num, eData, sigData) {
 
   centers <- centers[row_i, , drop = FALSE]
   levels(clusters) <- as.character(order(row_i))
-  rownames(centers) <- as.character(seq(n_components))
+  rownames(centers) <- as.character(seq_len(n_components))
 
   # undo the log scaling
   centers[, "sigSize"] <- round(10 ** centers[, "sigSize"])
@@ -213,10 +156,9 @@ generatePermutationNull <- function(num, eData, sigData) {
   message("  signatures per group: ", num)
 
   randomSigs <- list()
+  randomSigAssignments <- character()
 
   for (cluster_i in rownames(centers)) {
-
-    clusterSigs <- list()
 
     size <- centers[cluster_i, "sigSize"]
     balance <- centers[cluster_i, "sigBalance"]
@@ -232,20 +174,29 @@ generatePermutationNull <- function(num, eData, sigData) {
       newSigSigns <- c(rep(1, upGenes), rep(-1, size - upGenes))
 
       names(newSigSigns) <- newSigGenes
-      newSig <- Signature(newSigSigns, paste0("RANDOM_BG_", size, "_", j), "x")
-      clusterSigs[[newSig@name]] <- newSig
+      newSig <- Signature(
+          newSigSigns, paste0("RANDOM_BG_", cluster_i, "_", j), "x")
+      randomSigs[[newSig@name]] <- newSig
+      randomSigAssignments[[newSig@name]] <- cluster_i
     }
 
-    randomSigs[[cluster_i]] <- clusterSigs
   }
 
-  return(list(randomSigs = randomSigs, sigAssignments = clusters))
+  randomSigAssignments <- as.factor(randomSigAssignments)
+
+  return(
+      list(
+          randomSigs = randomSigs,
+          sigAssignments = clusters,
+          randomSigAssignments = randomSigAssignments
+          )
+  )
 }
 
 #' Evaluates the significance of each signature in each cluster
 #'
 #' @importFrom stats p.adjust
-#' @param latentSpace numeric matrix N_Cells x N_Components
+#' @param weights output of computeKNNWeights
 #' @param sigScoresData numeric matrix of signature scores
 #' size is cells x signatures
 #' @param metaData data.frame of meta-data for cells
@@ -257,22 +208,21 @@ generatePermutationNull <- function(num, eData, sigData) {
 #'
 #'   sigAssignments: named factor vector assigning signatures to random background
 #'     groups
-#' @param K Number of neighbors to consider.
+#' @param normExpr NormData object used to generate random background sigs
 #' @return list:
 #' \itemize{
 #'     \item sigProbMatrix: the vector of consistency z-scores
 #'     \item pVals: pvalues for the scores
 #'     \item emp_pVals: pvalues for the scores
 #' }
-sigConsistencyScores <- function(latentSpace, sigScoresData,
-                                      metaData, randomSigData, K) {
+sigConsistencyScores <- function(weights, sigScoresData,
+                                 metaData, randomSigData,
+                                 normExpr) {
 
     signatureNames <- c(colnames(sigScoresData), colnames(metaData))
 
-    weights <- computeKNNWeights(latentSpace, K)
-
-    svp_n <- sigsVsProjection_n(sigScoresData,
-                                randomSigData, weights)
+    svp_n <- sigsVsProjection_n(
+        sigScoresData, randomSigData, normExpr, weights)
     svp_pcn <- sigsVsProjection_pcn(metaData, weights)
     svp_pcf <- sigsVsProjection_pcf(metaData, weights)
 
@@ -287,25 +237,48 @@ sigConsistencyScores <- function(latentSpace, sigScoresData,
     consistency <- consistency[signatureNames]
     pvals <- pvals[signatureNames]
 
-    consistency <- as.matrix(consistency)
-    pvals <- as.matrix(pvals)
-
-    colnames(consistency) <- c("Consistency")
-    colnames(pvals) <- c("Consistency")
-
     # FDR-correct and log-transform p-values
-    if (nrow(pvals) > 1){
-        fdr <- apply(pvals, MARGIN = 2,
-                                    FUN = p.adjust, method = "BH")
+    if (length(pvals) > 1){
+        fdr <- p.adjust(pvals, method = "BH")
     } else {
-        fdr <- matrix(nrow = 0, ncol = 1)
-        colnames(fdr) <- "Consistency"
+        fdr <- numeric(0)
     }
 
-    return(list(sigProjMatrix = consistency,
-                pVals = pvals,
-                fdr = fdr)
+    df <- data.frame(
+        C = consistency,
+        pValue = pvals,
+        FDR = fdr
     )
+
+    return(df)
+}
+
+
+#' Evaluates the significance of each protein
+#'
+#' @importFrom stats p.adjust
+#' @param weights output of computeKNNWeights
+#' @param proteinData numeric matrix of protein abundance
+#' size is cells x proteins
+#' @return dataframe with columns "C", "pValue", and "FDR"
+fbConsistencyScores <- function(weights, proteinData) {
+
+    proteinNames <- colnames(proteinData)
+    svp_pcn <- sigsVsProjection_pcn(proteinData, weights, computePval = FALSE)
+
+    consistency <- svp_pcn$consistency
+
+    pvals <- svp_pcn$pvals
+
+    consistency <- consistency[proteinNames]
+    pvals <- pvals[proteinNames]
+
+    result <- data.frame(
+        C = consistency, pValue = pvals
+    )
+    result$FDR <- p.adjust(result$pValue, method = "BH")
+
+    return(result)
 }
 
 
@@ -314,9 +287,10 @@ sigConsistencyScores <- function(latentSpace, sigScoresData,
 #'
 #' @importFrom matrixStats colMedians
 #' @importFrom pbmcapply pbmclapply
-#' @param sigData numeric matrix of signature scores
+#' @importFrom stats setNames
+#' @param sigScores numeric matrix of signature scores
 #' size is cells x signatures
-#' @param randomSigData A list with two items:
+#' @param randomSigData A list with three items:
 #'
 #'   randomSigs: a list of signature score matrices.  Each list item
 #'     represents permutation signatures generated for a specific size/balance,
@@ -324,6 +298,12 @@ sigConsistencyScores <- function(latentSpace, sigScoresData,
 #'
 #'   sigAssignments: named factor vector assigning signatures to random background
 #'     groups
+#'
+#'   randomSigAssignments: named factor vector assigning signatures to random background
+#'     groups
+#'
+#' obtained from calling generatePermutationNull
+#' @param normExpr NormData object used to generate random background sigs
 #' @param weights numeric matrix of dimension N_SAMPLES x N_SAMPLES
 #' @param cells list of cell names.  Subsets anlysis to provided cells.
 #' If omitted, use all cells.
@@ -333,163 +313,184 @@ sigConsistencyScores <- function(latentSpace, sigScoresData,
 #'     \item pvals: pvalues
 #'     \item emppvals: empirical pvalues
 #' }
-sigsVsProjection_n <- function(sigData, randomSigData,
-                               weights, cells = NULL){
+sigsVsProjection_n <- function(sigScores, randomSigData,
+                               normExpr, weights, cells = NULL){
 
-    # Build a matrix of all non-meta signatures
-    sigScoreMatrix <- sigData
-    if (!is.null(cells)){
-        sigScoreMatrix <- sigScoreMatrix[cells, , drop = FALSE]
-    }
-
-    if (length(sigData) == 0){
+    if (length(sigScores) == 0){
         return(list(consistency = numeric(), pvals = numeric(),
                 empvals = numeric()))
     }
 
-    rowLabels <- rownames(sigScoreMatrix)
-    colLabels <- colnames(sigScoreMatrix)
-    sigScoreMatrix <- matrixStats::colRanks(
-               sigScoreMatrix, preserveShape = TRUE, ties.method = "average"
-    )
-    colnames(sigScoreMatrix) <- colLabels
-    rownames(sigScoreMatrix) <- rowLabels
+    # Build a matrix of all non-meta signatures
+    sigScoreMatrix <- sigScores
 
+    if (!is.null(cells)){
+        sigScoreMatrix <- sigScoreMatrix[cells, , drop = FALSE]
+    }
 
     if (!is.null(cells)) {
         weights$indices <- weights$indices[cells, , drop = FALSE]
         weights$weights <- weights$weights[cells, , drop = FALSE]
     }
 
-    N_SAMPLES <- nrow(weights$indices)
-
-    randomSigScores <- randomSigData$randomSigs
-    sigAssignments <- randomSigData$sigAssignments
-
-    groupedResults <- pbmclapply(names(randomSigScores), function(group) {
-
-        # Build a matrix of random background signatures for this group
-        randomSigScoreMatrix <- randomSigScores[[group]]
-
-        if (!is.null(cells)){
-            randomSigScoreMatrix <- randomSigScoreMatrix[cells, , drop = FALSE]
-        }
-
-        rowLabels <- rownames(randomSigScoreMatrix)
-        colLabels <- colnames(randomSigScoreMatrix)
-        randomSigScoreMatrix <- matrixStats::colRanks(
-              randomSigScoreMatrix, preserveShape = TRUE,
-              ties.method = "average"
+    gearyFG <- pbmclapply(seq_len(ncol(sigScoreMatrix)), function(ii) {
+        sigScoreMatrixGroup <- sigScoreMatrix[, ii, drop = FALSE]
+        sigScoreMatrixGroup <- matrixStats::colRanks(
+                   sigScoreMatrixGroup, preserveShape = TRUE, ties.method = "average"
         )
-
-        colnames(randomSigScoreMatrix) <- colLabels
-        rownames(randomSigScoreMatrix) <- rowLabels
-
-        groupSigNames <- names(sigAssignments)[sigAssignments == group]
-        groupSigNames <- intersect(groupSigNames, colnames(sigScoreMatrix))
-
-        sigScoreMatrixGroup <- sigScoreMatrix[, groupSigNames, drop = FALSE]
-
-        # Calculate scores for actual signatures
         geary_c <- geary_sig_v_proj(sigScoreMatrixGroup, weights$indices, weights$weights)
+        return(geary_c)
+    }, mc.preschedule = FALSE)
+    gearyFG <- unlist(gearyFG)
+    names(gearyFG) <- colnames(sigScoreMatrix)
 
-        # Calculate scores for random signatures
-        geary_c_bg <- geary_sig_v_proj(randomSigScoreMatrix, weights$indices, weights$weights)
+    randomSigs <- randomSigData$randomSigs
+    sigAssignments <- randomSigData$sigAssignments
+    randomSigAssignments <- randomSigData$randomSigAssignments
 
-        N <- length(geary_c_bg)
-        empvals <- vapply(geary_c, function(x) {
-                              comp <- sum(geary_c_bg < x)
-                              p <- (comp + 1) / (N + 1)
-                              return(p)
-       }, FUN.VALUE = 0.0)
+    randomSigBatches <- batchify(randomSigs, 10)
 
+    gearyBG <- pbmclapply(randomSigBatches, function(randomSigSubset){
+        randomSigScores <- t(innerEvalSignatureBatchNorm(normExpr, randomSigSubset))
+        randomSigScores <- matrixStats::colRanks(
+            randomSigScores, preserveShape = TRUE, ties.method = "average"
+        )
+        geary_c <- geary_sig_v_proj(randomSigScores, weights$indices, weights$weights)
+        return(geary_c)
+    }, mc.preschedule = FALSE)
+    gearyBG <- setNames(unlist(gearyBG), names(randomSigs))
 
-        return(list(consistency = 1 - geary_c, pvals = empvals))
+    # Compute fg with bg
+    pvals <- lapply(levels(sigAssignments), function(level){
+        fgNames <- names(sigAssignments)[sigAssignments == level]
+        fg <- gearyFG[fgNames]
 
+        bgNames <- names(randomSigAssignments)[randomSigAssignments == level]
+        bg <- gearyBG[bgNames]
+
+        N <- length(bg)
+        empvals <- vapply(fg, function(x) {
+            comp <- sum(bg < x)
+            p <- (comp + 1) / (N + 1)
+            return(p)
+        }, FUN.VALUE = 0.0)
     })
+    pvals <- unlist(pvals)
 
-
-    consistency <- do.call(c, lapply(groupedResults, function(x) x$consistency))
-    pvals <- do.call(c, lapply(groupedResults, function(x) x$pvals))
-
-    return(list(consistency = consistency, pvals = pvals))
+    return(list(consistency = 1 - gearyFG, pvals = pvals))
 }
 
 #' Evaluates the significance of each meta data numeric signature vs. a
 #' single projections weights
 #' @importFrom stats pnorm
+#' @importFrom stats setNames
 #' @importFrom pbmcapply pbmclapply
 #' @param metaData data.frame of meta-data for cells
 #' @param weights numeric matrix of dimension N_SAMPLES x N_SAMPLES
 #' @param cells list of cell names.  Subsets anlysis to provided cells.
 #' If omitted, use all cells.
+#' @param computePval bool whether to compute p-values. Set to FALSE to
+#' save computation time for large numbers of numeric signatures. If set
+#' to FALSE, all p-values are reported as 1.0
 #' @return list:
 #' \itemize{
 #'     \item consistency: consistency scores
 #'     \item pvals: pvalues
 #' }
-sigsVsProjection_pcn <- function(metaData, weights, cells = NULL){
-  # Calculate significance for meta data numerical signatures
-  # This is done separately because there are likely to be many repeats
-  # (e.g. for a time coordinate)
+sigsVsProjection_pcn <- function(metaData, weights, cells = NULL, computePval = TRUE){
+    # Calculate significance for meta data numerical signatures
+    # This is done separately because there are likely to be many repeats
+    # (e.g. for a time coordinate)
 
-  if (!is.null(cells)) {
-      weights$indices <- weights$indices[cells, , drop = FALSE]
-      weights$weights <- weights$weights[cells, , drop = FALSE]
-      metaData <- metaData[cells, , drop = FALSE]
-  }
-
-  N_SAMPLES <- nrow(weights$indices)
-
-  numericMeta <- vapply(names(metaData),
-                         function(metaName) {
-                             is.numeric(metaData[, metaName])
-                         }, FUN.VALUE = TRUE)
-
-  numericMeta <- names(numericMeta)[numericMeta]
-
-  results <- pbmclapply(numericMeta, function(metaName) {
-
-    scores <- metaData[[metaName]]
-
-    sigScores <- rank(scores, ties.method = "average")
-    if (all(sigScores == sigScores[1])) {
-      return(list(consistency = 0.0, pval = 1.0))
+    if (!is.null(cells)) {
+        weights$indices <- weights$indices[cells, , drop = FALSE]
+        weights$weights <- weights$weights[cells, , drop = FALSE]
+        metaData <- metaData[cells, , drop = FALSE]
     }
 
-    sigScores <- matrix(sigScores, ncol=1)
-    rownames(sigScores) <- rownames(metaData)
-    colnames(sigScores) <- metaName
+    if (is.data.frame(metaData)){
+        numericMeta <- vapply(names(metaData),
+                               function(metaName) {
+                                   is.numeric(metaData[, metaName])
+                               }, FUN.VALUE = TRUE)
 
-    geary_c <- geary_sig_v_proj(sigScores,
-                                         weights$indices,
-                                         weights$weights)
+        numericMetaNames <- names(numericMeta)[numericMeta]
+    } else { # If it's a matrix, assume all numeric
+        numericMetaNames <- colnames(metaData)
+    }
 
-    #Compute a background for numerical signatures
+    if (length(numericMetaNames) == 0) {
+        return(list(consistency = c(), pvals = c()))
+    }
+
+    numericMetaRanks <- matrixStats::colRanks(
+        as.matrix(metaData[, numericMetaNames, drop = FALSE]),
+        preserveShape = TRUE, ties.method = "average"
+    )
+    colnames(numericMetaRanks) <- numericMetaNames
+
     NUM_REPLICATES <- 3000
-    bgValues <- replicate(NUM_REPLICATES, sample(sigScores))
-    rownames(bgValues) <- rownames(sigScores)
-    randomScores <- geary_sig_v_proj(bgValues,
-                                         weights$indices,
-                                         weights$weights)
 
-    N <- length(randomScores)
-    comp <- sum(randomScores < geary_c)
-    pval <- (comp + 1) / (N + 1)
+    # Generate list of jobs
+    type <- character()
+    col <- numeric()
+    for (i in colnames(numericMetaRanks)) {
+        type <- c(type, "fg")
+        col <- c(col, i)
+        if (computePval){
+            type <- c(type, replicate(NUM_REPLICATES, "bg"))
+            col <- c(col, replicate(NUM_REPLICATES, i))
+        }
+    }
+    jobs <- data.frame(type = type, col = col, stringsAsFactors = FALSE)
 
-    return(list(consistency = 1 - geary_c, pval = pval))
+    results <- pbmclapply(seq_len(nrow(jobs)), function(i) {
 
-  })
+        type <- jobs[i, "type"]
+        col <- jobs[i, "col"]
 
-  names(results) <- numericMeta
 
-  consistency <- vapply(results, function(x) x$consistency,
-                        FUN.VALUE = 0.0)
+        sigScores <- numericMetaRanks[, col, drop = FALSE]
 
-  pvals <- vapply(results, function(x) x$pval,
-                        FUN.VALUE = 0.0)
+        if (any(is.na(sigScores))){
+            return(0.0)
+        }
 
-  return(list(consistency = consistency, pvals = pvals))
+        if (all(sigScores == sigScores[1])) {
+            return(0.0)
+        }
+
+        if (type == "bg"){
+            sigScores <- matrix(sample(sigScores), ncol = 1)
+            colnames(sigScores) <- colnames(numericMetaRanks)[col]
+        }
+
+        geary_c <- geary_sig_v_proj(
+            sigScores, weights$indices, weights$weights)
+
+        return(1 - geary_c)
+
+    }, mc.preschedule = FALSE)
+
+    jobs[["C"]] <- unlist(results)
+
+    results <- jobs[jobs$type == "fg", c("col", "C")]
+    rownames(results) <- results$col
+    results$pval <- 1.0
+
+    if (computePval) {
+        for (varname in rownames(results)) {
+            bg <- jobs[(jobs$col == varname) & (jobs$type == "bg"), ]
+            comp <- sum(bg$C >= results[varname, "C"])
+            pval <- (comp + 1) / (NUM_REPLICATES + 1)
+            results[varname, "pval"] <- pval
+        }
+    }
+
+    consistency <- setNames(results$C, rownames(results))
+    pvals <- setNames(results$pval, rownames(results))
+
+    return(list(consistency = consistency, pvals = pvals))
 }
 
 #' Evaluates the significance of each meta data factor signature vs. a
@@ -641,25 +642,27 @@ geary_sig_v_proj <- function(values, indices, weights){
 }
 
 #' Clusters signatures according to the rank sum
+#'
 #' @importFrom mclust Mclust
 #' @importFrom mclust mclustBIC
 #' @importFrom rsvd rsvd
 #' @param sigMatrix matrix of signatures scores, NUM_SAMPLES x NUM_SIGNATURES
 #' @param metaData data.frame of meta-data for cells
-#' @param pvals the corresponding P-values for each signature
-#' NUM_SIGNATURES x NUM_SAMPLES
+#' @param autocorrelation data.frame autocorrelation results
+#' @param clusterMeta bool whether or not to cluster meta-data (used when pool=TRUE)
 #' @return a list:
 #' \itemize{
 #'     \item Computed: a list of clusters of computed signatures
 #'     \item Meta: a list of clusters of meta data signatures
 #' }
-clusterSignatures <- function(sigMatrix, metaData, pvals, consistency, clusterMeta) {
+clusterSignatures <- function(sigMatrix, metaData, autocorrelation, clusterMeta) {
 
-  significant <- apply(pvals, 1, function(x) min(x) < .05)
+  significant <- autocorrelation$FDR < .05
 
   # Additionally, threshold on the Geary's C' itself
-  large <- consistency[, 1] > 0.2
+  large <- autocorrelation$C > 0.2
   significant <- significant & large
+  names(significant) <- rownames(autocorrelation)
 
   meta_n <- vapply(names(metaData), function(metaName) {
 			is.numeric(metaData[, metaName]) && !any(is.na(metaData[, metaName]))

@@ -54,13 +54,14 @@ Trajectory <- function(input) {
 #' @importFrom Matrix sparseMatrix
 #' @importFrom matrixStats rowMaxs
 #' @param object a Trajectory object
+#' @param K Number of neighbors to consider.
 #' @return a list of two items:
 #'          indices: matrix, cells X neighbors
 #'              Each row specifies indices of nearest neighbors
 #'          weights: matrix, cells X neighbors
 #'              Corresponding weights to nearest neighbors
 setMethod("computeKNNWeights", signature(object = "Trajectory"),
-            function(object, K) {
+            function(object, K = round(sqrt(nrow(object)))) {
 
             edgePos <- object@progressions$position
 			names(edgePos) <- rownames(object@progressions)
@@ -250,6 +251,7 @@ generateTrajectoryProjections <- function(trajectory) {
 #'
 #' Maps cell positions between edges
 #'
+#' @importFrom stats rnorm
 #' @param progressions data.frame describing cell positions between milestones
 #' @param vData Mx2 matrix mapping miletones into 2d
 #' @param edges Edges x 2 matrix describing connectivity between edges

@@ -7,10 +7,11 @@
 #' Applies filters to the inputted expression data (may remove rows)
 #'
 #' @param expr a numeric expression matrix (genes x cells)
-#' @param threshold minimum number of samples gene must be detected in to pass
 #' @param filterInput list of filters to compute
+#' @param threshold minimum number of samples gene must be detected in to pass
+#' @param num_mad number of median absolute deviations to use in fano filter
 #' @return character vector of gene names passing filter
-applyFilters <- function(expr, threshold, filterInput) {
+applyFilters <- function(expr, filterInput, threshold, num_mad) {
 
     for (filter in filterInput) {
         if (tolower(filter) == "novar") {
@@ -20,7 +21,7 @@ applyFilters <- function(expr, threshold, filterInput) {
         } else if (tolower(filter) == "fano") {
             gene_passes <- filterGenesThreshold(expr, threshold)
             t_expr <- expr[gene_passes, ]
-            gene_passes <- filterGenesFano(t_expr)
+            gene_passes <- filterGenesFano(t_expr, num_mad)
         } else {
             stop("Filter not recognized")
         }
@@ -38,7 +39,7 @@ applyFilters <- function(expr, threshold, filterInput) {
 #' @return character vector of gene names passing filter
 filterGenesNovar <- function(data) {
     message("Applying no variance filter...", appendLF = FALSE)
-    genes_passing <- rownames(data)[rowVars(data) != 0]
+    genes_passing <- rownames(data)[rowVarsSp(data) != 0]
     message(paste(length(genes_passing), "Genes Retained"))
     return(genes_passing)
 }
@@ -98,7 +99,7 @@ filterGenesFano <- function(data, num_mad=2, plot=FALSE) {
     }
 
     mu <- Matrix::rowMeans(sub_data)
-    fano <- rowVars(sub_data) / mu
+    fano <- rowVarsSp(sub_data) / mu
 
 
     aa <- order(mu)
@@ -148,8 +149,4 @@ filterGenesFano <- function(data, num_mad=2, plot=FALSE) {
     }
     return(gene_pass_names)
 
-}
-
-rowVars <- function(x) {
-    return (rowSums(( x - Matrix::rowMeans(x))^2) / (ncol(x) - 1))
 }
