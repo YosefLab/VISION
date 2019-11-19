@@ -42,6 +42,8 @@
 <meta property="og:title" content="Initializes a new VISION object. — Vision" />
 
 <meta property="og:description" content="Initializes a Vision object from an existing Seurat object taking any existing
+expression data, meta-data, and dimensionality reductions if they exist already
+Initializes a Vision object from an existing Seurat object taking any existing
 expression data, meta-data, and dimensionality reductions if they exist already" />
 
 <meta property="og:image" content="https://yoseflab.github.io/VISION/logo.png" />
@@ -75,7 +77,7 @@ expression data, meta-data, and dimensionality reductions if they exist already"
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">VISION</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.1.1</span>
       </span>
     </div>
 
@@ -153,6 +155,8 @@ expression data, meta-data, and dimensionality reductions if they exist already"
     
     <p>Initializes a Vision object from an existing Seurat object taking any existing
 expression data, meta-data, and dimensionality reductions if they exist already</p>
+<p>Initializes a Vision object from an existing Seurat object taking any existing
+expression data, meta-data, and dimensionality reductions if they exist already</p>
     
     </div>
 
@@ -168,7 +172,8 @@ expression data, meta-data, and dimensionality reductions if they exist already<
   <span class='st'>"znorm_rows_then_columns"</span>, <span class='st'>"rank_norm_columns"</span>),
   <span class='kw'>sig_score_method</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"naive"</span>, <span class='st'>"weighted_avg"</span>), <span class='kw'>pool</span> <span class='kw'>=</span> <span class='st'>"auto"</span>,
   <span class='kw'>cellsPerPartition</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>num_neighbors</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>latentSpace</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>latentTrajectory</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>pools</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/list'>list</a></span>())
+  <span class='kw'>latentSpace</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>latentSpaceName</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>latentTrajectory</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>pools</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/list'>list</a></span>())
 
 <span class='co'># S4 method for data.frame</span>
 <span class='fu'>Vision</span>(<span class='no'>data</span>, <span class='no'>...</span>)
@@ -180,6 +185,10 @@ expression data, meta-data, and dimensionality reductions if they exist already<
 <span class='fu'>Vision</span>(<span class='no'>data</span>, <span class='no'>...</span>)
 
 <span class='co'># S4 method for seurat</span>
+<span class='fu'>Vision</span>(<span class='no'>data</span>, <span class='kw'>dimRed</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>dimRedComponents</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='no'>...</span>)
+
+<span class='co'># S4 method for Seurat</span>
 <span class='fu'>Vision</span>(<span class='no'>data</span>, <span class='kw'>dimRed</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>dimRedComponents</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='no'>...</span>)</pre>
     
@@ -291,6 +300,16 @@ with dimensions CELLS x COMPONENTS</p></td>
       <th>latentTrajectory</th>
       <td><p>trajectory to model cell progression.  Wrapped result
 of a trajectory inference method by the dynverse/dynwrap library</p></td>
+    </tr>
+    <tr>
+      <th>dimRed</th>
+      <td><p>Dimensionality reduction to use for the latentSpace.  Default is to
+look for "pca" and use that if it exists</p></td>
+    </tr>
+    <tr>
+      <th>dimRedComponents</th>
+      <td><p>number of components to use for the selected dimensionality
+reduction.  Default is to use all components</p></td>
     </tr>
     <tr>
       <th>dimRed</th>

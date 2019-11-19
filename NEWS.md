@@ -1,3 +1,12 @@
+# VISION 1.1.1
+
+* Bugfixes
+    * Fixed issue with selection on high-dpi displays
+    * Better Encoding of URI Components
+* Removed gzmem as a suggested dependency
+* Various style fixes
+* Added support for Seurat 3.X objects
+
 # VISION 1.1.0
 
 * Added differential expression testing to the output report

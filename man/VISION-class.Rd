@@ -8,6 +8,7 @@
 \alias{Vision,ExpressionSet-method}
 \alias{Vision,SummarizedExperiment-method}
 \alias{Vision,seurat-method}
+\alias{Vision,Seurat-method}
 \title{Initializes a new VISION object.}
 \usage{
 Vision(data, ...)
@@ -21,7 +22,8 @@ Vision(data, ...)
   "znorm_rows_then_columns", "rank_norm_columns"),
   sig_score_method = c("naive", "weighted_avg"), pool = "auto",
   cellsPerPartition = 10, name = NULL, num_neighbors = NULL,
-  latentSpace = NULL, latentTrajectory = NULL, pools = list())
+  latentSpace = NULL, latentSpaceName = NULL,
+  latentTrajectory = NULL, pools = list())
 
 \S4method{Vision}{data.frame}(data, ...)
 
@@ -30,6 +32,9 @@ Vision(data, ...)
 \S4method{Vision}{SummarizedExperiment}(data, ...)
 
 \S4method{Vision}{seurat}(data, dimRed = NULL, dimRedComponents = NULL,
+  ...)
+
+\S4method{Vision}{Seurat}(data, dimRed = NULL, dimRedComponents = NULL,
   ...)
 }
 \arguments{
@@ -108,11 +113,20 @@ look for "pca" and use that if it exists}
 
 \item{dimRedComponents}{number of components to use for the selected dimensionality
 reduction.  Default is to use all components}
+
+\item{dimRed}{Dimensionality reduction to use for the latentSpace.  Default is to
+look for "pca" and use that if it exists}
+
+\item{dimRedComponents}{number of components to use for the selected dimensionality
+reduction.  Default is to use all components}
 }
 \value{
 A VISION object
 }
 \description{
+Initializes a Vision object from an existing Seurat object taking any existing
+expression data, meta-data, and dimensionality reductions if they exist already
+
 Initializes a Vision object from an existing Seurat object taking any existing
 expression data, meta-data, and dimensionality reductions if they exist already
 }

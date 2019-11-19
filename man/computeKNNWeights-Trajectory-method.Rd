@@ -5,7 +5,7 @@
 \alias{computeKNNWeights,Trajectory-method}
 \title{Compute KNN weights based on geodesic distances for Trajectory objects}
 \usage{
-\S4method{computeKNNWeights}{Trajectory}(object)
+\S4method{computeKNNWeights}{Trajectory}(object, K)
 }
 \arguments{
 \item{object}{a Trajectory object}
