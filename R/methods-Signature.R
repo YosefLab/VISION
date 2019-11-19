@@ -333,7 +333,14 @@ sigsVsProjection_n <- function(sigScores, randomSigData,
         weights$weights <- weights$weights[cells, , drop = FALSE]
     }
 
-    gearyFG <- pbmclapply(seq_len(ncol(sigScoreMatrix)), function(ii) {
+    # Thread setup time is around .36 seconds
+    # Compute batches so that thread setup/teardown doesn't dominate runtime
+    per_batch <- 3.6 * 58000 / length(weights$indices) / .0032
+    per_batch <- max(min(per_batch, 2000), 10)
+
+    fgSigBatches <- batchify(seq_len(ncol(sigScoreMatrix)), per_batch, getOption("mc.cores", 2L))
+
+    gearyFG <- pbmclapply(fgSigBatches, function(ii) {
         sigScoreMatrixGroup <- sigScoreMatrix[, ii, drop = FALSE]
         sigScoreMatrixGroup <- matrixStats::colRanks(
                    sigScoreMatrixGroup, preserveShape = TRUE, ties.method = "average"
@@ -341,14 +348,13 @@ sigsVsProjection_n <- function(sigScores, randomSigData,
         geary_c <- geary_sig_v_proj(sigScoreMatrixGroup, weights$indices, weights$weights)
         return(geary_c)
     }, mc.preschedule = FALSE)
-    gearyFG <- unlist(gearyFG)
-    names(gearyFG) <- colnames(sigScoreMatrix)
+    gearyFG <- setNames(unlist(gearyFG), colnames(sigScoreMatrix))
 
     randomSigs <- randomSigData$randomSigs
     sigAssignments <- randomSigData$sigAssignments
     randomSigAssignments <- randomSigData$randomSigAssignments
 
-    randomSigBatches <- batchify(randomSigs, 10)
+    randomSigBatches <- batchify(randomSigs, per_batch, getOption("mc.cores", 2L))
 
     gearyBG <- pbmclapply(randomSigBatches, function(randomSigSubset){
         randomSigScores <- t(innerEvalSignatureBatchNorm(normExpr, randomSigSubset))
@@ -444,31 +450,40 @@ sigsVsProjection_pcn <- function(metaData, weights, cells = NULL, computePval = 
     }
     jobs <- data.frame(type = type, col = col, stringsAsFactors = FALSE)
 
-    results <- pbmclapply(seq_len(nrow(jobs)), function(i) {
+    # Thread setup time is around .36 seconds
+    # Compute batches so that thread setup/teardown doesn't dominate runtime
+    per_batch <- 3.6 * 58000 / length(weights$indices) / .0032
+    per_batch <- max(min(per_batch, 2000), 10)
+    jbatches <- batchify(seq_len(nrow(jobs)), per_batch, getOption("mc.cores", 2L))
 
-        type <- jobs[i, "type"]
-        col <- jobs[i, "col"]
+    results <- pbmclapply(jbatches, function(jbatch) {
+
+        lapply(jbatch, function(i) {
+
+            type <- jobs[i, "type"]
+            col <- jobs[i, "col"]
 
 
-        sigScores <- numericMetaRanks[, col, drop = FALSE]
+            sigScores <- numericMetaRanks[, col, drop = FALSE]
 
-        if (any(is.na(sigScores))){
-            return(0.0)
-        }
+            if (any(is.na(sigScores))){
+                return(0.0)
+            }
 
-        if (all(sigScores == sigScores[1])) {
-            return(0.0)
-        }
+            if (all(sigScores == sigScores[1])) {
+                return(0.0)
+            }
 
-        if (type == "bg"){
-            sigScores <- matrix(sample(sigScores), ncol = 1)
-            colnames(sigScores) <- colnames(numericMetaRanks)[col]
-        }
+            if (type == "bg"){
+                sigScores <- matrix(sample(sigScores), ncol = 1)
+                colnames(sigScores) <- colnames(numericMetaRanks)[col]
+            }
 
-        geary_c <- geary_sig_v_proj(
-            sigScores, weights$indices, weights$weights)
+            geary_c <- geary_sig_v_proj(
+                sigScores, weights$indices, weights$weights)
 
-        return(1 - geary_c)
+            return(1 - geary_c)
+        })
 
     }, mc.preschedule = FALSE)
 

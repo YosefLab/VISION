@@ -285,9 +285,21 @@ calcSignatureScores <- function(
     sigScores <- batchSigEvalNorm(object@sigData, normExpr)
 
     if (sig_gene_importance) {
-        sigGeneImportance <- evalSigGeneImportanceSparse(
-            sigScores, object@sigData, normExpr
-        )
+
+        if (is(object@exprData, "sparseMatrix")) {
+            sigGeneImportance <- evalSigGeneImportanceSparse(
+                sigScores, object@sigData, normExpr
+            )
+        } else {
+            normExprDense <- getNormalizedCopy(
+                object@exprData,
+                object@params$signatures$sigNormMethod
+            )
+            sigGeneImportance <- evalSigGeneImportance(
+                sigScores, object@sigData, normExprDense
+            )
+        }
+
     } else {
         sigGeneImportance <- list()
     }
