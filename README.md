@@ -4,6 +4,7 @@
 
 VISION aids in the interpretation of single-cell RNA-seq (scRNA-seq) data by selecting for gene signatures which describe coordinated variation between cells.  While the software only requires an expression matrix and a signature library (available in online databases), it is also designed to integrate into existing scRNA-seq analysis pipelines by taking advantage of precomputed dimensionality reductions, trajectory inferences or clustering results.  The results of this analysis are made available through a dynamic web-app which can be shared with collaborators without requiring them to install any additional software.
 
+* [Nature Communications publication](https://www.nature.com/articles/s41467-019-12235-0)
 * [Full Documentation](https://yoseflab.github.io/VISION/)
 * [Biorxiv Preprint](https://www.biorxiv.org/content/early/2018/08/29/403055)
 
