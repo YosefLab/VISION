@@ -16,7 +16,7 @@ batchSigEvalNorm <- function(sigs, normData) {
     sigBatches <- batchify(sigs, 1200, n_workers = n_workers)
 
     allScoresBatches <- pbmclapply(sigBatches, function(sigBatch) {
-        scores <- innerEvalSignatureBatchNorm(normData, sigs)
+        scores <- innerEvalSignatureBatchNorm(normData, sigBatch)
         return(scores)
     })
 
