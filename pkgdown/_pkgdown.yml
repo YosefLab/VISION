@@ -56,7 +56,7 @@ navbar:
       text: Tutorials
       menu:
       - text: Gene Signatures
-        href: articles/web_only/Signatures.html
+        href: articles/Signatures.html
       - text: Signature Autocorrelation
         href: articles/web_only/SignatureAutocorrelation.html
       - text: Micropooling
