@@ -361,6 +361,9 @@
     <loc>https://yoseflab.github.io/VISION//reference/viewResults.html</loc>
   </url>
   <url>
+    <loc>https://yoseflab.github.io/VISION//articles/Signatures.html</loc>
+  </url>
+  <url>
     <loc>https://yoseflab.github.io/VISION//articles/VISION-vignette.html</loc>
   </url>
   <url>
@@ -377,8 +380,5 @@
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//articles/web_only/SignatureAutocorrelation.html</loc>
-  </url>
-  <url>
-    <loc>https://yoseflab.github.io/VISION//articles/web_only/Signatures.html</loc>
   </url>
 </urlset>
