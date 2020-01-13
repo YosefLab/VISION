@@ -195,10 +195,10 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
     }
 
     # Ensure the 'Viewer' list is fully initialized
-    if (!("selections" %in% object@Viewer)){
+    if (!("selections" %in% names(object@Viewer))){
         object@Viewer[["selections"]] <- list()
     }
-    if (!("de_cache" %in% object@Viewer)){
+    if (!("de_cache" %in% names(object@Viewer))){
         object@Viewer[["de_cache"]] <- list()
     }
 
