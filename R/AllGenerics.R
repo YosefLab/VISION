@@ -71,3 +71,7 @@ setGeneric("getMetaDifferential", function(object, ...) {
 setGeneric("hasProteinData", function(object, ...) {
     standardGeneric("hasProteinData")
 })
+
+setGeneric("hasTrajectory", function(object, ...) {
+    standardGeneric("hasTrajectory")
+})
