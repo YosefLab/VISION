@@ -674,7 +674,7 @@ setMethod("analyze", signature(object="Vision"),
     object <- generateProjections(object)
 
     # Populates @TrajectoryProjections
-    if (!is.null(object@LatentTrajectory)) {
+    if (hasTrajectory(object)) {
 
         object@TrajectoryProjections <- generateTrajectoryProjections(
                                             object@LatentTrajectory
@@ -688,7 +688,7 @@ setMethod("analyze", signature(object="Vision"),
     object <- analyzeLocalCorrelations(object)
 
     # Populates @TrajectoryAutocorrelation
-    if (!is.null(object@LatentTrajectory)) {
+    if (hasTrajectory(object)) {
         object <- analyzeTrajectoryCorrelations(object)
     }
 
@@ -1032,10 +1032,10 @@ setMethod("getSignatureScores", signature(object = "Vision"),
 setMethod("getSignatureAutocorrelation", signature(object = "Vision"),
           function(object) {
 
-              if (is.null(object@TrajectoryAutocorrelation)){
-                  out <- object@LocalAutocorrelation$Signatures
-              } else {
+              if (hasTrajectory(object)){
                   out <- object@TrajectoryAutocorrelation$Signatures
+              } else {
+                  out <- object@LocalAutocorrelation$Signatures
               }
 
               out <- out[order(out$pValue, out$C * -1), ]
@@ -1060,10 +1060,10 @@ setMethod("getSignatureAutocorrelation", signature(object = "Vision"),
 setMethod("getMetaAutocorrelation", signature(object = "Vision"),
           function(object) {
 
-              if (is.null(object@TrajectoryAutocorrelation)){
-                  out <- object@LocalAutocorrelation$Meta
-              } else {
+              if (hasTrajectory(object)){
                   out <- object@TrajectoryAutocorrelation$Meta
+              } else {
+                  out <- object@LocalAutocorrelation$Meta
               }
 
               out <- out[order(out$pValue, out$C * -1), ]
@@ -1156,5 +1156,11 @@ setMethod("show", "Vision",
 setMethod("hasProteinData", "Vision",
     function(object) {
         return(!all(dim(object@proteinData) == 1))
+    }
+)
+
+setMethod("hasTrajectory", "Vision",
+    function(object) {
+        return(!is.null(object@LatentTrajectory))
     }
 )
