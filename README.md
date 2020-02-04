@@ -38,5 +38,7 @@ More information can be found throughout the rest of the tutorials on the [Docum
 
 ## Sample Output
 
-[Click here for an example output report of ~9,000 CBMC's sequenced with the CITE-seq protocol](http://s133.millennium.berkeley.edu:7703/)
 ![Screenshot of report](https://github.com/YosefLab/VISION/blob/master/docs/example_report.png)
+
+- [Live output example: ~9,000 CBMC's sequenced with the CITE-seq protocol](http://s133.cs.berkeley.edu:7703/)
+- [Tour of the output report user interface(PDF)](https://github.com/YosefLab/VISION/raw/master/docs/VISION_Report_Manual.pdf)
