@@ -108,8 +108,12 @@ ColorScatter.prototype.setData = function(object)
             var marker = {
                 size: circle_radius
             }
-            if (unique.length > 10) {
-                var hue = Math.round(i/unique.length * 360);
+            if (unique.length > 10) { // Use husl if more than 10 categories
+                var step = 8
+                var L = Math.ceil(unique.length/step)*step
+                var hue = Math.round(
+                    ( (i*L/step)%L + Math.floor(i/step) ) / L * 360 // Helps scatter values
+                );
                 marker['color'] = hsluv.hsluvToHex([hue, 90, 55])
             }
 
