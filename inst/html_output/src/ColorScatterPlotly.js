@@ -88,7 +88,7 @@ ColorScatter.prototype.setData = function(object)
         // Need to check if any is selected.  If no, then all selected_points is null
         var anySelected = _(points).map('selected').reduce( (a, i) => a || i, false)
 
-        _.forEach(unique, level => {
+        _.forEach(unique, (level, i) => {
             var subset = _.filter(points, p => p['value'] == level)
             var x_sub = _.map(subset, p => p['x'])
             var y_sub = _.map(subset, p => p['y'])
@@ -105,6 +105,14 @@ ColorScatter.prototype.setData = function(object)
                 selected_points = null
             }
 
+            var marker = {
+                size: circle_radius
+            }
+            if (unique.length > 10) {
+                var hue = Math.round(i/unique.length * 360);
+                marker['color'] = hsluv.hsluvToHex([hue, 90, 55])
+            }
+
             var trace = {
                 x: x_sub,
                 y: y_sub,
@@ -112,9 +120,7 @@ ColorScatter.prototype.setData = function(object)
                 type: 'scattergl',
                 text: id_sub,
                 name: level.toString(),
-                marker: {
-                    size: circle_radius,
-                },
+                marker: marker,
                 selectedpoints: selected_points,
                 hoverinfo: 'text+name',
             }
