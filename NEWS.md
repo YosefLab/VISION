@@ -1,3 +1,17 @@
+# VISION 2.1.0
+
+Added parameter `sig_gene_threshold` with **changed default behavior**
+
+* Before it was a guideline to filter lowly expressed genes before running VISION
+* Now, by default, genes expressed in fewer than 0.1% of cells will be filtered automatically
+
+Bug Fixes:
+
+* Better colors in output when more than 10 categories
+* Errors with certain output object accessors
+* Selections not saving when loading results server
+* Crashes when running on more than 1200 signatures
+
 # VISION 2.0.0
 
 Lots of changes for this version.
