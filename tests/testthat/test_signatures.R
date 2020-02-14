@@ -37,7 +37,7 @@ test_that("Naive Sig Scores computed correctly", {
                      sep = "\t", header = TRUE)
   expr <- data.matrix(expr)
   sigList <- readSignaturesInput(c("test_data/published_signatures/h.all.v5.2.symbols.gmt"))
-  sigList <- processSignatures(sigList, rownames(expr), 1)
+  sigList <- processSignatures(sigList, expr, 1, .000001)
   
   normData <- getNormalizedCopySparse(expr, "none")
   

@@ -211,9 +211,11 @@ computeProjectionGenes <- function(object,
 #' on creating Signature objects.
 #' @param min_signature_genes Signature that match less than this number of genes in the
 #' supplied expression matrix are removed.
+#' @param sig_gene_threshold Proportion of cells that a gene must be detected in (nonzero)
+#' to be used in signature score calculations.
 #' @return the VISION object, with the @sigData slot updated
 #' @export
-addSignatures <- function(object, signatures, min_signature_genes=5) {
+addSignatures <- function(object, signatures, min_signature_genes=5, sig_gene_threshold=.01) {
 
     if (is.list(signatures)) {
         sigs <- lapply(signatures, function(sig){
@@ -237,7 +239,7 @@ addSignatures <- function(object, signatures, min_signature_genes=5) {
             Signature objects")
     }
 
-    sigs <- processSignatures(sigs, rownames(object@exprData), min_signature_genes)
+    sigs <- processSignatures(sigs, object@exprData, min_signature_genes, sig_gene_threshold)
 
     object@sigData <- c(object@sigData, sigs)
 

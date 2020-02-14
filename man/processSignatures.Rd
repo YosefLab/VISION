@@ -4,15 +4,18 @@
 \alias{processSignatures}
 \title{Processes signatures on input}
 \usage{
-processSignatures(sigData, expressionGenes, minSignatureGenes)
+processSignatures(sigData, exprData, minSignatureGenes, sig_gene_threshold)
 }
 \arguments{
 \item{sigData}{list of signature objects}
 
-\item{expressionGenes}{list of gene identifiers in the expression matrix}
+\item{exprData}{gene expression matrix}
 
 \item{minSignatureGenes}{minimum number of genes a signature must match
 in the expression matrix in order to be retained}
+
+\item{sig_gene_threshold}{Proportion of cells that a gene must be detected in (nonzero)
+to be used in signature score calculations.}
 }
 \value{
 processedSigData list of signature objects

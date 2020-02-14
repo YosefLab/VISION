@@ -77,7 +77,7 @@ expression data, meta-data, and dimensionality reductions if they exist already"
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">VISION</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.0</span>
       </span>
     </div>
 
@@ -166,7 +166,7 @@ expression data, meta-data, and dimensionality reductions if they exist already<
 <span class='fu'>Vision</span>(<span class='no'>data</span>, <span class='kw'>signatures</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/list'>list</a></span>(),
   <span class='kw'>proteinData</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>unnormalizedData</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>meta</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>projection_genes</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"fano"</span>), <span class='kw'>min_signature_genes</span> <span class='kw'>=</span> <span class='fl'>5</span>,
-  <span class='kw'>threshold</span> <span class='kw'>=</span> <span class='fl'>0.05</span>, <span class='kw'>perm_wPCA</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>sig_gene_threshold</span> <span class='kw'>=</span> <span class='fl'>0.005</span>, <span class='kw'>threshold</span> <span class='kw'>=</span> <span class='fl'>0.05</span>, <span class='kw'>perm_wPCA</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
   <span class='kw'>projection_methods</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"tSNE30"</span>),
   <span class='kw'>sig_norm_method</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"znorm_columns"</span>, <span class='st'>"none"</span>, <span class='st'>"znorm_rows"</span>,
   <span class='st'>"znorm_rows_then_columns"</span>, <span class='st'>"rank_norm_columns"</span>), <span class='kw'>pool</span> <span class='kw'>=</span> <span class='st'>"auto"</span>,
@@ -244,6 +244,11 @@ genes to use when computing projections.</p></td>
       <th>min_signature_genes</th>
       <td><p>Signature that match less than this number of genes in the
 supplied expression matrix are removed.</p></td>
+    </tr>
+    <tr>
+      <th>sig_gene_threshold</th>
+      <td><p>Proportion of cells that a gene must be detected in (nonzero)
+to be used in signature score calculations.</p></td>
     </tr>
     <tr>
       <th>threshold</th>
