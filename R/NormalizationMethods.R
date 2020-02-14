@@ -110,17 +110,20 @@ getNormalizedCopySparse <- function(data, func) {
     if (func == "znorm_rows" || func == "znorm_rows_then_columns") {
         rowOffsets <- rowMeans(data) * -1
         rowScaleFactors <- rowVarsSp(data) ** -0.5
+        rowScaleFactors[is.infinite(rowScaleFactors)] <- 1
     }
 
     if (func == "znorm_columns") {
         colOffsets <- colMeans(data) * -1
         colScaleFactors <- colVarsSp(data) ** -0.5
+        colScaleFactors[is.infinite(colScaleFactors)] <- 1
     }
 
     if (func == "znorm_rows_then_columns") {
         result <- .colNormHelper(data, rowOffsets, rowScaleFactors)
         colOffsets <- result$colOffsets
         colScaleFactors <- result$colScaleFactors
+        colScaleFactors[is.infinite(colScaleFactors)] <- 1
     }
 
     nd <- NormData(data, rowOffsets = rowOffsets, colOffsets = colOffsets,
