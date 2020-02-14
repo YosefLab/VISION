@@ -20,6 +20,8 @@
 #' genes to use when computing projections.
 #' @param min_signature_genes Signature that match less than this number of genes in the
 #' supplied expression matrix are removed.
+#' @param sig_gene_threshold Proportion of cells that a gene must be detected in (nonzero)
+#' to be used in signature score calculations.
 #' @param threshold Threshold to apply when using the 'threshold' or 'fano' projection genes filter.
 #' If greater than 1, this specifies the number of cells in which a gene must be detected
 #' for it to be used when computing PCA. If less than 1, this instead specifies the proportion of cells needed
@@ -75,7 +77,9 @@ setMethod("Vision", signature(data = "matrixORSparse"),
             function(data, signatures=list(),
                     proteinData=NULL,
                     unnormalizedData = NULL, meta=NULL,
-                    projection_genes=c("fano"), min_signature_genes=5,
+                    projection_genes=c("fano"),
+                    min_signature_genes=5,
+                    sig_gene_threshold=.005,
                     threshold=.05, perm_wPCA=FALSE,
                     projection_methods = c("tSNE30"),
                     sig_norm_method = c("znorm_columns", "none", "znorm_rows",
@@ -101,7 +105,16 @@ setMethod("Vision", signature(data = "matrixORSparse"),
             .Object@params$micropooling <- list()
 
             rownames(data) <- toupper(rownames(data))
-            data <- data[ !duplicated(rownames(data)), , drop = FALSE]
+            toRemove <- rownames(data)[duplicated(rownames(data))]
+            if (length(toRemove) > 0){
+                message(sprintf(
+                        "\nRemoving %i genes with duplicate IDs (ignoring case): %s\n",
+                        length(toRemove) + length(unique(toRemove)),
+                        paste(unique(toRemove), collapse = ", ")
+                        )
+                    )
+                data <- data[ !(rownames(data) %in% toRemove), , drop = FALSE]
+            }
             .Object@exprData <- data
 
             if (!is.null(unnormalizedData)){
@@ -198,7 +211,7 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                     Signature objects")
             }
 
-            .Object@sigData <- processSignatures(.Object@sigData, rownames(.Object@exprData), min_signature_genes)
+            .Object@sigData <- processSignatures(.Object@sigData, .Object@exprData, min_signature_genes, sig_gene_threshold)
 
             if (!is.null(meta)) {
                 if(is.matrix(meta)){

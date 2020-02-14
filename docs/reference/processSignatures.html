@@ -156,7 +156,7 @@ Drops signatures with less than `minSignatureGenes` matching genes</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>processSignatures</span>(<span class='no'>sigData</span>, <span class='no'>expressionGenes</span>, <span class='no'>minSignatureGenes</span>)</pre>
+    <pre class="usage"><span class='fu'>processSignatures</span>(<span class='no'>sigData</span>, <span class='no'>exprData</span>, <span class='no'>minSignatureGenes</span>, <span class='no'>sig_gene_threshold</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -166,13 +166,18 @@ Drops signatures with less than `minSignatureGenes` matching genes</p>
       <td><p>list of signature objects</p></td>
     </tr>
     <tr>
-      <th>expressionGenes</th>
-      <td><p>list of gene identifiers in the expression matrix</p></td>
+      <th>exprData</th>
+      <td><p>gene expression matrix</p></td>
     </tr>
     <tr>
       <th>minSignatureGenes</th>
       <td><p>minimum number of genes a signature must match
 in the expression matrix in order to be retained</p></td>
+    </tr>
+    <tr>
+      <th>sig_gene_threshold</th>
+      <td><p>Proportion of cells that a gene must be detected in (nonzero)
+to be used in signature score calculations.</p></td>
     </tr>
     </table>
     

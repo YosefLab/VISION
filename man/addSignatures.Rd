@@ -4,7 +4,8 @@
 \alias{addSignatures}
 \title{Add signatures to VISION object}
 \usage{
-addSignatures(object, signatures, min_signature_genes = 5)
+addSignatures(object, signatures, min_signature_genes = 5,
+  sig_gene_threshold = 0.01)
 }
 \arguments{
 \item{object}{the VISION object}
@@ -15,6 +16,9 @@ on creating Signature objects.}
 
 \item{min_signature_genes}{Signature that match less than this number of genes in the
 supplied expression matrix are removed.}
+
+\item{sig_gene_threshold}{Proportion of cells that a gene must be detected in (nonzero)
+to be used in signature score calculations.}
 }
 \value{
 the VISION object, with the @sigData slot updated

@@ -4,11 +4,31 @@
 #' Drops signatures with less than `minSignatureGenes` matching genes
 #'
 #' @param sigData list of signature objects
-#' @param expressionGenes list of gene identifiers in the expression matrix
+#' @param exprData gene expression matrix
 #' @param minSignatureGenes minimum number of genes a signature must match
 #' in the expression matrix in order to be retained
+#' @param sig_gene_threshold Proportion of cells that a gene must be detected in (nonzero)
+#' to be used in signature score calculations.
+#' @importFrom Matrix rowSums
 #' @return processedSigData list of signature objects
-processSignatures <- function(sigData, expressionGenes, minSignatureGenes){
+processSignatures <- function(sigData, exprData, minSignatureGenes, sig_gene_threshold){
+    expressionGenes <- rownames(exprData)
+
+
+    cell_threshold <- sig_gene_threshold * ncol(exprData)
+    gene_detects <- rowSums(exprData > 0)
+    valid_genes <- gene_detects >= cell_threshold
+
+    message(
+        sprintf(
+            "\nUsing %i/%i genes detected in %.2f%% of cells for signature analysis.",
+            sum(valid_genes), nrow(exprData), sig_gene_threshold*100)
+        )
+    message(
+        "See the `sig_gene_threshold` input to change this behavior.\n"
+        )
+
+    expressionGenes <- rownames(exprData)[valid_genes]
     out <- lapply(sigData, function(sig){
         validGenes <- names(sig@sigDict) %in% expressionGenes
         sig@sigDict <- sig@sigDict[validGenes]

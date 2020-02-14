@@ -18,7 +18,7 @@ Vision(data, ...)
 \S4method{Vision}{matrixORSparse}(data, signatures = list(),
   proteinData = NULL, unnormalizedData = NULL, meta = NULL,
   projection_genes = c("fano"), min_signature_genes = 5,
-  threshold = 0.05, perm_wPCA = FALSE,
+  sig_gene_threshold = 0.005, threshold = 0.05, perm_wPCA = FALSE,
   projection_methods = c("tSNE30"),
   sig_norm_method = c("znorm_columns", "none", "znorm_rows",
   "znorm_rows_then_columns", "rank_norm_columns"), pool = "auto",
@@ -72,6 +72,9 @@ genes to use when computing projections.}
 
 \item{min_signature_genes}{Signature that match less than this number of genes in the
 supplied expression matrix are removed.}
+
+\item{sig_gene_threshold}{Proportion of cells that a gene must be detected in (nonzero)
+to be used in signature score calculations.}
 
 \item{threshold}{Threshold to apply when using the 'threshold' or 'fano' projection genes filter.
 If greater than 1, this specifies the number of cells in which a gene must be detected
