@@ -121,17 +121,14 @@
 <h2 class="hasAnchor">
 <a href="#how-this-works" class="anchor"></a>How this works</h2>
 <ul>
-<li>If <code>obj@scale.data</code> exists, this is used as the expression data.
-<ul>
-<li>Otherwise, <code>obj@data</code> is used if “NormalizeData” was previously run.</li>
-<li>If “NormalizeData” was not run, then <code>obj@raw.data</code> is used (after scaling the expression sum in each cell to the median)</li>
-</ul>
-</li>
+<li>By default, <code>assay = "RNA"</code>, though this parameter is configurable.</li>
+<li>
+<code>obj@[[assay]]@counts</code> is used as the expression input (after normalizing to a library size of 10,000)</li>
 <li>The cell meta-data is taken from <code>obj@meta.data</code>
 </li>
-<li>Lower-dimensional visualizations are taken from the first 2 components of every “Dimensionality Reduction” in <code>object@dr</code>
+<li>Lower-dimensional visualizations are taken each dimensionality reduction in <code>Reductions(obj)</code>
 <ul>
-<li>These are added using their names prefixed with “Seurat_”</li>
+<li>These are added using their original names prefixed with “Seurat_”</li>
 </ul>
 </li>
 <li>If “pca” has been run, the latentSpace input is taken from its associated cell embeddings
@@ -142,6 +139,19 @@
 </ul>
 </li>
 </ul>
+<div id="recommendations-when-using-seurat-integratedata" class="section level3">
+<h3 class="hasAnchor">
+<a href="#recommendations-when-using-seurat-integratedata" class="anchor"></a>Recommendations when using Seurat <code>IntegrateData</code>
+</h3>
+<p>When using <code>IntegrateData</code>, a new assay is created called <code>integrated</code>.</p>
+<p>We recommend creating your reduced-dimensional representation using this assay by running PCA in Seurat after <code>IntegrateData</code>.</p>
+<p>Then create the Vision object, but use the default <code>assay="RNA"</code>.</p>
+<ul>
+<li>The original (normalized) counts will be used as the expression input</li>
+<li>However, the integrated latent space will be used to create the neighbors graph</li>
+</ul>
+<p>Why not use the integrated expression data? Typically this data only consists of a subset of the genes (e.g. 2000 highly-variable genes) and so is not ideal for matching genes in signatures.</p>
+</div>
 </div>
 <div id="examples" class="section level2">
 <h2 class="hasAnchor">

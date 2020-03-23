@@ -6,16 +6,28 @@ If you are already using Seurat for your analysis, VISION provides a convenience
 
 ## How this works
 
-* If `obj@scale.data` exists, this is used as the expression data.
-  * Otherwise, `obj@data` is used if "NormalizeData" was previously run.
-  * If "NormalizeData" was not run, then `obj@raw.data` is used (after scaling the expression sum in each cell to the median)
+* By default, `assay = "RNA"`, though this parameter is configurable.
+* `obj@[[assay]]@counts` is used as the expression input (after normalizing to a library size of 10,000)
 * The cell meta-data is taken from `obj@meta.data`
-* Lower-dimensional visualizations are taken from the first 2 components of every "Dimensionality Reduction" in `object@dr`
-  * These are added using their names prefixed with "Seurat\_"
+* Lower-dimensional visualizations are taken each dimensionality reduction in `Reductions(obj)`
+  * These are added using their original names prefixed with "Seurat\_"
 * If "pca" has been run, the latentSpace input is taken from its associated cell embeddings
   * The `dimRed` parameter can be used to select a different dimensionality reduction for this
   * The `dimRedComponents` can be used to limit the number of components used (Default: All components)
   * Otherwise, VISION computes the latentSpace by running PCA internally
+
+### Recommendations when using Seurat `IntegrateData`
+
+When using `IntegrateData`, a new assay is created called `integrated`.
+
+We recommend creating your reduced-dimensional representation using this assay by running PCA in Seurat after `IntegrateData`.
+
+Then create the Vision object, but use the default `assay="RNA"`.
+
+* The original (normalized) counts will be used as the expression input
+* However, the integrated latent space will be used to create the neighbors graph
+
+Why not use the integrated expression data?  Typically this data only consists of a subset of the genes (e.g. 2000 highly-variable genes) and so is not ideal for matching genes in signatures.
 
 ## Examples
 
