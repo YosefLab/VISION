@@ -536,7 +536,6 @@ setMethod("Vision", signature(data = "seurat"),
 
                   coordinates <- Seurat::GetCellEmbeddings(obj,
                       reduction.type = method,
-                      dims.use = 1:2
                       )
                   vis <- addProjection(vis,
                       name, coordinates
@@ -553,13 +552,14 @@ setMethod("Vision", signature(data = "seurat"),
 #' expression data, meta-data, and dimensionality reductions if they exist already
 #'
 #' @rdname VISION-class
+#' @param assay The assay slot in the Seurat object to use for expression data
 #' @param dimRed Dimensionality reduction to use for the latentSpace.  Default is to
 #' look for "pca" and use that if it exists
 #' @param dimRedComponents number of components to use for the selected dimensionality
 #' reduction.  Default is to use all components
 #' @export
 setMethod("Vision", signature(data = "Seurat"),
-          function(data, dimRed = NULL, dimRedComponents = NULL, ...) {
+          function(data, assay = "RNA", dimRed = NULL, dimRedComponents = NULL, ...) {
 
               if (!requireNamespace("Seurat", quietly = TRUE)){
                   stop("Package \"Seurat\" needed to load this data object.  Please install it.",
@@ -569,61 +569,48 @@ setMethod("Vision", signature(data = "Seurat"),
               obj <- data
               args <- list(...)
 
-              # Get Unnormalized Data
-              message("Importing Raw Data from obj@raw.data ...")
-              unnormData <- obj[['RNA']]@counts
-              totals <- colSums(unnormData)
-              scalefactor <- median(totals)
-              unnormData <- t(t(unnormData) / totals * scalefactor)
-
-              args[["unnormalizedData"]] <- unnormData
-
-
               # Get Expression Data from seurat object
-              exprData <- NULL
-              if (!is.null(obj[['RNA']]@scale.data)) {
-                  message("Importing Expression Data from obj@scale.data ...")
-                  exprData <- ilog1p(obj[['RNA']]@scale.data)
-              } else {
-                  # Can't just check obj@data because this could be the raw
-                  # data if NormalizeData hadn't been run and we would risk
-                  # exponentiated non log-scale data
-                  if (!all.equal(colSums(obj[['RNA']]@counts), colSums(obj[['RNA']]@data))) {
-                      message("Importing Expression Data from obj@data ...")
-                      exprData <- ilog1p(obj[['RNA']]@data)
-                  } else {
-                      exprData <- unnormData
-                  }
-              }
+              # here we can't use @scale.data because it has been
+              # centered already
+              message(
+                  sprintf("Importing counts from obj[[\"%s\"]]@counts ...", assay)
+              )
+              message("Normalizing to counts per 10,000...")
+              exprData <- obj[[assay]]@counts
+              totals <- colSums(exprData)
+              scalefactor <- 10000
+              exprData <- t(t(exprData) / totals * scalefactor)
+
 
               args[["data"]] <- exprData
 
               # Get meta data
               if (!("meta" %in% names(args))){
-                  message("Importing Meta Data from obj@meta ...")
+                  message("Importing Meta Data from obj@meta.data ...")
                   args[["meta"]] <- obj@meta.data
               }
 
               # Get latent space
-              if (is.null(dimRed) && "pca" %in% names(obj@reductions)) {
+              if (is.null(dimRed) && "pca" %in% Reductions(obj)) {
                   dimRed <- "pca"
               }
 
               if (!("latentSpace" %in% names(args))){
 
-                  message(
-                      sprintf("Importing latent space from reduction.type='%s' using first '%i' components",
-                          dimRed, dimRedComponents
-                          ))
-
                   latentSpace <- Embeddings(obj,
                       reduction = dimRed
                   )
 
-                  if (!is.null(dimRedComponents)) {
-                    latentSpace = latentSpace[,1:dimRedComponents]
+                  if (is.null(dimRedComponents)) {
+                      dimRedComponents <- ncol(latentSpace)
                   }
-                  
+
+                  latentSpace <- latentSpace[, 1:dimRedComponents]
+
+                  message(
+                      sprintf("Importing latent space from Embeddings(obj, \"%s\") using first %i components",
+                          dimRed, dimRedComponents
+                  ))
 
                   args[["latentSpace"]] <- latentSpace
 
@@ -640,7 +627,7 @@ setMethod("Vision", signature(data = "Seurat"),
                       reduction = method)
 
                   vis <- addProjection(vis,
-                      name, coordinates[,1:2]
+                      name, coordinates
                       )
               }
 

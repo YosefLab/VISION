@@ -166,7 +166,7 @@ expression data, meta-data, and dimensionality reductions if they exist already<
 <span class='fu'>Vision</span>(<span class='no'>data</span>, <span class='kw'>signatures</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/list'>list</a></span>(),
   <span class='kw'>proteinData</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>unnormalizedData</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>meta</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>projection_genes</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"fano"</span>), <span class='kw'>min_signature_genes</span> <span class='kw'>=</span> <span class='fl'>5</span>,
-  <span class='kw'>sig_gene_threshold</span> <span class='kw'>=</span> <span class='fl'>0.005</span>, <span class='kw'>threshold</span> <span class='kw'>=</span> <span class='fl'>0.05</span>, <span class='kw'>perm_wPCA</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>sig_gene_threshold</span> <span class='kw'>=</span> <span class='fl'>0.001</span>, <span class='kw'>threshold</span> <span class='kw'>=</span> <span class='fl'>0.05</span>, <span class='kw'>perm_wPCA</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
   <span class='kw'>projection_methods</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"tSNE30"</span>),
   <span class='kw'>sig_norm_method</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"znorm_columns"</span>, <span class='st'>"none"</span>, <span class='st'>"znorm_rows"</span>,
   <span class='st'>"znorm_rows_then_columns"</span>, <span class='st'>"rank_norm_columns"</span>), <span class='kw'>pool</span> <span class='kw'>=</span> <span class='st'>"auto"</span>,
@@ -194,8 +194,8 @@ expression data, meta-data, and dimensionality reductions if they exist already<
   <span class='no'>...</span>)
 
 <span class='co'># S4 method for Seurat</span>
-<span class='fu'>Vision</span>(<span class='no'>data</span>, <span class='kw'>dimRed</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>dimRedComponents</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='no'>...</span>)</pre>
+<span class='fu'>Vision</span>(<span class='no'>data</span>, <span class='kw'>assay</span> <span class='kw'>=</span> <span class='st'>"RNA"</span>, <span class='kw'>dimRed</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>dimRedComponents</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>...</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -325,6 +325,10 @@ look for "pca" and use that if it exists</p></td>
       <th>dimRedComponents</th>
       <td><p>number of components to use for the selected dimensionality
 reduction.  Default is to use all components</p></td>
+    </tr>
+    <tr>
+      <th>assay</th>
+      <td><p>The assay slot in the Seurat object to use for expression data</p></td>
     </tr>
     <tr>
       <th>dimRed</th>

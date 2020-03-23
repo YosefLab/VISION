@@ -18,7 +18,7 @@ Vision(data, ...)
 \S4method{Vision}{matrixORSparse}(data, signatures = list(),
   proteinData = NULL, unnormalizedData = NULL, meta = NULL,
   projection_genes = c("fano"), min_signature_genes = 5,
-  sig_gene_threshold = 0.005, threshold = 0.05, perm_wPCA = FALSE,
+  sig_gene_threshold = 0.001, threshold = 0.05, perm_wPCA = FALSE,
   projection_methods = c("tSNE30"),
   sig_norm_method = c("znorm_columns", "none", "znorm_rows",
   "znorm_rows_then_columns", "rank_norm_columns"), pool = "auto",
@@ -39,8 +39,8 @@ Vision(data, ...)
 \S4method{Vision}{seurat}(data, dimRed = NULL, dimRedComponents = NULL,
   ...)
 
-\S4method{Vision}{Seurat}(data, dimRed = NULL, dimRedComponents = NULL,
-  ...)
+\S4method{Vision}{Seurat}(data, assay = "RNA", dimRed = NULL,
+  dimRedComponents = NULL, ...)
 }
 \arguments{
 \item{data}{expression data - can be one of these: \itemize{
@@ -124,6 +124,8 @@ look for "pca" and use that if it exists}
 
 \item{dimRedComponents}{number of components to use for the selected dimensionality
 reduction.  Default is to use all components}
+
+\item{assay}{The assay slot in the Seurat object to use for expression data}
 
 \item{dimRed}{Dimensionality reduction to use for the latentSpace.  Default is to
 look for "pca" and use that if it exists}
