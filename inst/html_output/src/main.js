@@ -221,6 +221,8 @@ window.onload = function()
         global_status.has_lca = info.has_lca
         global_status.has_sigs = info.has_sigs
         global_status.has_proteins = info.has_proteins
+        global_status.has_dendrogram = info.has_dendrogram
+        global_status.dendrogram = info.dendrogram
 
         global_data.clusters_unique = info.clusters
     })

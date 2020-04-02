@@ -607,7 +607,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         res$body <- toJSON(cluster_vars, force = TRUE, pretty = TRUE)
         return(res)
     })
-
+    
     pr$handle("POST", "/DE", function(req, res) {
         # Params
         body <- fromJSON(req$postBody)
@@ -959,6 +959,10 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         info[["has_proteins"]] <- hasProteinData(object)
 
         info[["has_lca"]] <- !is.null(object@LCAnnotatorData)
+        
+        info[["has_dendrogram"]] <- !is.null(object@Tree)
+        
+        info[["dendrogram"]] <- object@Tree
 
         res$body <- toJSON(info, force = TRUE,
             pretty = TRUE, auto_unbox = TRUE)

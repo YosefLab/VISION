@@ -16,6 +16,7 @@ function Upper_Left_Content()
     this.protein_table = {}
     this.pc_table = {}
     this.gene_select = {}
+    this.dendrogram = {}
     this.dom_node = document.getElementById("upper-left-content");
 }
 
