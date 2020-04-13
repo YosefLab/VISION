@@ -36,3 +36,5 @@ html_output/thirdparty/lodash/lodash.min.js
 html_output/thirdparty/plotly/plotly.js-1.45.2/dist/plotly.min.js
 html_output/thirdparty/popper/popper.js/dist/umd/popper.min.js
 html_output/thirdparty/hsluv/hsluv-0.1.0.min.js
+html_output/thirdparty/phylotree/phylotree.js
+html_output/thirdparty/phylotree/phylotree.css

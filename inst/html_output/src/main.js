@@ -110,7 +110,7 @@ function set_global_status(update){
         all_promises.push(val_promise_after);
         right_content_promises.push(val_promise_after);
         lower_left_content_promises.push(val_promise_after);
-
+        upper_left_content_promises.push(val_promise_after);
     }
 
     // Updates signature info if we're plotting a new signature

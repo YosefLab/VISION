@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="thirdparty/chosen/chosen.min.css">
     <link rel="stylesheet" href="thirdparty/bootstrap/bootstrap.min.css">
     <link rel="stylesheet" href="thirdparty/datatables/datatables.min.css">
+    <link rel="stylesheet" href="thirdparty/phylotree/phylotree.css">
 
     <script type="text/javascript" src="thirdparty/jquery/jquery-2.1.4.min.js"></script>
     <script type="text/javascript" src="thirdparty/d3/d3.min.js"></script>
@@ -23,6 +24,7 @@
     <script type="text/javascript" src="thirdparty/popper/popper.js/dist/umd/popper.min.js"></script>
     <script type="text/javascript" src="thirdparty/plotly/plotly.js-1.45.2/dist/plotly.min.js"></script>
     <script type="text/javascript" src="thirdparty/hsluv/hsluv-0.1.0.min.js"></script>
+    <script type='text/javascript' src='thirdparty/phylotree/phylotree.js'></script>
 
 
 
@@ -86,6 +88,9 @@
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" id="de-table-tab" data-toggle="tab" href="#de-table" role="tab" aria-controls="de-table" aria-selected="false">DE</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="dend-tab" data-toggle="tab" href="#dend" role="tab" aria-controls="dend" aria-selected="false">Dendrogram</a>
                             </li>
                         </ul>
                     </div>
@@ -169,7 +174,11 @@
                             </div>
                         </div>
                     </div>
-
+                    <div class="tab-pane" id="dend" role="tabpanel" aria-labelledby="dend-tab">
+                      <div class="overflow-auto" width="100%" height="100%">
+                        <svg id="tree_display" />
+                      </div>
+                    </div>
                     <div class="tab-pane" id="de-table" role="tabpanel" aria-labelledby="de-table-tab">
 
                         <div class="controls">

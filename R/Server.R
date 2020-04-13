@@ -962,7 +962,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         
         info[["has_dendrogram"]] <- !is.null(object@Tree)
         
-        info[["dendrogram"]] <- object@Tree
+        info[["dendrogram"]] <- write.tree(object@Tree)
 
         res$body <- toJSON(info, force = TRUE,
             pretty = TRUE, auto_unbox = TRUE)

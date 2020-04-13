@@ -85,7 +85,13 @@ Upper_Left_Content.prototype.init = function()
     this.de_select = de_select
 
     var de_select_promise = de_select.init()
+    
+    // Dend Promise
+    var dend = new Dend()
+    this.children.push(dend)
+    this.dend = dend
 
+    var dend_promise = dend.init()
 
     this.setLoadingStatus = createLoadingFunction(
         document.getElementById("upper-left-content")
@@ -93,14 +99,19 @@ Upper_Left_Content.prototype.init = function()
 
     // If no signatures, need to hide the 'Signatures' nav item
     // If no proteins, need to hide the 'Proteins' nav item
+    // If no dendrogram, hide that nav item
 
     var has_sigs = get_global_status('has_sigs')
+    
     var has_proteins = get_global_status('has_proteins')
     var nav = $(this.dom_node).find('.section-nav')
+    var dendrogramTab = nav.find('#dend-tab')
     var sigTableTab = nav.find('#sig-table-tab')
     var proteinTableTab = nav.find('#protein-table-tab')
     var metaTableTab = nav.find('#meta-table-tab')
-
+    
+    var has_dendrogram = get_global_status('has_dendrogram')
+    
     if(!has_sigs){
         sigTableTab.parent().hide()
         if(!has_proteins){
@@ -111,6 +122,9 @@ Upper_Left_Content.prototype.init = function()
     }
     if(!has_proteins){
         proteinTableTab.parent().hide()
+    }
+    if(!has_dendrogram){
+        dendrogramTab.parent().hide()
     }
 
     $(this.dom_node).find('.nav-link')
@@ -123,7 +137,7 @@ Upper_Left_Content.prototype.init = function()
         });
 
 
-    return $.when(sig_table_promise, protein_table_promise, pc_table_promise, gene_select_promise, de_select_promise);
+    return $.when(sig_table_promise, protein_table_promise, pc_table_promise, gene_select_promise, de_select_promise, dend_promise);
 
 }
 
@@ -1973,6 +1987,113 @@ Protein_Table.prototype.doneTyping = function()
         }).addClass('filtered');
     }
 }
+
+
+
+function Dend()
+{
+    //this.recent_genes = [];
+    this.dom_node = document.getElementById("dend");
+    this.cluster_var_idx = 0;
+
+}
+
+Dend.prototype.init = function()
+{
+
+    var self = this;
+
+    this.newick = get_global_status("dendrogram")
+
+
+}
+
+
+Dend.prototype.update = function(updates)
+{
+    if ('plotted_item' in updates){
+        this.plotted_item = updates['plotted_item']
+
+        this.render_dend();
+    }
+}
+
+
+Dend.prototype.render_dend = function()
+{
+    this.setLoadingStatus = createLoadingFunction(this.dom_node);
+    this.setLoadingStatus(true, 0);
+    
+    var plotted = get_global_data("plotted_values");
+    var plotted_item = this.plotted_item;
+    
+    var is_meta = Object.keys(get_global_data('meta_levels')).indexOf(plotted_item) !== -1;
+    
+    function edgeStyler(dom_element, edge_object) {
+      dom_element.style("stroke-width", "1pt");
+    }
+
+    var tree = d3.layout.phylotree()
+    // create a tree layout object
+    .svg(d3.select("#tree_display"))
+    .radial(true)
+    .options({
+      "brush": false,
+      "zoom": true,
+      "show-scale": true,
+      "selectable": true,
+      'left-right-spacing': 'fit-to-size'
+    }).size([1000, 1000])
+
+    tree(this.newick)
+
+    var tree_attributes = {};
+
+    var attribute_to_color = d3.scale.category10();
+    var standard_label = tree.branch_name();
+
+    function nodeStyler(element, node_data) {
+      if (d3.layout.phylotree.is_leafnode(node_data)) {
+        var node_label = element.select("text");
+        var level = plotted[node_data.name];
+        
+        if (is_meta) {
+          level = get_global_data('meta_levels')[plotted_item].indexOf(level)
+        } 
+        
+        var annotation = element.selectAll ("circle").data([level]);
+        annotation.enter().append ("circle");
+
+        annotation.attr ("r", 2)
+          .style ("fill", function(d, i) {
+            return attribute_to_color (d);
+           });
+
+      }
+    }
+
+    tree.style_edges(edgeStyler).style_nodes(nodeStyler).branch_name(function() {
+        return ""
+      });
+
+    // parse the Newick into a d3 hierarchy object with additional fields
+    tree.layout()
+    
+    tree.selection_callback(function (nodes) {
+      // yanay
+      console.log("yanay")
+      var cells = nodes.map(function(node) {
+        if (d3.layout.phylotree.is_leafnode(node)) {
+          return node.name;
+        }
+      })
+      console.log(cells);
+      set_global_status({"selected_cell":cells, "selection_type":"cells"})
+    });
+
+    this.setLoadingStatus(false);
+}
+
 
 
 // Function that's triggered when clicking on table cell
