@@ -2032,7 +2032,8 @@ Dend.prototype.render_dend = function()
     function edgeStyler(dom_element, edge_object) {
       dom_element.style("stroke-width", "1pt");
     }
-
+    var num_cells = Object.keys(plotted).length;
+    var s = num_cells * 1200 / 300;
     var tree = d3.layout.phylotree()
     // create a tree layout object
     .svg(d3.select("#tree_display"))
@@ -2043,13 +2044,71 @@ Dend.prototype.render_dend = function()
       "show-scale": true,
       "selectable": true,
       'left-right-spacing': 'fit-to-size'
-    }).size([1000, 1000])
+    }).size([s, s])
 
     tree(this.newick)
 
     var tree_attributes = {};
+    var scatter = right_content.layoutPlotData["full"][0].scatter;
+    var plotly_defaults_colors = ["1F77B4", "FF7F0E", "2CA02C", "D62728", "9467BD", "8C564B","E377C2", "7F7F7F", "BCBD22", "17BECF"]
 
-    var attribute_to_color = d3.scale.category10();
+    if(!scatter["isfactor"])  {
+        var full_color_range = scatter.full_color_range;
+        var diverging_colormap = scatter.diverging_colormap
+        var c = Object.values(plotted);
+        var cvals = c.filter(cv => cv !== "NA")
+        cvals.sort(d3.ascending); // Needed for quantile
+        var low, high;
+        if(full_color_range){
+            low = d3.min(cvals)
+            high = d3.max(cvals)
+        } else {
+            low = d3.quantile(cvals, 0.02)
+            high = d3.quantile(cvals, 0.98)
+        }
+
+        if(diverging_colormap){
+            var color_range = [
+              '#440154', '#48186a', '#472d7b', '#424086', '#3b528b', '#33638d', '#2c728e', '#26828e', 
+            '#21918c', '#1fa088', '#28ae80', '#3fbc73', '#5ec962', '#84d44b', '#addc30',
+            '#d8e219', '#fde725'];
+            var color_domain = [
+              0, 0.06274509803921569, 0.12549019607843137, 0.18823529411764706, 0.25098039215686274, 
+              0.3137254901960784, 0.3764705882352941, 0.4392156862745098, 0.5019607843137255, 0.5647058823529412, 
+              0.6274509803921569, 0.6901960784313725, 0.7529411764705882, 0.8156862745098039, 0.8784313725490196, 0.9411764705882353, 1];
+        } else {
+            color_range = ['#d8d8d8','#395252','#000000'];
+            color_domain = [0, 0.5, 1]
+        }
+        console.log(color_range);
+        
+        attribute_to_color = function(d) {
+          var x = (d - low) / (high-low);
+          console.log(d);
+          return d3.scale.linear().domain(color_domain).range(color_range)(x);
+        }
+        
+    } else {
+        var labels = get_global_data('meta_levels')[plotted_item].sort();
+        if (labels.length > 10) {
+            attribute_to_color = function(d) {
+                var i = labels.indexOf(d);
+                var step = 8
+                var L = Math.ceil(labels.length/step)*step
+                var hue = Math.round(
+                ( (i*L/step)%L + Math.floor(i/step) ) / L * 360 // Helps scatter values
+                );
+                return hsluv.hsluvToHex([hue, 90, 55])
+             }
+          } else {
+            attribute_to_color = d3.scale.ordinal().domain(get_global_data('meta_levels')[plotted_item].sort()).range(plotly_defaults_colors);
+      }
+    } 
+    
+   
+    
+
+    
     var standard_label = tree.branch_name();
 
     function nodeStyler(element, node_data) {
@@ -2057,17 +2116,19 @@ Dend.prototype.render_dend = function()
         var node_label = element.select("text");
         var level = plotted[node_data.name];
         
-        if (is_meta) {
-          level = get_global_data('meta_levels')[plotted_item].indexOf(level)
-        } 
-        
-        var annotation = element.selectAll ("circle").data([level]);
-        annotation.enter().append ("circle");
+        var annotation = element.selectAll ("rect").data([level]);
+        annotation.enter().append ("rect");
 
-        annotation.attr ("r", 2)
+        annotation.attr ("height", 10).attr ("width", 30).attr ("x", -30).attr("y", -10)
           .style ("fill", function(d, i) {
+
             return attribute_to_color (d);
-           });
+           }).style("stroke-width", 0);
+         if (node_data.text_angle) {
+          annotation.attr("transform", function(d) {
+            return "rotate(" + node_data.text_angle + ")";
+          });
+        }
 
       }
     }
@@ -2080,14 +2141,11 @@ Dend.prototype.render_dend = function()
     tree.layout()
     
     tree.selection_callback(function (nodes) {
-      // yanay
-      console.log("yanay")
       var cells = nodes.map(function(node) {
         if (d3.layout.phylotree.is_leafnode(node)) {
           return node.name;
         }
       })
-      console.log(cells);
       set_global_status({"selected_cell":cells, "selection_type":"cells"})
     });
 
