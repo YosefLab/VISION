@@ -5,7 +5,7 @@
 \title{C++ wilcox rank-sums test}
 \usage{
 matrix_wilcox_cpp(data, cluster_num, cluster_denom,
-  jobs = getOption("mc.cores", 2L))
+  jobs = getOption("mc.cores", 1L))
 }
 \arguments{
 \item{data}{matrix of values, each row representing a separate variable}

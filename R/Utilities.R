@@ -245,7 +245,7 @@ matrix_wilcox <- function(ranks, cluster_ii,
 #' @return pval - numeric vector, pvalue for each row
 #' @return stat - numeric vector, test statistic (AUC) for each row
 matrix_wilcox_cpp <- function(data, cluster_num, cluster_denom,
-    jobs = getOption("mc.cores", 2L)) {
+    jobs = getOption("mc.cores", 1L)) {
 
     # Subsetting individual rows is bad with a sparse matrix
     # instead we subset chunks at a time
