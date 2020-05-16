@@ -175,9 +175,10 @@
 <a href="#running-an-analysis" class="anchor"></a>Running an Analysis</h2>
 <p>To run an analysis, simply call the analyze function:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="co"># Set the number of threads when running parallel computations</span></a>
-<a class="sourceLine" id="cb3-2" data-line-number="2"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/options">options</a></span>(<span class="dt">mc.cores =</span> <span class="dv">2</span>)</a>
-<a class="sourceLine" id="cb3-3" data-line-number="3"></a>
-<a class="sourceLine" id="cb3-4" data-line-number="4">vis &lt;-<span class="st"> </span><span class="kw"><a href="../reference/analyze-Vision-method.html">analyze</a></span>(vis)</a></code></pre></div>
+<a class="sourceLine" id="cb3-2" data-line-number="2"><span class="co"># On Windows, this must either be omitted or set to 1</span></a>
+<a class="sourceLine" id="cb3-3" data-line-number="3"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/options">options</a></span>(<span class="dt">mc.cores =</span> <span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb3-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb3-5" data-line-number="5">vis &lt;-<span class="st"> </span><span class="kw"><a href="../reference/analyze-Vision-method.html">analyze</a></span>(vis)</a></code></pre></div>
 </div>
 <div id="viewing-results" class="section level2">
 <h2 class="hasAnchor">
@@ -187,19 +188,17 @@
 <p>This will launch a browser running the interactive report.</p>
 <p>Other options (port, host, browser) can be provided to control how this occurs. For example, if you are launching a report on a remote server (such as an AWS instance) and want to make it accessible to others, run this with <code>host="0.0.0.0"</code>, some selected port number (e.g. <code>port=8888</code>), and <code>browser=FALSE</code> (so a browser isn’t auto-opened). Then the report should be available at “&lt;your instance IP address&gt;:8888”. (Note: You will also likely need to enable inbound traffic on your selected port for this to work correctly).</p>
 <p>Alternately, you can work with the VISION object directly in R. For example:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="co"># Display autocorrelation coefficients for signatures</span></a>
-<a class="sourceLine" id="cb5-2" data-line-number="2"><span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/head">head</a></span>(vis<span class="op">@</span>SigConsistencyScores<span class="op">@</span>sigProjMatrix)</a>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="co"># Display autocorrelation coefficients, p-values for signatures</span></a>
+<a class="sourceLine" id="cb5-2" data-line-number="2"><span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/head">head</a></span>(<span class="kw"><a href="../reference/getSignatureAutocorrelation.html">getSignatureAutocorrelation</a></span>(vis))</a>
 <a class="sourceLine" id="cb5-3" data-line-number="3"></a>
-<a class="sourceLine" id="cb5-4" data-line-number="4"><span class="co"># View autocorrelation empirical p-values</span></a>
-<a class="sourceLine" id="cb5-5" data-line-number="5"><span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/head">head</a></span>(vis<span class="op">@</span>SigConsistencyScores<span class="op">@</span>emp_pMatrix)</a>
-<a class="sourceLine" id="cb5-6" data-line-number="6"></a>
-<a class="sourceLine" id="cb5-7" data-line-number="7"><span class="co"># Plot signature scores for a signature of interest</span></a>
-<a class="sourceLine" id="cb5-8" data-line-number="8">tsne &lt;-<span class="st"> </span>vis<span class="op">@</span>Projections<span class="op">$</span>tSNE30</a>
-<a class="sourceLine" id="cb5-9" data-line-number="9">sigScores &lt;-<span class="st"> </span>vis<span class="op">@</span>sigScores[, <span class="st">"HALLMARK_INTERFERON_GAMMA_RESPONSE"</span>]</a>
-<a class="sourceLine" id="cb5-10" data-line-number="10"></a>
-<a class="sourceLine" id="cb5-11" data-line-number="11"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(ggplot2)</a>
-<a class="sourceLine" id="cb5-12" data-line-number="12"><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span>() <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="dt">x=</span>tsne[, <span class="dv">1</span>], <span class="dt">y=</span>tsne[, <span class="dv">2</span>], <span class="dt">color=</span>sigScores) <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html">geom_point</a></span>()</a></code></pre></div>
-<p>For more details on the structure of the VISION object see XXX.</p>
+<a class="sourceLine" id="cb5-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb5-5" data-line-number="5"><span class="co"># Plot signature scores for a signature of interest</span></a>
+<a class="sourceLine" id="cb5-6" data-line-number="6">tsne &lt;-<span class="st"> </span><span class="kw"><a href="../reference/getProjections.html">getProjections</a></span>(vis)[[<span class="st">"tSNE30"</span>]]</a>
+<a class="sourceLine" id="cb5-7" data-line-number="7">sigScores &lt;-<span class="st"> </span><span class="kw"><a href="../reference/getSignatureScores.html">getSignatureScores</a></span>(vis)[, <span class="st">"HALLMARK_INTERFERON_GAMMA_RESPONSE"</span>]</a>
+<a class="sourceLine" id="cb5-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb5-9" data-line-number="9"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(ggplot2)</a>
+<a class="sourceLine" id="cb5-10" data-line-number="10"><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span>() <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="dt">x=</span>tsne[, <span class="dv">1</span>], <span class="dt">y=</span>tsne[, <span class="dv">2</span>], <span class="dt">color=</span>sigScores) <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html">geom_point</a></span>()</a></code></pre></div>
+<p>For more details on accessing computed data within the VISION object, see the <a href="https://yoseflab.github.io/VISION/reference/index.html">References</a> page.</p>
 </div>
 <div id="customizing-the-latent-space" class="section level2">
 <h2 class="hasAnchor">
