@@ -80,8 +80,9 @@ body {
 }
 
 #left-content{
-    width: 500px;
+    width: 800px;
     display: flex;
+    overflow-y: auto;
     flex-direction: column;
 }
 

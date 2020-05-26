@@ -2024,10 +2024,10 @@ Dend.prototype.render_dend = function()
     this.setLoadingStatus = createLoadingFunction(this.dom_node);
     this.setLoadingStatus(true, 0);
     
+    $("#dend_layout").prop('checked', true);
+    
     var plotted = get_global_data("plotted_values");
     var plotted_item = this.plotted_item;
-    
-    var is_meta = Object.keys(get_global_data('meta_levels')).indexOf(plotted_item) !== -1;
     
     function edgeStyler(dom_element, edge_object) {
       dom_element.style("stroke-width", "1pt");
@@ -2052,7 +2052,6 @@ Dend.prototype.render_dend = function()
     var tree_attributes = {};
     var scatter = right_content.layoutPlotData["full"][0].scatter;
     var plotly_defaults_colors = ["1F77B4", "FF7F0E", "2CA02C", "D62728", "9467BD", "8C564B","E377C2", "7F7F7F", "BCBD22", "17BECF"]
-    console.log(scatter["isfactor"])
     if(!scatter["isfactor"])  {
         var full_color_range = scatter.full_color_range;
         var diverging_colormap = scatter.diverging_colormap
@@ -2067,7 +2066,6 @@ Dend.prototype.render_dend = function()
             low = d3.quantile(cvals, 0.02)
             high = d3.quantile(cvals, 0.98)
         }
-
         if(diverging_colormap){
             var color_range = [
               '#440154', '#48186a', '#472d7b', '#424086', '#3b528b', '#33638d', '#2c728e', '#26828e', 
@@ -2081,9 +2079,21 @@ Dend.prototype.render_dend = function()
             color_range = ['#d8d8d8','#395252','#000000'];
             color_domain = [0, 0.5, 1]
         }
+        console.log(color_domain)
+        console.log(color_range)
         
         attribute_to_color = function(d) {
-          var x = (d - low) / (high-low);
+          console.log(d)
+          if (d === undefined) {
+            d = 0.5
+          }
+          if (high === low) {
+            var x = 0.5
+          } else {
+             var x = (d - low) / (high-low);
+          }
+         
+          
           return d3.scale.linear().domain(color_domain).range(color_range)(x);
         }
         
@@ -2161,7 +2171,7 @@ Dend.prototype.render_dend = function()
         tree.size([s, s])
         tree.style_nodes(function(element, node_data) {return nodeStyler(element, node_data, true)}).placenodes().update();
       } else {
-        tree.size([100, 470])
+        tree.size([100, 770])
         tree.style_nodes(function(element, node_data) {return nodeStyler(element, node_data, false)}).placenodes().update();
       }
       

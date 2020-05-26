@@ -65,282 +65,304 @@
     </div>
     <div id="main-content">
         <div id="left-content">
-            <div id="upper-left-content">
-
-                <div style="display: flex; flex-direction: row; flex-shrink: 0;">
-                    <div>
-                        <select id="cluster-group-select" class="form-control form-control-sm" style="width: 150px;">
-                        </select>
-                    </div>
-                    <div class='section-nav' style="flex-grow: 1">
-                        <ul class="nav nav-pills justify-content-center">
-                            <li class="nav-item">
-                                <a class="nav-link active" id="sig-table-tab" data-toggle="tab" href="#table-div-container" role="tab" aria-controls="sig-table" aria-selected="true">Signatures</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" id="protein-table-tab" data-toggle="tab" href="#protein-div-container" role="tab" aria-controls="protein-table" aria-selected="true">Proteins</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" id="meta-table-tab" data-toggle="tab" href="#meta-table-div" role="tab" aria-controls="meta-table" aria-selected="false">Meta</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" id="genes-table-tab" data-toggle="tab" href="#genes-table" role="tab" aria-controls="genes-table" aria-selected="false">Genes</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" id="de-table-tab" data-toggle="tab" href="#de-table" role="tab" aria-controls="de-table" aria-selected="false">DE</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" id="dend-tab" data-toggle="tab" href="#dend" role="tab" aria-controls="dend" aria-selected="false">Dendrogram</a>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="tab-content upper-left-section-content">
-                    <div class="tab-pane show active" id="table-div-container" role="tabpanel" aria-labelledby="sig-table-tab">
-                        <div class="sig-tables-header">
-                            <table class="sig-table">
-                                <thead>
-                                    <tr class="proj-row">
-                                        <th>
-                                            <div>
-                                            <input id="sig_filt_input" class="form-control"
-                                                   type="text" placeholder="Filter Signatures...">
-                                            </input>
-                                            </div>
-                                        </th>
-                                    </tr>
-                                </thead>
-                            </table>
-                        </div>
-                        <div class="sig-tables-wrapper"></div>
-                    </div>
-                    <div class="tab-pane" id="protein-div-container" role="tabpanel" aria-labelledby="protein-table-tab">
-                        <div class="sig-tables-header">
-                            <table class="sig-table">
-                                <thead>
-                                    <tr class="proj-row">
-                                        <th>
-                                            <div>
-                                            <input id="protein_filt_input" class="form-control"
-                                                   type="text" placeholder="Filter Proteins...">
-                                            </input>
-                                            </div>
-                                        </th>
-                                    </tr>
-                                </thead>
-                            </table>
-                        </div>
-                        <div class="sig-tables-wrapper">
-                            <div class="sig-table-div">
-                                <table id="protein-table" class="sig-table">
-                                    <tbody></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="tab-pane" id="meta-table-div" role="tabpanel" aria-labelledby="meta-table-tab">
-                        <div class="sig-tables-header">
-                            <table class="sig-table">
-                                <thead>
-                                    <tr class="proj-row">
-                                        <th style="height: 38px"> <!-- Height matches space of filter input on other pane -->
-                                            <div>Variable Name</div>
-                                        </th>
-                                    </tr>
-                                </thead>
-                            </table>
-                        </div>
-                        <div class="sig-tables-wrapper">
-                            <div class="sig-table-div">
-                                <table id="meta-table" class="sig-table">
-                                    <tbody></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="tab-pane" id="genes-table" role="tabpanel" aria-labelledby="genes-table-tab">
-                        <div>
-                            <table class='label-table'>
-                                <tr>
-                                    <td style='font-size: 1.2em'>Gene:</td>
-                                    <td><select id="SelectGene" class="form-control"></select></td>
-                                </tr>
-                            </table>
-                        </div>
-                        <div id='recent-genes-div'>
-                            <div class='label1'>Recent Genes:</div>
-                            <div id='recent-genes-list'>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="tab-pane" id="dend" role="tabpanel" aria-labelledby="dend-tab">
-                      <form>
-                        <label>Radial layout</label>
-                        <input type="checkbox" id="dend_layout" checked/>
-                      </form>
-                      <div class="overflow-auto" width="100%" height="100%">
-                        <svg id="tree_display" />
+            <div class="card">
+              <div class="card-header" id="headingOne">
+                <h5 class="mb-0">
+                  <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                  Controls
+                  </button>
+                </h5>
+              </div>
+              <div id="collapseOne" class="collapse multi-collapse show" aria-labelledby="headingOne">
+                <div id="upper-left-content">
+  
+                  <div style="display: flex; flex-direction: row; flex-shrink: 0;">
+                      <div>
+                          <select id="cluster-group-select" class="form-control form-control-sm" style="width: 150px;">
+                          </select>
                       </div>
-                    </div>
-                    <div class="tab-pane" id="de-table" role="tabpanel" aria-labelledby="de-table-tab">
-
-                        <div class="controls">
-                            <div class="group-control">
-                                <div class="label">Group</div>
-                                <select id="num_control" class="form-control"></select>
-                            </div>
-                            <div class="fgbg">
-                                <div>
-                                    <div class="label">Foreground</div>
-                                    <select id="num" class="form-control"></select>
-                                </div>
-
-                                <div>
-                                    <div class="label">Background</div>
-                                    <select id="denom" class="form-control"></select>
-                                </div>
-
-                                <div>
-                                    <div class="label" style="height: 1em"></div>
-                                    <button type="button" class="btn btn-default btn-outline-primary" id="submit_de" class="form-control">Calculate DE</button>
-                                </div>
-                            </div>
-                            <button class="btn btn-secondary" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
-                              Advanced Options
-                            </button>
-                            <div class="collapse collapsed-controls" id="collapseExample">
-                              <div>
-                                  <div class="label">Exclude genes expressed in<br>less than <i>m</i> cells: </div>
-                                  <div class='label-control'>
-                                      <span class="label">m =</span>
-                                      <input type="number" id="de_min_cells" class="form-control" value="0"></input>
-                                  </div>
+                      <div class='section-nav' style="flex-grow: 1">
+                          <ul class="nav nav-pills justify-content-center">
+                              <li class="nav-item">
+                                  <a class="nav-link active" id="sig-table-tab" data-toggle="tab" href="#table-div-container" role="tab" aria-controls="sig-table" aria-selected="true">Signatures</a>
+                              </li>
+                              <li class="nav-item">
+                                  <a class="nav-link" id="protein-table-tab" data-toggle="tab" href="#protein-div-container" role="tab" aria-controls="protein-table" aria-selected="true">Proteins</a>
+                              </li>
+                              <li class="nav-item">
+                                  <a class="nav-link" id="meta-table-tab" data-toggle="tab" href="#meta-table-div" role="tab" aria-controls="meta-table" aria-selected="false">Meta</a>
+                              </li>
+                              <li class="nav-item">
+                                  <a class="nav-link" id="genes-table-tab" data-toggle="tab" href="#genes-table" role="tab" aria-controls="genes-table" aria-selected="false">Genes</a>
+                              </li>
+                              <li class="nav-item">
+                                  <a class="nav-link" id="de-table-tab" data-toggle="tab" href="#de-table" role="tab" aria-controls="de-table" aria-selected="false">DE</a>
+                              </li>
+                              <li class="nav-item">
+                                  <a class="nav-link" id="dend-tab" data-toggle="tab" href="#dend" role="tab" aria-controls="dend" aria-selected="false">Dendrogram</a>
+                              </li>
+                          </ul>
+                      </div>
+                  </div>
+  
+                  <div class="tab-content upper-left-section-content">
+                      <div class="tab-pane show active" id="table-div-container" role="tabpanel" aria-labelledby="sig-table-tab">
+                          <div class="sig-tables-header">
+                              <table class="sig-table">
+                                  <thead>
+                                      <tr class="proj-row">
+                                          <th>
+                                              <div>
+                                              <input id="sig_filt_input" class="form-control"
+                                                     type="text" placeholder="Filter Signatures...">
+                                              </input>
+                                              </div>
+                                          </th>
+                                      </tr>
+                                  </thead>
+                              </table>
+                          </div>
+                          <div class="sig-tables-wrapper"></div>
+                      </div>
+                      <div class="tab-pane" id="protein-div-container" role="tabpanel" aria-labelledby="protein-table-tab">
+                          <div class="sig-tables-header">
+                              <table class="sig-table">
+                                  <thead>
+                                      <tr class="proj-row">
+                                          <th>
+                                              <div>
+                                              <input id="protein_filt_input" class="form-control"
+                                                     type="text" placeholder="Filter Proteins...">
+                                              </input>
+                                              </div>
+                                          </th>
+                                      </tr>
+                                  </thead>
+                              </table>
+                          </div>
+                          <div class="sig-tables-wrapper">
+                              <div class="sig-table-div">
+                                  <table id="protein-table" class="sig-table">
+                                      <tbody></tbody>
+                                  </table>
                               </div>
-                              <div>
-                                  <div class='label-control no-select' style="align-items: center">
-                                      <span class="label">
-                                          <label for="de_sub_cells">Subsample Groups?</label>
-                                      </span>
-                                      <input type="checkbox" id="de_sub_cells" name="sub_groups" value="off">
-                                  </div>
-                                  <div class='label-control max-control disabled'>
-                                      <span class="label">Max Size =</span>
-                                      <input type="number" id="de_sub_cells_n" class="form-control" tabindex="-1" value="1000"></input>
-                                  </div>
+                          </div>
+                      </div>
+                      <div class="tab-pane" id="meta-table-div" role="tabpanel" aria-labelledby="meta-table-tab">
+                          <div class="sig-tables-header">
+                              <table class="sig-table">
+                                  <thead>
+                                      <tr class="proj-row">
+                                          <th style="height: 38px"> <!-- Height matches space of filter input on other pane -->
+                                              <div>Variable Name</div>
+                                          </th>
+                                      </tr>
+                                  </thead>
+                              </table>
+                          </div>
+                          <div class="sig-tables-wrapper">
+                              <div class="sig-table-div">
+                                  <table id="meta-table" class="sig-table">
+                                      <tbody></tbody>
+                                  </table>
                               </div>
-                            </div>
+                          </div>
+                      </div>
+                      <div class="tab-pane" id="genes-table" role="tabpanel" aria-labelledby="genes-table-tab" style="height: 300px">
+                          <div>
+                              <table class='label-table'>
+                                  <tr>
+                                      <td style='font-size: 1.2em'>Gene:</td>
+                                      <td><select id="SelectGene" class="form-control"></select></td>
+                                  </tr>
+                              </table>
+                          </div>
+                          <div id='recent-genes-div'>
+                              <div class='label1'>Recent Genes:</div>
+                              <div id='recent-genes-list'>
+                              </div>
+                          </div>
+                      </div>
+                      <div class="tab-pane" id="dend" role="tabpanel" aria-labelledby="dend-tab">
+                        <div class="checkbox-label">
+                          <label class="form-check-label" for="dend_layout">Radial layout</label>
+                          <input type="checkbox" id="dend_layout" value="true"/>
                         </div>
-
-                        <div id='de-error' style='display: none'></div>
-
-                        <div id='de-results' style='display: none'>
-                            <div class="spacer"></div>
-                            <div id='de-results-title'>Some Title for Comparison</div>
-                            <div class="spacer2"></div>
-                            <div class='label-control fdr-holder'>
-                                <span>Maximum FDR: </span>
-                                <input type="search" id="max" name="max" value=".05"></td>
-                            </div>
-                            <div id='de-results-table-div'>
-                                <table id="de-results-table" class="compact stripe hover"></table>
-                            </div>
-                            <div class="spacer2"></div>
-                            <div class="button-container">
-                                <div class='back-button'>
-                                    <button type="button" class="btn btn-secondary" id="new_de" class="form-control">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <line x1="3" y1="10" x2="18" y2="10" />
-                                            <line x1="3" y1="10" x2="10" y2="5" />
-                                            <line x1="3" y1="10" x2="10" y2="15" />
-                                        </svg>
-                                        New Comparison</button>
-                                </div>
-                            </div>
-                            <div class="spacer"></div>
-                        </div> <!-- End #de-results -->
-                  </div> <!-- End #de-table -->
-                </div>
-            </div> <!-- End of upper-left-content -->
-            <div id="lower-left-content">
-                <div class="nav nav-pills justify-content-center">
-                    <a class="nav-link active" id="ValuesButton" href="#value-plot" data-toggle="tab" aria-controls="value-plot" aria-selected="true">Values</a>
-                    <a class="nav-link" id="SigInfoButton" href="#sig-info-default" data-toggle="tab" aria-controls="sig-info-default" aria-selected="true">Signature</a>
-                    <a class="nav-link" id="HeatmapButton" href="#sig-info-cluster" data-toggle="tab" aria-controls="sig-info-cluster" aria-selected="false">Heatmap</a>
-                    <a class="nav-link" id="CellButton" href="#selected-cell-info" data-toggle="tab" aria-controls="selected-cell-info" aria-selected="false" style="display: none">Cell</a>
-                    <a class="nav-link" id="SelectionButton" href="#selection-info" data-toggle="tab" aria-controls="selection-info" aria-selected="false" style="display: none">Selection</a>
-                </div>
-                <div class="tab-content">
-                    <div id="value-plot" class="tab-pane show active" role="tabpanel" aria-labelledby="ValuesButton">
-                        <table class='label-table' style='margin-left: 30px;'>
-                            <tr style='font-size: 1.2em;'>
-                                <td></td>
-                                <td><span id="values-title" style="display: inline-block; width: 300px; word-wrap: break-word;"></span></td>
-                                <td>
-                                    <div class="checkbox-label">
-                                        <label for="log-check">Log Scale?</label>
-                                        <input type="checkbox" value="" id="log-check">
+                        <div class="overflow-auto" width="100%" height="100%">
+                          <svg id="tree_display" />
+                        </div>
+                      </div>
+                      <div class="tab-pane" id="de-table" role="tabpanel" aria-labelledby="de-table-tab">
+  
+                          <div class="controls">
+                              <div class="group-control">
+                                  <div class="label">Group</div>
+                                  <select id="num_control" class="form-control"></select>
+                              </div>
+                              <div class="fgbg">
+                                  <div>
+                                      <div class="label">Foreground</div>
+                                      <select id="num" class="form-control"></select>
+                                  </div>
+  
+                                  <div>
+                                      <div class="label">Background</div>
+                                      <select id="denom" class="form-control"></select>
+                                  </div>
+  
+                                  <div>
+                                      <div class="label" style="height: 1em"></div>
+                                      <button type="button" class="btn btn-default btn-outline-primary" id="submit_de" class="form-control">Calculate DE</button>
+                                  </div>
+                              </div>
+                              <button class="btn btn-secondary" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                                Advanced Options
+                              </button>
+                              <div class="collapse collapsed-controls" id="collapseExample">
+                                <div>
+                                    <div class="label">Exclude genes expressed in<br>less than <i>m</i> cells: </div>
+                                    <div class='label-control'>
+                                        <span class="label">m =</span>
+                                        <input type="number" id="de_min_cells" class="form-control" value="0"></input>
                                     </div>
-                                </td>
-                            </tr>
-                        </table>
-
-                        <div id="dist-div" style="flex-grow: 1"></div>
-                    </div>
-                    <div id="sig-info-default" class="tab-pane show" role="tabpanel" aria-labelledby="SigInfoButton">
-                        <table class='label-table' style='margin-left: 30px; margin-bottom: 20px; width: 250px;'>
-                            <tr style='font-size: 1.2em;'>
-                                <td>Signature:</td>
-                                <td><span id="data-analysis-title" style="display: inline-block; width: 300px; word-wrap: break-word;"></span></td>
-                            </tr>
-                            <tr>
-                                <td>Source:</td>
-                                <td><span id="sig-source"></span></td>
-                            </tr>
-                        </table>
-                        <div id="sig-table-wrapper" style="margin: 0 20px; display: flex; flex-direction: column;">
-                            <table id="sig-info-table" class="display" width="100%">
-                            </table>
-                        </div>
-                    </div>
-                    <div id="sig-info-cluster" class="tab-pane" role="tabpanel" aria-labelledby="HeatmapButton">
-                        <div>
-                            <span class="label">Grouping Variable:</span>
-                            <select id="heatmap-group-select" class="form-control form-control-sm" style="width: 150px;"></select>
-                        </div>
-                        <div id="heatmap-div"></div>
-                    </div>
-                    <div id="selected-cell-info" class="tab-pane" role="tabpanel" aria-labelledby="CellButton">
-                        <div class='label-row' style='margin-left: 30px; margin-bottom: 20px;'>
-                            <span>Cell ID:</span>
-                            <span id="cell-id-span"></span>
-                        </div>
-                        <div style="margin: 0 20px">
-                            <table id="cell-info-table" class="display" width="100%"> </table>
-                        </div>
-                    </div>
-                    <div id="selection-info" class="tab-pane" role="tabpanel" aria-labelledby="SelectionButton">
-                        <div class='label-row' style='margin-left: 30px; margin-bottom: 20px; display: flex; flex-shrink: 0; align-items: center;'>
-                            <div>Cells Selected:</div>
-                            <div id="selected-cell-count-span" style="padding-right: 5px"></div>
-                            <div id="download-cells-button" class="vis-icon invert">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="29" height="29" viewBox="0 0 29 29" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <line x1="14" y1="5" x2="14" y2="17" />
-                                    <line x1="9" y1="13" x2="14" y2="17" />
-                                    <line x1="19" y1="13" x2="14" y2="17" />
-                                    <line x1="19" y1="13" x2="14" y2="17" />
-                                    <path d="M6 18 L6 21 L22 21 L22 18" />
-                                </svg>
-                            </div>
-                        </div>
-                        <div style="margin: 0 20px;">
-                            <table id="selection-info-table" class='display' width="100%"></table>
-                            <div style="min-height: 20px"></div>
-                            <table id="selection-info-table-meta" class='display' width="100%"></table>
-                        </div>
-                    </div>
-                </div> <!-- End of .tab-content -->
-            </div> <!-- End of lower-left-content -->
+                                </div>
+                                <div>
+                                    <div class='label-control no-select' style="align-items: center">
+                                        <span class="label">
+                                            <label for="de_sub_cells">Subsample Groups?</label>
+                                        </span>
+                                        <input type="checkbox" id="de_sub_cells" name="sub_groups" value="off">
+                                    </div>
+                                    <div class='label-control max-control disabled'>
+                                        <span class="label">Max Size =</span>
+                                        <input type="number" id="de_sub_cells_n" class="form-control" tabindex="-1" value="1000"></input>
+                                    </div>
+                                </div>
+                              </div>
+                          </div>
+  
+                          <div id='de-error' style='display: none'></div>
+  
+                          <div id='de-results' style='display: none'>
+                              <div class="spacer"></div>
+                              <div id='de-results-title'>Some Title for Comparison</div>
+                              <div class="spacer2"></div>
+                              <div class='label-control fdr-holder'>
+                                  <span>Maximum FDR: </span>
+                                  <input type="search" id="max" name="max" value=".05"></td>
+                              </div>
+                              <div id='de-results-table-div'>
+                                  <table id="de-results-table" class="compact stripe hover"></table>
+                              </div>
+                              <div class="spacer2"></div>
+                              <div class="button-container">
+                                  <div class='back-button'>
+                                      <button type="button" class="btn btn-secondary" id="new_de" class="form-control">
+                                          <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                              <line x1="3" y1="10" x2="18" y2="10" />
+                                              <line x1="3" y1="10" x2="10" y2="5" />
+                                              <line x1="3" y1="10" x2="10" y2="15" />
+                                          </svg>
+                                          New Comparison</button>
+                                  </div>
+                              </div>
+                              <div class="spacer"></div>
+                          </div> <!-- End #de-results -->
+                    </div> <!-- End #de-table -->
+                  </div>
+              </div> <!-- End of upper-left-content -->
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header" id="headingTwo">
+                <h5 class="mb-0">
+                  <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
+                  Values
+                  </button>
+                </h5>
+              </div>
+              <div id="collapseTwo" class="collapse multi-collapse show" aria-labelledby="headingTwo">
+                <div id="lower-left-content">
+                  <div class="nav nav-pills justify-content-center">
+                      <a class="nav-link active" id="ValuesButton" href="#value-plot" data-toggle="tab" aria-controls="value-plot" aria-selected="true">Values</a>
+                      <a class="nav-link" id="SigInfoButton" href="#sig-info-default" data-toggle="tab" aria-controls="sig-info-default" aria-selected="true">Signature</a>
+                      <a class="nav-link" id="HeatmapButton" href="#sig-info-cluster" data-toggle="tab" aria-controls="sig-info-cluster" aria-selected="false">Heatmap</a>
+                      <a class="nav-link" id="CellButton" href="#selected-cell-info" data-toggle="tab" aria-controls="selected-cell-info" aria-selected="false" style="display: none">Cell</a>
+                      <a class="nav-link" id="SelectionButton" href="#selection-info" data-toggle="tab" aria-controls="selection-info" aria-selected="false" style="display: none">Selection</a>
+                  </div>
+                  <div class="tab-content">
+                      <div id="value-plot" class="tab-pane show active" role="tabpanel" aria-labelledby="ValuesButton">
+                          <table class='label-table' style='margin-left: 30px;'>
+                              <tr style='font-size: 1.2em;'>
+                                  <td></td>
+                                  <td><span id="values-title" style="display: inline-block; width: 300px; word-wrap: break-word;"></span></td>
+                                  <td>
+                                      <div class="checkbox-label">
+                                          <label for="log-check">Log Scale?</label>
+                                          <input type="checkbox" value="" id="log-check">
+                                      </div>
+                                  </td>
+                              </tr>
+                          </table>
+  
+                          <div id="dist-div" style="flex-grow: 1"></div>
+                      </div>
+                      <div id="sig-info-default" class="tab-pane show" role="tabpanel" aria-labelledby="SigInfoButton">
+                          <table class='label-table' style='margin-left: 30px; margin-bottom: 20px; width: 250px;'>
+                              <tr style='font-size: 1.2em;'>
+                                  <td>Signature:</td>
+                                  <td><span id="data-analysis-title" style="display: inline-block; width: 300px; word-wrap: break-word;"></span></td>
+                              </tr>
+                              <tr>
+                                  <td>Source:</td>
+                                  <td><span id="sig-source"></span></td>
+                              </tr>
+                          </table>
+                          <div id="sig-table-wrapper" style="margin: 0 20px; display: flex; flex-direction: column;">
+                              <table id="sig-info-table" class="display" width="100%">
+                              </table>
+                          </div>
+                      </div>
+                      <div id="sig-info-cluster" class="tab-pane" role="tabpanel" aria-labelledby="HeatmapButton">
+                          <div>
+                              <span class="label">Grouping Variable:</span>
+                              <select id="heatmap-group-select" class="form-control form-control-sm" style="width: 150px;"></select>
+                          </div>
+                          <div id="heatmap-div"></div>
+                      </div>
+                      <div id="selected-cell-info" class="tab-pane" role="tabpanel" aria-labelledby="CellButton">
+                          <div class='label-row' style='margin-left: 30px; margin-bottom: 20px;'>
+                              <span>Cell ID:</span>
+                              <span id="cell-id-span"></span>
+                          </div>
+                          <div style="margin: 0 20px">
+                              <table id="cell-info-table" class="display" width="100%"> </table>
+                          </div>
+                      </div>
+                      <div id="selection-info" class="tab-pane" role="tabpanel" aria-labelledby="SelectionButton">
+                          <div class='label-row' style='margin-left: 30px; margin-bottom: 20px; display: flex; flex-shrink: 0; align-items: center;'>
+                              <div>Cells Selected:</div>
+                              <div id="selected-cell-count-span" style="padding-right: 5px"></div>
+                              <div id="download-cells-button" class="vis-icon invert">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="29" height="29" viewBox="0 0 29 29" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                      <line x1="14" y1="5" x2="14" y2="17" />
+                                      <line x1="9" y1="13" x2="14" y2="17" />
+                                      <line x1="19" y1="13" x2="14" y2="17" />
+                                      <line x1="19" y1="13" x2="14" y2="17" />
+                                      <path d="M6 18 L6 21 L22 21 L22 18" />
+                                  </svg>
+                              </div>
+                          </div>
+                          <div style="margin: 0 20px;">
+                              <table id="selection-info-table" class='display' width="100%"></table>
+                              <div style="min-height: 20px"></div>
+                              <table id="selection-info-table-meta" class='display' width="100%"></table>
+                          </div>
+                      </div>
+                  </div> <!-- End of .tab-content -->
+              </div> <!-- End of lower-left-content -->
+              </div>
+            </div>
         </div> <!-- End of left-content -->
         <div id="right-content">
 
