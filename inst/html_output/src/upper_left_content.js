@@ -2004,6 +2004,7 @@ Dend.prototype.init = function()
     var self = this;
 
     this.newick = get_global_status("dendrogram")
+    this.tree = null
 
 
 }
@@ -2016,8 +2017,69 @@ Dend.prototype.update = function(updates)
 
         this.render_dend();
     }
+    if ('selected_cell' in updates) {
+      this.update_tree_selection()
+    }
 }
 
+Dend.prototype.update_tree_selection = function() {
+    var cells = get_global_status("selected_cell")
+    this.tree.selection_callback(function (nodes) {});
+    var nodes = cells
+    var all_nodes =  this.tree.get_nodes()
+    
+    if (cells.length > 0) {
+        var node_selector = function(node) {
+          if (!d3.layout.phylotree.is_leafnode(node)) {
+            return true
+          }
+          var selected = nodes.includes(node.name)
+
+          if (selected) {
+            nodes.push(node.name)
+          }
+          return false
+        }
+       all_nodes = all_nodes.filter(node_selector)
+       console.log(all_nodes)
+    
+        while (true) {
+          var node_selector = function(node) {
+              var in_nodes = (n) => nodes.includes(n.name)
+              var selected = node.children.every(in_nodes)
+              if (selected) {
+                nodes.push(node.name)
+              }
+              return !selected
+          }
+          
+          var all_nodes_new = all_nodes.filter(node_selector)
+          if (all_nodes_new.length === all_nodes.length) {
+            break
+          }
+          all_nodes = all_nodes_new
+        }
+    }
+    
+    var node_selector_final = function(node) {
+          var selected = nodes.includes(node.target.name)
+          return selected
+      }
+    
+    this.tree.modify_selection(node_selector_final)
+
+    this.tree.selection_callback(function (nodes) {
+        var cells = nodes.map(function(node) {
+          if (d3.layout.phylotree.is_leafnode(node)) {
+            return node.name;
+          }
+        })
+        
+        if (cells.length > 0) {
+          set_global_status({"selected_cell":cells, "selection_type":"cells"})
+        }
+      });
+}
 
 Dend.prototype.render_dend = function()
 {
@@ -2079,9 +2141,7 @@ Dend.prototype.render_dend = function()
             color_range = ['#d8d8d8','#395252','#000000'];
             color_domain = [0, 0.5, 1]
         }
-        console.log(color_domain)
-        console.log(color_range)
-        
+       
         attribute_to_color = function(d) {
           console.log(d)
           if (d === undefined) {
@@ -2093,7 +2153,6 @@ Dend.prototype.render_dend = function()
              var x = (d - low) / (high-low);
           }
          
-          
           return d3.scale.linear().domain(color_domain).range(color_range)(x);
         }
         
@@ -2155,14 +2214,7 @@ Dend.prototype.render_dend = function()
     // parse the Newick into a d3 hierarchy object with additional fields
     tree.layout()
     
-    tree.selection_callback(function (nodes) {
-      var cells = nodes.map(function(node) {
-        if (d3.layout.phylotree.is_leafnode(node)) {
-          return node.name;
-        }
-      })
-      set_global_status({"selected_cell":cells, "selection_type":"cells"})
-    });
+
     
     $("#dend_layout").on("click", function(e) {
       var is_radial = $(this).prop("checked")
@@ -2176,7 +2228,8 @@ Dend.prototype.render_dend = function()
       }
       
     });
-
+    this.tree = tree
+    this.update_tree_selection()
     this.setLoadingStatus(false);
 }
 
