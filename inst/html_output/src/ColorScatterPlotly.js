@@ -13,11 +13,7 @@ function ColorScatter(node)
     this.initialZoom = null
     this.currentZoom = null
     this.n_points = null
-    this.plot_data = []
-    
-    this.isfactor = true;
-    this.full_color_range = false;
-    this.diverging_colormap = false;
+
     /*
      * This one is weird.  So when you double-click, plotly also
      * fires the click event, but fires it after the double-click on
@@ -27,6 +23,10 @@ function ColorScatter(node)
      * interval after a doubleclick using this variable
      */
     this.clickMask = false
+    
+    this.isfactor = true
+    this.diverging_colormap = false
+    this.full_color_range = true
 }
 
 /*
@@ -42,17 +42,16 @@ ColorScatter.prototype.setData = function(object)
     var full_color_range = object['full_color_range'] === undefined ? false : object['full_color_range']
     var diverging_colormap = object['diverging_colormap'] === undefined ? true : object['diverging_colormap']
     var autoZoom = object['autozoom']
-    
-    // color stuff for dend
-    this.isfactor = isFactor;
-    this.full_color_range = full_color_range;
-    this.diverging_colormap = diverging_colormap;
-    
+
     this.title = object['title']
     this.proj_keyX = object['proj_keyX']
     this.proj_keyY = object['proj_keyY']
     this.n_points = points.length
-
+    
+    this.isfactor = isFactor
+    this.full_color_range = full_color_range
+    this.diverging_colormap = diverging_colormap
+    
     var x = _.map(points, p => p['x'])
     var xmin = _.min(x)
     var xmax = _.max(x)
@@ -92,7 +91,7 @@ ColorScatter.prototype.setData = function(object)
     var showlegend = false
     if(isFactor) {
         var c = _.map(points, p => p['value'])
-        var unique = d3.set(c).values().sort();;
+        var unique = d3.set(c).values().sort();
 
         // Need to check if any is selected.  If no, then all selected_points is null
         var anySelected = _(points).map('selected').reduce( (a, i) => a || i, false)
@@ -202,11 +201,10 @@ ColorScatter.prototype.setData = function(object)
             selectedpoints: selected_points,
             hoverinfo: 'text',
         }
+
         data.push(trace1)
 
     }
-    console.log(data)
-    this.plot_data = data
 
     var shapes = []
 
@@ -269,10 +267,8 @@ ColorScatter.prototype.setData = function(object)
         this.createListeners()
     } else {
         Plotly.react(this.node, data, layout, options)
-    
-      
     }
-    
+
     this.firstPlot = false
 
 }
