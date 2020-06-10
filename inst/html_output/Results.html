@@ -98,9 +98,6 @@
                               <li class="nav-item">
                                   <a class="nav-link" id="de-table-tab" data-toggle="tab" href="#de-table" role="tab" aria-controls="de-table" aria-selected="false">DE</a>
                               </li>
-                              <li class="nav-item">
-                                  <a class="nav-link" id="dend-tab" data-toggle="tab" href="#dend" role="tab" aria-controls="dend" aria-selected="false">Dendrogram</a>
-                              </li>
                           </ul>
                       </div>
                   </div>
@@ -168,7 +165,7 @@
                               </div>
                           </div>
                       </div>
-                      <div class="tab-pane" id="genes-table" role="tabpanel" aria-labelledby="genes-table-tab" style="height: 300px">
+                      <div class="tab-pane" id="genes-table" role="tabpanel" aria-labelledby="genes-table-tab">
                           <div>
                               <table class='label-table'>
                                   <tr>
@@ -182,15 +179,6 @@
                               <div id='recent-genes-list'>
                               </div>
                           </div>
-                      </div>
-                      <div class="tab-pane" id="dend" role="tabpanel" aria-labelledby="dend-tab">
-                        <div class="checkbox-label">
-                          <label class="form-check-label" for="dend_layout">Radial layout</label>
-                          <input type="checkbox" id="dend_layout" value="true"/>
-                        </div>
-                        <div class="overflow-auto" width="100%" height="100%">
-                          <svg id="tree_display" />
-                        </div>
                       </div>
                       <div class="tab-pane" id="de-table" role="tabpanel" aria-labelledby="de-table-tab">
   
@@ -273,6 +261,39 @@
               </div> <!-- End of upper-left-content -->
               </div>
             </div>
+            <!-- start new section -->
+            <div class="card" id="dend-section">
+              <div class="card-header" id="headingThree">
+                <h5 class="mb-0">
+                  <button class="btn btn-link" data-toggle="collapse" data-target="#collapseThree" aria-expanded="true" aria-controls="collapseThree">
+                  Dendrogram
+                  </button>
+                </h5>
+              </div>
+              <div id="collapseThree" class="collapse multi-collapse show" aria-labelledby="headingThree">
+                <div id="upper-middle-content">
+                  <div class="tab-content upper-left-section-content" style="height: 800px">
+                    <div class="tab-pane active">
+                      <div class='row'>
+                          <div class = 'col-md-12'>
+                            <div class="checkbox-label">
+                              <label class="form-check-label" for="dend_layout">Radial layout</label>
+                              <input type="checkbox" id="dend_layout" value="true"/>
+                            </div>
+                          </div>  
+                        </div>
+                        <div class='row' style="overflow:hidden">
+                            <div class = 'col-md-12'>
+                                <div id = 'tree_container' class = 'tree-widget'>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                  </div>
+              </div> <!-- End of middle-left-content -->
+              </div>
+            </div>
+            <!-- end of new section -->
             <div class="card">
               <div class="card-header" id="headingTwo">
                 <h5 class="mb-0">
@@ -290,7 +311,7 @@
                       <a class="nav-link" id="CellButton" href="#selected-cell-info" data-toggle="tab" aria-controls="selected-cell-info" aria-selected="false" style="display: none">Cell</a>
                       <a class="nav-link" id="SelectionButton" href="#selection-info" data-toggle="tab" aria-controls="selection-info" aria-selected="false" style="display: none">Selection</a>
                   </div>
-                  <div class="tab-content">
+                  <div class="tab-content" >
                       <div id="value-plot" class="tab-pane show active" role="tabpanel" aria-labelledby="ValuesButton">
                           <table class='label-table' style='margin-left: 30px;'>
                               <tr style='font-size: 1.2em;'>
@@ -325,10 +346,10 @@
                       </div>
                       <div id="sig-info-cluster" class="tab-pane" role="tabpanel" aria-labelledby="HeatmapButton">
                           <div>
-                              <span class="label">Grouping Variable:</span>
-                              <select id="heatmap-group-select" class="form-control form-control-sm" style="width: 150px;"></select>
-                          </div>
-                          <div id="heatmap-div"></div>
+                            <span class="label">Grouping Variable:</span>
+                            <select id="heatmap-group-select" class="form-control form-control-sm" style="width: 150px;"></select>
+                        </div>
+                        <div id="heatmap-div"></div>
                       </div>
                       <div id="selected-cell-info" class="tab-pane" role="tabpanel" aria-labelledby="CellButton">
                           <div class='label-row' style='margin-left: 30px; margin-bottom: 20px;'>

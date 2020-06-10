@@ -86,13 +86,16 @@ Upper_Left_Content.prototype.init = function()
 
     var de_select_promise = de_select.init()
     
+    var has_dend = get_global_status('has_dendrogram')
     // Dend Promise
-    var dend = new Dend()
-    this.children.push(dend)
-    this.dend = dend
-
-    var dend_promise = dend.init()
-
+    if (has_dend) {
+      var dend = new Dend()
+      this.children.push(dend)
+      this.dend = dend
+  
+      var dend_promise = dend.init()
+    }
+    
     this.setLoadingStatus = createLoadingFunction(
         document.getElementById("upper-left-content")
     );
@@ -105,7 +108,7 @@ Upper_Left_Content.prototype.init = function()
     
     var has_proteins = get_global_status('has_proteins')
     var nav = $(this.dom_node).find('.section-nav')
-    var dendrogramTab = nav.find('#dend-tab')
+    var dendrogramTab = $('#dend-section')
     var sigTableTab = nav.find('#sig-table-tab')
     var proteinTableTab = nav.find('#protein-table-tab')
     var metaTableTab = nav.find('#meta-table-tab')
@@ -124,7 +127,7 @@ Upper_Left_Content.prototype.init = function()
         proteinTableTab.parent().hide()
     }
     if(!has_dendrogram){
-        dendrogramTab.parent().hide()
+        dendrogramTab.hide()
     }
 
     $(this.dom_node).find('.nav-link')
@@ -2041,7 +2044,6 @@ Dend.prototype.update_tree_selection = function() {
           return false
         }
        all_nodes = all_nodes.filter(node_selector)
-       console.log(all_nodes)
     
         while (true) {
           var node_selector = function(node) {
@@ -2094,19 +2096,33 @@ Dend.prototype.render_dend = function()
     function edgeStyler(dom_element, edge_object) {
       dom_element.style("stroke-width", "1pt");
     }
+    
     var num_cells = Object.keys(plotted).length;
-    var s = num_cells * 2500;
-  
+    var width = 720;
+    var height = 720
+    var container_id = '#tree_container';
+
+    var s = num_cells*4;
+    $(container_id).empty();
+    var svg = d3.select(container_id).append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
     var tree = d3.layout.phylotree()
     // create a tree layout object
-    .svg(d3.select("#tree_display"))
+    .svg(svg)
     .radial(true)
     .options({
       "brush": false,
       "zoom": true,
       "show-scale": false,
       "selectable": true,
-      'left-right-spacing': 'fit-to-size',
+      "minimum-per-node-spacing": 5,
+      "minimum-per-level-spacing": 5,
+      "max-radius": s/2,
+      'left-right-spacing': 'fit-to-size'
+      //'top-bottom-spacing': 'fit-to-size',
+      //'max-radius': 800
     }).size([s, s])
 
     tree(this.newick)
@@ -2114,7 +2130,8 @@ Dend.prototype.render_dend = function()
     var tree_attributes = {};
     var scatter = right_content.layoutPlotData["full"][0].scatter;
     var plotly_defaults_colors = ["1F77B4", "FF7F0E", "2CA02C", "D62728", "9467BD", "8C564B","E377C2", "7F7F7F", "BCBD22", "17BECF"]
-    if(!scatter["isfactor"])  {
+    
+    if(get_global_data('meta_levels')[plotted_item] == null)  {
         var full_color_range = scatter.full_color_range;
         var diverging_colormap = scatter.diverging_colormap
         var c = Object.values(plotted);
@@ -2128,7 +2145,7 @@ Dend.prototype.render_dend = function()
             low = d3.quantile(cvals, 0.02)
             high = d3.quantile(cvals, 0.98)
         }
-        if(diverging_colormap){
+        if(get_global_status("plotted_item_type") !== "gene") {
             var color_range = [
               '#440154', '#48186a', '#472d7b', '#424086', '#3b528b', '#33638d', '#2c728e', '#26828e', 
             '#21918c', '#1fa088', '#28ae80', '#3fbc73', '#5ec962', '#84d44b', '#addc30',
@@ -2143,7 +2160,6 @@ Dend.prototype.render_dend = function()
         }
        
         attribute_to_color = function(d) {
-          console.log(d)
           if (d === undefined) {
             d = 0.5
           }
@@ -2177,7 +2193,13 @@ Dend.prototype.render_dend = function()
     } 
     
     var standard_label = tree.branch_name();
-
+    
+    function edgeStyler(element, node_data) {
+      element.style ("stroke-width", 1)  
+    }
+    
+    tree.style_edges(edgeStyler);
+    
     function nodeStyler(element, node_data, is_radial) {
       if (d3.layout.phylotree.is_leafnode(node_data)) {
         var node_label = element.select("text");
@@ -2186,7 +2208,7 @@ Dend.prototype.render_dend = function()
         var annotation = element.selectAll ("rect").data([level]);
         annotation.enter().append ("rect");
         if (is_radial) {
-          annotation.attr ("height", 10).attr ("width", 30).attr ("x", -30).attr("y", -10)
+          annotation.attr ("height", 3).attr ("width", 30).attr ("x", -15).attr("y", -1.5)
             .style ("fill", function(d, i) {
               return attribute_to_color (d);
              }).style("stroke-width", 0);
@@ -2196,7 +2218,7 @@ Dend.prototype.render_dend = function()
             });
           } 
         } else {
-            annotation.attr ("height", 10).attr ("width", 30).attr("y", -5)
+            annotation.attr ("height", 4).attr ("width", 30).attr("y", -2)
               .style ("fill", function(d, i) {
                 return attribute_to_color (d);
                }).style("stroke-width", 0);
@@ -2211,10 +2233,53 @@ Dend.prototype.render_dend = function()
         return ""
       });
 
-    // parse the Newick into a d3 hierarchy object with additional fields
-    tree.layout()
     
-
+    // sort nodes from phylotree example
+    function sort_nodes (asc) {
+      tree.traverse_and_compute (function (n) {
+              var d = 1;
+              if (n.children && n.children.length) {
+                  d += d3.max (n.children, function (d) { return d["count_depth"];});
+              }
+              n["count_depth"] = d;
+          });
+          tree.resort_children (function (a,b) {
+              return (a["count_depth"] - b["count_depth"]) * (asc ? 1 : -1);
+          });
+    }
+    sort_nodes(false);
+    
+    var max_count_depth = Math.max(...tree.get_nodes().map(n => n["count_depth"]))
+    // now change branch lengths
+    tree.branch_length (function (n) {
+      var parent_depth = n["parent"]["count_depth"];
+      var length = 210 * (parent_depth - n["count_depth"]);
+      if(n["count_depth"] == 1) {
+        length = length + 120
+      }
+      return length
+    });
+    
+    // try to collapse tree downwards
+    
+    
+    
+    tree.layout()
+    tree.placenodes().update();
+    
+    var svgHeight = parseInt(svg.style("height").replace("px", ""));
+    var svgWidth = parseInt(svg.style("width").replace("px", ""));
+    
+    
+    var zoomFactor = 1000/(Math.min(svgHeight, svgWidth)*1.25);
+    
+    var horizontalOffset = (-1 * svgWidth / 2) * (1-zoomFactor);
+    var verticalOffset = (-1 * svgHeight / 2) * (1-zoomFactor);
+    
+    
+    svg.attr("transform", "translate(" +  horizontalOffset +"," + verticalOffset + ")" + "scale(" + zoomFactor + ")")
+    
+    
     
     $("#dend_layout").on("click", function(e) {
       var is_radial = $(this).prop("checked")
@@ -2222,12 +2287,25 @@ Dend.prototype.render_dend = function()
       if (is_radial) {
         tree.size([s, s])
         tree.style_nodes(function(element, node_data) {return nodeStyler(element, node_data, true)}).placenodes().update();
+         svg.attr("transform", "translate(" +  horizontalOffset +"," + verticalOffset + ")" + "scale(" + zoomFactor + ")")
       } else {
-        tree.size([100, 770])
+        tree.size([100, 770]);
         tree.style_nodes(function(element, node_data) {return nodeStyler(element, node_data, false)}).placenodes().update();
+        svg.attr("transform", "translate(" +  0 +"," + 0 + ")") 
       }
       
     });
+    
+    console.log(max_count_depth)
+    //var collapseTo = 10;
+    /* tree.traverse_and_compute(function(n){ 
+      if(n["depth"] === collapseTo) {
+        tree.collapse_node(n);
+        console.log(n)
+      }
+    }); */
+    
+    
     this.tree = tree
     this.update_tree_selection()
     this.setLoadingStatus(false);

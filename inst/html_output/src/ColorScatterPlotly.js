@@ -25,7 +25,7 @@ function ColorScatter(node)
     this.clickMask = false
     
     this.isfactor = true
-    this.diverging_colormap = false
+    this.diverging_colormap = true
     this.full_color_range = true
 }
 

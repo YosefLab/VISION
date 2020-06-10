@@ -4,21 +4,33 @@
 #'
 #' @param object the VISION object for which to cluster the cells
 #' @return the VISION object modifed as described above
-clusterCells <- function(object) {
+clusterCells <- function(object, tree=FALSE) {
 
     message("Clustering cells...", appendLF = FALSE)
 
     res <- object@LatentSpace
 
     K <- min(object@params$numNeighbors, 30)
-    kn <- find_knn_parallel(res, K)
+    
+    if (!tree) {
+      kn <- find_knn_parallel(res, K)
+    } else {
+      message("Using Tree to compute clusters...\n")
+      kn <- find_knn_parallel_tree(object@Tree, K)
+    }
+    
 
     cl <- louvainCluster(kn, res)
 
     names(cl) <- paste('Cluster', seq(length(cl)))
 
     # cl is list of character vector
-    cluster_variable <- "VISION_Clusters"
+    if (!tree) {
+      cluster_variable <- "VISION_Clusters"
+    } else {
+      cluster_variable <- "VISION_Clusters (Tree)"
+    }
+    
     metaData <- object@metaData
 
     metaData[cluster_variable] <- factor(levels = names(cl))
@@ -715,7 +727,7 @@ addTSNE <- function(object, perplexity = 30, name = "tSNE", source = "LatentSpac
 #' @param object the VISION object
 #' @return the VISION object with values set for the analysis results
 #' @export
-analyzeLocalCorrelations <- function(object) {
+analyzeLocalCorrelations <- function(object, tree=FALSE) {
 
   signatureBackground <- generatePermutationNull(
       object@exprData, object@sigData, num = 3000
@@ -726,9 +738,13 @@ analyzeLocalCorrelations <- function(object) {
       object@params$signatures$sigNormMethod)
 
   message("Computing KNN Cell Graph in the Latent Space...\n")
-
-  weights <- computeKNNWeights(object@LatentSpace, object@params$numNeighbors)
-
+  if (!tree) {
+    weights <- computeKNNWeights(object@LatentSpace, object@params$numNeighbors)
+  } else {
+    message("Using Tree to compute neighbors...\n")
+    weights <- computeKNNWeights(object@Tree, object@params$numNeighbors)
+  }
+ 
   message("Evaluating local consistency of signatures in latent space...\n")
 
   sigConsistencyScores <- sigConsistencyScores(

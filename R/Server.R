@@ -960,9 +960,11 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         info[["has_lca"]] <- !is.null(object@LCAnnotatorData)
         
-        info[["has_dendrogram"]] <- !is.null(object@Tree)
+        if (!is.null(object@Tree)) {
+          info[["dendrogram"]] <- write.tree(object@Tree)
+        }
         
-        info[["dendrogram"]] <- write.tree(object@Tree)
+        info[["has_dendrogram"]] <- !is.null(object@Tree)
 
         res$body <- toJSON(info, force = TRUE,
             pretty = TRUE, auto_unbox = TRUE)

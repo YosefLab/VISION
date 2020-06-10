@@ -376,3 +376,38 @@ setMethod("computeKNNWeights", signature(object = "matrix"),
         return(list(indices = nn, weights = sparse_weights))
     }
 )
+
+
+#' compute for each vector the weights to apply to it's K nearest neighbors
+#' @importFrom Matrix rowSums
+#' @importFrom Matrix sparseMatrix
+#' @importFrom matrixStats rowMaxs
+#' @param object tree to use for KNN
+#' @param K Number of neighbors to consider.
+#' @return a list of two items:
+#'          indices: matrix, cells X neighbors
+#'              Each row specifies indices of nearest neighbors
+#'          weights: matrix, cells X neighbors
+#'              Corresponding weights to nearest neighbors
+setMethod("computeKNNWeights", signature(object = "phylo"),
+    function(object, K = round(sqrt(length(object$tip.label)))) {
+        k <- find_knn_parallel_tree(object, K)
+        
+        nn <- k[[1]]
+        d <- k[[2]]
+        
+        sigma <- rowMaxs(d)
+        sigma[sigma == 0] <- 1.0  # Can happen if all neighbors at same point as cell
+        sparse_weights <- exp(-1 * (d * d) / sigma ^ 2)
+        
+        # Normalize row sums = 1
+        weightsNormFactor <- rowSums(sparse_weights)
+        weightsNormFactor[weightsNormFactor == 0] <- 1.0
+        sparse_weights <- sparse_weights / weightsNormFactor
+        
+        rownames(nn) <- object$tip.label
+        rownames(d) <- object$tip.label
+        
+        return(list(indices = nn, weights = sparse_weights))
+      }
+)

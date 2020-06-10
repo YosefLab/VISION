@@ -648,6 +648,7 @@ setMethod("Vision", signature(data = "Seurat"),
 #' @export
 #' @aliases analyze
 #' @param object VISION object
+#' @param tree wether to use the TREE slot of the object to calculate values
 #' @return VISION object
 #'
 #' @examples
@@ -660,7 +661,7 @@ setMethod("Vision", signature(data = "Seurat"),
 #'
 #' }
 setMethod("analyze", signature(object="Vision"),
-            function(object) {
+            function(object, tree=FALSE) {
     message("Beginning Analysis\n")
 
     if (object@params$micropooling$pool || length(object@Pools) > 0) {
@@ -672,7 +673,7 @@ setMethod("analyze", signature(object="Vision"),
         object <- computeLatentSpace(object)
     }
 
-    object <- clusterCells(object)
+    object <- clusterCells(object, tree)
 
     # Populates @Projections
     object <- generateProjections(object)
@@ -689,7 +690,7 @@ setMethod("analyze", signature(object="Vision"),
     object <- calcSignatureScores(object)
 
     # Populates @LocalAutocorrelation
-    object <- analyzeLocalCorrelations(object)
+    object <- analyzeLocalCorrelations(object, tree)
 
     # Populates @TrajectoryAutocorrelation
     if (hasTrajectory(object)) {

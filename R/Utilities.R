@@ -776,3 +776,80 @@ find_knn_parallel <- function(data, K) {
 
     return(list(index=idx, dist=dists))
 }
+
+#' Helper KNN Function for Trees
+#'
+#' Computes nearest-neighbor indices and distances
+#' in serial.  Query is over all points and results
+#' do not include the self-distance.
+#'
+#' @param leaves indexes to find neighbors of
+#' @param k number of neighbors to query
+#' @param distances matrix of Samples x Samples matrix of cophenetic tree distances
+#' @return list with two items:
+#'     index: Samples x K matrix of neighbor indices
+#'     dist: Samples x K matrix of neighbor distances
+knn_tree <- function(leaves, k, distances) {
+  n <- length(leaves)
+  leafNames <- rownames(distances)[leaves]
+  rd <- list(idx = matrix(, length(leaves), k+1), dists = matrix(, length(leaves), k+1))
+  rownames(rd$idx) <- leafNames
+  rownames(rd$dists) <- leafNames
+  for (leafId in leaves) {
+    leaf <- leafNames[leafId]
+    subsetDistances <- distances[leaf, ]
+    random <- runif(length(subsetDistances)) * 0.1
+    sorted <- sort(subsetDistances + random)
+    nearest <- sorted[1:(k+1)] # don't include myself in my own nearest neighbors
+    rd$idx[leaf, ] <- names(nearest) %>% (function(x){match(x, leafNames)})
+    rd$dists[leaf, ] <- nearest
+  }
+  return(rd)
+}
+
+
+
+#' Parallel KNN for Trees
+#'
+#' Computes nearest-neighbor indices and distances
+#' in parallel.  Query is over all points and results
+#' do not include the self-distance.
+#'
+#' @importFrom pbmcapply pbmclapply
+#'
+#' @param tree an object of class phylo
+#' @param K number of neighbors to query
+#' @return list with two items:
+#'     index: Samples x K matrix of neighbor indices
+#'     dist: Samples x K matrix of neighbor distances
+find_knn_parallel_tree <- function(tree, K) {
+  
+  workers <- getOption("mc.cores")
+  if (is.null(workers)){
+    workers <- 1
+  }
+  
+  n <- length(tree$tip.label)
+  per_batch <- round(n/workers)
+  
+  batches <- batchify(seq_len(n), per_batch, n_workers = workers)
+  
+  # set edge lengths to uniform if not specified in tree
+  if (is.null(tree$edge.length)) {
+    tree$edge.length = rep(1, length(tree$edge))
+  }
+  # find the distances
+  distances <- cophenetic.phylo(tree)
+  
+  nn_out <- mclapply(batches, function(leaves){
+    return(knn_tree(leaves, K, distances))
+  })
+  
+  idx <- do.call(rbind, lapply(nn_out, function(nd) nd$idx))
+  dists <- do.call(rbind, lapply(nn_out, function(nd) nd$dists))
+  
+  idx <- idx[, -1, drop = FALSE]
+  dists <- dists[, -1, drop = FALSE]
+  
+  return(list(index=idx, dist=dists))
+}
