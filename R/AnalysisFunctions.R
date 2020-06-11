@@ -14,14 +14,13 @@ clusterCells <- function(object, tree=FALSE) {
     
     if (!tree) {
       kn <- find_knn_parallel(res, K)
+      cl <- louvainCluster(kn, res)
     } else {
-      message("Using Tree to compute clusters...\n")
-      kn <- find_knn_parallel_tree(object@Tree, K)
+        message("Using Tree to compute clusters...\n")
+        # Get the MRCA matrix and convert the node indexes to depths
+        cl <- treeCluster(object@Tree)
     }
     
-
-    cl <- louvainCluster(kn, res)
-
     names(cl) <- paste('Cluster', seq(length(cl)))
 
     # cl is list of character vector

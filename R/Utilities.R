@@ -853,3 +853,38 @@ find_knn_parallel_tree <- function(tree, K) {
   
   return(list(index=idx, dist=dists))
 }
+
+#' Generate an ultrametric tree
+#'
+#' @param tree an object of class phylo
+#' @return a tree with edge distances such that it is ultrametric.
+ultrametric_tree <- function(tree) {
+    tree$edge.length <- rep(1, length(length(tree$edge[,1])))
+    nodeDepths <- node.depth(tree)
+    for (edgeI in seq_len(length(tree$edge[,1]))) {
+      edge <- tree$edge[edgeI,]
+      me <- edge[1]
+      parent <- edge[2]
+      tree$edge.length[edgeI] <- nodeDepths[parent] - nodeDepths[me]
+    }
+    return(tree)
+}
+
+
+#' Find the ancestor of a node above a specific depth
+#'
+#' @param tree an object of class phylo
+#' @param node the index of the node
+#' @param depth the depth to search to
+#' @return the index of the ancestor node
+ancestor_at_depth <- function(tree, node, depth) {
+    nodeDepths <- node.depth(tree)
+    edges <- tree$edge
+    if (depth > max(nodeDepths)) {
+        stop("Can't search for a depth greater than max depth of tree")
+    }
+    while (nodeDepths[node] < depth) {
+        node <- edges[, 1][edges[, 2] == node]
+    }
+    return(node)
+}

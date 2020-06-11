@@ -415,3 +415,55 @@ poolMatrixCols_Inner <- function(expr, pools) {
 
     return(pool_data)
 }
+
+
+#' Performs a binary search on a depth d such that 
+#' if depth(u, v) <= d then u and v are in the same cluster
+#'
+#' @param tree object of class phylo
+#' @return List of clusters, each entry being a vector of indices representing
+#' samples in the cluster.
+treeCluster <- function(tree, reach=10) {
+    high <- length(tree$tip.label)
+    low <- 0
+    while (T) {
+        if (high == low) {
+            break
+        }
+        d <- round((high + low) / 2)
+        if (d == 0) {
+          break
+        }
+        
+        num_clusters <- 0
+        seen_ancestors <- c()
+        cl <- list()
+
+        for (cell in seq_len(length(tree$tip.label))) {
+            
+            ancestor <- ancestor_at_depth(tree, cell, d)
+            cell <- tree$tip.label[cell]
+            if (ancestor %in% seen_ancestors) {
+              cl[[match(ancestor, seen_ancestors)]] <- append(cl[[match(ancestor, seen_ancestors)]], cell)
+            } else {
+                num_clusters <- num_clusters + 1
+                seen_ancestors <- append(seen_ancestors, ancestor)
+                cl[[num_clusters]] <- c(cell)
+            }
+        }
+
+        if (num_clusters >= reach) {
+            if(low == d) {
+                break
+            }
+            low <- d
+        } else if (num_clusters < reach) {
+            if(high == d) {
+                break
+            }
+            high <- d
+        }
+    }
+
+    return(cl)
+}
