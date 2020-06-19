@@ -888,3 +888,64 @@ ancestor_at_depth <- function(tree, node, depth) {
     }
     return(node)
 }
+
+#' Find the root node
+#'
+#' @param tree an object of class phylo
+#' @return the index of the root node
+find_root <- function(tree) {
+    return(ancestor_at_depth(tree, 1, length(tree$tip.label)))
+}
+
+
+#' Find the children of a node
+#'
+#' @param tree an object of class phylo
+#' @param node the node to get the children of
+#' @return the children
+get_children <- function(tree, node) {
+    edges <- tree$edge
+    children <- edges[, 2][edges[, 1] == node]
+    if (length(children) == 0) {
+        children <- node
+    }
+    return(children)
+}
+
+#' Check if a child is a tip
+#'
+#' @param tree an object of class phylo
+#' @param node the node to check
+#' @return true or false
+is_tip <- function(tree, node) {
+    children <- get_children(tree, node)
+    return(length(children) <= 1 || node == children)
+}
+
+#' Get all the tip children of a node.
+#'
+#' @param tree an object of class phylo
+#' @param node the node to check
+#' @return the tips
+get_all_children <- function(tree, node) {
+    children <- get_children(tree, node)
+    tips <- c()
+    
+    while(length(children) > 0) {
+        are_tips <- c()
+        for (child in children) {
+          are_tips <- append(are_tips, is_tip(tree, child))
+        }
+        tips <- append(tips, children[are_tips])
+        
+        children <- children[!are_tips]
+        new_children <- c()
+        for (child in children) {
+            new_children <- append(new_children, get_children(tree, child))
+        }
+        
+        children <- new_children
+    }
+    
+    return(tips)
+}
