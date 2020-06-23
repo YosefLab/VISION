@@ -42,6 +42,8 @@
 #' @param latentSpaceName a name for the latent space method (used in output report)
 #' @param latentTrajectory trajectory to model cell progression.  Wrapped result
 #' of a trajectory inference method by the dynverse/dynwrap library
+#' @param tree a phylo object
+#' @param modules a list of signature objects for user defined modules
 #' @param projection_methods a character vector specifying which projection methods to apply. Can be: \itemize{
 #'    \item tSNE10 (tSNE with perplexity 10)
 #'    \item tSNE30 (tSNE with perplexity 30)
@@ -86,7 +88,7 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                                         "znorm_rows_then_columns",
                                         "rank_norm_columns"),
                     pool="auto", cellsPerPartition=10, name=NULL, num_neighbors = NULL,
-                    latentSpace = NULL, latentSpaceName = NULL, latentTrajectory = NULL, tree = NULL, pools=list()) {
+                    latentSpace = NULL, latentSpaceName = NULL, latentTrajectory = NULL, tree = NULL, modules = list(), pools=list()) {
 
             .Object <- new("Vision")
 
@@ -394,6 +396,8 @@ setMethod("Vision", signature(data = "matrixORSparse"),
             if (!is.null(tree)){
               .Object@Tree <- tree
             }
+            
+            .Object@Modules <- modules
             
             return(.Object)
     }
