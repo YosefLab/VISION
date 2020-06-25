@@ -17,6 +17,7 @@ function Upper_Left_Content()
     this.pc_table = {}
     this.gene_select = {}
     this.dendrogram = {}
+    this.mod_table = {}
     this.dom_node = document.getElementById("upper-left-content");
 }
 
@@ -96,6 +97,13 @@ Upper_Left_Content.prototype.init = function()
       var dend_promise = dend.init()
     }
     
+    
+    var mod_table = new Modules_Table()
+    this.children.push(mod_table)
+    this.mod_table = mod_table
+
+    var mod_table_promise = mod_table.init();
+    
     this.setLoadingStatus = createLoadingFunction(
         document.getElementById("upper-left-content")
     );
@@ -103,13 +111,15 @@ Upper_Left_Content.prototype.init = function()
     // If no signatures, need to hide the 'Signatures' nav item
     // If no proteins, need to hide the 'Proteins' nav item
     // If no dendrogram, hide that nav item
+    // same for modules
 
     var has_sigs = get_global_status('has_sigs')
-    
+    var has_mods = get_global_status('has_mods')
     var has_proteins = get_global_status('has_proteins')
     var nav = $(this.dom_node).find('.section-nav')
     var dendrogramTab = $('#dend-section')
     var sigTableTab = nav.find('#sig-table-tab')
+    var modTableTab = nav.find('#modules-table-tab')
     var proteinTableTab = nav.find('#protein-table-tab')
     var metaTableTab = nav.find('#meta-table-tab')
     
@@ -126,6 +136,9 @@ Upper_Left_Content.prototype.init = function()
     if(!has_proteins){
         proteinTableTab.parent().hide()
     }
+    if(!has_mods){
+        modTableTab.parent().hide()
+    }
     if(!has_dendrogram){
         dendrogramTab.hide()
     }
@@ -140,7 +153,7 @@ Upper_Left_Content.prototype.init = function()
         });
 
 
-    return $.when(sig_table_promise, protein_table_promise, pc_table_promise, gene_select_promise, de_select_promise, dend_promise);
+    return $.when(sig_table_promise, protein_table_promise, pc_table_promise, gene_select_promise, de_select_promise, dend_promise, mod_table_promise);
 
 }
 
@@ -2296,7 +2309,6 @@ Dend.prototype.render_dend = function()
       
     });
     
-    console.log(max_count_depth)
     //var collapseTo = 10;
     /* tree.traverse_and_compute(function(n){ 
       if(n["depth"] === collapseTo) {
@@ -2311,6 +2323,455 @@ Dend.prototype.render_dend = function()
     this.setLoadingStatus(false);
 }
 
+
+// START MODULES
+
+
+function Modules_Table()
+{
+    this.dom_node = document.getElementById("modules-table-div-container");
+    this.matrix = {}
+    this.modules_table = $(this.dom_node).find('#modules-table');
+    // this.clusters = {}
+    // this.sorted_column = 'Score'
+    // this.filterSig = $(this.dom_node).find('#sig_filt_input')
+    // this.is_filtering = false
+    // this.is_collapsed = {} // cluster -> boolean, holds whether a cluster is collapsed
+    // this.tooltip = {} // will contain a Popper.js object
+}
+
+
+Modules_Table.prototype.init = function()
+{
+
+    var self = this;
+
+    // var debounced = _.debounce(function(){self.doneTyping()}, 500)
+    // self.filterSig.on('input', debounced)
+    //
+    //
+    // var popper = document.querySelector('body > #sig-tooltip')
+    // var arrow = popper.querySelector('.arrow')
+    // var initialNode = document.querySelector('body > #hidden-node')
+    //
+    // var outPopper = new Popper(initialNode, popper, {placement: 'top',
+    //     modifiers: {
+    //         arrow: {
+    //             enabled: true,
+    //             element: arrow,
+    //         },
+    //         preventOverflow: {
+    //             enabled: false,
+    //         },
+    //         hide: {
+    //             enabled: false,
+    //         },
+    //     }
+    // })
+    //
+    // this.tooltip = outPopper;
+    //
+    // // Set up the scrolling behavior
+    // var header_div = this.dom_node.querySelector('.sig-tables-header')
+    // var tables_div = this.dom_node.querySelector('.sig-tables-wrapper')
+    // $(tables_div).on('scroll', function() {
+    //     $(header_div).scrollLeft($(this).scrollLeft())
+    // })
+    //
+    var update_promise = self.update({})
+    return update_promise;
+
+}
+
+Modules_Table.prototype.render = function()
+{
+    var self = this;
+    var matrix = self.matrix;
+    var main_vis = get_global_status('main_vis');
+
+    //var cluster_ids = _(self.clusters).values().uniq().sort(x => x).value()
+    console.log(matrix)
+    var table = this.modules_table.DataTable(
+        {
+            'columns': [
+                {'title': 'Module'},
+                {'title': 'C'},
+                {'title': 'P'},
+                {'title': 'FDR'},
+            ],
+            "pageLength": 10,
+            "scrollY": '15vh',
+            "order": [[1, "desc"]],
+            "buttons": {
+                dom: {
+                    button: {
+                        className: ''
+                    }
+                },
+                buttons: [
+                    {
+                        extend: 'csvHtml5',
+                        text: 'Export',
+                        className: 'btn btn-secondary',
+                    }
+                ]
+            },
+            "pagingType": "simple",
+            "dom": '<"fdr-filter">ftip'
+        }
+    );
+    
+    
+    
+    // CURRENTLOC
+
+    var dataSet = _.map(this.matrix, (f, i) => [f._row, f.C, f.pValue, f.FDR]);
+
+
+    this.modules_table.DataTable().clear()
+        .rows.add(dataSet)
+        .columns.adjust() // Needed or else column headers don't align
+        .draw()
+        
+    this.modules_table.on('click', "tr", function() {
+        var cells = $(this).find("td")
+        var module = cells.eq(0).text()
+        
+        set_global_status({
+            'plotted_item_type': 'signature',
+            'plotted_item': module,
+        })
+    });
+    
+
+    // // If the filtering is enabled, we're just going to put everything into one cluster
+    // if (self.is_filtering){
+    //     cluster_ids = [1]
+    // }
+    //
+    // // Create the Header row
+    // var header_row = $(self.dom_node).children(".sig-tables-header").find(".proj-row");
+    // header_row.find("th:not(:first-child)").remove()
+    // _.each(matrix.proj_labels, function(proj_label){
+    //     var new_cell = $("<th>")
+    //     var new_item = $("<div>")
+    //     new_item.html("<div>" + proj_label + "</div>")
+    //     new_cell.on("click", function() {
+    //         var col_name = $(this).text()
+    //         self.sorted_column = col_name
+    //         self.render()
+    //     });
+    //     new_cell.append(new_item)
+    //     header_row.append(new_cell)
+    // });
+    //
+    // // Add padding for scrollbar width of table below it
+    // $(self.dom_node).children(".sig-tables-header")
+    //     .css("padding-right", detect_browser_scrollbar_width() + "px")
+    //
+    // var clusterTableDiv = $(self.dom_node).children('.sig-tables-wrapper').first()
+    // var new_table_divs = []
+    //
+    // // Remove old tables
+    // clusterTableDiv.children('.sig-table-div').remove()
+    //
+    // var curr_cl;
+    // for (var i = 0; i < cluster_ids.length; i++) {
+    //     curr_cl = cluster_ids[i];
+    //
+    //     if (!(curr_cl in self.is_collapsed)){
+    //         self.is_collapsed[curr_cl] = true;
+    //     }
+    //
+    //     // Create new table and add to table_div
+    //     var new_table_div = document.createElement("div");
+    //     new_table_div.setAttribute("class", "sig-table-div");
+    //
+    //     var new_table = document.createElement("table");
+    //     new_table.setAttribute("id", "table"+ curr_cl);
+    //     new_table.setAttribute("class", "sig-table");
+    //     $(new_table).data("cluster", curr_cl)
+    //
+    //     var thead = document.createElement("thead");
+    //
+    //     var tbody = document.createElement("tbody");
+    //
+    //     new_table.appendChild(thead);
+    //     new_table.appendChild(tbody);
+    //
+    //
+    //     new_table_div.appendChild(new_table);
+    //     new_table_divs.push(new_table_div);
+    //
+    //     if (typeof(matrix.sig_labels) == "string") {
+    //         matrix.sig_labels = [matrix.sig_labels];
+    //     }
+    //
+    //     // Format cell data for better d3 binding
+    //     var sig_labels = matrix.sig_labels.filter(
+    //         function(x) { return self.is_filtering || self.clusters[x] == curr_cl; }
+    //     );
+    //
+    //     var zscores = []; // rows of z-scores
+    //     var pvals = []; // rows of p-values
+    //     var sig_indices = [] // signature index corresponding to each row
+    //
+    //     for (var ind = 0; ind < sig_labels.length; ind++) {
+    //         var sig = sig_labels[ind];
+    //         var sig_index = matrix.sig_labels.indexOf(sig)
+    //
+    //         pvals.push(matrix.pvals[sig_index]);
+    //         zscores.push(matrix.zscores[sig_index]);
+    //         sig_indices.push(sig_index);
+    //     }
+    //
+    //     var formatted_data_matrix = _.zip(sig_indices, zscores, pvals)
+    //         .map(x => {
+    //             var sig_index = x[0]
+    //             var zscores_row = x[1]
+    //             var pvals_row = x[2]
+    //             return _.zip(zscores_row, pvals_row).map((x, j)  => {
+    //                 return {
+    //                     "row": sig_index, "col": j,
+    //                     "zscore": x[0], "pval": x[1]
+    //                 }
+    //             })
+    //         })
+    //
+    //     var formatted_data_w_row_labels = d3.zip(sig_labels, formatted_data_matrix);
+    //
+    //     // Sort data if necessary
+    //
+    //     var sort_col = matrix.proj_labels.indexOf(self.sorted_column);
+    //     if(sort_col > -1){
+    //         var sortFun = function(a,b){
+    //             return b[1][sort_col].zscore - a[1][sort_col].zscore; // Descending order
+    //         };
+    //         formatted_data_w_row_labels.sort(sortFun);
+    //     }
+    //
+    //     $(new_table_div).data('table-sort-val', 0)
+    //     if (cluster_ids.length > 1) {
+    //         // Pull out the cluster leader and put it first
+    //
+    //         var row_vals;
+    //         if (main_vis === "pcannotator") {
+    //             row_vals = _.map(formatted_data_w_row_labels, x => {
+    //                 return _(x[1]).map(y => y.pval).sum()
+    //             })
+    //         } else {
+    //             row_vals = _.map(formatted_data_w_row_labels, x => {
+    //                 return (x[1][0].zscore*-1) // sort by zscore (geary-c actually)
+    //             })
+    //         }
+    //
+    //         var leader_row_i = row_vals.indexOf(_.min(row_vals))
+    //         var leader_row = formatted_data_w_row_labels[leader_row_i];
+    //         formatted_data_w_row_labels.splice(leader_row_i, 1);
+    //         formatted_data_w_row_labels.splice(0, 0, leader_row);
+    //
+    //         if (sort_col > -1) {
+    //             $(new_table_div).data('table-sort-val', leader_row[1][sort_col].zscore*-1)
+    //         }
+    //     }
+    //
+    //     if (main_vis == "pcannotator") {
+    //         var colorScale = d3.scale.linear()
+    //             .domain([-.5,0,.5])
+    //             .range(["steelblue", "white", "lightcoral"])
+    //             .clamp(true);
+    //     } else {
+    //         var colorScale = d3.scale.linear()
+    //             .domain([0,.5,1])
+    //             .range(["steelblue","white", "lightcoral"])
+    //             .clamp(true);
+    //     }
+    //     var colorScaleCluster = d3.scale.linear()
+    //         .domain([0,0.5,1])
+    //         .range(["steelblue","white", "lightcoral"])
+    //         .clamp(true);
+    //
+    //     var content_rows = d3.select(new_table).select('tbody').selectAll('tr')
+    //         .data(formatted_data_w_row_labels);
+    //     content_rows.enter().append('tr');
+    //     content_rows.exit().remove();
+    //
+    //     var content_row = content_rows.selectAll("td")
+    //         .data(function(d){return [d[0]].concat(d[1]);})
+    //
+    //     content_row.enter().append('td');
+    //     content_row.exit().remove();
+    //
+    //     if (main_vis === 'pcannotator') {
+    //         content_row
+    //             .filter(function(d,i) { return i > 0;})
+    //             .style('background-color', function(d){return colorScale(d.zscore);})
+    //             .on("click", function(d){tableClickFunction_PC(matrix.sig_labels[d.row], 'signature')})
+    //             .append('div');
+    //
+    //     } else {
+    //         content_row
+    //             .filter(function(d,i) { return i > 0;})
+    //             .on("click", function(d){tableClickFunction_clusters(matrix.sig_labels[d.row], 'signature')})
+    //
+    //         content_row
+    //             .filter(function(d,i) { return i == 1;})
+    //             .style('background-color', function(d){return colorScale(d.zscore);})
+    //             .append('div')
+    //             .text(function(d){ return d.zscore.toPrecision ? d.zscore.toPrecision(2) : d.zscore;})
+    //
+    //         content_row
+    //             .filter(function(d,i) { return i > 1;})
+    //             .style('background-color', function(d){return colorScaleCluster(d.zscore);})
+    //             .append('div')
+    //             .text(function(d){ return d.pval < 0.05 ? '*' : '';})
+    //     }
+    //
+    //     // Hover actions
+    //     var rowHoverFunc = function(header_row){
+    //         return function(d, i){
+    //             var tooltip_str;
+    //             if(main_vis === 'pcannotator'){
+    //                 tooltip_str = "corr = " + d.zscore.toFixed(2)
+    //             } else {
+    //                 if(main_vis === 'clusters' && i > 0)
+    //                     tooltip_str = "AUC=" + _auc_format(d.zscore) + " p<" + _pval_format(d.pval)
+    //                 else
+    //                     tooltip_str = "C'=" + d.zscore.toFixed(2) + ", p<" + _pval_format(d.pval)
+    //             }
+    //             createTooltip(self.tooltip, this, tooltip_str)
+    //             hoverRowCol(header_row, this, matrix.proj_labels[d.col])
+    //         }
+    //     }(header_row, new_table);
+    //     var rowUnHoverFunc = function(header_row){
+    //         return function(d){
+    //             destroyTooltip(self.tooltip)
+    //             unhoverRowCol(header_row, this, matrix.proj_labels[d.col])
+    //         }
+    //     }(header_row, new_table);
+    //
+    //     content_row
+    //         .filter(function(d,i) { return i > 0;})
+    //         .on("mouseenter", rowHoverFunc)
+    //         .on("mouseleave", rowUnHoverFunc)
+    //
+    //     // Add text for signature names
+    //     content_row.filter(function(d,i) { return i == 0;})
+    //         .html(function(d){return '<div class="sig-row-label"><div>'+d+'</div></div>';})
+    //
+    //     // Add cluster expand/collapse behavior ONLY if more than one cluster
+    //     if (cluster_ids.length > 1) {
+    //
+    //         $(new_table).addClass('collapsible')
+    //
+    //         if (self.is_collapsed[curr_cl]){
+    //             $(new_table).addClass('collapsed')
+    //         }
+    //
+    //         $(new_table).children('tbody').children('tr:first-child').children("td:first-child")
+    //             .on("click", function() { self.clickSummaryRow(this); });
+    //     }
+    //
+    // }
+    //
+    // new_table_divs = _.sortBy(new_table_divs, d => {
+    //     return $(d).data('table-sort-val')
+    // });
+    //
+    // _.forEach(new_table_divs, new_table_div => {
+    //     clusterTableDiv.append(new_table_div);
+    // });
+    //
+    // // Apply compact styling for pcannotator
+    // if(main_vis === "pcannotator" || main_vis === "clusters" || main_vis === "tree"){
+    //     $(self.dom_node).find('table').addClass('compact')
+    // } else {
+    //     $(self.dom_node).find('table').removeClass('compact')
+    // }
+    // if(main_vis === "clusters" || main_vis === "tree"){
+    //     $(self.dom_node).find('table').addClass('first-col')
+    // } else {
+    //     $(self.dom_node).find('table').removeClass('first-col')
+    // }
+    //
+    // // Trigger existinging filter
+    // self.filterSig.trigger('input');
+}
+
+// Modules_Table.prototype.clickSummaryRow = function(d){
+//
+//     var table_id = $(d).closest('table')
+//     var cluster_id = table_id.data('cluster')
+//
+//     if (this.is_collapsed[cluster_id]){
+//         this.is_collapsed[cluster_id] = false;
+//         table_id.removeClass('collapsed')
+//     } else {
+//         this.is_collapsed[cluster_id] = true;
+//         table_id.addClass('collapsed')
+//     }
+// }
+
+
+Modules_Table.prototype.update = function(updates)
+{
+    var self = this;
+
+    // If there are no modules, don't update
+    var has_mods = get_global_status('has_mods')
+    if(!has_mods){
+        return $.when(null); // Empty promise
+    }
+    
+
+    var lcs_promise;
+    if (_.isEmpty(self.matrix)){
+
+        lcs_promise = api.modules.lcs().then(function(mat){
+                self.matrix = mat;
+                return true;
+            })
+    } else {
+        lcs_promise = false
+    }
+    /**
+    var matrix_promise;
+    if( 'main_vis' in updates || _.isEmpty(self.matrix) || 'cluster_var' in updates){
+        var main_vis = get_global_status('main_vis');
+        var cluster_var = _get_cluster_var();
+
+        var fix_col_label = true
+        if (main_vis == "clusters") {
+            matrix_promise = api.clusters.sigProjMatrix(cluster_var, false); // YANAY
+        } else if (main_vis == "tree") {
+            matrix_promise = api.tree.sigProjMatrix(false);
+        } else {
+            matrix_promise = api.pCorr.signatures();
+            fix_col_label = false
+        }
+
+        matrix_promise = matrix_promise
+            .then(function(matrix) {
+                if (fix_col_label){
+                    matrix.proj_labels[0] = "Score";
+                }
+                self.matrix = matrix;
+                return true;
+            });
+    } else {
+        matrix_promise = false
+    }
+    **/
+    return $.when(lcs_promise)
+        .then(function(lcs_update){
+            if(lcs_update){
+                self.render();
+            }
+        });
+
+}
+
+// END MODULES
 
 
 // Function that's triggered when clicking on table cell

@@ -1,0 +1,51 @@
+name: /Users/yanay/Desktop/VISION/envs
+channels:
+  - defaults
+dependencies:
+  - ca-certificates=2020.1.1=0
+  - certifi=2020.6.20=py38_0
+  - expat=2.2.9=hb1e8313_2
+  - git=2.23.0=pl526h6951d83_0
+  - krb5=1.17.1=hddcf347_0
+  - libcurl=7.69.1=h051b688_0
+  - libcxx=10.0.0=1
+  - libedit=3.1.20191231=haf1e3a3_0
+  - libffi=3.3=h0a44026_1
+  - libiconv=1.16=h1de35cc_0
+  - libssh2=1.9.0=ha12b0ac_1
+  - ncurses=6.2=h0a44026_1
+  - openssl=1.1.1g=h1de35cc_0
+  - pcre=8.44=hb1e8313_0
+  - perl=5.26.2=h4e221da_0
+  - pip=20.1.1=py38_1
+  - python=3.8.3=h26836e1_1
+  - readline=8.0=h1de35cc_0
+  - setuptools=47.3.1=py38_0
+  - sqlite=3.32.3=hffcf06c_0
+  - tk=8.6.10=hb0a8c7a_0
+  - wheel=0.34.2=py38_0
+  - xz=5.2.5=h1de35cc_0
+  - zlib=1.2.11=h1de35cc_3
+  - pip:
+    - cycler==0.10.0
+    - hotspot==0.9.0
+    - joblib==0.15.1
+    - kiwisolver==1.2.0
+    - llvmlite==0.33.0
+    - matplotlib==3.2.2
+    - numba==0.50.1
+    - numpy==1.19.0
+    - pandas==1.0.5
+    - patsy==0.5.1
+    - pyparsing==2.4.7
+    - python-dateutil==2.8.1
+    - pytz==2020.1
+    - scikit-learn==0.23.1
+    - scipy==1.5.0
+    - seaborn==0.10.1
+    - six==1.15.0
+    - statsmodels==0.11.1
+    - threadpoolctl==2.1.0
+    - tqdm==4.46.1
+prefix: /Users/yanay/Desktop/VISION/envs
+

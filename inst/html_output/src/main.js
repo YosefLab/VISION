@@ -17,6 +17,7 @@ global_status.pooled = false;
 // Is trajectory data available?
 global_status.has_tree = false;
 global_status.has_sigs = true;
+global_status.has_mods = true;
 global_status.has_lca = false;
 
 // Determine projected values
@@ -220,6 +221,7 @@ window.onload = function()
         global_status.has_tree = info.has_tree
         global_status.has_lca = info.has_lca
         global_status.has_sigs = info.has_sigs
+        global_status.has_mods = info.has_mods
         global_status.has_proteins = info.has_proteins
         global_status.has_dendrogram = info.has_dendrogram
         global_status.dendrogram = info.dendrogram

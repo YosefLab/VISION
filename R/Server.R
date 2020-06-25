@@ -48,7 +48,7 @@ signatureToJSON <- function(sig, geneImportance) {
 
 }
 
-#' Converts row of sigantures score matrix to JSON
+#' Converts row of signatures score matrix to JSON
 #' @importFrom jsonlite toJSON
 #' @param names character vector of labels for signatures
 #' @param values numeric vector for signature values
@@ -108,7 +108,7 @@ sigProjMatrixToJSON <- function(sigzscores, sigpvals, sigs) {
     return(json)
 }
 
-#' convert perason correlation coeffcients between PCs and sgnatures into a JSON object
+#' convert perason correlation coeffcients between PCs and signatures into a JSON object
 #' @param pc the pearson correlation coefficients matrix
 #' @param sigs the signatures of interest
 #' @return Subsetted pearson correlations converted to JSON
@@ -237,6 +237,13 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             res$body <- sigScoresToJSON(names, values)
             compressJSONResponse(req, res)
             return(res)
+        } else if (name %in% colnames(object@ModScores)) {
+            sigMatrix <- object@ModScores
+            values <- sigMatrix[, name]
+            names <- rownames(sigMatrix)
+            res$body <- sigScoresToJSON(names, values)
+            compressJSONResponse(req, res)
+            return(res)
         } else {
             return("Signature does not exist!")
         }
@@ -265,7 +272,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       name <- URLdecode(sig_name)
       out <- "Signature does not exist!"
       if (name %in% names(signatures)) {
-        sig <- signatures[[name]]
+          sig <- signatures[[name]]
 
           if (.hasSlot(object, "SigGeneImportance")) {
               geneImportance <- object@SigGeneImportance[[name]]
@@ -274,22 +281,49 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
           }
 
         out <- signatureToJSON(sig, geneImportance)
+      } else if (name %in% names(object@modData)) {
+          signatures <- object@modData
+          sig <- signatures[[name]]
+          
+          if (.hasSlot(object, "ModGeneImportance")) {
+            geneImportance <- object@ModGeneImportance[[name]]
+          } else {
+            geneImportance <- sig@sigDict * 0
+          }
+          
+          out <- signatureToJSON(sig, geneImportance)
       }
       res$body <- out
       return(res)
     })
+    
+    pr$handle("GET", "/Modules/LC",
+        function(req, res) {
+          lcs <- object@LocalAutocorrelation$Modules
+          out <- toJSON(lcs)
+          res$body <- out
+          return(res)
+        }
+    )
 
     pr$handle("GET", "/Signature/Expression/<sig_name>/<cluster_var>",
         function(req, res, sig_name, cluster_var) {
 
         all_names <- vapply(object@sigData, function(x) x@name, "")
+        all_names_mod <- vapply(object@modData, function(x) x@name, "")
         name <- URLdecode(sig_name)
         index <- match(name, all_names)
-        if (is.na(index)){
+        indexMod <- match(name, all_names_mod)
+        if (is.na(index) && is.na(indexMod)){
             return("Signature does not exist!")
         }
         else{
-            sig <- object@sigData[[index]]
+            if (is.na(index)) {
+                sig <- object@modData[[indexMod]]
+            } else {
+                sig <- object@sigData[[index]]
+            }
+            
             genes <- names(sig@sigDict)
             expMat <- object@exprData[genes, ]
             # transpose to aggregate
@@ -955,6 +989,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         info[["ncells"]] <- nrow(object@metaData)
 
         info[["has_sigs"]] <- length(object@sigData) > 0
+        
+        info[["has_mods"]] <- length(object@modData) > 0
 
         info[["has_proteins"]] <- hasProteinData(object)
 

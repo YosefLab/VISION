@@ -347,6 +347,16 @@ var api = (function(){
         return $.ajax(query, {dataType: "json" }).then(x => x);
 
     }
+    
+    // Modules Api
+    // the modules api uses existing signature api endpoints with only some specific extra ones
+    output.modules = {}
+    
+    output.modules.lcs = function() {
+        var query = "Modules/LC"
+        query = postProcess(query)
+        return $.ajax(query, {dataType: "json" }).then(x => x);
+    }
 
     // Session Info Api
 

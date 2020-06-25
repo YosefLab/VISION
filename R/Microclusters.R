@@ -489,7 +489,7 @@ treeCluster2 <- function(tree, reach=10) {
     
     # get the top level internal nodes
     while (T) {
-      cluster_parents <- sort(cluster_parents, decreasing=T)
+      cluster_parents <- cluster_parents[order(unlist(cluster_parents), decreasing = T)]
       remove <- as.integer(names(cluster_parents)[1])
       cluster_parents <- cluster_parents[-1]
       
