@@ -47,5 +47,24 @@ dependencies:
     - statsmodels==0.11.1
     - threadpoolctl==2.1.0
     - tqdm==4.46.1
+    - ncurses==6.2
+    - libffi==3.3
+    - libiconv==1.16
+    - krb5==1.17.1
+    - expat==2.2.9
+    - readline==8.0
+    - sqlite==3.32.3
+    - libssh2==1.9.0
+    - zlib==1.2.11
+    - openssl==1.1.1g=
+    - python==3.8.3=
+    - tk==8.6.10=
+    - libcxx==10.0.0
+    - git==2.23.0
+    - perl==5.26.2
+    - libedit==3.1.20191231
+    - xz==5.2.5
+    - libcurl==7.69.1
+    - pcre==8.44
 prefix: /Users/yanay/Desktop/VISION/envs
 
