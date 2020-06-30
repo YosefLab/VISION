@@ -1,4 +1,5 @@
 calcHotspotModules <- function(object, model="danb", tree=F, genes=1000, num_umi=NULL, min_gene_threshold=20, n_neighbors=NULL, jobs=1) {
+    use_condaenv(condaenv = "vision_hotspot", conda = "auto", required = FALSE)
     hotspot <- import("hotspot", convert=F)
     # TODO add UMI support
     if (tree) {
