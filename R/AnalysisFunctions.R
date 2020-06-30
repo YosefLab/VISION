@@ -18,7 +18,7 @@ clusterCells <- function(object, tree=FALSE) {
     } else {
         message("Using Tree to compute clusters...\n")
         # Get the MRCA matrix and convert the node indexes to depths
-        cl <- treeCluster2(object@Tree)
+        cl <- treeCluster3(object@Tree)
     }
     
     names(cl) <- paste('Cluster', seq(length(cl)))
@@ -27,7 +27,7 @@ clusterCells <- function(object, tree=FALSE) {
     if (!tree) {
       cluster_variable <- "VISION_Clusters"
     } else {
-      cluster_variable <- "VISION_Clusters (Tree)"
+      cluster_variable <- "VISION_Clusters_Tree"
     }
     
     metaData <- object@metaData

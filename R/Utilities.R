@@ -863,8 +863,8 @@ ultrametric_tree <- function(tree) {
     nodeDepths <- node.depth(tree)
     for (edgeI in seq_len(length(tree$edge[,1]))) {
       edge <- tree$edge[edgeI,]
-      me <- edge[1]
-      parent <- edge[2]
+      me <- edge[2]
+      parent <- edge[1]
       tree$edge.length[edgeI] <- nodeDepths[parent] - nodeDepths[me]
     }
     return(tree)
@@ -919,7 +919,7 @@ get_children <- function(tree, node) {
 #' @return true or false
 is_tip <- function(tree, node) {
     children <- get_children(tree, node)
-    return(length(children) <= 1 || node == children)
+    return(length(children) ==1 && node == children)
 }
 
 #' Get all the tip children of a node.
@@ -948,4 +948,45 @@ get_all_children <- function(tree, node) {
     }
     
     return(tips)
+}
+
+
+get_max_cluster_size <- function(tree, node) {
+    children <- get_children(tree, node)
+    num_children <- c()
+    for (child in children) {
+        num_children <- append(num_children, length(get_all_children(tree, child)))
+    }
+    return(max(num_children))
+}
+
+
+trivial_dist <- function(tree, tip1, tip2) {
+    depths <- node.depth(tree)
+    edges <- tree$edge
+    path1 <- c()
+    root <- find_root(tree)
+    parent <- tip1
+    while (T) {
+      parent <- edges[, 1][edges[, 2] == parent]
+      path1 <- append(path1, parent)
+      if (parent == root) {
+          break
+      }
+    }
+    
+    path2 <- c()
+    parent <- tip2
+    while (T) {
+      parent <- edges[, 1][edges[, 2] == parent]
+      path2 <- append(path2, parent)
+      if (parent == root || parent %in% path1) {
+        break
+      }
+    }
+    
+    tip1_depth_prev <- depths[path1[which(path1 == path2[length(path2)]) - 1]]
+    tip2_depth_prev <- depths[path2[length(path2)] - 1]
+    
+    return(abs(tip1_depth_prev - tip2_depth_prev))
 }

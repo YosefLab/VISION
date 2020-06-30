@@ -2390,7 +2390,6 @@ Modules_Table.prototype.render = function()
     var main_vis = get_global_status('main_vis');
 
     //var cluster_ids = _(self.clusters).values().uniq().sort(x => x).value()
-    console.log(matrix)
     var table = this.modules_table.DataTable(
         {
             'columns': [
@@ -2402,6 +2401,7 @@ Modules_Table.prototype.render = function()
             "pageLength": 10,
             "scrollY": '15vh',
             "order": [[1, "desc"]],
+            "bFilter": false,
             "buttons": {
                 dom: {
                     button: {
@@ -2417,22 +2417,25 @@ Modules_Table.prototype.render = function()
                 ]
             },
             "pagingType": "simple",
-            "dom": '<"fdr-filter">ftip'
         }
     );
     
-    
-    
-    // CURRENTLOC
+
 
     var dataSet = _.map(this.matrix, (f, i) => [f._row, f.C, f.pValue, f.FDR]);
 
 
     this.modules_table.DataTable().clear()
         .rows.add(dataSet)
-        .columns.adjust() // Needed or else column headers don't align
+         // Needed or else column headers don't align
         .draw()
         
+    
+    $('a[data-toggle="tab"]').on('shown.bs.tab', function(e){
+      table.columns.adjust();
+    });
+    
+    
     this.modules_table.on('click', "tr", function() {
         var cells = $(this).find("td")
         var module = cells.eq(0).text()

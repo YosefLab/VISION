@@ -470,8 +470,8 @@ treeCluster <- function(tree, reach=10) {
 }
 
 
-#' Performs a binary search on a depth d such that 
-#' if depth(u, v) <= d then u and v are in the same cluster
+#' Performs a bread first search to create a specific number of clusters
+#' Clusters are split based of depth
 #'
 #' @param tree object of class phylo
 #' @param reach number of clusters to attempt to generate
@@ -512,4 +512,70 @@ treeCluster2 <- function(tree, reach=10) {
     }
     
     return(cl)
+}
+
+
+#' Performs a bread first search to create a specific number of clusters
+#' Clusters are split to prioritize cluster size
+#'
+#' @param tree object of class phylo
+#' @param reach number of clusters to attempt to generate
+#' @return List of clusters, each entry being a vector of indices representing
+#' samples in the cluster.
+treeCluster3 <- function(tree, reach=10) {
+  if (reach > length(tree$tip.label)) {
+    stop("Number of clusters is too high.")
+  }
+  
+  # node_depths <- node.depth(tree)
+  root <- find_root(tree)
+  cluster_parents <- c()
+  cluster_parents[[as.name(root)]] <- get_max_cluster_size(tree, root)
+  
+  # get the top level internal nodes
+  while (T) {
+    cluster_parents <- cluster_parents[order(unlist(cluster_parents), decreasing = T)]
+    remove <- as.integer(names(cluster_parents)[1])
+    cluster_parents <- cluster_parents[-1]
+    
+    children <- get_children(tree, remove)
+    for (child in children) {
+      cluster_parents[[as.name(child)]] <- get_max_cluster_size(tree, child)
+    }
+    
+    if (length(cluster_parents) >= sqrt(length(tree$tip.label))) {
+      break
+    }
+  }
+  
+  
+  cl <- list()
+  for (cluster in seq_len(length(cluster_parents))) {
+    cellId <- as.integer(names(cluster_parents)[cluster])
+    
+    all_children <- get_all_children(tree, cellId) %>% (function(x) {return(tree$tip.label[x])})
+    cl[[cluster]] <- all_children
+  }
+  
+  while (length(cl) > reach) {
+      cs <- c()
+      for (c in cl) {
+          cs <- append(cs, length(c))
+      }
+      
+      smallest_i <- which.min(cs)
+      tip1 <- which(tree$tip.label == cl[[smallest_i]][1])
+      dists <- c()
+      for (i in 1:length(cl)) {
+          tip2 <- which(tree$tip.label == cl[[i]][1])
+          dists <- append(dists, trivial_dist(tree, tip1, tip2))
+      }
+      
+      dists[smallest_i] <- dists[smallest_i] + max(dists)
+      closest_cluster_i <- which.min(dists)
+      cl[[min(c(closest_cluster_i, smallest_i))]] <- append(cl[[smallest_i]], cl[[closest_cluster_i]])
+      cl[[max(c(closest_cluster_i, smallest_i))]] <- NULL
+  }
+  
+  return(cl)
 }

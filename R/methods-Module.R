@@ -2,7 +2,7 @@ calcHotspotModules <- function(object, model="danb", tree=F, genes=1000, num_umi
     hotspot <- import("hotspot", convert=F)
     # TODO add UMI support
     if (tree) {
-        message("Using Tree to compute knn")
+        message("Using Tree")
         ete3 <- import("ete3", convert=F)
         nwk <- write.tree(object@Tree)
         pyTree <- ete3$Tree(nwk, format = 8L)
