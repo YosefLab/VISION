@@ -1,4 +1,4 @@
-name: /Users/yanay/Desktop/VISION/envs
+name: vision_hotspot
 channels:
   - defaults
 dependencies:
