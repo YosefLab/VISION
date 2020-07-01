@@ -25,5 +25,6 @@ dependencies:
     - statsmodels==0.11.1
     - threadpoolctl==2.1.0
     - tqdm==4.46.1
+    - ete3
 prefix: /Users/yanay/Desktop/VISION/envs
 
