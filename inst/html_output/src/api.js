@@ -363,6 +363,15 @@ var api = (function(){
         query = postProcess(query)
         return $.ajax(query, {dataType: "json" }).then(x => x);
     }
+    
+    output.modules.hotspot_score = function(mod_name){
+        var query = "Modules/HotspotScore/"
+        query = query.concat(encodeURIComponent(mod_name));
+        query = postProcess(query)
+        return $.ajax(query, {dataType: "json"}).then(x => {
+            return _.fromPairs(_.zip(x['cells'], x['values']))
+        })
+    }
 
     // Session Info Api
 

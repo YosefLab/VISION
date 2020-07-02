@@ -974,7 +974,23 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             
             return(res)
         })
-
+    
+    pr$handle("GET", "/Modules/HotspotScore/<module_name>",
+          function(req, res, module_name) {
+              module_name <- URLdecode(module_name)
+              if (module_name %in% colnames(object@ModuleHotspotScores)) {
+                  names <- rownames(object@ModuleHotspotScores)
+                  values <- object@ModuleHotspotScores[[module_name]]
+                  res$body <- sigScoresToJSON(names, values)
+                  # yanay
+                  compressJSONResponse(req, res)
+                  return(res)
+              } else {
+                  return("Module not found!")
+              }
+          })
+    
+    
     pr$handle("GET", "/Clusters/<cluster_variable>/SigProjMatrix/Meta",
         function(req, res, cluster_variable) {
 

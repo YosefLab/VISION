@@ -31,31 +31,11 @@ calcHotspotModules <- function(object, model="danb", tree=F, genes=1000, num_umi
     hs_genes <- hs_results$loc[hs_results$FDR$le(0.05)]$sort_values('Z', ascending=F)$head(as.integer(genes))$index
     hs$compute_local_correlations(hs_genes, jobs=as.integer(jobs))
     hs$create_modules(min_gene_threshold=as.integer(min_gene_threshold))
-    # hs$calculate_module_scores()
+    hs_module_scores <- py_to_r(hs$calculate_module_scores())
     hs_modules <- py_to_r(hs$modules)
-    #scores <- as.matrix(py_to_r(hs$module_scores))
     
-    modules <- object@modData
-    # mod_scores <- object@ModScores
-    # 
-    # if (all(is.na(mod_scores))) {
-    #     mod_scores <- scores
-    # } else {
-    #     mod_scores <- cbind(mod_scores, scores)
-    # }
-    # 
-    # for (i in unique(c(hs_modules))) {
-    #   if (i !=-1) {
-    #     if (tree) {
-    #       name <- paste("HOTSPOT_TREE", i, sep = "_")
-    #     } else {
-    #       name <- paste("HOTSPOT", i, sep = "_")
-    #     }
-    #     colnames(mod_scores) <- append(colnames(mod_scores), name)
-    #   }
-    # }
-    # 
-
+    
+    modules <- list()
     
     for (i in unique(c(hs_modules))) {
       if (i !=-1) {
@@ -72,9 +52,11 @@ calcHotspotModules <- function(object, model="danb", tree=F, genes=1000, num_umi
       }
     }
     
+    colnames(hs_module_scores) <- names(modules)
     object@modData <- modules
     object <- calcModuleScores(object)
     object@Hotspot <- list(hs)
+    object@ModuleHotspotScores <- hs_module_scores
     object <- analyzeLocalCorrelationsModules(object, tree)
     
     if (length(object@sigData) > 0) {

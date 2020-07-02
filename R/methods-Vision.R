@@ -401,6 +401,7 @@ setMethod("Vision", signature(data = "matrixORSparse"),
             .Object@modData <- modData
             .Object@Hotspot <- hotspot
             .Object@ModuleSignatureEnrichment <- list()
+            .Object@ModuleHotspotScores = data.frame()
 
             return(.Object)
     }

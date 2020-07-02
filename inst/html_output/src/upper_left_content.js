@@ -178,9 +178,11 @@ Upper_Left_Content.prototype.update = function(updates)
       var metaTableTab = nav.find('#meta-table-tab')
       var deTableTab = nav.find('#de-table-tab')
       var genesTableTab = nav.find("#genes-table-tab")
+      var clusterDropwdown = $(this.dom_node).find("#cluster-group-select")
       var has_sigs = get_global_status('has_sigs')
       var has_mods = get_global_status('has_mods')
       var has_proteins = get_global_status('has_proteins')
+      
       if (main_vis == "cells") {
           // Hide modules, de and genes
           if(has_mods){
@@ -192,6 +194,7 @@ Upper_Left_Content.prototype.update = function(updates)
           
           // show meta
           metaTableTab.parent().show()
+          // clusterDropwdown.parent().show()
           
           if (has_sigs) {
               sigTableTab.click()
@@ -209,6 +212,7 @@ Upper_Left_Content.prototype.update = function(updates)
           
           // Hide Meta
           metaTableTab.parent().hide()
+          // clusterDropwdown.parent().hide()
           if (has_sigs) {
               sigTableTab.click()
           } else if (has_mods) {
@@ -482,12 +486,22 @@ Signature_Table.prototype.render = function()
         content_row.enter().append('td');
         content_row.exit().remove();
 
-        if (main_vis === 'pcannotator') {
+        if (main_vis === 'genes') {
             content_row
                 .filter(function(d,i) { return i > 0;})
+                .on("click", function(d){tableClickFunction_modules(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'signature')})
+
+            content_row
+                .filter(function(d,i) { return i == 1;})
                 .style('background-color', function(d){return colorScale(d.zscore);})
-                .on("click", function(d){tableClickFunction_PC(matrix.sig_labels[d.row], 'signature')})
-                .append('div');
+                .append('div')
+                .text(function(d){ return d.zscore.toPrecision ? d.zscore.toPrecision(2) : d.zscore;})
+
+            content_row
+                .filter(function(d,i) { return i > 1;})
+                .style('background-color', function(d){return colorScaleCluster(d.zscore);})
+                .append('div')
+                .text(function(d){ return d.pval < 0.05 ? '*' : '';})
 
         } else {
             content_row
@@ -2494,277 +2508,13 @@ Modules_Table.prototype.render = function()
         set_global_status({
             'plotted_item_type': 'signature',
             'plotted_item': module,
+            "enrichment": true,
+            "enrichment_module": module
         })
     });
     
-
-    // // If the filtering is enabled, we're just going to put everything into one cluster
-    // if (self.is_filtering){
-    //     cluster_ids = [1]
-    // }
-    //
-    // // Create the Header row
-    // var header_row = $(self.dom_node).children(".sig-tables-header").find(".proj-row");
-    // header_row.find("th:not(:first-child)").remove()
-    // _.each(matrix.proj_labels, function(proj_label){
-    //     var new_cell = $("<th>")
-    //     var new_item = $("<div>")
-    //     new_item.html("<div>" + proj_label + "</div>")
-    //     new_cell.on("click", function() {
-    //         var col_name = $(this).text()
-    //         self.sorted_column = col_name
-    //         self.render()
-    //     });
-    //     new_cell.append(new_item)
-    //     header_row.append(new_cell)
-    // });
-    //
-    // // Add padding for scrollbar width of table below it
-    // $(self.dom_node).children(".sig-tables-header")
-    //     .css("padding-right", detect_browser_scrollbar_width() + "px")
-    //
-    // var clusterTableDiv = $(self.dom_node).children('.sig-tables-wrapper').first()
-    // var new_table_divs = []
-    //
-    // // Remove old tables
-    // clusterTableDiv.children('.sig-table-div').remove()
-    //
-    // var curr_cl;
-    // for (var i = 0; i < cluster_ids.length; i++) {
-    //     curr_cl = cluster_ids[i];
-    //
-    //     if (!(curr_cl in self.is_collapsed)){
-    //         self.is_collapsed[curr_cl] = true;
-    //     }
-    //
-    //     // Create new table and add to table_div
-    //     var new_table_div = document.createElement("div");
-    //     new_table_div.setAttribute("class", "sig-table-div");
-    //
-    //     var new_table = document.createElement("table");
-    //     new_table.setAttribute("id", "table"+ curr_cl);
-    //     new_table.setAttribute("class", "sig-table");
-    //     $(new_table).data("cluster", curr_cl)
-    //
-    //     var thead = document.createElement("thead");
-    //
-    //     var tbody = document.createElement("tbody");
-    //
-    //     new_table.appendChild(thead);
-    //     new_table.appendChild(tbody);
-    //
-    //
-    //     new_table_div.appendChild(new_table);
-    //     new_table_divs.push(new_table_div);
-    //
-    //     if (typeof(matrix.sig_labels) == "string") {
-    //         matrix.sig_labels = [matrix.sig_labels];
-    //     }
-    //
-    //     // Format cell data for better d3 binding
-    //     var sig_labels = matrix.sig_labels.filter(
-    //         function(x) { return self.is_filtering || self.clusters[x] == curr_cl; }
-    //     );
-    //
-    //     var zscores = []; // rows of z-scores
-    //     var pvals = []; // rows of p-values
-    //     var sig_indices = [] // signature index corresponding to each row
-    //
-    //     for (var ind = 0; ind < sig_labels.length; ind++) {
-    //         var sig = sig_labels[ind];
-    //         var sig_index = matrix.sig_labels.indexOf(sig)
-    //
-    //         pvals.push(matrix.pvals[sig_index]);
-    //         zscores.push(matrix.zscores[sig_index]);
-    //         sig_indices.push(sig_index);
-    //     }
-    //
-    //     var formatted_data_matrix = _.zip(sig_indices, zscores, pvals)
-    //         .map(x => {
-    //             var sig_index = x[0]
-    //             var zscores_row = x[1]
-    //             var pvals_row = x[2]
-    //             return _.zip(zscores_row, pvals_row).map((x, j)  => {
-    //                 return {
-    //                     "row": sig_index, "col": j,
-    //                     "zscore": x[0], "pval": x[1]
-    //                 }
-    //             })
-    //         })
-    //
-    //     var formatted_data_w_row_labels = d3.zip(sig_labels, formatted_data_matrix);
-    //
-    //     // Sort data if necessary
-    //
-    //     var sort_col = matrix.proj_labels.indexOf(self.sorted_column);
-    //     if(sort_col > -1){
-    //         var sortFun = function(a,b){
-    //             return b[1][sort_col].zscore - a[1][sort_col].zscore; // Descending order
-    //         };
-    //         formatted_data_w_row_labels.sort(sortFun);
-    //     }
-    //
-    //     $(new_table_div).data('table-sort-val', 0)
-    //     if (cluster_ids.length > 1) {
-    //         // Pull out the cluster leader and put it first
-    //
-    //         var row_vals;
-    //         if (main_vis === "pcannotator") {
-    //             row_vals = _.map(formatted_data_w_row_labels, x => {
-    //                 return _(x[1]).map(y => y.pval).sum()
-    //             })
-    //         } else {
-    //             row_vals = _.map(formatted_data_w_row_labels, x => {
-    //                 return (x[1][0].zscore*-1) // sort by zscore (geary-c actually)
-    //             })
-    //         }
-    //
-    //         var leader_row_i = row_vals.indexOf(_.min(row_vals))
-    //         var leader_row = formatted_data_w_row_labels[leader_row_i];
-    //         formatted_data_w_row_labels.splice(leader_row_i, 1);
-    //         formatted_data_w_row_labels.splice(0, 0, leader_row);
-    //
-    //         if (sort_col > -1) {
-    //             $(new_table_div).data('table-sort-val', leader_row[1][sort_col].zscore*-1)
-    //         }
-    //     }
-    //
-    //     if (main_vis == "pcannotator") {
-    //         var colorScale = d3.scale.linear()
-    //             .domain([-.5,0,.5])
-    //             .range(["steelblue", "white", "lightcoral"])
-    //             .clamp(true);
-    //     } else {
-    //         var colorScale = d3.scale.linear()
-    //             .domain([0,.5,1])
-    //             .range(["steelblue","white", "lightcoral"])
-    //             .clamp(true);
-    //     }
-    //     var colorScaleCluster = d3.scale.linear()
-    //         .domain([0,0.5,1])
-    //         .range(["steelblue","white", "lightcoral"])
-    //         .clamp(true);
-    //
-    //     var content_rows = d3.select(new_table).select('tbody').selectAll('tr')
-    //         .data(formatted_data_w_row_labels);
-    //     content_rows.enter().append('tr');
-    //     content_rows.exit().remove();
-    //
-    //     var content_row = content_rows.selectAll("td")
-    //         .data(function(d){return [d[0]].concat(d[1]);})
-    //
-    //     content_row.enter().append('td');
-    //     content_row.exit().remove();
-    //
-    //     if (main_vis === 'pcannotator') {
-    //         content_row
-    //             .filter(function(d,i) { return i > 0;})
-    //             .style('background-color', function(d){return colorScale(d.zscore);})
-    //             .on("click", function(d){tableClickFunction_PC(matrix.sig_labels[d.row], 'signature')})
-    //             .append('div');
-    //
-    //     } else {
-    //         content_row
-    //             .filter(function(d,i) { return i > 0;})
-    //             .on("click", function(d){tableClickFunction_clusters(matrix.sig_labels[d.row], 'signature')})
-    //
-    //         content_row
-    //             .filter(function(d,i) { return i == 1;})
-    //             .style('background-color', function(d){return colorScale(d.zscore);})
-    //             .append('div')
-    //             .text(function(d){ return d.zscore.toPrecision ? d.zscore.toPrecision(2) : d.zscore;})
-    //
-    //         content_row
-    //             .filter(function(d,i) { return i > 1;})
-    //             .style('background-color', function(d){return colorScaleCluster(d.zscore);})
-    //             .append('div')
-    //             .text(function(d){ return d.pval < 0.05 ? '*' : '';})
-    //     }
-    //
-    //     // Hover actions
-    //     var rowHoverFunc = function(header_row){
-    //         return function(d, i){
-    //             var tooltip_str;
-    //             if(main_vis === 'pcannotator'){
-    //                 tooltip_str = "corr = " + d.zscore.toFixed(2)
-    //             } else {
-    //                 if(main_vis === 'clusters' && i > 0)
-    //                     tooltip_str = "AUC=" + _auc_format(d.zscore) + " p<" + _pval_format(d.pval)
-    //                 else
-    //                     tooltip_str = "C'=" + d.zscore.toFixed(2) + ", p<" + _pval_format(d.pval)
-    //             }
-    //             createTooltip(self.tooltip, this, tooltip_str)
-    //             hoverRowCol(header_row, this, matrix.proj_labels[d.col])
-    //         }
-    //     }(header_row, new_table);
-    //     var rowUnHoverFunc = function(header_row){
-    //         return function(d){
-    //             destroyTooltip(self.tooltip)
-    //             unhoverRowCol(header_row, this, matrix.proj_labels[d.col])
-    //         }
-    //     }(header_row, new_table);
-    //
-    //     content_row
-    //         .filter(function(d,i) { return i > 0;})
-    //         .on("mouseenter", rowHoverFunc)
-    //         .on("mouseleave", rowUnHoverFunc)
-    //
-    //     // Add text for signature names
-    //     content_row.filter(function(d,i) { return i == 0;})
-    //         .html(function(d){return '<div class="sig-row-label"><div>'+d+'</div></div>';})
-    //
-    //     // Add cluster expand/collapse behavior ONLY if more than one cluster
-    //     if (cluster_ids.length > 1) {
-    //
-    //         $(new_table).addClass('collapsible')
-    //
-    //         if (self.is_collapsed[curr_cl]){
-    //             $(new_table).addClass('collapsed')
-    //         }
-    //
-    //         $(new_table).children('tbody').children('tr:first-child').children("td:first-child")
-    //             .on("click", function() { self.clickSummaryRow(this); });
-    //     }
-    //
-    // }
-    //
-    // new_table_divs = _.sortBy(new_table_divs, d => {
-    //     return $(d).data('table-sort-val')
-    // });
-    //
-    // _.forEach(new_table_divs, new_table_div => {
-    //     clusterTableDiv.append(new_table_div);
-    // });
-    //
-    // // Apply compact styling for pcannotator
-    // if(main_vis === "pcannotator" || main_vis === "clusters" || main_vis === "tree"){
-    //     $(self.dom_node).find('table').addClass('compact')
-    // } else {
-    //     $(self.dom_node).find('table').removeClass('compact')
-    // }
-    // if(main_vis === "clusters" || main_vis === "tree"){
-    //     $(self.dom_node).find('table').addClass('first-col')
-    // } else {
-    //     $(self.dom_node).find('table').removeClass('first-col')
-    // }
-    //
-    // // Trigger existinging filter
-    // self.filterSig.trigger('input');
 }
 
-// Modules_Table.prototype.clickSummaryRow = function(d){
-//
-//     var table_id = $(d).closest('table')
-//     var cluster_id = table_id.data('cluster')
-//
-//     if (this.is_collapsed[cluster_id]){
-//         this.is_collapsed[cluster_id] = false;
-//         table_id.removeClass('collapsed')
-//     } else {
-//         this.is_collapsed[cluster_id] = true;
-//         table_id.addClass('collapsed')
-//     }
-// }
 
 
 Modules_Table.prototype.update = function(updates)
@@ -2843,6 +2593,7 @@ function tableClickFunction_PC(row_key, item_type)
 
     update['plotted_item_type'] = item_type;
     update['plotted_item'] = row_key;
+    update['enrichment'] = false;
 
     set_global_status(update);
 }
@@ -2860,6 +2611,19 @@ function tableClickFunction_clusters(row_key, item_type)
     }
 
     update['plotted_item_type'] = item_type;
+    update['plotted_item'] = row_key;
+    update['enrichment'] = false;
+
+    set_global_status(update);
+}
+
+function tableClickFunction_modules(row_key, col_key, item_type)
+{
+    var update = {}
+
+    update['plotted_item_type'] = item_type;
+    update['enrichment'] = true;
+    update['enrichment_module'] = col_key;
     update['plotted_item'] = row_key;
 
     set_global_status(update);

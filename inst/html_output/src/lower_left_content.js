@@ -205,7 +205,9 @@ Values_Plot.prototype.update = function(updates)
         'plotted_item' in updates ||
         'plotted_item_type' in updates ||
         'selected_cell' in updates ||
-        'selection_type' in updates
+        'selection_type' in updates ||
+        'enrichment' in updates ||
+        'enrichment_module' in updates
     )){
         return;
     }
@@ -228,9 +230,10 @@ Values_Plot.prototype.update = function(updates)
 
 Values_Plot.prototype.plot = function()
 {
+
     var plotted_values_object = get_global_data('plotted_values')
     var logScale = $(this.logCheck).is(':checked')
-
+    
     if(get_global_status('selection_type') === 'cells' ||
         get_global_status('selection_type') === 'pools'){
 
@@ -238,10 +241,34 @@ Values_Plot.prototype.plot = function()
         var selection_name = get_global_status('selection_name')
         var selected_values = _.values(_.pick(plotted_values_object, selected_cells))
         var remainder_values = _.values(_.omit(plotted_values_object, selected_cells))
-        drawDistChartSelection(this.chart, selected_values, remainder_values, selection_name, logScale)
+        
+        
+        if (get_global_status("enrichment")) {
+            //drawDistChartSelection(this.chart, selected_values, remainder_values, selection_name, logScale)
+            var y = get_global_data("extra_plotted_values")
+            var mapped_y = _.values(y)
+            var plotted_values = _.values(plotted_values_object)
+            
+            var cell_names = _.keys(y)
+            var selection_index = selected_cells.map(x => cell_names.indexOf(x))
+            
+            drawDistChart(this.chart, plotted_values, logScale, mapped_y, selection_index, cellNames=cell_names)
+        } else {
+            drawDistChartSelection(this.chart, selected_values, remainder_values, selection_name, logScale)
+        }
     } else {
         var plotted_values = _.values(plotted_values_object)
-        drawDistChart(this.chart, plotted_values, logScale)
+        
+        
+        if (get_global_status("enrichment")) {
+            // drawDistChart(this.chart, plotted_values, logScale)
+            var y = get_global_data("extra_plotted_values")
+            var mapped_y = _.values(y)
+            var selection_index = 
+            drawDistChart(this.chart, plotted_values, logScale, mapped_y, null, cellNames=_.keys(y))
+        } else {
+            drawDistChart(this.chart, plotted_values, logScale)
+        }
     }
 
     this.needs_plot = false
@@ -713,7 +740,7 @@ function _formatNum(value){
     }
 }
 
-function drawDistChart(node, values, logScale) {
+function drawDistChart(node, values, logScale, y=null, selectedCells=null, cellNames=null) {
 
     var isFactor = (typeof(values[0]) === "string") &&
                    (values[0] !== "NA")
@@ -721,19 +748,41 @@ function drawDistChart(node, values, logScale) {
     var data = []
 
     if (!isFactor) {
-        var binmin = _.min(values)
-        var binmax = _.max(values) + 1e-4 // end is not inclusive so need buffer
-
-        data.push({
-            type: 'histogram',
-            x: values,
-            autobinx: false,
-            xbins: {
-                start: binmin,
-                end: binmax,
-                size: (binmax-binmin)/40,
-            },
-        })
+        if (y == null) {
+            var binmin = _.min(values)
+            var binmax = _.max(values) + 1e-4 // end is not inclusive so need buffer
+    
+            data.push({
+                type: 'histogram',
+                x: values,
+                autobinx: false,
+                xbins: {
+                    start: binmin,
+                    end: binmax,
+                    size: (binmax-binmin)/40,
+                },
+            })
+          } else {
+              if (selectedCells != null) {
+                  data.push({
+                      type: 'scatter',
+                      x: values,
+                      y: y,
+                      text:cellNames,
+                      selectedpoints:selectedCells,
+                      mode: 'markers',
+                  })
+              } else {
+                  data.push({
+                      type: 'scatter',
+                      x: values,
+                      y: y,
+                      text:cellNames,
+                      mode: 'markers',
+                  })
+              }
+              
+          }
     } else {
         var valcounts = _.countBy(values)
         var pairs = _.toPairs(valcounts)
@@ -744,27 +793,62 @@ function drawDistChart(node, values, logScale) {
             y: _.map(pairs, x => x[1]),
         })
     }
-    var layout = {
-        margin: {
-            l: 50,
-            r: 50,
-            t: 30,
-            b: 60,
-        },
-        bargap: .1,
-        dragmode: 'select',
-        selectdirection: 'h',
-        yaxis: {
-            type: logScale ? 'log': 'linear',
-            nticks: 6,
-            tickmode: 'auto',
-        }
+    
+    if (y == null) {
+        var layout = {
+              margin: {
+                  l: 50,
+                  r: 50,
+                  t: 30,
+                  b: 60,
+              },
+              bargap: .1,
+              dragmode: 'select',
+              yaxis: {
+                  type: logScale ? 'log': 'linear',
+                  nticks: 6,
+                  tickmode: 'auto',
+              }
+          }
+          var options = {
+              'displaylogo': false,
+              'displayModeBar': false,
+              'modeBarButtonsToRemove': ['sendDataToCloud', 'hoverCompareCartesian', 'toggleSpikelines'],
+          }
+    } else {
+        var yLabel = get_global_status("enrichment_module") + " Hotspot Scores";
+        var xLabel = get_global_status("plotted_item") + " Signature Scores";
+        var layout = {
+              margin: {
+                  l: 50,
+                  r: 50,
+                  t: 30,
+                  b: 60,
+              },
+              yaxis: {
+                  type: logScale ? 'log': 'linear',
+                  nticks: 6,
+                  tickmode: 'auto',
+                  title: {"text": yLabel}
+              }, 
+              xaxis: {
+                  type: logScale ? 'log': 'linear',
+                  nticks: 6,
+                  tickmode: 'auto',
+                  title: {"text": xLabel}
+              }
+          }
+          
+
+          var options = {
+              'displaylogo': false,
+              'displayModeBar': true,
+              'modeBarButtonsToRemove': ['sendDataToCloud', 'hoverCompareCartesian', 'toggleSpikelines'],
+          }
+          
+          
     }
-    var options = {
-        'displaylogo': false,
-        'displayModeBar': false,
-        'modeBarButtonsToRemove': ['sendDataToCloud', 'hoverCompareCartesian', 'toggleSpikelines'],
-    }
+    
 
     Plotly.newPlot(node, data, layout, options)
 
@@ -774,9 +858,10 @@ function drawDistChart(node, values, logScale) {
         if (eventData !== undefined) {
             var values = get_global_data('plotted_values')
             var selected = _.map(eventData.points, p => p.x)
+            
             var subset;
 
-            if(typeof(selected[0]) === 'string'){
+            if(typeof(selected[0]) === 'string' || y != null){
                 var select_map = _.keyBy(selected)
                 subset = _.pickBy(values, v => v in select_map)
             } else {
@@ -795,6 +880,7 @@ function drawDistChart(node, values, logScale) {
             detail: {cells: cellIds}
         })
         window.dispatchEvent(event);
+        console.log(cellIds)
     });
 }
 
