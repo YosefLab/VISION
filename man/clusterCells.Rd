@@ -4,7 +4,7 @@
 \alias{clusterCells}
 \title{Creates clustering of the cells}
 \usage{
-clusterCells(object)
+clusterCells(object, tree = FALSE)
 }
 \arguments{
 \item{object}{the VISION object for which to cluster the cells}

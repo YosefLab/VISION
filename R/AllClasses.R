@@ -5,10 +5,13 @@
 # scores, distance matrices, and anything else, is computed
 # on the different types of data.
 
+
 setClassUnion("numericORNULL", members = c("numeric", "NULL"))
 setClassUnion("matrixORSparse", members = c("matrix", "dgCMatrix"))
 setClassUnion("matrixORNULL", members = c("matrix", "NULL"))
 setClassUnion("dataframeORNULL", members = c("data.frame", "NULL"))
+# setClassUnion("treeorNull", members=c("phylo", "NULL"))
+# setClassUnion("pythonorNull", members = c("python.builtin.object", "NULL"))
 
 Cluster <- setClass("Cluster",
     slots = c(
@@ -116,6 +119,8 @@ Vision <- setClass("Vision",
         LatentSpace = "matrix",
         LatentTrajectory = "Trajectory",
         Tree = "phylo",
+        Hotspot = "list",
+        ModuleSignatureEnrichment = "list",
         Viewer = "list",
         params = "list",
         version = "numeric"
@@ -141,6 +146,8 @@ Vision <- setClass("Vision",
         LatentSpace = matrix(NA, 1, 1),
         LatentTrajectory = NULL,
         Tree = NULL,
+        Hotspot = list(),
+        ModuleSignatureEnrichment = list(),
         Viewer = list(),
         params = list(),
         version = 1.2

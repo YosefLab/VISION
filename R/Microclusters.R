@@ -470,8 +470,8 @@ treeCluster <- function(tree, reach=10) {
 }
 
 
-#' Performs a bread first search to create a specific number of clusters
-#' Clusters are split based of depth
+#' Performs a breadth first search to create a specific number of clusters
+#' Clusters are split based on depth
 #'
 #' @param tree object of class phylo
 #' @param reach number of clusters to attempt to generate

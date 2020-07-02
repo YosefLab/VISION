@@ -4,8 +4,7 @@
 \alias{calcSignatureScores}
 \title{calculate signature scores}
 \usage{
-calcSignatureScores(object, sig_norm_method = NULL,
-  sig_gene_importance = TRUE)
+calcSignatureScores(object, sig_norm_method = NULL, sig_gene_importance = TRUE)
 }
 \arguments{
 \item{object}{the VISION object}

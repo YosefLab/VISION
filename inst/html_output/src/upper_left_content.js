@@ -169,7 +169,55 @@ Upper_Left_Content.prototype.update = function(updates)
     // Updates passed to children components
 
     var child_promises = []
-
+    if ('main_vis' in updates) {
+      // Yanay
+      var nav = $(this.dom_node).find('.section-nav')
+      var main_vis = get_global_status('main_vis');
+      var sigTableTab = nav.find('#sig-table-tab')
+      var modTableTab = nav.find('#modules-table-tab')
+      var metaTableTab = nav.find('#meta-table-tab')
+      var deTableTab = nav.find('#de-table-tab')
+      var genesTableTab = nav.find("#genes-table-tab")
+      var has_sigs = get_global_status('has_sigs')
+      var has_mods = get_global_status('has_mods')
+      var has_proteins = get_global_status('has_proteins')
+      if (main_vis == "cells") {
+          // Hide modules, de and genes
+          if(has_mods){
+              modTableTab.parent().hide()
+          }
+          
+          deTableTab.parent().hide()
+          genesTableTab.parent().hide()
+          
+          // show meta
+          metaTableTab.parent().show()
+          
+          if (has_sigs) {
+              sigTableTab.click()
+          } else {
+              metaTableTab.click()
+          }
+      } else {
+          // Show modules, genes and DE
+          if(has_mods){
+              modTableTab.parent().show()
+          }
+          
+          deTableTab.parent().show()
+          genesTableTab.parent().show()
+          
+          // Hide Meta
+          metaTableTab.parent().hide()
+          if (has_sigs) {
+              sigTableTab.click()
+          } else if (has_mods) {
+              modTableTab.click()
+          } else {
+              genesTableTab.click()
+          }
+      }
+    }
     _.each(this.children, function(child){
         child_promises.push(child.update(updates))
     });
@@ -463,10 +511,10 @@ Signature_Table.prototype.render = function()
         var rowHoverFunc = function(header_row){
             return function(d, i){
                 var tooltip_str;
-                if(main_vis === 'pcannotator'){
-                    tooltip_str = "corr = " + d.zscore.toFixed(2)
+                if(main_vis === 'genes'){
+                    tooltip_str = "enrichment = " + d.zscore.toFixed(2) + " p<" + _pval_format(d.pval)
                 } else {
-                    if(main_vis === 'clusters' && i > 0)
+                    if(main_vis === 'cells' && i > 0)
                         tooltip_str = "AUC=" + _auc_format(d.zscore) + " p<" + _pval_format(d.pval)
                     else
                         tooltip_str = "C'=" + d.zscore.toFixed(2) + ", p<" + _pval_format(d.pval)
@@ -515,12 +563,12 @@ Signature_Table.prototype.render = function()
     });
 
     // Apply compact styling for pcannotator
-    if(main_vis === "pcannotator" || main_vis === "clusters" || main_vis === "tree"){
+    if(main_vis === "genes" || main_vis === "cells" || main_vis === "tree"){
         $(self.dom_node).find('table').addClass('compact')
     } else {
         $(self.dom_node).find('table').removeClass('compact')
     }
-    if(main_vis === "clusters" || main_vis === "tree"){
+    if(main_vis === "cells" || main_vis === "tree"){
         $(self.dom_node).find('table').addClass('first-col')
     } else {
         $(self.dom_node).find('table').removeClass('first-col')
@@ -573,8 +621,11 @@ Signature_Table.prototype.update = function(updates)
         var cluster_var = _get_cluster_var();
 
         var fix_col_label = true
-        if (main_vis == "clusters") {
+        if (main_vis == "cells" || main_vis == "genes" && !get_global_status('has_mods')) {
             matrix_promise = api.clusters.sigProjMatrix(cluster_var, false);
+        } else if (main_vis == "genes") {
+            matrix_promise = api.modules.enrichment();
+            fix_col_label = false
         } else if (main_vis == "tree") {
             matrix_promise = api.tree.sigProjMatrix(false);
         } else {
@@ -786,7 +837,7 @@ Protein_Table.prototype.render = function()
             // Pull out the cluster leader and put it first
 
             var row_vals;
-            if (main_vis === "pcannotator") {
+            if (main_vis === "genes") {
                 row_vals = _.map(formatted_data_w_row_labels, x => {
                     return _(x[1]).map(y => y.pval).sum()
                 })
@@ -861,10 +912,10 @@ Protein_Table.prototype.render = function()
         var rowHoverFunc = function(header_row){
             return function(d, i){
                 var tooltip_str;
-                if(main_vis === 'pcannotator'){
-                    tooltip_str = "corr = " + d.zscore.toFixed(2)
+                if(main_vis === 'genes'){
+                    tooltip_str = "Enrichment = " + d.zscore.toFixed(2) + " p<" + _pval_format(d.pval)
                 } else {
-                    if(main_vis === 'clusters' && i > 0)
+                    if(main_vis === 'cells' && i > 0)
                         tooltip_str = "AUC=" + _auc_format(d.zscore) + " p<" + _pval_format(d.pval)
                     else
                         tooltip_str = "C'=" + d.zscore.toFixed(2)
@@ -913,12 +964,12 @@ Protein_Table.prototype.render = function()
     });
 
     // Apply compact styling for pcannotator
-    if(main_vis === "pcannotator" || main_vis === "clusters" || main_vis === "tree"){
+    if(main_vis === "pcannotator" || main_vis === "cells" || main_vis === "tree"){
         $(self.dom_node).find('table').addClass('compact')
     } else {
         $(self.dom_node).find('table').removeClass('compact')
     }
-    if(main_vis === "clusters" || main_vis === "tree"){
+    if(main_vis === "cells" || main_vis === "tree"){
         $(self.dom_node).find('table').addClass('first-col')
     } else {
         $(self.dom_node).find('table').removeClass('first-col')
@@ -971,7 +1022,7 @@ Protein_Table.prototype.update = function(updates)
         var cluster_var = _get_cluster_var()
 
         var fix_col_label = true
-        if (main_vis == "clusters") {
+        if (main_vis == "cells") {
             matrix_promise = api.clusters.proteinMatrix(cluster_var);
         } else if (main_vis == "tree") {
             matrix_promise = api.tree.proteinMatrix();
@@ -1079,7 +1130,7 @@ Meta_Table.prototype.update = function(updates)
         var cluster_var = _get_cluster_var()
 
         var fix_col_label = true
-        if (main_vis == "clusters") {
+        if (main_vis == "cells") {
             matrix_promise = api.clusters.sigProjMatrix(cluster_var, true);
         } else if (main_vis === "tree") {
             matrix_promise = api.tree.sigProjMatrix(true);
@@ -1362,12 +1413,12 @@ Meta_Table.prototype.render = function()
 
 
     // Apply compact styling for pcannotator
-    if(main_vis === "pcannotator" || main_vis === "clusters" || main_vis === "tree"){
+    if(main_vis === "pcannotator" || main_vis === "cells" || main_vis === "tree"){
         $(self.dom_node).find('table').addClass('compact')
     } else {
         $(self.dom_node).find('table').removeClass('compact')
     }
-    if(main_vis === "clusters" || main_vis === "tree"){
+    if(main_vis === "cells" || main_vis === "tree"){
         $(self.dom_node).find('table').addClass('first-col')
     } else {
         $(self.dom_node).find('table').removeClass('first-col')
@@ -2745,7 +2796,7 @@ Modules_Table.prototype.update = function(updates)
 
         var fix_col_label = true
         if (main_vis == "clusters") {
-            matrix_promise = api.clusters.sigProjMatrix(cluster_var, false); // YANAY
+            matrix_promise = api.clusters.sigProjMatrix(cluster_var, false); 
         } else if (main_vis == "tree") {
             matrix_promise = api.tree.sigProjMatrix(false);
         } else {

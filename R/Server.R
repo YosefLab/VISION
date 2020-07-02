@@ -231,6 +231,12 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         sigMatrix <- object@SigScores
         name <- URLdecode(sig_name)
+        
+        # For modules we've split up the up/down groups in signatures
+        upDown <- grepl("_UP$|_DOWN$", name, fixed=F)
+        if (upDown) {
+          name_subbed <- gsub("_UP$|_DOWN$", "", name)
+        }
         if (name %in% colnames(sigMatrix)) {
             values <- sigMatrix[, name]
             names <- rownames(sigMatrix)
@@ -239,6 +245,12 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             return(res)
         } else if (name %in% colnames(object@ModScores)) {
             sigMatrix <- object@ModScores
+            values <- sigMatrix[, name]
+            names <- rownames(sigMatrix)
+            res$body <- sigScoresToJSON(names, values)
+            compressJSONResponse(req, res)
+            return(res)
+        } else if (upDown && name_subbed %in% colnames(sigMatrix)) {
             values <- sigMatrix[, name]
             names <- rownames(sigMatrix)
             res$body <- sigScoresToJSON(names, values)
@@ -254,12 +266,23 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
       metaData <- object@metaData
       name <- URLdecode(sig_name)
+      
+      upDown <- grepl("_UP$|_DOWN$", name, fixed=F)
+      if (upDown) {
+        name_subbed <- gsub("_UP$|_DOWN$", "", name)
+      }
+      
       if (name %in% colnames(metaData)) {
           names <- rownames(metaData)
           values <- metaData[[name]]
           res$body <- sigScoresToJSON(names, values)
           compressJSONResponse(req, res)
           return(res)
+      } else if (upDown && name_subbed %in% colnames(metaData)) {
+          names <- rownames(metaData)
+          values <- metaData[[name_subbed]]
+          res$body <- sigScoresToJSON(names, values)
+          compressJSONResponse(req, res)
       } else {
           return("Signature does not exist!")
       }
@@ -271,6 +294,12 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       signatures <- object@sigData
       name <- URLdecode(sig_name)
       out <- "Signature does not exist!"
+      
+      upDown <- grepl("_UP$|_DOWN$", name, fixed=F)
+      if (upDown) {
+        name_subbed <- gsub("_UP$|_DOWN$", "", name)
+      }
+      
       if (name %in% names(signatures)) {
           sig <- signatures[[name]]
 
@@ -280,6 +309,26 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
               geneImportance <- sig@sigDict * 0
           }
 
+        out <- signatureToJSON(sig, geneImportance)
+      } else if (upDown && name_subbed %in% names(signatures)) {
+        sig <- signatures[[name_subbed]]
+        
+        directed <- sig@sigDict
+        if (grepl("_UP$", name, fixed=F)) {
+            genes <- names(directed[directed == 1])
+        } else {
+            genes <- names(directed[directed == -1])
+        }
+        directed <- directed[genes]
+        sig@sigDict <- directed
+        sig@name <- name
+        
+        if (.hasSlot(object, "SigGeneImportance")) {
+          geneImportance <- object@SigGeneImportance[[name_subbed]][genes]
+        } else {
+          geneImportance <- sig@sigDict[genes] * 0
+        }
+        print("here 2")
         out <- signatureToJSON(sig, geneImportance)
       } else if (name %in% names(object@modData)) {
           signatures <- object@modData
@@ -311,17 +360,36 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         all_names <- vapply(object@sigData, function(x) x@name, "")
         all_names_mod <- vapply(object@modData, function(x) x@name, "")
+        
         name <- URLdecode(sig_name)
         index <- match(name, all_names)
         indexMod <- match(name, all_names_mod)
-        if (is.na(index) && is.na(indexMod)){
+        
+        upDown <- grepl("_UP$|_DOWN$", name, fixed=F)
+        if (upDown) {
+          name_subbed <- gsub("_UP$|_DOWN$", "", name)
+          indexSubbed <- match(name_subbed, all_names)
+        }
+        
+        if (is.na(index) && is.na(indexMod) && upDown && is.na(indexSubbed)){
             return("Signature does not exist!")
         }
         else{
-            if (is.na(index)) {
+            if (is.na(index) && !upDown) {
                 sig <- object@modData[[indexMod]]
-            } else {
+            } else if (!upDown) {
                 sig <- object@sigData[[index]]
+            } else {
+                sig <- object@sigData[[indexSubbed]]
+                directed <- sig@sigDict
+                if (grepl("_UP$", name, fixed=F)) {
+                  genes <- names(directed[directed == 1])
+                } else {
+                  genes <- names(directed[directed == -1])
+                }
+                sig@sigDict <- sig@sigDict[genes]
+                sig@name <- name
+                print("here 1")
             }
             
             genes <- names(sig@sigDict)
@@ -896,6 +964,16 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         res$body <- sigProjMatrixToJSON(stat, pvals, sigs = rownames(stat))
         return(res)
     })
+    
+    pr$handle("GET", "/Modules/Enrichment",
+        function(req, res) {
+            pvals <- object@ModuleSignatureEnrichment$p_vals
+            stat <- object@ModuleSignatureEnrichment$statistics
+            
+            res$body <- sigProjMatrixToJSON(stat, pvals, sigs = rownames(stat))
+            
+            return(res)
+        })
 
     pr$handle("GET", "/Clusters/<cluster_variable>/SigProjMatrix/Meta",
         function(req, res, cluster_variable) {

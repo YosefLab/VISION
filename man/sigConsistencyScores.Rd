@@ -4,8 +4,7 @@
 \alias{sigConsistencyScores}
 \title{Evaluates the significance of each signature in each cluster}
 \usage{
-sigConsistencyScores(weights, sigScoresData, metaData, randomSigData,
-  normExpr)
+sigConsistencyScores(weights, sigScoresData, metaData, randomSigData, normExpr)
 }
 \arguments{
 \item{weights}{output of computeKNNWeights}

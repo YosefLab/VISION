@@ -74,6 +74,15 @@ calcHotspotModules <- function(object, model="danb", tree=F, genes=1000, num_umi
     
     object@modData <- modules
     object <- calcModuleScores(object)
+    object@Hotspot <- list(hs)
+    object <- analyzeLocalCorrelationsModules(object, tree)
+    
+    if (length(object@sigData) > 0) {
+        # Have signatures, let's compute the enrichment
+        message("Computing Module-Signature Enrichment")
+        object@ModuleSignatureEnrichment <- calc_mod_sig_enrichment(object)
+    }
+    
     
     return(object)
 }
@@ -200,6 +209,83 @@ analyzeLocalCorrelationsModules <- function(object, tree=FALSE) {
   object@LocalAutocorrelation <- LocalAutocorrelation
   
   return(object)
+}
+
+calc_mod_sig_enrichment <- function(object) {
+    modules <- object@modData
+    original_signatures <- object@sigData
+    signatures <- list()
+    sig_names <- list()
+    for (signature in original_signatures) {
+        directional <- all(c(1, -1) %in% signature@sigDict)
+        if (directional) {
+          up <- names(which(signature@sigDict == 1))
+          down <- names(which(signature@sigDict == -1))
+          
+          up_name <- paste(signature@name, "_UP", sep = "")
+          down_name <- paste(signature@name, "_DOWN", sep = "")
+          
+          signatures <- c(signatures, list(up))
+          signatures <- c(signatures, list(down))
+          
+          sig_names <- append(sig_names, up_name)
+          sig_names <- append(sig_names, down_name)
+        } else {
+            signatures <-  c(signatures, list(names(signature@sigDict)))
+            sig_names <- append(sig_names, signature@name)
+        }
+    }
+    
+    genes <- rownames(object@exprData)
+    
+    stats <- c()
+    p_values <- c()
+    for (signature in signatures) {
+        set1 <- signature
+        stat <- c()
+        pval <- c()
+        for (module in modules) {
+            set2 <- names(module@sigDict)
+            results <- calc_set_enrichment(set1, set2, genes)
+            stat <- append(stat, results[1])
+            pval <- append(pval, results[2])
+        }
+        stats <- rbind(stats, stat)
+        p_values <- rbind(p_values, pval)
+    }
+    
+    mod_names <- c()
+    for (module in modules) {
+        mod_names <- append(mod_names, module@name)
+    }
+    
+    colnames(stats) <- mod_names
+    rownames(stats) <- sig_names
+    
+    colnames(p_values) <- mod_names
+    rownames(p_values) <- sig_names
+    
+    return(list("statistics"=stats, "p_vals"=p_values))
+}
+
+
+
+calc_set_enrichment <- function(set1, set2, genes) {
+    N <- length(genes)
+    m <- max(length(set1), length(set2))
+    n <- N - m
+    k <- min(length(set1), length(set2))
+    
+    
+    o_overlap <- length(intersect(set1, set2))
+    e_overlap <- k * (m / N)
+    stat <- log(o_overlap / e_overlap)
+    if (o_overlap == 0) {
+        stat <- 0
+    }
+    
+    p_value <- 1 - phyper(q=o_overlap-1, m, n, k)
+    return(c(stat, p_value))
 }
 
 

@@ -4,8 +4,13 @@
 \alias{NormData}
 \title{Initialize a new NormData object}
 \usage{
-NormData(data, rowOffsets = NULL, rowScaleFactors = NULL,
-  colOffsets = NULL, colScaleFactors = NULL)
+NormData(
+  data,
+  rowOffsets = NULL,
+  rowScaleFactors = NULL,
+  colOffsets = NULL,
+  colScaleFactors = NULL
+)
 }
 \arguments{
 \item{data}{expression data matrix}

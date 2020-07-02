@@ -31,6 +31,8 @@ Imports:
 	Rtsne,
 	utils,
 	vegan,
+	ape,
+	reticulate,
 	wordspace
 LinkingTo: Rcpp
 License: MIT + file LICENSE
@@ -38,7 +40,7 @@ Encoding: UTF-8
 LazyData: true
 URL: https://yoseflab.github.io/VISION, https://github.com/yoseflab/VISION
 BugReports: https://github.com/YosefLab/VISION/issues
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.0
 Suggests:
 	Biobase,
 	BiocStyle,

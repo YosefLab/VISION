@@ -1,9 +1,9 @@
 var global_status = {};
-global_status.main_vis = "clusters"; // Selected from 4 options on top
+global_status.main_vis = "cells"; // Selected from 4 options on top
 /* Options are:
-    'clusters'
-    'pcannotator'
-    'tree'
+    'cells'
+    'genes'
+    'tree' (this is being phased out)
 */
 
 // Determine the projected coordinates
@@ -211,7 +211,7 @@ window.onload = function()
 
         if(info.has_lca){
             $('#nav-bar')
-                .find(".nav-link[data-main-vis='pcannotator']")
+                .find(".nav-link[data-main-vis='genes']")
                 .removeClass('disabled')
         }
 
@@ -249,7 +249,7 @@ window.onload = function()
     $.when(right_promise, combinedPromise, combinedPromise2, allCellClustersPromise)
         .then(function(){
             var has_tree = get_global_status('has_tree')
-            var update0 = {'main_vis': (has_tree ? 'tree': 'clusters')}
+            var update0 = {'main_vis': (has_tree ? 'tree': 'cells')}
             var update1 = upper_left_content.select_default_sig();
             var update2 = right_content.select_default_proj();
             var update = Object.assign({}, update0, update1, update2); // Merge

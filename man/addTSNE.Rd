@@ -4,8 +4,7 @@
 \alias{addTSNE}
 \title{Adds a tSNE projection}
 \usage{
-addTSNE(object, perplexity = 30, name = "tSNE",
-  source = "LatentSpace")
+addTSNE(object, perplexity = 30, name = "tSNE", source = "LatentSpace")
 }
 \arguments{
 \item{object}{the VISION object}

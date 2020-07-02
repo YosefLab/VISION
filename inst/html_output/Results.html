@@ -53,12 +53,12 @@
         </div>
         <ul class="nav nav-pills justify-content-end inv">
             <li class="nav-item">
-                <a class="nav-link active" href="#" data-main-vis="clusters">Autocorrelation</a>
+                <a class="nav-link active" href="#" data-main-vis="cells">Cells</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link disabled" href="#" data-main-vis="pcannotator">LC Annotator</a>
+                <a class="nav-link disabled" href="#" data-main-vis="genes">Genes</a>
             </li>
-            <li class="nav-item">
+            <li class="nav-item" style="display: none">
                 <a class="nav-link disabled" href="#" data-main-vis="tree">Trajectories</a>
             </li>
         </ul>
@@ -105,8 +105,8 @@
                       </div>
                   </div>
   
-                  <div class="tab-content upper-left-section-content">
-                      <div class="tab-pane show active" id="table-div-container" role="tabpanel" aria-labelledby="sig-table-tab">
+                  <div class="tab-content upper-left-section-content" style="padding: 5px">
+                      <div class="tab-pane show active" id="table-div-container" role="tabpanel" aria-labelledby="sig-table-tab" style="overflow-x: scroll">
                           <div class="sig-tables-header">
                               <table class="sig-table">
                                   <thead>
@@ -281,7 +281,7 @@
                   </button>
                 </h5>
               </div>
-              <div id="collapseThree" class="collapse multi-collapse show" aria-labelledby="headingThree">
+              <div id="collapseThree" class="collapse multi-collapse show" aria-labelledby="headingThree" style="padding: 10px">
                 <div id="upper-middle-content">
                   <div class="tab-content upper-left-section-content" style="height: 800px">
                     <div class="tab-pane active">

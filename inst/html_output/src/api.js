@@ -357,6 +357,12 @@ var api = (function(){
         query = postProcess(query)
         return $.ajax(query, {dataType: "json" }).then(x => x);
     }
+    
+    output.modules.enrichment = function() {
+        var query = "Modules/Enrichment"
+        query = postProcess(query)
+        return $.ajax(query, {dataType: "json" }).then(x => x);
+    }
 
     // Session Info Api
 

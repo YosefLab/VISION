@@ -14,6 +14,8 @@
 #' @import methods
 #' @import loe
 #' @import Matrix
+#' @import ape
+#' @import reticulate
 #' @useDynLib VISION
 #' @name VISION
 NULL

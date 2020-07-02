@@ -4,8 +4,13 @@
 \alias{generateProjectionsInner}
 \title{Projects data into 2 dimensions using a variety of linear and non-linear methods.}
 \usage{
-generateProjectionsInner(expr, latentSpace, projection_genes = NULL,
-  projection_methods = NULL, K = round(sqrt(ncol(expr))))
+generateProjectionsInner(
+  expr,
+  latentSpace,
+  projection_genes = NULL,
+  projection_methods = NULL,
+  K = round(sqrt(ncol(expr)))
+)
 }
 \arguments{
 \item{expr}{numeric matrix of gene expression}

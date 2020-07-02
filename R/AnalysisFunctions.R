@@ -294,14 +294,33 @@ calcSignatureScores <- function(
         object@exprData,
         object@params$signatures$sigNormMethod
     )
-
-    sigScores <- batchSigEvalNorm(object@sigData, normExpr)
-
+    
+    sigData <- object@sigData
+    
+    for (sig_name in names(object@sigData)){
+        signature <- object@sigData[[sig_name]]
+        directional <- all(c(1, -1) %in% signature@sigDict)
+        if (directional) {
+            up <- names(which(signature@sigDict == 1))
+            down <- names(which(signature@sigDict == -1))
+            
+            up_name <- paste(signature@name, "_UP", sep = "")
+            down_name <- paste(signature@name, "_DOWN", sep = "")
+            
+            up_sig <- Signature(sigDict = signature@sigDict[up], name = up_name, source = signature@source, metaData = signature@metaData)
+            down_sig <- Signature(sigDict = signature@sigDict[down], name = down_name, source = signature@source, metaData = signature@metaData)
+            sigData[[up_name]] <- up_sig
+            sigData[[down_name]] <- down_sig
+        }
+    }
+    
+    sigScores <- batchSigEvalNorm(sigData, normExpr)
+    
     if (sig_gene_importance) {
 
         if (is(object@exprData, "sparseMatrix")) {
             sigGeneImportance <- evalSigGeneImportanceSparse(
-                sigScores, object@sigData, normExpr
+                sigScores, sigData, normExpr
             )
         } else {
             normExprDense <- getNormalizedCopy(
@@ -309,7 +328,7 @@ calcSignatureScores <- function(
                 object@params$signatures$sigNormMethod
             )
             sigGeneImportance <- evalSigGeneImportance(
-                sigScores, object@sigData, normExprDense
+                sigScores, sigData, normExprDense
             )
         }
 

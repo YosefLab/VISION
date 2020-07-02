@@ -4,9 +4,15 @@
 \alias{computeLatentSpace}
 \title{Computes the latent space of the expression matrix using PCA}
 \usage{
-computeLatentSpace(object, projection_genes = NULL,
-  filterThreshold = 0.05, filterNumMad = 2,
-  projection_genes_method = NULL, num_PCs = 30, perm_wPCA = NULL)
+computeLatentSpace(
+  object,
+  projection_genes = NULL,
+  filterThreshold = 0.05,
+  filterNumMad = 2,
+  projection_genes_method = NULL,
+  num_PCs = 30,
+  perm_wPCA = NULL
+)
 }
 \arguments{
 \item{object}{the VISION object for which compute the latent space}

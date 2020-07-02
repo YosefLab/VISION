@@ -4,8 +4,12 @@
 \alias{matrix_wilcox_cpp}
 \title{C++ wilcox rank-sums test}
 \usage{
-matrix_wilcox_cpp(data, cluster_num, cluster_denom,
-  jobs = getOption("mc.cores", 2L))
+matrix_wilcox_cpp(
+  data,
+  cluster_num,
+  cluster_denom,
+  jobs = getOption("mc.cores", 2L)
+)
 }
 \arguments{
 \item{data}{matrix of values, each row representing a separate variable}

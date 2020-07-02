@@ -2,7 +2,7 @@
 % Please edit documentation in R/Server.R
 \name{sigScoresToJSON}
 \alias{sigScoresToJSON}
-\title{Converts row of sigantures score matrix to JSON}
+\title{Converts row of signatures score matrix to JSON}
 \usage{
 sigScoresToJSON(names, values)
 }
@@ -15,5 +15,5 @@ sigScoresToJSON(names, values)
 Signature scores list to JSON, with names of each entry that of the list names
 }
 \description{
-Converts row of sigantures score matrix to JSON
+Converts row of signatures score matrix to JSON
 }
