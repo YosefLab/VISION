@@ -151,6 +151,30 @@ Upper_Left_Content.prototype.init = function()
                 clust_dropdown.prop('disabled', false)
             }
         });
+        
+        
+        
+    // for gene/cell new view
+    // Hide modules, de and genes
+    var metaTableTab = nav.find('#meta-table-tab');
+    var deTableTab = nav.find('#de-table-tab');
+    var genesTableTab = nav.find("#genes-table-tab")
+    if(has_mods){
+        modTableTab.parent().hide()
+    }
+    
+    deTableTab.parent().hide()
+    genesTableTab.parent().hide()
+    
+    // show meta
+    metaTableTab.parent().show()
+    // clusterDropwdown.parent().show()
+    
+    if (has_sigs) {
+        sigTableTab.click()
+    } else {
+        metaTableTab.click()
+    }
 
 
     return $.when(sig_table_promise, protein_table_promise, pc_table_promise, gene_select_promise, de_select_promise, dend_promise, mod_table_promise);
