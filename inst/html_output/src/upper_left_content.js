@@ -86,24 +86,24 @@ Upper_Left_Content.prototype.init = function()
     this.de_select = de_select
 
     var de_select_promise = de_select.init()
-    
+
     var has_dend = get_global_status('has_dendrogram')
     // Dend Promise
     if (has_dend) {
       var dend = new Dend()
       this.children.push(dend)
       this.dend = dend
-  
+
       var dend_promise = dend.init()
     }
-    
-    
+
+
     var mod_table = new Modules_Table()
     this.children.push(mod_table)
     this.mod_table = mod_table
 
     var mod_table_promise = mod_table.init();
-    
+
     this.setLoadingStatus = createLoadingFunction(
         document.getElementById("upper-left-content")
     );
@@ -122,9 +122,9 @@ Upper_Left_Content.prototype.init = function()
     var modTableTab = nav.find('#modules-table-tab')
     var proteinTableTab = nav.find('#protein-table-tab')
     var metaTableTab = nav.find('#meta-table-tab')
-    
+
     var has_dendrogram = get_global_status('has_dendrogram')
-    
+
     if(!has_sigs){
         sigTableTab.parent().hide()
         if(!has_proteins){
@@ -151,9 +151,9 @@ Upper_Left_Content.prototype.init = function()
                 clust_dropdown.prop('disabled', false)
             }
         });
-        
-        
-        
+
+
+
     // for gene/cell new view
     // Hide modules, de and genes
     var metaTableTab = nav.find('#meta-table-tab');
@@ -162,14 +162,14 @@ Upper_Left_Content.prototype.init = function()
     if(has_mods){
         modTableTab.parent().hide()
     }
-    
+
     deTableTab.parent().hide()
     genesTableTab.parent().hide()
-    
+
     // show meta
     metaTableTab.parent().show()
     // clusterDropwdown.parent().show()
-    
+
     if (has_sigs) {
         sigTableTab.click()
     } else {
@@ -206,20 +206,20 @@ Upper_Left_Content.prototype.update = function(updates)
       var has_sigs = get_global_status('has_sigs')
       var has_mods = get_global_status('has_mods')
       var has_proteins = get_global_status('has_proteins')
-      
+
       if (main_vis == "cells") {
           // Hide modules, de and genes
           if(has_mods){
               modTableTab.parent().hide()
           }
-          
+
           deTableTab.parent().hide()
           genesTableTab.parent().hide()
-          
+
           // show meta
           metaTableTab.parent().show()
           // clusterDropwdown.parent().show()
-          
+
           if (has_sigs) {
               sigTableTab.click()
           } else {
@@ -230,10 +230,10 @@ Upper_Left_Content.prototype.update = function(updates)
           if(has_mods){
               modTableTab.parent().show()
           }
-          
+
           deTableTab.parent().show()
           genesTableTab.parent().show()
-          
+
           // Hide Meta
           metaTableTab.parent().hide()
           // clusterDropwdown.parent().hide()
@@ -2132,7 +2132,7 @@ Dend.prototype.update_tree_selection = function() {
     this.tree.selection_callback(function (nodes) {});
     var nodes = cells
     var all_nodes =  this.tree.get_nodes()
-    
+
     if (cells.length > 0) {
         var node_selector = function(node) {
           if (!d3.layout.phylotree.is_leafnode(node)) {
@@ -2146,7 +2146,7 @@ Dend.prototype.update_tree_selection = function() {
           return false
         }
        all_nodes = all_nodes.filter(node_selector)
-    
+
         while (true) {
           var node_selector = function(node) {
               var in_nodes = (n) => nodes.includes(n.name)
@@ -2156,7 +2156,7 @@ Dend.prototype.update_tree_selection = function() {
               }
               return !selected
           }
-          
+
           var all_nodes_new = all_nodes.filter(node_selector)
           if (all_nodes_new.length === all_nodes.length) {
             break
@@ -2164,12 +2164,12 @@ Dend.prototype.update_tree_selection = function() {
           all_nodes = all_nodes_new
         }
     }
-    
+
     var node_selector_final = function(node) {
           var selected = nodes.includes(node.target.name)
           return selected
       }
-    
+
     this.tree.modify_selection(node_selector_final)
 
     this.tree.selection_callback(function (nodes) {
@@ -2178,7 +2178,7 @@ Dend.prototype.update_tree_selection = function() {
             return node.name;
           }
         })
-        
+
         if (cells.length > 0) {
           set_global_status({"selected_cell":cells, "selection_type":"cells"})
         }
@@ -2189,16 +2189,16 @@ Dend.prototype.render_dend = function()
 {
     this.setLoadingStatus = createLoadingFunction(this.dom_node);
     this.setLoadingStatus(true, 0);
-    
+
     $("#dend_layout").prop('checked', true);
-    
+
     var plotted = get_global_data("plotted_values");
     var plotted_item = this.plotted_item;
-    
+    /*
     function edgeStyler(dom_element, edge_object) {
       dom_element.style("stroke-width", "1pt");
     }
-    
+
     var num_cells = Object.keys(plotted).length;
     var width = 720;
     var height = 720
@@ -2230,9 +2230,10 @@ Dend.prototype.render_dend = function()
     tree(this.newick)
 
     var tree_attributes = {};
+    */
     var scatter = right_content.layoutPlotData["full"][0].scatter;
     var plotly_defaults_colors = ["1F77B4", "FF7F0E", "2CA02C", "D62728", "9467BD", "8C564B","E377C2", "7F7F7F", "BCBD22", "17BECF"]
-    
+
     if(get_global_data('meta_levels')[plotted_item] == null)  {
         var full_color_range = scatter.full_color_range;
         var diverging_colormap = scatter.diverging_colormap
@@ -2249,18 +2250,18 @@ Dend.prototype.render_dend = function()
         }
         if(get_global_status("plotted_item_type") !== "gene") {
             var color_range = [
-              '#440154', '#48186a', '#472d7b', '#424086', '#3b528b', '#33638d', '#2c728e', '#26828e', 
+              '#440154', '#48186a', '#472d7b', '#424086', '#3b528b', '#33638d', '#2c728e', '#26828e',
             '#21918c', '#1fa088', '#28ae80', '#3fbc73', '#5ec962', '#84d44b', '#addc30',
             '#d8e219', '#fde725'];
             var color_domain = [
-              0, 0.06274509803921569, 0.12549019607843137, 0.18823529411764706, 0.25098039215686274, 
-              0.3137254901960784, 0.3764705882352941, 0.4392156862745098, 0.5019607843137255, 0.5647058823529412, 
+              0, 0.06274509803921569, 0.12549019607843137, 0.18823529411764706, 0.25098039215686274,
+              0.3137254901960784, 0.3764705882352941, 0.4392156862745098, 0.5019607843137255, 0.5647058823529412,
               0.6274509803921569, 0.6901960784313725, 0.7529411764705882, 0.8156862745098039, 0.8784313725490196, 0.9411764705882353, 1];
         } else {
             color_range = ['#d8d8d8','#395252','#000000'];
             color_domain = [0, 0.5, 1]
         }
-       
+
         attribute_to_color = function(d) {
           if (d === undefined) {
             d = 0.5
@@ -2270,10 +2271,10 @@ Dend.prototype.render_dend = function()
           } else {
              var x = (d - low) / (high-low);
           }
-         
+
           return d3.scale.linear().domain(color_domain).range(color_range)(x);
         }
-        
+
     } else {
         var labels = get_global_data('meta_levels')[plotted_item].sort();
         if (labels.length > 10) {
@@ -2292,21 +2293,21 @@ Dend.prototype.render_dend = function()
               return c
             }
       }
-    } 
-    
-    var standard_label = tree.branch_name();
-    
-    function edgeStyler(element, node_data) {
-      element.style ("stroke-width", 1)  
     }
-    
+    /*
+    var standard_label = tree.branch_name();
+
+    function edgeStyler(element, node_data) {
+      element.style ("stroke-width", 1)
+    }
+
     tree.style_edges(edgeStyler);
-    
+
     function nodeStyler(element, node_data, is_radial) {
       if (d3.layout.phylotree.is_leafnode(node_data)) {
         var node_label = element.select("text");
         var level = plotted[node_data.name];
-        
+
         var annotation = element.selectAll ("rect").data([level]);
         annotation.enter().append ("rect");
         if (is_radial) {
@@ -2318,7 +2319,7 @@ Dend.prototype.render_dend = function()
             annotation.attr("transform", function(d) {
               return "rotate(" + node_data.text_angle + ")";
             });
-          } 
+          }
         } else {
             annotation.attr ("height", 4).attr ("width", 30).attr("y", -2)
               .style ("fill", function(d, i) {
@@ -2335,7 +2336,7 @@ Dend.prototype.render_dend = function()
         return ""
       });
 
-    
+
     // sort nodes from phylotree example
     function sort_nodes (asc) {
       tree.traverse_and_compute (function (n) {
@@ -2350,7 +2351,7 @@ Dend.prototype.render_dend = function()
           });
     }
     sort_nodes(false);
-    
+
     var max_count_depth = Math.max(...tree.get_nodes().map(n => n["count_depth"]))
     // now change branch lengths
     tree.branch_length (function (n) {
@@ -2361,30 +2362,28 @@ Dend.prototype.render_dend = function()
       }
       return length
     });
-    
-    // try to collapse tree downwards
-    
-    
-    
+
     tree.layout()
     tree.placenodes().update();
-    
+
     var svgHeight = parseInt(svg.style("height").replace("px", ""));
     var svgWidth = parseInt(svg.style("width").replace("px", ""));
-    
-    
+
+
     var zoomFactor = 1000/(Math.min(svgHeight, svgWidth)*1.25);
-    
+
     var horizontalOffset = (-1 * svgWidth / 2) * (1-zoomFactor);
     var verticalOffset = (-1 * svgHeight / 2) * (1-zoomFactor);
-    
-    
+
+
     svg.attr("transform", "translate(" +  horizontalOffset +"," + verticalOffset + ")" + "scale(" + zoomFactor + ")")
-    
-    
-    
+    */
+
+
     $("#dend_layout").on("click", function(e) {
       var is_radial = $(this).prop("checked")
+      plotDendro(get_global_status("dendrogram"), "tree_container_plotly", is_radial, plotted, attribute_to_color);
+      /*
       tree.radial(is_radial)
       if (is_radial) {
         tree.size([s, s])
@@ -2393,23 +2392,29 @@ Dend.prototype.render_dend = function()
       } else {
         tree.size([100, 770]);
         tree.style_nodes(function(element, node_data) {return nodeStyler(element, node_data, false)}).placenodes().update();
-        svg.attr("transform", "translate(" +  0 +"," + 0 + ")") 
+        svg.attr("transform", "translate(" +  0 +"," + 0 + ")")
       }
-      
+      */
     });
-    
+
     //var collapseTo = 10;
-    /* tree.traverse_and_compute(function(n){ 
+    /* tree.traverse_and_compute(function(n){
       if(n["depth"] === collapseTo) {
         tree.collapse_node(n);
         console.log(n)
       }
     }); */
-    
-    
-    this.tree = tree
-    this.update_tree_selection()
+
+    plotDendro(this.newick, "tree_container_plotly", true, plotted, attribute_to_color);
+    //this.tree = tree
+    //this.update_tree_selection()
     this.setLoadingStatus(false);
+
+
+    // start plotly_phylo
+    
+    // var tree = parseNewick(get_global_status("dendrogram"));
+    
 }
 
 
@@ -2508,7 +2513,7 @@ Modules_Table.prototype.render = function()
             "pagingType": "simple",
         }
     );
-    
+
 
 
     var dataSet = _.map(this.matrix, (f, i) => [f._row, f.C, f.pValue, f.FDR]);
@@ -2518,17 +2523,17 @@ Modules_Table.prototype.render = function()
         .rows.add(dataSet)
          // Needed or else column headers don't align
         .draw()
-        
-    
+
+
     $('a[data-toggle="tab"]').on('shown.bs.tab', function(e){
       table.columns.adjust();
     });
-    
-    
+
+
     this.modules_table.on('click', "tr", function() {
         var cells = $(this).find("td")
         var module = cells.eq(0).text()
-        
+
         set_global_status({
             'plotted_item_type': 'signature',
             'plotted_item': module,
@@ -2536,7 +2541,7 @@ Modules_Table.prototype.render = function()
             "enrichment_module": module
         })
     });
-    
+
 }
 
 
@@ -2550,7 +2555,7 @@ Modules_Table.prototype.update = function(updates)
     if(!has_mods){
         return $.when(null); // Empty promise
     }
-    
+
 
     var lcs_promise;
     if (_.isEmpty(self.matrix)){
@@ -2570,7 +2575,7 @@ Modules_Table.prototype.update = function(updates)
 
         var fix_col_label = true
         if (main_vis == "clusters") {
-            matrix_promise = api.clusters.sigProjMatrix(cluster_var, false); 
+            matrix_promise = api.clusters.sigProjMatrix(cluster_var, false);
         } else if (main_vis == "tree") {
             matrix_promise = api.tree.sigProjMatrix(false);
         } else {
