@@ -86,6 +86,10 @@ function plotDendro(newick, div, radial, mapping, nodeColor) {
     var y = [];
     var names = [];
     var colors = [];
+    var nodeSizes = [];
+    
+    var internalNodeSize = 5;
+    var tipSize = 6.3;
     
     function nodeCoords(tree) {
         names.push(tree["name"]);
@@ -93,16 +97,19 @@ function plotDendro(newick, div, radial, mapping, nodeColor) {
         y.push(tree["y"]);
         
         if (!isTip(tree)) {
-            colors.push("#a4a4a4")
+            colors.push("#a4a4a4");
+            nodeSizes.push(internalNodeSize);
             tree["branchset"].sort(function(a, b) {return a["depth"] - b["depth"]}).forEach(function(child) {
                 nodeCoords(child);
             });
         } else {
+            nodeSizes.push(tipSize);
             colors.push(nodeColor(mapping[tree["name"]]));
         }
     }
     
     nodeCoords(tree);
+    console.log(colors);
     
     var yMin = Math.min(...y);
     var yMax = Math.max(...y);
@@ -136,6 +143,7 @@ function plotDendro(newick, div, radial, mapping, nodeColor) {
         x = [];
         y = [];
         colors = [];
+        nodeSizes = [];
         function convertRadial(tree) {
             var radialCoords = treeCordToRadial([tree["x"], tree["y"]]);
             var coords = polorCoordToCartestian(radialCoords);
@@ -146,11 +154,13 @@ function plotDendro(newick, div, radial, mapping, nodeColor) {
             x.push(coords[0]);
             y.push(coords[1]);
             if (!isTip(tree)) {
+                nodeSizes.push(internalNodeSize);
                 colors.push("#a4a4a4")
                 tree["branchset"].sort(function(a, b) {return a["depth"] - b["depth"]}).forEach(function(child) {
                     convertRadial(child);
                 });
             } else {
+                nodeSizes.push(tipSize);
                 colors.push(nodeColor(mapping[tree["name"]]));
             }
         }
@@ -208,9 +218,6 @@ function plotDendro(newick, div, radial, mapping, nodeColor) {
                     thetav.push(thetaC);
                 })
                 
-                
-                
-                
                 rv.push(null);
                 thetav.push(null);
                 
@@ -262,18 +269,18 @@ function plotDendro(newick, div, radial, mapping, nodeColor) {
         lines(tree)
     }
     
-   
-    
-    
     var nodesTrace = {
         x: x,
         y: y,
+        type: "scattergl",
         text: names,
         mode: "markers",
-        type: "scatter",
         marker: {
-          color: colors
-        }
+          color: colors,
+          size: nodeSizes,
+          opacity: 1
+        },
+        hoverinfo: "text"
         
     }
     
@@ -286,7 +293,8 @@ function plotDendro(newick, div, radial, mapping, nodeColor) {
           color: '#000000',
           width: 0.5,
           shape: "spline"
-        }
+        },
+        hoverinfo: 'skip'
     }
     
     var verticalLines = {
@@ -298,7 +306,8 @@ function plotDendro(newick, div, radial, mapping, nodeColor) {
           color: '#000000',
           width: 0.5,
           shape: "spline"
-        }
+        },
+        hoverinfo: 'skip'
     }
     
     var layout = {
@@ -306,9 +315,122 @@ function plotDendro(newick, div, radial, mapping, nodeColor) {
         height: 770,
         showlegend: false,
         yaxis: {'showgrid':false, 'zeroline':false, "showline":false, showticklabels:false},
-        xaxis: {'showgrid':false, 'zeroline':false, "showline":false, showticklabels:false}
+        xaxis: {'showgrid':false, 'zeroline':false, "showline":false, showticklabels:false},
+        hovermode:"closest"
     }
     
     var data = [horizontalLines, verticalLines, nodesTrace];
+    // clear any existing event listeners
+    $(div).off();
     Plotly.newPlot(div, data, layout);
+    // add event listener for clicks
+    div.on('plotly_click', function(eventData) {
+        var expansion = selectionExpander(tree, eventData.points.map(x => x["text"]));
+        var selectedNames = expansion.selectedNames;
+        var cells = expansion.cells;
+        
+        var nodesToSelect = expansion.nodesToSelect;
+        
+        var selectedpointsIdx = [];
+        names.map(function (name, idx) {
+            if (selectedNames.includes(name)) {
+                selectedpointsIdx.push(idx);
+            }
+        });
+      
+        data[2].selectedpoints =  selectedpointsIdx;
+        
+        Plotly.react(div, data, layout);
+        
+        set_global_status({"selected_cell":cells, "selection_type":"cells"});
+    });
+    
+    // add event listener for selection
+    div.on('plotly_selected', function(eventData) {
+        if (eventData === undefined) {
+            set_global_status({"selected_cell":[], "selection_type":"none"});
+            return;
+        }
+        // event data are points, internal and tips
+        // for each tip use joining algo to find the internal nodes that lead to it
+        // for each internal node find the tips and restyle so they're selected
+        // restyle the lines so that they're highlight colored
+        var expansion = selectionExpander(tree, eventData.points.map(x => x["text"]));
+        var selectedNames = expansion.selectedNames;
+        var cells = expansion.cells;
+        
+        var nodesToSelect = expansion.nodesToSelect;
+        
+        var selectedpointsIdx = [];
+        names.map(function (name, idx) {
+            if (selectedNames.includes(name)) {
+                selectedpointsIdx.push(idx);
+            }
+        });
+      
+        data[2].selectedpoints =  selectedpointsIdx;
+        
+        Plotly.react(div, data, layout);
+        
+        set_global_status({"selected_cell":cells, "selection_type":"cells"});
+        
+    })
+    return({"tree": tree, "data": data, "layout": layout})
+}
+
+
+function updateDendroSelection(div, tree, data, layout, cells) {
+    var expansion = selectionExpander(tree, cells);
+    var selectedNames = expansion.selectedNames;
+    
+    var names = data[2].text;
+    var selectedpointsIdx = [];
+    names.map(function (name, idx) {
+        if (selectedNames.includes(name)) {
+            selectedpointsIdx.push(idx);
+        }
+    });
+    if (selectedpointsIdx.length > 0) {
+        data[2].selectedpoints =  selectedpointsIdx;
+    } else {
+        data[2].selectedpoints =  null;
+    }
+    
+    
+    Plotly.react(div, data, layout);
+    
+}
+
+
+function selectionExpander(tree, cells) {
+    var selectedNames = cells;
+    var cells = [];
+    
+    var nodesToSelect = [];
+    function treeSelect(tree, parentSelected) {
+        var updateSelected = parentSelected && !selectedNames.includes(tree["name"]);
+        tree["selected"] = parentSelected || selectedNames.includes(tree["name"]);
+        if (!isTip(tree)) {
+            var childrenSelects = [];
+            tree["branchset"].forEach(function(child) {
+                treeSelect(child, tree["selected"]);
+                childrenSelects.push(child["selected"]);
+            });
+            
+            updateSelected = updateSelected || (!tree["selected"] && childrenSelects.every(x => x));
+            tree["selected"] = tree["selected"] || childrenSelects.every(x => x);
+        } else {
+            if (tree["selected"]) {
+                cells.push(tree["name"]);
+            }
+        }
+        
+        if (updateSelected) {
+            selectedNames.push(tree["name"]);
+            nodesToSelect.push(tree["name"]);
+        }
+    }
+    
+    treeSelect(tree, false);
+    return({"cells":cells, "selectedNames":selectedNames, "nodesToSelect":nodesToSelect})
 }

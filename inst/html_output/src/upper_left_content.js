@@ -2109,7 +2109,10 @@ Dend.prototype.init = function()
     var self = this;
 
     this.newick = get_global_status("dendrogram")
-    this.tree = null
+    this.tree = null;
+    this.div = document.getElementById("tree_container_plotly");
+    this.data = null;
+    this.layout = null;
 
 
 }
@@ -2128,7 +2131,9 @@ Dend.prototype.update = function(updates)
 }
 
 Dend.prototype.update_tree_selection = function() {
-    var cells = get_global_status("selected_cell")
+    var cells = get_global_status("selected_cell");
+    updateDendroSelection(this.div, this.tree, this.data, this.layout, cells);
+    /*
     this.tree.selection_callback(function (nodes) {});
     var nodes = cells
     var all_nodes =  this.tree.get_nodes()
@@ -2183,6 +2188,7 @@ Dend.prototype.update_tree_selection = function() {
           set_global_status({"selected_cell":cells, "selection_type":"cells"})
         }
       });
+      */
 }
 
 Dend.prototype.render_dend = function()
@@ -2232,7 +2238,7 @@ Dend.prototype.render_dend = function()
     var tree_attributes = {};
     */
     var scatter = right_content.layoutPlotData["full"][0].scatter;
-    var plotly_defaults_colors = ["1F77B4", "FF7F0E", "2CA02C", "D62728", "9467BD", "8C564B","E377C2", "7F7F7F", "BCBD22", "17BECF"]
+    var plotly_defaults_colors = ["#1F77B4", "#FF7F0E", "#2CA02C", "#D62728", "#9467BD", "#8C564B","#E377C2", "#7F7F7F", "#BCBD22", "#17BECF"]
 
     if(get_global_data('meta_levels')[plotted_item] == null)  {
         var full_color_range = scatter.full_color_range;
@@ -2379,10 +2385,13 @@ Dend.prototype.render_dend = function()
     svg.attr("transform", "translate(" +  horizontalOffset +"," + verticalOffset + ")" + "scale(" + zoomFactor + ")")
     */
 
-
+    var self = this;
     $("#dend_layout").on("click", function(e) {
       var is_radial = $(this).prop("checked")
-      plotDendro(get_global_status("dendrogram"), "tree_container_plotly", is_radial, plotted, attribute_to_color);
+      dendroInfo = plotDendro(self.newick, self.div, is_radial, plotted, attribute_to_color);
+      self.tree = dendroInfo.tree;
+      self.data = dendroInfo.data;
+      self.layout = dendroInfo.layout;
       /*
       tree.radial(is_radial)
       if (is_radial) {
@@ -2405,7 +2414,10 @@ Dend.prototype.render_dend = function()
       }
     }); */
 
-    plotDendro(this.newick, "tree_container_plotly", true, plotted, attribute_to_color);
+    var dendroInfo = plotDendro(this.newick, this.div, true, plotted, attribute_to_color);
+    this.tree = dendroInfo.tree;
+    this.data = dendroInfo.data;
+    this.layout = dendroInfo.layout;
     //this.tree = tree
     //this.update_tree_selection()
     this.setLoadingStatus(false);
