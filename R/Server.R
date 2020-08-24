@@ -978,11 +978,12 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
     pr$handle("GET", "/Modules/HotspotScore/<module_name>",
           function(req, res, module_name) {
               module_name <- URLdecode(module_name)
-              if (module_name %in% colnames(object@ModuleHotspotScores)) {
-                  names <- rownames(object@ModuleHotspotScores)
-                  values <- object@ModuleHotspotScores[[module_name]]
+              # change back to modulehotspot scores if want hotspot scores
+              # instead of signature scores for the hotspot modules.
+              if (module_name %in% colnames(object@ModScores)) {
+                  names <- rownames(object@ModScores)
+                  values <- as.data.frame(object@ModScores)[[module_name]]
                   res$body <- sigScoresToJSON(names, values)
-                  # yanay
                   compressJSONResponse(req, res)
                   return(res)
               } else {

@@ -35,27 +35,289 @@ function parseNewick(s) {
 }
 
 
-function isTip(tree) {
-    return !(_.keys(tree).includes("branchset"));
-}
-
-function setUltrametricTreeDepths(tree) {
-    if (!isTip(tree)) {
-        var my_depth = 0;
-        tree["branchset"].forEach(function(child) {
-            setUltrametricTreeDepths(child);
-            my_depth = my_depth + child["depth"]
-        });
-        tree["depth"] = my_depth;
-    } else {
-        tree["depth"] = 1;
-    }
-}
-
-function generateLinearCoords(tree) {
-    var maxDepth = tree["depth"]; // at root
-    var leafIndex = 0;
+/*
+    Initialize a plotly phylo object with a newick sting and a div
+    optionally, pass a dictionary of nodes -> values and a function to determine
+    the colors of the the mapped values.
+*/
+function PhyloPlotly(newick, div, mapping, nodeColor) {
+    this.newick = newick;
+    this.div = div;
+    this.tree = parseNewick(newick);
+    this.mapping = mapping;
+    this.nodeColor = nodeColor;
+    this.collapsed = [];
+    this.radial = true;
+    this.depth = -1;
     
+    // plotly values
+    this.data = [];
+    this.layout = {
+        width: 770,
+        height: 770,
+        showlegend: false,
+        yaxis: {'showgrid':false, 'zeroline':false, "showline":false, showticklabels:false},
+        xaxis: {'showgrid':false, 'zeroline':false, "showline":false, showticklabels:false},
+        hovermode:"closest"
+    }
+    
+    this.yMin = 0;
+    this.yMax = 1;
+    this.d = 1
+}
+
+
+/*
+  set the mapping
+*/
+PhyloPlotly.prototype.setMapping = function(mapping) {
+  this.mapping = mapping;
+}
+
+/*
+  set the nodeColor function
+*/
+PhyloPlotly.prototype.setNodeColor = function(nodeColor) {
+  this.nodeColor = nodeColor;
+}
+
+
+/*
+  Init all the coordinates, plot for the first time
+*/
+PhyloPlotly.prototype.init = function() {
+    this.updateCoords();
+    this.generatePlotlyData();
+    this.plotAndUpdateListeners();
+}
+
+
+/*
+  Update the mode, linear or radial and redraw
+*/
+PhyloPlotly.prototype.updateMode = function(radial) {
+    this.radial = radial;
+    this.init();
+}
+
+
+/*
+  Update depths and coordinates
+*/
+PhyloPlotly.prototype.updateCoords = function() {
+    setUltrametricTreeDepths(this.tree, this.collapsed);
+    this.setLinearCoords();
+    this.setRadialCoords();
+}
+
+
+/*
+  Populate the data array for plotly plotting
+  item 0: horizontalLines, ie lines from root outwards
+  item 1: vertical lines, ie lines perpendicular to root
+  item 2: internal nodes and leaves
+*/
+PhyloPlotly.prototype.generatePlotlyData = function() {
+    var xKey = "x";
+    var yKey = "y";
+    
+    if (this.radial) {
+        xKey = "u";
+        yKey = "v";
+    }
+    
+    // set the node coordinates
+    var x = [];
+    var y = [];
+    var names = [];
+    var colors = [];
+    var nodeSizes = [];
+    var nodeSymbols = [];
+    
+    var internalNodeSize = 5;
+    var tipSize = 6.3;
+    var collapsedNodeSize = 20;
+    var self = this;
+    
+    function nodeCoords(tree) {
+        names.push(tree["name"]);
+        x.push(tree[xKey]);
+        y.push(tree[yKey]);
+        
+        if (self.collapsed.includes(tree["name"])) {
+            colors.push("#111111");
+            nodeSizes.push(collapsedNodeSize);
+            nodeSymbols.push("triangle-down");
+            // black triangle for collapsed (color)
+        } else if (!isTip(tree)) {
+            colors.push("#a4a4a4");
+            nodeSizes.push(internalNodeSize);
+            nodeSymbols.push("circle");
+            tree["branchset"].sort(function(a, b) {return a["depth"] - b["depth"]}).forEach(function(child) {
+                nodeCoords(child);
+            });
+        } else {
+            nodeSizes.push(tipSize);
+            nodeSymbols.push("circle");
+            colors.push(self.nodeColor(self.mapping[tree["name"]]));
+        }
+    }
+    
+    nodeCoords(this.tree);
+    
+    // set the lines
+    
+    var lines = this.linearLines();
+    if (this.radial) {
+        lines = this.radialLines();
+    }
+    
+    var xh = lines[0];
+    var yh = lines[1];
+    var xv = lines[2];
+    var yv = lines[3];
+
+    var nodesTrace = {
+        x: x,
+        y: y,
+        type: "scattergl",
+        text: names,
+        mode: "markers",
+        marker: {
+          color: colors,
+          size: nodeSizes,
+          symbol: nodeSymbols,
+          opacity: 1,
+          line: {width: 0}
+        },
+        hoverinfo: "text"
+        
+    }
+      
+    var horizontalLines = {
+        x: xh,
+        y: yh,
+        mode: "lines",
+        type:"scatter",
+        line: {
+            color: '#000000',
+            width: 0.5,
+            shape: "spline"
+        },
+        hoverinfo: 'skip'
+    }
+    
+    var verticalLines = {
+        x: xv,
+        y: yv,
+        mode: "lines",
+        type:"scatter",
+        line: {
+            color: '#000000',
+            width: 0.5,
+            shape: "spline"
+        },
+        hoverinfo: 'skip'
+    }
+    this.data = [horizontalLines, verticalLines, nodesTrace]; 
+}
+
+
+/*
+  Replot the tree and update the listeners.
+*/
+PhyloPlotly.prototype.plotAndUpdateListeners = function() {
+    var self = this;
+    $(self.div).off();
+    Plotly.newPlot(self.div, self.data, self.layout);
+    // add event listener for clicks
+    
+    // disable default right click on plotly div
+    self.div.addEventListener('contextmenu', ev => {ev.preventDefault()});
+    
+    
+    self.div.on('plotly_click', function(eventData) {
+        var clickType = eventData.event.buttons;
+        if (clickType === 2) {
+          // right click
+          // collapse or uncollapse all children
+          var cell = eventData.points.map(x => x["text"])[0];
+          var idx = self.collapsed.indexOf(cell);
+          if (idx >= 0) {
+            // remove cell (uncollapsing)
+            self.collapsed.splice(idx, 1);
+          } else {
+            // add the cell (collapsing)
+            self.collapsed.push(cell);
+          }
+          
+          // update the coords then the data
+          self.updateCoords();
+          self.generatePlotlyData();
+          // redraw the tree but with collapsed nodes as leaves
+          Plotly.react(self.div, self.data, self.layout);
+        } else {
+          var expansion = selectionExpander(self.tree, eventData.points.map(x => x["text"]));
+          var selectedNames = expansion.selectedNames;
+          var cells = expansion.cells;
+          
+          var nodesToSelect = expansion.nodesToSelect;
+          
+          var selectedpointsIdx = [];
+          var names = self.data[2].text;
+          names.map(function (name, idx) {
+              if (selectedNames.includes(name)) {
+                  selectedpointsIdx.push(idx);
+              }
+          });
+        
+          self.data[2].selectedpoints =  selectedpointsIdx;
+          
+          Plotly.react(self.div, self.data, self.layout);
+          
+          set_global_status({"selected_cell":cells, "selection_type":"cells"});
+        }
+    });
+    
+    // add event listener for selection
+    self.div.on('plotly_selected', function(eventData) {
+        if (eventData === undefined) {
+            set_global_status({"selected_cell":[], "selection_type":"none"});
+            return;
+        }
+        // event data are points, internal and tips
+        // for each tip use joining algo to find the internal nodes that lead to it
+        // for each internal node find the tips and restyle so they're selected
+        // restyle the lines so that they're highlight colored
+        var expansion = selectionExpander(self.tree, eventData.points.map(x => x["text"]));
+        var selectedNames = expansion.selectedNames;
+        var cells = expansion.cells;
+        
+        var nodesToSelect = expansion.nodesToSelect;
+        
+        var selectedpointsIdx = [];
+        var names = self.data[2].text;
+        names.map(function (name, idx) {
+            if (selectedNames.includes(name)) {
+                selectedpointsIdx.push(idx);
+            }
+        });
+      
+        self.data[2].selectedpoints =  selectedpointsIdx;
+        
+        Plotly.react(self.div, self.data, self.layout);
+        
+        set_global_status({"selected_cell":cells, "selection_type":"cells"});
+        
+    })
+}
+
+
+// add the linear coords to the tree object
+PhyloPlotly.prototype.setLinearCoords = function() {
+    var maxDepth = this.tree["depth"]; // at root
+    var leafIndex = 0;
+    var y = [];
     function setLinearCoord(tree) {
         tree["x"] = maxDepth - tree["depth"]
         if (!isTip(tree)) {
@@ -70,320 +332,173 @@ function generateLinearCoords(tree) {
             // am a tip
             tree["y"] = leafIndex;
             leafIndex++;
-            tree["x"] = tree["x"] + 30
+            tree["x"] = tree["x"] + 1;
         }
+        y.push(tree["y"]);
     }
-    setLinearCoord(tree);
+    
+    setLinearCoord(this.tree);
+    this.yMin = Math.min(...y);
+    this.yMax = Math.max(...y);
 }
 
 
-function plotDendro(newick, div, radial, mapping, nodeColor) {
-    var tree = parseNewick(newick);
-    setUltrametricTreeDepths(tree);
-    generateLinearCoords(tree);
-    
-    var x = [];
-    var y = [];
-    var names = [];
-    var colors = [];
-    var nodeSizes = [];
-    
-    var internalNodeSize = 5;
-    var tipSize = 6.3;
-    
-    function nodeCoords(tree) {
-        names.push(tree["name"]);
-        x.push(tree["x"]);
-        y.push(tree["y"]);
-        
-        if (!isTip(tree)) {
-            colors.push("#a4a4a4");
-            nodeSizes.push(internalNodeSize);
+/* 
+  add the radial coords to the tree object
+*/
+PhyloPlotly.prototype.setRadialCoords = function() {
+    var self = this;
+    function convertRadial(tree) {
+        var radialCoords = linearCordToRadial([tree["x"], tree["y"]], self.yMax, self.yMin, self.d);
+        var coords = polorCoordToCartestian(radialCoords);
+        tree["r"] = radialCoords[0];
+        tree["theta"] = radialCoords[1];
+        tree["u"] = coords[0];
+        tree["v"] = coords[1];
+        if (self.collapsed.includes(tree["name"])) {
+            // collapsed
+        } else if (!isTip(tree)) {
             tree["branchset"].sort(function(a, b) {return a["depth"] - b["depth"]}).forEach(function(child) {
-                nodeCoords(child);
+                convertRadial(child);
             });
-        } else {
-            nodeSizes.push(tipSize);
-            colors.push(nodeColor(mapping[tree["name"]]));
         }
     }
     
-    nodeCoords(tree);
-    console.log(colors);
-    
-    var yMin = Math.min(...y);
-    var yMax = Math.max(...y);
-    var d = 1;
-    
-    function treeCordToRadial(coord) {
-        var x = coord[0];
-        var y = coord[1];
-        
-        if (x === null || y === null) {
-            return [null, null]
-        }
-        
-        var r = x;
-        var theta = 2*Math.PI*(y-yMin+d)/(yMax-yMin+d);
-        
-        return [r, theta]
-    }
-    
-    function polorCoordToCartestian(polarCoord) {
-        var r = polarCoord[0];
-        var theta = polarCoord[1];
-        
-        if (r == null || theta == null) {
-            return [null, null]
-        }
-        return [Math.cos(theta)*r, Math.sin(theta)*r]
-    }
-    
-    if (radial) {
-        x = [];
-        y = [];
-        colors = [];
-        nodeSizes = [];
-        function convertRadial(tree) {
-            var radialCoords = treeCordToRadial([tree["x"], tree["y"]]);
-            var coords = polorCoordToCartestian(radialCoords);
-            tree["r"] = radialCoords[0];
-            tree["theta"] = radialCoords[1];
-            tree["x"] = coords[0];
-            tree["y"] = coords[1];
-            x.push(coords[0]);
-            y.push(coords[1]);
-            if (!isTip(tree)) {
-                nodeSizes.push(internalNodeSize);
-                colors.push("#a4a4a4")
-                tree["branchset"].sort(function(a, b) {return a["depth"] - b["depth"]}).forEach(function(child) {
-                    convertRadial(child);
-                });
-            } else {
-                nodeSizes.push(tipSize);
-                colors.push(nodeColor(mapping[tree["name"]]));
-            }
-        }
-        
-        convertRadial(tree)
-    }
-    
-    
+    convertRadial(this.tree)
+}
+
+
+/*
+  Generate the coordinates for the lines when in linear mode
+*/
+PhyloPlotly.prototype.linearLines = function() {
     var xh = [];
     var yh = [];
-    var xv = []
+    var xv = [];
     var yv = [];
+    var self = this;
     
-    if (radial) {
-        var rh = [];
-        var thetah = [];
-        var rv = []
-        var thetav = [];
-        function lines(tree) {
-            if (!isTip(tree)) {
-                var rStart = tree["r"]
-                var theta = tree["theta"]
-                
-                var childrenRs = [];
-                var childrenThetas = [];
-                
-                tree["branchset"].sort(function(a, b) {return a["theta"] - b["theta"]}).forEach(function(child) {
-                    lines(child);
-                    childrenRs.push(child["r"]);
-                    childrenThetas.push(child["theta"]);
-                });
-                var rEnd = Math.min(...childrenRs);
-                var hlineEnd = (rStart + rEnd)/2;
-                
-                rh = rh.concat([rStart, hlineEnd, null]) // first part of connection, x
-                thetah = thetah.concat([theta, theta, null]) // first part of connection, y
-                
-                
-                // draw the second parts horizontal x
-                childrenRs.forEach(function(r) {
-                    rh = rh.concat([hlineEnd, r, null]);
-                });
-                
-                // draw the second parts horizontal y
-                childrenThetas.forEach(function(theta) {
-                    thetah = thetah.concat([theta, theta, null])
-                })
-                
-                // draw the vertical part as a spline
-                var maxTheta = Math.max(...childrenThetas);
-                var minTheta = Math.min(...childrenThetas);
-                var thetaRange = _.range(minTheta, maxTheta, (maxTheta - minTheta)/25)
-                childrenThetas.concat([theta]).concat(thetaRange).sort().forEach(function(thetaC) {
-                    rv.push(hlineEnd);
-                    thetav.push(thetaC);
-                })
-                
-                rv.push(null);
-                thetav.push(null);
-                
-            }
+    function lines(tree) {
+        if (!isTip(tree)  && !self.collapsed.includes(tree["name"])) {
+            var xStart = tree["x"];
+            var y = tree["y"];
+            
+            var childrenXs = [];
+            var childrenYs = [];
+            tree["branchset"].sort(function(a, b) {
+              return a["depth"] - b["depth"]
+            }).forEach(function(child) {
+                lines(child);
+                childrenXs.push(child["x"]);
+                childrenYs.push(child["y"]);
+            });
+            var xEnd = Math.min(...childrenXs);
+            var hlineEnd = (xStart + xEnd)/2;
+            xh = xh.concat([xStart, hlineEnd, null]) // first part of connection, x
+            yh = yh.concat([y, y, null]) // first part of connection, y
+            
+            // draw the second parts horizontal x
+            childrenXs.forEach(function(x) {
+                xh = xh.concat([hlineEnd, x, null]);
+            });
+            
+            // draw the second parts horizontal y
+            childrenYs.forEach(function(y) {
+                yh = yh.concat([y, y, null])
+            })
+            
+            // draw the vertical part
+            xv = xv.concat([hlineEnd, hlineEnd, null]);
+            yv = yv.concat([Math.min(...childrenYs), Math.max(...childrenYs), null]);
         }
-        
-        lines(tree)    
-        
-        var coords = _.unzip(_.zip(rh, thetah).map(polorCoordToCartestian))
-        xh = coords[0];
-        yh = coords[1];
-        coords = _.unzip(_.zip(rv, thetav).map(polorCoordToCartestian))
-        xv = coords[0];
-        yv = coords[1];
-        
-    } else {
-        function lines(tree) {
-            if (!isTip(tree)) {
-                var xStart = tree["x"]
-                var y = tree["y"]
-                
-                var childrenXs = [];
-                var childrenYs = []
-                tree["branchset"].sort(function(a, b) {return a["depth"] - b["depth"]}).forEach(function(child) {
-                    lines(child);
-                    childrenXs.push(child["x"]);
-                    childrenYs.push(child["y"]);
-                });
-                var xEnd = Math.min(...childrenXs);
-                var hlineEnd = (xStart + xEnd)/2;
-                xh = xh.concat([xStart, hlineEnd, null]) // first part of connection, x
-                yh = yh.concat([y, y, null]) // first part of connection, y
-                
-                // draw the second parts horizontal x
-                childrenXs.forEach(function(x) {
-                    xh = xh.concat([hlineEnd, x, null]);
-                });
-                
-                // draw the second parts horizontal y
-                childrenYs.forEach(function(y) {
-                    yh = yh.concat([y, y, null])
-                })
-                
-                // draw the vertical part
-                xv = xv.concat([hlineEnd, hlineEnd, null]);
-                yv = yv.concat([Math.min(...childrenYs), Math.max(...childrenYs), null]);
-            }
-        }
-        lines(tree)
     }
     
-    var nodesTrace = {
-        x: x,
-        y: y,
-        type: "scattergl",
-        text: names,
-        mode: "markers",
-        marker: {
-          color: colors,
-          size: nodeSizes,
-          opacity: 1
-        },
-        hoverinfo: "text"
-        
-    }
-    
-    var horizontalLines = {
-        x: xh,
-        y: yh,
-        mode: "lines",
-        type:"scatter",
-        line: {
-          color: '#000000',
-          width: 0.5,
-          shape: "spline"
-        },
-        hoverinfo: 'skip'
-    }
-    
-    var verticalLines = {
-        x: xv,
-        y: yv,
-        mode: "lines",
-        type:"scatter",
-        line: {
-          color: '#000000',
-          width: 0.5,
-          shape: "spline"
-        },
-        hoverinfo: 'skip'
-    }
-    
-    var layout = {
-        width: 770,
-        height: 770,
-        showlegend: false,
-        yaxis: {'showgrid':false, 'zeroline':false, "showline":false, showticklabels:false},
-        xaxis: {'showgrid':false, 'zeroline':false, "showline":false, showticklabels:false},
-        hovermode:"closest"
-    }
-    
-    var data = [horizontalLines, verticalLines, nodesTrace];
-    // clear any existing event listeners
-    $(div).off();
-    Plotly.newPlot(div, data, layout);
-    // add event listener for clicks
-    div.on('plotly_click', function(eventData) {
-        var expansion = selectionExpander(tree, eventData.points.map(x => x["text"]));
-        var selectedNames = expansion.selectedNames;
-        var cells = expansion.cells;
-        
-        var nodesToSelect = expansion.nodesToSelect;
-        
-        var selectedpointsIdx = [];
-        names.map(function (name, idx) {
-            if (selectedNames.includes(name)) {
-                selectedpointsIdx.push(idx);
-            }
-        });
-      
-        data[2].selectedpoints =  selectedpointsIdx;
-        
-        Plotly.react(div, data, layout);
-        
-        set_global_status({"selected_cell":cells, "selection_type":"cells"});
-    });
-    
-    // add event listener for selection
-    div.on('plotly_selected', function(eventData) {
-        if (eventData === undefined) {
-            set_global_status({"selected_cell":[], "selection_type":"none"});
-            return;
-        }
-        // event data are points, internal and tips
-        // for each tip use joining algo to find the internal nodes that lead to it
-        // for each internal node find the tips and restyle so they're selected
-        // restyle the lines so that they're highlight colored
-        var expansion = selectionExpander(tree, eventData.points.map(x => x["text"]));
-        var selectedNames = expansion.selectedNames;
-        var cells = expansion.cells;
-        
-        var nodesToSelect = expansion.nodesToSelect;
-        
-        var selectedpointsIdx = [];
-        names.map(function (name, idx) {
-            if (selectedNames.includes(name)) {
-                selectedpointsIdx.push(idx);
-            }
-        });
-      
-        data[2].selectedpoints =  selectedpointsIdx;
-        
-        Plotly.react(div, data, layout);
-        
-        set_global_status({"selected_cell":cells, "selection_type":"cells"});
-        
-    })
-    return({"tree": tree, "data": data, "layout": layout})
+    lines(self.tree);
+    return([xh, yh, xv, yv]);
 }
 
 
-function updateDendroSelection(div, tree, data, layout, cells) {
-    var expansion = selectionExpander(tree, cells);
+/*
+  Generate the lines when in radial mode
+*/
+PhyloPlotly.prototype.radialLines = function() {
+    var xh = [];
+    var yh = [];
+    var xv = [];
+    var yv = [];
+    var self = this;
+    
+    var rh = [];
+    var thetah = [];
+    var rv = []
+    var thetav = [];
+    function lines(tree) {
+        if (!isTip(tree) && !self.collapsed.includes(tree["name"])) {
+            var rStart = tree["r"]
+            var theta = tree["theta"]
+            
+            var childrenRs = [];
+            var childrenThetas = [];
+            
+            tree["branchset"].sort(function(a, b) {
+              return a["theta"] - b["theta"]
+            }).forEach(function(child) {
+                lines(child);
+                childrenRs.push(child["r"]);
+                childrenThetas.push(child["theta"]);
+            });
+            var rEnd = Math.min(...childrenRs);
+            var hlineEnd = (rStart + rEnd)/2;
+            
+            rh = rh.concat([rStart, hlineEnd, null]) // first part of connection, x
+            thetah = thetah.concat([theta, theta, null]) // first part of connection, y
+            
+            
+            // draw the second parts horizontal x
+            childrenRs.forEach(function(r) {
+                rh = rh.concat([hlineEnd, r, null]);
+            });
+            
+            // draw the second parts horizontal y
+            childrenThetas.forEach(function(theta) {
+                thetah = thetah.concat([theta, theta, null])
+            })
+            
+            // draw the vertical part as a spline
+            var maxTheta = Math.max(...childrenThetas);
+            var minTheta = Math.min(...childrenThetas);
+            var thetaRange = _.range(minTheta, maxTheta, (maxTheta - minTheta)/25)
+            childrenThetas.concat([theta]).concat(thetaRange).sort().forEach(function(thetaC) {
+                rv.push(hlineEnd);
+                thetav.push(thetaC);
+            })
+            
+            rv.push(null);
+            thetav.push(null);
+            
+        }
+    }
+    
+    lines(self.tree);    
+    
+    var coords = _.unzip(_.zip(rh, thetah).map(polorCoordToCartestian));
+    xh = coords[0];
+    yh = coords[1];
+    coords = _.unzip(_.zip(rv, thetav).map(polorCoordToCartestian));
+    xv = coords[0];
+    yv = coords[1];
+    return([xh, yh, xv, yv]);
+}
+
+
+/*
+  Update the selected CELLS from an arguments
+*/
+PhyloPlotly.prototype.updateSelection = function(cells) {
+    var expansion = selectionExpander(this.tree, cells);
     var selectedNames = expansion.selectedNames;
     
-    var names = data[2].text;
+    var names = this.data[2].text;
     var selectedpointsIdx = [];
     names.map(function (name, idx) {
         if (selectedNames.includes(name)) {
@@ -391,17 +506,120 @@ function updateDendroSelection(div, tree, data, layout, cells) {
         }
     });
     if (selectedpointsIdx.length > 0) {
-        data[2].selectedpoints =  selectedpointsIdx;
+        this.data[2].selectedpoints =  selectedpointsIdx;
     } else {
-        data[2].selectedpoints =  null;
+        this.data[2].selectedpoints =  null;
     }
     
     
-    Plotly.react(div, data, layout);
-    
+    Plotly.react(this.div, this.data, this.layout);
+}
+
+/*
+  Expand all Nodes
+*/
+PhyloPlotly.prototype.expandAll = function() {
+  this.collapseDepth = -1;
+  // reset the depths
+  this.collapsed = [];
+  setUltrametricTreeDepths(this.tree, this.collapsed);
+  this.updateCoords();
+  this.generatePlotlyData();
+  Plotly.react(this.div, this.data, this.layout);
 }
 
 
+/*
+  Collapse tree to certain depth and redraw
+*/
+PhyloPlotly.prototype.collapseToDepth = function(depth) {
+  this.collapseDepth = depth;
+  // reset the depths
+  this.collapsed = [];
+  setUltrametricTreeDepths(this.tree, this.collapsed);
+  
+  var self = this;
+  
+  // collapse to a specific detph
+  function collapseAtDepth(tree) {
+    if (tree["depth"] <= depth && !isTip(tree)) {
+      self.collapsed.push(tree["name"]); 
+    } else {
+      if (!isTip(tree)) {
+        tree["branchset"].forEach(function (x) {
+          collapseAtDepth(x);
+        });
+      }
+    }
+  }
+  
+  collapseAtDepth(this.tree);
+  this.updateCoords();
+  self.generatePlotlyData();
+  Plotly.react(this.div, this.data, this.layout);
+}
+
+
+/*
+  convert linear tree coords to radial r and theta
+*/
+function linearCordToRadial(coord, yMax, yMin, d) {
+    var x = coord[0];
+    var y = coord[1];
+    
+    if (x === null || y === null) {
+        return [null, null]
+    }
+    
+    var r = x;
+    var theta = 2*Math.PI*(y-yMin+d)/(yMax-yMin+d);
+    
+    return [r, theta]
+}
+
+
+/*
+  convert r and theta back to x and y
+*/
+function polorCoordToCartestian(polarCoord) {
+    var r = polarCoord[0];
+    var theta = polarCoord[1];
+    
+    if (r == null || theta == null) {
+        return [null, null]
+    }
+    return [Math.cos(theta)*r, Math.sin(theta)*r]
+}
+
+
+/* 
+  is this tree a tip?
+*/
+function isTip(tree) {
+    return !(_.keys(tree).includes("branchset"));
+}
+
+/*
+  set the modified ultrametric depths on a tree object
+*/
+function setUltrametricTreeDepths(tree, collapsed) {
+    if (!isTip(tree) && !collapsed.includes(tree["name"])) {
+        var my_depth = 0;
+        tree["branchset"].forEach(function(child) {
+            setUltrametricTreeDepths(child, collapsed);
+            my_depth = Math.max(my_depth, child["depth"] + 1);
+        });
+        tree["depth"] = my_depth;
+    } else {
+        tree["depth"] = 1;
+    }
+}
+
+
+/*
+  Expand a selection of CELLS in a TREE to any internal nodes that are 
+  fully satisfied by the leaves selected.
+*/
 function selectionExpander(tree, cells) {
     var selectedNames = cells;
     var cells = [];
@@ -434,3 +652,245 @@ function selectionExpander(tree, cells) {
     treeSelect(tree, false);
     return({"cells":cells, "selectedNames":selectedNames, "nodesToSelect":nodesToSelect})
 }
+
+
+
+
+
+
+
+/*
+function plotDendro(newick, div, radial, mapping, nodeColor) {
+    var tree = parseNewick(newick);
+    
+    function generatePlotlyData(collapsed) {
+        // treat collapsed nodes as leaves (special leaves though)
+        setUltrametricTreeDepths(tree, collapsed);
+        generateLinearCoords(tree);
+        
+        var x = [];
+        var y = [];
+        var names = [];
+        var colors = [];
+        var nodeSizes = [];
+        
+        var internalNodeSize = 5;
+        var tipSize = 6.3;
+        
+        function nodeCoords(tree) {
+            names.push(tree["name"]);
+            x.push(tree["x"]);
+            y.push(tree["y"]);
+            
+            if (collapsed.includes(tree["name"])) {
+              colors.push("#0000ff");
+              nodeSizes.push(internalNodeSize);
+              // blue triangle for collapsed (color)
+            } else if (!isTip(tree)) {
+                colors.push("#a4a4a4");
+                nodeSizes.push(internalNodeSize);
+                tree["branchset"].sort(function(a, b) {return a["depth"] - b["depth"]}).forEach(function(child) {
+                    nodeCoords(child);
+                });
+            } else {
+                nodeSizes.push(tipSize);
+                colors.push(nodeColor(mapping[tree["name"]]));
+            }
+        }
+        
+        nodeCoords(tree);
+        
+        
+        var yMin = Math.min(...y);
+        var yMax = Math.max(...y);
+        var d = 1;
+        
+        
+        
+        if (radial) {
+            x = [];
+            y = [];
+            colors = [];
+            nodeSizes = [];
+            function convertRadial(tree) {
+                var radialCoords = treeCordToRadial([tree["x"], tree["y"]]);
+                var coords = polorCoordToCartestian(radialCoords);
+                tree["r"] = radialCoords[0];
+                tree["theta"] = radialCoords[1];
+                tree["x"] = coords[0];
+                tree["y"] = coords[1];
+                x.push(coords[0]);
+                y.push(coords[1]);
+                if (collapsed.includes(tree["name"])) {
+                    // collapsed
+                    colors.push("#0000ff");
+                    nodeSizes.push(internalNodeSize);
+                } else if (!isTip(tree)) {
+                    nodeSizes.push(internalNodeSize);
+                    colors.push("#a4a4a4")
+                    tree["branchset"].sort(function(a, b) {return a["depth"] - b["depth"]}).forEach(function(child) {
+                        convertRadial(child);
+                    });
+                } else {
+                    nodeSizes.push(tipSize);
+                    colors.push(nodeColor(mapping[tree["name"]]));
+                }
+            }
+            
+            convertRadial(tree)
+        }
+        
+        
+        var xh = [];
+        var yh = [];
+        var xv = []
+        var yv = [];
+        
+        if (radial) {
+            var rh = [];
+            var thetah = [];
+            var rv = []
+            var thetav = [];
+            function lines(tree) {
+                if (!isTip(tree) && !collapsed.includes(tree["name"])) {
+                    var rStart = tree["r"]
+                    var theta = tree["theta"]
+                    
+                    var childrenRs = [];
+                    var childrenThetas = [];
+                    
+                    tree["branchset"].sort(function(a, b) {return a["theta"] - b["theta"]}).forEach(function(child) {
+                        lines(child);
+                        childrenRs.push(child["r"]);
+                        childrenThetas.push(child["theta"]);
+                    });
+                    var rEnd = Math.min(...childrenRs);
+                    var hlineEnd = (rStart + rEnd)/2;
+                    
+                    rh = rh.concat([rStart, hlineEnd, null]) // first part of connection, x
+                    thetah = thetah.concat([theta, theta, null]) // first part of connection, y
+                    
+                    
+                    // draw the second parts horizontal x
+                    childrenRs.forEach(function(r) {
+                        rh = rh.concat([hlineEnd, r, null]);
+                    });
+                    
+                    // draw the second parts horizontal y
+                    childrenThetas.forEach(function(theta) {
+                        thetah = thetah.concat([theta, theta, null])
+                    })
+                    
+                    // draw the vertical part as a spline
+                    var maxTheta = Math.max(...childrenThetas);
+                    var minTheta = Math.min(...childrenThetas);
+                    var thetaRange = _.range(minTheta, maxTheta, (maxTheta - minTheta)/25)
+                    childrenThetas.concat([theta]).concat(thetaRange).sort().forEach(function(thetaC) {
+                        rv.push(hlineEnd);
+                        thetav.push(thetaC);
+                    })
+                    
+                    rv.push(null);
+                    thetav.push(null);
+                    
+                }
+            }
+            
+            lines(tree)    
+            
+            var coords = _.unzip(_.zip(rh, thetah).map(polorCoordToCartestian))
+            xh = coords[0];
+            yh = coords[1];
+            coords = _.unzip(_.zip(rv, thetav).map(polorCoordToCartestian))
+            xv = coords[0];
+            yv = coords[1];
+            
+        } else {
+            function lines(tree) {
+                if (!isTip(tree)  && !collapsed.includes(tree["name"])) {
+                    var xStart = tree["x"]
+                    var y = tree["y"]
+                    
+                    var childrenXs = [];
+                    var childrenYs = []
+                    tree["branchset"].sort(function(a, b) {return a["depth"] - b["depth"]}).forEach(function(child) {
+                        lines(child);
+                        childrenXs.push(child["x"]);
+                        childrenYs.push(child["y"]);
+                    });
+                    var xEnd = Math.min(...childrenXs);
+                    var hlineEnd = (xStart + xEnd)/2;
+                    xh = xh.concat([xStart, hlineEnd, null]) // first part of connection, x
+                    yh = yh.concat([y, y, null]) // first part of connection, y
+                    
+                    // draw the second parts horizontal x
+                    childrenXs.forEach(function(x) {
+                        xh = xh.concat([hlineEnd, x, null]);
+                    });
+                    
+                    // draw the second parts horizontal y
+                    childrenYs.forEach(function(y) {
+                        yh = yh.concat([y, y, null])
+                    })
+                    
+                    // draw the vertical part
+                    xv = xv.concat([hlineEnd, hlineEnd, null]);
+                    yv = yv.concat([Math.min(...childrenYs), Math.max(...childrenYs), null]);
+                }
+            }
+            lines(tree)
+        }
+        
+        var nodesTrace = {
+            x: x,
+            y: y,
+            type: "scattergl",
+            text: names,
+            mode: "markers",
+            marker: {
+              color: colors,
+              size: nodeSizes,
+              opacity: 1
+            },
+            hoverinfo: "text"
+            
+        }
+        
+        var horizontalLines = {
+            x: xh,
+            y: yh,
+            mode: "lines",
+            type:"scatter",
+            line: {
+              color: '#000000',
+              width: 0.5,
+              shape: "spline"
+            },
+            hoverinfo: 'skip'
+        }
+        
+        var verticalLines = {
+            x: xv,
+            y: yv,
+            mode: "lines",
+            type:"scatter",
+            line: {
+              color: '#000000',
+              width: 0.5,
+              shape: "spline"
+            },
+            hoverinfo: 'skip'
+        }
+        return([horizontalLines, verticalLines, nodesTrace]);
+    }
+    
+    
+    
+    
+    
+    var data = generatePlotlyData([]);
+    // clear any existing event listeners
+    
+    return({"tree": tree, "data": data, "layout": layout})
+}
+*/

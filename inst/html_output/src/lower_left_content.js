@@ -235,15 +235,14 @@ Values_Plot.prototype.plot = function()
     var logScale = $(this.logCheck).is(':checked')
     
     if(get_global_status('selection_type') === 'cells' ||
-        get_global_status('selection_type') === 'pools'){
+        get_global_status('selection_type') === 'pools') {
 
         var selected_cells = get_global_status('selected_cell')
         var selection_name = get_global_status('selection_name')
         var selected_values = _.values(_.pick(plotted_values_object, selected_cells))
         var remainder_values = _.values(_.omit(plotted_values_object, selected_cells))
         
-        
-        if (get_global_status("enrichment")) {
+       if (get_global_status("enrichment") && get_global_status("enrichment_module") !== get_global_status("plotted_item")) {
             //drawDistChartSelection(this.chart, selected_values, remainder_values, selection_name, logScale)
             var y = get_global_data("extra_plotted_values")
             var mapped_y = _.values(y)
@@ -258,9 +257,7 @@ Values_Plot.prototype.plot = function()
         }
     } else {
         var plotted_values = _.values(plotted_values_object)
-        
-        
-        if (get_global_status("enrichment")) {
+        if (get_global_status("enrichment") && get_global_status("enrichment_module") !== get_global_status("plotted_item")) {
             // drawDistChart(this.chart, plotted_values, logScale)
             var y = get_global_data("extra_plotted_values")
             var mapped_y = _.values(y)
@@ -748,7 +745,7 @@ function drawDistChart(node, values, logScale, y=null, selectedCells=null, cellN
     var data = []
 
     if (!isFactor) {
-        if (y == null) {
+        if (y == null || get_global_status("enrichment_module") === get_global_status("plotted_item")) {
             var binmin = _.min(values)
             var binmax = _.max(values) + 1e-4 // end is not inclusive so need buffer
     
@@ -794,7 +791,7 @@ function drawDistChart(node, values, logScale, y=null, selectedCells=null, cellN
         })
     }
     
-    if (y == null) {
+    if (y == null || get_global_status("enrichment_module") === get_global_status("plotted_item")) {
         var layout = {
               margin: {
                   l: 50,
@@ -816,7 +813,7 @@ function drawDistChart(node, values, logScale, y=null, selectedCells=null, cellN
               'modeBarButtonsToRemove': ['sendDataToCloud', 'hoverCompareCartesian', 'toggleSpikelines'],
           }
     } else {
-        var yLabel = get_global_status("enrichment_module") + " Hotspot Scores";
+        var yLabel = get_global_status("enrichment_module") + " Signature Scores";
         var xLabel = get_global_status("plotted_item") + " Signature Scores";
         var layout = {
               margin: {

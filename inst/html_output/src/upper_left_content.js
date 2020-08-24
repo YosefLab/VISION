@@ -2105,16 +2105,9 @@ function Dend()
 
 Dend.prototype.init = function()
 {
-
-    var self = this;
-
     this.newick = get_global_status("dendrogram")
-    this.tree = null;
     this.div = document.getElementById("tree_container_plotly");
-    this.data = null;
-    this.layout = null;
-
-
+    this.phyloPlotly = new PhyloPlotly(this.newick, this.div, null, null);
 }
 
 
@@ -2132,63 +2125,7 @@ Dend.prototype.update = function(updates)
 
 Dend.prototype.update_tree_selection = function() {
     var cells = get_global_status("selected_cell");
-    updateDendroSelection(this.div, this.tree, this.data, this.layout, cells);
-    /*
-    this.tree.selection_callback(function (nodes) {});
-    var nodes = cells
-    var all_nodes =  this.tree.get_nodes()
-
-    if (cells.length > 0) {
-        var node_selector = function(node) {
-          if (!d3.layout.phylotree.is_leafnode(node)) {
-            return true
-          }
-          var selected = nodes.includes(node.name)
-
-          if (selected) {
-            nodes.push(node.name)
-          }
-          return false
-        }
-       all_nodes = all_nodes.filter(node_selector)
-
-        while (true) {
-          var node_selector = function(node) {
-              var in_nodes = (n) => nodes.includes(n.name)
-              var selected = node.children.every(in_nodes)
-              if (selected) {
-                nodes.push(node.name)
-              }
-              return !selected
-          }
-
-          var all_nodes_new = all_nodes.filter(node_selector)
-          if (all_nodes_new.length === all_nodes.length) {
-            break
-          }
-          all_nodes = all_nodes_new
-        }
-    }
-
-    var node_selector_final = function(node) {
-          var selected = nodes.includes(node.target.name)
-          return selected
-      }
-
-    this.tree.modify_selection(node_selector_final)
-
-    this.tree.selection_callback(function (nodes) {
-        var cells = nodes.map(function(node) {
-          if (d3.layout.phylotree.is_leafnode(node)) {
-            return node.name;
-          }
-        })
-
-        if (cells.length > 0) {
-          set_global_status({"selected_cell":cells, "selection_type":"cells"})
-        }
-      });
-      */
+    this.phyloPlotly.updateSelection(cells);
 }
 
 Dend.prototype.render_dend = function()
@@ -2200,45 +2137,10 @@ Dend.prototype.render_dend = function()
 
     var plotted = get_global_data("plotted_values");
     var plotted_item = this.plotted_item;
-    /*
-    function edgeStyler(dom_element, edge_object) {
-      dom_element.style("stroke-width", "1pt");
-    }
-
-    var num_cells = Object.keys(plotted).length;
-    var width = 720;
-    var height = 720
-    var container_id = '#tree_container';
-
-    var s = num_cells*4;
-    $(container_id).empty();
-    var svg = d3.select(container_id).append("svg")
-    .attr("width", width)
-    .attr("height", height);
-
-    var tree = d3.layout.phylotree()
-    // create a tree layout object
-    .svg(svg)
-    .radial(true)
-    .options({
-      "brush": false,
-      "zoom": true,
-      "show-scale": false,
-      "selectable": true,
-      "minimum-per-node-spacing": 5,
-      "minimum-per-level-spacing": 5,
-      "max-radius": s/2,
-      'left-right-spacing': 'fit-to-size'
-      //'top-bottom-spacing': 'fit-to-size',
-      //'max-radius': 800
-    }).size([s, s])
-
-    tree(this.newick)
-
-    var tree_attributes = {};
-    */
+    
     var scatter = right_content.layoutPlotData["full"][0].scatter;
-    var plotly_defaults_colors = ["#1F77B4", "#FF7F0E", "#2CA02C", "#D62728", "#9467BD", "#8C564B","#E377C2", "#7F7F7F", "#BCBD22", "#17BECF"]
+    var plotly_defaults_colors = ["#1F77B4", "#FF7F0E", "#2CA02C", "#D62728", 
+    "#9467BD", "#8C564B","#E377C2", "#7F7F7F", "#BCBD22", "#17BECF"]
 
     if(get_global_data('meta_levels')[plotted_item] == null)  {
         var full_color_range = scatter.full_color_range;
@@ -2300,133 +2202,34 @@ Dend.prototype.render_dend = function()
             }
       }
     }
-    /*
-    var standard_label = tree.branch_name();
+    
 
-    function edgeStyler(element, node_data) {
-      element.style ("stroke-width", 1)
-    }
-
-    tree.style_edges(edgeStyler);
-
-    function nodeStyler(element, node_data, is_radial) {
-      if (d3.layout.phylotree.is_leafnode(node_data)) {
-        var node_label = element.select("text");
-        var level = plotted[node_data.name];
-
-        var annotation = element.selectAll ("rect").data([level]);
-        annotation.enter().append ("rect");
-        if (is_radial) {
-          annotation.attr ("height", 3).attr ("width", 30).attr ("x", -15).attr("y", -1.5)
-            .style ("fill", function(d, i) {
-              return attribute_to_color (d);
-             }).style("stroke-width", 0);
-           if (node_data.text_angle && is_radial) {
-            annotation.attr("transform", function(d) {
-              return "rotate(" + node_data.text_angle + ")";
-            });
-          }
-        } else {
-            annotation.attr ("height", 4).attr ("width", 30).attr("y", -2)
-              .style ("fill", function(d, i) {
-                return attribute_to_color (d);
-               }).style("stroke-width", 0);
-            annotation.attr("transform", function(d) {
-              return "rotate(0)";
-              });
-            }
-      }
-    }
-
-    tree.style_edges(edgeStyler).style_nodes(function(element, node_data) { return nodeStyler(element, node_data, true)}).branch_name(function() {
-        return ""
-      });
-
-
-    // sort nodes from phylotree example
-    function sort_nodes (asc) {
-      tree.traverse_and_compute (function (n) {
-              var d = 1;
-              if (n.children && n.children.length) {
-                  d += d3.max (n.children, function (d) { return d["count_depth"];});
-              }
-              n["count_depth"] = d;
-          });
-          tree.resort_children (function (a,b) {
-              return (a["count_depth"] - b["count_depth"]) * (asc ? 1 : -1);
-          });
-    }
-    sort_nodes(false);
-
-    var max_count_depth = Math.max(...tree.get_nodes().map(n => n["count_depth"]))
-    // now change branch lengths
-    tree.branch_length (function (n) {
-      var parent_depth = n["parent"]["count_depth"];
-      var length = 210 * (parent_depth - n["count_depth"]);
-      if(n["count_depth"] == 1) {
-        length = length + 120
-      }
-      return length
-    });
-
-    tree.layout()
-    tree.placenodes().update();
-
-    var svgHeight = parseInt(svg.style("height").replace("px", ""));
-    var svgWidth = parseInt(svg.style("width").replace("px", ""));
-
-
-    var zoomFactor = 1000/(Math.min(svgHeight, svgWidth)*1.25);
-
-    var horizontalOffset = (-1 * svgWidth / 2) * (1-zoomFactor);
-    var verticalOffset = (-1 * svgHeight / 2) * (1-zoomFactor);
-
-
-    svg.attr("transform", "translate(" +  horizontalOffset +"," + verticalOffset + ")" + "scale(" + zoomFactor + ")")
-    */
-
+    
+    this.phyloPlotly.setMapping(plotted);
+    this.phyloPlotly.setNodeColor(attribute_to_color);
     var self = this;
+    $("#dend_layout").off();
+    $("#dend_expand_all").off();
     $("#dend_layout").on("click", function(e) {
       var is_radial = $(this).prop("checked")
-      dendroInfo = plotDendro(self.newick, self.div, is_radial, plotted, attribute_to_color);
-      self.tree = dendroInfo.tree;
-      self.data = dendroInfo.data;
-      self.layout = dendroInfo.layout;
-      /*
-      tree.radial(is_radial)
-      if (is_radial) {
-        tree.size([s, s])
-        tree.style_nodes(function(element, node_data) {return nodeStyler(element, node_data, true)}).placenodes().update();
-         svg.attr("transform", "translate(" +  horizontalOffset +"," + verticalOffset + ")" + "scale(" + zoomFactor + ")")
-      } else {
-        tree.size([100, 770]);
-        tree.style_nodes(function(element, node_data) {return nodeStyler(element, node_data, false)}).placenodes().update();
-        svg.attr("transform", "translate(" +  0 +"," + 0 + ")")
-      }
-      */
+      self.phyloPlotly.updateMode(is_radial);
+    });
+    
+    $("#dend_expand_all").on("click", function(e) {
+      self.phyloPlotly.expandAll();
+    });
+    
+    $("#dend_collapse").on("click", function(e) {
+      var value = $("#dend_collapse_to").prop("value");
+      self.phyloPlotly.collapseToDepth(value);
     });
 
-    //var collapseTo = 10;
-    /* tree.traverse_and_compute(function(n){
-      if(n["depth"] === collapseTo) {
-        tree.collapse_node(n);
-        console.log(n)
-      }
-    }); */
 
-    var dendroInfo = plotDendro(this.newick, this.div, true, plotted, attribute_to_color);
-    this.tree = dendroInfo.tree;
-    this.data = dendroInfo.data;
-    this.layout = dendroInfo.layout;
-    //this.tree = tree
-    //this.update_tree_selection()
+    this.phyloPlotly.init();
+    this.update_tree_selection()
     this.setLoadingStatus(false);
-
-
-    // start plotly_phylo
     
-    // var tree = parseNewick(get_global_status("dendrogram"));
-    
+    this.phyloPlotly.collapseToDepth(4);
 }
 
 

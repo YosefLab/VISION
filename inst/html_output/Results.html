@@ -106,7 +106,7 @@
                       </div>
                   </div>
   
-                  <div class="tab-content upper-left-section-content" style="padding: 5px">
+                  <div class="tab-content upper-left-section-content" style="padding: 5px; display: block">
                       <div class="tab-pane show active" id="table-div-container" role="tabpanel" aria-labelledby="sig-table-tab" style="overflow-x: scroll">
                           <div class="sig-tables-header">
                               <table class="sig-table">
@@ -284,30 +284,39 @@
               </div>
               <div id="collapseThree" class="collapse multi-collapse show" aria-labelledby="headingThree" style="padding: 10px">
                 <div id="upper-middle-content">
-                  <div class="tab-content upper-left-section-content" style="height: 800px">
-                    <div class="tab-pane active">
-                      <div class='row'>
+                  <div class="tab-content upper-left-section-content">
+                    <div class="tab-pane active container">
+                      <div class="form-inline justify-content-sm-around">
+                        <div class="form-check">
+                          <label class="form-check-label">
+                              Radial Layout <input class="form-check-input"  style="margin-left: 10px;" type="checkbox" value="true" id="dend_layout">
+                          </label>
+                        </div>
+                        <div class="form-group">
+                          <label>
+                            Collapse To <input class="form-control" style="margin-left: 10px;" type="number" value="4" id="dend_collapse_to">
+                          </label>
+                          <button type="button" class="btn btn-secondary" id="dend_collapse">Collapse</button>
+                          
+                        </div>
+                        <div class="form-group">
+                          <button type="button" class="btn btn-primary" id="dend_expand_all">Expand All</button>
+                        </div>
+                      </div>
+                      <div class='row' style="overflow:hidden">
                           <div class = 'col-md-12'>
-                            <div class="checkbox-label">
-                              <label class="form-check-label" for="dend_layout">Radial layout</label>
-                              <input type="checkbox" id="dend_layout" value="true"/>
-                            </div>
-                          </div>  
-                        </div>
-                        <div class='row' style="overflow:hidden">
-                            <div class = 'col-md-12'>
-                                <div id = 'tree_container_plotly'>
-                                </div>
-                            </div>
-                        </div>
-                        <!--<div class='row' style="overflow:hidden">
-                            <div class = 'col-md-12'>
-                                <div id = 'tree_container' class = 'tree-widget'>
-                                </div>
-                            </div>
-                        </div>-->
-                    </div>
+                              <div id = 'tree_container_plotly'>
+                              </div>
+                          </div>
+                      </div>
+                      <!--<div class='row' style="overflow:hidden">
+                          <div class = 'col-md-12'>
+                              <div id = 'tree_container' class = 'tree-widget'>
+                              </div>
+                          </div>
+                      </div>-->
                   </div>
+                </div>
               </div> <!-- End of middle-left-content -->
               </div>
             </div>
