@@ -964,7 +964,7 @@ get_max_cluster_size <- function(tree, node) {
 trivial_dist <- function(tree, tip1, tip2) {
     depths <- node.depth(tree)
     edges <- tree$edge
-    path1 <- c()
+    path1 <- c(tip1)
     root <- find_root(tree)
     parent <- tip1
     while (T) {
@@ -975,7 +975,7 @@ trivial_dist <- function(tree, tip1, tip2) {
       }
     }
     
-    path2 <- c()
+    path2 <- c(tip2)
     parent <- tip2
     while (T) {
       parent <- edges[, 1][edges[, 2] == parent]
