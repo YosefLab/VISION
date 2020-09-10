@@ -2223,6 +2223,12 @@ Dend.prototype.render_dend = function()
       var value = $("#dend_collapse_to").prop("value");
       self.phyloPlotly.collapseToDepth(value);
     });
+    
+    $("#collapse_select").on("change", function(e) {
+      var value = $("#collapse_select").prop("value");
+      self.phyloPlotly.setCollapseMethod(value);
+    });
+    
 
 
     this.phyloPlotly.init();

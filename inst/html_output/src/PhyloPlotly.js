@@ -64,6 +64,8 @@ function PhyloPlotly(newick, div, mapping, nodeColor) {
     this.yMin = 0;
     this.yMax = 1;
     this.d = 1
+    
+    this.collapseMethod = "mode";
 }
 
 
@@ -72,6 +74,14 @@ function PhyloPlotly(newick, div, mapping, nodeColor) {
 */
 PhyloPlotly.prototype.setMapping = function(mapping) {
   this.mapping = mapping;
+}
+
+
+/*
+  set the collapseMethod for coloring
+*/
+PhyloPlotly.prototype.setCollapseMethod = function(collapseMethod) {
+  this.collapseMethod = collapseMethod;
 }
 
 /*
@@ -145,7 +155,7 @@ PhyloPlotly.prototype.generatePlotlyData = function() {
         y.push(tree[yKey]);
         
         if (self.collapsed.includes(tree["name"])) {
-            colors.push("#111111");
+            colors.push(self.nodeColor(self.collapseColor(tree)));
             nodeSizes.push(collapsedNodeSize);
             nodeSymbols.push("triangle-down");
             // black triangle for collapsed (color)
@@ -561,6 +571,40 @@ PhyloPlotly.prototype.collapseToDepth = function(depth) {
 
 
 /*
+  function to color a collapsed node
+*/
+PhyloPlotly.prototype.collapseColor = function(tree) {
+  var childValues = [];
+  var self = this;
+  function collectValues(tree) {
+    if (!isTip(tree)) {
+        tree["branchset"].forEach(function (x) {
+          collectValues(x);
+        });
+      } else {
+        childValues.push(self.mapping[tree["name"]])
+      }
+  }
+  
+  
+  collectValues(tree);
+  switch(this.collapseMethod) {
+    case "arimean":
+      return (ariMean(childValues));
+    case "geomean":
+      return (geoMean(childValues));
+    case "median":
+      return (median(childValues));
+    case "mode":
+      return (mode(childValues));
+    default:
+      console.log("defaulted to mode")
+      return (mode(childValues));
+  }
+}
+
+
+/*
   convert linear tree coords to radial r and theta
 */
 function linearCordToRadial(coord, yMax, yMin, d) {
@@ -654,7 +698,55 @@ function selectionExpander(tree, cells) {
 }
 
 
+/* COLLAPSE COLORING METHODS
+  -arithmetic mean
+  -geometric mean
+  -median
+  -mode
+*/
 
+/*
+  arithmetic mean of array
+*/
+function ariMean(arr) {
+  return(arr.reduce(function(a, b) {return a+b}) / arr.length);
+}
+
+/*
+  geometric mean of array
+*/
+function geoMean(arr) {
+  return(Math.exp(arr.map(function(a) {return Math.log(a)}).reduce(function(a, b) {return a + b}) / arr.length));
+}
+
+
+/*
+  median of an array
+*/
+function median(arr) {
+  arr.sort();
+  if (arr.length % 2 !== 0) {
+    return(arr[arr.length / 2 - 0.5]);
+  } else {
+    return((arr[arr.length / 2] + arr[(arr.length / 2) - 1]) / 2);
+  }
+}
+
+
+/*
+  mode of an array
+*/
+function mode(arr) {
+  var freq = {};
+  arr.forEach(function(x) {
+    if (x in freq) {
+      freq[x] ++;
+    } else {
+      freq[x] = 1;
+    }
+  })
+  return (Object.keys(freq).reduce((a, b) => freq[a] > freq[b] ? a : b));
+}
 
 
 

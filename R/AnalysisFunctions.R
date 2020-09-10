@@ -314,6 +314,8 @@ calcSignatureScores <- function(
         }
     }
     
+    object@sigData <- sigData # persist back to the object because of issues with up/down
+    
     sigScores <- batchSigEvalNorm(sigData, normExpr)
     
     if (sig_gene_importance) {
