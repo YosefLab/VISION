@@ -2217,6 +2217,7 @@ Dend.prototype.render_dend = function()
     
     $("#dend_expand_all").on("click", function(e) {
       self.phyloPlotly.expandAll();
+      $("#dend_collapse_to").val(self.phyloPlotly.maxDepth);
     });
     
     $("#dend_collapse").on("click", function(e) {
