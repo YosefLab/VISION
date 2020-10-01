@@ -10,14 +10,18 @@ calcHotspotModules <- function(object, model="danb", tree=F, genes=1000, num_umi
         if (is.null(num_umi)) {
             hs <- hotspot$Hotspot(as.data.frame(object@exprData), tree=pyTree, model=model)
         } else {
-            hs <- hotspot$Hotspot(as.data.frame(object@exprData), tree=pyTree, model=model, umi_counts=num_umi)
+            py$umi_df <- r_to_py(num_umi)
+            py_run_string("umi_counts = umi_df.iloc[:, 0]")
+            hs <- hotspot$Hotspot(as.data.frame(object@exprData), tree=pyTree, model=model, umi_counts=py$umi_counts)
         }
         
     } else {
         if (is.null(num_umi)) {
             hs <- hotspot$Hotspot(as.data.frame(object@exprData), latent=as.data.frame(object@LatentSpace), model=model)
         } else {
-            hs <- hotspot$Hotspot(as.data.frame(object@exprData), latent=as.data.frame(object@LatentSpace), model=model, umi_counts=num_umi)
+            py$umi_df <- r_to_py(num_umi)
+            py_run_string("umi_counts = umi_df.iloc[:, 0]")
+            hs <- hotspot$Hotspot(as.data.frame(object@exprData), latent=as.data.frame(object@LatentSpace), model=model, umi_counts=py$umi_counts)
         }
     }
     

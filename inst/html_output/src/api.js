@@ -372,6 +372,14 @@ var api = (function(){
             return _.fromPairs(_.zip(x['cells'], x['values']))
         })
     }
+    
+    output.modules.clusters = function() {
+        var query
+        query = "FilterGroup/SigClusters/Modules"
+        
+        query = postProcess(query)
+        return $.ajax(query, {dataType: "json"}).then(x => x)
+    }
 
     // Session Info Api
 

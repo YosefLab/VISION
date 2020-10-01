@@ -299,6 +299,7 @@ function Signature_Table()
     this.is_filtering = false
     this.is_collapsed = {} // cluster -> boolean, holds whether a cluster is collapsed
     this.tooltip = {} // will contain a Popper.js object
+    this.showing_enrichment = false;
 }
 
 
@@ -663,6 +664,12 @@ Signature_Table.prototype.update = function(updates)
             matrix_promise = api.clusters.sigProjMatrix(cluster_var, false);
         } else if (main_vis == "genes") {
             matrix_promise = api.modules.enrichment();
+            self.showing_enrichment = true;
+            clusters_promise = api.modules.clusters()
+            .then(function(cls){
+                self.clusters = cls;
+                return true;
+            })
             fix_col_label = false
         } else if (main_vis == "tree") {
             matrix_promise = api.tree.sigProjMatrix(false);

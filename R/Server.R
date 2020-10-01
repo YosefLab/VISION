@@ -465,6 +465,18 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         return(res)
 
     })
+    
+    pr$handle("GET", "/FilterGroup/SigClusters/Modules", function(req, res) {
+      # Fix for signatures vs modules enrichment tab in genes panel
+      cls <- object@LocalAutocorrelation$Clusters
+      cls <- cls$Computed
+      sigs <- rownames(object@ModuleSignatureEnrichment$p_vals)
+      
+      cls <- cls[intersect(names(cls), sigs)]
+      res$body <- toJSON(cls, auto_unbox = TRUE)
+      return(res)
+      
+    })
 
     pr$handle("GET", "/FilterGroup/SigClusters/Proteins", function(req, res) {
 
