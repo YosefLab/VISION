@@ -18,7 +18,7 @@ clusterCells <- function(object, tree=FALSE) {
     } else {
         message("Using Tree to compute clusters...\n")
         # Get the MRCA matrix and convert the node indexes to depths
-        cl <- treeCluster3(object@Tree)
+        cl <- treeCluster3(object@tree)
     }
     
     names(cl) <- paste('Cluster', seq(length(cl)))
@@ -762,7 +762,7 @@ analyzeLocalCorrelations <- function(object, tree=FALSE) {
     weights <- computeKNNWeights(object@LatentSpace, object@params$numNeighbors)
   } else {
     message("Using Tree to compute neighbors...\n")
-    weights <- computeKNNWeights(object@Tree, object@params$numNeighbors)
+    weights <- computeKNNWeights(object@tree, object@params$numNeighbors)
   }
  
   message("Evaluating local consistency of signatures in latent space...\n")

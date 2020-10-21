@@ -394,10 +394,6 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                 .Object@params$latentSpace$Name <- latentSpaceName
             }
 
-            if (!is.null(tree)){
-              .Object@Tree <- tree
-            }
-
             .Object@modData <- modData
             .Object@Hotspot <- hotspot
             .Object@ModuleSignatureEnrichment <- list()
@@ -405,6 +401,14 @@ setMethod("Vision", signature(data = "matrixORSparse"),
 
             return(.Object)
     }
+)
+
+setMethod("PhyloVision", signature(tree="phylo"), 
+          function(tree, ...) {
+            obj <- Vision(...)
+            obj <- new("PhyloVision", obj, tree=tree)
+            return(obj)
+          }
 )
 
 #' @rdname VISION-class
@@ -656,7 +660,7 @@ setMethod("Vision", signature(data = "Seurat"),
 #' @export
 #' @aliases analyze
 #' @param object VISION object
-#' @param tree wether to use the TREE slot of the object to calculate values
+#' @param tree whether to use the TREE slot of the object to calculate values
 #' @return VISION object
 #'
 #' @examples
@@ -720,6 +724,12 @@ setMethod("analyze", signature(object="Vision"),
 
     message("Analysis Complete!\n")
 
+    return(object)
+})
+
+setMethod("phyloAnalyze", signature(object="PhyloVision"),
+          function(object, hotspot=FALSE) {
+    object <- analyze(object, tree=TRUE, hotspot=hotspot)
     return(object)
 })
 

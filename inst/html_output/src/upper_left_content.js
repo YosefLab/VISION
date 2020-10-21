@@ -373,6 +373,10 @@ Signature_Table.prototype.render = function()
         new_cell.append(new_item)
         header_row.append(new_cell)
     });
+    
+    //$('.sig-table th:not(:first-child)').css('height', )
+    //header_row.
+    //header_row.find("th:not(:first-child)")..css('height', h.width());
 
     // Add padding for scrollbar width of table below it
     $(self.dom_node).children(".sig-tables-header")
@@ -658,13 +662,20 @@ Signature_Table.prototype.update = function(updates)
     if( 'main_vis' in updates || _.isEmpty(self.matrix) || 'cluster_var' in updates){
         var main_vis = get_global_status('main_vis');
         var cluster_var = _get_cluster_var();
+        clusters_promise = api.signature.clusters(false)
+            .then(function(cls){
+                self.clusters = cls;
+                return true;
+            })
 
         var fix_col_label = true
+        self.showing_enrichment = false;
         if (main_vis == "cells" || main_vis == "genes" && !get_global_status('has_mods')) {
             matrix_promise = api.clusters.sigProjMatrix(cluster_var, false);
         } else if (main_vis == "genes") {
             matrix_promise = api.modules.enrichment();
             self.showing_enrichment = true;
+            // yanay here
             clusters_promise = api.modules.clusters()
             .then(function(cls){
                 self.clusters = cls;

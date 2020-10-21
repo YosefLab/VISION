@@ -33,9 +33,9 @@
 .upper-left-section-content .sig-tables-header{
     margin-right: 15px; /* Account for padding of div below it */
     margin-bottom: 5px;
-    padding-top: 35px;
+    padding-top: 65px;
     overflow-x: hidden;
-    overflow-y: hidden;
+    overflow-y: scroll;
     flex-shrink: 0;
 }
 

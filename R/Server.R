@@ -468,11 +468,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
     
     pr$handle("GET", "/FilterGroup/SigClusters/Modules", function(req, res) {
       # Fix for signatures vs modules enrichment tab in genes panel
-      cls <- object@LocalAutocorrelation$Clusters
-      cls <- cls$Computed
-      sigs <- rownames(object@ModuleSignatureEnrichment$p_vals)
-      
-      cls <- cls[intersect(names(cls), sigs)]
+      cls <- object@ModuleSignatureEnrichment$cl
       res$body <- toJSON(cls, auto_unbox = TRUE)
       return(res)
       
@@ -1103,11 +1099,11 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         info[["has_lca"]] <- !is.null(object@LCAnnotatorData)
         
-        if (!is.null(object@Tree)) {
-          info[["dendrogram"]] <- write.tree(object@Tree)
+        if (.hasSlot(object, "tree") && !is.null(object@tree)) {
+          info[["dendrogram"]] <- write.tree(object@tree)
         }
         
-        info[["has_dendrogram"]] <- !is.null(object@Tree)
+        info[["has_dendrogram"]] <- .hasSlot(object, "tree") && !is.null(object@tree)
 
         res$body <- toJSON(info, force = TRUE,
             pretty = TRUE, auto_unbox = TRUE)

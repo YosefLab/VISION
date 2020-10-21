@@ -1,11 +1,11 @@
-calcHotspotModules <- function(object, model="danb", tree=F, genes=1000, num_umi=NULL, min_gene_threshold=20, n_neighbors=NULL, jobs=1) {
+calcHotspotModules <- function(object, model="danb", tree=FALSE, genes=1000, num_umi=NULL, min_gene_threshold=20, n_neighbors=NULL, jobs=1, fdr_threshold=0.05) {
     use_condaenv(condaenv = "vision_hotspot", conda = "auto", required = FALSE)
     hotspot <- import("hotspot", convert=F)
     # TODO add UMI support
     if (tree) {
         message("Using Tree")
         ete3 <- import("ete3", convert=F)
-        nwk <- write.tree(object@Tree)
+        nwk <- write.tree(object@tree)
         pyTree <- ete3$Tree(nwk, format = 8L)
         if (is.null(num_umi)) {
             hs <- hotspot$Hotspot(as.data.frame(object@exprData), tree=pyTree, model=model)
@@ -32,7 +32,7 @@ calcHotspotModules <- function(object, model="danb", tree=F, genes=1000, num_umi
     }
     
     hs_results <- hs$compute_autocorrelations(jobs=as.integer(jobs))
-    hs_genes <- hs_results$loc[hs_results$FDR$le(0.05)]$sort_values('Z', ascending=F)$head(as.integer(genes))$index
+    hs_genes <- hs_results$loc[hs_results$FDR$le(fdr_threshold)]$sort_values('Z', ascending=F)$head(as.integer(genes))$index
     hs$compute_local_correlations(hs_genes, jobs=as.integer(jobs))
     hs$create_modules(min_gene_threshold=as.integer(min_gene_threshold))
     hs_module_scores <- py_to_r(hs$calculate_module_scores())
@@ -171,7 +171,7 @@ analyzeLocalCorrelationsModules <- function(object, tree=FALSE) {
     weights <- computeKNNWeights(object@LatentSpace, object@params$numNeighbors)
   } else {
     message("Using Tree to compute neighbors...\n")
-    weights <- computeKNNWeights(object@Tree, object@params$numNeighbors)
+    weights <- computeKNNWeights(object@tree, object@params$numNeighbors)
   }
   
   message("Evaluating local consistency of modules in latent space...\n")
@@ -251,7 +251,9 @@ calc_mod_sig_enrichment <- function(object) {
     colnames(p_values) <- mod_names
     rownames(p_values) <- sig_names
     
-    return(list("statistics"=stats, "p_vals"=p_values))
+    assignments <- group_modules_enrichment(stats, p_values)
+    
+    return(list("statistics"=stats, "p_vals"=p_values, "cl"=assignments))
 }
 
 
@@ -272,6 +274,17 @@ calc_set_enrichment <- function(set1, set2, genes) {
     
     p_value <- 1 - phyper(q=o_overlap-1, m, n, k)
     return(c(stat, p_value))
+}
+
+
+group_modules_enrichment <- function(stats, pvals) {
+  sigs <- rownames(stats)
+  mods <- colnames(stats)
+  
+  assignments <- as.list(max.col(stats))
+  num_cl <- length(unique(assignments <- assignments))
+  names(assignments) <- rownames(stats)
+  return(assignments)
 }
 
 

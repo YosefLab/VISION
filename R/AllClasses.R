@@ -10,6 +10,7 @@ setClassUnion("numericORNULL", members = c("numeric", "NULL"))
 setClassUnion("matrixORSparse", members = c("matrix", "dgCMatrix"))
 setClassUnion("matrixORNULL", members = c("matrix", "NULL"))
 setClassUnion("dataframeORNULL", members = c("data.frame", "NULL"))
+
 # setClassUnion("treeorNull", members=c("phylo", "NULL"))
 # setClassUnion("pythonorNull", members = c("python.builtin.object", "NULL"))
 
@@ -60,6 +61,8 @@ Trajectory <- setClass("Trajectory",
             # rownames: cell (character)
             # columns:  from (character), to (character), position (numeric, 0 to 1)
 ))
+
+setClassUnion("trajectoryORNULL", members = c("Trajectory", "NULL"))
 
 TrajectoryProjection <- setClass("TrajectoryProjection",
     slots = c(
@@ -117,8 +120,7 @@ Vision <- setClass("Vision",
         ModGeneImportance = "list",
         Pools = "list",
         LatentSpace = "matrix",
-        LatentTrajectory = "Trajectory",
-        Tree = "phylo",
+        LatentTrajectory = "trajectoryORNULL",
         Hotspot = "list",
         ModuleSignatureEnrichment = "list",
         ModuleHotspotScores = "data.frame",
@@ -146,7 +148,6 @@ Vision <- setClass("Vision",
         Pools = list(),
         LatentSpace = matrix(NA, 1, 1),
         LatentTrajectory = NULL,
-        Tree = NULL,
         Hotspot = list(),
         ModuleSignatureEnrichment = list(),
         ModuleHotspotScores = data.frame(),
@@ -154,3 +155,12 @@ Vision <- setClass("Vision",
         params = list(),
         version = 1.2
 ))
+
+# This is a hack to try and get R to play nice with the phylo class
+# Which the Ape package doesn't expose
+phylo <- setClass("phylo")
+
+PhyloVision <- setClass("PhyloVision", contains = "Vision", 
+  slots = c(tree = "phylo"),
+  prototype = list(tree=NULL)
+)
