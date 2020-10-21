@@ -157,8 +157,9 @@ ColorScatter.prototype.setData = function(object)
         } else {
             colorscale = [
                 [0,   '#d8d8d8'],
-                [0.5, '#395252'],
-                [1,   '#000000'],
+                // [0.5, '#395252'],
+                [1, '#b4382d'],
+                //[1,   '#000000'],
             ]
         }
 
