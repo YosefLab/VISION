@@ -156,10 +156,11 @@ ColorScatter.prototype.setData = function(object)
             colorscale = 'Viridis'
         } else {
             colorscale = [
-                [0,   '#d8d8d8'],
+                //[0,   '#d8d8d8'],
                 // [0.5, '#395252'],
-                [1, '#b4382d'],
                 //[1,   '#000000'],
+				[0,   '#d8d8d8'],
+                [1, '#952E25'],
             ]
         }
 
@@ -434,7 +435,7 @@ ColorScatter.prototype.getLayout = function() {
         title: titleOpt,
         hovermode: 'closest',
         paper_bgcolor: 'rgba(255, 255, 255, 0)',
-        plot_bgcolor: '#eeeeee',
+        plot_bgcolor: '#ffffff',
         dragmode: 'pan',
         legend: {
             xanchor: 'right',
@@ -457,14 +458,18 @@ ColorScatter.prototype.getLayout = function() {
             range: [this.currentZoom.xmin, this.currentZoom.xmax],
             title: {
                 'text': xlabel,
-            }
+            },
+			showgrid: false,
+			showline: true,
         },
         yaxis: {
             zeroline: false,
             range: [this.currentZoom.ymin, this.currentZoom.ymax],
             title: {
                 'text': ylabel,
-            }
+            },
+			showgrid: false,
+			showline: true
         },
         modebar: {
             bgcolor: 'rgba(255, 255, 255, 0)',
