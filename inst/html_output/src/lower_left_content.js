@@ -284,6 +284,7 @@ function Sig_Info()
     this.source = $(this.dom_node).find('#sig-source');
     this.content = $(this.dom_node).find('#sig-table-wrapper');
     this.bound_sig = ""
+    this.bound_mod = ""
 }
 
 Sig_Info.prototype.init = function()
@@ -306,6 +307,7 @@ Sig_Info.prototype.init = function()
                     return "<a href=http://www.genecards.org/cgi-bin/carddisp.pl?gene=" + data + " target='_blank'>&lt;genecards&gt;</a>";
                 }
             },
+            {'title': 'Overlap', 'className': 'dt-center'},
             {'title': 'Sign', 'className': 'dt-center'},
             {
                 'title': 'Score',
@@ -317,21 +319,32 @@ Sig_Info.prototype.init = function()
         'info': true,
         'scrollY': '15vh',
         'scrollCollapse': true,
-        'order': [[3, 'desc']],
+        'order': [[4, 'desc']],
     })
 
 }
 
 Sig_Info.prototype.update = function(updates)
 {
-
+    
     var sig_info = get_global_data('sig_info');
-    if(_.isEmpty(sig_info) || sig_info.name === this.bound_sig || sig_info.isMeta)
+    var enriched = get_global_status("enrichment_module") !== "" && get_global_status("enrichment_module") !== get_global_status("plotted_item") && get_global_status("enrichment");
+    var bound_mod = "";
+    if (enriched) {
+      var bound_mod = get_global_status("enrichment_module")
+      //$("#plot-ms-overlap-button").show()
+    }/* else (
+      $("#plot-ms-overlap-button").hide()
+    )*/
+    
+    if(_.isEmpty(sig_info) || sig_info.name === this.bound_sig && bound_mod === this.bound_mod || sig_info.isMeta)
     {
         return;
     }
 
     this.bound_sig = sig_info.name
+    this.bound_mod = bound_mod
+    
 
     $(this.title).text(sig_info.name)
 
@@ -355,27 +368,64 @@ Sig_Info.prototype.update = function(updates)
 
     // Toggle the score column visibility
     var scoreColumnVisible = !_.isEmpty(sig_info.geneImportance)
-    var scoreColumn = dt.DataTable().column("3")
+    var scoreColumn = dt.DataTable().column("4")
     scoreColumn.visible(scoreColumnVisible)
+    
+    
+    var overlapColumn = dt.DataTable().column("2")
+    overlapColumn.visible(enriched)
 
     var sign;
+    var mod_genes = [];
+    // yanay here
+    if (enriched) {
+      mod_genes = get_global_data("mod_gene_list");
+    }
+    
+    var overlap_genes = [];
     var dataSet = _.map(sig_info.sigDict, function (value, key){
         if(value > 0){
             sign = '+'
         } else {
             sign = '-'
         }
+        
+        var overlap = mod_genes.includes(key);
+        if (overlap) {
+          overlap_genes = overlap_genes.concat(key);
+        }
+        
+        
         if (scoreColumnVisible){
-            return [key, key, sign, sig_info.geneImportance[key]];
+            return [key, key, overlap, sign, sig_info.geneImportance[key]];
         } else {
-            return [key, key, sign, 0];
+            return [key, key, overlap, sign, 0];
         }
 
     })
+    
+   
+    
 
     dt.DataTable().clear()
         .rows.add(dataSet)
         .draw()
+    /*    
+    if (enriched) {
+      $("#plot-ms-overlap-button").off();
+      $("#plot-ms-overlap-button").on("click", function() {
+        // hack!! 
+        var overlap_name = sig_info.name + "_OVERLAP_" + get_global_status("enrichment_module");
+        var update = {
+            'plotted_item': overlap_name,
+            'plotted_item_type': 'signature',
+        }
+    
+        set_global_status(update)
+        console.log(overlap_genes);
+      });
+    }
+    */
 }
 
 // Used when clicking on the gene namesin the signature-info table

@@ -143,6 +143,7 @@ Upper_Left_Content.prototype.init = function()
         dendrogramTab.hide()
     }
 
+  /*
     $(this.dom_node).find('.nav-link')
         .on('click', function(e) {
             if (e.target.id === "genes-table-tab" || e.target.id === "de-table-tab") {
@@ -151,6 +152,7 @@ Upper_Left_Content.prototype.init = function()
                 clust_dropdown.prop('disabled', false)
             }
         });
+    */
 
 
 
@@ -163,8 +165,8 @@ Upper_Left_Content.prototype.init = function()
         modTableTab.parent().hide()
     }
 
-    deTableTab.parent().hide()
-    genesTableTab.parent().hide()
+    // deTableTab.parent().hide()
+    // genesTableTab.parent().hide()
 
     // show meta
     metaTableTab.parent().show()
@@ -213,8 +215,8 @@ Upper_Left_Content.prototype.update = function(updates)
               modTableTab.parent().hide()
           }
 
-          deTableTab.parent().hide()
-          genesTableTab.parent().hide()
+          // deTableTab.parent().hide()
+          // genesTableTab.parent().hide()
 
           // show meta
           metaTableTab.parent().show()
@@ -673,7 +675,7 @@ Signature_Table.prototype.update = function(updates)
         if (main_vis == "cells" || main_vis == "genes" && !get_global_status('has_mods')) {
             matrix_promise = api.clusters.sigProjMatrix(cluster_var, false);
         } else if (main_vis == "genes") {
-            matrix_promise = api.modules.enrichment();
+            matrix_promise = api.clusters.modProjMatrix(cluster_var);
             self.showing_enrichment = true;
             // yanay here
             clusters_promise = api.modules.clusters()
@@ -2491,8 +2493,8 @@ function tableClickFunction_modules(row_key, col_key, item_type)
     var update = {}
 
     update['plotted_item_type'] = item_type;
-    update['enrichment'] = true;
-    update['enrichment_module'] = col_key;
+    //update['enrichment'] = true;
+    //update['enrichment_module'] = col_key;
     update['plotted_item'] = row_key;
 
     set_global_status(update);

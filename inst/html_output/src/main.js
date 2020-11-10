@@ -44,6 +44,7 @@ global_data.plotted_values = {}; // Holds gene expression, signature scores/rank
 global_data.sig_info = {};  // Holds the information for the last plotted signature
 global_data.meta_sigs = []; // Holds list of sig names that are meta-data
 global_data.extra_plotted_values = {}; // Holds extra info like module hotspot scores
+global_data.mod_gene_list = {}; // Holds extra info like module hotspot scores
 
 var lower_left_content;
 var upper_left_content;
@@ -153,6 +154,18 @@ function set_global_status(update){
         
             all_promises.push(mod_sig_promise);
             lower_left_content_promises.push(mod_sig_promise);
+            
+            
+            var mod_gene_list_promise = api.modules.mod_gene_list(get_global_status("enrichment_module"))
+            .then(new_info => {
+                global_data.mod_gene_list = new_info;
+                console.log(new_info);
+            })
+        
+            all_promises.push(mod_gene_list_promise);
+            lower_left_content_promises.push(mod_gene_list_promise);
+            
+            
         }
         
     } else if ('plotted_item' in update || 'plotted_item_type' in update) {

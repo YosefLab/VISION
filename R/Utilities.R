@@ -859,7 +859,7 @@ find_knn_parallel_tree <- function(tree, K) {
 #' @param tree an object of class phylo
 #' @return a tree with edge distances such that it is ultrametric.
 ultrametric_tree <- function(tree) {
-    tree$edge.length <- rep(1, length(length(tree$edge[,1])))
+    tree$edge.length <- rep(1, length(tree$edge[,1]))
     nodeDepths <- node.depth(tree)
     for (edgeI in seq_len(length(tree$edge[,1]))) {
       edge <- tree$edge[edgeI,]

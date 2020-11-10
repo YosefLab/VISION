@@ -133,6 +133,16 @@ var api = (function(){
         query = postProcess(query)
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
+    
+    
+    output.clusters.modProjMatrix = function(cluster_variable)
+    {
+        var query = "Clusters/"
+        query = query.concat(encodeURIComponent(cluster_variable))
+        query = query.concat("/ModProjMatrix/Normal")
+        query = postProcess(query)
+        return $.ajax(query, {dataType: "json"}).then(x => x)
+    }
 
     output.clusters.proteinMatrix = function(cluster_variable)
     {
@@ -358,8 +368,9 @@ var api = (function(){
         return $.ajax(query, {dataType: "json" }).then(x => x);
     }
     
-    output.modules.enrichment = function() {
+    output.modules.enrichment = function(cluster_var) {
         var query = "Modules/Enrichment"
+        query = query.concat(encodeURIComponent(cluster_var));
         query = postProcess(query)
         return $.ajax(query, {dataType: "json" }).then(x => x);
     }
@@ -371,6 +382,13 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => {
             return _.fromPairs(_.zip(x['cells'], x['values']))
         })
+    }
+    
+    output.modules.mod_gene_list = function(mod_name){
+        var query = "Modules/GeneList/"
+        query = query.concat(encodeURIComponent(mod_name));
+        query = postProcess(query)
+        return $.ajax(query, {dataType: "json"}).then(x => x)
     }
     
     output.modules.clusters = function() {

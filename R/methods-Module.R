@@ -58,16 +58,23 @@ calcHotspotModules <- function(object, model="danb", tree=FALSE, genes=1000, num
     
     colnames(hs_module_scores) <- names(modules)
     object@modData <- modules
+    
+    if (length(object@sigData) > 0) {
+      # Have signatures, let's compute the enrichment
+      message("Computing Module-Signature Enrichment")
+      object@ModuleSignatureEnrichment <- calc_mod_sig_enrichment(object)
+    }
+    
+    # calculate overlap signatures
+    object <- generateOverlapSignatures(object)
+    
+    # normal analysis
     object <- calcModuleScores(object)
+    object <- clusterModScores(object)
     object@Hotspot <- list(hs)
     object@ModuleHotspotScores <- hs_module_scores
     object <- analyzeLocalCorrelationsModules(object, tree)
     
-    if (length(object@sigData) > 0) {
-        # Have signatures, let's compute the enrichment
-        message("Computing Module-Signature Enrichment")
-        object@ModuleSignatureEnrichment <- calc_mod_sig_enrichment(object)
-    }
     
     
     return(object)
@@ -285,6 +292,119 @@ group_modules_enrichment <- function(stats, pvals) {
   num_cl <- length(unique(assignments <- assignments))
   names(assignments) <- rownames(stats)
   return(assignments)
+}
+
+
+generateOverlapSignatures <- function(object) {
+    message("Generating Module Signature Overlaps...\n")
+    sigs <- rownames(object@ModuleSignatureEnrichment$statistics)
+    mods <- names(object@modData)
+    overlap_sigs <- list()
+    for (mod in mods) {
+      genes <- names(object@modData[[mod]]@sigDict)
+      for (sig in sigs) {
+        stat <- object@ModuleSignatureEnrichment$statistics[sig, mod]
+        pval <- object@ModuleSignatureEnrichment$p_vals[sig, mod]
+        if (pval < 0.05) {
+          # create overlap signature
+          sig_overlap <- object@sigData[[sig]]
+          sig_genes <- names(sig_overlap@sigDict)
+          overlap_genes <- intersect(genes, sig_genes)
+          sig_overlap@sigDict <- sig_overlap@sigDict[overlap_genes]
+          new_name <-  paste(sig_overlap@name, "_OVERLAP_", mod, sep="")
+          sig_overlap@name <- new_name
+          object@modData[[new_name]] <- sig_overlap
+        }
+      }
+    }
+    
+    return(object)
+}
+
+
+
+
+#' Compute Ranksums Test, for all factor meta data.  One level vs all others
+#'
+#' @importFrom pbmcapply pbmclapply
+#' @importFrom matrixStats colRanks
+#' @importFrom stats setNames
+#' @param object the VISION object
+#' @param variables which columns of the meta-data to use for comparisons
+#' @return the VISION object with the @ClusterComparisons modules slot populated
+#' @export
+clusterModScores <- function(object, variables = "All") {
+  
+  message("Computing differential modules and overlaps tests...\n")
+  
+  modScores <- object@ModScores
+  metaData <- object@metaData
+  
+  metaData <- metaData[rownames(modScores), , drop = FALSE]
+  
+  if (variables == "All") {
+    # Determine which metaData we can run on
+    # Must be a factor with at least 20 levels
+    clusterMeta <- vapply(colnames(metaData), function(x) {
+      scores <- metaData[[x]]
+      if (!is.factor(scores)){
+        return("")
+      }
+      if (length(levels(scores)) > 50){
+        return("")
+      }
+      if (length(unique(scores)) == 1){
+        return("")
+      }
+      return(x)
+    }, FUN.VALUE = "")
+    clusterMeta <- clusterMeta[clusterMeta != ""]
+  } else {
+    if (!all(variables %in% colnames(metaData))) {
+      stop("Supplied variable names must be column names of object@metaData")
+    }
+    clusterMeta <- setNames(variables, variables)
+  }
+  
+  # Comparisons for Modules
+  if (ncol(modScores) > 0){
+    modScoreRanks <- colRanks(modScores,
+                              preserveShape = TRUE,
+                              ties.method = "average")
+    dimnames(modScoreRanks) <- dimnames(modScores)
+  } else {
+    modScoreRanks <- modScores
+  }
+  
+  out <- pbmclapply(clusterMeta, function(variable){
+    values <- metaData[[variable]]
+    var_levels <- levels(values)
+    
+    result <- lapply(var_levels, function(var_level){
+      cluster_ii <- which(values == var_level)
+      
+      r1 <- matrix_wilcox(modScoreRanks, cluster_ii,
+                          check_na = FALSE, check_ties = FALSE)
+      
+      pval <- r1$pval
+      stat <- r1$stat
+      fdr <- p.adjust(pval, method = "BH")
+      out <- data.frame(
+        stat = stat, pValue = pval, FDR = fdr
+      )
+      return(out)
+    })
+    
+    names(result) <- var_levels
+    result <- result[order(var_levels)]
+    
+    return(result)
+  }, mc.cores = 1)
+  
+  object@ClusterComparisons[["Modules"]] <- out
+  
+  return(object)
+  
 }
 
 
