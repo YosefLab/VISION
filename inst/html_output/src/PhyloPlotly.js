@@ -53,8 +53,9 @@ function PhyloPlotly(newick, div, mapping, nodeColor) {
     // plotly values
     this.data = [];
     this.layout = {
-        width: 770,
-        height: 770,
+        autosize: true,
+        autoexpand: true,
+        margin: {'l':10,'r':10,'t':10,'b':10},
         showlegend: false,
         yaxis: {'showgrid':false, 'zeroline':false, "showline":false, showticklabels:false},
         xaxis: {'showgrid':false, 'zeroline':false, "showline":false, showticklabels:false},

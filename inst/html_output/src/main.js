@@ -20,6 +20,9 @@ global_status.has_sigs = true;
 global_status.has_mods = true;
 global_status.has_lca = false;
 
+// Dendro specific values
+global_status.dendro_collapse_settings = {};
+
 // Determine projected values
 global_status.plotted_item = "";  // name of signature, meta or gene that is plotted
 global_status.plotted_item_type = ""; // either 'signature', 'protein', 'meta', 'gene', or 'signature-gene'

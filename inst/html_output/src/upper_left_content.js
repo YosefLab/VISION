@@ -2120,6 +2120,7 @@ function Dend()
     //this.recent_genes = [];
     this.dom_node = document.getElementById("dend");
     this.cluster_var_idx = 0;
+    this.stored_collapse_settings = {};
 
 }
 
@@ -2238,16 +2239,30 @@ Dend.prototype.render_dend = function()
     $("#dend_expand_all").on("click", function(e) {
       self.phyloPlotly.expandAll();
       $("#dend_collapse_to").val(self.phyloPlotly.maxDepth);
+      
+      
+      var collapseSettings = get_global_status("dendro_collapse_settings")
+      collapseSettings["depth"] = self.phyloPlotly.maxDepth;
+      set_global_status({"dendro_collapse_settings":collapseSettings})
     });
     
     $("#dend_collapse").on("click", function(e) {
       var value = $("#dend_collapse_to").prop("value");
       self.phyloPlotly.collapseToDepth(value);
+      
+      var collapseSettings = get_global_status("dendro_collapse_settings")
+      collapseSettings["depth"] = value;
+      set_global_status({"dendro_collapse_settings":collapseSettings})
+      
     });
     
     $("#collapse_select").on("change", function(e) {
       var value = $("#collapse_select").prop("value");
       self.phyloPlotly.setCollapseMethod(value);
+      
+      var collapseSettings = get_global_status("dendro_collapse_settings")
+      collapseSettings["method"] = value;
+      set_global_status({"dendro_collapse_settings":collapseSettings})
     });
     
 
@@ -2255,8 +2270,26 @@ Dend.prototype.render_dend = function()
     this.phyloPlotly.init();
     this.update_tree_selection()
     this.setLoadingStatus(false);
+    console.log("gere")
     
-    this.phyloPlotly.collapseToDepth(4);
+    var collapseSettings = get_global_status("dendro_collapse_settings")
+    
+    if (typeof(collapseSettings["depth"]) !== "undefined") {
+      this.phyloPlotly.collapseToDepth(collapseSettings["depth"]);
+    } else {
+      this.phyloPlotly.collapseToDepth(4);
+      collapseSettings["depth"] = 4;
+      this.stored_collapse_settings = collapseSettings;
+    }
+    
+    if (typeof(collapseSettings["method"]) !== "undefined") {
+      this.phyloPlotly.setCollapseMethod(collapseSettings["method"]);
+    } else {
+      this.phyloPlotly.setCollapseMethod("mode");
+      collapseSettings["method"] = "mode";
+      this.stored_collapse_settings = collapseSettings;
+    }
+    
 }
 
 
