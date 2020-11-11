@@ -53,7 +53,7 @@ function PhyloPlotly(newick, div, mapping, nodeColor) {
     // plotly values
     this.data = [];
     this.layout = {
-        autosize: true,
+        height:550,
         autoexpand: true,
         margin: {'l':10,'r':10,'t':10,'b':10},
         showlegend: false,

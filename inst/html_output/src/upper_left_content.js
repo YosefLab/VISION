@@ -613,7 +613,7 @@ Signature_Table.prototype.render = function()
     } else {
         $(self.dom_node).find('table').removeClass('compact')
     }
-    if(main_vis === "cells" || main_vis === "tree"){
+    if(main_vis === "cells" || main_vis === "genes" || main_vis === "tree"){
         $(self.dom_node).find('table').addClass('first-col')
     } else {
         $(self.dom_node).find('table').removeClass('first-col')
