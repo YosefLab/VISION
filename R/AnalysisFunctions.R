@@ -489,7 +489,7 @@ evalSigGeneImportanceSparse <- function(sigScores, sigData, normExpr){
         geneCov <- geneCov[, 1]
         geneCov <- geneCov[names(genes)]
 
-        geneCov <- geneCov * genes # invert sign for negative genes
+        geneCov <- geneCov * unlist(genes) # invert sign for negative genes
 
         return(geneCov)
     }
