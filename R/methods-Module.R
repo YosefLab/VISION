@@ -1,6 +1,24 @@
-calcHotspotModules <- function(object, model="danb", tree=FALSE, genes=1000, num_umi=NULL, min_gene_threshold=20, n_neighbors=NULL, jobs=1, fdr_threshold=0.05) {
-    use_condaenv(condaenv = "vision_hotspot", conda = "auto", required = FALSE)
+
+
+calcHotspotModules <- function(object, model="normal", tree=FALSE, genes=1000,
+                    num_umi=NULL, min_gene_threshold=20, n_neighbors=NULL,
+                    fdr_threshold=0.05) {
+
     hotspot <- import("hotspot", convert=F)
+
+    workers <- getOption("mc.cores")
+    if (is.null(workers)){
+        workers <- 1
+    }
+
+    gene_subset = object@params$latentSpace$projectionGenes
+    exprData = as.data.frame(as.matrix(object@exprData)[gene_subset,])
+    exprData = matLog2(exprData)
+
+    # remove genes that do not have any standard deviation
+    sds = apply(exprData, 1, sd)
+    exprData = exprData[which(sds > 0), ]
+
     # TODO add UMI support
     if (tree) {
         message("Using Tree")
@@ -8,32 +26,32 @@ calcHotspotModules <- function(object, model="danb", tree=FALSE, genes=1000, num
         nwk <- write.tree(object@tree)
         pyTree <- ete3$Tree(nwk, format = 8L)
         if (is.null(num_umi)) {
-            hs <- hotspot$Hotspot(as.data.frame(object@exprData), tree=pyTree, model=model)
+            hs <- hotspot$Hotspot(exprData, tree=pyTree, model=model)
         } else {
             py$umi_df <- r_to_py(num_umi)
             py_run_string("umi_counts = umi_df.iloc[:, 0]")
-            hs <- hotspot$Hotspot(as.data.frame(object@exprData), tree=pyTree, model=model, umi_counts=py$umi_counts)
+            hs <- hotspot$Hotspot(exprData, tree=pyTree, model=model, umi_counts=py$umi_counts)
         }
         
     } else {
         if (is.null(num_umi)) {
-            hs <- hotspot$Hotspot(as.data.frame(object@exprData), latent=as.data.frame(object@LatentSpace), model=model)
+            hs <- hotspot$Hotspot(exprData, latent=as.data.frame(object@LatentSpace), model=model)
         } else {
             py$umi_df <- r_to_py(num_umi)
             py_run_string("umi_counts = umi_df.iloc[:, 0]")
-            hs <- hotspot$Hotspot(as.data.frame(object@exprData), latent=as.data.frame(object@LatentSpace), model=model, umi_counts=py$umi_counts)
+            hs <- hotspot$Hotspot(exprData, latent=as.data.frame(object@LatentSpace), model=model, umi_counts=py$umi_counts)
         }
     }
     
     if (is.null(n_neighbors)) {
         hs$create_knn_graph(F, n_neighbors = as.integer(object@params$numNeighbors))
     } else {
-      hs$create_knn_graph(F, n_neighbors = as.integer(n_neighbors))
+        hs$create_knn_graph(F, n_neighbors = as.integer(n_neighbors))
     }
-    
-    hs_results <- hs$compute_autocorrelations(jobs=as.integer(jobs))
-    hs_genes <- hs_results$loc[hs_results$FDR$le(fdr_threshold)]$sort_values('Z', ascending=F)$head(as.integer(genes))$index
-    hs$compute_local_correlations(hs_genes, jobs=as.integer(jobs))
+  
+    hs_results <- hs$compute_autocorrelations(jobs=as.integer(workers))
+    hs_genes <- hs_results$loc[hs_results$FDR$le(fdr_threshold)]$sort_values('Z', ascending=F)$index
+    hs$compute_local_correlations(hs_genes, jobs=as.integer(workers))
     hs$create_modules(min_gene_threshold=as.integer(min_gene_threshold))
     hs_module_scores <- py_to_r(hs$calculate_module_scores())
     hs_modules <- py_to_r(hs$modules)

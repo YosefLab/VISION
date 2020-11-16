@@ -25,6 +25,7 @@ function Lower_Left_Content()
         'cell_info': $(this.dom_node).find('#CellButton'),
         'selection_info': $(this.dom_node).find('#SelectionButton'),
     }
+
 }
 
 Lower_Left_Content.prototype.init = function()
@@ -319,6 +320,7 @@ Sig_Info.prototype.init = function()
         'info': true,
         'scrollY': '15vh',
         'scrollCollapse': true,
+        "bFilter": false,
         'order': [[4, 'desc']],
     })
 
@@ -383,6 +385,7 @@ Sig_Info.prototype.update = function(updates)
     }
     
     var overlap_genes = [];
+
     var dataSet = _.map(sig_info.sigDict, function (value, key){
         if(value > 0){
             sign = '+'
@@ -395,7 +398,6 @@ Sig_Info.prototype.update = function(updates)
           overlap_genes = overlap_genes.concat(key);
         }
         
-        
         if (scoreColumnVisible){
             return [key, key, overlap, sign, sig_info.geneImportance[key]];
         } else {
@@ -404,9 +406,6 @@ Sig_Info.prototype.update = function(updates)
 
     })
     
-   
-    
-
     dt.DataTable().clear()
         .rows.add(dataSet)
         .draw()
