@@ -362,7 +362,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         } else {
           geneImportance <- sig@sigDict[genes] * 0
         }
-        print("here 2")
+
         out <- signatureToJSON(sig, geneImportance)
       } else if (name %in% names(object@modData)) {
           signatures <- object@modData

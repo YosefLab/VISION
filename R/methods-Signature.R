@@ -730,7 +730,7 @@ clusterSignatures <- function(sigMatrix, metaData, autocorrelation, clusterMeta)
 
     r <- t(as.matrix(cSM_sub))
 
-    mbic <- mclustBIC(r, G=1:15, modelNames = "VII")
+    mbic <- mclustBIC(r, G=1:15, modelNames = "EII")
     compkm <- Mclust(r, x = mbic)
 
     compcls <- as.list(compkm$classification)

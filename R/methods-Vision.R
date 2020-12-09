@@ -266,6 +266,8 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                 .Object@params$latentSpace$projectionGenesMethod <- NULL
                 .Object@params$latentSpace$projectionGenes <- vapply(
                     projection_genes, toupper, "", USE.NAMES = FALSE)
+                .Object@params$latentSpace$projectionGenes = intersect(rownames(.Object@exprData),
+                                .Object@params$latentSpace$projectionGenes)
             }
 
             if (threshold < 1) {
