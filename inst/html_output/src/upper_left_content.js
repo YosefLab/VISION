@@ -141,6 +141,15 @@ Upper_Left_Content.prototype.init = function()
     }
     if(!has_dendrogram){
         dendrogramTab.hide()
+        // also hide the collapse tabs
+        $("#headingTwo").hide()
+        $("#headingOne").hide()
+        $("#upper-left-card").css("max-height", "40%")
+        $("#upper-left-card").css("overflow", "scroll")
+        $("#lower-left-card").css("max-height", "60%")
+        $("#lower-left-card").css("overflow", "scroll")
+        //$("#lower-left-content").css("display", "inline-block")
+        
     }
 
   /*
