@@ -165,7 +165,7 @@ computeProjectionGenes <- function(object,
     if (!is.null(projection_genes)){
         object@params$latentSpace$projectionGenes <- projection_genes
     } else {
-        object@params$latentSpace$projectionGenes <- NULL
+        object@params$latentSpace$projectionGenes <- NA
     }
 
     if (!is.null(projection_genes_method)){
@@ -174,7 +174,7 @@ computeProjectionGenes <- function(object,
 
     message("Determining projection genes...")
 
-    if (is.null(object@params$latentSpace[["projectionGenes"]])){
+    if (is.na(object@params$latentSpace[["projectionGenes"]])){
 
         exprData <- matLog2(object@exprData)
         projection_genes <- applyFilters(
