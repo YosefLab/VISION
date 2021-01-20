@@ -1,5 +1,3 @@
-
-
 calcHotspotModules <- function(object, model="normal", tree=FALSE, genes=1000,
                     num_umi=NULL, min_gene_threshold=20, n_neighbors=NULL,
                     fdr_threshold=0.05) {
@@ -74,7 +72,7 @@ calcHotspotModules <- function(object, model="normal", tree=FALSE, genes=1000,
       }
     }
     
-    colnames(hs_module_scores) <- names(modules)
+    colnames(hs_module_scores) <- sort(names(modules))
     object@modData <- modules
     
     if (length(object@sigData) > 0) {
