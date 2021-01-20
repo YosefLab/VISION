@@ -1,10 +1,4 @@
-<<<<<<< HEAD
-calcHotspotModules <- function(object, model="normal", tree=FALSE, genes=1000,
-=======
-
-
 calcHotspotModules <- function(object, model="normal", tree=FALSE, number_top_genes=1000,
->>>>>>> 97f7568d065586ab6894478faf43ad6c0c342058
                     num_umi=NULL, min_gene_threshold=20, n_neighbors=NULL,
                     fdr_threshold=0.05) {
 
