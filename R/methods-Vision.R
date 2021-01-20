@@ -93,8 +93,7 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                     tree = NULL, modData = list(), hotspot= list(), pools=list()) {
 
             .Object <- new("Vision")
-
-
+            
             if (is.null(rownames(data))) {
                 stop("rownames(data) = NULL. Expression matrix must have gene names as the rownames")
             }
@@ -119,6 +118,11 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                     )
                 data <- data[ !(rownames(data) %in% toRemove), , drop = FALSE]
             }
+
+            if (!is.null(tree)) {
+                data = data[,tree$tip.label]
+            }
+
             .Object@exprData <- data
 
             if (!is.null(unnormalizedData)){
@@ -261,9 +265,10 @@ setMethod("Vision", signature(data = "matrixORSparse"),
             if (length(projection_genes) == 1 &&
                 tolower(projection_genes) %in% c("fano", "threshold")){
                 .Object@params$latentSpace$projectionGenesMethod <- projection_genes
-                .Object@params$latentSpace$projectionGenes <- NULL
+                .Object@params$latentSpace$projectionGenes <- NA
             } else {
-                .Object@params$latentSpace$projectionGenesMethod <- NULL
+                print("Here")
+                .Object@params$latentSpace$projectionGenesMethod <- NA
                 .Object@params$latentSpace$projectionGenes <- vapply(
                     projection_genes, toupper, "", USE.NAMES = FALSE)
                 .Object@params$latentSpace$projectionGenes = intersect(rownames(.Object@exprData),
@@ -388,7 +393,7 @@ setMethod("Vision", signature(data = "matrixORSparse"),
             if (!is.null(num_neighbors)) {
                 .Object@params$numNeighbors <- num_neighbors
             } else {
-                .Object@params$numNeighbors <- round( (sqrt(ncol(.Object@exprData))))
+                .Object@params$numNeighbors <- round((sqrt(ncol(.Object@exprData))))
             }
 
             if (is.null(latentSpaceName)){

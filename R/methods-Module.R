@@ -1,4 +1,10 @@
+<<<<<<< HEAD
 calcHotspotModules <- function(object, model="normal", tree=FALSE, genes=1000,
+=======
+
+
+calcHotspotModules <- function(object, model="normal", tree=FALSE, number_top_genes=1000,
+>>>>>>> 97f7568d065586ab6894478faf43ad6c0c342058
                     num_umi=NULL, min_gene_threshold=20, n_neighbors=NULL,
                     fdr_threshold=0.05) {
 
@@ -9,9 +15,17 @@ calcHotspotModules <- function(object, model="normal", tree=FALSE, genes=1000,
         workers <- 1
     }
 
+    exprData = matLog2(object@exprData)
+
     gene_subset = object@params$latentSpace$projectionGenes
+
+    if (is.null(gene_subset)) {
+      gene_subset <- applyFilters(exprData,
+            object@params$latentSpace$projectionGenesMethod,
+            object@params$latentSpace$threshold, 2)
+    }
+
     exprData = as.data.frame(as.matrix(object@exprData)[gene_subset,])
-    exprData = matLog2(exprData)
 
     # remove genes that do not have any standard deviation
     sds = apply(exprData, 1, sd)
@@ -48,7 +62,7 @@ calcHotspotModules <- function(object, model="normal", tree=FALSE, genes=1000,
     }
   
     hs_results <- hs$compute_autocorrelations(jobs=as.integer(workers))
-    hs_genes <- hs_results$loc[hs_results$FDR$le(fdr_threshold)]$sort_values('Z', ascending=F)$index
+    hs_genes <- hs_results$loc[hs_results$FDR$le(fdr_threshold)]$sort_values('Z', ascending=F)$head(as.integer(number_top_genes))$index
     hs$compute_local_correlations(hs_genes, jobs=as.integer(workers))
     hs$create_modules(min_gene_threshold=as.integer(min_gene_threshold))
     hs_module_scores <- py_to_r(hs$calculate_module_scores())

@@ -783,7 +783,7 @@ find_knn_parallel <- function(data, K) {
 #' in serial.  Query is over all points and results
 #' do not include the self-distance.
 #'
-#' @param leaves indexes to find neighbors of
+#' @param leaves leaves to find the nearest neighbors of
 #' @param k number of neighbors to query
 #' @param distances matrix of Samples x Samples matrix of cophenetic tree distances
 #' @return list with two items:
@@ -791,17 +791,15 @@ find_knn_parallel <- function(data, K) {
 #'     dist: Samples x K matrix of neighbor distances
 knn_tree <- function(leaves, k, distances) {
   n <- length(leaves)
-  leafNames <- rownames(distances)[leaves]
   rd <- list(idx = matrix(, length(leaves), k+1), dists = matrix(, length(leaves), k+1))
-  rownames(rd$idx) <- leafNames
-  rownames(rd$dists) <- leafNames
-  for (leafId in leaves) {
-    leaf <- leafNames[leafId]
+  rownames(rd$idx) <- leaves
+  rownames(rd$dists) <- leaves
+  for (leaf in leaves) {
     subsetDistances <- distances[leaf, ]
     random <- runif(length(subsetDistances)) * 0.1
     sorted <- sort(subsetDistances + random)
     nearest <- sorted[1:(k+1)] # don't include myself in my own nearest neighbors
-    rd$idx[leaf, ] <- names(nearest) %>% (function(x){match(x, leafNames)})
+    rd$idx[leaf, ] <- names(nearest) %>% (function(x){match(x, colnames(distances))})
     rd$dists[leaf, ] <- nearest
   }
   return(rd)
@@ -832,7 +830,7 @@ find_knn_parallel_tree <- function(tree, K) {
   n <- length(tree$tip.label)
   per_batch <- round(n/workers)
   
-  batches <- batchify(seq_len(n), per_batch, n_workers = workers)
+  batches <- batchify(tree$tip.label, per_batch, n_workers = workers)
   
   # set edge lengths to uniform if not specified in tree
   if (is.null(tree$edge.length)) {
