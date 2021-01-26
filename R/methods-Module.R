@@ -23,7 +23,7 @@
 calcHotspotModules <- function(object, model="normal", tree=FALSE, 
                                number_top_genes=1000,num_umi=NULL, 
                                min_gene_threshold=20, n_neighbors=NULL,
-                               fdr_threshold=0.05) {
+                               autocorrelation_fdr=0.05, clustering_fdr=0.5) {
 
     hotspot <- import("hotspot", convert=F)
 
@@ -81,9 +81,9 @@ calcHotspotModules <- function(object, model="normal", tree=FALSE,
   
     # perform hotspot analysis and store results in R
     hs_results <- hs$compute_autocorrelations(jobs=as.integer(workers))
-    hs_genes <- hs_results$loc[hs_results$FDR$le(fdr_threshold)]$sort_values('Z', ascending=F)$head(as.integer(number_top_genes))$index
+    hs_genes <- hs_results$loc[hs_results$FDR$le(autocorrelation_fdr)]$sort_values('Z', ascending=F)$head(as.integer(number_top_genes))$index
     hs$compute_local_correlations(hs_genes, jobs=as.integer(workers))
-    hs$create_modules(min_gene_threshold=as.integer(min_gene_threshold), fdr_threshold=fdr_threshold)
+    hs$create_modules(min_gene_threshold=as.integer(min_gene_threshold), fdr_threshold=clustering_fdr)
     hs_module_scores <- py_to_r(hs$calculate_module_scores())
     hs_modules <- py_to_r(hs$modules)
     
