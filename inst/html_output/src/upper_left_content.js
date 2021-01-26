@@ -2233,10 +2233,9 @@ Dend.prototype.render_dend = function()
       }
     }
     
-
-    
     this.phyloPlotly.setMapping(plotted);
     this.phyloPlotly.setNodeColor(attribute_to_color);
+    
     var self = this;
     $("#dend_layout").off();
     $("#dend_expand_all").off();
@@ -2279,15 +2278,21 @@ Dend.prototype.render_dend = function()
     this.phyloPlotly.init();
     this.update_tree_selection()
     this.setLoadingStatus(false);
-    console.log("gere")
     
     var collapseSettings = get_global_status("dendro_collapse_settings")
     
     if (typeof(collapseSettings["depth"]) !== "undefined") {
       this.phyloPlotly.collapseToDepth(collapseSettings["depth"]);
     } else {
-      this.phyloPlotly.collapseToDepth(4);
-      collapseSettings["depth"] = 4;
+      // if small enough tree don't collapse automatically
+      var ncells = get_global_status("ncells");
+      var depth = self.phyloPlotly.maxDepth;
+      if (ncells >= 1500) {
+        depth = 5;
+      }
+      $("#dend_collapse_to").val(depth);
+      this.phyloPlotly.collapseToDepth(depth);
+      collapseSettings["depth"] = depth;
       this.stored_collapse_settings = collapseSettings;
     }
     

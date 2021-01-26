@@ -1,6 +1,29 @@
-calcHotspotModules <- function(object, model="normal", tree=FALSE, number_top_genes=1000,
-                    num_umi=NULL, min_gene_threshold=20, n_neighbors=NULL,
-                    fdr_threshold=0.05) {
+#' Initializes a new VISION object.
+#'
+#'
+#' @param object Vision Object
+#' @param model model argument for Hotspot, one of \itemize{
+#' \item normal
+#' \item danb
+#' \item bernoulli
+#' \item none 
+#' }
+#' @param tree whether to use tree as latent space. If TRUE, object should have
+#' a tree slot.
+#' @param number_top_genes hotspot argument for number of genes to consider
+#' @param num_umi optional dataframe containing umi counts in first column for
+#'  barcodes
+#' @param min_gene_threshold minimum number of genes in hotspot module
+#' @param n_neighbors number of neighbors to consider in latent space
+#' @param fdr_threshold threshold for significance
+#' 
+#' Populates the modData, HotspotModuleScores, ModuleSignatureEnrichment
+#' and HotspotObject slots of object, as well as recalculates signature scores
+#' for new modules.
+calcHotspotModules <- function(object, model="normal", tree=FALSE, 
+                               number_top_genes=1000,num_umi=NULL, 
+                               min_gene_threshold=20, n_neighbors=NULL,
+                               fdr_threshold=0.05) {
 
     hotspot <- import("hotspot", convert=F)
 
@@ -13,7 +36,7 @@ calcHotspotModules <- function(object, model="normal", tree=FALSE, number_top_ge
 
     gene_subset = object@params$latentSpace$projectionGenes
 
-    if (is.null(gene_subset)) {
+    if (is.na(gene_subset)) {
       gene_subset <- applyFilters(exprData,
             object@params$latentSpace$projectionGenesMethod,
             object@params$latentSpace$threshold, 2)
@@ -25,7 +48,7 @@ calcHotspotModules <- function(object, model="normal", tree=FALSE, number_top_ge
     sds = apply(exprData, 1, sd)
     exprData = exprData[which(sds > 0), ]
 
-    # TODO add UMI support
+    # generate the Hotspot object in python, potentially using the tree
     if (tree) {
         message("Using Tree")
         ete3 <- import("ete3", convert=F)
@@ -49,22 +72,25 @@ calcHotspotModules <- function(object, model="normal", tree=FALSE, number_top_ge
         }
     }
     
+    # create knn graph, specify nn or use object default
     if (is.null(n_neighbors)) {
         hs$create_knn_graph(F, n_neighbors = as.integer(object@params$numNeighbors))
     } else {
         hs$create_knn_graph(F, n_neighbors = as.integer(n_neighbors))
     }
   
+    # perform hotspot analysis and store results in R
     hs_results <- hs$compute_autocorrelations(jobs=as.integer(workers))
     hs_genes <- hs_results$loc[hs_results$FDR$le(fdr_threshold)]$sort_values('Z', ascending=F)$head(as.integer(number_top_genes))$index
     hs$compute_local_correlations(hs_genes, jobs=as.integer(workers))
-    hs$create_modules(min_gene_threshold=as.integer(min_gene_threshold))
+    hs$create_modules(min_gene_threshold=as.integer(min_gene_threshold), fdr_threshold=fdr_threshold)
     hs_module_scores <- py_to_r(hs$calculate_module_scores())
     hs_modules <- py_to_r(hs$modules)
     
     
     modules <- list()
     
+    # add the modules with name scheme HOTSPOT_{TREE if using TREE}_#
     for (i in unique(c(hs_modules))) {
       if (i !=-1) {
         names <- dimnames(hs_modules[hs_modules == i])[[1]]
@@ -80,6 +106,7 @@ calcHotspotModules <- function(object, model="normal", tree=FALSE, number_top_ge
       }
     }
     
+    # store module scores
     colnames(hs_module_scores) <- sort(names(modules))
     object@modData <- modules
     
@@ -98,16 +125,13 @@ calcHotspotModules <- function(object, model="normal", tree=FALSE, number_top_ge
     object@Hotspot <- list(hs)
     object@ModuleHotspotScores <- hs_module_scores
     object <- analyzeLocalCorrelationsModules(object, tree)
-    
-    
-    
     return(object)
 }
 
 
 
 
-#' calculate module scores
+#' Calculate module scores (signature scores but on the modules)
 #'
 #' For each module-cell pair, compute a score that captures the level of
 #' correspondence between the cell and the module.
@@ -185,6 +209,7 @@ calcModuleScores <- function(
 #' consistency of the resulting space with the signature scores is computed
 #' to find signals that are captured successfully by the projections.
 #' @param object the VISION object
+#' @param tree whether to use the tree object as latent space for neighbors
 #' @return the VISION object with values set for the analysis results
 #' @export
 analyzeLocalCorrelationsModules <- function(object, tree=FALSE) {
@@ -228,12 +253,18 @@ analyzeLocalCorrelationsModules <- function(object, tree=FALSE) {
   return(object)
 }
 
+
+#' Computes the hypergeometric overlap test for modules and signatures
+#' @param object the vision object.
+#' @return list(statistic values, p values, clusters of signatures)
+#' 
 calc_mod_sig_enrichment <- function(object) {
     modules <- object@modData
     original_signatures <- object@sigData
     signatures <- list()
     sig_names <- list()
     for (signature in original_signatures) {
+        # calculate enrichment for both the up signal and down signal signature genes
         directional <- all(c(1, -1) %in% signature@sigDict)
         if (directional) {
           up <- names(which(signature@sigDict == 1))
@@ -255,6 +286,7 @@ calc_mod_sig_enrichment <- function(object) {
     
     genes <- rownames(object@exprData)
     
+    # calculate the enrichments
     stats <- c()
     p_values <- c()
     for (signature in signatures) {
@@ -282,13 +314,21 @@ calc_mod_sig_enrichment <- function(object) {
     colnames(p_values) <- mod_names
     rownames(p_values) <- sig_names
     
+    # group the signatures
     assignments <- group_modules_enrichment(stats, p_values)
     
     return(list("statistics"=stats, "p_vals"=p_values, "cl"=assignments))
 }
 
 
-
+#' Calculate the hypergeometric enrichment for two sets from a population
+#' 
+#' @param set1
+#' @param set2
+#' @param genes the population
+#' @return c(statistic, p value)
+#' Statisic = log (observed overlap / expected overlap)
+#' P value = 1- hypergeometric(observed overlap -1, max(|set1|, |set2|), |genes| - |set1|, min(|set1|, |set2|))
 calc_set_enrichment <- function(set1, set2, genes) {
     N <- length(genes)
     m <- max(length(set1), length(set2))
@@ -307,7 +347,11 @@ calc_set_enrichment <- function(set1, set2, genes) {
     return(c(stat, p_value))
 }
 
-
+#' Make the clusters for the modules by enrichment.
+#' For now we just assign each signature to each cluster, could filter to only include once.
+#' 
+#' @param stats 
+#' @param pvals
 group_modules_enrichment <- function(stats, pvals) {
   sigs <- rownames(stats)
   mods <- colnames(stats)
@@ -319,6 +363,10 @@ group_modules_enrichment <- function(stats, pvals) {
 }
 
 
+#' Generates signature objects for the overlap sets between modules and signatures
+#' @param object the vision object
+#' 
+#' Populates the modData slot with overlap signatures.
 generateOverlapSignatures <- function(object) {
     message("Generating Module Signature Overlaps...\n")
     sigs <- rownames(object@ModuleSignatureEnrichment$statistics)
@@ -428,7 +476,5 @@ clusterModScores <- function(object, variables = "All") {
   object@ClusterComparisons[["Modules"]] <- out
   
   return(object)
-  
 }
-
 

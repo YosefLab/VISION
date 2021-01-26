@@ -267,7 +267,6 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                 .Object@params$latentSpace$projectionGenesMethod <- projection_genes
                 .Object@params$latentSpace$projectionGenes <- NA
             } else {
-                print("Here")
                 .Object@params$latentSpace$projectionGenesMethod <- NA
                 .Object@params$latentSpace$projectionGenes <- vapply(
                     projection_genes, toupper, "", USE.NAMES = FALSE)

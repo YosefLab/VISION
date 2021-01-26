@@ -67,7 +67,6 @@ function PhyloPlotly(newick, div, mapping, nodeColor) {
     this.d = 1
     
     this.collapseMethod = "mode";
-    this.maxDepth = -1;
 }
 
 
@@ -101,6 +100,8 @@ PhyloPlotly.prototype.init = function() {
     this.updateCoords();
     this.generatePlotlyData();
     this.plotAndUpdateListeners();
+    var max_depth = this.tree["depth"];
+    this.maxDepth = max_depth - 1;
 }
 
 
@@ -550,7 +551,6 @@ PhyloPlotly.prototype.collapseToDepth = function(depth) {
   this.collapsed = [];
   setUltrametricTreeDepths(this.tree, this.collapsed);
   var max_depth = this.tree["depth"];
-  this.maxDepth = max_depth - 1;
   depth = max_depth - depth;
   
   var self = this;
@@ -603,7 +603,6 @@ PhyloPlotly.prototype.collapseColor = function(tree) {
     case "mode":
       return (mode(childValues));
     default:
-      console.log("defaulted to mode")
       return (mode(childValues));
   }
 }
