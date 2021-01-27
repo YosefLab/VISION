@@ -15,7 +15,8 @@
 #'  barcodes
 #' @param min_gene_threshold minimum number of genes in hotspot module
 #' @param n_neighbors number of neighbors to consider in latent space
-#' @param fdr_threshold threshold for significance
+#' @param autocorrelation_fdr threshold for significance for genes autocorr
+#' @param clustering_fdr threshold for significance for clustering modules
 #' 
 #' Populates the modData, HotspotModuleScores, ModuleSignatureEnrichment
 #' and HotspotObject slots of object, as well as recalculates signature scores
@@ -31,8 +32,13 @@ calcHotspotModules <- function(object, model="normal", tree=FALSE,
     if (is.null(workers)){
         workers <- 1
     }
-
-    exprData = matLog2(object@exprData)
+    if (model == "danb") {
+      # Don't take the log if danb
+      exprData = object@exprData
+    } else {
+      # take the log2 otherwise
+      exprData = matLog2(object@exprData)
+    }
 
     gene_subset = object@params$latentSpace$projectionGenes
 
@@ -42,7 +48,7 @@ calcHotspotModules <- function(object, model="normal", tree=FALSE,
             object@params$latentSpace$threshold, 2)
     }
 
-    exprData = as.data.frame(as.matrix(object@exprData)[gene_subset,])
+    exprData = as.data.frame(as.matrix(exprData)[gene_subset,])
 
     # remove genes that do not have any standard deviation
     sds = apply(exprData, 1, sd)
@@ -256,9 +262,10 @@ analyzeLocalCorrelationsModules <- function(object, tree=FALSE) {
 
 #' Computes the hypergeometric overlap test for modules and signatures
 #' @param object the vision object.
+#' @param skip_down whether to ignore down signatures in overlap
 #' @return list(statistic values, p values, clusters of signatures)
 #' 
-calc_mod_sig_enrichment <- function(object) {
+calc_mod_sig_enrichment <- function(object, skip_down=TRUE) {
     modules <- object@modData
     original_signatures <- object@sigData
     signatures <- list()
@@ -266,6 +273,10 @@ calc_mod_sig_enrichment <- function(object) {
     for (signature in original_signatures) {
         # calculate enrichment for both the up signal and down signal signature genes
         directional <- all(c(1, -1) %in% signature@sigDict)
+        down_reg <- all(signature@sigDict == -1)
+        if (skip_down && down_reg) {
+          next
+        }
         if (directional) {
           up <- names(which(signature@sigDict == 1))
           down <- names(which(signature@sigDict == -1))
@@ -274,10 +285,13 @@ calc_mod_sig_enrichment <- function(object) {
           down_name <- paste(signature@name, "_DOWN", sep = "")
           
           signatures <- c(signatures, list(up))
-          signatures <- c(signatures, list(down))
-          
           sig_names <- append(sig_names, up_name)
-          sig_names <- append(sig_names, down_name)
+          
+          if (!skip_down) {
+            signatures <- c(signatures, list(down))
+            sig_names <- append(sig_names, down_name)
+          }
+         
         } else {
             signatures <-  c(signatures, list(names(signature@sigDict)))
             sig_names <- append(sig_names, signature@name)
