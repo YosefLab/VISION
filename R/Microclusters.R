@@ -515,7 +515,7 @@ treeCluster2 <- function(tree, reach=10) {
 }
 
 
-#' Performs a bread first search to create a specific number of clusters
+#' Performs a breadth first search to create a specific number of clusters
 #' Clusters are split to prioritize cluster size
 #'
 #' @param tree object of class phylo
@@ -547,7 +547,6 @@ treeCluster3 <- function(tree, reach=10) {
       break
     }
   }
-  
   
   cl <- list()
   for (cluster in seq_len(length(cluster_parents))) {

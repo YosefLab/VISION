@@ -189,7 +189,9 @@ PhyloPlotly.prototype.generatePlotlyData = function() {
     var yh = lines[1];
     var xv = lines[2];
     var yv = lines[3];
-
+    
+    var nodesMap = lines[4];
+    
     var nodesTrace = {
         x: x,
         y: y,
@@ -203,8 +205,13 @@ PhyloPlotly.prototype.generatePlotlyData = function() {
           opacity: 1,
           line: {width: 0}
         },
-        hoverinfo: "text"
-        
+        hoverinfo: "text",
+        unselected: {
+          marker: {
+            color: colors,
+            opacity: 0.05
+          }
+        }
     }
       
     var horizontalLines = {
@@ -232,7 +239,7 @@ PhyloPlotly.prototype.generatePlotlyData = function() {
         },
         hoverinfo: 'skip'
     }
-    this.data = [horizontalLines, verticalLines, nodesTrace]; 
+    this.data = [horizontalLines, verticalLines, nodesTrace, nodesMap]; 
 }
 
 
@@ -285,8 +292,8 @@ PhyloPlotly.prototype.plotAndUpdateListeners = function() {
           });
         
           self.data[2].selectedpoints =  selectedpointsIdx;
-          
-          Plotly.react(self.div, self.data, self.layout);
+          var selectLines = self.selectedLinesTrace(selectedNames)
+          Plotly.react(self.div, self.data.concat([selectLines]), self.layout);
           
           set_global_status({"selected_cell":cells, "selection_type":"cells"});
         }
@@ -317,8 +324,8 @@ PhyloPlotly.prototype.plotAndUpdateListeners = function() {
         });
       
         self.data[2].selectedpoints =  selectedpointsIdx;
-        
-        Plotly.react(self.div, self.data, self.layout);
+        var selectLines = self.selectedLinesTrace(selectedNames)
+        Plotly.react(self.div, self.data.concat([selectLines]), self.layout);
         
         set_global_status({"selected_cell":cells, "selection_type":"cells"});
         
@@ -353,6 +360,53 @@ PhyloPlotly.prototype.setLinearCoords = function() {
     setLinearCoord(this.tree);
     this.yMin = Math.min(...y);
     this.yMax = Math.max(...y);
+}
+
+/*
+  Generate the selected lines trace
+*/
+PhyloPlotly.prototype.selectedLinesTrace = function(nodes){
+  var self = this;
+  var nodesMap = self.data[3]
+  var plotX = []
+  var plotY = []
+  
+  if (nodes.length === 0) {
+    return [];
+  }
+  
+  function collectValues(tree) {
+    if (self.collapsed.includes(tree["name"])) {
+            // collapsed
+    } else if (!isTip(tree) ) {
+      if (nodes.includes(tree["name"])) {
+        plotX = plotX.concat(nodesMap[tree["name"]]["x"])
+        plotY = plotY.concat(nodesMap[tree["name"]]["y"])
+      }
+      
+      tree["branchset"].forEach(function(child) {
+          collectValues(child);
+      });
+    }
+  }
+  
+  collectValues(self.tree);
+  
+  var horizontalLines = {
+    x: plotX,
+    y: plotY,
+    mode: "lines",
+    type:"scatter",
+    line: {
+        color: '#8b0000',
+        width: 2,
+        shape: "spline"
+    },
+    hoverinfo: 'skip'
+  }
+  
+  console.log(horizontalLines)
+  return (horizontalLines)
 }
 
 
@@ -391,6 +445,10 @@ PhyloPlotly.prototype.linearLines = function() {
     var yv = [];
     var self = this;
     
+    // for selection, we want to associate the line leaving an internal node
+    // with the internal node, so we can redraw them as selected.
+    var nodeMap = {};
+    
     function lines(tree) {
         if (!isTip(tree)  && !self.collapsed.includes(tree["name"])) {
             var xStart = tree["x"];
@@ -407,27 +465,41 @@ PhyloPlotly.prototype.linearLines = function() {
             });
             var xEnd = Math.min(...childrenXs);
             var hlineEnd = (xStart + xEnd)/2;
+            
+            var leavingLinesX = []
+            var leavingLinesY = []
+            
             xh = xh.concat([xStart, hlineEnd, null]) // first part of connection, x
             yh = yh.concat([y, y, null]) // first part of connection, y
+            
+            leavingLinesX = leavingLinesX.concat([xStart, hlineEnd, null]) // first part of connection, x
+            leavingLinesY = leavingLinesY.concat([y, y, null]) // first part of connection, y
             
             // draw the second parts horizontal x
             childrenXs.forEach(function(x) {
                 xh = xh.concat([hlineEnd, x, null]);
+                leavingLinesX = leavingLinesX.concat([hlineEnd, x, null]);
             });
             
             // draw the second parts horizontal y
             childrenYs.forEach(function(y) {
                 yh = yh.concat([y, y, null])
+                leavingLinesY = leavingLinesY.concat([y, y, null])
             })
             
             // draw the vertical part
             xv = xv.concat([hlineEnd, hlineEnd, null]);
             yv = yv.concat([Math.min(...childrenYs), Math.max(...childrenYs), null]);
+            
+            leavingLinesX = leavingLinesX.concat([hlineEnd, hlineEnd, null]);
+            leavingLinesY = leavingLinesY.concat([Math.min(...childrenYs), Math.max(...childrenYs), null]);
+            
+            nodeMap[tree["name"]] = {"x":leavingLinesX, "y":leavingLinesY}
         }
     }
     
     lines(self.tree);
-    return([xh, yh, xv, yv]);
+    return([xh, yh, xv, yv, nodeMap]);
 }
 
 
@@ -445,6 +517,11 @@ PhyloPlotly.prototype.radialLines = function() {
     var thetah = [];
     var rv = []
     var thetav = [];
+    
+    // for selection, we want to associate the line leaving an internal node
+    // with the internal node, so we can redraw them as selected.
+    var nodeMap = {};
+    
     function lines(tree) {
         if (!isTip(tree) && !self.collapsed.includes(tree["name"])) {
             var rStart = tree["r"]
@@ -463,18 +540,25 @@ PhyloPlotly.prototype.radialLines = function() {
             var rEnd = Math.min(...childrenRs);
             var hlineEnd = (rStart + rEnd)/2;
             
+            var leavingLinesR = []
+            var leavingLinesTheta = []
+            
             rh = rh.concat([rStart, hlineEnd, null]) // first part of connection, x
             thetah = thetah.concat([theta, theta, null]) // first part of connection, y
             
+            leavingLinesR = leavingLinesR.concat([rStart, hlineEnd, null]) // first part of connection, x
+            leavingLinesTheta = leavingLinesTheta.concat([theta, theta, null]) // first part of connection, y
             
             // draw the second parts horizontal x
             childrenRs.forEach(function(r) {
                 rh = rh.concat([hlineEnd, r, null]);
+                leavingLinesR = leavingLinesR.concat([hlineEnd, r, null]);
             });
             
             // draw the second parts horizontal y
             childrenThetas.forEach(function(theta) {
                 thetah = thetah.concat([theta, theta, null])
+                leavingLinesTheta = leavingLinesTheta.concat([theta, theta, null])
             })
             
             // draw the vertical part as a spline
@@ -484,11 +568,21 @@ PhyloPlotly.prototype.radialLines = function() {
             childrenThetas.concat([theta]).concat(thetaRange).sort().forEach(function(thetaC) {
                 rv.push(hlineEnd);
                 thetav.push(thetaC);
+                
+                leavingLinesR.push(hlineEnd);
+                leavingLinesTheta.push(thetaC);
             })
             
             rv.push(null);
             thetav.push(null);
             
+            leavingLinesR.push(null);
+            leavingLinesTheta.push(null);
+            
+            var leavingCoords = _.unzip(_.zip(leavingLinesR, leavingLinesTheta).map(polorCoordToCartestian));
+            leavingX = leavingCoords[0];
+            leavingY = leavingCoords[1];
+            nodeMap[tree["name"]] = {"x":leavingX, "y":leavingY}
         }
     }
     
@@ -500,7 +594,7 @@ PhyloPlotly.prototype.radialLines = function() {
     coords = _.unzip(_.zip(rv, thetav).map(polorCoordToCartestian));
     xv = coords[0];
     yv = coords[1];
-    return([xh, yh, xv, yv]);
+    return([xh, yh, xv, yv, nodeMap]);
 }
 
 
@@ -508,6 +602,7 @@ PhyloPlotly.prototype.radialLines = function() {
   Update the selected CELLS from an arguments
 */
 PhyloPlotly.prototype.updateSelection = function(cells) {
+    var self = this;
     var expansion = selectionExpander(this.tree, cells);
     var selectedNames = expansion.selectedNames;
     
@@ -524,8 +619,8 @@ PhyloPlotly.prototype.updateSelection = function(cells) {
         this.data[2].selectedpoints =  null;
     }
     
-    
-    Plotly.react(this.div, this.data, this.layout);
+    var selectLines = self.selectedLinesTrace(selectedNames)
+    Plotly.react(self.div, self.data.concat([selectLines]), self.layout);
 }
 
 /*
