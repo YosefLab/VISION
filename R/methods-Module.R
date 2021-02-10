@@ -92,7 +92,7 @@ calcHotspotModules <- function(object, model="normal", tree=FALSE,
     hs$create_modules(min_gene_threshold=as.integer(min_gene_threshold), fdr_threshold=clustering_fdr)
     hs$calculate_module_scores()
     
-    object <- analyzeHotspotObject(object, hs)
+    object <- analyzeHotspotObject(object, hs, tree)
     
     
     return(object)
@@ -115,6 +115,15 @@ calcHotspotModules <- function(object, model="normal", tree=FALSE,
 analyzeHotspotObject <- function(object, hs, tree=FALSE) {
     hs_module_scores <- hs$module_scores
     hs_modules <- hs$modules
+    
+    # handle annoying reticulate conversion issues when writing to a file
+    if (!is.data.frame(hs_module_scores)) {
+        hs_module_scores <- py_to_r(hs_module_scores)
+    }
+    
+    if (!is.array(hs_modules)) {
+        hs_modules <- py_to_r(hs_modules)
+    }
     
     modules <- list()
     
