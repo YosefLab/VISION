@@ -27,7 +27,7 @@ calcHotspotModules <- function(object, model="normal", tree=FALSE,
                                autocorrelation_fdr=0.05, clustering_fdr=0.5) {
 
     hotspot <- import("hotspot", convert=F)
-
+    
     workers <- getOption("mc.cores")
     if (is.null(workers)){
         workers <- 1
@@ -90,24 +90,47 @@ calcHotspotModules <- function(object, model="normal", tree=FALSE,
     hs_genes <- hs_results$loc[hs_results$FDR$le(autocorrelation_fdr)]$sort_values('Z', ascending=F)$head(as.integer(number_top_genes))$index
     hs$compute_local_correlations(hs_genes, jobs=as.integer(workers))
     hs$create_modules(min_gene_threshold=as.integer(min_gene_threshold), fdr_threshold=clustering_fdr)
-    hs_module_scores <- py_to_r(hs$calculate_module_scores())
-    hs_modules <- py_to_r(hs$modules)
+    hs$calculate_module_scores()
     
+    object <- analyzeHotspotObject(object, hs)
+    
+    
+    return(object)
+}
+
+
+#' Analyze a hotspot object using built in methods such
+#' such as local correlation, signature overlap, etc.
+#' Necessary to run this function for hotpot functionality in viewer to work.
+#'
+#' @param object the VISION object
+#' @param hs the hotspot python object loaded by reticulate
+#' @param tree whether to use tree as latent space. If TRUE, object should have
+#' 
+#' @return the modified VISION object with the following slots filled:
+#' Populates the modData, HotspotModuleScores, ModuleSignatureEnrichment
+#' and HotspotObject slots of object, as well as recalculates signature scores
+#' for new modules.
+#' @export
+analyzeHotspotObject <- function(object, hs, tree=FALSE) {
+    hs_module_scores <- hs$module_scores
+    hs_modules <- hs$modules
     
     modules <- list()
     
     # add the modules with name scheme HOTSPOT_{TREE if using TREE}_#
+    model <- hs$model
     for (i in unique(c(hs_modules))) {
       if (i !=-1) {
         names <- dimnames(hs_modules[hs_modules == i])[[1]]
         v <- rep(1, length(names))
         names(v) <- names
         if (tree) {
-            new_sig <- Signature(sigDict = v, name=paste("HOTSPOT_TREE", i, sep = "_"), source="Hotspot", meta=paste("Hotspot on tree, model:", model))
-            modules[[paste("HOTSPOT_TREE", i, sep = "_")]] <- new_sig
+          new_sig <- Signature(sigDict = v, name=paste("HOTSPOT_TREE", i, sep = "_"), source="Hotspot", meta=paste("Hotspot on tree, model:", model))
+          modules[[paste("HOTSPOT_TREE", i, sep = "_")]] <- new_sig
         } else {
-            new_sig <- Signature(sigDict = v, name=paste("HOTSPOT", i, sep = "_"), source="Hotspot", meta=paste("Hotspot, model:", model))
-            modules[[paste("HOTSPOT", i, sep = "_")]] <- new_sig
+          new_sig <- Signature(sigDict = v, name=paste("HOTSPOT", i, sep = "_"), source="Hotspot", meta=paste("Hotspot, model:", model))
+          modules[[paste("HOTSPOT", i, sep = "_")]] <- new_sig
         }
       }
     }
@@ -125,16 +148,23 @@ calcHotspotModules <- function(object, model="normal", tree=FALSE,
     # calculate overlap signatures
     object <- generateOverlapSignatures(object)
     
-    # normal analysis
+    # re run normal analysis
     object <- calcModuleScores(object)
     object <- clusterModScores(object)
-    object@Hotspot <- list(hs)
+    
     object@ModuleHotspotScores <- hs_module_scores
     object <- analyzeLocalCorrelationsModules(object, tree)
+    
+    # save the hotspot object
+    pickle <- import("pickle", convert=F)
+    py$pickle <- pickle
+    py_run_string("hs_byte_array = bytearray(pickle.dumps(hs))")
+    hs_pickled_r <- as.raw(py$hs_byte_array)
+    object@Hotspot <- append(object@Hotspot, list(hs_pickled_r))
+    
+    print(object)
     return(object)
 }
-
-
 
 
 #' Calculate module scores (signature scores but on the modules)
@@ -204,8 +234,6 @@ calcModuleScores <- function(
     
     return(object)
 }
-
-
 
 
 #' Compute local correlations for all modules
@@ -408,8 +436,6 @@ generateOverlapSignatures <- function(object) {
 }
 
 
-
-
 #' Compute Ranksums Test, for all factor meta data.  One level vs all others
 #'
 #' @importFrom pbmcapply pbmclapply
@@ -492,3 +518,41 @@ clusterModScores <- function(object, variables = "All") {
   return(object)
 }
 
+
+#' Load in an existing Hotspot object from bytes or a file
+#'
+#' @param file optional path to an existing file containing pickled bytes (format 0)
+#' @param bytes optional R character vector of bytes created by calcHotspotModules
+#' @return an externalptr to a Hotspot Object loaded in the R reticulate session
+#' 
+#' @export
+loadHotspotObject <- function(file=NULL, bytes=NULL) {
+  hotspot <- import("hotspot", convert=F)
+  pickle <- import("pickle", convert=F)
+  py$pickle <- pickle
+  
+  if (!is.null(file)) {
+    # load file
+    hs <- py_load_object(file)
+    return(hs)
+  } else if (!is.null(bytes)) {
+    py$hs_bytes <- r_to_py(bytes)
+    py_run_string("hs = pickle.loads(hs_bytes)")
+    return(py$hs)
+  } else {
+    return(NULL)
+  }
+}
+
+
+#' Save bytes in the Hotspot object slot to a file
+#' @param path the file path
+#' @param bytes the raw bytes, like in the Hotspot slot of a VISION Object
+#' 
+#' @export
+saveHSBytestToPickle <- function(path, bytes) {
+  py_save_object(obj=loadHotspotObject(bytes=bytes), path)
+}
+
+
+#' 
