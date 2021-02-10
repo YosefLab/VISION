@@ -166,12 +166,12 @@ analyzeHotspotObject <- function(object, hs, tree=FALSE) {
     
     # save the hotspot object
     pickle <- import("pickle", convert=F)
+    py$hs <- hs
     py$pickle <- pickle
     py_run_string("hs_byte_array = bytearray(pickle.dumps(hs))")
     hs_pickled_r <- as.raw(py$hs_byte_array)
     object@Hotspot <- append(object@Hotspot, list(hs_pickled_r))
     
-    print(object)
     return(object)
 }
 
