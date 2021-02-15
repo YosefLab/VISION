@@ -88,14 +88,29 @@ calcHotspotModules <- function(object, model="normal", tree=FALSE,
     # perform hotspot analysis and store results in R
     hs_results <- hs$compute_autocorrelations(jobs=as.integer(workers))
     hs_genes <- hs_results$loc[hs_results$FDR$le(autocorrelation_fdr)]$sort_values('Z', ascending=F)$head(as.integer(number_top_genes))$index
-    hs$compute_local_correlations(hs_genes, jobs=as.integer(workers))
-    hs$create_modules(min_gene_threshold=as.integer(min_gene_threshold), fdr_threshold=clustering_fdr)
-    hs$calculate_module_scores()
+    
+    hs <- hsComputeLocalCorrelations(hs, hs_genes, workers)
+    
+    hs <- createHotspotModulesCalcScores(hs, min_gene_threshold, clustering_fdr)
     
     object <- analyzeHotspotObject(object, hs, tree)
     
-    
     return(object)
+}
+
+
+
+#' Interface function to compute local correlations for hotspot
+#' Warning: modifies the hs argument
+#' @param hs the hotspot object
+#' @param hs_genes hotspot genes
+#' @param workers num core
+#' @return the populated hs object
+#' 
+#' @export
+hsComputeLocalCorrelations <- function(hs, hs_genes, workers) {
+    hs$compute_local_correlations(hs_genes, jobs=as.integer(workers))
+    return(hs)
 }
 
 
@@ -165,12 +180,46 @@ analyzeHotspotObject <- function(object, hs, tree=FALSE) {
     object <- analyzeLocalCorrelationsModules(object, tree)
     
     # save the hotspot object
+    object <- addHotspotToVision(object, hs)
+    
+    return(object)
+}
+
+
+#' Create Hotspot Modules and calculate module scores given a HS object
+#' with local correlations already calculated
+#' @param hs the hotspot object, must have ran compute_local_correlations already
+#' @param min_gene_threshold min genes per module
+#' @param clustering_fdr p value for clustering genes
+#' @return the modified hs object
+#' 
+#' @export
+createHotspotModulesCalcScores <- function(hs, min_gene_threshold=20, clustering_fdr=0.5, plot=F) {
+  hs$create_modules(min_gene_threshold=as.integer(min_gene_threshold), fdr_threshold=clustering_fdr)
+  hs$calculate_module_scores()
+  
+  if (plot) {
+    draw_hotspot_heatmap(hs)
+  }
+  
+  return(hs)
+}
+
+
+#' Add HS python obj to vision OBJECT
+#' @param object Vision object
+#' @param hs python hs object
+#' @return vision object
+#' 
+#' @export
+addHotspotToVision <- function(object, hs) {
+    # save the hotspot object
     pickle <- import("pickle", convert=F)
     py$hs <- hs
     py$pickle <- pickle
     py_run_string("hs_byte_array = bytearray(pickle.dumps(hs))")
     hs_pickled_r <- as.raw(py$hs_byte_array)
-    object@Hotspot <- append(object@Hotspot, list(hs_pickled_r))
+    object@Hotspot <- list(hs_pickled_r)
     
     return(object)
 }
