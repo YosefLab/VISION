@@ -520,7 +520,7 @@ treeCluster2 <- function(tree, reach=10) {
 #'
 #' @param tree object of class phylo
 #' @param reach number of clusters to attempt to generate
-#' @return List of clusters, each entry being a vector of indices representing
+#' @return List of clusters, each entry being a vector of tips representing
 #' samples in the cluster.
 treeCluster3 <- function(tree, reach=10) {
   if (reach > length(tree$tip.label)) {
@@ -576,5 +576,49 @@ treeCluster3 <- function(tree, reach=10) {
       cl[[max(c(closest_cluster_i, smallest_i))]] <- NULL
   }
   
+  return(cl)
+}
+
+
+
+#' Generate clusters for a tree of minimum size (unless children of root)
+#'
+#' @param tree object of class phylo
+#' @param minSize minimum clade size for a clade to be expanded
+#' @return List of clusters, each entry being a vector of tips representing
+treeClusterMinCladeSize <- function(tree, minSize=30) {
+  nodeLabels <- tree$node.label
+  numC <- length(tree$tip.label)
+  
+  # split into clusters for each one
+  cl <- list()
+  seen <- c()
+  i <- 1 # current cluster number
+  # sort groups by min cluster_size first
+  root <- find_root(tree)
+  queue <- c(root)
+  while (TRUE) {
+    # BFS on internal nodes
+    if (length(queue) < 1) {
+      break
+    }
+    internalNode <- queue[1]
+    queue <- queue[-1]
+    
+    
+    children <- get_children(tree, internalNode)
+    for (child in children) {
+      childMinSize <- get_min_cluster_size(tree, child)
+      if (childMinSize >= minSize){
+        # continue expanding this child
+        queue <- append(queue, child)
+      } else {
+        # make this child a cluster
+        cl[[i]] <- get_all_children(tree, child) %>% (function(x) {return(tree$tip.label[x])})
+        i <- i + 1
+      }
+    }
+    
+  }
   return(cl)
 }
