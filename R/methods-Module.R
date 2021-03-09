@@ -24,7 +24,7 @@
 calcHotspotModules <- function(object, model="normal", tree=FALSE, 
                                number_top_genes=1000,num_umi=NULL, 
                                min_gene_threshold=20, n_neighbors=NULL,
-                               autocorrelation_fdr=0.05, clustering_fdr=0.5) {
+                               autocorrelation_fdr=0.05, clustering_fdr=0.5, nn_precomp=NULL, wt_precomp=NULL) {
 
     hotspot <- import("hotspot", convert=F)
     
@@ -79,7 +79,10 @@ calcHotspotModules <- function(object, model="normal", tree=FALSE,
     }
     
     # create knn graph, specify nn or use object default
-    if (is.null(n_neighbors)) {
+    if (!is.null(nn_precomp)) {
+      hs$neighbors <- nn_precomp
+      hs$weights <- wt_precomp
+    } else if (is.null(n_neighbors)) {
         hs$create_knn_graph(F, n_neighbors = as.integer(object@params$numNeighbors))
     } else {
         hs$create_knn_graph(F, n_neighbors = as.integer(n_neighbors))
@@ -613,4 +616,38 @@ saveHSBytestToPickle <- function(path, bytes) {
 }
 
 
+#' Add custom tree based neighbor and weights to a hotspot object
 #' 
+#'  @param tree object of class phylo
+#'  @param the hotspot object to add the nw to
+#'  @param minSize the minimum number of neighbors of the node
+#'  @return the hotspot object
+lcaBasedHotspotNeighbors <- function(tree, hotspot, minSize=20) {
+  tips <- tree$tip.label
+  nTips <- length(tips)
+  neighbors <- data.frame(t(matrix(seq_len(nTips) -1, ncol = nTips, nrow= nTips)))
+  rownames(neighbors) <- tips
+  
+  
+  weights <- data.frame(matrix(0, ncol = nTips, nrow= nTips))
+  for (tip in seq_len(nTips)) {
+    my_neighbors <- minSizeCladeNeighbors(tree, tip, minSize)
+    
+    weights[tip, my_neighbors] <- 1
+  }
+  
+  neighbors_no_diag <- data.frame(matrix(ncol = nTips -1, nrow= nTips))
+  weights_no_diag <- data.frame(matrix(ncol = nTips -1, nrow= nTips))
+  
+  for (tip in seq_len(nTips)) {
+    neighbors_no_diag[tip, ] <- neighbors[tip, -tip]
+    weights_no_diag[tip, ] <- weights[tip, -tip]
+  }
+  
+  rownames(neighbors_no_diag) <- tips
+  rownames(weights_no_diag) <- tips
+  
+  colnames(neighbors_no_diag) <- seq_len(nTips-1) - 1
+  colnames(weights_no_diag) <- seq_len(nTips-1) - 1
+  return(list("neighbors"=neighbors_no_diag, "weights"=weights_no_diag))
+} 

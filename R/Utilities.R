@@ -910,6 +910,40 @@ get_children <- function(tree, node) {
     return(children)
 }
 
+#' Get the parent of a node
+#' @param tree an object of class phylo
+#' @param node the node to get parent
+#' 
+#' @return the immediate parent of the mode, or the node if it is root
+get_parent <- function(tree, node) {
+  edges <- tree$edge
+  parent <- edges[, 1][edges[, 2] == node]
+  if (length(parent) > 0){
+    return(parent)
+  }
+  return(node)
+}
+
+
+#' Get's the nearest >= min size neighbors of a node based on clade structure
+#' @param tree an object of class phylo
+#' @param tip the tip to find the neighbors of
+#' @param minSize the minimum number of neighbors of the node (excludes self)
+#' 
+#' @return the neighbors
+minSizeCladeNeighbors <- function(tree, tip, minSize=20) {
+  node <- tip
+  while (T) {
+    neighbors <- get_all_children(tree, node)
+    clade_size <- length(neighbors)
+    if (clade_size > minSize) {
+      return(neighbors)
+    } else {
+      node <- get_parent(tree, node)
+    }
+  }
+}
+
 #' Check if a child is a tip
 #'
 #' @param tree an object of class phylo
@@ -948,7 +982,10 @@ get_all_children <- function(tree, node) {
     return(tips)
 }
 
-
+#' Tree method for getting the max child clade size of a node
+#' @param tree an object of class phylo
+#' @param node the node to check
+#' @return the size of the largest child clade
 get_max_cluster_size <- function(tree, node) {
     children <- get_children(tree, node)
     num_children <- c()
@@ -959,6 +996,28 @@ get_max_cluster_size <- function(tree, node) {
 }
 
 
+#' Tree method for getting the min child clade size of a node
+#' @param tree an object of class phylo
+#' @param node the node to check
+#' @return the size of the smallest child clade
+get_min_cluster_size <- function(tree, node) {
+  children <- get_children(tree, node)
+  num_children <- c()
+  for (child in children) {
+    num_children <- append(num_children, length(get_all_children(tree, child)))
+  }
+  return(min(num_children))
+}
+
+
+#' Trivial distance function for arbitrary tree clustering
+#' 
+#' Trivial distance is defined as the difference in depths between the 
+#' 
+#' @param tree an object of class phylo
+#' @param tip1 the first leaf
+#' @param tip2 the second leaf
+#' @return the trivial distance between tip1, tip2
 trivial_dist <- function(tree, tip1, tip2) {
     depths <- node.depth(tree)
     edges <- tree$edge
