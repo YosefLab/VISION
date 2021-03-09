@@ -107,7 +107,6 @@ setMethod("Vision", signature(data = "matrixORSparse"),
             .Object@params$signatures <- list()
             .Object@params$micropooling <- list()
 
-            rownames(data) <- toupper(rownames(data))
             toRemove <- rownames(data)[duplicated(rownames(data))]
             if (length(toRemove) > 0){
                 message(sprintf(
@@ -139,7 +138,6 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                 }
                 # unnormalizedData might have more genes than exprData
                 # and it might have more cells than exprData
-                rownames(unnormalizedData) <- toupper(rownames(unnormalizedData))
                 HAS_CORRECT_CELLS <- length(setdiff(
                                            colnames(.Object@exprData),
                                            colnames(unnormalizedData)
@@ -268,8 +266,7 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                 .Object@params$latentSpace$projectionGenes <- NA
             } else {
                 .Object@params$latentSpace$projectionGenesMethod <- NA
-                .Object@params$latentSpace$projectionGenes <- vapply(
-                    projection_genes, toupper, "", USE.NAMES = FALSE)
+                .Object@params$latentSpace$projectionGenes <- projection_genes
                 .Object@params$latentSpace$projectionGenes = intersect(rownames(.Object@exprData),
                                 .Object@params$latentSpace$projectionGenes)
             }
