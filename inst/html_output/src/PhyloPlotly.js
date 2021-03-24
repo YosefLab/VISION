@@ -343,7 +343,7 @@ PhyloPlotly.prototype.setLinearCoords = function() {
         if (!isTip(tree)) {
             // internal node
             var childrenHeights = [];
-            tree["branchset"].forEach(function(child) {
+            tree["branchset"].sort(function(a, b) {return a["depth"] - b["depth"]}).forEach(function(child) {
                 setLinearCoord(child);
                 childrenHeights.push(child["y"])
             });
@@ -405,7 +405,6 @@ PhyloPlotly.prototype.selectedLinesTrace = function(nodes){
     hoverinfo: 'skip'
   }
   
-  console.log(horizontalLines)
   return (horizontalLines)
 }
 

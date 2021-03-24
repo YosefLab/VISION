@@ -806,7 +806,6 @@ knn_tree <- function(leaves, k, distances) {
 }
 
 
-
 #' Parallel KNN for Trees
 #'
 #' Computes nearest-neighbor indices and distances
@@ -851,6 +850,47 @@ find_knn_parallel_tree <- function(tree, K) {
   
   return(list(index=idx, dist=dists))
 }
+
+
+
+#' Add custom tree based neighbor and weights to a hotspot object
+#' 
+#'  @param tree object of class phylo
+#'  @param the hotspot object to add the nw to
+#'  @param minSize the minimum number of neighbors of the node
+#'  @return the hotspot object
+lcaBasedTreeKNN <- function(tree, minSize=20) {
+  tips <- tree$tip.label
+  nTips <- length(tips)
+  neighbors <- data.frame(t(matrix(seq_len(nTips), ncol = nTips, nrow= nTips)))
+  rownames(neighbors) <- tips
+  
+  
+  weights <- data.frame(matrix(0, ncol = nTips, nrow= nTips))
+  for (tip in seq_len(nTips)) {
+    my_neighbors <- minSizeCladeNeighbors(tree, tip, minSize)
+    
+    weights[tip, my_neighbors] <- 1
+  }
+  
+  neighbors_no_diag <- data.frame(matrix(ncol = nTips -1, nrow= nTips))
+  weights_no_diag <- data.frame(matrix(ncol = nTips -1, nrow= nTips))
+  
+  for (tip in seq_len(nTips)) {
+    neighbors_no_diag[tip, ] <- neighbors[tip, -tip]
+    weights_no_diag[tip, ] <- weights[tip, -tip]
+  }
+  
+  rownames(neighbors_no_diag) <- tips
+  rownames(weights_no_diag) <- tips
+  
+  colnames(neighbors_no_diag) <- seq_len(nTips-1) - 1
+  colnames(weights_no_diag) <- seq_len(nTips-1) - 1
+  return(list("neighbors"=as.matrix(neighbors_no_diag), "weights"=as.matrix(weights_no_diag)))
+}
+
+
+
 
 #' Generate an ultrametric tree
 #'
@@ -1012,38 +1052,74 @@ get_min_cluster_size <- function(tree, node) {
 
 #' Trivial distance function for arbitrary tree clustering
 #' 
-#' Trivial distance is defined as the difference in depths between the 
+#' Number of mutations along path from tip1 to LCA(tip1, tip2)
+#' Ensures if on same clade, join.
 #' 
 #' @param tree an object of class phylo
 #' @param tip1 the first leaf
 #' @param tip2 the second leaf
 #' @return the trivial distance between tip1, tip2
+#'
+#' @export
 trivial_dist <- function(tree, tip1, tip2) {
-    depths <- node.depth(tree)
-    edges <- tree$edge
-    path1 <- c(tip1)
-    root <- find_root(tree)
-    parent <- tip1
-    while (T) {
-      parent <- edges[, 1][edges[, 2] == parent]
-      path1 <- append(path1, parent)
-      if (parent == root) {
-          break
-      }
+  # node depths of tree
+  edges <- tree$edge
+  # Get the path from tip1 to root
+  path1 <- c(tip1)
+  root <- find_root(tree)
+  parent <- tip1
+  while (T) {
+    parent <- edges[, 1][edges[, 2] == parent]
+    path1 <- append(path1, parent)
+    if (parent == root) {
+      break
     }
-    
-    path2 <- c(tip2)
-    parent <- tip2
-    while (T) {
-      parent <- edges[, 1][edges[, 2] == parent]
-      path2 <- append(path2, parent)
-      if (parent == root || parent %in% path1) {
-        break
-      }
+  }
+  
+  mrca <- getMRCA(tree, c(tip1, tip2)) # MRCA of both
+  
+  
+  # Depths of the internal nodes that represent the parents of tip1, tip2 right before LCA
+  # ie the 'diverging' point or first split
+  path_length <- which(path1 == mrca)
+  
+  # Return the absolute difference between the depths
+  return(path_length)
+}
+
+
+
+
+
+#' Depth of tip1 parent immediately after LCA(tip1, tip2)
+#' 
+#' @param tree an object of class phylo
+#' @param tip1 the first leaf
+#' @param tip2 the second leaf
+#' @return the trivial distance between tip1, tip2
+#'
+#' @export
+lca_based_depth <- function(tree, tip1, tip2) {
+  depths <- node.depth(tree)
+  edges <- tree$edge
+  # Get the path from tip1 to root
+  path1 <- c(tip1)
+  root <- find_root(tree)
+  parent <- tip1
+  while (T) {
+    parent <- edges[, 1][edges[, 2] == parent]
+    path1 <- append(path1, parent)
+    if (parent == root) {
+      break
     }
-    
-    tip1_depth_prev <- depths[path1[which(path1 == path2[length(path2)]) - 1]]
-    tip2_depth_prev <- depths[path2[length(path2)] - 1]
-    
-    return(abs(tip1_depth_prev - tip2_depth_prev))
+  }
+  
+  mrca <- getMRCA(tree, c(tip1, tip2)) # MRCA of both
+  
+  # Depths of the internal nodes that represent the parents of tip1, tip2 right before LCA
+  # ie the 'diverging' point or first split
+  lca_child_depth <- depths[path1[which(path1 == mrca) - 1]]
+  
+  # Return the absolute difference between the depths
+  return(lca_child_depth)
 }

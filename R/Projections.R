@@ -378,20 +378,28 @@ setMethod("computeKNNWeights", signature(object = "matrix"),
 )
 
 
-#' compute for each vector the weights to apply to it's K nearest neighbors
+#' Compute for each vector the weights to apply to it's K nearest neighbors
+#' 
 #' @importFrom Matrix rowSums
 #' @importFrom Matrix sparseMatrix
 #' @importFrom matrixStats rowMaxs
 #' @param object tree to use for KNN
 #' @param K Number of neighbors to consider.
+#' @param lcaKNN whether to use LCA based KNN (cluster by minimum size)
+#' WARNING: lcaKNN doesn't perform well with broad multifurcations
 #' @return a list of two items:
 #'          indices: matrix, cells X neighbors
 #'              Each row specifies indices of nearest neighbors
 #'          weights: matrix, cells X neighbors
 #'              Corresponding weights to nearest neighbors
 setMethod("computeKNNWeights", signature(object = "phylo"),
-    function(object, K = round(sqrt(length(object$tip.label)))) {
-        k <- find_knn_parallel_tree(object, K)
+    function(object, K = round(sqrt(length(object$tip.label))), lcaKNN=FALSE, minSize=20) {
+        if (lcaKNN) {
+          k <- lcaBasedTreeKNN(object, minSize = minSize)
+        } else {
+          k <- find_knn_parallel_tree(object, K)
+        }
+        
         
         nn <- k[[1]]
         d <- k[[2]]
