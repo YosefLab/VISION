@@ -35,7 +35,7 @@ hsAnalyze <- function(object, model="normal", tree=FALSE,
     # Init Hotspot KNN
     hs <- hsCreateKnnGraph(hs, object, n_neighbors=NULL, nn_precomp=NULL, wt_precomp=NULL)
     # perform Hotspot analysis and store results in R
-    hs_genes <- hsComputeAutoCorrelations(hs, number_top_genes=1000, autocorrelation_fdr=0.05)
+    hs_genes <- hsComputeAutoCorrelations(hs, number_top_genes=number_top_genes, autocorrelation_fdr=autocorrelation_fdr)
     # Compute localcorr
     hs <- hsComputeLocalCorrelations(hs, hs_genes)
     # Calculate Hotspot Module Scores for informative genes
