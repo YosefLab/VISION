@@ -420,7 +420,7 @@ poolMatrixCols_Inner <- function(expr, pools) {
 
 
 #' Performs a binary search on a depth d such that 
-#' if depth(u, v) <= d then u and v are in the same cluster
+#' if depth(LCA(u, v)) <= d then u and v are in the same cluster
 #'
 #' @param tree object of class phylo
 #' @param reach number of clusters to attempt to generate
@@ -428,7 +428,7 @@ poolMatrixCols_Inner <- function(expr, pools) {
 #' samples in the cluster.
 #' 
 #' @export
-treeCluster1 <- function(tree, reach=10) {
+depthBasedTreeCluster <- function(tree, reach=10) {
     high <- length(tree$tip.label)
     low <- 0
     while (T) {
@@ -483,7 +483,7 @@ treeCluster1 <- function(tree, reach=10) {
 #' samples in the cluster.
 #'
 #' @export
-treeCluster2 <- function(tree, reach=10) {
+depthBasedCladewiseTreeCluster <- function(tree, reach=10) {
     if (reach > length(tree$tip.label)) {
         stop("Number of clusters is too high.")
     }
@@ -522,13 +522,13 @@ treeCluster2 <- function(tree, reach=10) {
 
 
 #' Performs a breadth first search to create a specific number of clusters
-#' Clusters are split to prioritize cluster size
+#' Clusters are split to prioritize max cluster size
 #'
 #' @param tree object of class phylo
 #' @param reach number of clusters to attempt to generate
 #' @return List of clusters, each entry being a vector of tips representing
 #' samples in the cluster.
-treeCluster3 <- function(tree, reach=10) {
+maxSizeCladewiseTreeCluster <- function(tree, reach=10) {
   if (reach > length(tree$tip.label)) {
     stop("Number of clusters is too high.")
   }
@@ -585,63 +585,9 @@ treeCluster3 <- function(tree, reach=10) {
   return(cl)
 }
 
-#' Bottom up tree clustering approach
-#' Merge the smallest cluster and the cluster next to it in the plotly tree.
-#' Plotly tree is sorted by ultrametric depth
-#'
-#' @param tree object of class phylo
-#' @param reach number of clusters to attempt to generate
-#' @return List of clusters, each entry being a vector of tips representing
-#' samples in the cluster.
-treeCluster4 <- function(tree, reach=10) {
-  if (reach > length(tree$tip.label)) {
-    stop("Number of clusters is too high.")
-  }
-  
-  node_depths <- node.depth(tree, method = 2)
-  root <- find_root(tree)
-  # PQ
-  cluster_parents <- c()
-  for (node in tree$tip.label) {
-    cluster_parents[[node]] <- 1
-  }
-  
-  # BFS on internal nodes, with pq ordered by the maximum clade size we would get splitting on that node
-  while (T) {
-    cluster_parents <- cluster_parents[order(unlist(cluster_parents), decreasing = F)] # sorted by decreasing size
-    remove <- as.integer(names(cluster_parents)[1]) # smallest cluster
-    cluster_parents <- cluster_parents[-1] # after removing
-    
-    
-    removed_parent <- get_parent(tree, )
-    
-    children <- get_children(tree, remove)
-    for (child in children) {
-      cluster_parents[[as.name(child)]] <- get_min_cluster_size(tree, child)
-      
-    }
-    
-    # Don't make too many clusters
-    if (length(cluster_parents) >= reach) {
-      break
-    }
-  }
-  
-  # Map the internal nodes from PQ to clusters (their children)
-  cl <- list()
-  for (cluster in seq_len(length(cluster_parents))) {
-    cellId <- as.integer(names(cluster_parents)[cluster])
-    
-    all_children <- get_all_children(tree, cellId) %>% (function(x) {return(tree$tip.label[x])})
-    cl[[cluster]] <- all_children
-  }
-
-  return(cl)
-}
-
-
 
 #' Generate clade-clusters for a tree of minimum size (unless children of root)
+#' 
 #'
 #' @param tree object of class phylo
 #' @param minSize minimum clade size for a clade to be expanded

@@ -385,7 +385,7 @@ setMethod("computeKNNWeights", signature(object = "matrix"),
 #' @importFrom matrixStats rowMaxs
 #' @param object tree to use for KNN
 #' @param K Number of neighbors to consider.
-#' @param lcaKNN whether to use LCA based KNN (cluster by minimum size)
+#' @param lcaKNN whether to use LCA based KNN (cluster by minimum size), if false defaults to cophenetic distance (random tie breaking).
 #' WARNING: lcaKNN doesn't perform well with broad multifurcations
 #' @return a list of two items:
 #'          indices: matrix, cells X neighbors
