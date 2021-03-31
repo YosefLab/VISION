@@ -722,7 +722,7 @@ setMethod("analyze", signature(object="Vision"),
 
     if (hotspot) {
       message("Hotspot Analysis")
-      object <- hsAnalyze(object, model="danb", tree)
+      object <- runHotspot(object, model="danb", tree)
     }
 
 

@@ -16,8 +16,6 @@
 #' @param n_neighbors number of neighbors to consider in latent space
 #' @param autocorrelation_fdr threshold for significance for genes autocorr
 #' @param clustering_fdr threshold for significance for clustering modules
-#' @param nn_precomp precomputed neighbors, barcodes x neighbors
-#' @param wt_precomp precomputed weights, barcodes x neighbors
 #' 
 #' Populates the modData, HotspotModuleScores, ModuleSignatureEnrichment
 #' and HotspotObject slots of object, as well as recalculates signature scores
@@ -25,15 +23,15 @@
 #' @return the modified Vision object
 #' 
 #' @export
-hsAnalyze <- function(object, model="normal", tree=FALSE, 
+runHotspot <- function(object, model="normal", tree=FALSE, 
                                number_top_genes=1000, num_umi=NULL, 
                                min_gene_threshold=20, n_neighbors=NULL,
-                               autocorrelation_fdr=0.05, clustering_fdr=0.5, nn_precomp=NULL, wt_precomp=NULL) {
+                               autocorrelation_fdr=0.05, clustering_fdr=0.5) {
 
     # Init Hotspot
     hs <- hsInit(object, model, tree, num_umi)
     # Init Hotspot KNN
-    hs <- hsCreateKnnGraph(hs, object, n_neighbors=n_neighbors, nn_precomp=nn_precomp, wt_precomp=wt_precomp)
+    hs <- hsCreateKnnGraph(hs, object, n_neighbors=n_neighbors)
     # perform Hotspot analysis and store results in R
     hs_genes <- hsComputeAutoCorrelations(hs, number_top_genes=number_top_genes, autocorrelation_fdr=autocorrelation_fdr)
     # Compute localcorr
@@ -115,17 +113,12 @@ hsInit <- function(object, model="normal", tree=F, num_umi=NULL) {
 
 #' Init KNN graph in Hotspot object
 #' 
-#' @param nn_precomp precomputed neighbors, barcodes x neighbors
-#' @param wt_precomp precomputed weights, barcodes x neighbors
 #' @return the Hotspot object with KNN initialized
 #' 
 #' @export
-hsCreateKnnGraph <- function(hs, object, n_neighbors=NULL, nn_precomp=NULL, wt_precomp=NULL) {
+hsCreateKnnGraph <- function(hs, object, n_neighbors=NULL) {
   # create knn graph, specify nn or use object default
-  if (!is.null(nn_precomp)) {
-    hs$neighbors <- nn_precomp
-    hs$weights <- wt_precomp
-  } else if (is.null(n_neighbors)) {
+  if (is.null(n_neighbors)) {
     hs$create_knn_graph(F, n_neighbors = as.integer(object@params$numNeighbors))
   } else {
     hs$create_knn_graph(F, n_neighbors = as.integer(n_neighbors))

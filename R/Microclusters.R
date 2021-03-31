@@ -423,12 +423,12 @@ poolMatrixCols_Inner <- function(expr, pools) {
 #' if depth(LCA(u, v)) <= d then u and v are in the same cluster
 #'
 #' @param tree object of class phylo
-#' @param reach number of clusters to attempt to generate
+#' @param target number of clusters to attempt to generate
 #' @return List of clusters, each entry being a vector of indices representing
 #' samples in the cluster.
 #' 
 #' @export
-depthBasedTreeCluster <- function(tree, reach=10) {
+depthBasedTreeCluster <- function(tree, target=10) {
     high <- length(tree$tip.label)
     low <- 0
     while (T) {
@@ -457,12 +457,12 @@ depthBasedTreeCluster <- function(tree, reach=10) {
             }
         }
 
-        if (num_clusters >= reach) {
+        if (num_clusters >= target) {
             if(low == d) {
                 break
             }
             low <- d
-        } else if (num_clusters < reach) {
+        } else if (num_clusters < target) {
             if(high == d) {
                 break
             }
@@ -478,13 +478,13 @@ depthBasedTreeCluster <- function(tree, reach=10) {
 #' Clusters are split based on depth.
 #'
 #' @param tree object of class phylo
-#' @param reach number of clusters to attempt to generate
+#' @param target number of clusters to attempt to generate
 #' @return List of clusters, each entry being a vector of indices representing
 #' samples in the cluster.
 #'
 #' @export
-depthBasedCladewiseTreeCluster <- function(tree, reach=10) {
-    if (reach > length(tree$tip.label)) {
+depthBasedCladewiseTreeCluster <- function(tree, target=10) {
+    if (target > length(tree$tip.label)) {
         stop("Number of clusters is too high.")
     }
     
@@ -504,7 +504,7 @@ depthBasedCladewiseTreeCluster <- function(tree, reach=10) {
           cluster_parents[[as.name(child)]] <- node_depths[child]
       }
       
-      if (length(cluster_parents) >= reach) {
+      if (length(cluster_parents) >= target) {
           break
       }
     }
@@ -525,11 +525,11 @@ depthBasedCladewiseTreeCluster <- function(tree, reach=10) {
 #' Clusters are split to prioritize max cluster size
 #'
 #' @param tree object of class phylo
-#' @param reach number of clusters to attempt to generate
+#' @param target number of clusters to attempt to generate
 #' @return List of clusters, each entry being a vector of tips representing
 #' samples in the cluster.
-maxSizeCladewiseTreeCluster <- function(tree, reach=10) {
-  if (reach > length(tree$tip.label)) {
+maxSizeCladewiseTreeCluster <- function(tree, target=10) {
+  if (target > length(tree$tip.label)) {
     stop("Number of clusters is too high.")
   }
   
@@ -562,7 +562,7 @@ maxSizeCladewiseTreeCluster <- function(tree, reach=10) {
     cl[[cluster]] <- all_children
   }
   
-  while (length(cl) > reach) {
+  while (length(cl) > target) {
     cs <- c()
     for (c in cl) {
       cs <- append(cs, length(c))
