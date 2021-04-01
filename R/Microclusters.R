@@ -533,7 +533,6 @@ maxSizeCladewiseTreeCluster <- function(tree, target=10) {
     stop("Number of clusters is too high.")
   }
   
-  # node_depths <- node.depth(tree)
   root <- find_root(tree)
   cluster_parents <- c()
   cluster_parents[[as.name(root)]] <- get_max_cluster_size(tree, root)
