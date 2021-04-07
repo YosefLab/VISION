@@ -1,0 +1,77 @@
+---
+title: "metastasis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+devtools::load_all("/home/eecs/yanayrosen/VISION/") # change to just load VISION
+library(ape)
+library(reticulate)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+## Creating a Phylo Vision Object with a Tree
+
+Vision objects now support dendrograms for visualization and analysis. To create the Phylo-VISION object, you need all of the same data, an expression matrix, and metadata and/or signatures, but you also include a tree object from the Ape package.
+```{r create}
+# Read the expression and meta data
+expr <- read_10x(expression = "/data/yosef2/users/mattjones/projects/PhyloVision/data/metastasis_data/GRCh38/matrix.mtx",
+                 genes = "/data/yosef2/users/mattjones/projects/PhyloVision/data/metastasis_data/GRCh38/genes.tsv",
+                 barcodes = "/data/yosef2/users/mattjones/projects/PhyloVision/data/metastasis_data/GRCh38/barcodes.tsv")
+
+
+barcodes <- read.table("/data/yosef2/users/mattjones/projects/PhyloVision/data/metastasis_data/GRCh38/barcodes.tsv", check.names = FALSE, sep="\t")
+latent <- read.table("/data/yosef2/users/mattjones/projects/PhyloVision/data/metastasis_data/latent.csv", check.names=FALSE, sep="\t", row.names = 1, header=TRUE)
+row.names(latent) <- barcodes[, 1]
+
+meta <- read.table("/data/yosef2/users/mattjones/projects/PhyloVision/data/metastasis_data/GSM4905335_meta.5k.tsv.gz", check.names = FALSE, sep = "\t", row.names = 1, header=TRUE)
+# meta$Cell_Type <- as.factor(meta$Cell_Type)
+# Signature file
+sigs = c("c5.go.bp.v7.2.symbols.gmt", "h.all.v5.2.symbols.gmt", "c4.cgn.v7.2.symbols.gmt")
+
+# Read the trees
+lg7_tree <- read.tree("/data/yosef2/users/mattjones/projects/PhyloVision/data/metastasis_data/lg7_tree_hybrid_priors.alleleThresh.processed.txt")
+lg4_tree <- read.tree("/data/yosef2/users/mattjones/projects/PhyloVision/data/metastasis_data/lg4_tree_hybrid_priors.alleleThresh.processed.txt")
+
+# Subset trees with expression
+lg7_barcodes <- intersect(lg7_tree$tip.label, colnames(expr))
+lg4_barcodes <- intersect(lg4_tree$tip.label, colnames(expr))
+
+lg7_tree <- keep.tip(lg7_tree, lg7_barcodes)
+lg4_tree <- keep.tip(lg4_tree, lg4_barcodes)
+
+# Collapse one mutations
+lg7_tree <- collapse.singles(lg7_tree)
+lg4_tree <- collapse.singles(lg4_tree)
+
+expr_lg7 <- expr[, lg7_barcodes]
+expr_lg4 <- expr[, lg4_barcodes]
+
+latent_lg7 <- latent[lg7_barcodes,]
+latent_lg4 <- latent[lg4_barcodes,]
+
+meta_lg7 <- meta[lg7_barcodes,]
+meta_lg4 <- meta[lg4_barcodes,]
+
+# Construct the Vision object
+vis_lg7 <- PhyloVision(tree=lg7_tree, data=expr_lg7, latentSpace=latent_lg7, signatures=sigs, meta=meta_lg7, num_neighbors=40, projection_genes="threshold", sig_gene_threshold=0.05, projection_methods=c("tSNE30", "tSNE10", "UMAP")) 
+vis_lg4 <- PhyloVision(tree=lg4_tree, data=expr_lg4, latentSpace=latent_lg4, signatures=sigs, meta=meta_lg4, num_neighbors=40, projection_genes="threshold", sig_gene_threshold=0.05, projection_methods=c("tSNE30", "tSNE10", "UMAP")) 
+```
+Next, we can perform the normal Vision analysis using the tree as the latent space.
+
+```{r analyze}
+vis_lg7 <- phyloAnalyze(vis_lg7)
+vis_lg4 <- phyloAnalyze(vis_lg4)
+```
+
+We can also perform Hotspot module analysis.
+```{r hotspot}
+vis_lg7 <- runHotspot(vis_lg7, model="danb", tree=TRUE, min_gene_threshold=120, n_neighbors = 40, clustering_fdr = 1.0)
+vis_lg4 <- runHotspot(vis_lg4, model="danb", tree=TRUE, min_gene_threshold=120, n_neighbors = 40, clustering_fdr = 1.0)
+```

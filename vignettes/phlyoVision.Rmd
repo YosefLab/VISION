@@ -1,0 +1,79 @@
+---
+title: "VisCas Vignette"
+author: "Yanay Rosen"
+date: "9/30/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+devtools::load_all("~/Desktop/VISION/") # change to just load VISION
+library(ape)
+library(reticulate)
+```
+
+## Creating a Phylo Vision Object with a Tree
+
+Vision objects now support dendrograms for visualization and analysis. To create the Phylo-VISION object, you need all of the same data, an expression matrix, and metadata and/or signatures, but you also include a tree object from the Ape package.
+```{r create}
+# Read the expression and meta data
+expr <- read.table("VisCasVignetteFiles/expr.tsv", check.names = FALSE, sep = "\t")
+umap <- read.table("VisCasVignetteFiles/umap_data.csv", check.names=FALSE, sep=",", row.names = 1, header=TRUE)
+meta <- read.table("VisCasVignetteFiles/meta.tsv", check.names = FALSE, sep = "\t", row.names = 1, header=TRUE)
+meta$Cell_Type <- as.factor(meta$Cell_Type)
+# Signature file
+sigs = c("signatures/h.all.v5.2.symbols.gmt", "signatures/c6.all.v7.2.symbols.gmt", "signatures/c8.all.v7.2.symbols.gmt")
+
+# Read the tree
+tree <- read.tree("VisCasVignetteFiles/tree")
+# Collapse one mutations
+tree <- collapse.singles(tree)
+expr <- expr[, tree$tip.label]
+
+# Construct the Vision object
+vis <- PhyloVision(tree=tree, data=expr, latentSpace=umap, signatures=sigs, meta=meta, num_neighbors=30)
+```
+
+Next, we can perform the normal Vision analysis using the tree as the latent space.
+
+``` {r analyze}
+vis <- phyloAnalyze(vis)
+```
+We can also perform Hotspot module analysis.
+```{r hotspot}
+vis <- runHotspot(vis, model="normal", tree=TRUE, min_gene_threshold=50, n_neighbors = 30, number_top_genes = 12438)
+```
+The full Hotspot API is exposed for analysis as well:
+```{r eval=FALSE}
+# Init Hotspot
+hs <- hsInit(vis, model = "normal", tree=TRUE)
+# Init Hotspot KNN
+hs <- hsCreateKnnGraph(hs, vis, n_neighbors=30)
+# perform Hotspot analysis and store results in R
+hs_genes <- hsComputeAutoCorrelations(hs, number_top_genes=12438)
+# Compute localcorr
+hs <- hsComputeLocalCorrelations(hs, hs_genes)
+# Calculate Hotspot Module Scores for informative genes
+hs <- hsCalculateModuleScores(hs)
+# Cluster Hotspot modules and perform Vision based analysis on HS Modules and 
+vis <- analyzeHotspotObjectVision(vis, hs, tree=TRUE)
+```
+
+
+
+Finally, we can launch the Vision browser.
+```{r eval=FALSE}
+viewResults(vis)
+```
+
+```{r inspectModules}
+hs <- loadHotspotObject(bytes=vis@Hotspot[[1]])
+library(reticulate)
+use_python('/usr/bin/python3')
+```
+```{python modulesPlot}
+import matplotlib.pyplot as plt
+import hotspot
+hs.plot_local_correlations()
+plt.show()
+```
