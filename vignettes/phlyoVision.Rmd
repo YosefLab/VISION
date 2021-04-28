@@ -43,7 +43,8 @@ We can also perform Hotspot module analysis.
 ```{r hotspot}
 vis <- runHotspot(vis, model="normal", tree=TRUE, min_gene_threshold=50, n_neighbors = 30, number_top_genes = 12438)
 ```
-The full Hotspot API is exposed for analysis as well:
+
+The full Hotspot API is exposed for analysis as well. For more on the Hotspot API see [here](https://yoseflab.github.io/Hotspot/index.html)
 ```{r eval=FALSE}
 # Init Hotspot
 hs <- hsInit(vis, model = "normal", tree=TRUE)
@@ -59,13 +60,7 @@ hs <- hsCalculateModuleScores(hs)
 vis <- analyzeHotspotObjectVision(vis, hs, tree=TRUE)
 ```
 
-
-
-Finally, we can launch the Vision browser.
-```{r eval=FALSE}
-viewResults(vis)
-```
-
+We can also access further Hotspot functionality using Reticulate and Python.
 ```{r inspectModules}
 hs <- loadHotspotObject(bytes=vis@Hotspot[[1]])
 library(reticulate)
@@ -77,3 +72,11 @@ import hotspot
 hs.plot_local_correlations()
 plt.show()
 ```
+
+
+Finally, we can launch the Vision browser.
+```{r eval=FALSE}
+viewResults(vis)
+```
+
+

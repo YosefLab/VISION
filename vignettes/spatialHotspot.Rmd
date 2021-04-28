@@ -32,7 +32,7 @@ pos <- pos[c("X", "Y")]
 vis <- Vision(expr, signatures=c(sig), latentSpace = pos, meta=meta) # TODO add relevant signatures
 ```
 
-Next, we can perform the normal Vision analysis using the tree as the latent space. We need to tell Vision to use the Tree as the latent space and to calculate neighbors. 
+Next, we can perform the normal Vision analysis using the spatial coordinates as the latent space.
 
 ``` {r analyze}
 vis <- analyze(vis)
