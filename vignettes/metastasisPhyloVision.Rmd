@@ -5,7 +5,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-devtools::load_all("/home/eecs/yanayrosen/VISION/") # change to just load VISION
+library(VISION)
 library(ape)
 library(reticulate)
 ```

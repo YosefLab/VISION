@@ -7,7 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-devtools::load_all("~/Desktop/VISION/") # change to just load VISION
+library(VISION)
 library(reticulate)
 ```
 
