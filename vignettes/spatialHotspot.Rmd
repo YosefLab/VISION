@@ -16,14 +16,16 @@ library(reticulate)
 First, we create a Vision object
 ```{r create}
 # Read the expression and meta data
-expr <- read.table("VisHotspotVignetteFiles/expr.tsv", check.names = FALSE, sep = "\t")
-meta <- read.table("VisHotspotVignetteFiles/meta.tsv", check.names = FALSE, sep = "\t", row.names = 1, header=TRUE)
+file_path <- "..." # Replace the path
+
+expr <- read.table(paste(file_path, "expr.tsv", sep="/"), check.names = FALSE, sep = "\t")
+meta <- read.table(paste(file_path, "meta.tsv", sep="/"), check.names = FALSE, sep = "\t", row.names = 1, header=TRUE)
 
 # Signature file
-sig = "VisHotspotVignetteFiles/h.all.v5.2.symbols.gmt"
+sig = paste(file_path, "h.all.v5.2.symbols.gmt", sep="/")
 
 # Read and create the coordinates
-pos <- read.table("VisHotspotVignetteFiles/BeadLocationsForR.csv", sep=",", check.names = FALSE, row.names=1, header=TRUE)
+pos <- read.table(paste(file_path, "BeadLocationsForR.csv", sep="/"), sep=",", check.names = FALSE, row.names=1, header=TRUE)
 pos["X"] <- pos$ycoord
 pos["Y"] <- -1 * pos$xcoord
 pos <- pos[c("X", "Y")]
@@ -39,6 +41,7 @@ vis <- analyze(vis)
 ```
 We can also perform Hotspot module analysis.
 ```{r hotspot}
+vis@params$latentSpace$projectionGenes <- rownames(vis@exprData) # Use all genes.
 vis <- runHotspot(vis, model="bernoulli", num_umi=meta["num_umi"])
 ```
 

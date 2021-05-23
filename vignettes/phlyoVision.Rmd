@@ -18,15 +18,17 @@ library(reticulate)
 Vision objects now support dendrograms for visualization and analysis. To create the Phylo-VISION object, you need all of the same data, an expression matrix, and metadata and/or signatures, but you also include a tree object from the Ape package.
 ```{r create}
 # Read the expression and meta data
-expr <- read.table("VisCasVignetteFiles/expr.tsv", check.names = FALSE, sep = "\t")
-umap <- read.table("VisCasVignetteFiles/umap_data.csv", check.names=FALSE, sep=",", row.names = 1, header=TRUE)
-meta <- read.table("VisCasVignetteFiles/meta.tsv", check.names = FALSE, sep = "\t", row.names = 1, header=TRUE)
+file_path <- "..." # Replace the path
+paste(file_path, "expr.tsv", sep="/")
+expr <- read.table(paste(file_path, "expr.tsv", sep="/"), check.names = FALSE, sep = "\t")
+umap <- read.table(paste(file_path, "umap_data.csv", sep="/"), check.names=FALSE, sep=",", row.names = 1, header=TRUE)
+meta <- read.table(paste(file_path, "meta.tsv", sep="/"), check.names = FALSE, sep = "\t", row.names = 1, header=TRUE)
 meta$Cell_Type <- as.factor(meta$Cell_Type)
 # Signature file
-sigs = c("signatures/h.all.v5.2.symbols.gmt", "signatures/c6.all.v7.2.symbols.gmt", "signatures/c8.all.v7.2.symbols.gmt")
+sigs <- paste(file_path, c("h.all.v5.2.symbols.gmt", "c6.all.v7.2.symbols.gmt", "c8.all.v7.2.symbols.gmt"), sep="/")
 
 # Read the tree
-tree <- read.tree("VisCasVignetteFiles/tree")
+tree <- read.tree(paste(file_path, "tree", sep="/"))
 # Collapse one mutations
 tree <- collapse.singles(tree)
 expr <- expr[, tree$tip.label]

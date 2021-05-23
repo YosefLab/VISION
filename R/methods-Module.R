@@ -69,9 +69,9 @@ hsInit <- function(object, model="normal", tree=F, num_umi=NULL) {
     exprData = matLog2(object@exprData)
   }
   
-  gene_subset = object@params$latentSpace$projectionGenes
+  gene_subset <- object@params$latentSpace$projectionGenes
   
-  if (is.na(gene_subset)) {
+  if (any(is.na(gene_subset))) {
     gene_subset <- applyFilters(exprData,
                                 object@params$latentSpace$projectionGenesMethod,
                                 object@params$latentSpace$threshold, 2)
