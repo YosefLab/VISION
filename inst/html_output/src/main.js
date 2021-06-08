@@ -246,7 +246,7 @@ window.onload = function()
                 .removeClass('disabled')
         }
 
-        if(info.has_lca){
+        if(info.has_mods){
             $('#nav-bar')
                 .find(".nav-link[data-main-vis='genes']")
                 .removeClass('disabled')
