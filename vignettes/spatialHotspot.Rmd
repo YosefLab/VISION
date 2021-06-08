@@ -16,13 +16,13 @@ library(reticulate)
 First, we create a Vision object
 ```{r create}
 # Read the expression and meta data
-file_path <- "..." # Replace the path
+file_path <- "data/spatial" # Replace the path
 
-expr <- read.table(paste(file_path, "expr.tsv", sep="/"), check.names = FALSE, sep = "\t")
+expr <- read.table(paste(file_path, "expr.tsv.gz", sep="/"), check.names = FALSE, sep = "\t")
 meta <- read.table(paste(file_path, "meta.tsv", sep="/"), check.names = FALSE, sep = "\t", row.names = 1, header=TRUE)
 
 # Signature file
-sig = paste(file_path, "h.all.v5.2.symbols.gmt", sep="/")
+sig <- paste("data", "h.all.v5.2.symbols.gmt", sep="/")
 
 # Read and create the coordinates
 pos <- read.table(paste(file_path, "BeadLocationsForR.csv", sep="/"), sep=",", check.names = FALSE, row.names=1, header=TRUE)
@@ -39,10 +39,11 @@ Next, we can perform the normal Vision analysis using the spatial coordinates as
 ``` {r analyze}
 vis <- analyze(vis)
 ```
-We can also perform Hotspot module analysis.
+
+We can also perform Hotspot module analysis. For more on the Hotspot API see [here](https://yoseflab.github.io/Hotspot/index.html) and the other included vignette.
 ```{r hotspot}
 vis@params$latentSpace$projectionGenes <- rownames(vis@exprData) # Use all genes.
-vis <- runHotspot(vis, model="bernoulli", num_umi=meta["num_umi"])
+vis <- runHotspot(vis, model="bernoulli", num_umi=meta["num_umi"], logdata=FALSE)
 ```
 
 Finally, we can launch the Vision browser.

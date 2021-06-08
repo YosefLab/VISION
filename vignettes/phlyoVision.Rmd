@@ -7,7 +7,6 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-devtools::load_all("~/Desktop/VISION/") # change to just load VISION
 library(VISION)
 library(ape)
 library(reticulate)
@@ -18,14 +17,14 @@ library(reticulate)
 Vision objects now support dendrograms for visualization and analysis. To create the Phylo-VISION object, you need all of the same data, an expression matrix, and metadata and/or signatures, but you also include a tree object from the Ape package.
 ```{r create}
 # Read the expression and meta data
-file_path <- "..." # Replace the path
-paste(file_path, "expr.tsv", sep="/")
-expr <- read.table(paste(file_path, "expr.tsv", sep="/"), check.names = FALSE, sep = "\t")
-umap <- read.table(paste(file_path, "umap_data.csv", sep="/"), check.names=FALSE, sep=",", row.names = 1, header=TRUE)
+file_path <- "data/embryogenesis" # Replace the path
+
+expr <- read.table(paste(file_path, "expr_filtered.tsv.gz", sep="/"), check.names = FALSE, sep = "\t")
+
 meta <- read.table(paste(file_path, "meta.tsv", sep="/"), check.names = FALSE, sep = "\t", row.names = 1, header=TRUE)
 meta$Cell_Type <- as.factor(meta$Cell_Type)
 # Signature file
-sigs <- paste(file_path, c("h.all.v5.2.symbols.gmt", "c6.all.v7.2.symbols.gmt", "c8.all.v7.2.symbols.gmt"), sep="/")
+sig <- paste("data", "h.all.v5.2.symbols.gmt", sep="/")
 
 # Read the tree
 tree <- read.tree(paste(file_path, "tree", sep="/"))
@@ -34,7 +33,7 @@ tree <- collapse.singles(tree)
 expr <- expr[, tree$tip.label]
 
 # Construct the Vision object
-vis <- PhyloVision(tree=tree, data=expr, latentSpace=umap, signatures=sigs, meta=meta, num_neighbors=30)
+vis <- PhyloVision(tree=tree, data=expr, signatures=sig, meta=meta, num_neighbors=30, projection_genes= rownames(expr))
 ```
 
 Next, we can perform the normal Vision analysis using the tree as the latent space.
@@ -42,15 +41,16 @@ Next, we can perform the normal Vision analysis using the tree as the latent spa
 ``` {r analyze}
 vis <- phyloAnalyze(vis)
 ```
-We can also perform Hotspot module analysis.
+
+We can also perform Hotspot module analysis. The expression data is already logged for us.
 ```{r hotspot}
-vis <- runHotspot(vis, model="normal", tree=TRUE, min_gene_threshold=50, n_neighbors = 30, number_top_genes = 12438)
+vis <- runHotspot(vis, model="normal", tree=TRUE, min_gene_threshold=50, n_neighbors = 30, number_top_genes = 1326, logdata=TRUE)
 ```
 
 The full Hotspot API is exposed for analysis as well. For more on the Hotspot API see [here](https://yoseflab.github.io/Hotspot/index.html)
 ```{r eval=FALSE}
 # Init Hotspot
-hs <- hsInit(vis, model = "normal", tree=TRUE)
+hs <- hsInit(vis, model = "normal", tree=TRUE, logdata=TRUE)
 # Init Hotspot KNN
 hs <- hsCreateKnnGraph(hs, vis, n_neighbors=30)
 # perform Hotspot analysis and store results in R
@@ -65,7 +65,7 @@ vis <- analyzeHotspotObjectVision(vis, hs, tree=TRUE)
 
 We can also access further Hotspot functionality using Reticulate and Python.
 ```{r inspectModules}
-hs <- loadHotspotObject(bytes=vis@Hotspot[[1]])
+hs <- loadHotspotObject(bytes=vis@Hotspot)
 library(reticulate)
 use_python('/usr/bin/python3')
 ```
@@ -74,6 +74,12 @@ import matplotlib.pyplot as plt
 import hotspot
 hs.plot_local_correlations()
 plt.show()
+```
+Note: the heatmap can also be visualized like so:
+```{r heatmapR}
+hs <- loadHotspotObject(bytes=vis@Hotspot)
+library(paletteer)
+draw_hotspot_heatmap(hs)
 ```
 
 
