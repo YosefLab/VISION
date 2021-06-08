@@ -90,7 +90,7 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                                         "rank_norm_columns"),
                     pool="auto", cellsPerPartition=10, name=NULL, num_neighbors = NULL,
                     latentSpace = NULL, latentSpaceName = NULL, latentTrajectory = NULL,
-                    tree = NULL, modData = list(), hotspot= list(), pools=list()) {
+                    tree = NULL, modData = list(), hotspot= NULL, pools=list()) {
 
             .Object <- new("Vision")
             
