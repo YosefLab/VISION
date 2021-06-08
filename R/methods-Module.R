@@ -16,7 +16,7 @@
 #' @param n_neighbors number of neighbors to consider in latent space
 #' @param autocorrelation_fdr threshold for significance for genes autocorr
 #' @param clustering_fdr threshold for significance for clustering modules
-#' 
+#' @param logdata boolean, log the expression data, avoid for danb
 #' Populates the modData, HotspotModuleScores, ModuleSignatureEnrichment
 #' and HotspotObject slots of object, as well as recalculates signature scores
 #' for new modules.
@@ -26,10 +26,10 @@
 runHotspot <- function(object, model="normal", tree=FALSE, 
                                number_top_genes=1000, num_umi=NULL, 
                                min_gene_threshold=20, n_neighbors=NULL,
-                               autocorrelation_fdr=0.05, clustering_fdr=0.5) {
+                               autocorrelation_fdr=0.05, clustering_fdr=0.5, logdata=FALSE) {
 
     # Init Hotspot
-    hs <- hsInit(object, model, tree, num_umi)
+    hs <- hsInit(object, model, tree, num_umi, logdata)
     # Init Hotspot KNN
     hs <- hsCreateKnnGraph(hs, object, n_neighbors=n_neighbors)
     # perform Hotspot analysis and store results in R
@@ -51,18 +51,21 @@ runHotspot <- function(object, model="normal", tree=FALSE,
 #' @param model the model for Hotspot (ie "normal", "danb"...)
 #' @param tree boolean, whether to use the tree as ls
 #' @param num_umi df of barcodes x num_umi
+#' @param logdata boolean, log the expression data, avoid for danb
+#' 
 #' @return the Hotspot object
 #' 
 #' @export
-hsInit <- function(object, model="normal", tree=F, num_umi=NULL) {
+hsInit <- function(object, model="normal", tree=F, num_umi=NULL, logdata=FALSE) {
   hotspot <- import("hotspot", convert=F)
   
   workers <- getOption("mc.cores")
   if (is.null(workers)){
     workers <- 1
   }
-  if (model == "danb") {
-    # Don't take the log if danb
+  
+  if (!logdata) {
+    # Don't take the log
     exprData = object@exprData
   } else {
     # take the log2 otherwise
@@ -272,7 +275,7 @@ addHotspotToVision <- function(object, hs) {
     py$pickle <- pickle
     py_run_string("hs_byte_array = bytearray(pickle.dumps(hs))")
     hs_pickled_r <- as.raw(py$hs_byte_array)
-    object@Hotspot <- list(hs_pickled_r)
+    object@Hotspot <- hs_pickled_r
     
     return(object)
 }
@@ -716,4 +719,47 @@ lcaBasedHotspotNeighbors <- function(tree, hotspot, minSize=20) {
   colnames(neighbors_no_diag) <- seq_len(nTips-1) - 1
   colnames(weights_no_diag) <- seq_len(nTips-1) - 1
   return(list("neighbors"=neighbors_no_diag, "weights"=weights_no_diag))
-} 
+}
+
+
+#' Draw Modules Heatmap (Gene x Gene)
+#' 
+#' @param hs the Hotspot Object
+#' @param palette palette
+#' @export
+draw_hotspot_heatmap <- function(hs, palette = paletteer_d("ggsci::default_nejm")) {
+  scipy_hierarchy <- import("scipy.cluster.hierarchy", convert=F)
+  np <- import("numpy")
+  linkage <- hs$linkage
+  py_dend = scipy_hierarchy$dendrogram(linkage)
+  lcz = hs$local_correlation_z
+  gene_order = colnames(lcz)[np$array(py_dend$leaves)+1]
+  col_mapping = c()
+  module_to_col = list()
+  unique_mods = as.character(unique(hs$modules))
+  example_genes = list()
+  col_mapping[["-1"]] = "#ffffff"
+  for (i in 1:length(unique_mods)) {
+    mod = unique_mods[[i]]
+    if (mod != -1) {
+      col_mapping[[mod]] = palette[[i]] 
+      module_to_col[[mod]] = palette[[i]]
+      example_genes[[mod]] = sample(hs$modules[hs$modules == mod], 5)
+    }
+  }
+  print(module_to_col)
+  print(col_mapping[order(names(col_mapping))])
+  print(example_genes)
+  modules = data.frame("module" = hs$modules)
+  modules$module = modules$module
+  ha = rowAnnotation(df = modules,
+                     col = list(module = col_mapping),
+                     simple_anno_size = unit(0.5, "in"))
+  ht = Heatmap(as.matrix(lcz), name = "mat",
+               show_row_names=F, show_column_names=F, show_row_dend=F, show_column_dend=F,
+               row_order = gene_order, column_order=gene_order,
+               right_annotation=ha,       
+               column_names_gp = gpar(fontsize = c(1)),
+               width = unit(8, "in"), height = unit(8, "in"))
+  draw(ht)
+}
