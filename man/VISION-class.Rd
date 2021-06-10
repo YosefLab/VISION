@@ -37,6 +37,7 @@ Vision(data, ...)
   latentTrajectory = NULL,
   tree = NULL,
   modData = list(),
+  hotspot = NULL,
   pools = list()
 )
 
@@ -131,6 +132,8 @@ of a trajectory inference method by the dynverse/dynwrap library}
 \item{tree}{a phylo object}
 
 \item{modData}{a list of signature objects for user defined modules}
+
+\item{hotspot}{a list containing one hotspot object precomputed in python and loaded in via reticulate}
 
 \item{pools}{assignments of cell to micropool.  Used when microclustering batches
 separately and then combining.  See vignette for usage.}

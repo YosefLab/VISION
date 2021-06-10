@@ -411,8 +411,8 @@ setMethod("Vision", signature(data = "matrixORSparse"),
 #' Initializes a new PhyloVision Object
 #' 
 #' @param tree parsed ape tree
-#' @rdname PHYLOVISION-class
 #' @param ... arguments passed to the base Vision constructor
+#' @rdname PhyloVision-class
 #' @export
 setMethod("PhyloVision", signature(tree="phylo"), 
           function(tree, ...) {
@@ -740,7 +740,9 @@ setMethod("analyze", signature(object="Vision"),
 
 
 #' Analyze a PhyloVision object
+#' 
 #' @param ... arguments passed to the base Vision constructor
+#' @aliases phyloAnalyze
 #' @export
 setMethod("phyloAnalyze", signature(object="PhyloVision"),
           function(object, hotspot=FALSE) {

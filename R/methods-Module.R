@@ -486,8 +486,8 @@ calc_mod_sig_enrichment <- function(object, skip_down=TRUE) {
 #' Statisic = log (observed overlap / expected overlap)
 #' P value = 1- hypergeometric(observed overlap -1, max(|set1|, |set2|), |genes| - |set1|, min(|set1|, |set2|))
 #' 
-#' @param set1
-#' @param set2
+#' @param set1 the first gene set
+#' @param set2 the second gene set
 #' @param genes the population
 #' @return c(statistic, p value)
 #' 

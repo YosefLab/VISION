@@ -1,8 +1,11 @@
 ---
-title: "VisCas Vignette"
-author: "Yanay Rosen"
-date: "9/30/2020"
-output: html_document
+title: "Introduction to PhyloVision and Hotspot"
+package: "`r BiocStyle::pkg_ver('BiocStyle')`"
+output: BiocStyle::html_document
+vignette: >
+  %\VignetteIndexEntry{Introduction to PhyloVision and Hotspot}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r setup, include=FALSE}
@@ -12,9 +15,9 @@ library(ape)
 library(reticulate)
 ```
 
-## Creating a Phylo Vision Object with a Tree
+## Creating a PhyloVision Object with a Tree
 
-Vision objects now support dendrograms for visualization and analysis. To create the Phylo-VISION object, you need all of the same data, an expression matrix, and metadata and/or signatures, but you also include a tree object from the Ape package.
+Vision objects now support dendrograms for visualization and analysis. To create the PhyloVision object, you need all of the same data, an expression matrix, and metadata and/or signatures, but you also include a tree object from the Ape package.
 ```{r create, eval=F}
 # Read the expression and meta data
 file_path <- "data/embryogenesis" # Replace the path

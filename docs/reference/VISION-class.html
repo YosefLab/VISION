@@ -85,7 +85,7 @@ expression data, meta-data, and dimensionality reductions if they exist already"
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">VISION</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.0</span>
       </span>
     </div>
 
@@ -198,6 +198,7 @@ expression data, meta-data, and dimensionality reductions if they exist already<
   latentTrajectory <span class='op'>=</span> <span class='cn'>NULL</span>,
   tree <span class='op'>=</span> <span class='cn'>NULL</span>,
   modData <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span>,
+  hotspot <span class='op'>=</span> <span class='cn'>NULL</span>,
   pools <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span>
 <span class='op'>)</span>
 
@@ -343,6 +344,10 @@ of a trajectory inference method by the dynverse/dynwrap library</p></td>
     <tr>
       <th>modData</th>
       <td><p>a list of signature objects for user defined modules</p></td>
+    </tr>
+    <tr>
+      <th>hotspot</th>
+      <td><p>a list containing one hotspot object precomputed in python and loaded in via reticulate</p></td>
     </tr>
     <tr>
       <th>pools</th>
