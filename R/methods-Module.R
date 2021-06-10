@@ -753,7 +753,7 @@ draw_hotspot_heatmap <- function(hs, palette = paletteer_d("ggsci::default_nejm"
   modules = data.frame("module" = hs$modules)
   modules$module = modules$module
   ha = rowAnnotation(df = modules,
-                     col = list(module = col_mapping),
+                     col = col_mapping,
                      simple_anno_size = unit(0.5, "in"))
   ht = Heatmap(as.matrix(lcz), name = "mat",
                show_row_names=F, show_column_names=F, show_row_dend=F, show_column_dend=F,

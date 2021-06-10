@@ -8,8 +8,6 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(VISION)
-library(ape)
-library(reticulate)
 ```
 
 ## Creating a Phylo Vision Object with a Tree
@@ -27,7 +25,7 @@ meta$Cell_Type <- as.factor(meta$Cell_Type)
 sig <- paste("data", "h.all.v5.2.symbols.gmt", sep="/")
 
 # Read the tree
-tree <- read.tree(paste(file_path, "tree", sep="/"))
+tree <- read.tree(paste(file_path, "embryo_tree.newick", sep="/"))
 # Collapse one mutations
 tree <- collapse.singles(tree)
 expr <- expr[, tree$tip.label]
@@ -44,13 +42,13 @@ vis <- phyloAnalyze(vis)
 
 We can also perform Hotspot module analysis. The expression data is already logged for us.
 ```{r hotspot}
-vis <- runHotspot(vis, model="normal", tree=TRUE, min_gene_threshold=50, n_neighbors = 30, number_top_genes = 1326, logdata=TRUE)
+vis <- runHotspot(vis, model="normal", tree=TRUE, min_gene_threshold=50, n_neighbors = 30, number_top_genes = nrow(expr), logdata=FALSE)
 ```
 
 The full Hotspot API is exposed for analysis as well. For more on the Hotspot API see [here](https://yoseflab.github.io/Hotspot/index.html)
 ```{r eval=FALSE}
 # Init Hotspot
-hs <- hsInit(vis, model = "normal", tree=TRUE, logdata=TRUE)
+hs <- hsInit(vis, model = "normal", tree=TRUE, logdata=FALSE)
 # Init Hotspot KNN
 hs <- hsCreateKnnGraph(hs, vis, n_neighbors=30)
 # perform Hotspot analysis and store results in R

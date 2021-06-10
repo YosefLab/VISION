@@ -8,7 +8,6 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(VISION)
-library(reticulate)
 ```
 
 ## Creating a Vision Object
