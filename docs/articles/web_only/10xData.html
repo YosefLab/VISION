@@ -47,7 +47,7 @@
       <ul class="nav navbar-nav">
 <li>
   <a href="../../index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -74,6 +74,12 @@
       <a href="../../articles/trajectories.html">Incorporating a Trajectory Model</a>
     </li>
     <li>
+      <a href="../../articles/phyloVision.html">PhyloVision and Hotspot</a>
+    </li>
+    <li>
+      <a href="../../articles/spatialHotspot.html">Spatial Data and Hotspot</a>
+    </li>
+    <li>
       <a href="../../articles/web_only/Seurat.html">How To: Working with Seurat</a>
     </li>
     <li>
@@ -91,7 +97,7 @@
 <ul class="nav navbar-nav navbar-right">
 <li>
   <a href="https://github.com/YosefLab/VISION/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -105,7 +111,7 @@
 
       
 
-      </header><script src="10xData_files/header-attrs-2.3/header-attrs.js"></script><script src="10xData_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
+      </header><script src="10xData_files/header-attrs-2.8/header-attrs.js"></script><script src="10xData_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>How To: Loading 10x CellRanger Outputs</h1>
@@ -120,18 +126,19 @@
     
 <p>VISION provides some convenience methods for loading gene expression data output from the 10x CellRanger pipeline.</p>
 <p>The <code><a href="../../reference/read_10x.html">read_10x()</a></code> and <code><a href="../../reference/read_10x_h5.html">read_10x_h5()</a></code> functions load count data from 10x and perform the ID conversion from Ensembl IDs to Gene Symbols. This is performed as most signature libraries refer to genes using symbols. The expression of genes whose symbols map to multiple Ensembl IDs are combined by summation. The resulting count matrix can then be scaled and input into VISION:</p>
-<div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="co"># Read in expression counts (Genes X Cells)</span>
-<span class="no">counts</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../../reference/read_10x.html">read_10x</a></span>(
-    <span class="kw">expression</span> <span class="kw">=</span> <span class="st">"outs/filtered_gene_bc_matrices/mm10/matrix.mtx"</span>,
-    <span class="kw">genes</span> <span class="kw">=</span> <span class="st">"outs/filtered_gene_bc_matrices/mm10/genes.tsv"</span>,
-    <span class="kw">barcodes</span> <span class="kw">=</span> <span class="st">"outs/filtered_gene_bc_matrices/mm10/barcodes.tsv"</span>
-    )
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># Read in expression counts (Genes X Cells)</span>
+<span class="va">counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="../../reference/read_10x.html">read_10x</a></span><span class="op">(</span>
+    expression <span class="op">=</span> <span class="st">"outs/filtered_gene_bc_matrices/mm10/matrix.mtx"</span>,
+    genes <span class="op">=</span> <span class="st">"outs/filtered_gene_bc_matrices/mm10/genes.tsv"</span>,
+    barcodes <span class="op">=</span> <span class="st">"outs/filtered_gene_bc_matrices/mm10/barcodes.tsv"</span>
+    <span class="op">)</span>
 
 <span class="co"># Scale counts within a sample</span>
-<span class="no">n.umi</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html">colSums</a></span>(<span class="no">counts</span>)
-<span class="no">scaled_counts</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span>(<span class="no">counts</span>) / <span class="no">n.umi</span>) * <span class="fu"><a href="https://rdrr.io/r/stats/median.html">median</a></span>(<span class="no">n.umi</span>)
+<span class="va">n.umi</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html">colSums</a></span><span class="op">(</span><span class="va">counts</span><span class="op">)</span>
+<span class="va">scaled_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="va">counts</span><span class="op">)</span> <span class="op">/</span> <span class="va">n.umi</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/stats/median.html">median</a></span><span class="op">(</span><span class="va">n.umi</span><span class="op">)</span>
 
-<span class="no">vis</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../../reference/VISION-class.html">Vision</a></span>(<span class="no">scaled_counts</span>, <span class="kw">signatures</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"data/h.all.v5.2.symbols.gmt"</span>))</pre></body></html></div>
+<span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../../reference/Vision.html">Vision</a></span><span class="op">(</span><span class="va">scaled_counts</span>, signatures <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"data/h.all.v5.2.symbols.gmt"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -143,11 +150,11 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Matt Jones, David Detomaso, Tal Ashuach.</p>
+  <p>Developed by Matt Jones, David Detomaso, Tal Ashuach, Yanay Rosen.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

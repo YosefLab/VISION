@@ -8,12 +8,14 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(VISION)
+library(ape)
+library(reticulate)
 ```
 
 ## Creating a Phylo Vision Object with a Tree
 
 Vision objects now support dendrograms for visualization and analysis. To create the Phylo-VISION object, you need all of the same data, an expression matrix, and metadata and/or signatures, but you also include a tree object from the Ape package.
-```{r create}
+```{r create, eval=F}
 # Read the expression and meta data
 file_path <- "data/embryogenesis" # Replace the path
 
@@ -36,17 +38,17 @@ vis <- PhyloVision(tree=tree, data=expr, signatures=sig, meta=meta, num_neighbor
 
 Next, we can perform the normal Vision analysis using the tree as the latent space.
 
-``` {r analyze}
+``` {r analyze, eval=F}
 vis <- phyloAnalyze(vis)
 ```
 
 We can also perform Hotspot module analysis. The expression data is already logged for us.
-```{r hotspot}
+```{r hotspot, eval=F}
 vis <- runHotspot(vis, model="normal", tree=TRUE, min_gene_threshold=50, n_neighbors = 30, number_top_genes = nrow(expr), logdata=FALSE)
 ```
 
 The full Hotspot API is exposed for analysis as well. For more on the Hotspot API see [here](https://yoseflab.github.io/Hotspot/index.html)
-```{r eval=FALSE}
+```{r full_h, eval=FALSE}
 # Init Hotspot
 hs <- hsInit(vis, model = "normal", tree=TRUE, logdata=FALSE)
 # Init Hotspot KNN
@@ -62,19 +64,19 @@ vis <- analyzeHotspotObjectVision(vis, hs, tree=TRUE)
 ```
 
 We can also access further Hotspot functionality using Reticulate and Python.
-```{r inspectModules}
+```{r inspectModules, eval=F}
 hs <- loadHotspotObject(bytes=vis@Hotspot)
 library(reticulate)
 use_python('/usr/bin/python3')
 ```
-```{python modulesPlot}
+```{python modulesPlot, eval=F}
 import matplotlib.pyplot as plt
 import hotspot
 hs.plot_local_correlations()
 plt.show()
 ```
 Note: the heatmap can also be visualized like so:
-```{r heatmapR}
+```{r heatmapR, eval=F}
 hs <- loadHotspotObject(bytes=vis@Hotspot)
 library(paletteer)
 draw_hotspot_heatmap(hs)

@@ -47,7 +47,7 @@
       <ul class="nav navbar-nav">
 <li>
   <a href="../index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -74,6 +74,12 @@
       <a href="../articles/trajectories.html">Incorporating a Trajectory Model</a>
     </li>
     <li>
+      <a href="../articles/phyloVision.html">PhyloVision and Hotspot</a>
+    </li>
+    <li>
+      <a href="../articles/spatialHotspot.html">Spatial Data and Hotspot</a>
+    </li>
+    <li>
       <a href="../articles/web_only/Seurat.html">How To: Working with Seurat</a>
     </li>
     <li>
@@ -91,7 +97,7 @@
 <ul class="nav navbar-nav navbar-right">
 <li>
   <a href="https://github.com/YosefLab/VISION/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -105,7 +111,7 @@
 
       
 
-      </header><script src="Signatures_files/header-attrs-2.3/header-attrs.js"></script><script src="Signatures_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
+      </header><script src="Signatures_files/header-attrs-2.8/header-attrs.js"></script><script src="Signatures_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Gene Signatures</h1>
@@ -145,27 +151,30 @@
 <h2 class="hasAnchor">
 <a href="#creating-a-signature-object-in-r" class="anchor"></a>1. Creating a Signature object in R</h2>
 <p>Once a set of genes that are up or down regulated in the process or cell type of interest are selected, creating a Signature object from them is relatively straightforward:</p>
-<div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="no">sigData</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(
-    <span class="kw">Gene.A</span> <span class="kw">=</span> <span class="fl">1</span>, <span class="kw">Gene.B</span> <span class="kw">=</span> <span class="fl">1</span>, <span class="kw">Gene.C</span> <span class="kw">=</span> <span class="fl">1</span>,
-    <span class="kw">Gene.D</span> <span class="kw">=</span> -<span class="fl">1</span>, <span class="kw">Gene.B</span> <span class="kw">=</span> -<span class="fl">1</span>, <span class="kw">Gene.C</span> <span class="kw">=</span> -<span class="fl">1</span>
-)
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">sigData</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>
+    Gene.A <span class="op">=</span> <span class="fl">1</span>, Gene.B <span class="op">=</span> <span class="fl">1</span>, Gene.C <span class="op">=</span> <span class="fl">1</span>,
+    Gene.D <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>, Gene.B <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>, Gene.C <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>
+<span class="op">)</span>
 
-<span class="no">sig</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/createGeneSignature.html">createGeneSignature</a></span>(<span class="kw">name</span> <span class="kw">=</span> <span class="st">"Interesting Process"</span>, <span class="kw">sigData</span> <span class="kw">=</span> <span class="no">sigData</span>)</pre></body></html></div>
+<span class="va">sig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createGeneSignature.html">createGeneSignature</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"Interesting Process"</span>, sigData <span class="op">=</span> <span class="va">sigData</span><span class="op">)</span></code></pre></div>
 <p>For the sigData vector, the names represent gene names and the values (1 or -1) represent the ‘sign’ of the gene. For an unsigned signature, just use 1 for the value of every gene.</p>
 <p>A list of these sig objects can then be passed into the VISION object constructor instead of paths to .gmt files.</p>
-<div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="no">sig1</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/createGeneSignature.html">createGeneSignature</a></span>(<span class="kw">name</span> <span class="kw">=</span> <span class="st">"Interesting Process"</span>, <span class="no">...</span> )
-<span class="no">sig2</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/createGeneSignature.html">createGeneSignature</a></span>(<span class="kw">name</span> <span class="kw">=</span> <span class="st">"Another Interesting Process"</span>, <span class="no">...</span> )
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">sig1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createGeneSignature.html">createGeneSignature</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"Interesting Process"</span>, <span class="va">...</span> <span class="op">)</span>
+<span class="va">sig2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createGeneSignature.html">createGeneSignature</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"Another Interesting Process"</span>, <span class="va">...</span> <span class="op">)</span>
 
-<span class="no">mySignatures</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="no">sig1</span>, <span class="no">sig2</span>)
+<span class="va">mySignatures</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">sig1</span>, <span class="va">sig2</span><span class="op">)</span>
 
-<span class="no">vis</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/VISION-class.html">Vision</a></span>(<span class="kw">data</span> <span class="kw">=</span> <span class="no">expressionMat</span>, <span class="kw">signatures</span> <span class="kw">=</span> <span class="no">mySignatures</span>)</pre></body></html></div>
+<span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Vision.html">Vision</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">expressionMat</span>, signatures <span class="op">=</span> <span class="va">mySignatures</span><span class="op">)</span></code></pre></div>
 <p>Additionally, you can mix and match user-created signatures and paths to signature files in the <code>signatures</code> argument. When doing this, signatures in each library file are read and combined with the user-created signatures.</p>
-<div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="no">sig1</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/createGeneSignature.html">createGeneSignature</a></span>(<span class="kw">name</span> <span class="kw">=</span> <span class="st">"Interesting Process"</span>, <span class="no">...</span> )
-<span class="no">sig2</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/createGeneSignature.html">createGeneSignature</a></span>(<span class="kw">name</span> <span class="kw">=</span> <span class="st">"Another Interesting Process"</span>, <span class="no">...</span> )
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">sig1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createGeneSignature.html">createGeneSignature</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"Interesting Process"</span>, <span class="va">...</span> <span class="op">)</span>
+<span class="va">sig2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createGeneSignature.html">createGeneSignature</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"Another Interesting Process"</span>, <span class="va">...</span> <span class="op">)</span>
 
-<span class="no">mySignatures</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="no">sig1</span>, <span class="no">sig2</span>, <span class="st">'path/to/some/library.gmt'</span>)
+<span class="va">mySignatures</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">sig1</span>, <span class="va">sig2</span>, <span class="st">'path/to/some/library.gmt'</span><span class="op">)</span>
 
-<span class="no">vis</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/VISION-class.html">Vision</a></span>(<span class="kw">data</span> <span class="kw">=</span> <span class="no">expressionMat</span>, <span class="kw">signatures</span> <span class="kw">=</span> <span class="no">mySignatures</span>)</pre></body></html></div>
+<span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Vision.html">Vision</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">expressionMat</span>, signatures <span class="op">=</span> <span class="va">mySignatures</span><span class="op">)</span></code></pre></div>
 </div>
 <div id="create-your-own--gmt-files" class="section level2">
 <h2 class="hasAnchor">
@@ -218,11 +227,11 @@ BCELL_VS_LUPUS_BCELL_minus        GSE10325   VAMP5   WSB2     CCR2   ...</code><
 
 
       <footer><div class="copyright">
-  <p>Developed by Matt Jones, David Detomaso, Tal Ashuach.</p>
+  <p>Developed by Matt Jones, David Detomaso, Tal Ashuach, Yanay Rosen.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

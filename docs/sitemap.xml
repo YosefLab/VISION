@@ -52,13 +52,7 @@
     <loc>https://yoseflab.github.io/VISION//reference/analyzeLocalCorrelations.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/analyzeLocalCorrelationsModules.html</loc>
-  </url>
-  <url>
     <loc>https://yoseflab.github.io/VISION//reference/analyzeTrajectoryCorrelations.html</loc>
-  </url>
-  <url>
-    <loc>https://yoseflab.github.io/VISION//reference/ancestor_at_depth.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/annotateLatentComponents.html</loc>
@@ -112,9 +106,6 @@
     <loc>https://yoseflab.github.io/VISION//reference/calcIntraEdgeDistMat.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/calcModuleScores.html</loc>
-  </url>
-  <url>
     <loc>https://yoseflab.github.io/VISION//reference/calcSignatureScores.html</loc>
   </url>
   <url>
@@ -146,9 +137,6 @@
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/computeKNNWeights-matrix-method.html</loc>
-  </url>
-  <url>
-    <loc>https://yoseflab.github.io/VISION//reference/computeKNNWeights-phylo-method.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/computeLatentSpace.html</loc>
@@ -191,12 +179,6 @@
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/find_knn_parallel.html</loc>
-  </url>
-  <url>
-    <loc>https://yoseflab.github.io/VISION//reference/find_knn_parallel_tree.html</loc>
-  </url>
-  <url>
-    <loc>https://yoseflab.github.io/VISION//reference/find_root.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/fitTree.html</loc>
@@ -256,12 +238,6 @@
     <loc>https://yoseflab.github.io/VISION//reference/getSignatureScores.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/get_all_children.html</loc>
-  </url>
-  <url>
-    <loc>https://yoseflab.github.io/VISION//reference/get_children.html</loc>
-  </url>
-  <url>
     <loc>https://yoseflab.github.io/VISION//reference/hasUnnormalizedData.html</loc>
   </url>
   <url>
@@ -269,12 +245,6 @@
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/innerEvalSignatureBatchNorm.html</loc>
-  </url>
-  <url>
-    <loc>https://yoseflab.github.io/VISION//reference/is_tip.html</loc>
-  </url>
-  <url>
-    <loc>https://yoseflab.github.io/VISION//reference/knn_tree.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/launchServer.html</loc>
@@ -385,18 +355,6 @@
     <loc>https://yoseflab.github.io/VISION//reference/translateCellPositions.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/treeCluster.html</loc>
-  </url>
-  <url>
-    <loc>https://yoseflab.github.io/VISION//reference/treeCluster2.html</loc>
-  </url>
-  <url>
-    <loc>https://yoseflab.github.io/VISION//reference/treeCluster3.html</loc>
-  </url>
-  <url>
-    <loc>https://yoseflab.github.io/VISION//reference/ultrametric_tree.html</loc>
-  </url>
-  <url>
     <loc>https://yoseflab.github.io/VISION//reference/versionCheck.html</loc>
   </url>
   <url>
@@ -410,6 +368,12 @@
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//articles/micropooling.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//articles/phlyoVision.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//articles/spatialHotspot.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//articles/trajectories.html</loc>
