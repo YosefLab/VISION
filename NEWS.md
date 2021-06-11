@@ -1,4 +1,4 @@
-# VISION 3.0
+# VISION 3.0.0
 
 Added support for Phylogenies as latent spaces in core VISION.
 

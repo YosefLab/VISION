@@ -736,6 +736,7 @@ draw_hotspot_heatmap <- function(hs, palette = paletteer_d("ggsci::default_nejm"
   gene_order = colnames(lcz)[np$array(py_dend$leaves)+1]
   col_mapping = c()
   module_to_col = list()
+  hs$modules = as.character(hs$modules)
   unique_mods = as.character(unique(hs$modules))
   example_genes = list()
   col_mapping[["-1"]] = "#ffffff"
@@ -749,9 +750,10 @@ draw_hotspot_heatmap <- function(hs, palette = paletteer_d("ggsci::default_nejm"
   }
   print(module_to_col)
   print(col_mapping[order(names(col_mapping))])
+  print(col_mapping)
   print(example_genes)
   modules = data.frame("module" = hs$modules)
-  modules$module = modules$module
+  modules$module = as.character(modules$module)
   ha = rowAnnotation(df = modules,
                      col = col_mapping,
                      simple_anno_size = unit(0.5, "in"))
@@ -760,6 +762,6 @@ draw_hotspot_heatmap <- function(hs, palette = paletteer_d("ggsci::default_nejm"
                row_order = gene_order, column_order=gene_order,
                right_annotation=ha,       
                column_names_gp = gpar(fontsize = c(1)),
-               width = unit(8, "in"), height = unit(8, "in"))
+               width = unit(5, "in"), height = unit(5, "in"))
   draw(ht)
 }
