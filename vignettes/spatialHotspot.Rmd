@@ -1,0 +1,56 @@
+---
+title: "Spatial Data and Hotspot"
+package: "`r BiocStyle::pkg_ver('BiocStyle')`"
+output: BiocStyle::html_document
+vignette: >
+  %\VignetteIndexEntry{Spatial Data and Hotspot}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(VISION)
+library(reticulate)
+```
+
+## Creating a Vision Object
+
+First, we create a Vision object
+```{r create, eval=F}
+# Read the expression and meta data
+file_path <- "data/spatial" # Replace the path
+
+expr <- read.table(paste(file_path, "expr.tsv.gz", sep="/"), check.names = FALSE, sep = "\t")
+meta <- read.table(paste(file_path, "meta.tsv", sep="/"), check.names = FALSE, sep = "\t", row.names = 1, header=TRUE)
+
+# Signature file
+sig <- paste("data", "h.all.v5.2.symbols.gmt", sep="/")
+
+# Read and create the coordinates
+pos <- read.table(paste(file_path, "BeadLocationsForR.csv", sep="/"), sep=",", check.names = FALSE, row.names=1, header=TRUE)
+pos["X"] <- pos$ycoord
+pos["Y"] <- -1 * pos$xcoord
+pos <- pos[c("X", "Y")]
+
+# Construct the Vision object
+vis <- Vision(expr, signatures=c(sig), latentSpace = pos, meta=meta) # TODO add relevant signatures
+```
+
+Next, we can perform the normal Vision analysis using the spatial coordinates as the latent space.
+
+``` {r analyze, eval=F}
+vis <- analyze(vis)
+```
+
+We can also perform Hotspot module analysis. For more on the Hotspot API see [here](https://yoseflab.github.io/Hotspot/index.html) and the other included vignette.
+```{r hotspot, eval=F}
+vis@params$latentSpace$projectionGenes <- rownames(vis@exprData) # Use all genes.
+vis <- runHotspot(vis, model="bernoulli", num_umi=meta["num_umi"], logdata=FALSE)
+```
+
+Finally, we can launch the Vision browser.
+```{r view, eval=F}
+viewResults(vis)
+```

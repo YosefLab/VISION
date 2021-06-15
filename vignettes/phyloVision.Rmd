@@ -1,0 +1,94 @@
+---
+title: "Introduction to PhyloVision and Hotspot"
+package: "`r BiocStyle::pkg_ver('BiocStyle')`"
+output: BiocStyle::html_document
+vignette: >
+  %\VignetteIndexEntry{Introduction to PhyloVision and Hotspot}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(VISION)
+library(ape)
+library(reticulate)
+```
+
+## Creating a PhyloVision Object with a Tree
+
+Vision objects now support dendrograms for visualization and analysis. To create the PhyloVision object, you need all of the same data, an expression matrix, and metadata and/or signatures, but you also include a tree object from the Ape package.
+```{r create, eval=F}
+# Read the expression and meta data
+file_path <- "data/embryogenesis" # Replace the path
+
+expr <- read.table(paste(file_path, "expr_filtered.tsv.gz", sep="/"), check.names = FALSE, sep = "\t")
+
+meta <- read.table(paste(file_path, "meta.tsv", sep="/"), check.names = FALSE, sep = "\t", row.names = 1, header=TRUE)
+meta$Cell_Type <- as.factor(meta$Cell_Type)
+# Signature file
+sig <- paste("data", "h.all.v5.2.symbols.gmt", sep="/")
+
+# Read the tree
+tree <- read.tree(paste(file_path, "embryo_tree.newick", sep="/"))
+# Collapse one mutations
+tree <- collapse.singles(tree)
+expr <- expr[, tree$tip.label]
+
+# Construct the Vision object
+vis <- PhyloVision(tree=tree, data=expr, signatures=sig, meta=meta, num_neighbors=30, projection_genes= rownames(expr))
+```
+
+Next, we can perform the normal Vision analysis using the tree as the latent space.
+
+``` {r analyze, eval=F}
+vis <- phyloAnalyze(vis)
+```
+
+We can also perform Hotspot module analysis. The expression data is already logged for us.
+```{r hotspot, eval=F}
+vis <- runHotspot(vis, model="normal", tree=TRUE, min_gene_threshold=50, n_neighbors = 30, number_top_genes = nrow(expr), logdata=FALSE)
+```
+
+The full Hotspot API is exposed for analysis as well. For more on the Hotspot API see [here](https://yoseflab.github.io/Hotspot/index.html)
+```{r full_h, eval=FALSE}
+# Init Hotspot
+hs <- hsInit(vis, model = "normal", tree=TRUE, logdata=FALSE)
+# Init Hotspot KNN
+hs <- hsCreateKnnGraph(hs, vis, n_neighbors=30)
+# perform Hotspot analysis and store results in R
+hs_genes <- hsComputeAutoCorrelations(hs, number_top_genes=12438)
+# Compute localcorr
+hs <- hsComputeLocalCorrelations(hs, hs_genes)
+# Calculate Hotspot Module Scores for informative genes
+hs <- hsCalculateModuleScores(hs)
+# Cluster Hotspot modules and perform Vision based analysis on HS Modules and 
+vis <- analyzeHotspotObjectVision(vis, hs, tree=TRUE)
+```
+
+We can also access further Hotspot functionality using Reticulate and Python.
+```{r inspectModules, eval=F}
+hs <- loadHotspotObject(bytes=vis@Hotspot)
+library(reticulate)
+use_python('/usr/bin/python3')
+```
+```{python modulesPlot, eval=F}
+import matplotlib.pyplot as plt
+import hotspot
+hs.plot_local_correlations()
+plt.show()
+```
+Note: the heatmap can also be visualized like so:
+```{r heatmapR, eval=F}
+hs <- loadHotspotObject(bytes=vis@Hotspot)
+library(paletteer)
+draw_hotspot_heatmap(hs)
+```
+
+
+Finally, we can launch the Vision browser.
+```{r eval=FALSE}
+viewResults(vis)
+```
+
+

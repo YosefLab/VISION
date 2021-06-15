@@ -1,3 +1,11 @@
+# VISION 3.0.0
+
+Added support for Phylogenies as latent spaces in core VISION.
+
+Integrated [Hotspot](https://yoseflab.github.io/Hotspot/index.html) into VISION analysis and report UI.
+
+Deprecated support for trajectories and LC Annotator.
+
 # VISION 2.1.0
 
 Added parameter `sig_gene_threshold` with **changed default behavior**

@@ -10,7 +10,7 @@
 \arguments{
 \item{object}{VISION object}
 
-\item{tree}{wether to use the TREE slot of the object to calculate values}
+\item{tree}{whether to use the TREE slot of the object to calculate values}
 }
 \value{
 VISION object

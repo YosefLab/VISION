@@ -18,7 +18,7 @@ clusterCells <- function(object, tree=FALSE) {
     } else {
         message("Using Tree to compute clusters...\n")
         # Get the MRCA matrix and convert the node indexes to depths
-        cl <- treeCluster3(object@tree)
+        cl <- maxSizeCladewiseTreeCluster(object@tree)
     }
     
     names(cl) <- paste('Cluster', seq(length(cl)))

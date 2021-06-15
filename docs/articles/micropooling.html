@@ -39,7 +39,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">VISION</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.0</span>
       </span>
     </div>
 
@@ -47,7 +47,7 @@
       <ul class="nav navbar-nav">
 <li>
   <a href="../index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -74,6 +74,12 @@
       <a href="../articles/trajectories.html">Incorporating a Trajectory Model</a>
     </li>
     <li>
+      <a href="../articles/phyloVision.html">PhyloVision and Hotspot</a>
+    </li>
+    <li>
+      <a href="../articles/spatialHotspot.html">Spatial Data and Hotspot</a>
+    </li>
+    <li>
       <a href="../articles/web_only/Seurat.html">How To: Working with Seurat</a>
     </li>
     <li>
@@ -91,7 +97,7 @@
 <ul class="nav navbar-nav navbar-right">
 <li>
   <a href="https://github.com/YosefLab/VISION/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -105,7 +111,7 @@
 
       
 
-      </header><script src="micropooling_files/header-attrs-2.3/header-attrs.js"></script><script src="micropooling_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
+      </header><script src="micropooling_files/header-attrs-2.8/header-attrs.js"></script><script src="micropooling_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Micropooling</h1>
@@ -152,58 +158,58 @@
 <h2 class="hasAnchor">
 <a href="#workflow" class="anchor"></a>Workflow</h2>
 <p>Here, we’ll demonstrate a common use case of micropooling on the data:</p>
-<div class="sourceCode" id="cb1"><html><body><pre class="r">library(VISION)
-
-counts = as.matrix(read.table("data/hemato_counts.csv.gz", sep=',', header=T, row.names=1))
-
-# compute scaled counts
-scale.factor = median(colSums(counts))
-scaled.counts = t(t(counts) / colSums(counts)) * scale.factor
-
-# read in meta data
-meta = read.table("data/hemato_covariates.txt.gz", sep='\t', header=T, row.names=1)
-meta = meta[colnames(scaled.counts), -1]
-
-vis &lt;- Vision(scaled.counts, meta = meta
-              signatures = c("data/h.all.v5.2.symbols.gmt"),
-              pool = T, cellsPerPartition = 5)
-
-vis &lt;- analyze(vis)
-
-viewResults(vis)</pre></body></html></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">library</span>(VISION)</span>
+<span id="cb1-2"><a href="#cb1-2"></a></span>
+<span id="cb1-3"><a href="#cb1-3"></a>counts =<span class="st"> </span><span class="kw">as.matrix</span>(<span class="kw">read.table</span>(<span class="st">"data/hemato_counts.csv.gz"</span>, <span class="dt">sep=</span><span class="st">','</span>, <span class="dt">header=</span>T, <span class="dt">row.names=</span><span class="dv">1</span>))</span>
+<span id="cb1-4"><a href="#cb1-4"></a></span>
+<span id="cb1-5"><a href="#cb1-5"></a><span class="co"># compute scaled counts</span></span>
+<span id="cb1-6"><a href="#cb1-6"></a>scale.factor =<span class="st"> </span><span class="kw">median</span>(<span class="kw">colSums</span>(counts))</span>
+<span id="cb1-7"><a href="#cb1-7"></a>scaled.counts =<span class="st"> </span><span class="kw">t</span>(<span class="kw">t</span>(counts) <span class="op">/</span><span class="st"> </span><span class="kw">colSums</span>(counts)) <span class="op">*</span><span class="st"> </span>scale.factor</span>
+<span id="cb1-8"><a href="#cb1-8"></a></span>
+<span id="cb1-9"><a href="#cb1-9"></a><span class="co"># read in meta data</span></span>
+<span id="cb1-10"><a href="#cb1-10"></a>meta =<span class="st"> </span><span class="kw">read.table</span>(<span class="st">"data/hemato_covariates.txt.gz"</span>, <span class="dt">sep=</span><span class="st">'</span><span class="ch">\t</span><span class="st">'</span>, <span class="dt">header=</span>T, <span class="dt">row.names=</span><span class="dv">1</span>)</span>
+<span id="cb1-11"><a href="#cb1-11"></a>meta =<span class="st"> </span>meta[<span class="kw">colnames</span>(scaled.counts), <span class="dv">-1</span>]</span>
+<span id="cb1-12"><a href="#cb1-12"></a></span>
+<span id="cb1-13"><a href="#cb1-13"></a>vis &lt;-<span class="st"> </span><span class="kw">Vision</span>(scaled.counts, <span class="dt">meta =</span> meta</span>
+<span id="cb1-14"><a href="#cb1-14"></a>              <span class="dt">signatures =</span> <span class="kw">c</span>(<span class="st">"data/h.all.v5.2.symbols.gmt"</span>),</span>
+<span id="cb1-15"><a href="#cb1-15"></a>              <span class="dt">pool =</span> T, <span class="dt">cellsPerPartition =</span> <span class="dv">5</span>)</span>
+<span id="cb1-16"><a href="#cb1-16"></a></span>
+<span id="cb1-17"><a href="#cb1-17"></a>vis &lt;-<span class="st"> </span><span class="kw">analyze</span>(vis)</span>
+<span id="cb1-18"><a href="#cb1-18"></a></span>
+<span id="cb1-19"><a href="#cb1-19"></a><span class="kw">viewResults</span>(vis)</span></code></pre></div>
 </div>
 </div>
 <div id="micropooling-independently-of-the-main-vision-analysis" class="section level1">
 <h1 class="hasAnchor">
 <a href="#micropooling-independently-of-the-main-vision-analysis" class="anchor"></a>Micropooling independently of the main VISION analysis</h1>
-<p>There may be reasons it is desired micropool outside of the main VISION <code><a href="../reference/analyze-Vision-method.html">analyze()</a></code> function. For example, there may be discrete classes that users may not wish to pool across (e.g. not wanting to merge disease and control cells). Or, you may want to only use the micropooling function independently of the rest of the pipeline. This can be accomplished using the <code><a href="../reference/applyMicroClustering.html">applyMicroClustering()</a></code> utility function as demonstrated here.</p>
-<div class="sourceCode" id="cb2"><html><body><pre class="r">## Create scaled.counts and meta as shown above
-
-pools &lt;- applyMicroClustering(scaled.counts, cellsPerPartition = 5)
-
-# Create pooled versions of expression matrix and meta-data
-pooledExpression &lt;- poolMatrixCols(scaled.counts, pools)
-pooledMeta &lt;- poolMetaData(meta, pools)
-
-# These could then be fed into the VISION constructor
-vis &lt;- Vision(pooledExpression, meta = pooledMeta
-              signatures = c("data/h.all.v5.2.symbols.gmt"))</pre></body></html></div>
+<p>There may be reasons it is desired micropool outside of the main VISION <code><a href="../reference/analyze,Vision-method.html">analyze()</a></code> function. For example, there may be discrete classes that users may not wish to pool across (e.g. not wanting to merge disease and control cells). Or, you may want to only use the micropooling function independently of the rest of the pipeline. This can be accomplished using the <code><a href="../reference/applyMicroClustering.html">applyMicroClustering()</a></code> utility function as demonstrated here.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="co">## Create scaled.counts and meta as shown above</span></span>
+<span id="cb2-2"><a href="#cb2-2"></a></span>
+<span id="cb2-3"><a href="#cb2-3"></a>pools &lt;-<span class="st"> </span><span class="kw">applyMicroClustering</span>(scaled.counts, <span class="dt">cellsPerPartition =</span> <span class="dv">5</span>)</span>
+<span id="cb2-4"><a href="#cb2-4"></a></span>
+<span id="cb2-5"><a href="#cb2-5"></a><span class="co"># Create pooled versions of expression matrix and meta-data</span></span>
+<span id="cb2-6"><a href="#cb2-6"></a>pooledExpression &lt;-<span class="st"> </span><span class="kw">poolMatrixCols</span>(scaled.counts, pools)</span>
+<span id="cb2-7"><a href="#cb2-7"></a>pooledMeta &lt;-<span class="st"> </span><span class="kw">poolMetaData</span>(meta, pools)</span>
+<span id="cb2-8"><a href="#cb2-8"></a></span>
+<span id="cb2-9"><a href="#cb2-9"></a><span class="co"># These could then be fed into the VISION constructor</span></span>
+<span id="cb2-10"><a href="#cb2-10"></a>vis &lt;-<span class="st"> </span><span class="kw">Vision</span>(pooledExpression, <span class="dt">meta =</span> pooledMeta</span>
+<span id="cb2-11"><a href="#cb2-11"></a>              <span class="dt">signatures =</span> <span class="kw">c</span>(<span class="st">"data/h.all.v5.2.symbols.gmt"</span>))</span></code></pre></div>
 <p>Alternately, if you already have a latent space computed and wish to use this (instead of PCA) when pooling <em>outside</em> of the normal Vision pipeline, you can provide it when calling <code><a href="../reference/applyMicroClustering.html">applyMicroClustering()</a></code> and later pool the latent space.</p>
 <p>This is demonstrated below:</p>
-<div class="sourceCode" id="cb3"><html><body><pre class="r">## Create scaled.counts and meta as shown above
-
-pools &lt;- applyMicroClustering(scaled.counts,
-    cellsPerPartition = 5, latentSpace = latentPpace)
-
-# Create pooled versions of expression matrix and meta-data
-pooledExpression &lt;- poolMatrixCols(scaled.counts, pools)
-pooledMeta &lt;- poolMetaData(meta, pools)
-pooledLatentSpace &lt;- poolMatrixRows(latentSpace, pools)
-
-# These could then be fed into the VISION constructor
-vis &lt;- Vision(pooledExpression, meta = pooledMeta
-              signatures = c("data/h.all.v5.2.symbols.gmt"),
-              latentSpace = pooledLatentSpace)</pre></body></html></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="co">## Create scaled.counts and meta as shown above</span></span>
+<span id="cb3-2"><a href="#cb3-2"></a></span>
+<span id="cb3-3"><a href="#cb3-3"></a>pools &lt;-<span class="st"> </span><span class="kw">applyMicroClustering</span>(scaled.counts,</span>
+<span id="cb3-4"><a href="#cb3-4"></a>    <span class="dt">cellsPerPartition =</span> <span class="dv">5</span>, <span class="dt">latentSpace =</span> latentPpace)</span>
+<span id="cb3-5"><a href="#cb3-5"></a></span>
+<span id="cb3-6"><a href="#cb3-6"></a><span class="co"># Create pooled versions of expression matrix and meta-data</span></span>
+<span id="cb3-7"><a href="#cb3-7"></a>pooledExpression &lt;-<span class="st"> </span><span class="kw">poolMatrixCols</span>(scaled.counts, pools)</span>
+<span id="cb3-8"><a href="#cb3-8"></a>pooledMeta &lt;-<span class="st"> </span><span class="kw">poolMetaData</span>(meta, pools)</span>
+<span id="cb3-9"><a href="#cb3-9"></a>pooledLatentSpace &lt;-<span class="st"> </span><span class="kw">poolMatrixRows</span>(latentSpace, pools)</span>
+<span id="cb3-10"><a href="#cb3-10"></a></span>
+<span id="cb3-11"><a href="#cb3-11"></a><span class="co"># These could then be fed into the VISION constructor</span></span>
+<span id="cb3-12"><a href="#cb3-12"></a>vis &lt;-<span class="st"> </span><span class="kw">Vision</span>(pooledExpression, <span class="dt">meta =</span> pooledMeta</span>
+<span id="cb3-13"><a href="#cb3-13"></a>              <span class="dt">signatures =</span> <span class="kw">c</span>(<span class="st">"data/h.all.v5.2.symbols.gmt"</span>),</span>
+<span id="cb3-14"><a href="#cb3-14"></a>              <span class="dt">latentSpace =</span> pooledLatentSpace)</span></code></pre></div>
 </div>
   </div>
 
@@ -218,11 +224,11 @@ vis &lt;- Vision(pooledExpression, meta = pooledMeta
 
 
       <footer><div class="copyright">
-  <p>Developed by Matt Jones, David Detomaso, Tal Ashuach.</p>
+  <p>Developed by Matt Jones, David Detomaso, Tal Ashuach, Yanay Rosen.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

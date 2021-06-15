@@ -1,15 +1,17 @@
 pandoc: 2.9.2.1
-pkgdown: 1.5.1
+pkgdown: 1.6.1
 pkgdown_sha: ~
 articles:
   Signatures: Signatures.html
   VISION-vignette: VISION-vignette.html
   micropooling: micropooling.html
+  phyloVision: phyloVision.html
+  spatialHotspot: spatialHotspot.html
   trajectories: trajectories.html
-  10xData: web_only/10xData.html
-  Seurat: web_only/Seurat.html
-  SignatureAutocorrelation: web_only/SignatureAutocorrelation.html
-last_built: 2020-07-01T20:10Z
+  web_only/10xData: 10xData.html
+  web_only/Seurat: Seurat.html
+  web_only/SignatureAutocorrelation: SignatureAutocorrelation.html
+last_built: 2021-06-11T18:07Z
 urls:
   reference: https://yoseflab.github.io/VISION//reference
   article: https://yoseflab.github.io/VISION//articles

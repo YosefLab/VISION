@@ -1,5 +1,4 @@
-#' Initializes a new VISION object.
-#'
+#' Perform Hotspot analysis on Vision Object
 #'
 #' @param object Vision Object
 #' @param model model argument for Hotspot, one of \itemize{
@@ -10,127 +9,179 @@
 #' }
 #' @param tree whether to use tree as latent space. If TRUE, object should have
 #' a tree slot.
-#' @param number_top_genes hotspot argument for number of genes to consider
+#' @param number_top_genes Hotspot argument for number of genes to consider
 #' @param num_umi optional dataframe containing umi counts in first column for
 #'  barcodes
-#' @param min_gene_threshold minimum number of genes in hotspot module
+#' @param min_gene_threshold minimum number of genes in Hotspot module
 #' @param n_neighbors number of neighbors to consider in latent space
 #' @param autocorrelation_fdr threshold for significance for genes autocorr
 #' @param clustering_fdr threshold for significance for clustering modules
-#' 
+#' @param logdata boolean, log the expression data, avoid for danb
 #' Populates the modData, HotspotModuleScores, ModuleSignatureEnrichment
 #' and HotspotObject slots of object, as well as recalculates signature scores
 #' for new modules.
-calcHotspotModules <- function(object, model="normal", tree=FALSE, 
-                               number_top_genes=1000,num_umi=NULL, 
+#' @return the modified Vision object
+#' 
+#' @export
+runHotspot <- function(object, model="normal", tree=FALSE, 
+                               number_top_genes=1000, num_umi=NULL, 
                                min_gene_threshold=20, n_neighbors=NULL,
-                               autocorrelation_fdr=0.05, clustering_fdr=0.5, nn_precomp=NULL, wt_precomp=NULL) {
+                               autocorrelation_fdr=0.05, clustering_fdr=0.5, logdata=FALSE) {
 
-    hotspot <- import("hotspot", convert=F)
-    
-    workers <- getOption("mc.cores")
-    if (is.null(workers)){
-        workers <- 1
-    }
-    if (model == "danb") {
-      # Don't take the log if danb
-      exprData = object@exprData
-    } else {
-      # take the log2 otherwise
-      exprData = matLog2(object@exprData)
-    }
-
-    gene_subset = object@params$latentSpace$projectionGenes
-
-    if (is.na(gene_subset)) {
-      gene_subset <- applyFilters(exprData,
-            object@params$latentSpace$projectionGenesMethod,
-            object@params$latentSpace$threshold, 2)
-    }
-
-    exprData = as.data.frame(as.matrix(exprData)[gene_subset,])
-
-    # remove genes that do not have any standard deviation
-    sds = apply(exprData, 1, sd)
-    exprData = exprData[which(sds > 0), ]
-
-    # generate the Hotspot object in python, potentially using the tree
-    if (tree) {
-        message("Using Tree")
-        ete3 <- import("ete3", convert=F)
-        nwk <- write.tree(object@tree)
-        pyTree <- ete3$Tree(nwk, format = 8L)
-        if (is.null(num_umi)) {
-            hs <- hotspot$Hotspot(exprData, tree=pyTree, model=model)
-        } else {
-            py$umi_df <- r_to_py(num_umi)
-            py_run_string("umi_counts = umi_df.iloc[:, 0]")
-            hs <- hotspot$Hotspot(exprData, tree=pyTree, model=model, umi_counts=py$umi_counts)
-        }
-        
-    } else {
-        if (is.null(num_umi)) {
-            hs <- hotspot$Hotspot(exprData, latent=as.data.frame(object@LatentSpace), model=model)
-        } else {
-            py$umi_df <- r_to_py(num_umi)
-            py_run_string("umi_counts = umi_df.iloc[:, 0]")
-            hs <- hotspot$Hotspot(exprData, latent=as.data.frame(object@LatentSpace), model=model, umi_counts=py$umi_counts)
-        }
-    }
-    
-    # create knn graph, specify nn or use object default
-    if (!is.null(nn_precomp)) {
-      hs$neighbors <- nn_precomp
-      hs$weights <- wt_precomp
-    } else if (is.null(n_neighbors)) {
-        hs$create_knn_graph(F, n_neighbors = as.integer(object@params$numNeighbors))
-    } else {
-        hs$create_knn_graph(F, n_neighbors = as.integer(n_neighbors))
-    }
-  
-    # perform hotspot analysis and store results in R
-    hs_results <- hs$compute_autocorrelations(jobs=as.integer(workers))
-    hs_genes <- hs_results$loc[hs_results$FDR$le(autocorrelation_fdr)]$sort_values('Z', ascending=F)$head(as.integer(number_top_genes))$index
-    
-    hs <- hsComputeLocalCorrelations(hs, hs_genes, workers)
-    
-    hs <- createHotspotModulesCalcScores(hs, min_gene_threshold, clustering_fdr)
-    
-    object <- analyzeHotspotObject(object, hs, tree)
+    # Init Hotspot
+    hs <- hsInit(object, model, tree, num_umi, logdata)
+    # Init Hotspot KNN
+    hs <- hsCreateKnnGraph(hs, object, n_neighbors=n_neighbors)
+    # perform Hotspot analysis and store results in R
+    hs_genes <- hsComputeAutoCorrelations(hs, number_top_genes=number_top_genes, autocorrelation_fdr=autocorrelation_fdr)
+    # Compute localcorr
+    hs <- hsComputeLocalCorrelations(hs, hs_genes)
+    # Calculate Hotspot Module Scores for informative genes
+    hs <- hsCalculateModuleScores(hs, min_gene_threshold, clustering_fdr)
+    # Cluster Hotspot modules and perform Vision based analysis on HS Modules and 
+    object <- analyzeHotspotObjectVision(object, hs, tree)
     
     return(object)
 }
 
 
-
-#' Interface function to compute local correlations for hotspot
-#' Warning: modifies the hs argument
-#' @param hs the hotspot object
-#' @param hs_genes hotspot genes
-#' @param workers num core
-#' @return the populated hs object
+#' Init Hotspot object from Vision Object
+#' 
+#' @param object the Vision Object
+#' @param model the model for Hotspot (ie "normal", "danb"...)
+#' @param tree boolean, whether to use the tree as ls
+#' @param num_umi df of barcodes x num_umi
+#' @param logdata boolean, log the expression data, avoid for danb
+#' 
+#' @return the Hotspot object
 #' 
 #' @export
-hsComputeLocalCorrelations <- function(hs, hs_genes, workers) {
-    hs$compute_local_correlations(hs_genes, jobs=as.integer(workers))
-    return(hs)
+hsInit <- function(object, model="normal", tree=F, num_umi=NULL, logdata=FALSE) {
+  hotspot <- import("hotspot", convert=F)
+  
+  workers <- getOption("mc.cores")
+  if (is.null(workers)){
+    workers <- 1
+  }
+  
+  if (!logdata) {
+    # Don't take the log
+    exprData = object@exprData
+  } else {
+    # take the log2 otherwise
+    exprData = matLog2(object@exprData)
+  }
+  
+  gene_subset <- object@params$latentSpace$projectionGenes
+  
+  if (any(is.na(gene_subset))) {
+    gene_subset <- applyFilters(exprData,
+                                object@params$latentSpace$projectionGenesMethod,
+                                object@params$latentSpace$threshold, 2)
+  }
+  
+  exprData = as.data.frame(as.matrix(exprData)[gene_subset,])
+  
+  # remove genes that do not have any standard deviation
+  sds = apply(exprData, 1, sd)
+  exprData = exprData[which(sds > 0), ]
+  
+  # generate the Hotspot object in python, potentially using the tree
+  if (tree) {
+    message("Using Tree")
+    ete3 <- import("ete3", convert=F)
+    nwk <- write.tree(object@tree)
+    pyTree <- ete3$Tree(nwk, format = 8L)
+    if (is.null(num_umi)) {
+      hs <- hotspot$Hotspot(exprData, tree=pyTree, model=model)
+    } else {
+      py$umi_df <- r_to_py(num_umi)
+      py_run_string("umi_counts = umi_df.iloc[:, 0]")
+      hs <- hotspot$Hotspot(exprData, tree=pyTree, model=model, umi_counts=py$umi_counts)
+    }
+    
+  } else {
+    if (is.null(num_umi)) {
+      hs <- hotspot$Hotspot(exprData, latent=as.data.frame(object@LatentSpace), model=model)
+    } else {
+      py$umi_df <- r_to_py(num_umi)
+      py_run_string("umi_counts = umi_df.iloc[:, 0]")
+      hs <- hotspot$Hotspot(exprData, latent=as.data.frame(object@LatentSpace), model=model, umi_counts=py$umi_counts)
+    }
+  }
+  
+  return(hs)
 }
 
 
-#' Analyze a hotspot object using built in methods such
+#' Init KNN graph in Hotspot object
+#' 
+#' @return the Hotspot object with KNN initialized
+#' 
+#' @export
+hsCreateKnnGraph <- function(hs, object, n_neighbors=NULL) {
+  # create knn graph, specify nn or use object default
+  if (is.null(n_neighbors)) {
+    hs$create_knn_graph(F, n_neighbors = as.integer(object@params$numNeighbors))
+  } else {
+    hs$create_knn_graph(F, n_neighbors = as.integer(n_neighbors))
+  }
+  return(hs)
+}
+
+
+#' Compute Hotspot auto correlations
+#' 
+#' @param hs the Hotspot object
+#' @param number_top_genes Hotspot argument for number of genes to consider
+#' @param autocorrelation_fdr threshold for significance for genes autocorr
+#' @return list of HS genes
+#' 
+#' @export
+hsComputeAutoCorrelations <- function(hs, number_top_genes=1000, autocorrelation_fdr=0.05) {
+  workers <- getOption("mc.cores")
+  if (is.null(workers)){
+    workers <- 1
+  }
+  
+  hs_results <- hs$compute_autocorrelations(jobs=as.integer(workers))
+  hs_genes <- hs_results$loc[hs_results$FDR$le(autocorrelation_fdr)]$sort_values('Z', ascending=F)$head(as.integer(number_top_genes))$index
+  return(hs_genes)
+}
+
+
+#' Interface function to compute local correlations for Hotspot
+#' Warning: modifies the hs argument
+#' @param hs the Hotspot object
+#' @param hs_genes Hotspot genes
+#' @return the populated hs object
+#' 
+#' @export
+hsComputeLocalCorrelations <- function(hs, hs_genes) {
+  workers <- getOption("mc.cores")
+  if (is.null(workers)){
+    workers <- 1
+  }
+  hs$compute_local_correlations(hs_genes, jobs=as.integer(workers))
+  return(hs)
+}
+
+
+#' Analyze a Hotspot object using built in methods such
 #' such as local correlation, signature overlap, etc.
-#' Necessary to run this function for hotpot functionality in viewer to work.
+#' Necessary to run this function for Hotspot functionality in viewer to work.
 #'
 #' @param object the VISION object
-#' @param hs the hotspot python object loaded by reticulate
-#' @param tree whether to use tree as latent space. If TRUE, object should have
+#' @param hs the Hotspot python object loaded by Reticulate
+#' @param tree whether to use tree as latent space. If TRUE, object should have a tree
 #' 
 #' @return the modified VISION object with the following slots filled:
 #' Populates the modData, HotspotModuleScores, ModuleSignatureEnrichment
 #' and HotspotObject slots of object, as well as recalculates signature scores
 #' for new modules.
+#' 
 #' @export
-analyzeHotspotObject <- function(object, hs, tree=FALSE) {
+analyzeHotspotObjectVision <- function(object, hs, tree=FALSE) {
     hs_module_scores <- hs$module_scores
     hs_modules <- hs$modules
     
@@ -182,7 +233,7 @@ analyzeHotspotObject <- function(object, hs, tree=FALSE) {
     object@ModuleHotspotScores <- hs_module_scores
     object <- analyzeLocalCorrelationsModules(object, tree)
     
-    # save the hotspot object
+    # save the Hotspot object
     object <- addHotspotToVision(object, hs)
     
     return(object)
@@ -191,13 +242,14 @@ analyzeHotspotObject <- function(object, hs, tree=FALSE) {
 
 #' Create Hotspot Modules and calculate module scores given a HS object
 #' with local correlations already calculated
-#' @param hs the hotspot object, must have ran compute_local_correlations already
+#' 
+#' @param hs the Hotspot object, must have ran compute_local_correlations already
 #' @param min_gene_threshold min genes per module
 #' @param clustering_fdr p value for clustering genes
 #' @return the modified hs object
 #' 
 #' @export
-createHotspotModulesCalcScores <- function(hs, min_gene_threshold=20, clustering_fdr=0.5, plot=F) {
+hsCalculateModuleScores <- function(hs, min_gene_threshold=20, clustering_fdr=0.5, plot=F) {
   hs$create_modules(min_gene_threshold=as.integer(min_gene_threshold), fdr_threshold=clustering_fdr)
   hs$calculate_module_scores()
   
@@ -210,19 +262,20 @@ createHotspotModulesCalcScores <- function(hs, min_gene_threshold=20, clustering
 
 
 #' Add HS python obj to vision OBJECT
+#' 
 #' @param object Vision object
 #' @param hs python hs object
-#' @return vision object
+#' @return Vision object with hs populated
 #' 
 #' @export
 addHotspotToVision <- function(object, hs) {
-    # save the hotspot object
+    # save the Hotspot object
     pickle <- import("pickle", convert=F)
     py$hs <- hs
     py$pickle <- pickle
     py_run_string("hs_byte_array = bytearray(pickle.dumps(hs))")
     hs_pickled_r <- as.raw(py$hs_byte_array)
-    object@Hotspot <- list(hs_pickled_r)
+    object@Hotspot <- hs_pickled_r
     
     return(object)
 }
@@ -242,6 +295,7 @@ addHotspotToVision <- function(object, hs) {
 #' the overall signature score.  Default = TRUE.  This is used for inspecting
 #' genes in a signature in the output report
 #' @return the VISION object, with the @ModScores and @ModGeneImportance slots populated
+#' 
 #' @export
 calcModuleScores <- function(
     object, mod_norm_method = NULL, mod_gene_importance = TRUE) {
@@ -303,9 +357,11 @@ calcModuleScores <- function(
 #' different projection onto low-dimensional space are computed, and the
 #' consistency of the resulting space with the signature scores is computed
 #' to find signals that are captured successfully by the projections.
+#' 
 #' @param object the VISION object
 #' @param tree whether to use the tree object as latent space for neighbors
 #' @return the VISION object with values set for the analysis results
+#' 
 #' @export
 analyzeLocalCorrelationsModules <- function(object, tree=FALSE) {
   
@@ -350,10 +406,12 @@ analyzeLocalCorrelationsModules <- function(object, tree=FALSE) {
 
 
 #' Computes the hypergeometric overlap test for modules and signatures
-#' @param object the vision object.
+#' 
+#' @param object the Vision object.
 #' @param skip_down whether to ignore down signatures in overlap
 #' @return list(statistic values, p values, clusters of signatures)
 #' 
+#' @export
 calc_mod_sig_enrichment <- function(object, skip_down=TRUE) {
     modules <- object@modData
     original_signatures <- object@sigData
@@ -425,13 +483,15 @@ calc_mod_sig_enrichment <- function(object, skip_down=TRUE) {
 
 
 #' Calculate the hypergeometric enrichment for two sets from a population
-#' 
-#' @param set1
-#' @param set2
-#' @param genes the population
-#' @return c(statistic, p value)
 #' Statisic = log (observed overlap / expected overlap)
 #' P value = 1- hypergeometric(observed overlap -1, max(|set1|, |set2|), |genes| - |set1|, min(|set1|, |set2|))
+#' 
+#' @param set1 the first gene set
+#' @param set2 the second gene set
+#' @param genes the population
+#' @return c(statistic, p value)
+#' 
+#' @export
 calc_set_enrichment <- function(set1, set2, genes) {
     N <- length(genes)
     m <- max(length(set1), length(set2))
@@ -450,11 +510,16 @@ calc_set_enrichment <- function(set1, set2, genes) {
     return(c(stat, p_value))
 }
 
+
 #' Make the clusters for the modules by enrichment.
-#' For now we just assign each signature to each cluster, could filter to only include once.
+#' For now we just assign each signature to each cluster, could filter to only include once,
+#' so that each one appears in the modules x sigs table.
 #' 
-#' @param stats 
-#' @param pvals
+#' @param stats overlap stats from calc_set_enrichment
+#' @param pvals overlap p values from calc_set_enrichment
+#' @return assignments of each signature to each module
+#' 
+#' @export
 group_modules_enrichment <- function(stats, pvals) {
   sigs <- rownames(stats)
   mods <- colnames(stats)
@@ -467,9 +532,10 @@ group_modules_enrichment <- function(stats, pvals) {
 
 
 #' Generates signature objects for the overlap sets between modules and signatures
-#' @param object the vision object
+#' @param object the Vision object
+#' @return Vision Object, populates the modData slot with overlap signatures.
 #' 
-#' Populates the modData slot with overlap signatures.
+#' @export
 generateOverlapSignatures <- function(object) {
     message("Generating Module Signature Overlaps...\n")
     sigs <- rownames(object@ModuleSignatureEnrichment$statistics)
@@ -505,6 +571,7 @@ generateOverlapSignatures <- function(object) {
 #' @param object the VISION object
 #' @param variables which columns of the meta-data to use for comparisons
 #' @return the VISION object with the @ClusterComparisons modules slot populated
+#' 
 #' @export
 clusterModScores <- function(object, variables = "All") {
   
@@ -616,12 +683,14 @@ saveHSBytestToPickle <- function(path, bytes) {
 }
 
 
-#' Add custom tree based neighbor and weights to a hotspot object
+#' Add custom tree based neighbor and weights to a Hotspot object
 #' 
 #'  @param tree object of class phylo
-#'  @param the hotspot object to add the nw to
+#'  @param the Hotspot object to add the nw to
 #'  @param minSize the minimum number of neighbors of the node
-#'  @return the hotspot object
+#'  @return the Hotspot object
+#'  
+#'  @export
 lcaBasedHotspotNeighbors <- function(tree, hotspot, minSize=20) {
   tips <- tree$tip.label
   nTips <- length(tips)
@@ -650,4 +719,49 @@ lcaBasedHotspotNeighbors <- function(tree, hotspot, minSize=20) {
   colnames(neighbors_no_diag) <- seq_len(nTips-1) - 1
   colnames(weights_no_diag) <- seq_len(nTips-1) - 1
   return(list("neighbors"=neighbors_no_diag, "weights"=weights_no_diag))
-} 
+}
+
+
+#' Draw Modules Heatmap (Gene x Gene)
+#' 
+#' @param hs the Hotspot Object
+#' @param palette palette
+#' @export
+draw_hotspot_heatmap <- function(hs, palette = paletteer_d("ggsci::default_nejm")) {
+  scipy_hierarchy <- import("scipy.cluster.hierarchy", convert=F)
+  np <- import("numpy")
+  linkage <- hs$linkage
+  py_dend = scipy_hierarchy$dendrogram(linkage)
+  lcz = hs$local_correlation_z
+  gene_order = colnames(lcz)[np$array(py_dend$leaves)+1]
+  col_mapping = c()
+  module_to_col = list()
+  hs$modules = as.character(hs$modules)
+  unique_mods = as.character(unique(hs$modules))
+  example_genes = list()
+  col_mapping[["-1"]] = "#ffffff"
+  for (i in 1:length(unique_mods)) {
+    mod = unique_mods[[i]]
+    if (mod != -1) {
+      col_mapping[[mod]] = palette[[i]] 
+      module_to_col[[mod]] = palette[[i]]
+      example_genes[[mod]] = sample(hs$modules[hs$modules == mod], 5)
+    }
+  }
+  print(module_to_col)
+  print(col_mapping[order(names(col_mapping))])
+  print(col_mapping)
+  print(example_genes)
+  modules = data.frame("module" = hs$modules)
+  modules$module = as.character(modules$module)
+  ha = rowAnnotation(df = modules,
+                     col = col_mapping,
+                     simple_anno_size = unit(0.5, "in"))
+  ht = Heatmap(as.matrix(lcz), name = "mat",
+               show_row_names=F, show_column_names=F, show_row_dend=F, show_column_dend=F,
+               row_order = gene_order, column_order=gene_order,
+               right_annotation=ha,       
+               column_names_gp = gpar(fontsize = c(1)),
+               width = unit(5, "in"), height = unit(5, "in"))
+  draw(ht)
+}

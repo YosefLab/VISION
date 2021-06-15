@@ -90,7 +90,7 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                                         "rank_norm_columns"),
                     pool="auto", cellsPerPartition=10, name=NULL, num_neighbors = NULL,
                     latentSpace = NULL, latentSpaceName = NULL, latentTrajectory = NULL,
-                    tree = NULL, modData = list(), hotspot= list(), pools=list()) {
+                    tree = NULL, modData = list(), hotspot= NULL, pools=list()) {
 
             .Object <- new("Vision")
             
@@ -407,6 +407,13 @@ setMethod("Vision", signature(data = "matrixORSparse"),
     }
 )
 
+
+#' Initializes a new PhyloVision Object
+#' 
+#' @param tree parsed ape tree
+#' @param ... arguments passed to the base Vision constructor
+#' @rdname PhyloVision-class
+#' @export
 setMethod("PhyloVision", signature(tree="phylo"), 
           function(tree, ...) {
             obj <- Vision(...)
@@ -722,7 +729,7 @@ setMethod("analyze", signature(object="Vision"),
 
     if (hotspot) {
       message("Hotspot Analysis")
-      object <- calcHotspotModules(object, model="danb", tree)
+      object <- runHotspot(object, model="danb", tree)
     }
 
 
@@ -731,6 +738,12 @@ setMethod("analyze", signature(object="Vision"),
     return(object)
 })
 
+
+#' Analyze a PhyloVision object
+#' 
+#' @param ... arguments passed to the base Vision constructor
+#' @aliases phyloAnalyze
+#' @export
 setMethod("phyloAnalyze", signature(object="PhyloVision"),
           function(object, hotspot=FALSE) {
     object <- analyze(object, tree=TRUE, hotspot=hotspot)
