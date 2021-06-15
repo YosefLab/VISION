@@ -67,12 +67,12 @@ vis <- analyzeHotspotObjectVision(vis, hs, tree=TRUE)
 ```
 
 We can also access further Hotspot functionality using Reticulate and Python.
-```{r inspectModules, eval=T}
+```{r inspectModules, eval=F}
 hs <- loadHotspotObject(bytes=vis@Hotspot)
 library(reticulate)
 use_python('/usr/bin/python3')
 ```
-```{python modulesPlot, eval=T}
+```{python modulesPlot, eval=F}
 import matplotlib.pyplot as plt
 import hotspot
 hs.plot_local_correlations()
