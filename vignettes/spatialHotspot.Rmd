@@ -27,7 +27,8 @@ Running an analysis with vision consists of three steps:
 3. Running Hotspot
 3. Browsing results
 
-```{r setup, include=FALSE}
+First, we need to load VISION and reticulate.
+```{r setup, eval=F}
 knitr::opts_chunk$set(echo = TRUE)
 library(VISION)
 library(reticulate)

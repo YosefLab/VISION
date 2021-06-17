@@ -28,12 +28,12 @@ Running an analysis with vision consists of three steps:
 3. Running Hotspot
 4. Browsing results
 
-
-```{r setup, include=FALSE}
+First, we need to load VISION, reticulate and ape.
+```{r setup, eval=F}
 knitr::opts_chunk$set(echo = TRUE)
 library(VISION)
-library(ape)
 library(reticulate)
+library(ape)
 ```
 
 ## Creating a PhyloVision Object with a Tree
