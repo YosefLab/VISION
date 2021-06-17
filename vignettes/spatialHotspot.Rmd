@@ -7,7 +7,25 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
+# Preliminaries
 
+If you have yet to install VISION, we recommend installing the package from Github to install this package. Full source code can be found at the VISION Github repository, available [here](http://www.github.com/YosefLab/VISION).
+
+```r
+require(devtools)
+install_github("YosefLab/VISION")
+```
+
+Once VISION and R are installed, you may load in VISION using `library(VISION)`.
+
+# Using VISION
+
+Running an analysis with vision consists of three steps:
+
+1. Creating the VISION object
+2. Running the `analyze` function
+3. Running Hotspot
+3. Browsing results
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -37,6 +55,29 @@ pos <- pos[c("X", "Y")]
 # Construct the Vision object
 vis <- Vision(expr, signatures=c(sig), latentSpace = pos, meta=meta) # TODO add relevant signatures
 ```
+**Expression Data**
+
+The provided expression data should be scaled and normalized. It is recommended to apply more advanced normalization procedures such as batch correction or removal of technical confounders.
+
+The expression data should not be log-transformed prior to loading into VISION.
+
+**Signatures**
+
+Signatures can be provided as a list of paths to signature files (\*.gmt) or Signature objects.
+
+See [the signature vignette](Signatures.html) for more information on finding or creating gene Signatures.
+
+**Meta Data**
+
+An R data.frame with cell-level meta-data.  This could be confounding variables (e.g. percentage of mitochondrial RNA, number of genes detected) or experimental covariates (e.g. genotype, donor, batch).
+
+This input is optional if Signatures are provided.
+
+**Other Options**
+
+Other options and inputs can be provided to customize how VISION runs.
+
+## Running an analysis
 
 Next, we can perform the normal Vision analysis using the spatial coordinates as the latent space.
 
@@ -44,12 +85,16 @@ Next, we can perform the normal Vision analysis using the spatial coordinates as
 vis <- analyze(vis)
 ```
 
-We can also perform Hotspot module analysis. For more on the Hotspot API see [here](https://yoseflab.github.io/Hotspot/index.html) and the other included vignette.
+## Running Hotpsot analysis
+
+We can also perform Hotspot module analysis. For more on the Hotspot API see [here](https://yoseflab.github.io/Hotspot/index.html) and [the PhyloVision vignette](phyloVision.html).
 ```{r hotspot, eval=F}
 vis@params$latentSpace$projectionGenes <- rownames(vis@exprData) # Use all genes.
 vis <- runHotspot(vis, model="bernoulli", num_umi=meta["num_umi"], logdata=FALSE)
 ```
 
+
+## Viewing results
 Finally, we can launch the Vision browser.
 ```{r view, eval=F}
 viewResults(vis)
