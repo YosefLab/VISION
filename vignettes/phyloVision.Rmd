@@ -8,6 +8,27 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+# Preliminaries
+
+If you have yet to install VISION, we recommend installing the package from Github to install this package. Full source code can be found at the VISION Github repository, available [here](http://www.github.com/YosefLab/VISION).
+
+```r
+require(devtools)
+install_github("YosefLab/VISION")
+```
+
+Once VISION and R are installed, you may load in VISION using `library(VISION)`.
+
+# Using PhyloVision
+
+Running an analysis with vision consists of three steps:
+
+1. Creating the PhyloVision object
+2. Running the `phyloAnalyze` function
+3. Running Hotspot
+4. Browsing results
+
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(VISION)
@@ -18,6 +39,7 @@ library(reticulate)
 ## Creating a PhyloVision Object with a Tree
 
 Vision objects now support dendrograms for visualization and analysis. To create the PhyloVision object, you need all of the same data, an expression matrix, and metadata and/or signatures, but you also include a tree object from the Ape package.
+
 ```{r create, eval=F}
 # Read the expression and meta data
 file_path <- "data/embryogenesis" # Replace the path
@@ -38,12 +60,40 @@ expr <- expr[, tree$tip.label]
 # Construct the Vision object
 vis <- PhyloVision(tree=tree, data=expr, signatures=sig, meta=meta, num_neighbors=30, projection_genes= rownames(expr))
 ```
+**Tree**
+
+The `ape` phylogeny object. Singleton edges should be collapsed prior to use. The tree should be filtered to have the same cell (leaf) names as the expression data.
+
+**Expression Data**
+
+The provided expression data should be scaled and normalized. It is recommended to apply more advanced normalization procedures such as batch correction or removal of technical confounders.
+
+The expression data should not be log-transformed prior to loading into VISION.
+
+**Signatures**
+
+Signatures can be provided as a list of paths to signature files (\*.gmt) or Signature objects.
+
+See [the signature vignette](Signatures.html) for more information on finding or creating gene Signatures.
+
+**Meta Data**
+
+An R data.frame with cell-level meta-data.  This could be confounding variables (e.g. percentage of mitochondrial RNA, number of genes detected) or experimental covariates (e.g. genotype, donor, batch).
+
+This input is optional if Signatures are provided.
+
+**Other Options**
+
+Other options and inputs can be provided to customize how VISION runs.
+
+## Running PhyloVision analysis
 
 Next, we can perform the normal Vision analysis using the tree as the latent space.
 
 ``` {r analyze, eval=F}
 vis <- phyloAnalyze(vis)
 ```
+## Running Hotpost analysis
 
 We can also perform Hotspot module analysis. The expression data is already logged for us.
 ```{r hotspot, eval=F}
@@ -85,6 +135,7 @@ library(paletteer)
 draw_hotspot_heatmap(hs)
 ```
 
+## Viewing Results
 
 Finally, we can launch the Vision browser.
 ```{r eval=FALSE}
