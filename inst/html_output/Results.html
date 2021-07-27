@@ -11,7 +11,6 @@
     <link rel="stylesheet" href="thirdparty/chosen/chosen.min.css">
     <link rel="stylesheet" href="thirdparty/bootstrap/bootstrap.min.css">
     <link rel="stylesheet" href="thirdparty/datatables/datatables.min.css">
-    <link rel="stylesheet" href="thirdparty/phylotree/phylotree.css">
 
     <script type="text/javascript" src="thirdparty/jquery/jquery-2.1.4.min.js"></script>
     <script type="text/javascript" src="thirdparty/d3/d3.min.js"></script>
@@ -24,7 +23,6 @@
     <script type="text/javascript" src="thirdparty/popper/popper.js/dist/umd/popper.min.js"></script>
     <script type="text/javascript" src="thirdparty/plotly/plotly.js-1.45.2/dist/plotly.min.js"></script>
     <script type="text/javascript" src="thirdparty/hsluv/hsluv-0.1.0.min.js"></script>
-    <script type='text/javascript' src='thirdparty/phylotree/phylotree.js'></script>
 
 
 
@@ -107,8 +105,8 @@
                   </div>
   
                   <div class="tab-content upper-left-section-content" style="padding: 5px; display: block">
-                      <div class="tab-pane show active" id="table-div-container" role="tabpanel" aria-labelledby="sig-table-tab" style="overflow-x: scroll; overflow-y: scroll; max-height: 500px">
-                          <div class="sig-tables-header">
+                      <div class="tab-pane show active" id="table-div-container" role="tabpanel" aria-labelledby="sig-table-tab" style="overflow: auto; max-height: 500px">
+                          <div class="sig-tables-header" style="overflow-y: auto">
                               <table class="sig-table">
                                   <thead>
                                       <tr class="proj-row">
