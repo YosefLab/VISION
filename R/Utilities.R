@@ -853,11 +853,10 @@ find_knn_parallel_tree <- function(tree, K) {
 
 
 
-#' Add custom tree based neighbor and weights to a hotspot object
+#'  Generate neighbors and weights for a tree object, based on LCA.
 #' 
 #'  @param tree object of class phylo
-#'  @param the hotspot object to add the nw to
-#'  @param minSize the minimum number of neighbors of the node
+#'  @param minSize the minimum number of neighbors per node
 #'  @return the hotspot object
 lcaBasedTreeKNN <- function(tree, minSize=20) {
   tips <- tree$tip.label

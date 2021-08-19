@@ -748,10 +748,7 @@ draw_hotspot_heatmap <- function(hs, palette = paletteer_d("ggsci::default_nejm"
       example_genes[[mod]] = sample(hs$modules[hs$modules == mod], 5)
     }
   }
-  print(module_to_col)
-  print(col_mapping[order(names(col_mapping))])
-  print(col_mapping)
-  print(example_genes)
+  
   modules = data.frame("module" = hs$modules)
   modules$module = as.character(modules$module)
   ha = rowAnnotation(df = modules,

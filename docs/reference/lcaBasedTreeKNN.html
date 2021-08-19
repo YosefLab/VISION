@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Add custom tree based neighbor and weights to a hotspot object — lcaBasedTreeKNN • VISION</title>
+<title>Generate neighbors and weights for a tree object, based on LCA. — lcaBasedTreeKNN • VISION</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -48,10 +48,9 @@
   <link href="../extra.css" rel="stylesheet">
   
 
-<meta property="og:title" content="Add custom tree based neighbor and weights to a hotspot object — lcaBasedTreeKNN" />
+<meta property="og:title" content="Generate neighbors and weights for a tree object, based on LCA. — lcaBasedTreeKNN" />
 <meta property="og:description" content="@param tree object of class phylo
- @param the hotspot object to add the nw to
- @param minSize the minimum number of neighbors of the node
+ @param minSize the minimum number of neighbors per node
  @return the hotspot object" />
 <meta property="og:image" content="https://yoseflab.github.io/VISION/logo.svg" />
 
@@ -160,15 +159,14 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Add custom tree based neighbor and weights to a hotspot object</h1>
+    <h1>Generate neighbors and weights for a tree object, based on LCA.</h1>
     <small class="dont-index">Source: <a href='https://github.com/YosefLab/VISION/blob/master/R/Utilities.R'><code>R/Utilities.R</code></a></small>
     <div class="hidden name"><code>lcaBasedTreeKNN.Rd</code></div>
     </div>
 
     <div class="ref-description">
     <p>@param tree object of class phylo
- @param the hotspot object to add the nw to
- @param minSize the minimum number of neighbors of the node
+ @param minSize the minimum number of neighbors per node
  @return the hotspot object</p>
     </div>
 

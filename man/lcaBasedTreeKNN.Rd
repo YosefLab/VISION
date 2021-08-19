@@ -2,13 +2,12 @@
 % Please edit documentation in R/Utilities.R
 \name{lcaBasedTreeKNN}
 \alias{lcaBasedTreeKNN}
-\title{Add custom tree based neighbor and weights to a hotspot object}
+\title{Generate neighbors and weights for a tree object, based on LCA.}
 \usage{
 lcaBasedTreeKNN(tree, minSize = 20)
 }
 \description{
 @param tree object of class phylo
- @param the hotspot object to add the nw to
- @param minSize the minimum number of neighbors of the node
+ @param minSize the minimum number of neighbors per node
  @return the hotspot object
 }

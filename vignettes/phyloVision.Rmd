@@ -19,6 +19,12 @@ install_github("YosefLab/VISION")
 
 Once VISION and R are installed, you may load in VISION using `library(VISION)`.
 
+Hotspot is a tool for identifying informative genes (and gene modules) in a single-cell dataset. Hotspot is installed directly from the git repository using the following command:
+
+```
+pip install git+https://github.com/yoseflab/Hotspot.git
+```
+
 # Using PhyloVision
 
 Running an analysis with vision consists of three steps:
@@ -93,7 +99,7 @@ Next, we can perform the normal Vision analysis using the tree as the latent spa
 ``` {r analyze, eval=F}
 vis <- phyloAnalyze(vis)
 ```
-## Running Hotpost analysis
+## Running Hotspot analysis
 
 We can also perform Hotspot module analysis. The expression data is already logged for us.
 ```{r hotspot, eval=F}

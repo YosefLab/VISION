@@ -132,6 +132,8 @@
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">require</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/">devtools</a></span><span class="op">)</span>
 <span class="fu"><a href="https://devtools.r-lib.org//reference/remote-reexports.html">install_github</a></span><span class="op">(</span><span class="st">"YosefLab/VISION"</span><span class="op">)</span></code></pre></div>
 <p>Once VISION and R are installed, you may load in VISION using <code><a href="https://yoseflab.github.io/VISION">library(VISION)</a></code>.</p>
+<p>Hotspot is a tool for identifying informative genes (and gene modules) in a single-cell dataset. Hotspot is installed directly from the git repository using the following command:</p>
+<pre><code>pip install git+https://github.com/yoseflab/Hotspot.git</code></pre>
 </div>
 <div id="using-phylovision" class="section level1">
 <h1 class="hasAnchor">
@@ -144,7 +146,7 @@
 <li>Browsing results</li>
 </ol>
 <p>First, we need to load VISION, reticulate and ape.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">knitr</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/knitr/man/opts_chunk.html">opts_chunk</a></span><span class="op">$</span><span class="fu">set</span><span class="op">(</span>echo <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://yoseflab.github.io/VISION">VISION</a></span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/rstudio/reticulate">reticulate</a></span><span class="op">)</span>
@@ -153,7 +155,7 @@
 <h2 class="hasAnchor">
 <a href="#creating-a-phylovision-object-with-a-tree" class="anchor"></a>Creating a PhyloVision Object with a Tree</h2>
 <p>Vision objects now support dendrograms for visualization and analysis. To create the PhyloVision object, you need all of the same data, an expression matrix, and metadata and/or signatures, but you also include a tree object from the Ape package.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># Read the expression and meta data</span>
 <span class="va">file_path</span> <span class="op">&lt;-</span> <span class="st">"data/embryogenesis"</span> <span class="co"># Replace the path</span>
 
@@ -190,17 +192,17 @@
 <h2 class="hasAnchor">
 <a href="#running-phylovision-analysis" class="anchor"></a>Running PhyloVision analysis</h2>
 <p>Next, we can perform the normal Vision analysis using the tree as the latent space.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/phyloAnalyze,PhyloVision-method.html">phyloAnalyze</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span></code></pre></div>
 </div>
-<div id="running-hotpost-analysis" class="section level2">
+<div id="running-hotspot-analysis" class="section level2">
 <h2 class="hasAnchor">
-<a href="#running-hotpost-analysis" class="anchor"></a>Running Hotpost analysis</h2>
+<a href="#running-hotspot-analysis" class="anchor"></a>Running Hotspot analysis</h2>
 <p>We can also perform Hotspot module analysis. The expression data is already logged for us.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/runHotspot.html">runHotspot</a></span><span class="op">(</span><span class="va">vis</span>, model<span class="op">=</span><span class="st">"normal"</span>, tree<span class="op">=</span><span class="cn">TRUE</span>, min_gene_threshold<span class="op">=</span><span class="fl">50</span>, n_neighbors <span class="op">=</span> <span class="fl">30</span>, number_top_genes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">expr</span><span class="op">)</span>, logdata<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
 <p>The full Hotspot API is exposed for analysis as well. For more on the Hotspot API see <a href="https://yoseflab.github.io/Hotspot/index.html">here</a></p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># Init Hotspot</span>
 <span class="va">hs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/hsInit.html">hsInit</a></span><span class="op">(</span><span class="va">vis</span>, model <span class="op">=</span> <span class="st">"normal"</span>, tree<span class="op">=</span><span class="cn">TRUE</span>, logdata<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span>
 <span class="co"># Init Hotspot KNN</span>
@@ -214,16 +216,16 @@
 <span class="co"># Cluster Hotspot modules and perform Vision based analysis on HS Modules and </span>
 <span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/analyzeHotspotObjectVision.html">analyzeHotspotObjectVision</a></span><span class="op">(</span><span class="va">vis</span>, <span class="va">hs</span>, tree<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
 <p>We can also access further Hotspot functionality using Reticulate and Python.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">hs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadHotspotObject.html">loadHotspotObject</a></span><span class="op">(</span>bytes<span class="op">=</span><span class="va">vis</span><span class="op">@</span><span class="va">Hotspot</span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/rstudio/reticulate">reticulate</a></span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/pkg/reticulate/man/use_python.html">use_python</a></span><span class="op">(</span><span class="st">'/usr/bin/python3'</span><span class="op">)</span></code></pre></div>
-<div class="sourceCode" id="cb8"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb8-2"><a href="#cb8-2"></a><span class="im">import</span> hotspot</span>
-<span id="cb8-3"><a href="#cb8-3"></a>hs.plot_local_correlations()</span>
-<span id="cb8-4"><a href="#cb8-4"></a>plt.show()</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb9-2"><a href="#cb9-2"></a><span class="im">import</span> hotspot</span>
+<span id="cb9-3"><a href="#cb9-3"></a>hs.plot_local_correlations()</span>
+<span id="cb9-4"><a href="#cb9-4"></a>plt.show()</span></code></pre></div>
 <p>Note: the heatmap can also be visualized like so:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">hs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadHotspotObject.html">loadHotspotObject</a></span><span class="op">(</span>bytes<span class="op">=</span><span class="va">vis</span><span class="op">@</span><span class="va">Hotspot</span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/EmilHvitfeldt/paletteer">paletteer</a></span><span class="op">)</span>
 <span class="fu"><a href="../reference/draw_hotspot_heatmap.html">draw_hotspot_heatmap</a></span><span class="op">(</span><span class="va">hs</span><span class="op">)</span></code></pre></div>
@@ -232,7 +234,7 @@
 <h2 class="hasAnchor">
 <a href="#viewing-results" class="anchor"></a>Viewing Results</h2>
 <p>Finally, we can launch the Vision browser.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/viewResults,Vision-method.html">viewResults</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span></code></pre></div>
 </div>
 </div>

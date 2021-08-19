@@ -18,6 +18,12 @@ install_github("YosefLab/VISION")
 
 Once VISION and R are installed, you may load in VISION using `library(VISION)`.
 
+Hotspot is a tool for identifying informative genes (and gene modules) in a single-cell dataset. Hotspot is installed directly from the git repository using the following command:
+
+```
+pip install git+https://github.com/yoseflab/Hotspot.git
+```
+
 # Using VISION
 
 Running an analysis with vision consists of three steps:
