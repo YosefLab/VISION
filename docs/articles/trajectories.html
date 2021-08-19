@@ -127,6 +127,7 @@
 <div id="introduction" class="section level1">
 <h1 class="hasAnchor">
 <a href="#introduction" class="anchor"></a>Introduction</h1>
+<p><em>Note: this feature is deprecated in VISION 3.0+.</em></p>
 <p>To compute Signature consistency scores, VISION needs a cell-cell similarity metric in order to build the neighborhood graph. By default, VISION runs PCA and uses euclidean distances in the reduced space for this purpose. However, if the cells’ variation is better modeled by a trajectory (either linear or tree-like), then distances along the trajectory structure can be used instead.</p>
 <p>Many tools exist to perform trajectory inference in single cells. The <a href="https://github.com/dynverse">Dynverse</a> project has developed wrappers for 59 recently-published methods and VISION is able to accept the wrapped output of these methods as an input trajectory model.</p>
 <p>Within the Dynverse trajectory object, VISION depends on two components:</p>

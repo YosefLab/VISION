@@ -68,7 +68,7 @@ vis <- PhyloVision(tree=tree, data=expr, signatures=sig, meta=meta, num_neighbor
 ```
 **Tree**
 
-The `ape` phylogeny object. Singleton edges should be collapsed prior to use. The tree should be filtered to have the same cell (leaf) names as the expression data.
+The `ape` phylogeny object. Singleton edges should be collapsed prior to use. Ensure that leaf names correspond to same names used in the expression matrix. 
 
 **Expression Data**
 

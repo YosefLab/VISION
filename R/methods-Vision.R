@@ -119,7 +119,10 @@ setMethod("Vision", signature(data = "matrixORSparse"),
             }
 
             if (!is.null(tree)) {
-                data = data[,tree$tip.label]
+                # Subset matrix
+                data <- data[,tree$tip.label]
+                # Subset Tree
+                tree <- keep.tip(tree, colnames(data)) 
             }
 
             .Object@exprData <- data

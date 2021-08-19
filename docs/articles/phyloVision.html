@@ -175,7 +175,7 @@
 <span class="co"># Construct the Vision object</span>
 <span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/PhyloVision.html">PhyloVision</a></span><span class="op">(</span>tree<span class="op">=</span><span class="va">tree</span>, data<span class="op">=</span><span class="va">expr</span>, signatures<span class="op">=</span><span class="va">sig</span>, meta<span class="op">=</span><span class="va">meta</span>, num_neighbors<span class="op">=</span><span class="fl">30</span>, projection_genes<span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html">rownames</a></span><span class="op">(</span><span class="va">expr</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p><strong>Tree</strong></p>
-<p>The <code>ape</code> phylogeny object. Singleton edges should be collapsed prior to use. The tree should be filtered to have the same cell (leaf) names as the expression data.</p>
+<p>The <code>ape</code> phylogeny object. Singleton edges should be collapsed prior to use. Ensure that leaf names correspond to same names used in the expression matrix.</p>
 <p><strong>Expression Data</strong></p>
 <p>The provided expression data should be scaled and normalized. It is recommended to apply more advanced normalization procedures such as batch correction or removal of technical confounders.</p>
 <p>The expression data should not be log-transformed prior to loading into VISION.</p>
