@@ -8,6 +8,11 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+# Introduction
+As of version 3.0.0, VISION now supports the analysis of scRNA-seq data with respect to a user-defined cell lineage, or phylogeny. In this case, VISION uses the relationships between cells as specified by the phylogeny, as opposed to some user-defined latent space, to conduct the autocorrelation analysis. In this vignette, we demonstrate how a user might use this variant of the VISION pipeline - which we term `PhyloVision` - to analyze a recently published dataset that simultaneously profiled the single-cell transcriptomes and lineages of mouse embryogenesis (Chan et al, Nature 2019).
+
+This tutorial begins by showing users how to create a `PhyloVision` object and performing analysis on it. Then, we demonstrate how this object can be passed into a Hotspot module that will identify de-novo transcriptional gene sets that are autocorrelated on the tree (this is described more below and in the Spatial Hotspot vignette). Finally, we show users how to launch a report for viewing.
+
 # Preliminaries
 
 If you have yet to install VISION, we recommend installing the package from Github to install this package. Full source code can be found at the VISION Github repository, available [here](http://www.github.com/YosefLab/VISION).
@@ -19,20 +24,14 @@ install_github("YosefLab/VISION")
 
 Once VISION and R are installed, you may load in VISION using `library(VISION)`.
 
-Hotspot is a tool for identifying informative genes (and gene modules) in a single-cell dataset. Hotspot is installed directly from the git repository using the following command:
+To enable the Hotspot analysis below, install it directly from the git repository using the following command:
 
 ```
 pip install git+https://github.com/yoseflab/Hotspot.git
 ```
+If you are having trouble installing Hotspot, please refer to the documentation website [here](https://yoseflab.github.io/Hotspot/).
 
-# Using PhyloVision
-
-Running an analysis with vision consists of three steps:
-
-1. Creating the PhyloVision object
-2. Running the `phyloAnalyze` function
-3. Running Hotspot
-4. Browsing results
+# Running PhyloVision
 
 First, we need to load VISION, reticulate and ape.
 ```{r setup, eval=F}
@@ -59,9 +58,14 @@ sig <- paste("data", "h.all.v5.2.symbols.gmt", sep="/")
 
 # Read the tree
 tree <- read.tree(paste(file_path, "embryo_tree.newick", sep="/"))
-# Collapse one mutations
+
+# subset tree and expression matrix
+keep.bcs = intersect(tree$tip.label, colnames(expr))
+tree <- keep.tip(tree, keep.bcs)
+expr <- expr[, keep.bcs]
+
+# Collapse one mutations with ape
 tree <- collapse.singles(tree)
-expr <- expr[, tree$tip.label]
 
 # Construct the Vision object
 vis <- PhyloVision(tree=tree, data=expr, signatures=sig, meta=meta, num_neighbors=30, projection_genes= rownames(expr))
@@ -72,9 +76,7 @@ The `ape` phylogeny object. Singleton edges should be collapsed prior to use. En
 
 **Expression Data**
 
-The provided expression data should be scaled and normalized. It is recommended to apply more advanced normalization procedures such as batch correction or removal of technical confounders.
-
-The expression data should not be log-transformed prior to loading into VISION.
+The provided expression data should be library-normalized. The expression data should not be log-transformed prior to loading into VISION. For more information on the input to VISION, please refer to the central [VISION vignette](VISION_vignette.html)
 
 **Signatures**
 
@@ -101,12 +103,17 @@ vis <- phyloAnalyze(vis)
 ```
 ## Running Hotspot analysis
 
-We can also perform Hotspot module analysis. The expression data is already logged for us.
+As mentioned above, PhyloVision can take advantage of the new Hotspot functionality in VISION. Briefly, Hotspot is a tool for inferring modules of genes that are significantly autocorrelated with one another and a particular latent space (e.g., the first 30 principal components of a gene expression matrix). When combined with PhyloVision, the Hotspot functionality will use the user-defined phylogeny as the latent space.
+
+We can invoke the Hotspot analysis with the function `runHotspot` and setting `tree=True`. Upon doing so, this will identify modules of genes and add these as Signatures to the VISION object for autocorrelation evaluation. Moreover, to add interpretability to this analysis, VISION will also compute the enrichment between all the user-defined Signatures and each Hotspot module. This information will be accessible on the web-based report by selecting the "Hotspot" mode in the top-right of the web-page.
+
+The full Hotspot API is exposed for analysis as well. For more on the Hotspot API see [here](https://yoseflab.github.io/Hotspot/index.html). To note, while it is typically not recommended to use `model="normal"` and `logdata=FALSE` in Hotpsot, we elect to do so because the data here has been previously log-normalized. In more typical single-cell anlayses where the user is working with a library-normalized count matrix, we suggest setting `model="danb"` and `logdata=TRUE`.
+
 ```{r hotspot, eval=F}
 vis <- runHotspot(vis, model="normal", tree=TRUE, min_gene_threshold=50, n_neighbors = 30, number_top_genes = nrow(expr), logdata=FALSE)
 ```
 
-The full Hotspot API is exposed for analysis as well. For more on the Hotspot API see [here](https://yoseflab.github.io/Hotspot/index.html)
+We have additionally exposed the full Hotspot pipeline should a user want to iterate with different parameters:
 ```{r full_h, eval=FALSE}
 # Init Hotspot
 hs <- hsInit(vis, model = "normal", tree=TRUE, logdata=FALSE)
@@ -143,9 +150,13 @@ draw_hotspot_heatmap(hs)
 
 ## Viewing Results
 
-Finally, we can launch the Vision browser.
+Finally, we can launch the Vision browser. If you are local, the following will work:
 ```{r eval=FALSE}
 viewResults(vis)
 ```
 
-
+Else, if you would like to launch from a server, you can use the following settings:
+```{r, eval=FALSE}
+viewResults(vis, host='0.0.0.0', port=8100, browser=F)
+```
+Now, the report will be visible from port `8100` from your server (e.g., http://server-name:8100/Results.html)
