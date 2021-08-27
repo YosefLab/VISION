@@ -17,7 +17,7 @@ This tutorial begins by showing users how to create a `PhyloVision` object and p
 
 If you have yet to install VISION, we recommend installing the package from Github to install this package. Full source code can be found at the VISION Github repository, available [here](http://www.github.com/YosefLab/VISION).
 
-```r
+```r{eval=FALSE}
 require(devtools)
 install_github("YosefLab/VISION")
 ```
@@ -76,7 +76,7 @@ The `ape` phylogeny object. Singleton edges should be collapsed prior to use. En
 
 **Expression Data**
 
-The provided expression data should be library-normalized. The expression data should not be log-transformed prior to loading into VISION. For more information on the input to VISION, please refer to the central [VISION vignette](VISION_vignette.html)
+The provided expression data should be library-normalized. The expression data should not be log-transformed prior to loading into VISION. For more information on the input to VISION, please refer to the central [VISION vignette](VISION_vignette.html).
 
 **Signatures**
 

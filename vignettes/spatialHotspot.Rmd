@@ -96,6 +96,8 @@ vis <- analyze(vis)
 ## Running Hotpsot analysis
 
 Conveniently, the Hotspot analysis can be performed directly ontop of the VISION object we just processed. To do so, we'll use the `runHotspot` function which invokes the Hotspot pipeline. For more information about the analysis pipeline & Hotspot API, you can refer the documentation website [here](https://yoseflab.github.io/Hotspot/index.html) and [the PhyloVision vignette](phyloVision.html).
+
+As described in the original Hotspot vignette, we use the `bernoulli` model because of the low capture rate of the spatial technology. In a typical anlaysis, we would use the `danb` model. 
 ```{r hotspot, eval=F}
 vis@params$latentSpace$projectionGenes <- rownames(vis@exprData) # Use all genes.
 vis <- runHotspot(vis, model="bernoulli", num_umi=meta["num_umi"], logdata=FALSE)
