@@ -7,18 +7,24 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
+
+# Introduction
+In this vignette, we demonstrate how to use VISION to identify de-novo transcriptional gene modules and interpret them. To this end, we use Hotspot - an algorithm that identifies modules of genes that are significantly autocorrelated with one another on some latent space that can be used to define cell-cell similarity (e.g., the first 30 principal components). Qualitatively, this can be interpreted as a co-expression analysis that takes into account the distribution of gene expression values and nuanced cell-cell similarities. If you are more interested in learning more about the algorithm, you can read the [original publication](https://www.cell.com/cell-systems/fulltext/S2405-4712(21)00114-9).
+
+In the example below, we use spatial transcriptomic data from the Slide-seq technology for the Hotspot analysis, following the original [Hotspot tutorial](https://yoseflab.github.io/Hotspot/Spatial_Tutorial.html). Though this analysis is extensible to more typical latent spaces, this is an interesting example where we show that VISION can use spatial coordinates to define cell-cell similarities.
+
 # Preliminaries
 
 If you have yet to install VISION, we recommend installing the package from Github to install this package. Full source code can be found at the VISION Github repository, available [here](http://www.github.com/YosefLab/VISION).
 
-```r
+```r{eval=FALSE}
 require(devtools)
 install_github("YosefLab/VISION")
 ```
 
-Once VISION and R are installed, you may load in VISION using `library(VISION)`.
+Once VISION and R are installed, you may load in VISION using `library(VISION)`. Also make sure that you have installed `reticular` appropriately, as this will be necessary for running Hotspot.
 
-Hotspot is a tool for identifying informative genes (and gene modules) in a single-cell dataset. Hotspot is installed directly from the git repository using the following command:
+You'll also need to install Hotspot, which can be installed directly from the git repository using the following command:
 
 ```
 pip install git+https://github.com/yoseflab/Hotspot.git
@@ -26,18 +32,13 @@ pip install git+https://github.com/yoseflab/Hotspot.git
 
 # Using VISION
 
-Running an analysis with vision consists of three steps:
-
-1. Creating the VISION object
-2. Running the `analyze` function
-3. Running Hotspot
-3. Browsing results
+Below, we first run the VISION pipeline as usual. In addition to importing VISION, we'll have to import `reticulate` for the Hotspot analaysis.
 
 First, we need to load VISION and reticulate.
 ```{r setup, eval=F}
 knitr::opts_chunk$set(echo = TRUE)
 library(VISION)
-library(reticulate)
+library(reticulate) # for the Hotspot analysis
 ```
 
 ## Creating a Vision Object
@@ -64,9 +65,9 @@ vis <- Vision(expr, signatures=c(sig), latentSpace = pos, meta=meta) # TODO add 
 ```
 **Expression Data**
 
-The provided expression data should be scaled and normalized. It is recommended to apply more advanced normalization procedures such as batch correction or removal of technical confounders.
+The provided expression data should be library-normalized.
 
-The expression data should not be log-transformed prior to loading into VISION.
+The expression data should not be log-transformed prior to loading into VISION. For more information about how to transform the expression data, refer to the central [VISION vignette](VISION-vignette.html).
 
 **Signatures**
 
@@ -94,15 +95,18 @@ vis <- analyze(vis)
 
 ## Running Hotpsot analysis
 
-We can also perform Hotspot module analysis. For more on the Hotspot API see [here](https://yoseflab.github.io/Hotspot/index.html) and [the PhyloVision vignette](phyloVision.html).
+Conveniently, the Hotspot analysis can be performed directly ontop of the VISION object we just processed. To do so, we'll use the `runHotspot` function which invokes the Hotspot pipeline. For more information about the analysis pipeline & Hotspot API, you can refer the documentation website [here](https://yoseflab.github.io/Hotspot/index.html) and [the PhyloVision vignette](phyloVision.html).
 ```{r hotspot, eval=F}
 vis@params$latentSpace$projectionGenes <- rownames(vis@exprData) # Use all genes.
 vis <- runHotspot(vis, model="bernoulli", num_umi=meta["num_umi"], logdata=FALSE)
 ```
 
+The [PhyloVision vignette](phyloVision.html) additionally describes the additional API that is exposed for iterating on the Hotspot analysis.
+
+After running the Hotpsot module, the VISION object will have populated slots storing the gene modules, the scores for each cell with respect to these new gene modules, and the enrichment score between user-specified signatures and the new Hotspot gene modules. These results can be explored in the Hotspot mode of the VISION web-based report.
 
 ## Viewing results
-Finally, we can launch the Vision browser.
+Finally, we can launch the Vision browser. The results from the Hotspot analysis can be viewed by clicking on the "Hotspot" button on the top-right of the web report.
 ```{r view, eval=F}
 viewResults(vis)
 ```
