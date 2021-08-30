@@ -186,6 +186,7 @@
 <p>To run an analysis, simply call the analyze function:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># Set the number of threads when running parallel computations</span>
+<span class="co"># On Windows, this must either be omitted or set to 1</span>
 <span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span>mc.cores <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>
 
 <span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/analyze,Vision-method.html">analyze</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span></code></pre></div>
@@ -200,19 +201,17 @@
 <p>Other options (port, host, browser) can be provided to control how this occurs. For example, if you are launching a report on a remote server (such as an AWS instance) and want to make it accessible to others, run this with <code>host="0.0.0.0"</code>, some selected port number (e.g. <code>port=8888</code>), and <code>browser=FALSE</code> (so a browser isn’t auto-opened). Then the report should be available at “&lt;your instance IP address&gt;:8888”. (Note: You will also likely need to enable inbound traffic on your selected port for this to work correctly).</p>
 <p>Alternately, you can work with the VISION object directly in R. For example:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># Display autocorrelation coefficients for signatures</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">vis</span><span class="op">@</span><span class="va">SigConsistencyScores</span><span class="op">@</span><span class="va">sigProjMatrix</span><span class="op">)</span>
+<code class="sourceCode R"><span class="co"># Display autocorrelation coefficients, p-values for signatures</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/getSignatureAutocorrelation,Vision-method.html">getSignatureAutocorrelation</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span><span class="op">)</span>
 
-<span class="co"># View autocorrelation empirical p-values</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">vis</span><span class="op">@</span><span class="va">SigConsistencyScores</span><span class="op">@</span><span class="va">emp_pMatrix</span><span class="op">)</span>
 
 <span class="co"># Plot signature scores for a signature of interest</span>
-<span class="va">tsne</span> <span class="op">&lt;-</span> <span class="va">vis</span><span class="op">@</span><span class="va">Projections</span><span class="op">$</span><span class="va">tSNE30</span>
-<span class="va">sigScores</span> <span class="op">&lt;-</span> <span class="va">vis</span><span class="op">@</span><span class="va">sigScores</span><span class="op">[</span>, <span class="st">"HALLMARK_INTERFERON_GAMMA_RESPONSE"</span><span class="op">]</span>
+<span class="va">tsne</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/getProjections,Vision-method.html">getProjections</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span><span class="op">[[</span><span class="st">"tSNE30"</span><span class="op">]</span><span class="op">]</span>
+<span class="va">sigScores</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/getSignatureScores,Vision-method.html">getSignatureScores</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span><span class="op">[</span>, <span class="st">"HALLMARK_INTERFERON_GAMMA_RESPONSE"</span><span class="op">]</span>
 
 <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org">ggplot2</a></span><span class="op">)</span>
 <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">tsne</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>, y<span class="op">=</span><span class="va">tsne</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span>, color<span class="op">=</span><span class="va">sigScores</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html">geom_point</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<p>For more details on the structure of the VISION object see XXX.</p>
+<p>For more details on accessing computed data within the VISION object, see the <a href="https://yoseflab.github.io/VISION/reference/index.html">References</a> page.</p>
 </div>
 <div id="customizing-the-latent-space" class="section level2">
 <h2 class="hasAnchor">

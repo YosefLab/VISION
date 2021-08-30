@@ -124,27 +124,26 @@
 
     
     
+<div id="introduction" class="section level1">
+<h1 class="hasAnchor">
+<a href="#introduction" class="anchor"></a>Introduction</h1>
+<p>As of version 3.0.0, VISION now supports the analysis of scRNA-seq data with respect to a user-defined cell lineage, or phylogeny. In this case, VISION uses the relationships between cells as specified by the phylogeny, as opposed to some user-defined latent space, to conduct the autocorrelation analysis. In this vignette, we demonstrate how a user might use this variant of the VISION pipeline - which we term <code>PhyloVision</code> - to analyze a recently published dataset that simultaneously profiled the single-cell transcriptomes and lineages of mouse embryogenesis (Chan et al, Nature 2019).</p>
+<p>This tutorial begins by showing users how to create a <code>PhyloVision</code> object and performing analysis on it. Then, we demonstrate how this object can be passed into the Hotspot pipeline that will identify de-novo transcriptional gene sets that are autocorrelated on the tree (this is described more below and in the <a href="spatialHotspot.html">Spatial Hotspot vignette</a>. Finally, we show users how to launch a report for viewing.</p>
+</div>
 <div id="preliminaries" class="section level1">
 <h1 class="hasAnchor">
 <a href="#preliminaries" class="anchor"></a>Preliminaries</h1>
 <p>If you have yet to install VISION, we recommend installing the package from Github to install this package. Full source code can be found at the VISION Github repository, available <a href="http://www.github.com/YosefLab/VISION">here</a>.</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">require</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/">devtools</a></span><span class="op">)</span>
-<span class="fu"><a href="https://devtools.r-lib.org//reference/remote-reexports.html">install_github</a></span><span class="op">(</span><span class="st">"YosefLab/VISION"</span><span class="op">)</span></code></pre></div>
+<pre class="r{eval=false}"><code><a href="https://devtools.r-lib.org/">require(devtools)
+install_github("YosefLab/VISION")</a></code></pre>
 <p>Once VISION and R are installed, you may load in VISION using <code><a href="https://yoseflab.github.io/VISION">library(VISION)</a></code>.</p>
-<p>Hotspot is a tool for identifying informative genes (and gene modules) in a single-cell dataset. Hotspot is installed directly from the git repository using the following command:</p>
+<p>To enable the Hotspot analysis below, install it directly from the git repository using the following command:</p>
 <pre><code>pip install git+https://github.com/yoseflab/Hotspot.git</code></pre>
+<p>If you are having trouble installing Hotspot, please refer to the documentation website <a href="https://yoseflab.github.io/Hotspot/">here</a>.</p>
 </div>
-<div id="using-phylovision" class="section level1">
+<div id="running-phylovision" class="section level1">
 <h1 class="hasAnchor">
-<a href="#using-phylovision" class="anchor"></a>Using PhyloVision</h1>
-<p>Running an analysis with vision consists of three steps:</p>
-<ol style="list-style-type: decimal">
-<li>Creating the PhyloVision object</li>
-<li>Running the <code>phyloAnalyze</code> function</li>
-<li>Running Hotspot</li>
-<li>Browsing results</li>
-</ol>
+<a href="#running-phylovision" class="anchor"></a>Running PhyloVision</h1>
 <p>First, we need to load VISION, reticulate and ape.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">knitr</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/knitr/man/opts_chunk.html">opts_chunk</a></span><span class="op">$</span><span class="fu">set</span><span class="op">(</span>echo <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
@@ -168,17 +167,16 @@
 
 <span class="co"># Read the tree</span>
 <span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/ape/man/read.tree.html">read.tree</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste</a></span><span class="op">(</span><span class="va">file_path</span>, <span class="st">"embryo_tree.newick"</span>, sep<span class="op">=</span><span class="st">"/"</span><span class="op">)</span><span class="op">)</span>
-<span class="co"># Collapse one mutations</span>
+
+<span class="co"># Collapse one mutations with ape</span>
 <span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/ape/man/collapse.singles.html">collapse.singles</a></span><span class="op">(</span><span class="va">tree</span><span class="op">)</span>
-<span class="va">expr</span> <span class="op">&lt;-</span> <span class="va">expr</span><span class="op">[</span>, <span class="va">tree</span><span class="op">$</span><span class="va">tip.label</span><span class="op">]</span>
 
 <span class="co"># Construct the Vision object</span>
 <span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/PhyloVision.html">PhyloVision</a></span><span class="op">(</span>tree<span class="op">=</span><span class="va">tree</span>, data<span class="op">=</span><span class="va">expr</span>, signatures<span class="op">=</span><span class="va">sig</span>, meta<span class="op">=</span><span class="va">meta</span>, num_neighbors<span class="op">=</span><span class="fl">30</span>, projection_genes<span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html">rownames</a></span><span class="op">(</span><span class="va">expr</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p><strong>Tree</strong></p>
 <p>The <code>ape</code> phylogeny object. Singleton edges should be collapsed prior to use. Ensure that leaf names correspond to same names used in the expression matrix.</p>
 <p><strong>Expression Data</strong></p>
-<p>The provided expression data should be scaled and normalized. It is recommended to apply more advanced normalization procedures such as batch correction or removal of technical confounders.</p>
-<p>The expression data should not be log-transformed prior to loading into VISION.</p>
+<p>The provided expression data should be library-normalized. The expression data should not be log-transformed prior to loading into VISION. For more information on the input to VISION, please refer to the central <a href="VISION_vignette.html">VISION vignette</a>.</p>
 <p><strong>Signatures</strong></p>
 <p>Signatures can be provided as a list of paths to signature files (*.gmt) or Signature objects.</p>
 <p>See <a href="Signatures.html">the signature vignette</a> for more information on finding or creating gene Signatures.</p>
@@ -198,10 +196,12 @@
 <div id="running-hotspot-analysis" class="section level2">
 <h2 class="hasAnchor">
 <a href="#running-hotspot-analysis" class="anchor"></a>Running Hotspot analysis</h2>
-<p>We can also perform Hotspot module analysis. The expression data is already logged for us.</p>
+<p>As mentioned above, PhyloVision can take advantage of the new Hotspot functionality in VISION. Briefly, Hotspot is a tool for inferring modules of genes that are significantly autocorrelated with one another and a particular latent space (e.g., the first 30 principal components of a gene expression matrix). When combined with PhyloVision, the Hotspot functionality will use the user-defined phylogeny as the latent space.</p>
+<p>We can invoke the Hotspot analysis with the function <code>runHotspot</code> and setting <code>tree=True</code>. Upon doing so, this will identify modules of genes and add these as Signatures to the VISION object for autocorrelation evaluation. Moreover, to add interpretability to this analysis, VISION will also compute the enrichment between all the user-defined Signatures and each Hotspot module. This information will be accessible on the web-based report by selecting the “Hotspot” mode in the top-right of the web-page.</p>
+<p>The full Hotspot API is exposed for analysis as well. For more on the Hotspot API see <a href="https://yoseflab.github.io/Hotspot/index.html">here</a>. To note, while it is typically not recommended to use <code>model="normal"</code> and <code>logdata=FALSE</code> in Hotpsot, we elect to do so because the data here has been previously log-normalized. In more typical single-cell anlayses where the user is working with a library-normalized count matrix, we suggest setting <code>model="danb"</code> and <code>logdata=TRUE</code>.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/runHotspot.html">runHotspot</a></span><span class="op">(</span><span class="va">vis</span>, model<span class="op">=</span><span class="st">"normal"</span>, tree<span class="op">=</span><span class="cn">TRUE</span>, min_gene_threshold<span class="op">=</span><span class="fl">50</span>, n_neighbors <span class="op">=</span> <span class="fl">30</span>, number_top_genes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">expr</span><span class="op">)</span>, logdata<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
-<p>The full Hotspot API is exposed for analysis as well. For more on the Hotspot API see <a href="https://yoseflab.github.io/Hotspot/index.html">here</a></p>
+<p>We have additionally exposed the full Hotspot pipeline should a user want to iterate with different parameters:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># Init Hotspot</span>
 <span class="va">hs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/hsInit.html">hsInit</a></span><span class="op">(</span><span class="va">vis</span>, model <span class="op">=</span> <span class="st">"normal"</span>, tree<span class="op">=</span><span class="cn">TRUE</span>, logdata<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span>
@@ -233,9 +233,13 @@
 <div id="viewing-results" class="section level2">
 <h2 class="hasAnchor">
 <a href="#viewing-results" class="anchor"></a>Viewing Results</h2>
-<p>Finally, we can launch the Vision browser.</p>
+<p>Finally, we can launch the Vision browser. If you are local, the following will work:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/viewResults,Vision-method.html">viewResults</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span></code></pre></div>
+<p>Else, if you would like to launch from a server, you can use the following settings:</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/viewResults,Vision-method.html">viewResults</a></span><span class="op">(</span><span class="va">vis</span>, host<span class="op">=</span><span class="st">'0.0.0.0'</span>, port<span class="op">=</span><span class="fl">8100</span>, browser<span class="op">=</span><span class="cn">F</span><span class="op">)</span></code></pre></div>
+<p>Now, the report will be visible from port <code>8100</code> from your server (e.g., <a href="http://server-name:8100/Results.html" class="uri">http://server-name:8100/Results.html</a>)</p>
 </div>
 </div>
   </div>

@@ -8,7 +8,7 @@ matrix_wilcox_cpp(
   data,
   cluster_num,
   cluster_denom,
-  jobs = getOption("mc.cores", 2L)
+  jobs = getOption("mc.cores", 1L)
 )
 }
 \arguments{
