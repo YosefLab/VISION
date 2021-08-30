@@ -84,7 +84,7 @@ localhost — saveAndViewResults,Vision-method" />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">VISION</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.0</span>
       </span>
     </div>
 
@@ -92,7 +92,7 @@ localhost — saveAndViewResults,Vision-method" />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -119,6 +119,12 @@ localhost — saveAndViewResults,Vision-method" />
       <a href="../articles/trajectories.html">Incorporating a Trajectory Model</a>
     </li>
     <li>
+      <a href="../articles/phyloVision.html">PhyloVision and Hotspot</a>
+    </li>
+    <li>
+      <a href="../articles/spatialHotspot.html">Spatial Data and Hotspot</a>
+    </li>
+    <li>
       <a href="../articles/web_only/Seurat.html">How To: Working with Seurat</a>
     </li>
     <li>
@@ -136,7 +142,7 @@ localhost — saveAndViewResults,Vision-method" />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/YosefLab/VISION/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -164,14 +170,14 @@ localhost</h1>
     </div>
 
     <pre class="usage"><span class='co'># S4 method for Vision</span>
-<span class='fu'>saveAndViewResults</span>(
-  <span class='no'>object</span>,
-  <span class='kw'>ofile</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>port</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>host</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>browser</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>name</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
-)</pre>
+<span class='fu'>saveAndViewResults</span><span class='op'>(</span>
+  <span class='va'>object</span>,
+  ofile <span class='op'>=</span> <span class='cn'>NULL</span>,
+  port <span class='op'>=</span> <span class='cn'>NULL</span>,
+  host <span class='op'>=</span> <span class='cn'>NULL</span>,
+  browser <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  name <span class='op'>=</span> <span class='cn'>NULL</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -216,15 +222,16 @@ is used.</p></td>
     viewResults(vis)</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
+    <pre class="examples"><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
 
-<span class='no'>vis</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='VISION-class.html'>Vision</a></span>(<span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>expMat</span>, <span class='kw'>signatures</span> <span class='kw'>=</span> <span class='no'>sigs</span>)
+<span class='va'>vis</span> <span class='op'>&lt;-</span> <span class='fu'><a href='Vision.html'>Vision</a></span><span class='op'>(</span>data <span class='op'>=</span> <span class='va'>expMat</span>, signatures <span class='op'>=</span> <span class='va'>sigs</span><span class='op'>)</span>
 
-<span class='fu'><a href='https://rdrr.io/r/base/options.html'>options</a></span>(<span class='kw'>mc.cores</span><span class='kw'>=</span><span class='fl'>10</span>) <span class='co'># Use 10 cores</span>
-<span class='no'>vis</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='analyze-Vision-method.html'>analyze</a></span>(<span class='no'>vis</span>)
+<span class='fu'><a href='https://rdrr.io/r/base/options.html'>options</a></span><span class='op'>(</span>mc.cores<span class='op'>=</span><span class='fl'>10</span><span class='op'>)</span> <span class='co'># Use 10 cores</span>
+<span class='va'>vis</span> <span class='op'>&lt;-</span> <span class='fu'><a href='analyze,Vision-method.html'>analyze</a></span><span class='op'>(</span><span class='va'>vis</span><span class='op'>)</span>
 
-<span class='fu'>saveAndViewResults</span>(<span class='no'>vis</span>, <span class='st'>'vision_results.rds'</span>) <span class='co'># Saves and launches dynamic output report</span>
-}</pre>
+<span class='fu'>saveAndViewResults</span><span class='op'>(</span><span class='va'>vis</span>, <span class='st'>'vision_results.rds'</span><span class='op'>)</span> <span class='co'># Saves and launches dynamic output report</span>
+<span class='op'>}</span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -236,11 +243,11 @@ is used.</p></td>
 
       <footer>
       <div class="copyright">
-  <p>Developed by Matt Jones, David Detomaso, Tal Ashuach.</p>
+  <p>Developed by Matt Jones, David Detomaso, Tal Ashuach, Yanay Rosen.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

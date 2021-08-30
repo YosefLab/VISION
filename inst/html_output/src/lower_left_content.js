@@ -926,7 +926,6 @@ function drawDistChart(node, values, logScale, y=null, selectedCells=null, cellN
             detail: {cells: cellIds}
         })
         window.dispatchEvent(event);
-        console.log(cellIds)
     });
 }
 

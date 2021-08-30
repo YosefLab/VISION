@@ -39,7 +39,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">VISION</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.0</span>
       </span>
     </div>
 
@@ -47,7 +47,7 @@
       <ul class="nav navbar-nav">
 <li>
   <a href="../index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -74,6 +74,12 @@
       <a href="../articles/trajectories.html">Incorporating a Trajectory Model</a>
     </li>
     <li>
+      <a href="../articles/phyloVision.html">PhyloVision and Hotspot</a>
+    </li>
+    <li>
+      <a href="../articles/spatialHotspot.html">Spatial Data and Hotspot</a>
+    </li>
+    <li>
       <a href="../articles/web_only/Seurat.html">How To: Working with Seurat</a>
     </li>
     <li>
@@ -91,7 +97,7 @@
 <ul class="nav navbar-nav navbar-right">
 <li>
   <a href="https://github.com/YosefLab/VISION/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -105,7 +111,7 @@
 
       
 
-      </header><script src="VISION-vignette_files/header-attrs-2.3/header-attrs.js"></script><script src="VISION-vignette_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
+      </header><script src="VISION-vignette_files/header-attrs-2.8/header-attrs.js"></script><script src="VISION-vignette_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Introduction to VISION</h1>
@@ -122,9 +128,10 @@
 <h1 class="hasAnchor">
 <a href="#preliminaries" class="anchor"></a>Preliminaries</h1>
 <p>If you have yet to install VISION, we recommend installing the package from Github to install this package. Full source code can be found at the VISION Github repository, available <a href="http://www.github.com/YosefLab/VISION">here</a>.</p>
-<div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">require</a></span>(<span class="no">devtools</span>)
-<span class="fu"><a href="https://devtools.r-lib.org//reference/remote-reexports.html">install_github</a></span>(<span class="st">"YosefLab/VISION"</span>)</pre></body></html></div>
-<p>Once VISION and R are installed, you may load in VISION using <code><a href="https://yoseflab.github.io/VISION//reference">library(VISION)</a></code>.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">require</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/">devtools</a></span><span class="op">)</span>
+<span class="fu"><a href="https://devtools.r-lib.org//reference/remote-reexports.html">install_github</a></span><span class="op">(</span><span class="st">"YosefLab/VISION"</span><span class="op">)</span></code></pre></div>
+<p>Once VISION and R are installed, you may load in VISION using <code><a href="https://yoseflab.github.io/VISION">library(VISION)</a></code>.</p>
 </div>
 <div id="using-vision" class="section level1">
 <h1 class="hasAnchor">
@@ -140,26 +147,27 @@
 <a href="#creating-the-vision-object" class="anchor"></a>Creating the VISION object</h2>
 <p>Creating the VISION object requires a gene expression matrix and <em>either</em> a list of Gene Signatures or a data.frame of meta-data.</p>
 <p>In this example - both are provided.</p>
-<div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="co"># Load VISION</span>
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">VISION</span>)
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># Load VISION</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://yoseflab.github.io/VISION">VISION</a></span><span class="op">)</span>
 
 <span class="co"># Read in expression counts (Genes X Cells)</span>
-<span class="no">counts</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.table</a></span>(<span class="st">"data/expression_counts.txt.gz"</span>,
-                     <span class="kw">header</span> <span class="kw">=</span> <span class="fl">TRUE</span>,
-                     <span class="kw">sep</span> <span class="kw">=</span> <span class="st">'\t'</span>,
-                     <span class="kw">row.names</span> <span class="kw">=</span> <span class="fl">1</span>)
+<span class="va">counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.table</a></span><span class="op">(</span><span class="st">"data/expression_counts.txt.gz"</span>,
+                     header <span class="op">=</span> <span class="cn">TRUE</span>,
+                     sep <span class="op">=</span> <span class="st">'\t'</span>,
+                     row.names <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>
 
 <span class="co"># Scale counts within a sample</span>
-<span class="no">n.umi</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html">colSums</a></span>(<span class="no">counts</span>)
+<span class="va">n.umi</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html">colSums</a></span><span class="op">(</span><span class="va">counts</span><span class="op">)</span>
 
-<span class="no">scaled_counts</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span>(<span class="no">counts</span>) / <span class="no">n.umi</span>) * <span class="fu"><a href="https://rdrr.io/r/stats/median.html">median</a></span>(<span class="no">n.umi</span>)
+<span class="va">scaled_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="va">counts</span><span class="op">)</span> <span class="op">/</span> <span class="va">n.umi</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/stats/median.html">median</a></span><span class="op">(</span><span class="va">n.umi</span><span class="op">)</span>
 
 <span class="co"># Read in meta data (Cells x Vars)</span>
-<span class="no">meta</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.table</a></span>(<span class="st">"data/glio_meta.txt.gz"</span>, <span class="kw">sep</span><span class="kw">=</span><span class="st">'\t'</span>, <span class="kw">header</span><span class="kw">=</span><span class="no">T</span>, <span class="kw">row.names</span><span class="kw">=</span><span class="fl">1</span>)
+<span class="va">meta</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.table</a></span><span class="op">(</span><span class="st">"data/glio_meta.txt.gz"</span>, sep<span class="op">=</span><span class="st">'\t'</span>, header<span class="op">=</span><span class="cn">T</span>, row.names<span class="op">=</span><span class="fl">1</span><span class="op">)</span>
 
-<span class="no">vis</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/VISION-class.html">Vision</a></span>(<span class="no">scaled_counts</span>,
-              <span class="kw">signatures</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"data/h.all.v5.2.symbols.gmt"</span>),
-              <span class="kw">meta</span> <span class="kw">=</span> <span class="no">meta</span>)</pre></body></html></div>
+<span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Vision.html">Vision</a></span><span class="op">(</span><span class="va">scaled_counts</span>,
+              signatures <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"data/h.all.v5.2.symbols.gmt"</span><span class="op">)</span>,
+              meta <span class="op">=</span> <span class="va">meta</span><span class="op">)</span></code></pre></div>
 <p><strong>Expression Data</strong></p>
 <p>The provided expression data should be scaled and normalized. The example above shows just a simple UMI-scaling, but it is recommended to apply more advanced normalization procedures such as batch correction or removal of technical confounders.</p>
 <p>The expression data should not be log-transformed prior to loading into VISION.</p>
@@ -176,32 +184,34 @@
 <h2 class="hasAnchor">
 <a href="#running-an-analysis" class="anchor"></a>Running an Analysis</h2>
 <p>To run an analysis, simply call the analyze function:</p>
-<div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="co"># Set the number of threads when running parallel computations</span>
-<span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span>(<span class="kw">mc.cores</span> <span class="kw">=</span> <span class="fl">2</span>)
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># Set the number of threads when running parallel computations</span>
+<span class="co"># On Windows, this must either be omitted or set to 1</span>
+<span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span>mc.cores <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>
 
-<span class="no">vis</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/analyze-Vision-method.html">analyze</a></span>(<span class="no">vis</span>)</pre></body></html></div>
+<span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/analyze,Vision-method.html">analyze</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span></code></pre></div>
 </div>
 <div id="viewing-results" class="section level2">
 <h2 class="hasAnchor">
 <a href="#viewing-results" class="anchor"></a>Viewing Results</h2>
-<p>With the processed Vision object, a dynamic web report can be generated with the <code><a href="../reference/viewResults.html">viewResults()</a></code> function.</p>
-<div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="fu"><a href="../reference/viewResults.html">viewResults</a></span>(<span class="no">vis</span>)</pre></body></html></div>
+<p>With the processed Vision object, a dynamic web report can be generated with the <code><a href="../reference/viewResults,Vision-method.html">viewResults()</a></code> function.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/viewResults,Vision-method.html">viewResults</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span></code></pre></div>
 <p>This will launch a browser running the interactive report.</p>
 <p>Other options (port, host, browser) can be provided to control how this occurs. For example, if you are launching a report on a remote server (such as an AWS instance) and want to make it accessible to others, run this with <code>host="0.0.0.0"</code>, some selected port number (e.g. <code>port=8888</code>), and <code>browser=FALSE</code> (so a browser isn’t auto-opened). Then the report should be available at “&lt;your instance IP address&gt;:8888”. (Note: You will also likely need to enable inbound traffic on your selected port for this to work correctly).</p>
 <p>Alternately, you can work with the VISION object directly in R. For example:</p>
-<div class="sourceCode" id="cb5"><html><body><pre class="r"><span class="co"># Display autocorrelation coefficients for signatures</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="no">vis</span>@<span class="kw">SigConsistencyScores</span>@<span class="kw">sigProjMatrix</span>)
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># Display autocorrelation coefficients, p-values for signatures</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/getSignatureAutocorrelation,Vision-method.html">getSignatureAutocorrelation</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span><span class="op">)</span>
 
-<span class="co"># View autocorrelation empirical p-values</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(<span class="no">vis</span>@<span class="kw">SigConsistencyScores</span>@<span class="kw">emp_pMatrix</span>)
 
 <span class="co"># Plot signature scores for a signature of interest</span>
-<span class="no">tsne</span> <span class="kw">&lt;-</span> <span class="no">vis</span>@<span class="kw">Projections</span>$<span class="no">tSNE30</span>
-<span class="no">sigScores</span> <span class="kw">&lt;-</span> <span class="no">vis</span>@<span class="kw">sigScores</span>[, <span class="st">"HALLMARK_INTERFERON_GAMMA_RESPONSE"</span>]
+<span class="va">tsne</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/getProjections,Vision-method.html">getProjections</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span><span class="op">[[</span><span class="st">"tSNE30"</span><span class="op">]</span><span class="op">]</span>
+<span class="va">sigScores</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/getSignatureScores,Vision-method.html">getSignatureScores</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span><span class="op">[</span>, <span class="st">"HALLMARK_INTERFERON_GAMMA_RESPONSE"</span><span class="op">]</span>
 
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">ggplot2</span>)
-<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span>() + <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="kw">x</span><span class="kw">=</span><span class="no">tsne</span>[, <span class="fl">1</span>], <span class="kw">y</span><span class="kw">=</span><span class="no">tsne</span>[, <span class="fl">2</span>], <span class="kw">color</span><span class="kw">=</span><span class="no">sigScores</span>) + <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html">geom_point</a></span>()</pre></body></html></div>
-<p>For more details on the structure of the VISION object see XXX.</p>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org">ggplot2</a></span><span class="op">)</span>
+<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">tsne</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>, y<span class="op">=</span><span class="va">tsne</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span>, color<span class="op">=</span><span class="va">sigScores</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html">geom_point</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
+<p>For more details on accessing computed data within the VISION object, see the <a href="https://yoseflab.github.io/VISION/reference/index.html">References</a> page.</p>
 </div>
 <div id="customizing-the-latent-space" class="section level2">
 <h2 class="hasAnchor">
@@ -243,12 +253,13 @@
 <a href="#adding-2d-projections" class="anchor"></a>Adding 2d Projections</h2>
 <p>Two-dimensional projections are used to visualize the data in the output report.</p>
 <p>By default, VISION computes tSNE on the latent space for visualization. However, other options are availabled via the <code>projection_methods</code> argument.</p>
-<p>Often times, users will have pre-computed projections that they would like to use for visualizing their data (e.g. a pre-computed tSNE, or UMAP projection). In this case, the <code><a href="../reference/addProjection-Vision-method.html">addProjection()</a></code> method can be used to add this view of the data to the output report.</p>
-<div class="sourceCode" id="cb6"><html><body><pre class="r"><span class="no">projection</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span>(<span class="st">"umap_results.csv"</span>)
+<p>Often times, users will have pre-computed projections that they would like to use for visualizing their data (e.g. a pre-computed tSNE, or UMAP projection). In this case, the <code><a href="../reference/addProjection,Vision-method.html">addProjection()</a></code> method can be used to add this view of the data to the output report.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">projection</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span><span class="op">(</span><span class="st">"umap_results.csv"</span><span class="op">)</span>
 
 <span class="co"># projection is a matirx or data.frame of dimension (Cells x 2)</span>
 
-<span class="no">vis</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/addProjection-Vision-method.html">addProjection</a></span>(<span class="no">vis</span>, <span class="st">"UMAP"</span>, <span class="no">projection</span>)</pre></body></html></div>
+<span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/addProjection,Vision-method.html">addProjection</a></span><span class="op">(</span><span class="va">vis</span>, <span class="st">"UMAP"</span>, <span class="va">projection</span><span class="op">)</span></code></pre></div>
 </div>
 </div>
   </div>
@@ -264,11 +275,11 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Matt Jones, David Detomaso, Tal Ashuach.</p>
+  <p>Developed by Matt Jones, David Detomaso, Tal Ashuach, Yanay Rosen.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

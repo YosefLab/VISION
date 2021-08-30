@@ -61,8 +61,6 @@ Signature <- function(sigDict, name, source, metaData="") {
     stop("Missing source file.")
   }
 
-  names(sigDict) <- toupper(names(sigDict))
-
   .Object <- new("Signature", sigDict = sigDict, name = name,
                  source = source, metaData = metaData)
 

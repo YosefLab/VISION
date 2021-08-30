@@ -10,6 +10,8 @@ setClassUnion("numericORNULL", members = c("numeric", "NULL"))
 setClassUnion("matrixORSparse", members = c("matrix", "dgCMatrix"))
 setClassUnion("matrixORNULL", members = c("matrix", "NULL"))
 setClassUnion("dataframeORNULL", members = c("data.frame", "NULL"))
+setClassUnion("rawORNULL", members = c("raw", "NULL"))
+
 
 # setClassUnion("treeorNull", members=c("phylo", "NULL"))
 # setClassUnion("pythonorNull", members = c("python.builtin.object", "NULL"))
@@ -121,7 +123,7 @@ Vision <- setClass("Vision",
         Pools = "list",
         LatentSpace = "matrix",
         LatentTrajectory = "trajectoryORNULL",
-        Hotspot = "list",
+        Hotspot = "rawORNULL",
         ModuleSignatureEnrichment = "list",
         ModuleHotspotScores = "data.frame",
         Viewer = "list",
@@ -148,7 +150,7 @@ Vision <- setClass("Vision",
         Pools = list(),
         LatentSpace = matrix(NA, 1, 1),
         LatentTrajectory = NULL,
-        Hotspot = list(),
+        Hotspot = NULL,
         ModuleSignatureEnrichment = list(),
         ModuleHotspotScores = data.frame(),
         Viewer = list(),

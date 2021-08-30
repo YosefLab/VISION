@@ -23,6 +23,8 @@ set.seed(6473) ## for reproducibility
 
 # Introduction
 
+*Note: this feature is deprecated in VISION 3.0+.*
+
 To compute Signature consistency scores, VISION needs a cell-cell similarity metric in order to
 build the neighborhood graph.  By default, VISION runs PCA and uses euclidean distances in the reduced
 space for this purpose.  However, if the cells' variation is better modeled by a trajectory (either

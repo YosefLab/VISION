@@ -141,6 +141,15 @@ Upper_Left_Content.prototype.init = function()
     }
     if(!has_dendrogram){
         dendrogramTab.hide()
+        // also hide the collapse tabs
+        $("#headingTwo").hide()
+        $("#headingOne").hide()
+        //$("#upper-left-card").css("max-height", "40%")
+        //$("#table-div-container").css("overflow", "scroll")
+        $("#lower-left-card").css("max-height", "60%")
+        $("#lower-left-card").css("overflow", "scroll")
+        //$("#lower-left-content").css("display", "inline-block")
+        
     }
 
   /*
@@ -2187,8 +2196,8 @@ Dend.prototype.render_dend = function()
               0.3137254901960784, 0.3764705882352941, 0.4392156862745098, 0.5019607843137255, 0.5647058823529412,
               0.6274509803921569, 0.6901960784313725, 0.7529411764705882, 0.8156862745098039, 0.8784313725490196, 0.9411764705882353, 1];
         } else {
-            color_range = ['#d8d8d8','#395252','#000000'];
-            color_domain = [0, 0.5, 1]
+            color_range = ['#d8d8d8', '#952E25'];
+            color_domain = [0, 1]
         }
 
         attribute_to_color = function(d) {
@@ -2224,10 +2233,9 @@ Dend.prototype.render_dend = function()
       }
     }
     
-
-    
     this.phyloPlotly.setMapping(plotted);
     this.phyloPlotly.setNodeColor(attribute_to_color);
+    
     var self = this;
     $("#dend_layout").off();
     $("#dend_expand_all").off();
@@ -2270,15 +2278,21 @@ Dend.prototype.render_dend = function()
     this.phyloPlotly.init();
     this.update_tree_selection()
     this.setLoadingStatus(false);
-    console.log("gere")
     
     var collapseSettings = get_global_status("dendro_collapse_settings")
     
     if (typeof(collapseSettings["depth"]) !== "undefined") {
       this.phyloPlotly.collapseToDepth(collapseSettings["depth"]);
     } else {
-      this.phyloPlotly.collapseToDepth(4);
-      collapseSettings["depth"] = 4;
+      // if small enough tree don't collapse automatically
+      var ncells = get_global_status("ncells");
+      var depth = self.phyloPlotly.maxDepth;
+      if (ncells >= 1500) {
+        depth = 5;
+      }
+      $("#dend_collapse_to").val(depth);
+      this.phyloPlotly.collapseToDepth(depth);
+      collapseSettings["depth"] = depth;
       this.stored_collapse_settings = collapseSettings;
     }
     

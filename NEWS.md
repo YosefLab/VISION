@@ -1,3 +1,14 @@
+# VISION 3.0.0
+
+Major version bump!
+
+* Added support for Phylogenies as latent spaces in core VISION and integrated with VISION api
+* Re-engineered UI into Signature Autocorrelation and Hotspot views
+* Integrated [Hotspot](https://yoseflab.github.io/Hotspot/index.html) into VISION analysis and report UI.
+* Deprecated support for trajectories and LC Annotator.
+* New color-scheme for gene expression values
+
+
 # VISION 2.1.0
 
 Added parameter `sig_gene_threshold` with **changed default behavior**

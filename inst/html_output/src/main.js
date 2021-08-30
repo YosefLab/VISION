@@ -162,7 +162,6 @@ function set_global_status(update){
             var mod_gene_list_promise = api.modules.mod_gene_list(get_global_status("enrichment_module"))
             .then(new_info => {
                 global_data.mod_gene_list = new_info;
-                console.log(new_info);
             })
         
             all_promises.push(mod_gene_list_promise);
@@ -247,7 +246,7 @@ window.onload = function()
                 .removeClass('disabled')
         }
 
-        if(info.has_lca){
+        if(info.has_mods){
             $('#nav-bar')
                 .find(".nav-link[data-main-vis='genes']")
                 .removeClass('disabled')

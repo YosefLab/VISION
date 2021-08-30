@@ -11,7 +11,6 @@
     <link rel="stylesheet" href="thirdparty/chosen/chosen.min.css">
     <link rel="stylesheet" href="thirdparty/bootstrap/bootstrap.min.css">
     <link rel="stylesheet" href="thirdparty/datatables/datatables.min.css">
-    <link rel="stylesheet" href="thirdparty/phylotree/phylotree.css">
 
     <script type="text/javascript" src="thirdparty/jquery/jquery-2.1.4.min.js"></script>
     <script type="text/javascript" src="thirdparty/d3/d3.min.js"></script>
@@ -24,7 +23,6 @@
     <script type="text/javascript" src="thirdparty/popper/popper.js/dist/umd/popper.min.js"></script>
     <script type="text/javascript" src="thirdparty/plotly/plotly.js-1.45.2/dist/plotly.min.js"></script>
     <script type="text/javascript" src="thirdparty/hsluv/hsluv-0.1.0.min.js"></script>
-    <script type='text/javascript' src='thirdparty/phylotree/phylotree.js'></script>
 
 
 
@@ -66,7 +64,7 @@
     </div>
     <div id="main-content">
         <div id="left-content">
-            <div class="card">
+            <div id="upper-left-card" class="card" >
               <div class="card-header" id="headingOne">
                 <h5 class="mb-0">
                   <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
@@ -107,8 +105,8 @@
                   </div>
   
                   <div class="tab-content upper-left-section-content" style="padding: 5px; display: block">
-                      <div class="tab-pane show active" id="table-div-container" role="tabpanel" aria-labelledby="sig-table-tab" style="overflow-x: scroll; overflow-y: scroll; max-height: 500px;">
-                          <div class="sig-tables-header">
+                      <div class="tab-pane show active" id="table-div-container" role="tabpanel" aria-labelledby="sig-table-tab" style="overflow: auto; max-height: 500px">
+                          <div class="sig-tables-header" style="overflow-y: auto">
                               <table class="sig-table">
                                   <thead>
                                       <tr class="proj-row">
@@ -177,7 +175,7 @@
                               </div>
                           </div>
                       </div>
-                      <div class="tab-pane" id="genes-table" role="tabpanel" aria-labelledby="genes-table-tab">
+                      <div class="tab-pane" id="genes-table" role="tabpanel" aria-labelledby="genes-table-tab" style="height: 200px">
                           <div>
                               <table class='label-table'>
                                   <tr>
@@ -282,7 +280,7 @@
                   </button>
                 </h5>
               </div>
-              <div id="collapseThree" class="collapse multi-collapse show" aria-labelledby="headingThree" style="padding: 10px">
+              <div id="collapseThree" class="collapse multi-collapse show" aria-labelledby="headingThree" style="padding: 10px;">
                 <div id="upper-middle-content">
                   <div class="tab-content upper-left-section-content">
                     <div class="tab-pane active container">
@@ -294,7 +292,7 @@
                         </div>
                         <div class="form-group">
                           <label>
-                            Collapse To <input class="form-control" style="margin-left: 10px;" type="number" value="4" id="dend_collapse_to">
+                            Collapse To <input class="form-control" style="margin-left: 10px;" type="number" value="5" id="dend_collapse_to">
                           </label>
                           <select id="collapse_select">
                             <option selected value="mode">Mode</option>
@@ -327,7 +325,7 @@
               </div>
             </div>
             <!-- end of new section -->
-            <div class="card">
+            <div id="lower-left-card" class="card">
               <div class="card-header" id="headingTwo">
                 <h5 class="mb-0">
                   <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">

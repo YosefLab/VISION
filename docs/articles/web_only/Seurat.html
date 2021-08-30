@@ -39,7 +39,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../../index.html">VISION</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.0</span>
       </span>
     </div>
 
@@ -47,7 +47,7 @@
       <ul class="nav navbar-nav">
 <li>
   <a href="../../index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -74,6 +74,12 @@
       <a href="../../articles/trajectories.html">Incorporating a Trajectory Model</a>
     </li>
     <li>
+      <a href="../../articles/phyloVision.html">PhyloVision and Hotspot</a>
+    </li>
+    <li>
+      <a href="../../articles/spatialHotspot.html">Spatial Data and Hotspot</a>
+    </li>
+    <li>
       <a href="../../articles/web_only/Seurat.html">How To: Working with Seurat</a>
     </li>
     <li>
@@ -91,7 +97,7 @@
 <ul class="nav navbar-nav navbar-right">
 <li>
   <a href="https://github.com/YosefLab/VISION/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -105,7 +111,7 @@
 
       
 
-      </header><script src="Seurat_files/header-attrs-2.3/header-attrs.js"></script><script src="Seurat_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
+      </header><script src="Seurat_files/header-attrs-2.8/header-attrs.js"></script><script src="Seurat_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>How To: Working with Seurat</h1>
@@ -159,26 +165,30 @@
 <h2 class="hasAnchor">
 <a href="#examples" class="anchor"></a>Examples</h2>
 <p>Assuming you already have a Seurat object defined as <code>seurat.obj</code>, you can use it in this way:</p>
-<div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="no">signatures</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"data/h.all.v5.2.symbols.gmt"</span>)
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">signatures</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"data/h.all.v5.2.symbols.gmt"</span><span class="op">)</span>
 
-<span class="no">vision.obj</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../../reference/VISION-class.html">Vision</a></span>(<span class="no">seurat.obj</span>, <span class="kw">signatures</span> <span class="kw">=</span> <span class="no">signatures</span>)
+<span class="va">vision.obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../../reference/Vision.html">Vision</a></span><span class="op">(</span><span class="va">seurat.obj</span>, signatures <span class="op">=</span> <span class="va">signatures</span><span class="op">)</span>
 
-<span class="no">vision.obj</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../../reference/analyze-Vision-method.html">analyze</a></span>(<span class="no">vision.obj</span>)
+<span class="va">vision.obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../../reference/analyze,Vision-method.html">analyze</a></span><span class="op">(</span><span class="va">vision.obj</span><span class="op">)</span>
 
-<span class="fu"><a href="../../reference/viewResults.html">viewResults</a></span>(<span class="no">vision.obj</span>)</pre></body></html></div>
+<span class="fu"><a href="../../reference/viewResults,Vision-method.html">viewResults</a></span><span class="op">(</span><span class="va">vision.obj</span><span class="op">)</span></code></pre></div>
 <p>The above call would take the “pca” dimensionality reduction from <code>seurat.obj</code> if it is defined. If you instead had run a Diffusion Map using Seurat and wanted to use that as your latent space, you could specify that like this:</p>
-<div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="no">vision.obj</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../../reference/VISION-class.html">Vision</a></span>(<span class="no">seurat.obj</span>,
-    <span class="kw">signatures</span> <span class="kw">=</span> <span class="no">signatures</span>,
-    <span class="no">dimRed</span> <span class="kw">&lt;-</span> <span class="st">"dm"</span>)</pre></body></html></div>
-<p>Any of the other <code><a href="../../reference/VISION-class.html">Vision()</a></code> constructor parameters can also be passed here. For example, if you wanted to enable microclustering with 5 cells per micropool:</p>
-<div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="no">vision.obj</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../../reference/VISION-class.html">Vision</a></span>(<span class="no">seurat.obj</span>,
-    <span class="kw">signatures</span> <span class="kw">=</span> <span class="no">signatures</span>,
-    <span class="kw">pool</span> <span class="kw">=</span> <span class="no">T</span>, <span class="kw">cellsPerPartition</span> <span class="kw">=</span> <span class="fl">5</span>
-    )</pre></body></html></div>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">vision.obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../../reference/Vision.html">Vision</a></span><span class="op">(</span><span class="va">seurat.obj</span>,
+    signatures <span class="op">=</span> <span class="va">signatures</span>,
+    <span class="va">dimRed</span> <span class="op">&lt;-</span> <span class="st">"dm"</span><span class="op">)</span></code></pre></div>
+<p>Any of the other <code><a href="../../reference/Vision.html">Vision()</a></code> constructor parameters can also be passed here. For example, if you wanted to enable microclustering with 5 cells per micropool:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">vision.obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../../reference/Vision.html">Vision</a></span><span class="op">(</span><span class="va">seurat.obj</span>,
+    signatures <span class="op">=</span> <span class="va">signatures</span>,
+    pool <span class="op">=</span> <span class="cn">T</span>, cellsPerPartition <span class="op">=</span> <span class="fl">5</span>
+    <span class="op">)</span></code></pre></div>
 <p>By default, Vision will still run tSNE as part of the main analysis pipeline. You may wish to skip this if a visualization has already been run in Seurat. To instruction VISION to not run any additional visualization projections, set <code>projection_methods = NULL</code> like so:</p>
-<div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="no">vision.obj</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../../reference/VISION-class.html">Vision</a></span>(<span class="no">seurat.obj</span>,
-    <span class="kw">signatures</span> <span class="kw">=</span> <span class="no">signatures</span>,
-    <span class="kw">projection_methods</span> <span class="kw">=</span> <span class="kw">NULL</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">vision.obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../../reference/Vision.html">Vision</a></span><span class="op">(</span><span class="va">seurat.obj</span>,
+    signatures <span class="op">=</span> <span class="va">signatures</span>,
+    projection_methods <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></code></pre></div>
 </div>
   </div>
 
@@ -191,11 +201,11 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Matt Jones, David Detomaso, Tal Ashuach.</p>
+  <p>Developed by Matt Jones, David Detomaso, Tal Ashuach, Yanay Rosen.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

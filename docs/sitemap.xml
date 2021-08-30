@@ -10,6 +10,9 @@
     <loc>https://yoseflab.github.io/VISION//reference/NormData.html</loc>
   </url>
   <url>
+    <loc>https://yoseflab.github.io/VISION//reference/PhyloVision-class.html</loc>
+  </url>
+  <url>
     <loc>https://yoseflab.github.io/VISION//reference/ServerExpression.html</loc>
   </url>
   <url>
@@ -31,6 +34,9 @@
     <loc>https://yoseflab.github.io/VISION//reference/VISION.html</loc>
   </url>
   <url>
+    <loc>https://yoseflab.github.io/VISION//reference/addHotspotToVision.html</loc>
+  </url>
+  <url>
     <loc>https://yoseflab.github.io/VISION//reference/addLatentSpace.html</loc>
   </url>
   <url>
@@ -47,6 +53,9 @@
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/analyze-Vision-method.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/analyzeHotspotObjectVision.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/analyzeLocalCorrelations.html</loc>
@@ -118,6 +127,12 @@
     <loc>https://yoseflab.github.io/VISION//reference/calcSignatureScores.html</loc>
   </url>
   <url>
+    <loc>https://yoseflab.github.io/VISION//reference/calc_mod_sig_enrichment.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/calc_set_enrichment.html</loc>
+  </url>
+  <url>
     <loc>https://yoseflab.github.io/VISION//reference/calculateTrajectoryDistances.html</loc>
   </url>
   <url>
@@ -125,6 +140,9 @@
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/clusterCells.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/clusterModScores.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/clusterSigScores.html</loc>
@@ -169,7 +187,16 @@
     <loc>https://yoseflab.github.io/VISION//reference/createTrajectoryMetaData.html</loc>
   </url>
   <url>
+    <loc>https://yoseflab.github.io/VISION//reference/depthBasedCladewiseTreeCluster.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/depthBasedTreeCluster.html</loc>
+  </url>
+  <url>
     <loc>https://yoseflab.github.io/VISION//reference/dot-colNormHelper.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/draw_hotspot_heatmap.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/evalSigGeneImportance.html</loc>
@@ -203,6 +230,9 @@
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/geary_sig_v_proj.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/generateOverlapSignatures.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/generatePermutationNull.html</loc>
@@ -262,7 +292,34 @@
     <loc>https://yoseflab.github.io/VISION//reference/get_children.html</loc>
   </url>
   <url>
+    <loc>https://yoseflab.github.io/VISION//reference/get_max_cluster_size.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/get_min_cluster_size.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/get_parent.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/group_modules_enrichment.html</loc>
+  </url>
+  <url>
     <loc>https://yoseflab.github.io/VISION//reference/hasUnnormalizedData.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/hsCalculateModuleScores.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/hsComputeAutoCorrelations.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/hsComputeLocalCorrelations.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/hsCreateKnnGraph.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/hsInit.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/ilog1p.html</loc>
@@ -280,6 +337,18 @@
     <loc>https://yoseflab.github.io/VISION//reference/launchServer.html</loc>
   </url>
   <url>
+    <loc>https://yoseflab.github.io/VISION//reference/lcaBasedHotspotNeighbors.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/lcaBasedTreeKNN.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/lca_based_depth.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/loadHotspotObject.html</loc>
+  </url>
+  <url>
     <loc>https://yoseflab.github.io/VISION//reference/louvainCluster.html</loc>
   </url>
   <url>
@@ -295,10 +364,19 @@
     <loc>https://yoseflab.github.io/VISION//reference/matrix_wilcox_cpp.html</loc>
   </url>
   <url>
+    <loc>https://yoseflab.github.io/VISION//reference/maxSizeCladewiseTreeCluster.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/minSizeCladeNeighbors.html</loc>
+  </url>
+  <url>
     <loc>https://yoseflab.github.io/VISION//reference/noNormalization.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/pearsonCorrToJSON.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/phyloAnalyze-PhyloVision-method.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/poolCells.html</loc>
@@ -352,7 +430,13 @@
     <loc>https://yoseflab.github.io/VISION//reference/rowVarsSp.html</loc>
   </url>
   <url>
+    <loc>https://yoseflab.github.io/VISION//reference/runHotspot.html</loc>
+  </url>
+  <url>
     <loc>https://yoseflab.github.io/VISION//reference/saveAndViewResults-Vision-method.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//reference/saveHSBytestToPickle.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/sigConsistencyScores.html</loc>
@@ -385,13 +469,10 @@
     <loc>https://yoseflab.github.io/VISION//reference/translateCellPositions.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/treeCluster.html</loc>
+    <loc>https://yoseflab.github.io/VISION//reference/treeClusterMinCladeSize.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/treeCluster2.html</loc>
-  </url>
-  <url>
-    <loc>https://yoseflab.github.io/VISION//reference/treeCluster3.html</loc>
+    <loc>https://yoseflab.github.io/VISION//reference/trivial_dist.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//reference/ultrametric_tree.html</loc>
@@ -410,6 +491,12 @@
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//articles/micropooling.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//articles/phyloVision.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION//articles/spatialHotspot.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION//articles/trajectories.html</loc>

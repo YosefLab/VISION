@@ -97,6 +97,7 @@ To run an analysis, simply call the analyze function:
 
 ```{r, collapse=T, message=F, eval=F}
 # Set the number of threads when running parallel computations
+# On Windows, this must either be omitted or set to 1
 options(mc.cores = 2)
 
 vis <- analyze(vis)
@@ -117,22 +118,19 @@ Other options (port, host, browser) can be provided to control how this occurs. 
 Alternately, you can work with the VISION object directly in R. For example:
 
 ```{r, collapse=T, message=F, results=F, eval=F}
-# Display autocorrelation coefficients for signatures
-head(vis@SigConsistencyScores@sigProjMatrix)
+# Display autocorrelation coefficients, p-values for signatures
+head(getSignatureAutocorrelation(vis))
 
-# View autocorrelation empirical p-values
-head(vis@SigConsistencyScores@emp_pMatrix)
 
 # Plot signature scores for a signature of interest
-tsne <- vis@Projections$tSNE30
-sigScores <- vis@sigScores[, "HALLMARK_INTERFERON_GAMMA_RESPONSE"]
+tsne <- getProjections(vis)[["tSNE30"]]
+sigScores <- getSignatureScores(vis)[, "HALLMARK_INTERFERON_GAMMA_RESPONSE"]
 
 library(ggplot2)
 ggplot() + aes(x=tsne[, 1], y=tsne[, 2], color=sigScores) + geom_point()
 ```
 
-For more details on the structure of the VISION object see XXX.
-
+For more details on accessing computed data within the VISION object, see the [References](https://yoseflab.github.io/VISION/reference/index.html) page.
 
 ## Customizing the Latent Space
 

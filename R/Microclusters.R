@@ -326,6 +326,7 @@ readjust_clusters <- function(clusters, data, cellsPerPartition=100) {
     return(clusters)
 }
 
+
 #' Pools columns of a numeric matrix
 #'
 #' Uses the provided pools to merge columns of the supplied data matrix
@@ -383,6 +384,7 @@ poolMatrixRows <- function(data, pools) {
     return(pooled_data)
 }
 
+
 #' create "super-cells" by pooling together single cells
 #' @param expr expression data (genes x cells matrix)
 #' @param pools cluster association of each cell
@@ -418,13 +420,15 @@ poolMatrixCols_Inner <- function(expr, pools) {
 
 
 #' Performs a binary search on a depth d such that 
-#' if depth(u, v) <= d then u and v are in the same cluster
+#' if depth(LCA(u, v)) <= d then u and v are in the same cluster
 #'
 #' @param tree object of class phylo
-#' @param reach number of clusters to attempt to generate
+#' @param target number of clusters to attempt to generate
 #' @return List of clusters, each entry being a vector of indices representing
 #' samples in the cluster.
-treeCluster <- function(tree, reach=10) {
+#' 
+#' @export
+depthBasedTreeCluster <- function(tree, target=10) {
     high <- length(tree$tip.label)
     low <- 0
     while (T) {
@@ -453,12 +457,12 @@ treeCluster <- function(tree, reach=10) {
             }
         }
 
-        if (num_clusters >= reach) {
+        if (num_clusters >= target) {
             if(low == d) {
                 break
             }
             low <- d
-        } else if (num_clusters < reach) {
+        } else if (num_clusters < target) {
             if(high == d) {
                 break
             }
@@ -470,15 +474,17 @@ treeCluster <- function(tree, reach=10) {
 }
 
 
-#' Performs a breadth first search to create a specific number of clusters
-#' Clusters are split based on depth
+#' Performs a breadth first search to create a specific number of clusters.
+#' Clusters are split based on depth.
 #'
 #' @param tree object of class phylo
-#' @param reach number of clusters to attempt to generate
+#' @param target number of clusters to attempt to generate
 #' @return List of clusters, each entry being a vector of indices representing
 #' samples in the cluster.
-treeCluster2 <- function(tree, reach=10) {
-    if (reach > length(tree$tip.label)) {
+#'
+#' @export
+depthBasedCladewiseTreeCluster <- function(tree, target=10) {
+    if (target > length(tree$tip.label)) {
         stop("Number of clusters is too high.")
     }
     
@@ -498,7 +504,7 @@ treeCluster2 <- function(tree, reach=10) {
           cluster_parents[[as.name(child)]] <- node_depths[child]
       }
       
-      if (length(cluster_parents) >= reach) {
+      if (length(cluster_parents) >= target) {
           break
       }
     }
@@ -515,19 +521,18 @@ treeCluster2 <- function(tree, reach=10) {
 }
 
 
-#' Performs a bread first search to create a specific number of clusters
-#' Clusters are split to prioritize cluster size
+#' Performs a breadth first search to create a specific number of clusters
+#' Clusters are split to prioritize max cluster size
 #'
 #' @param tree object of class phylo
-#' @param reach number of clusters to attempt to generate
-#' @return List of clusters, each entry being a vector of indices representing
+#' @param target number of clusters to attempt to generate
+#' @return List of clusters, each entry being a vector of tips representing
 #' samples in the cluster.
-treeCluster3 <- function(tree, reach=10) {
-  if (reach > length(tree$tip.label)) {
+maxSizeCladewiseTreeCluster <- function(tree, target=10) {
+  if (target > length(tree$tip.label)) {
     stop("Number of clusters is too high.")
   }
   
-  # node_depths <- node.depth(tree)
   root <- find_root(tree)
   cluster_parents <- c()
   cluster_parents[[as.name(root)]] <- get_max_cluster_size(tree, root)
@@ -548,7 +553,6 @@ treeCluster3 <- function(tree, reach=10) {
     }
   }
   
-  
   cl <- list()
   for (cluster in seq_len(length(cluster_parents))) {
     cellId <- as.integer(names(cluster_parents)[cluster])
@@ -557,25 +561,71 @@ treeCluster3 <- function(tree, reach=10) {
     cl[[cluster]] <- all_children
   }
   
-  while (length(cl) > reach) {
-      cs <- c()
-      for (c in cl) {
-          cs <- append(cs, length(c))
-      }
-      
-      smallest_i <- which.min(cs)
-      tip1 <- which(tree$tip.label == cl[[smallest_i]][1])
-      dists <- c()
-      for (i in 1:length(cl)) {
-          tip2 <- which(tree$tip.label == cl[[i]][1])
-          dists <- append(dists, trivial_dist(tree, tip1, tip2))
-      }
-      
-      dists[smallest_i] <- dists[smallest_i] + max(dists)
-      closest_cluster_i <- which.min(dists)
-      cl[[min(c(closest_cluster_i, smallest_i))]] <- append(cl[[smallest_i]], cl[[closest_cluster_i]])
-      cl[[max(c(closest_cluster_i, smallest_i))]] <- NULL
+  while (length(cl) > target) {
+    cs <- c()
+    for (c in cl) {
+      cs <- append(cs, length(c))
+    }
+    
+    smallest_i <- which.min(cs)
+    tip1 <- which(tree$tip.label == cl[[smallest_i]][1])
+    dists <- c()
+    for (i in 1:length(cl)) {
+      tip2 <- which(tree$tip.label == cl[[i]][1])
+      dists <- append(dists, trivial_dist(tree, tip1, tip2))
+    }
+    
+    dists[smallest_i] <- dists[smallest_i] + max(dists)
+    closest_cluster_i <- which.min(dists)
+    cl[[min(c(closest_cluster_i, smallest_i))]] <- append(cl[[smallest_i]], cl[[closest_cluster_i]])
+    cl[[max(c(closest_cluster_i, smallest_i))]] <- NULL
   }
   
+  return(cl)
+}
+
+
+#' Generate clade-clusters for a tree of minimum size (unless children of root)
+#' 
+#'
+#' @param tree object of class phylo
+#' @param minSize minimum clade size for a clade to be expanded
+#' @return List of clusters, each entry being a vector of tips representing
+#' WARNING: This won't work well for tree's with broad multifurcations
+#' @export
+treeClusterMinCladeSize <- function(tree, minSize=30) {
+  nodeLabels <- tree$node.label
+  numC <- length(tree$tip.label)
+  
+  # split into clusters for each one
+  cl <- list()
+  seen <- c()
+  i <- 1 # current cluster number
+  # sort groups by min cluster_size first
+  root <- find_root(tree)
+  queue <- c(root)
+  while (TRUE) {
+    # BFS on internal nodes
+    if (length(queue) < 1) {
+      break
+    }
+    internalNode <- queue[1]
+    queue <- queue[-1]
+    
+    
+    children <- get_children(tree, internalNode)
+    for (child in children) {
+      childMinSize <- get_min_cluster_size(tree, child)
+      if (childMinSize >= minSize){
+        # continue expanding this child
+        queue <- append(queue, child)
+      } else {
+        # make this child a cluster
+        cl[[i]] <- get_all_children(tree, child) %>% (function(x) {return(tree$tip.label[x])})
+        i <- i + 1
+      }
+    }
+    
+  }
   return(cl)
 }

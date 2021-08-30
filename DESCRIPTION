@@ -1,15 +1,17 @@
 Package: VISION
 Title: Functional interpretation of single cell RNA-seq latent manifolds
-Version: 2.1.0
+Version: 3.0.0
 Authors@R: c(person("Matt", "Jones", email = "mattjones315@gmail.com", role = c("aut", "cre")),
 			 person("David", "Detomaso", email = "david.detomaso@berkeley.edu", role = c("aut", "cre")),
 			 person("Tal", "Ashuach", email = "tal_ashuach@berkeley.edu", role = c("aut")),
+			 person("Yanay", "Rosen", email = "yanayrosen@berkeley.edu", role = c("aut")),
 			 person("Nir", "Yosef", email = "niryosef@berkeley.edu", role = c("ctb", "cph")))
 Author: Matt Jones [aut, cre], David Detomaso [aut, cre], Tal Ashuach [aut], Nir Yosef [ctb]
 Maintainer: Matt Jones <mattjones315@gmail.com>
 Description: VISION provides functional interpretation of single cell RNA-seq (scRNA-seq) latent manifolds through the use of biological signatures (which can be downloaded from online databases). VISION can operate downstream of other common analyses such as dimensionality reduction, clustering, or trajectory analysis of scRNA-seq data. VISION produces an interactive web-based output report that can be easily shared with other collaborators or the greater scientific community.
 Depends: R (>= 3.4)
 Imports:
+	dplyr,
 	fastICA,
 	igraph,
     irlba,
@@ -40,7 +42,7 @@ Encoding: UTF-8
 LazyData: true
 URL: https://yoseflab.github.io/VISION, https://github.com/yoseflab/VISION
 BugReports: https://github.com/YosefLab/VISION/issues
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 Suggests:
 	Biobase,
 	BiocStyle,

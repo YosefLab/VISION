@@ -4,6 +4,8 @@ setGeneric("Vision", function(data, ...) {
     standardGeneric("Vision")
 })
 
+#' @rdname PhyloVision-class
+#' @export
 setGeneric("PhyloVision", function(tree, ...) {
   standardGeneric("PhyloVision")
 })

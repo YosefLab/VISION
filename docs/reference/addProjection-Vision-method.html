@@ -87,7 +87,7 @@ the results into VISION." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">VISION</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.0</span>
       </span>
     </div>
 
@@ -95,7 +95,7 @@ the results into VISION." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -122,6 +122,12 @@ the results into VISION." />
       <a href="../articles/trajectories.html">Incorporating a Trajectory Model</a>
     </li>
     <li>
+      <a href="../articles/phyloVision.html">PhyloVision and Hotspot</a>
+    </li>
+    <li>
+      <a href="../articles/spatialHotspot.html">Spatial Data and Hotspot</a>
+    </li>
+    <li>
       <a href="../articles/web_only/Seurat.html">How To: Working with Seurat</a>
     </li>
     <li>
@@ -139,7 +145,7 @@ the results into VISION." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/YosefLab/VISION/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -171,7 +177,7 @@ the results into VISION.</p>
     </div>
 
     <pre class="usage"><span class='co'># S4 method for Vision</span>
-<span class='fu'>addProjection</span>(<span class='no'>object</span>, <span class='no'>name</span>, <span class='no'>coordinates</span>)</pre>
+<span class='fu'>addProjection</span><span class='op'>(</span><span class='va'>object</span>, <span class='va'>name</span>, <span class='va'>coordinates</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -196,22 +202,23 @@ sample in the projection (NUM_SAMPLES x NUM_COMPONENTS)</p></td>
     <p>VISION object</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
+    <pre class="examples"><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
 
 <span class='co'># First create the VISION object</span>
-<span class='no'>vis</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='VISION-class.html'>Vision</a></span>(<span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>expMat</span>, <span class='kw'>signatures</span> <span class='kw'>=</span> <span class='no'>sigs</span>)
+<span class='va'>vis</span> <span class='op'>&lt;-</span> <span class='fu'><a href='Vision.html'>Vision</a></span><span class='op'>(</span>data <span class='op'>=</span> <span class='va'>expMat</span>, signatures <span class='op'>=</span> <span class='va'>sigs</span><span class='op'>)</span>
 
 <span class='co'># Load and add an additional visualization</span>
-<span class='no'>my_umap</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/utils/read.table.html'>read.csv</a></span>(<span class='st'>"umap_results.csv"</span>)
-<span class='no'>vis</span> <span class='kw'>&lt;-</span> <span class='fu'>addProjection</span>(<span class='no'>vis</span>, <span class='st'>"UMAP"</span>, <span class='no'>my_umap</span>)
+<span class='va'>my_umap</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/utils/read.table.html'>read.csv</a></span><span class='op'>(</span><span class='st'>"umap_results.csv"</span><span class='op'>)</span>
+<span class='va'>vis</span> <span class='op'>&lt;-</span> <span class='fu'>addProjection</span><span class='op'>(</span><span class='va'>vis</span>, <span class='st'>"UMAP"</span>, <span class='va'>my_umap</span><span class='op'>)</span>
 
 <span class='co'># Run analysis</span>
-<span class='no'>vis</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='analyze-Vision-method.html'>analyze</a></span>(<span class='no'>vis</span>)
+<span class='va'>vis</span> <span class='op'>&lt;-</span> <span class='fu'><a href='analyze,Vision-method.html'>analyze</a></span><span class='op'>(</span><span class='va'>vis</span><span class='op'>)</span>
 
 <span class='co'># View results</span>
-<span class='fu'><a href='viewResults.html'>viewResults</a></span>(<span class='no'>vis</span>)
+<span class='fu'><a href='viewResults,Vision-method.html'>viewResults</a></span><span class='op'>(</span><span class='va'>vis</span><span class='op'>)</span>
 
-}</pre>
+<span class='op'>}</span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -223,11 +230,11 @@ sample in the projection (NUM_SAMPLES x NUM_COMPONENTS)</p></td>
 
       <footer>
       <div class="copyright">
-  <p>Developed by Matt Jones, David Detomaso, Tal Ashuach.</p>
+  <p>Developed by Matt Jones, David Detomaso, Tal Ashuach, Yanay Rosen.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>
