@@ -11,7 +11,7 @@ vignette: >
 # Introduction
 As of version 3.0.0, VISION now supports the analysis of scRNA-seq data with respect to a user-defined cell lineage, or phylogeny. In this case, VISION uses the relationships between cells as specified by the phylogeny, as opposed to some user-defined latent space, to conduct the autocorrelation analysis. In this vignette, we demonstrate how a user might use this variant of the VISION pipeline - which we term `PhyloVision` - to analyze a recently published dataset that simultaneously profiled the single-cell transcriptomes and lineages of mouse embryogenesis (Chan et al, Nature 2019).
 
-This tutorial begins by showing users how to create a `PhyloVision` object and performing analysis on it. Then, we demonstrate how this object can be passed into a Hotspot module that will identify de-novo transcriptional gene sets that are autocorrelated on the tree (this is described more below and in the Spatial Hotspot vignette). Finally, we show users how to launch a report for viewing.
+This tutorial begins by showing users how to create a `PhyloVision` object and performing analysis on it. Then, we demonstrate how this object can be passed into the Hotspot pipeline that will identify de-novo transcriptional gene sets that are autocorrelated on the tree (this is described more below and in the [Spatial Hotspot vignette](spatialHotspot.html). Finally, we show users how to launch a report for viewing.
 
 # Preliminaries
 
@@ -58,11 +58,6 @@ sig <- paste("data", "h.all.v5.2.symbols.gmt", sep="/")
 
 # Read the tree
 tree <- read.tree(paste(file_path, "embryo_tree.newick", sep="/"))
-
-# subset tree and expression matrix
-keep.bcs = intersect(tree$tip.label, colnames(expr))
-tree <- keep.tip(tree, keep.bcs)
-expr <- expr[, keep.bcs]
 
 # Collapse one mutations with ape
 tree <- collapse.singles(tree)
