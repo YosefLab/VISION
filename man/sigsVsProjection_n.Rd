@@ -5,8 +5,7 @@
 \title{Evaluates the significance of each numeric signature vs. a
 single projections weights}
 \usage{
-sigsVsProjection_n(sigScores, randomSigData, normExpr, weights,
-  cells = NULL)
+sigsVsProjection_n(sigScores, randomSigData, normExpr, weights, cells = NULL)
 }
 \arguments{
 \item{sigScores}{numeric matrix of signature scores

@@ -25,6 +25,7 @@ function Lower_Left_Content()
         'cell_info': $(this.dom_node).find('#CellButton'),
         'selection_info': $(this.dom_node).find('#SelectionButton'),
     }
+
 }
 
 Lower_Left_Content.prototype.init = function()
@@ -205,7 +206,9 @@ Values_Plot.prototype.update = function(updates)
         'plotted_item' in updates ||
         'plotted_item_type' in updates ||
         'selected_cell' in updates ||
-        'selection_type' in updates
+        'selection_type' in updates ||
+        'enrichment' in updates ||
+        'enrichment_module' in updates
     )){
         return;
     }
@@ -228,20 +231,42 @@ Values_Plot.prototype.update = function(updates)
 
 Values_Plot.prototype.plot = function()
 {
+
     var plotted_values_object = get_global_data('plotted_values')
     var logScale = $(this.logCheck).is(':checked')
-
+    
     if(get_global_status('selection_type') === 'cells' ||
-        get_global_status('selection_type') === 'pools'){
+        get_global_status('selection_type') === 'pools') {
 
         var selected_cells = get_global_status('selected_cell')
         var selection_name = get_global_status('selection_name')
         var selected_values = _.values(_.pick(plotted_values_object, selected_cells))
         var remainder_values = _.values(_.omit(plotted_values_object, selected_cells))
-        drawDistChartSelection(this.chart, selected_values, remainder_values, selection_name, logScale)
+        
+       if (get_global_status("enrichment") && get_global_status("enrichment_module") !== get_global_status("plotted_item")) {
+            //drawDistChartSelection(this.chart, selected_values, remainder_values, selection_name, logScale)
+            var y = get_global_data("extra_plotted_values")
+            var mapped_y = _.values(y)
+            var plotted_values = _.values(plotted_values_object)
+            
+            var cell_names = _.keys(y)
+            var selection_index = selected_cells.map(x => cell_names.indexOf(x))
+            
+            drawDistChart(this.chart, plotted_values, logScale, mapped_y, selection_index, cellNames=cell_names)
+        } else {
+            drawDistChartSelection(this.chart, selected_values, remainder_values, selection_name, logScale)
+        }
     } else {
         var plotted_values = _.values(plotted_values_object)
-        drawDistChart(this.chart, plotted_values, logScale)
+        if (get_global_status("enrichment") && get_global_status("enrichment_module") !== get_global_status("plotted_item")) {
+            // drawDistChart(this.chart, plotted_values, logScale)
+            var y = get_global_data("extra_plotted_values")
+            var mapped_y = _.values(y)
+            var selection_index = 
+            drawDistChart(this.chart, plotted_values, logScale, mapped_y, null, cellNames=_.keys(y))
+        } else {
+            drawDistChart(this.chart, plotted_values, logScale)
+        }
     }
 
     this.needs_plot = false
@@ -260,6 +285,7 @@ function Sig_Info()
     this.source = $(this.dom_node).find('#sig-source');
     this.content = $(this.dom_node).find('#sig-table-wrapper');
     this.bound_sig = ""
+    this.bound_mod = ""
 }
 
 Sig_Info.prototype.init = function()
@@ -282,6 +308,7 @@ Sig_Info.prototype.init = function()
                     return "<a href=http://www.genecards.org/cgi-bin/carddisp.pl?gene=" + data + " target='_blank'>&lt;genecards&gt;</a>";
                 }
             },
+            {'title': 'Overlap', 'className': 'dt-center'},
             {'title': 'Sign', 'className': 'dt-center'},
             {
                 'title': 'Score',
@@ -293,21 +320,33 @@ Sig_Info.prototype.init = function()
         'info': true,
         'scrollY': '15vh',
         'scrollCollapse': true,
-        'order': [[3, 'desc']],
+        "bFilter": false,
+        'order': [[4, 'desc']],
     })
 
 }
 
 Sig_Info.prototype.update = function(updates)
 {
-
+    
     var sig_info = get_global_data('sig_info');
-    if(_.isEmpty(sig_info) || sig_info.name === this.bound_sig || sig_info.isMeta)
+    var enriched = get_global_status("enrichment_module") !== "" && get_global_status("enrichment_module") !== get_global_status("plotted_item") && get_global_status("enrichment");
+    var bound_mod = "";
+    if (enriched) {
+      var bound_mod = get_global_status("enrichment_module")
+      //$("#plot-ms-overlap-button").show()
+    }/* else (
+      $("#plot-ms-overlap-button").hide()
+    )*/
+    
+    if(_.isEmpty(sig_info) || sig_info.name === this.bound_sig && bound_mod === this.bound_mod || sig_info.isMeta)
     {
         return;
     }
 
     this.bound_sig = sig_info.name
+    this.bound_mod = bound_mod
+    
 
     $(this.title).text(sig_info.name)
 
@@ -331,27 +370,61 @@ Sig_Info.prototype.update = function(updates)
 
     // Toggle the score column visibility
     var scoreColumnVisible = !_.isEmpty(sig_info.geneImportance)
-    var scoreColumn = dt.DataTable().column("3")
+    var scoreColumn = dt.DataTable().column("4")
     scoreColumn.visible(scoreColumnVisible)
+    
+    
+    var overlapColumn = dt.DataTable().column("2")
+    overlapColumn.visible(enriched)
 
     var sign;
+    var mod_genes = [];
+    // yanay here
+    if (enriched) {
+      mod_genes = get_global_data("mod_gene_list");
+    }
+    
+    var overlap_genes = [];
+
     var dataSet = _.map(sig_info.sigDict, function (value, key){
         if(value > 0){
             sign = '+'
         } else {
             sign = '-'
         }
+        
+        var overlap = mod_genes.includes(key);
+        if (overlap) {
+          overlap_genes = overlap_genes.concat(key);
+        }
+        
         if (scoreColumnVisible){
-            return [key, key, sign, sig_info.geneImportance[key]];
+            return [key, key, overlap, sign, sig_info.geneImportance[key]];
         } else {
-            return [key, key, sign, 0];
+            return [key, key, overlap, sign, 0];
         }
 
     })
-
+    
     dt.DataTable().clear()
         .rows.add(dataSet)
         .draw()
+    /*    
+    if (enriched) {
+      $("#plot-ms-overlap-button").off();
+      $("#plot-ms-overlap-button").on("click", function() {
+        // hack!! 
+        var overlap_name = sig_info.name + "_OVERLAP_" + get_global_status("enrichment_module");
+        var update = {
+            'plotted_item': overlap_name,
+            'plotted_item_type': 'signature',
+        }
+    
+        set_global_status(update)
+        console.log(overlap_genes);
+      });
+    }
+    */
 }
 
 // Used when clicking on the gene namesin the signature-info table
@@ -713,7 +786,7 @@ function _formatNum(value){
     }
 }
 
-function drawDistChart(node, values, logScale) {
+function drawDistChart(node, values, logScale, y=null, selectedCells=null, cellNames=null) {
 
     var isFactor = (typeof(values[0]) === "string") &&
                    (values[0] !== "NA")
@@ -721,19 +794,41 @@ function drawDistChart(node, values, logScale) {
     var data = []
 
     if (!isFactor) {
-        var binmin = _.min(values)
-        var binmax = _.max(values) + 1e-4 // end is not inclusive so need buffer
-
-        data.push({
-            type: 'histogram',
-            x: values,
-            autobinx: false,
-            xbins: {
-                start: binmin,
-                end: binmax,
-                size: (binmax-binmin)/40,
-            },
-        })
+        if (y == null || get_global_status("enrichment_module") === get_global_status("plotted_item")) {
+            var binmin = _.min(values)
+            var binmax = _.max(values) + 1e-4 // end is not inclusive so need buffer
+    
+            data.push({
+                type: 'histogram',
+                x: values,
+                autobinx: false,
+                xbins: {
+                    start: binmin,
+                    end: binmax,
+                    size: (binmax-binmin)/40,
+                },
+            })
+          } else {
+              if (selectedCells != null) {
+                  data.push({
+                      type: 'scatter',
+                      x: values,
+                      y: y,
+                      text:cellNames,
+                      selectedpoints:selectedCells,
+                      mode: 'markers',
+                  })
+              } else {
+                  data.push({
+                      type: 'scatter',
+                      x: values,
+                      y: y,
+                      text:cellNames,
+                      mode: 'markers',
+                  })
+              }
+              
+          }
     } else {
         var valcounts = _.countBy(values)
         var pairs = _.toPairs(valcounts)
@@ -744,27 +839,62 @@ function drawDistChart(node, values, logScale) {
             y: _.map(pairs, x => x[1]),
         })
     }
-    var layout = {
-        margin: {
-            l: 50,
-            r: 50,
-            t: 30,
-            b: 60,
-        },
-        bargap: .1,
-        dragmode: 'select',
-        selectdirection: 'h',
-        yaxis: {
-            type: logScale ? 'log': 'linear',
-            nticks: 6,
-            tickmode: 'auto',
-        }
+    
+    if (y == null || get_global_status("enrichment_module") === get_global_status("plotted_item")) {
+        var layout = {
+              margin: {
+                  l: 50,
+                  r: 50,
+                  t: 30,
+                  b: 60,
+              },
+              bargap: .1,
+              dragmode: 'select',
+              yaxis: {
+                  type: logScale ? 'log': 'linear',
+                  nticks: 6,
+                  tickmode: 'auto',
+              }
+          }
+          var options = {
+              'displaylogo': false,
+              'displayModeBar': false,
+              'modeBarButtonsToRemove': ['sendDataToCloud', 'hoverCompareCartesian', 'toggleSpikelines'],
+          }
+    } else {
+        var yLabel = get_global_status("enrichment_module") + " Signature Scores";
+        var xLabel = get_global_status("plotted_item") + " Signature Scores";
+        var layout = {
+              margin: {
+                  l: 50,
+                  r: 50,
+                  t: 30,
+                  b: 60,
+              },
+              yaxis: {
+                  type: logScale ? 'log': 'linear',
+                  nticks: 6,
+                  tickmode: 'auto',
+                  title: {"text": yLabel}
+              }, 
+              xaxis: {
+                  type: logScale ? 'log': 'linear',
+                  nticks: 6,
+                  tickmode: 'auto',
+                  title: {"text": xLabel}
+              }
+          }
+          
+
+          var options = {
+              'displaylogo': false,
+              'displayModeBar': true,
+              'modeBarButtonsToRemove': ['sendDataToCloud', 'hoverCompareCartesian', 'toggleSpikelines'],
+          }
+          
+          
     }
-    var options = {
-        'displaylogo': false,
-        'displayModeBar': false,
-        'modeBarButtonsToRemove': ['sendDataToCloud', 'hoverCompareCartesian', 'toggleSpikelines'],
-    }
+    
 
     Plotly.newPlot(node, data, layout, options)
 
@@ -774,9 +904,10 @@ function drawDistChart(node, values, logScale) {
         if (eventData !== undefined) {
             var values = get_global_data('plotted_values')
             var selected = _.map(eventData.points, p => p.x)
+            
             var subset;
 
-            if(typeof(selected[0]) === 'string'){
+            if(typeof(selected[0]) === 'string' || y != null){
                 var select_map = _.keyBy(selected)
                 subset = _.pickBy(values, v => v in select_map)
             } else {

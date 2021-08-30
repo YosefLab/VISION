@@ -4,8 +4,12 @@
 \alias{addUMAP}
 \title{Adds a UMAP projection}
 \usage{
-addUMAP(object, K = object@params$numNeighbors, name = "UMAP",
-  source = "LatentSpace")
+addUMAP(
+  object,
+  K = object@params$numNeighbors,
+  name = "UMAP",
+  source = "LatentSpace"
+)
 }
 \arguments{
 \item{object}{the VISION object}

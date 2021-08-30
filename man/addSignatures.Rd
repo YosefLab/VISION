@@ -4,8 +4,12 @@
 \alias{addSignatures}
 \title{Add signatures to VISION object}
 \usage{
-addSignatures(object, signatures, min_signature_genes = 5,
-  sig_gene_threshold = 0.01)
+addSignatures(
+  object,
+  signatures,
+  min_signature_genes = 5,
+  sig_gene_threshold = 0.01
+)
 }
 \arguments{
 \item{object}{the VISION object}

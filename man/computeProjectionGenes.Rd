@@ -4,8 +4,13 @@
 \alias{computeProjectionGenes}
 \title{filter data accourding to the provided filters}
 \usage{
-computeProjectionGenes(object, threshold = NULL, num_mad = NULL,
-  projection_genes_method = NULL, projection_genes = NULL)
+computeProjectionGenes(
+  object,
+  threshold = NULL,
+  num_mad = NULL,
+  projection_genes_method = NULL,
+  projection_genes = NULL
+)
 }
 \arguments{
 \item{object}{the VISION object}

@@ -16,6 +16,8 @@ function Upper_Left_Content()
     this.protein_table = {}
     this.pc_table = {}
     this.gene_select = {}
+    this.dendrogram = {}
+    this.mod_table = {}
     this.dom_node = document.getElementById("upper-left-content");
 }
 
@@ -85,6 +87,22 @@ Upper_Left_Content.prototype.init = function()
 
     var de_select_promise = de_select.init()
 
+    var has_dend = get_global_status('has_dendrogram')
+    // Dend Promise
+    if (has_dend) {
+      var dend = new Dend()
+      this.children.push(dend)
+      this.dend = dend
+
+      var dend_promise = dend.init()
+    }
+
+
+    var mod_table = new Modules_Table()
+    this.children.push(mod_table)
+    this.mod_table = mod_table
+
+    var mod_table_promise = mod_table.init();
 
     this.setLoadingStatus = createLoadingFunction(
         document.getElementById("upper-left-content")
@@ -92,13 +110,20 @@ Upper_Left_Content.prototype.init = function()
 
     // If no signatures, need to hide the 'Signatures' nav item
     // If no proteins, need to hide the 'Proteins' nav item
+    // If no dendrogram, hide that nav item
+    // same for modules
 
     var has_sigs = get_global_status('has_sigs')
+    var has_mods = get_global_status('has_mods')
     var has_proteins = get_global_status('has_proteins')
     var nav = $(this.dom_node).find('.section-nav')
+    var dendrogramTab = $('#dend-section')
     var sigTableTab = nav.find('#sig-table-tab')
+    var modTableTab = nav.find('#modules-table-tab')
     var proteinTableTab = nav.find('#protein-table-tab')
     var metaTableTab = nav.find('#meta-table-tab')
+
+    var has_dendrogram = get_global_status('has_dendrogram')
 
     if(!has_sigs){
         sigTableTab.parent().hide()
@@ -111,7 +136,23 @@ Upper_Left_Content.prototype.init = function()
     if(!has_proteins){
         proteinTableTab.parent().hide()
     }
+    if(!has_mods){
+        modTableTab.parent().hide()
+    }
+    if(!has_dendrogram){
+        dendrogramTab.hide()
+        // also hide the collapse tabs
+        $("#headingTwo").hide()
+        $("#headingOne").hide()
+        //$("#upper-left-card").css("max-height", "40%")
+        //$("#table-div-container").css("overflow", "scroll")
+        $("#lower-left-card").css("max-height", "60%")
+        $("#lower-left-card").css("overflow", "scroll")
+        //$("#lower-left-content").css("display", "inline-block")
+        
+    }
 
+  /*
     $(this.dom_node).find('.nav-link')
         .on('click', function(e) {
             if (e.target.id === "genes-table-tab" || e.target.id === "de-table-tab") {
@@ -120,9 +161,34 @@ Upper_Left_Content.prototype.init = function()
                 clust_dropdown.prop('disabled', false)
             }
         });
+    */
 
 
-    return $.when(sig_table_promise, protein_table_promise, pc_table_promise, gene_select_promise, de_select_promise);
+
+    // for gene/cell new view
+    // Hide modules, de and genes
+    var metaTableTab = nav.find('#meta-table-tab');
+    var deTableTab = nav.find('#de-table-tab');
+    var genesTableTab = nav.find("#genes-table-tab")
+    if(has_mods){
+        modTableTab.parent().hide()
+    }
+
+    // deTableTab.parent().hide()
+    // genesTableTab.parent().hide()
+
+    // show meta
+    metaTableTab.parent().show()
+    // clusterDropwdown.parent().show()
+
+    if (has_sigs) {
+        sigTableTab.click()
+    } else {
+        metaTableTab.click()
+    }
+
+
+    return $.when(sig_table_promise, protein_table_promise, pc_table_promise, gene_select_promise, de_select_promise, dend_promise, mod_table_promise);
 
 }
 
@@ -138,7 +204,59 @@ Upper_Left_Content.prototype.update = function(updates)
     // Updates passed to children components
 
     var child_promises = []
+    if ('main_vis' in updates) {
+      // Yanay
+      var nav = $(this.dom_node).find('.section-nav')
+      var main_vis = get_global_status('main_vis');
+      var sigTableTab = nav.find('#sig-table-tab')
+      var modTableTab = nav.find('#modules-table-tab')
+      var metaTableTab = nav.find('#meta-table-tab')
+      var deTableTab = nav.find('#de-table-tab')
+      var genesTableTab = nav.find("#genes-table-tab")
+      var clusterDropwdown = $(this.dom_node).find("#cluster-group-select")
+      var has_sigs = get_global_status('has_sigs')
+      var has_mods = get_global_status('has_mods')
+      var has_proteins = get_global_status('has_proteins')
 
+      if (main_vis == "cells") {
+          // Hide modules, de and genes
+          if(has_mods){
+              modTableTab.parent().hide()
+          }
+
+          // deTableTab.parent().hide()
+          // genesTableTab.parent().hide()
+
+          // show meta
+          metaTableTab.parent().show()
+          // clusterDropwdown.parent().show()
+
+          if (has_sigs) {
+              sigTableTab.click()
+          } else {
+              metaTableTab.click()
+          }
+      } else {
+          // Show modules, genes and DE
+          if(has_mods){
+              modTableTab.parent().show()
+          }
+
+          deTableTab.parent().show()
+          genesTableTab.parent().show()
+
+          // Hide Meta
+          metaTableTab.parent().hide()
+          // clusterDropwdown.parent().hide()
+          if (has_sigs) {
+              sigTableTab.click()
+          } else if (has_mods) {
+              modTableTab.click()
+          } else {
+              genesTableTab.click()
+          }
+      }
+    }
     _.each(this.children, function(child){
         child_promises.push(child.update(updates))
     });
@@ -192,6 +310,7 @@ function Signature_Table()
     this.is_filtering = false
     this.is_collapsed = {} // cluster -> boolean, holds whether a cluster is collapsed
     this.tooltip = {} // will contain a Popper.js object
+    this.showing_enrichment = false;
 }
 
 
@@ -265,6 +384,10 @@ Signature_Table.prototype.render = function()
         new_cell.append(new_item)
         header_row.append(new_cell)
     });
+    
+    //$('.sig-table th:not(:first-child)').css('height', )
+    //header_row.
+    //header_row.find("th:not(:first-child)")..css('height', h.width());
 
     // Add padding for scrollbar width of table below it
     $(self.dom_node).children(".sig-tables-header")
@@ -403,12 +526,22 @@ Signature_Table.prototype.render = function()
         content_row.enter().append('td');
         content_row.exit().remove();
 
-        if (main_vis === 'pcannotator') {
+        if (main_vis === 'genes') {
             content_row
                 .filter(function(d,i) { return i > 0;})
+                .on("click", function(d){tableClickFunction_modules(matrix.sig_labels[d.row], matrix.proj_labels[d.col], 'signature')})
+
+            content_row
+                .filter(function(d,i) { return i == 1;})
                 .style('background-color', function(d){return colorScale(d.zscore);})
-                .on("click", function(d){tableClickFunction_PC(matrix.sig_labels[d.row], 'signature')})
-                .append('div');
+                .append('div')
+                .text(function(d){ return d.zscore.toPrecision ? d.zscore.toPrecision(2) : d.zscore;})
+
+            content_row
+                .filter(function(d,i) { return i > 1;})
+                .style('background-color', function(d){return colorScaleCluster(d.zscore);})
+                .append('div')
+                .text(function(d){ return d.pval < 0.05 ? '*' : '';})
 
         } else {
             content_row
@@ -432,10 +565,10 @@ Signature_Table.prototype.render = function()
         var rowHoverFunc = function(header_row){
             return function(d, i){
                 var tooltip_str;
-                if(main_vis === 'pcannotator'){
-                    tooltip_str = "corr = " + d.zscore.toFixed(2)
+                if(main_vis === 'genes'){
+                    tooltip_str = "enrichment = " + d.zscore.toFixed(2) + " p<" + _pval_format(d.pval)
                 } else {
-                    if(main_vis === 'clusters' && i > 0)
+                    if(main_vis === 'cells' && i > 0)
                         tooltip_str = "AUC=" + _auc_format(d.zscore) + " p<" + _pval_format(d.pval)
                     else
                         tooltip_str = "C'=" + d.zscore.toFixed(2) + ", p<" + _pval_format(d.pval)
@@ -484,12 +617,12 @@ Signature_Table.prototype.render = function()
     });
 
     // Apply compact styling for pcannotator
-    if(main_vis === "pcannotator" || main_vis === "clusters" || main_vis === "tree"){
+    if(main_vis === "genes" || main_vis === "cells" || main_vis === "tree"){
         $(self.dom_node).find('table').addClass('compact')
     } else {
         $(self.dom_node).find('table').removeClass('compact')
     }
-    if(main_vis === "clusters" || main_vis === "tree"){
+    if(main_vis === "cells" || main_vis === "genes" || main_vis === "tree"){
         $(self.dom_node).find('table').addClass('first-col')
     } else {
         $(self.dom_node).find('table').removeClass('first-col')
@@ -540,10 +673,26 @@ Signature_Table.prototype.update = function(updates)
     if( 'main_vis' in updates || _.isEmpty(self.matrix) || 'cluster_var' in updates){
         var main_vis = get_global_status('main_vis');
         var cluster_var = _get_cluster_var();
+        clusters_promise = api.signature.clusters(false)
+            .then(function(cls){
+                self.clusters = cls;
+                return true;
+            })
 
         var fix_col_label = true
-        if (main_vis == "clusters") {
+        self.showing_enrichment = false;
+        if (main_vis == "cells" || main_vis == "genes" && !get_global_status('has_mods')) {
             matrix_promise = api.clusters.sigProjMatrix(cluster_var, false);
+        } else if (main_vis == "genes") {
+            matrix_promise = api.clusters.modProjMatrix(cluster_var);
+            self.showing_enrichment = true;
+            // yanay here
+            clusters_promise = api.modules.clusters()
+            .then(function(cls){
+                self.clusters = cls;
+                return true;
+            })
+            fix_col_label = false
         } else if (main_vis == "tree") {
             matrix_promise = api.tree.sigProjMatrix(false);
         } else {
@@ -755,7 +904,7 @@ Protein_Table.prototype.render = function()
             // Pull out the cluster leader and put it first
 
             var row_vals;
-            if (main_vis === "pcannotator") {
+            if (main_vis === "genes") {
                 row_vals = _.map(formatted_data_w_row_labels, x => {
                     return _(x[1]).map(y => y.pval).sum()
                 })
@@ -830,10 +979,10 @@ Protein_Table.prototype.render = function()
         var rowHoverFunc = function(header_row){
             return function(d, i){
                 var tooltip_str;
-                if(main_vis === 'pcannotator'){
-                    tooltip_str = "corr = " + d.zscore.toFixed(2)
+                if(main_vis === 'genes'){
+                    tooltip_str = "Enrichment = " + d.zscore.toFixed(2) + " p<" + _pval_format(d.pval)
                 } else {
-                    if(main_vis === 'clusters' && i > 0)
+                    if(main_vis === 'cells' && i > 0)
                         tooltip_str = "AUC=" + _auc_format(d.zscore) + " p<" + _pval_format(d.pval)
                     else
                         tooltip_str = "C'=" + d.zscore.toFixed(2)
@@ -882,12 +1031,12 @@ Protein_Table.prototype.render = function()
     });
 
     // Apply compact styling for pcannotator
-    if(main_vis === "pcannotator" || main_vis === "clusters" || main_vis === "tree"){
+    if(main_vis === "pcannotator" || main_vis === "cells" || main_vis === "tree"){
         $(self.dom_node).find('table').addClass('compact')
     } else {
         $(self.dom_node).find('table').removeClass('compact')
     }
-    if(main_vis === "clusters" || main_vis === "tree"){
+    if(main_vis === "cells" || main_vis === "tree"){
         $(self.dom_node).find('table').addClass('first-col')
     } else {
         $(self.dom_node).find('table').removeClass('first-col')
@@ -940,7 +1089,7 @@ Protein_Table.prototype.update = function(updates)
         var cluster_var = _get_cluster_var()
 
         var fix_col_label = true
-        if (main_vis == "clusters") {
+        if (main_vis == "cells") {
             matrix_promise = api.clusters.proteinMatrix(cluster_var);
         } else if (main_vis == "tree") {
             matrix_promise = api.tree.proteinMatrix();
@@ -1048,7 +1197,7 @@ Meta_Table.prototype.update = function(updates)
         var cluster_var = _get_cluster_var()
 
         var fix_col_label = true
-        if (main_vis == "clusters") {
+        if (main_vis == "cells") {
             matrix_promise = api.clusters.sigProjMatrix(cluster_var, true);
         } else if (main_vis === "tree") {
             matrix_promise = api.tree.sigProjMatrix(true);
@@ -1331,12 +1480,12 @@ Meta_Table.prototype.render = function()
 
 
     // Apply compact styling for pcannotator
-    if(main_vis === "pcannotator" || main_vis === "clusters" || main_vis === "tree"){
+    if(main_vis === "pcannotator" || main_vis === "cells" || main_vis === "tree"){
         $(self.dom_node).find('table').addClass('compact')
     } else {
         $(self.dom_node).find('table').removeClass('compact')
     }
-    if(main_vis === "clusters" || main_vis === "tree"){
+    if(main_vis === "cells" || main_vis === "tree"){
         $(self.dom_node).find('table').addClass('first-col')
     } else {
         $(self.dom_node).find('table').removeClass('first-col')
@@ -1974,6 +2123,379 @@ Protein_Table.prototype.doneTyping = function()
 }
 
 
+
+function Dend()
+{
+    //this.recent_genes = [];
+    this.dom_node = document.getElementById("dend");
+    this.cluster_var_idx = 0;
+    this.stored_collapse_settings = {};
+
+}
+
+Dend.prototype.init = function()
+{
+    this.newick = get_global_status("dendrogram")
+    this.div = document.getElementById("tree_container_plotly");
+    this.phyloPlotly = new PhyloPlotly(this.newick, this.div, null, null);
+}
+
+
+Dend.prototype.update = function(updates)
+{
+    if ('plotted_item' in updates){
+        this.plotted_item = updates['plotted_item']
+
+        this.render_dend();
+    }
+    if ('selected_cell' in updates) {
+      this.update_tree_selection()
+    }
+}
+
+Dend.prototype.update_tree_selection = function() {
+    var cells = get_global_status("selected_cell");
+    this.phyloPlotly.updateSelection(cells);
+}
+
+Dend.prototype.render_dend = function()
+{
+    this.setLoadingStatus = createLoadingFunction(this.dom_node);
+    this.setLoadingStatus(true, 0);
+
+    $("#dend_layout").prop('checked', true);
+
+    var plotted = get_global_data("plotted_values");
+    var plotted_item = this.plotted_item;
+    
+    var scatter = right_content.layoutPlotData["full"][0].scatter;
+    var plotly_defaults_colors = ["#1F77B4", "#FF7F0E", "#2CA02C", "#D62728", 
+    "#9467BD", "#8C564B","#E377C2", "#7F7F7F", "#BCBD22", "#17BECF"]
+
+    if(get_global_data('meta_levels')[plotted_item] == null)  {
+        var full_color_range = scatter.full_color_range;
+        var diverging_colormap = scatter.diverging_colormap
+        var c = Object.values(plotted);
+        var cvals = c.filter(cv => cv !== "NA")
+        cvals.sort(d3.ascending); // Needed for quantile
+        var low, high;
+        if(full_color_range){
+            low = d3.min(cvals)
+            high = d3.max(cvals)
+        } else {
+            low = d3.quantile(cvals, 0.02)
+            high = d3.quantile(cvals, 0.98)
+        }
+        if(get_global_status("plotted_item_type") !== "gene") {
+            var color_range = [
+              '#440154', '#48186a', '#472d7b', '#424086', '#3b528b', '#33638d', '#2c728e', '#26828e',
+            '#21918c', '#1fa088', '#28ae80', '#3fbc73', '#5ec962', '#84d44b', '#addc30',
+            '#d8e219', '#fde725'];
+            var color_domain = [
+              0, 0.06274509803921569, 0.12549019607843137, 0.18823529411764706, 0.25098039215686274,
+              0.3137254901960784, 0.3764705882352941, 0.4392156862745098, 0.5019607843137255, 0.5647058823529412,
+              0.6274509803921569, 0.6901960784313725, 0.7529411764705882, 0.8156862745098039, 0.8784313725490196, 0.9411764705882353, 1];
+        } else {
+            color_range = ['#d8d8d8', '#952E25'];
+            color_domain = [0, 1]
+        }
+
+        attribute_to_color = function(d) {
+          if (d === undefined) {
+            d = 0.5
+          }
+          if (high === low) {
+            var x = 0.5
+          } else {
+             var x = (d - low) / (high-low);
+          }
+
+          return d3.scale.linear().domain(color_domain).range(color_range)(x);
+        }
+
+    } else {
+        var labels = get_global_data('meta_levels')[plotted_item].sort();
+        if (labels.length > 10) {
+            attribute_to_color = function(d) {
+                var i = labels.indexOf(d);
+                var step = 8
+                var L = Math.ceil(labels.length/step)*step
+                var hue = Math.round(
+                ( (i*L/step)%L + Math.floor(i/step) ) / L * 360 // Helps scatter values
+                );
+                return hsluv.hsluvToHex([hue, 90, 55])
+             }
+          } else {
+            attribute_to_color = function(d) {
+              var c = d3.scale.ordinal().domain(get_global_data('meta_levels')[plotted_item].sort()).range(plotly_defaults_colors)(d);
+              return c
+            }
+      }
+    }
+    
+    this.phyloPlotly.setMapping(plotted);
+    this.phyloPlotly.setNodeColor(attribute_to_color);
+    
+    var self = this;
+    $("#dend_layout").off();
+    $("#dend_expand_all").off();
+    $("#dend_layout").on("click", function(e) {
+      var is_radial = $(this).prop("checked")
+      self.phyloPlotly.updateMode(is_radial);
+    });
+    
+    $("#dend_expand_all").on("click", function(e) {
+      self.phyloPlotly.expandAll();
+      $("#dend_collapse_to").val(self.phyloPlotly.maxDepth);
+      
+      
+      var collapseSettings = get_global_status("dendro_collapse_settings")
+      collapseSettings["depth"] = self.phyloPlotly.maxDepth;
+      set_global_status({"dendro_collapse_settings":collapseSettings})
+    });
+    
+    $("#dend_collapse").on("click", function(e) {
+      var value = $("#dend_collapse_to").prop("value");
+      self.phyloPlotly.collapseToDepth(value);
+      
+      var collapseSettings = get_global_status("dendro_collapse_settings")
+      collapseSettings["depth"] = value;
+      set_global_status({"dendro_collapse_settings":collapseSettings})
+      
+    });
+    
+    $("#collapse_select").on("change", function(e) {
+      var value = $("#collapse_select").prop("value");
+      self.phyloPlotly.setCollapseMethod(value);
+      
+      var collapseSettings = get_global_status("dendro_collapse_settings")
+      collapseSettings["method"] = value;
+      set_global_status({"dendro_collapse_settings":collapseSettings})
+    });
+    
+
+
+    this.phyloPlotly.init();
+    this.update_tree_selection()
+    this.setLoadingStatus(false);
+    
+    var collapseSettings = get_global_status("dendro_collapse_settings")
+    
+    if (typeof(collapseSettings["depth"]) !== "undefined") {
+      this.phyloPlotly.collapseToDepth(collapseSettings["depth"]);
+    } else {
+      // if small enough tree don't collapse automatically
+      var ncells = get_global_status("ncells");
+      var depth = self.phyloPlotly.maxDepth;
+      if (ncells >= 1500) {
+        depth = 5;
+      }
+      $("#dend_collapse_to").val(depth);
+      this.phyloPlotly.collapseToDepth(depth);
+      collapseSettings["depth"] = depth;
+      this.stored_collapse_settings = collapseSettings;
+    }
+    
+    if (typeof(collapseSettings["method"]) !== "undefined") {
+      this.phyloPlotly.setCollapseMethod(collapseSettings["method"]);
+    } else {
+      this.phyloPlotly.setCollapseMethod("mode");
+      collapseSettings["method"] = "mode";
+      this.stored_collapse_settings = collapseSettings;
+    }
+    
+}
+
+
+// START MODULES
+
+
+function Modules_Table()
+{
+    this.dom_node = document.getElementById("modules-table-div-container");
+    this.matrix = {}
+    this.modules_table = $(this.dom_node).find('#modules-table');
+    // this.clusters = {}
+    // this.sorted_column = 'Score'
+    // this.filterSig = $(this.dom_node).find('#sig_filt_input')
+    // this.is_filtering = false
+    // this.is_collapsed = {} // cluster -> boolean, holds whether a cluster is collapsed
+    // this.tooltip = {} // will contain a Popper.js object
+}
+
+
+Modules_Table.prototype.init = function()
+{
+
+    var self = this;
+
+    // var debounced = _.debounce(function(){self.doneTyping()}, 500)
+    // self.filterSig.on('input', debounced)
+    //
+    //
+    // var popper = document.querySelector('body > #sig-tooltip')
+    // var arrow = popper.querySelector('.arrow')
+    // var initialNode = document.querySelector('body > #hidden-node')
+    //
+    // var outPopper = new Popper(initialNode, popper, {placement: 'top',
+    //     modifiers: {
+    //         arrow: {
+    //             enabled: true,
+    //             element: arrow,
+    //         },
+    //         preventOverflow: {
+    //             enabled: false,
+    //         },
+    //         hide: {
+    //             enabled: false,
+    //         },
+    //     }
+    // })
+    //
+    // this.tooltip = outPopper;
+    //
+    // // Set up the scrolling behavior
+    // var header_div = this.dom_node.querySelector('.sig-tables-header')
+    // var tables_div = this.dom_node.querySelector('.sig-tables-wrapper')
+    // $(tables_div).on('scroll', function() {
+    //     $(header_div).scrollLeft($(this).scrollLeft())
+    // })
+    //
+    var update_promise = self.update({})
+    return update_promise;
+
+}
+
+Modules_Table.prototype.render = function()
+{
+    var self = this;
+    var matrix = self.matrix;
+    var main_vis = get_global_status('main_vis');
+
+    //var cluster_ids = _(self.clusters).values().uniq().sort(x => x).value()
+    var table = this.modules_table.DataTable(
+        {
+            'columns': [
+                {'title': 'Module'},
+                {'title': 'C'},
+                {'title': 'P'},
+                {'title': 'FDR'},
+            ],
+            "pageLength": 10,
+            "scrollY": '15vh',
+            "order": [[1, "desc"]],
+            "bFilter": false,
+            "buttons": {
+                dom: {
+                    button: {
+                        className: ''
+                    }
+                },
+                buttons: [
+                    {
+                        extend: 'csvHtml5',
+                        text: 'Export',
+                        className: 'btn btn-secondary',
+                    }
+                ]
+            },
+            "pagingType": "simple",
+        }
+    );
+
+
+
+    var dataSet = _.map(this.matrix, (f, i) => [f._row, f.C, f.pValue, f.FDR]);
+
+
+    this.modules_table.DataTable().clear()
+        .rows.add(dataSet)
+         // Needed or else column headers don't align
+        .draw()
+
+
+    $('a[data-toggle="tab"]').on('shown.bs.tab', function(e){
+      table.columns.adjust();
+    });
+
+
+    this.modules_table.on('click', "tr", function() {
+        var cells = $(this).find("td")
+        var module = cells.eq(0).text()
+
+        set_global_status({
+            'plotted_item_type': 'signature',
+            'plotted_item': module,
+            "enrichment": true,
+            "enrichment_module": module
+        })
+    });
+
+}
+
+
+
+Modules_Table.prototype.update = function(updates)
+{
+    var self = this;
+
+    // If there are no modules, don't update
+    var has_mods = get_global_status('has_mods')
+    if(!has_mods){
+        return $.when(null); // Empty promise
+    }
+
+
+    var lcs_promise;
+    if (_.isEmpty(self.matrix)){
+
+        lcs_promise = api.modules.lcs().then(function(mat){
+                self.matrix = mat;
+                return true;
+            })
+    } else {
+        lcs_promise = false
+    }
+    /**
+    var matrix_promise;
+    if( 'main_vis' in updates || _.isEmpty(self.matrix) || 'cluster_var' in updates){
+        var main_vis = get_global_status('main_vis');
+        var cluster_var = _get_cluster_var();
+
+        var fix_col_label = true
+        if (main_vis == "clusters") {
+            matrix_promise = api.clusters.sigProjMatrix(cluster_var, false);
+        } else if (main_vis == "tree") {
+            matrix_promise = api.tree.sigProjMatrix(false);
+        } else {
+            matrix_promise = api.pCorr.signatures();
+            fix_col_label = false
+        }
+
+        matrix_promise = matrix_promise
+            .then(function(matrix) {
+                if (fix_col_label){
+                    matrix.proj_labels[0] = "Score";
+                }
+                self.matrix = matrix;
+                return true;
+            });
+    } else {
+        matrix_promise = false
+    }
+    **/
+    return $.when(lcs_promise)
+        .then(function(lcs_update){
+            if(lcs_update){
+                self.render();
+            }
+        });
+
+}
+
+// END MODULES
+
+
 // Function that's triggered when clicking on table cell
 function tableClickFunction_PC(row_key, item_type)
 {
@@ -1989,6 +2511,7 @@ function tableClickFunction_PC(row_key, item_type)
 
     update['plotted_item_type'] = item_type;
     update['plotted_item'] = row_key;
+    update['enrichment'] = false;
 
     set_global_status(update);
 }
@@ -2006,6 +2529,19 @@ function tableClickFunction_clusters(row_key, item_type)
     }
 
     update['plotted_item_type'] = item_type;
+    update['plotted_item'] = row_key;
+    update['enrichment'] = false;
+
+    set_global_status(update);
+}
+
+function tableClickFunction_modules(row_key, col_key, item_type)
+{
+    var update = {}
+
+    update['plotted_item_type'] = item_type;
+    //update['enrichment'] = true;
+    //update['enrichment_module'] = col_key;
     update['plotted_item'] = row_key;
 
     set_global_status(update);

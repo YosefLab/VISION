@@ -15,21 +15,29 @@
 <link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png" />
 <link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png" />
 <link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png" />
-<!-- jquery -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
-<!-- Bootstrap -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script>
+<!-- jquery -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+<!-- Bootstrap -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script>
+
+<!-- bootstrap-toc -->
+<link rel="stylesheet" href="../bootstrap-toc.css">
+<script src="../bootstrap-toc.js"></script>
 
 <!-- Font Awesome icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous" />
 
 <!-- clipboard.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script>
 
-<!-- sticky kit -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script>
+<!-- headroom.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script>
 
 <!-- pkgdown -->
 <link href="../pkgdown.css" rel="stylesheet">
@@ -39,10 +47,10 @@
 
   <link href="../extra.css" rel="stylesheet">
   
-<meta property="og:title" content="Changelog" />
 
-<meta property="og:image" content="https://yoseflab.github.io/VISION/logo.png" />
-<meta name="twitter:card" content="summary" />
+<meta property="og:title" content="Changelog" />
+<meta property="og:image" content="https://yoseflab.github.io/VISION/logo.svg" />
+
 
 
 
@@ -56,9 +64,10 @@
 <![endif]-->
 
 
+
   </head>
 
-  <body>
+  <body data-spy="scroll" data-target="#toc">
     <div class="container template-news">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
@@ -72,7 +81,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">VISION</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.0</span>
       </span>
     </div>
 
@@ -80,7 +89,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -107,6 +116,12 @@
       <a href="../articles/trajectories.html">Incorporating a Trajectory Model</a>
     </li>
     <li>
+      <a href="../articles/phyloVision.html">PhyloVision and Hotspot</a>
+    </li>
+    <li>
+      <a href="../articles/spatialHotspot.html">Spatial Data and Hotspot</a>
+    </li>
+    <li>
       <a href="../articles/web_only/Seurat.html">How To: Working with Seurat</a>
     </li>
     <li>
@@ -121,11 +136,10 @@
   <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
-      
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="https://github.com/yoseflab/VISION">
-    <span class="fa fa-github fa-lg"></span>
+  <a href="https://github.com/YosefLab/VISION/">
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -136,18 +150,31 @@
 </div><!--/.navbar -->
 
       
+
       </header>
 
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-      <h1>Changelog <small></small></h1>
-      <small>Source: <a href='https://github.com/yoseflab/VISION/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
+      <h1 data-toc-skip>Changelog <small></small></h1>
+      <small>Source: <a href='https://github.com/YosefLab/VISION/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
-    <div id="vision-2-1-0" class="section level1">
-<h1 class="page-header">
-<a href="#vision-2-1-0" class="anchor"></a>VISION 2.1.0</h1>
+    <div id="vision-300" class="section level1">
+<h1 class="page-header" data-toc-text="3.0.0">
+<a href="#vision-300" class="anchor"></a>VISION 3.0.0</h1>
+<p>Major version bump!</p>
+<ul>
+<li>Added support for Phylogenies as latent spaces in core VISION and integrated with VISION api</li>
+<li>Re-engineered UI into Signature Autocorrelation and Hotspot views</li>
+<li>Integrated <a href="https://yoseflab.github.io/Hotspot/index.html">Hotspot</a> into VISION analysis and report UI.</li>
+<li>Deprecated support for trajectories and LC Annotator.</li>
+<li>New color-scheme for gene expression values</li>
+</ul>
+</div>
+    <div id="vision-210" class="section level1">
+<h1 class="page-header" data-toc-text="2.1.0">
+<a href="#vision-210" class="anchor"></a>VISION 2.1.0</h1>
 <p>Added parameter <code>sig_gene_threshold</code> with <strong>changed default behavior</strong></p>
 <ul>
 <li>Before it was a guideline to filter lowly expressed genes before running VISION</li>
@@ -161,9 +188,9 @@
 <li>Crashes when running on more than 1200 signatures</li>
 </ul>
 </div>
-    <div id="vision-2-0-0" class="section level1">
-<h1 class="page-header">
-<a href="#vision-2-0-0" class="anchor"></a>VISION 2.0.0</h1>
+    <div id="vision-200" class="section level1">
+<h1 class="page-header" data-toc-text="2.0.0">
+<a href="#vision-200" class="anchor"></a>VISION 2.0.0</h1>
 <p>Lots of changes for this version.</p>
 <p>However the object structure has been refactored. This means that any old saved RDS objects will not work with the viewResults function once the code has been upgraded. To resolve this, either re-create the objects or use the latest v1.x release of VISION. Incompatible changes like this will be avoided in the future, but a refactor was long needed.</p>
 <ul>
@@ -195,9 +222,9 @@
 </ul>
 <p>Many thanks to <a href='https://github.com/Yanay1'>@Yanay1</a> for improvements to the DE results and heatmap!</p>
 </div>
-    <div id="vision-1-1-1" class="section level1">
-<h1 class="page-header">
-<a href="#vision-1-1-1" class="anchor"></a>VISION 1.1.1</h1>
+    <div id="vision-111" class="section level1">
+<h1 class="page-header" data-toc-text="1.1.1">
+<a href="#vision-111" class="anchor"></a>VISION 1.1.1</h1>
 <ul>
 <li>Bugfixes
 <ul>
@@ -210,9 +237,9 @@
 <li>Added support for Seurat 3.X objects</li>
 </ul>
 </div>
-    <div id="vision-1-1-0" class="section level1">
-<h1 class="page-header">
-<a href="#vision-1-1-0" class="anchor"></a>VISION 1.1.0</h1>
+    <div id="vision-110" class="section level1">
+<h1 class="page-header" data-toc-text="1.1.0">
+<a href="#vision-110" class="anchor"></a>VISION 1.1.0</h1>
 <ul>
 <li>Added differential expression testing to the output report
 <ul>
@@ -224,18 +251,18 @@
 <li>Added UMAP as a projection method</li>
 </ul>
 </div>
-    <div id="vision-1-0-1" class="section level1">
-<h1 class="page-header">
-<a href="#vision-1-0-1" class="anchor"></a>VISION 1.0.1</h1>
+    <div id="vision-101" class="section level1">
+<h1 class="page-header" data-toc-text="1.0.1">
+<a href="#vision-101" class="anchor"></a>VISION 1.0.1</h1>
 <ul>
 <li>Bugfixes related to caching in the output report</li>
 <li>Change default <code>cellsPerPartition</code> value to 10</li>
 <li>Change default <code>filterThreshold</code> parameter value to 5% in applyMicroClustering (for consistency with Vision constructor)</li>
 </ul>
 </div>
-    <div id="vision-1-0-0" class="section level1">
-<h1 class="page-header">
-<a href="#vision-1-0-0" class="anchor"></a>VISION 1.0.0</h1>
+    <div id="vision-100" class="section level1">
+<h1 class="page-header" data-toc-text="1.0.0">
+<a href="#vision-100" class="anchor"></a>VISION 1.0.0</h1>
 <ul>
 <li>Added Layout Options to the output report</li>
 <li>Selected cells can now be saved/loaded</li>
@@ -249,35 +276,31 @@
 </div>
   </div>
 
-  <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
-    <div id="tocnav">
-      <h2>Contents</h2>
-      <ul class="nav nav-pills nav-stacked">
-        <li><a href="#vision-2-1-0">2.1.0</a></li>
-        <li><a href="#vision-2-0-0">2.0.0</a></li>
-        <li><a href="#vision-1-1-1">1.1.1</a></li>
-        <li><a href="#vision-1-1-0">1.1.0</a></li>
-        <li><a href="#vision-1-0-1">1.0.1</a></li>
-        <li><a href="#vision-1-0-0">1.0.0</a></li>
-      </ul>
-    </div>
+  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
+    <nav id="toc" data-toggle="toc" class="sticky-top">
+      <h2 data-toc-skip>Contents</h2>
+    </nav>
   </div>
 
 </div>
 
+
       <footer>
       <div class="copyright">
-  <p>Developed by Matt Jones, David Detomaso, Tal Ashuach.</p>
+  <p>Developed by Matt Jones, David Detomaso, Tal Ashuach, Yanay Rosen.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.3.0.9000.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
+
       </footer>
    </div>
 
   
 
+
   </body>
 </html>
+
 

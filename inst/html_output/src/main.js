@@ -1,9 +1,9 @@
 var global_status = {};
-global_status.main_vis = "clusters"; // Selected from 4 options on top
+global_status.main_vis = "cells"; // Selected from 4 options on top
 /* Options are:
-    'clusters'
-    'pcannotator'
-    'tree'
+    'cells'
+    'genes'
+    'tree' (this is being phased out)
 */
 
 // Determine the projected coordinates
@@ -17,7 +17,11 @@ global_status.pooled = false;
 // Is trajectory data available?
 global_status.has_tree = false;
 global_status.has_sigs = true;
+global_status.has_mods = true;
 global_status.has_lca = false;
+
+// Dendro specific values
+global_status.dendro_collapse_settings = {};
 
 // Determine projected values
 global_status.plotted_item = "";  // name of signature, meta or gene that is plotted
@@ -29,6 +33,11 @@ global_status.selected_cell = ""; // which cell(s) is/are currently selected
 global_status.selection_type = "none"; // either 'cell', or 'cells', or 'pool', or 'pools', or 'none'
 global_status.selection_name = "Selection"; // For plot legends
 
+// handling for scatterplot of modulescors vs signature scores
+global_status.enrichment = false;
+global_status.enrichment_module= "";
+
+
 var global_data = {};
 
 global_data.sig_projection_coordinatesX = {};
@@ -37,6 +46,8 @@ global_data.tree_projection_coordinates = {};
 global_data.plotted_values = {}; // Holds gene expression, signature scores/ranks, etc...
 global_data.sig_info = {};  // Holds the information for the last plotted signature
 global_data.meta_sigs = []; // Holds list of sig names that are meta-data
+global_data.extra_plotted_values = {}; // Holds extra info like module hotspot scores
+global_data.mod_gene_list = {}; // Holds extra info like module hotspot scores
 
 var lower_left_content;
 var upper_left_content;
@@ -110,7 +121,7 @@ function set_global_status(update){
         all_promises.push(val_promise_after);
         right_content_promises.push(val_promise_after);
         lower_left_content_promises.push(val_promise_after);
-
+        upper_left_content_promises.push(val_promise_after);
     }
 
     // Updates signature info if we're plotting a new signature
@@ -135,7 +146,34 @@ function set_global_status(update){
         }
 
     }
-
+    
+    if('enrichment' in update || 'enrichment_module' in update) {
+        var enriched = get_global_status("enrichment")
+        if(enriched) {
+            var mod_sig_promise = api.modules.hotspot_score(get_global_status("enrichment_module"))
+            .then(new_info => {
+                global_data.extra_plotted_values = new_info;
+            })
+        
+            all_promises.push(mod_sig_promise);
+            lower_left_content_promises.push(mod_sig_promise);
+            
+            
+            var mod_gene_list_promise = api.modules.mod_gene_list(get_global_status("enrichment_module"))
+            .then(new_info => {
+                global_data.mod_gene_list = new_info;
+            })
+        
+            all_promises.push(mod_gene_list_promise);
+            lower_left_content_promises.push(mod_gene_list_promise);
+            
+            
+        }
+        
+    } else if ('plotted_item' in update || 'plotted_item_type' in update) {
+        global_status["enrichment"] = false;
+    }
+    
     $.when.apply($, right_content_promises).then(
         function() {
             right_content.update(update).then(() => {
@@ -208,9 +246,9 @@ window.onload = function()
                 .removeClass('disabled')
         }
 
-        if(info.has_lca){
+        if(info.has_mods){
             $('#nav-bar')
-                .find(".nav-link[data-main-vis='pcannotator']")
+                .find(".nav-link[data-main-vis='genes']")
                 .removeClass('disabled')
         }
 
@@ -220,7 +258,10 @@ window.onload = function()
         global_status.has_tree = info.has_tree
         global_status.has_lca = info.has_lca
         global_status.has_sigs = info.has_sigs
+        global_status.has_mods = info.has_mods
         global_status.has_proteins = info.has_proteins
+        global_status.has_dendrogram = info.has_dendrogram
+        global_status.dendrogram = info.dendrogram
 
         global_data.clusters_unique = info.clusters
     })
@@ -245,7 +286,7 @@ window.onload = function()
     $.when(right_promise, combinedPromise, combinedPromise2, allCellClustersPromise)
         .then(function(){
             var has_tree = get_global_status('has_tree')
-            var update0 = {'main_vis': (has_tree ? 'tree': 'clusters')}
+            var update0 = {'main_vis': (has_tree ? 'tree': 'cells')}
             var update1 = upper_left_content.select_default_sig();
             var update2 = right_content.select_default_proj();
             var update = Object.assign({}, update0, update1, update2); // Merge

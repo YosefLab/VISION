@@ -42,6 +42,9 @@
 #' @param latentSpaceName a name for the latent space method (used in output report)
 #' @param latentTrajectory trajectory to model cell progression.  Wrapped result
 #' of a trajectory inference method by the dynverse/dynwrap library
+#' @param tree a phylo object
+#' @param hotspot a list containing one hotspot object precomputed in python and loaded in via reticulate
+#' @param modData a list of signature objects for user defined modules
 #' @param projection_methods a character vector specifying which projection methods to apply. Can be: \itemize{
 #'    \item tSNE10 (tSNE with perplexity 10)
 #'    \item tSNE30 (tSNE with perplexity 30)
@@ -86,11 +89,11 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                                         "znorm_rows_then_columns",
                                         "rank_norm_columns"),
                     pool="auto", cellsPerPartition=10, name=NULL, num_neighbors = NULL,
-                    latentSpace = NULL, latentSpaceName = NULL, latentTrajectory = NULL, pools=list()) {
+                    latentSpace = NULL, latentSpaceName = NULL, latentTrajectory = NULL,
+                    tree = NULL, modData = list(), hotspot= NULL, pools=list()) {
 
             .Object <- new("Vision")
-
-
+            
             if (is.null(rownames(data))) {
                 stop("rownames(data) = NULL. Expression matrix must have gene names as the rownames")
             }
@@ -104,7 +107,6 @@ setMethod("Vision", signature(data = "matrixORSparse"),
             .Object@params$signatures <- list()
             .Object@params$micropooling <- list()
 
-            rownames(data) <- toupper(rownames(data))
             toRemove <- rownames(data)[duplicated(rownames(data))]
             if (length(toRemove) > 0){
                 message(sprintf(
@@ -115,6 +117,14 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                     )
                 data <- data[ !(rownames(data) %in% toRemove), , drop = FALSE]
             }
+
+            if (!is.null(tree)) {
+                # Subset matrix
+                data <- data[,tree$tip.label]
+                # Subset Tree
+                tree <- keep.tip(tree, colnames(data)) 
+            }
+
             .Object@exprData <- data
 
             if (!is.null(unnormalizedData)){
@@ -131,7 +141,6 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                 }
                 # unnormalizedData might have more genes than exprData
                 # and it might have more cells than exprData
-                rownames(unnormalizedData) <- toupper(rownames(unnormalizedData))
                 HAS_CORRECT_CELLS <- length(setdiff(
                                            colnames(.Object@exprData),
                                            colnames(unnormalizedData)
@@ -257,11 +266,12 @@ setMethod("Vision", signature(data = "matrixORSparse"),
             if (length(projection_genes) == 1 &&
                 tolower(projection_genes) %in% c("fano", "threshold")){
                 .Object@params$latentSpace$projectionGenesMethod <- projection_genes
-                .Object@params$latentSpace$projectionGenes <- NULL
+                .Object@params$latentSpace$projectionGenes <- NA
             } else {
-                .Object@params$latentSpace$projectionGenesMethod <- NULL
-                .Object@params$latentSpace$projectionGenes <- vapply(
-                    projection_genes, toupper, "", USE.NAMES = FALSE)
+                .Object@params$latentSpace$projectionGenesMethod <- NA
+                .Object@params$latentSpace$projectionGenes <- projection_genes
+                .Object@params$latentSpace$projectionGenes = intersect(rownames(.Object@exprData),
+                                .Object@params$latentSpace$projectionGenes)
             }
 
             if (threshold < 1) {
@@ -382,7 +392,7 @@ setMethod("Vision", signature(data = "matrixORSparse"),
             if (!is.null(num_neighbors)) {
                 .Object@params$numNeighbors <- num_neighbors
             } else {
-                .Object@params$numNeighbors <- round( (sqrt(ncol(.Object@exprData))))
+                .Object@params$numNeighbors <- round((sqrt(ncol(.Object@exprData))))
             }
 
             if (is.null(latentSpaceName)){
@@ -391,8 +401,28 @@ setMethod("Vision", signature(data = "matrixORSparse"),
                 .Object@params$latentSpace$Name <- latentSpaceName
             }
 
+            .Object@modData <- modData
+            .Object@Hotspot <- hotspot
+            .Object@ModuleSignatureEnrichment <- list()
+            .Object@ModuleHotspotScores = data.frame()
+
             return(.Object)
     }
+)
+
+
+#' Initializes a new PhyloVision Object
+#' 
+#' @param tree parsed ape tree
+#' @param ... arguments passed to the base Vision constructor
+#' @rdname PhyloVision-class
+#' @export
+setMethod("PhyloVision", signature(tree="phylo"), 
+          function(tree, ...) {
+            obj <- Vision(...)
+            obj <- new("PhyloVision", obj, tree=tree)
+            return(obj)
+          }
 )
 
 #' @rdname VISION-class
@@ -644,6 +674,7 @@ setMethod("Vision", signature(data = "Seurat"),
 #' @export
 #' @aliases analyze
 #' @param object VISION object
+#' @param tree whether to use the TREE slot of the object to calculate values
 #' @return VISION object
 #'
 #' @examples
@@ -656,7 +687,7 @@ setMethod("Vision", signature(data = "Seurat"),
 #'
 #' }
 setMethod("analyze", signature(object="Vision"),
-            function(object) {
+            function(object, tree=FALSE, hotspot=FALSE) {
     message("Beginning Analysis\n")
 
     if (object@params$micropooling$pool || length(object@Pools) > 0) {
@@ -668,7 +699,7 @@ setMethod("analyze", signature(object="Vision"),
         object <- computeLatentSpace(object)
     }
 
-    object <- clusterCells(object)
+    object <- clusterCells(object, tree)
 
     # Populates @Projections
     object <- generateProjections(object)
@@ -685,7 +716,7 @@ setMethod("analyze", signature(object="Vision"),
     object <- calcSignatureScores(object)
 
     # Populates @LocalAutocorrelation
-    object <- analyzeLocalCorrelations(object)
+    object <- analyzeLocalCorrelations(object, tree)
 
     # Populates @TrajectoryAutocorrelation
     if (hasTrajectory(object)) {
@@ -699,8 +730,26 @@ setMethod("analyze", signature(object="Vision"),
     object <- annotateLatentComponents(object)
 
 
+    if (hotspot) {
+      message("Hotspot Analysis")
+      object <- runHotspot(object, model="danb", tree)
+    }
+
+
     message("Analysis Complete!\n")
 
+    return(object)
+})
+
+
+#' Analyze a PhyloVision object
+#' 
+#' @param ... arguments passed to the base Vision constructor
+#' @aliases phyloAnalyze
+#' @export
+setMethod("phyloAnalyze", signature(object="PhyloVision"),
+          function(object, hotspot=FALSE) {
+    object <- analyze(object, tree=TRUE, hotspot=hotspot)
     return(object)
 })
 

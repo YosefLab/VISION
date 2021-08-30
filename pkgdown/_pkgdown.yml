@@ -30,6 +30,21 @@ reference:
           - poolMatrixCols
           - poolMatrixRows
           - poolMetaData
+    - title: PhyloVision
+      contents:
+          - PhyloVision
+          - phyloAnalyze
+    - title: Hotspot
+      contents:
+          - runHotspot
+          - hsInit
+          - hsCreateKnnGraph
+          - hsComputeAutoCorrelations
+          - hsComputeLocalCorrelations
+          - hsCalculateModuleScores
+          - analyzeHotspotObjectVision
+          - loadHotspotObject
+          - draw_hotspot_heatmap
     - title: Miscellaneous
       contents:
           - convertGeneIds
@@ -63,6 +78,10 @@ navbar:
         href: articles/micropooling.html
       - text: Incorporating a Trajectory Model
         href: articles/trajectories.html
+      - text: PhyloVision and Hotspot
+        href: articles/phyloVision.html
+      - text: Spatial Data and Hotspot
+        href: articles/spatialHotspot.html
       - text: 'How To: Working with Seurat'
         href: articles/web_only/Seurat.html
       - text: 'How To: 10x CellRanger Outputs'

@@ -3,7 +3,6 @@
 \docType{package}
 \name{VISION}
 \alias{VISION}
-\alias{VISION-package}
 \title{VISION}
 \description{
 VISION analyzes expression data and produces a dynamic report in which various two dimensional

@@ -4,21 +4,32 @@
 #'
 #' @param object the VISION object for which to cluster the cells
 #' @return the VISION object modifed as described above
-clusterCells <- function(object) {
+clusterCells <- function(object, tree=FALSE) {
 
     message("Clustering cells...", appendLF = FALSE)
 
     res <- object@LatentSpace
 
     K <- min(object@params$numNeighbors, 30)
-    kn <- find_knn_parallel(res, K)
-
-    cl <- louvainCluster(kn, res)
-
+    
+    if (!tree) {
+      kn <- find_knn_parallel(res, K)
+      cl <- louvainCluster(kn, res)
+    } else {
+        message("Using Tree to compute clusters...\n")
+        # Get the MRCA matrix and convert the node indexes to depths
+        cl <- maxSizeCladewiseTreeCluster(object@tree)
+    }
+    
     names(cl) <- paste('Cluster', seq(length(cl)))
 
     # cl is list of character vector
-    cluster_variable <- "VISION_Clusters"
+    if (!tree) {
+      cluster_variable <- "VISION_Clusters"
+    } else {
+      cluster_variable <- "VISION_Clusters_Tree"
+    }
+    
     metaData <- object@metaData
 
     metaData[cluster_variable] <- factor(levels = names(cl))
@@ -154,7 +165,7 @@ computeProjectionGenes <- function(object,
     if (!is.null(projection_genes)){
         object@params$latentSpace$projectionGenes <- projection_genes
     } else {
-        object@params$latentSpace$projectionGenes <- NULL
+        object@params$latentSpace$projectionGenes <- NA
     }
 
     if (!is.null(projection_genes_method)){
@@ -163,7 +174,7 @@ computeProjectionGenes <- function(object,
 
     message("Determining projection genes...")
 
-    if (is.null(object@params$latentSpace[["projectionGenes"]])){
+    if (is.na(object@params$latentSpace[["projectionGenes"]])){
 
         exprData <- matLog2(object@exprData)
         projection_genes <- applyFilters(
@@ -283,14 +294,35 @@ calcSignatureScores <- function(
         object@exprData,
         object@params$signatures$sigNormMethod
     )
-
-    sigScores <- batchSigEvalNorm(object@sigData, normExpr)
-
+    
+    sigData <- object@sigData
+    
+    for (sig_name in names(object@sigData)){
+        signature <- object@sigData[[sig_name]]
+        directional <- all(c(1, -1) %in% signature@sigDict)
+        if (directional) {
+            up <- names(which(signature@sigDict == 1))
+            down <- names(which(signature@sigDict == -1))
+            
+            up_name <- paste(signature@name, "_UP", sep = "")
+            down_name <- paste(signature@name, "_DOWN", sep = "")
+            
+            up_sig <- Signature(sigDict = signature@sigDict[up], name = up_name, source = signature@source, metaData = signature@metaData)
+            down_sig <- Signature(sigDict = signature@sigDict[down], name = down_name, source = signature@source, metaData = signature@metaData)
+            sigData[[up_name]] <- up_sig
+            sigData[[down_name]] <- down_sig
+        }
+    }
+    
+    object@sigData <- sigData # persist back to the object because of issues with up/down
+    
+    sigScores <- batchSigEvalNorm(sigData, normExpr)
+    
     if (sig_gene_importance) {
 
         if (is(object@exprData, "sparseMatrix")) {
             sigGeneImportance <- evalSigGeneImportanceSparse(
-                sigScores, object@sigData, normExpr
+                sigScores, sigData, normExpr
             )
         } else {
             normExprDense <- getNormalizedCopy(
@@ -298,7 +330,7 @@ calcSignatureScores <- function(
                 object@params$signatures$sigNormMethod
             )
             sigGeneImportance <- evalSigGeneImportance(
-                sigScores, object@sigData, normExprDense
+                sigScores, sigData, normExprDense
             )
         }
 
@@ -715,7 +747,7 @@ addTSNE <- function(object, perplexity = 30, name = "tSNE", source = "LatentSpac
 #' @param object the VISION object
 #' @return the VISION object with values set for the analysis results
 #' @export
-analyzeLocalCorrelations <- function(object) {
+analyzeLocalCorrelations <- function(object, tree=FALSE) {
 
   signatureBackground <- generatePermutationNull(
       object@exprData, object@sigData, num = 3000
@@ -726,9 +758,13 @@ analyzeLocalCorrelations <- function(object) {
       object@params$signatures$sigNormMethod)
 
   message("Computing KNN Cell Graph in the Latent Space...\n")
-
-  weights <- computeKNNWeights(object@LatentSpace, object@params$numNeighbors)
-
+  if (!tree) {
+    weights <- computeKNNWeights(object@LatentSpace, object@params$numNeighbors)
+  } else {
+    message("Using Tree to compute neighbors...\n")
+    weights <- computeKNNWeights(object@tree, object@params$numNeighbors)
+  }
+ 
   message("Evaluating local consistency of signatures in latent space...\n")
 
   sigConsistencyScores <- sigConsistencyScores(

@@ -776,3 +776,349 @@ find_knn_parallel <- function(data, K) {
 
     return(list(index=idx, dist=dists))
 }
+
+#' Helper KNN Function for Trees
+#'
+#' Computes nearest-neighbor indices and distances
+#' in serial.  Query is over all points and results
+#' do not include the self-distance.
+#'
+#' @param leaves leaves to find the nearest neighbors of
+#' @param k number of neighbors to query
+#' @param distances matrix of Samples x Samples matrix of cophenetic tree distances
+#' @return list with two items:
+#'     index: Samples x K matrix of neighbor indices
+#'     dist: Samples x K matrix of neighbor distances
+knn_tree <- function(leaves, k, distances) {
+  n <- length(leaves)
+  rd <- list(idx = matrix(, length(leaves), k+1), dists = matrix(, length(leaves), k+1))
+  rownames(rd$idx) <- leaves
+  rownames(rd$dists) <- leaves
+  for (leaf in leaves) {
+    subsetDistances <- distances[leaf, ]
+    random <- runif(length(subsetDistances)) * 0.1
+    sorted <- sort(subsetDistances + random)
+    nearest <- sorted[1:(k+1)] # don't include myself in my own nearest neighbors
+    rd$idx[leaf, ] <- names(nearest) %>% (function(x){match(x, colnames(distances))})
+    rd$dists[leaf, ] <- nearest
+  }
+  return(rd)
+}
+
+
+#' Parallel KNN for Trees
+#'
+#' Computes nearest-neighbor indices and distances
+#' in parallel.  Query is over all points and results
+#' do not include the self-distance.
+#'
+#' @importFrom pbmcapply pbmclapply
+#'
+#' @param tree an object of class phylo
+#' @param K number of neighbors to query
+#' @return list with two items:
+#'     index: Samples x K matrix of neighbor indices
+#'     dist: Samples x K matrix of neighbor distances
+find_knn_parallel_tree <- function(tree, K) {
+  
+  workers <- getOption("mc.cores")
+  if (is.null(workers)){
+    workers <- 1
+  }
+  
+  n <- length(tree$tip.label)
+  per_batch <- round(n/workers)
+  
+  batches <- batchify(tree$tip.label, per_batch, n_workers = workers)
+  
+  # set edge lengths to uniform if not specified in tree
+  if (is.null(tree$edge.length)) {
+    tree$edge.length = rep(1, length(tree$edge))
+  }
+  # find the distances
+  distances <- cophenetic.phylo(tree)
+  
+  nn_out <- mclapply(batches, function(leaves){
+    return(knn_tree(leaves, K, distances))
+  })
+  
+  idx <- do.call(rbind, lapply(nn_out, function(nd) nd$idx))
+  dists <- do.call(rbind, lapply(nn_out, function(nd) nd$dists))
+  
+  idx <- idx[, -1, drop = FALSE]
+  dists <- dists[, -1, drop = FALSE]
+  
+  return(list(index=idx, dist=dists))
+}
+
+
+
+#'  Generate neighbors and weights for a tree object, based on LCA.
+#' 
+#'  @param tree object of class phylo
+#'  @param minSize the minimum number of neighbors per node
+#'  @return the hotspot object
+lcaBasedTreeKNN <- function(tree, minSize=20) {
+  tips <- tree$tip.label
+  nTips <- length(tips)
+  neighbors <- data.frame(t(matrix(seq_len(nTips), ncol = nTips, nrow= nTips)))
+  rownames(neighbors) <- tips
+  
+  
+  weights <- data.frame(matrix(0, ncol = nTips, nrow= nTips))
+  for (tip in seq_len(nTips)) {
+    my_neighbors <- minSizeCladeNeighbors(tree, tip, minSize)
+    
+    weights[tip, my_neighbors] <- 1
+  }
+  
+  neighbors_no_diag <- data.frame(matrix(ncol = nTips -1, nrow= nTips))
+  weights_no_diag <- data.frame(matrix(ncol = nTips -1, nrow= nTips))
+  
+  for (tip in seq_len(nTips)) {
+    neighbors_no_diag[tip, ] <- neighbors[tip, -tip]
+    weights_no_diag[tip, ] <- weights[tip, -tip]
+  }
+  
+  rownames(neighbors_no_diag) <- tips
+  rownames(weights_no_diag) <- tips
+  
+  colnames(neighbors_no_diag) <- seq_len(nTips-1) - 1
+  colnames(weights_no_diag) <- seq_len(nTips-1) - 1
+  return(list("neighbors"=as.matrix(neighbors_no_diag), "weights"=as.matrix(weights_no_diag)))
+}
+
+
+
+
+#' Generate an ultrametric tree
+#'
+#' @param tree an object of class phylo
+#' @return a tree with edge distances such that it is ultrametric.
+ultrametric_tree <- function(tree) {
+    tree$edge.length <- rep(1, length(tree$edge[,1]))
+    nodeDepths <- node.depth(tree)
+    for (edgeI in seq_len(length(tree$edge[,1]))) {
+      edge <- tree$edge[edgeI,]
+      me <- edge[2]
+      parent <- edge[1]
+      tree$edge.length[edgeI] <- nodeDepths[parent] - nodeDepths[me]
+    }
+    return(tree)
+}
+
+
+#' Find the ancestor of a node above a specific depth
+#'
+#' @param tree an object of class phylo
+#' @param node the index of the node
+#' @param depth the depth to search to
+#' @return the index of the ancestor node
+ancestor_at_depth <- function(tree, node, depth) {
+    nodeDepths <- node.depth(tree)
+    edges <- tree$edge
+    if (depth > max(nodeDepths)) {
+        stop("Can't search for a depth greater than max depth of tree")
+    }
+    while (nodeDepths[node] < depth) {
+        node <- edges[, 1][edges[, 2] == node]
+    }
+    return(node)
+}
+
+#' Find the root node
+#'
+#' @param tree an object of class phylo
+#' @return the index of the root node
+find_root <- function(tree) {
+    return(ancestor_at_depth(tree, 1, length(tree$tip.label)))
+}
+
+
+#' Find the children of a node
+#'
+#' @param tree an object of class phylo
+#' @param node the node to get the children of
+#' @return the children
+get_children <- function(tree, node) {
+    edges <- tree$edge
+    children <- edges[, 2][edges[, 1] == node]
+    if (length(children) == 0) {
+        children <- node
+    }
+    return(children)
+}
+
+#' Get the parent of a node
+#' @param tree an object of class phylo
+#' @param node the node to get parent
+#' 
+#' @return the immediate parent of the mode, or the node if it is root
+get_parent <- function(tree, node) {
+  edges <- tree$edge
+  parent <- edges[, 1][edges[, 2] == node]
+  if (length(parent) > 0){
+    return(parent)
+  }
+  return(node)
+}
+
+
+#' Get's the nearest >= min size neighbors of a node based on clade structure
+#' @param tree an object of class phylo
+#' @param tip the tip to find the neighbors of
+#' @param minSize the minimum number of neighbors of the node (excludes self)
+#' 
+#' @return the neighbors
+minSizeCladeNeighbors <- function(tree, tip, minSize=20) {
+  node <- tip
+  while (T) {
+    neighbors <- get_all_children(tree, node)
+    clade_size <- length(neighbors)
+    if (clade_size > minSize) {
+      return(neighbors)
+    } else {
+      node <- get_parent(tree, node)
+    }
+  }
+}
+
+#' Check if a child is a tip
+#'
+#' @param tree an object of class phylo
+#' @param node the node to check
+#' @return true or false
+is_tip <- function(tree, node) {
+    children <- get_children(tree, node)
+    return(length(children) ==1 && node == children)
+}
+
+#' Get all the tip children of a node.
+#'
+#' @param tree an object of class phylo
+#' @param node the node to check
+#' @return the tips
+get_all_children <- function(tree, node) {
+    children <- get_children(tree, node)
+    tips <- c()
+    
+    while(length(children) > 0) {
+        are_tips <- c()
+        for (child in children) {
+          are_tips <- append(are_tips, is_tip(tree, child))
+        }
+        tips <- append(tips, children[are_tips])
+        
+        children <- children[!are_tips]
+        new_children <- c()
+        for (child in children) {
+            new_children <- append(new_children, get_children(tree, child))
+        }
+        
+        children <- new_children
+    }
+    
+    return(tips)
+}
+
+#' Tree method for getting the max child clade size of a node
+#' @param tree an object of class phylo
+#' @param node the node to check
+#' @return the size of the largest child clade
+get_max_cluster_size <- function(tree, node) {
+    children <- get_children(tree, node)
+    num_children <- c()
+    for (child in children) {
+        num_children <- append(num_children, length(get_all_children(tree, child)))
+    }
+    return(max(num_children))
+}
+
+
+#' Tree method for getting the min child clade size of a node
+#' @param tree an object of class phylo
+#' @param node the node to check
+#' @return the size of the smallest child clade
+get_min_cluster_size <- function(tree, node) {
+  children <- get_children(tree, node)
+  num_children <- c()
+  for (child in children) {
+    num_children <- append(num_children, length(get_all_children(tree, child)))
+  }
+  return(min(num_children))
+}
+
+
+#' Trivial distance function for arbitrary tree clustering
+#' 
+#' Number of mutations along path from tip1 to LCA(tip1, tip2)
+#' Ensures if on same clade, join.
+#' 
+#' @param tree an object of class phylo
+#' @param tip1 the first leaf
+#' @param tip2 the second leaf
+#' @return the trivial distance between tip1, tip2
+#'
+#' @export
+trivial_dist <- function(tree, tip1, tip2) {
+  # node depths of tree
+  edges <- tree$edge
+  # Get the path from tip1 to root
+  path1 <- c(tip1)
+  root <- find_root(tree)
+  parent <- tip1
+  while (T) {
+    parent <- edges[, 1][edges[, 2] == parent]
+    path1 <- append(path1, parent)
+    if (parent == root) {
+      break
+    }
+  }
+  
+  mrca <- getMRCA(tree, c(tip1, tip2)) # MRCA of both
+  
+  
+  # Depths of the internal nodes that represent the parents of tip1, tip2 right before LCA
+  # ie the 'diverging' point or first split
+  path_length <- which(path1 == mrca)
+  
+  # Return the absolute difference between the depths
+  return(path_length)
+}
+
+
+
+
+
+#' Depth of tip1 parent immediately after LCA(tip1, tip2)
+#' 
+#' @param tree an object of class phylo
+#' @param tip1 the first leaf
+#' @param tip2 the second leaf
+#' @return the trivial distance between tip1, tip2
+#'
+#' @export
+lca_based_depth <- function(tree, tip1, tip2) {
+  depths <- node.depth(tree)
+  edges <- tree$edge
+  # Get the path from tip1 to root
+  path1 <- c(tip1)
+  root <- find_root(tree)
+  parent <- tip1
+  while (T) {
+    parent <- edges[, 1][edges[, 2] == parent]
+    path1 <- append(path1, parent)
+    if (parent == root) {
+      break
+    }
+  }
+  
+  mrca <- getMRCA(tree, c(tip1, tip2)) # MRCA of both
+  
+  # Depths of the internal nodes that represent the parents of tip1, tip2 right before LCA
+  # ie the 'diverging' point or first split
+  lca_child_depth <- depths[path1[which(path1 == mrca) - 1]]
+  
+  # Return the absolute difference between the depths
+  return(lca_child_depth)
+}

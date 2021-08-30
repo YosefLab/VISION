@@ -4,7 +4,7 @@
 \alias{analyzeLocalCorrelations}
 \title{Compute local correlations for all signatures}
 \usage{
-analyzeLocalCorrelations(object)
+analyzeLocalCorrelations(object, tree = FALSE)
 }
 \arguments{
 \item{object}{the VISION object}

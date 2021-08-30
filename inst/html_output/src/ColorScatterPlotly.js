@@ -23,6 +23,10 @@ function ColorScatter(node)
      * interval after a doubleclick using this variable
      */
     this.clickMask = false
+    
+    this.isfactor = true
+    this.diverging_colormap = true
+    this.full_color_range = true
 }
 
 /*
@@ -43,7 +47,11 @@ ColorScatter.prototype.setData = function(object)
     this.proj_keyX = object['proj_keyX']
     this.proj_keyY = object['proj_keyY']
     this.n_points = points.length
-
+    
+    this.isfactor = isFactor
+    this.full_color_range = full_color_range
+    this.diverging_colormap = diverging_colormap
+    
     var x = _.map(points, p => p['x'])
     var xmin = _.min(x)
     var xmax = _.max(x)
@@ -83,7 +91,7 @@ ColorScatter.prototype.setData = function(object)
     var showlegend = false
     if(isFactor) {
         var c = _.map(points, p => p['value'])
-        var unique = d3.set(c).values();
+        var unique = d3.set(c).values().sort();
 
         // Need to check if any is selected.  If no, then all selected_points is null
         var anySelected = _(points).map('selected').reduce( (a, i) => a || i, false)
@@ -156,11 +164,8 @@ ColorScatter.prototype.setData = function(object)
             colorscale = 'Viridis'
         } else {
             colorscale = [
-                //[0,   '#d8d8d8'],
-                // [0.5, '#395252'],
-                //[1,   '#000000'],
-				[0,   '#d8d8d8'],
-                [1, '#952E25'],
+                [0,   '#d8d8d8'],
+                [1, '#952E25']
             ]
         }
 
@@ -458,18 +463,18 @@ ColorScatter.prototype.getLayout = function() {
             range: [this.currentZoom.xmin, this.currentZoom.xmax],
             title: {
                 'text': xlabel,
-            },
-			showgrid: false,
-			showline: true,
+            }, 
+            showgrid: false,
+			      showline: true,
         },
         yaxis: {
             zeroline: false,
             range: [this.currentZoom.ymin, this.currentZoom.ymax],
             title: {
                 'text': ylabel,
-            },
-			showgrid: false,
-			showline: true
+            }, 
+            showgrid: false,
+			      showline: true,
         },
         modebar: {
             bgcolor: 'rgba(255, 255, 255, 0)',

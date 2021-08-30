@@ -80,8 +80,9 @@ body {
 }
 
 #left-content{
-    width: 500px;
+    width: 800px;
     display: flex;
+    overflow-y: auto;
     flex-direction: column;
 }
 
@@ -90,8 +91,12 @@ body {
     box-sizing: border-box;
 }
 
-#lower-left-content{
+#upper-middle-content{
     height: 50%;
+    box-sizing: border-box;
+}
+
+#lower-left-content{
     box-sizing: border-box;
     border-top: 1px solid #bbbbbb;
 }

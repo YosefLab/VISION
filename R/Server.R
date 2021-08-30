@@ -48,7 +48,7 @@ signatureToJSON <- function(sig, geneImportance) {
 
 }
 
-#' Converts row of sigantures score matrix to JSON
+#' Converts row of signatures score matrix to JSON
 #' @importFrom jsonlite toJSON
 #' @param names character vector of labels for signatures
 #' @param values numeric vector for signature values
@@ -108,7 +108,7 @@ sigProjMatrixToJSON <- function(sigzscores, sigpvals, sigs) {
     return(json)
 }
 
-#' convert perason correlation coeffcients between PCs and sgnatures into a JSON object
+#' convert perason correlation coeffcients between PCs and signatures into a JSON object
 #' @param pc the pearson correlation coefficients matrix
 #' @param sigs the signatures of interest
 #' @return Subsetted pearson correlations converted to JSON
@@ -231,13 +231,66 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         sigMatrix <- object@SigScores
         name <- URLdecode(sig_name)
+        
+        # For modules we've split up the up/down groups in signatures
+        upDown <- grepl("_UP$|_DOWN$", name, fixed=F)
+        if (upDown) {
+          name_subbed <- gsub("_UP$|_DOWN$", "", name)
+        }
         if (name %in% colnames(sigMatrix)) {
             values <- sigMatrix[, name]
             names <- rownames(sigMatrix)
             res$body <- sigScoresToJSON(names, values)
             compressJSONResponse(req, res)
             return(res)
-        } else {
+        } else if (name %in% colnames(object@ModScores)) {
+            sigMatrix <- object@ModScores
+            values <- sigMatrix[, name]
+            names <- rownames(sigMatrix)
+            res$body <- sigScoresToJSON(names, values)
+            compressJSONResponse(req, res)
+            return(res)
+        } else if (upDown && name_subbed %in% colnames(sigMatrix)) {
+            values <- sigMatrix[, name]
+            names <- rownames(sigMatrix)
+            res$body <- sigScoresToJSON(names, values)
+            compressJSONResponse(req, res)
+            return(res)
+        } #else if (grepl("_OVERLAP_", name,  fixed=T)) {
+        #   name_split <- strsplit(name, "_OVERLAP_")[[1]]
+        #   if (length(name_split) != 2) {
+        #     res$body <- out
+        #     return(res)
+        #   }
+        # 
+        #   # we might have a proper split now.
+        #   name <- name_split[1]
+        #   mod_name <- name_split[2]
+        # 
+        # 
+        #   mod_genes <- names(object@modData[[mod_name]]@sigDict)
+        # 
+        #   upDown <- grepl("_UP$|_DOWN$", name, fixed=F)
+        #   if (upDown) {
+        #     name_subbed <- gsub("_UP$|_DOWN$", "", name)
+        #   }
+        #   if (name %in% colnames(sigMatrix)) {
+        #     values <- sigMatrix[, name]
+        #     names <- rownames(sigMatrix)
+        #     res$body <- sigScoresToJSON(names, values)
+        #     compressJSONResponse(req, res)
+        #     return(res)
+        #   } else if (upDown && name_subbed %in% colnames(sigMatrix)) {
+        #     values <- sigMatrix[, name]
+        #     names <- rownames(sigMatrix)
+        #     res$body <- sigScoresToJSON(names, values)
+        #     compressJSONResponse(req, res)
+        #     return(res)
+        #   }
+        # 
+        # 
+        # }
+        else {
             return("Signature does not exist!")
         }
     })
@@ -247,12 +300,23 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
       metaData <- object@metaData
       name <- URLdecode(sig_name)
+      
+      upDown <- grepl("_UP$|_DOWN$", name, fixed=F)
+      if (upDown) {
+        name_subbed <- gsub("_UP$|_DOWN$", "", name)
+      }
+      
       if (name %in% colnames(metaData)) {
           names <- rownames(metaData)
           values <- metaData[[name]]
           res$body <- sigScoresToJSON(names, values)
           compressJSONResponse(req, res)
           return(res)
+      } else if (upDown && name_subbed %in% colnames(metaData)) {
+          names <- rownames(metaData)
+          values <- metaData[[name_subbed]]
+          res$body <- sigScoresToJSON(names, values)
+          compressJSONResponse(req, res)
       } else {
           return("Signature does not exist!")
       }
@@ -264,8 +328,14 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
       signatures <- object@sigData
       name <- URLdecode(sig_name)
       out <- "Signature does not exist!"
+      
+      upDown <- grepl("_UP$|_DOWN$", name, fixed=F)
+      if (upDown) {
+        name_subbed <- gsub("_UP$|_DOWN$", "", name)
+      }
+      
       if (name %in% names(signatures)) {
-        sig <- signatures[[name]]
+          sig <- signatures[[name]]
 
           if (.hasSlot(object, "SigGeneImportance")) {
               geneImportance <- object@SigGeneImportance[[name]]
@@ -274,68 +344,236 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
           }
 
         out <- signatureToJSON(sig, geneImportance)
-      }
+      } else if (upDown && name_subbed %in% names(signatures)) {
+        sig <- signatures[[name_subbed]]
+        
+        directed <- sig@sigDict
+        if (grepl("_UP$", name, fixed=F)) {
+            genes <- names(directed[directed == 1])
+        } else {
+            genes <- names(directed[directed == -1])
+        }
+        directed <- directed[genes]
+        sig@sigDict <- directed
+        sig@name <- name
+        
+        if (.hasSlot(object, "SigGeneImportance")) {
+          geneImportance <- object@SigGeneImportance[[name_subbed]][genes]
+        } else {
+          geneImportance <- sig@sigDict[genes] * 0
+        }
+
+        out <- signatureToJSON(sig, geneImportance)
+      } else if (name %in% names(object@modData)) {
+          signatures <- object@modData
+          sig <- signatures[[name]]
+          
+          if (.hasSlot(object, "ModGeneImportance")) {
+            geneImportance <- object@ModGeneImportance[[name]]
+          } else {
+            geneImportance <- sig@sigDict * 0
+          }
+          
+          out <- signatureToJSON(sig, geneImportance)
+      } # else if (grepl("_OVERLAP_", name,  fixed=T)) {
+      #   name_split <- strsplit(name, "_OVERLAP_")[[1]]
+      #   if (length(name_split) != 2) {
+      #     res$body <- out
+      #     return(res)
+      #   }
+      #   
+      #   # we might have a proper split now.
+      #   name <- name_split[1]
+      #   mod_name <- name_split[2]
+      #   
+      #   
+      #   mod_genes <- names(object@modData[[mod_name]]@sigDict)
+      #   
+      #   
+      #   upDown <- grepl("_UP$|_DOWN$", name, fixed=F)
+      #   if (upDown) {
+      #     name_subbed <- gsub("_UP$|_DOWN$", "", name)
+      #   }
+      #   
+      #   if (name %in% names(signatures)) {
+      #     sig <- signatures[[name]]
+      #     intersect_mod <- intersect(mod_genes, names(sig@sigDict))
+      #     sig@sigDict <- sig@sigDict[intersect_mod]
+      #     if (.hasSlot(object, "SigGeneImportance")) {
+      #       geneImportance <- object@SigGeneImportance[[name]][intersect_mod]
+      #     } else {
+      #       geneImportance <- sig@sigDict * 0
+      #     }
+      #     sig@name <- paste(name, " Overlap ", mod_name);
+      #     out <- signatureToJSON(sig, geneImportance)
+      #   } else if (upDown && name_subbed %in% names(signatures)) {
+      #     sig <- signatures[[name_subbed]]
+      #     intersect_mod <- intersect(mod_genes, names(sig@sigDict))
+      #     sig@sigDict <- sig@sigDict[intersect_mod]
+      #     directed <- sig@sigDict
+      #     if (grepl("_UP$", name, fixed=F)) {
+      #       genes <- names(directed[directed == 1])
+      #     } else {
+      #       genes <- names(directed[directed == -1])
+      #     }
+      #     
+      #     genes <- intersect(genes, mod_genes)
+      #     directed <- directed[genes]
+      #     sig@sigDict <- directed
+      #     sig@name <- paste(name, " Overlap ", mod_name);
+      #     
+      #     if (.hasSlot(object, "SigGeneImportance")) {
+      #       geneImportance <- object@SigGeneImportance[[name_subbed]][genes]
+      #     } else {
+      #       geneImportance <- sig@sigDict[genes] * 0
+      #     }
+      #     out <- signatureToJSON(sig, geneImportance)
+      #   }
+      #   
+      #   
+      #   res$body <- out
+      #   return(res)
+      # }
       res$body <- out
       return(res)
     })
+    
+    
+    pr$handle("GET", "/Modules/LC",
+        function(req, res) {
+          # exclude overlap sigs
+          modules <- colnames(object@ModuleSignatureEnrichment$statistics)
+          lcs <- object@LocalAutocorrelation$Modules[sort(modules), ]
+          out <- toJSON(lcs)
+          res$body <- out
+          return(res)
+        }
+    )
 
     pr$handle("GET", "/Signature/Expression/<sig_name>/<cluster_var>",
         function(req, res, sig_name, cluster_var) {
 
         all_names <- vapply(object@sigData, function(x) x@name, "")
+        all_names_mod <- vapply(object@modData, function(x) x@name, "")
+        
         name <- URLdecode(sig_name)
         index <- match(name, all_names)
-        if (is.na(index)){
-            return("Signature does not exist!")
+        indexMod <- match(name, all_names_mod)
+        
+        upDown <- grepl("_UP$|_DOWN$", name, fixed=F)
+        if (upDown) {
+          name_subbed <- gsub("_UP$|_DOWN$", "", name)
+          indexSubbed <- match(name_subbed, all_names)
         }
-        else{
+        
+        if (is.na(index) && !upDown && !is.na(indexMod)) {
+            # received a module
+            sig <- object@modData[[indexMod]]
+        } else if (!is.na(index) && !upDown) {
+            # received a normal signature name with no up/downage
             sig <- object@sigData[[index]]
-            genes <- names(sig@sigDict)
-            expMat <- object@exprData[genes, ]
-            # transpose to aggregate
-            # note only agg over genes in sig
-            # on click gene plots gene
-            expMat <- t(expMat)
-            clusters <- object@metaData[rownames(expMat), cluster_var]
-            clusters <- as.factor(clusters)
-            onehot <- lapply(setNames(levels(clusters), levels(clusters)),
-                function(level) ifelse(clusters == level, 1, 0)
-            )
-            onehot <- t(do.call(cbind, onehot))
-            onehot <- onehot / rowSums(onehot)
-            x <- onehot %*% expMat
-
-            # get rid of aggregate artifact and redo transpose
-            y <- as.matrix(t(x))
-            rownames(y) <- colnames(expMat)
-
-            # z-score before cluster
-            rm <- matrixStats::rowMeans2(y)
-            rsd <- matrixStats::rowSds(y)
-            rsd[rsd == 0] <- 1.0
-            y <- (y - rm) / rsd
-
-            # Cluster the rows
-            d <- dist(y, method = "euclidean")
-            fit <- hclust(d, method = "average")
-            y <- y[fit$order, , drop = FALSE]
-
-            # Cluster the columns
-            d <- dist(t(y), method = "euclidean")
-            fit <- hclust(d, method = "average")
-            y <- y[, fit$order, drop = FALSE]
-
-            sExpr <- ServerExpression(y, colnames(y), rownames(y))
-            json_out <- toJSON(
-                sExpr, force = TRUE, pretty = TRUE, auto_unbox = TRUE,
-                digits = I(4)
-            )
-
-            res$body <- json_out
-            compressJSONResponse(req, res)
-
-            return(res)
+        } else if (upDown && !is.na(indexSubbed)){
+            # a up down signature name
+            sig <- object@sigData[[indexSubbed]]
+            directed <- sig@sigDict
+            if (grepl("_UP$", name, fixed=F)) {
+              genes <- names(directed[directed == 1])
+            } else {
+              genes <- names(directed[directed == -1])
+            }
+            sig@sigDict <- sig@sigDict[genes]
+            sig@name <- name
+        }# else if (grepl("_OVERLAP_", name,  fixed=T)) {
+        #     # yanay rnow
+        #     # overlap inputted, re proccess
+        #     name_split <- strsplit(name, "_OVERLAP_")[[1]]
+        #     if (length(name_split) != 2) {
+        #       return("Signature does not exist!")
+        #     }
+        #     
+        #     # we might have a proper split now.
+        #     overlap_name <- name
+        #     name <- name_split[1]
+        #     mod_name <- name_split[2]
+        #     
+        #     
+        #     mod_genes <- names(object@modData[[mod_name]]@sigDict)
+        #     
+        #     
+        #     upDown <- grepl("_UP$|_DOWN$", name, fixed=F)
+        #     if (upDown) {
+        #       name_subbed <- gsub("_UP$|_DOWN$", "", name)
+        #     }
+        #     index <- match(name, all_names)
+        #     if (!is.na(index) && !upDown) {
+        #       # received a normal signature name with no up/downage
+        #       sig <- object@sigData[[index]]
+        #       sig@sigDict <- sig@sigDict[intersect(mod_genes, names(sig@sigDict))]
+        #       sig@name <- overlap_name
+        #     } else if (upDown && !is.na(indexSubbed)){
+        #       # a up down signature name
+        #       sig <- object@sigData[[indexSubbed]]
+        #       directed <- sig@sigDict
+        #       if (grepl("_UP$", name, fixed=F)) {
+        #         genes <- names(directed[directed == 1])
+        #       } else {
+        #         genes <- names(directed[directed == -1])
+        #       }
+        #       sig@sigDict <- sig@sigDict[intersect(genes, mod_genes)]
+        #       sig@name <- overlap_name
+        #     }
+        #     
+        # } 
+        else {
+          return("Signature does not exist!")
         }
+        
+        genes <- names(sig@sigDict)
+        expMat <- object@exprData[genes, ]
+        # transpose to aggregate
+        # note only agg over genes in sig
+        # on click gene plots gene
+        expMat <- t(expMat)
+        clusters <- object@metaData[rownames(expMat), cluster_var]
+        clusters <- as.factor(clusters)
+        onehot <- lapply(setNames(levels(clusters), levels(clusters)),
+            function(level) ifelse(clusters == level, 1, 0)
+        )
+        onehot <- t(do.call(cbind, onehot))
+        onehot <- onehot / rowSums(onehot)
+        x <- onehot %*% expMat
+
+        # get rid of aggregate artifact and redo transpose
+        y <- as.matrix(t(x))
+        rownames(y) <- colnames(expMat)
+
+        # z-score before cluster
+        rm <- matrixStats::rowMeans2(y)
+        rsd <- matrixStats::rowSds(y)
+        rsd[rsd == 0] <- 1.0
+        y <- (y - rm) / rsd
+
+        # Cluster the rows
+        d <- dist(y, method = "euclidean")
+        fit <- hclust(d, method = "average")
+        y <- y[fit$order, , drop = FALSE]
+
+        # Cluster the columns
+        d <- dist(t(y), method = "euclidean")
+        fit <- hclust(d, method = "average")
+        y <- y[, fit$order, drop = FALSE]
+
+        sExpr <- ServerExpression(y, colnames(y), rownames(y))
+        json_out <- toJSON(
+            sExpr, force = TRUE, pretty = TRUE, auto_unbox = TRUE,
+            digits = I(4)
+        )
+
+        res$body <- json_out
+        compressJSONResponse(req, res)
+
+        return(res)
+        
     })
 
     pr$handle("GET", "/Proteins/<protein_name>/Values",
@@ -362,6 +600,31 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         res$body <- toJSON(cls, auto_unbox = TRUE)
         return(res)
 
+    })
+    
+    pr$handle("GET", "/FilterGroup/SigClusters/Modules", function(req, res) {
+      # Fix for signatures vs modules enrichment tab in genes panel
+      # yanay yanay
+      mods <- colnames(object@ModScores)
+      cls <- list()
+      module_names <- sort(colnames(object@ModuleSignatureEnrichment$p_vals))
+      
+      
+      for (mod in mods) {
+        if (grepl("_OVERLAP_", mod,  fixed=T)) {
+          name_split <- strsplit(mod, "_OVERLAP_")[[1]]
+          sig_name <- name_split[1]
+          mod_name <- name_split[2]
+          idx <- match(mod_name, module_names)
+          cls[mod] = idx
+        } else {
+          idx = match(mod, module_names)
+          cls[mod] = idx
+        }
+      } 
+      res$body <- toJSON(cls, auto_unbox = TRUE)
+      return(res)
+      
     })
 
     pr$handle("GET", "/FilterGroup/SigClusters/Proteins", function(req, res) {
@@ -607,7 +870,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         res$body <- toJSON(cluster_vars, force = TRUE, pretty = TRUE)
         return(res)
     })
-
+    
     pr$handle("POST", "/DE", function(req, res) {
         # Params
         body <- fromJSON(req$postBody)
@@ -862,7 +1125,109 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         res$body <- sigProjMatrixToJSON(stat, pvals, sigs = rownames(stat))
         return(res)
     })
-
+    
+    
+    pr$handle("GET", "/Clusters/<cluster_variable>/ModProjMatrix/Normal",
+              function(req, res, cluster_variable) {
+                
+                # Gather signatures and numeric meta-data names
+                mods <- colnames(object@ModScores)
+                pvals_s <- c()
+                stat_s <- c()
+                
+                for (mod in mods) {
+                  if (grepl("_OVERLAP_", mod,  fixed=T)) {
+                    # yanay rnow
+                    # overlap inputted, re proccess
+                    name_split <- strsplit(mod, "_OVERLAP_")[[1]]
+                    sig_name <- name_split[1]
+                    mod_name <- name_split[2]
+                    pval <- object@ModuleSignatureEnrichment$p_vals[sig_name, mod_name]
+                    stat <- object@ModuleSignatureEnrichment$statistics[sig_name, mod_name]
+                    pvals_s <- append(pvals_s, pval)
+                    stat_s <- append(stat_s, stat)
+                  } else {
+                    mod_genes <- names(object@modData[[mod]]@sigDict)
+                    mod_hyp_test <- calc_set_enrichment(mod_genes, mod_genes, rownames(object@exprData))
+                    pvals_s <- append(pvals_s, mod_hyp_test[2])
+                    stat_s <- append(stat_s, mod_hyp_test[1])
+                  }
+                }
+              
+                stat <- as.matrix(stat_s)
+                pvals <- as.matrix(pvals_s)
+              
+                cluster_variable <- URLdecode(cluster_variable)
+                
+                # Get Modules Cluster Comparisons
+                var_res <- object@ClusterComparisons$Modules[[cluster_variable]]
+                
+                cluster_pval_s <- lapply(var_res, function(var_level_res){
+                  var_level_res["FDR"]
+                })
+                cluster_pval_s <- as.matrix(do.call(cbind, cluster_pval_s))
+                colnames(cluster_pval_s) <- names(var_res)
+                
+                cluster_stat_s <- lapply(var_res, function(var_level_res){
+                  var_level_res["stat"]
+                })
+                cluster_stat_s <- as.matrix(do.call(cbind, cluster_stat_s))
+                colnames(cluster_stat_s) <- names(var_res)
+                
+                
+                pvals <- cbind(pvals, cluster_pval_s)
+                stat <- cbind(stat, cluster_stat_s)
+                colnames(pvals)[1] <- "Overlap"
+                colnames(stat)[1] <- "Overlap"
+                
+                stat <- stat[order(stat[,1],decreasing=TRUE), ]
+                res$body <- sigProjMatrixToJSON(stat, pvals, sigs = rownames(stat))
+                return(res)
+              })
+    
+    pr$handle("GET", "/Modules/Enrichment",
+        function(req, res) {
+          
+            pvals <- object@ModuleSignatureEnrichment$p_vals
+            stat <- object@ModuleSignatureEnrichment$statistics
+            
+            res$body <- sigProjMatrixToJSON(stat, pvals, sigs = rownames(stat))
+            
+            return(res)
+        })
+    
+    pr$handle("GET", "/Modules/HotspotScore/<module_name>",
+          function(req, res, module_name) {
+              module_name <- URLdecode(module_name)
+              # change back to modulehotspot scores if want hotspot scores
+              # instead of signature scores for the hotspot modules.
+              if (module_name %in% colnames(object@ModScores)) {
+                  names <- rownames(object@ModScores)
+                  values <- as.data.frame(object@ModScores)[[module_name]]
+                  res$body <- sigScoresToJSON(names, values)
+                  compressJSONResponse(req, res)
+                  return(res)
+              } else {
+                  return("Module not found!")
+              }
+          })
+    
+    pr$handle("GET", "/Modules/GeneList/<module_name>",
+              function(req, res, module_name) {
+                module_name <- URLdecode(module_name)
+                # change back to module hotspot scores if want hotspot scores
+                # instead of signature scores for the hotspot modules.
+                if (module_name %in% names(object@modData)) {
+                  mod <- object
+                  genes <- names(object@modData[[module_name]]@sigDict)
+                  res$body <- toJSON(genes, force = TRUE, pretty = TRUE)
+                  compressJSONResponse(req, res)
+                  return(res)
+                } else {
+                  return("Module not found!")
+                }
+              })
+    
     pr$handle("GET", "/Clusters/<cluster_variable>/SigProjMatrix/Meta",
         function(req, res, cluster_variable) {
 
@@ -955,10 +1320,18 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         info[["ncells"]] <- nrow(object@metaData)
 
         info[["has_sigs"]] <- length(object@sigData) > 0
+        
+        info[["has_mods"]] <- length(object@modData) > 0
 
         info[["has_proteins"]] <- hasProteinData(object)
 
         info[["has_lca"]] <- !is.null(object@LCAnnotatorData)
+        
+        if (.hasSlot(object, "tree") && !is.null(object@tree)) {
+          info[["dendrogram"]] <- write.tree(object@tree)
+        }
+        
+        info[["has_dendrogram"]] <- .hasSlot(object, "tree") && !is.null(object@tree)
 
         res$body <- toJSON(info, force = TRUE,
             pretty = TRUE, auto_unbox = TRUE)

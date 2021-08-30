@@ -2,7 +2,7 @@
 % Please edit documentation in R/Server.R
 \name{pearsonCorrToJSON}
 \alias{pearsonCorrToJSON}
-\title{convert perason correlation coeffcients between PCs and sgnatures into a JSON object}
+\title{convert perason correlation coeffcients between PCs and signatures into a JSON object}
 \usage{
 pearsonCorrToJSON(pc, sigs)
 }
@@ -15,5 +15,5 @@ pearsonCorrToJSON(pc, sigs)
 Subsetted pearson correlations converted to JSON
 }
 \description{
-convert perason correlation coeffcients between PCs and sgnatures into a JSON object
+convert perason correlation coeffcients between PCs and signatures into a JSON object
 }

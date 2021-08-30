@@ -4,8 +4,7 @@
 \alias{calculateTrajectoryDistances}
 \title{Calculate distance matrix between all pairs of ponts based on their projection onto the tree}
 \usage{
-calculateTrajectoryDistances(adjMat, edgeAssoc, edgePos,
-  latentPnts = NULL)
+calculateTrajectoryDistances(adjMat, edgeAssoc, edgePos, latentPnts = NULL)
 }
 \arguments{
 \item{adjMat}{(K x K logical) adjacency matrix of the milestones}

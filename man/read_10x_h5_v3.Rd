@@ -24,5 +24,5 @@ This version uses the h5 file produced by "cellranger count"
 
 This file is typically in a folder that looks like:
 
-\code{outs/filtered_feature_bc_matrices_h5.h5}
+    \code{outs/filtered_feature_bc_matrices_h5.h5}
 }

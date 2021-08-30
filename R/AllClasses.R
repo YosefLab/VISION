@@ -5,10 +5,16 @@
 # scores, distance matrices, and anything else, is computed
 # on the different types of data.
 
+
 setClassUnion("numericORNULL", members = c("numeric", "NULL"))
 setClassUnion("matrixORSparse", members = c("matrix", "dgCMatrix"))
 setClassUnion("matrixORNULL", members = c("matrix", "NULL"))
 setClassUnion("dataframeORNULL", members = c("data.frame", "NULL"))
+setClassUnion("rawORNULL", members = c("raw", "NULL"))
+
+
+# setClassUnion("treeorNull", members=c("phylo", "NULL"))
+# setClassUnion("pythonorNull", members = c("python.builtin.object", "NULL"))
 
 Cluster <- setClass("Cluster",
     slots = c(
@@ -58,6 +64,8 @@ Trajectory <- setClass("Trajectory",
             # columns:  from (character), to (character), position (numeric, 0 to 1)
 ))
 
+setClassUnion("trajectoryORNULL", members = c("Trajectory", "NULL"))
+
 TrajectoryProjection <- setClass("TrajectoryProjection",
     slots = c(
         name = "character", # Name of projection
@@ -101,7 +109,9 @@ Vision <- setClass("Vision",
         unnormalizedData = "matrixORSparse",
         sigData = "list",
         metaData = "data.frame",
+        modData = "list",
         SigScores = "matrix",
+        ModScores = "matrix",
         LocalAutocorrelation = "list",
         TrajectoryAutocorrelation = "list",
         ClusterComparisons = "list",
@@ -109,9 +119,13 @@ Vision <- setClass("Vision",
         Projections = "list",
         TrajectoryProjections = "list", # list of TrajectoryProjection
         SigGeneImportance = "list",
+        ModGeneImportance = "list",
         Pools = "list",
         LatentSpace = "matrix",
-        LatentTrajectory = "Trajectory",
+        LatentTrajectory = "trajectoryORNULL",
+        Hotspot = "rawORNULL",
+        ModuleSignatureEnrichment = "list",
+        ModuleHotspotScores = "data.frame",
         Viewer = "list",
         params = "list",
         version = "numeric"
@@ -122,7 +136,9 @@ Vision <- setClass("Vision",
         unnormalizedData = matrix(NA, 1, 1),
         sigData = list(),
         metaData = data.frame(),
+        modData=list(),
         SigScores = matrix(NA, 1, 1),
+        ModScores = matrix(NA, 1, 1),
         LocalAutocorrelation = list(),
         TrajectoryAutocorrelation = list(),
         ClusterComparisons = list(),
@@ -130,10 +146,23 @@ Vision <- setClass("Vision",
         Projections = list(),
         TrajectoryProjections = list(),
         SigGeneImportance = list(),
+        ModGeneImportance = list(),
         Pools = list(),
         LatentSpace = matrix(NA, 1, 1),
         LatentTrajectory = NULL,
+        Hotspot = NULL,
+        ModuleSignatureEnrichment = list(),
+        ModuleHotspotScores = data.frame(),
         Viewer = list(),
         params = list(),
         version = 1.2
 ))
+
+# This is a hack to try and get R to play nice with the phylo class
+# Which the Ape package doesn't expose
+phylo <- setClass("phylo")
+
+PhyloVision <- setClass("PhyloVision", contains = "Vision", 
+  slots = c(tree = "phylo"),
+  prototype = list(tree=NULL)
+)
