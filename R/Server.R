@@ -953,8 +953,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             cluster_denom <- match(cells_denom, colnames(exprDataSubset))
 
             # Needed for sparse subsetting
-            cluster_num <- as.numeric(cluster_num)
-            cluster_denom <- as.numeric(cluster_denom)
+            cluster_num <- na.omit(as.numeric(cluster_num))
+            cluster_denom <- na.omit(as.numeric(cluster_denom))
 
             out <- matrix_wilcox_cpp(exprDataSubset, cluster_num, cluster_denom)
 
