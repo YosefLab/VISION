@@ -1086,10 +1086,6 @@ trivial_dist <- function(tree, tip1, tip2) {
   return(path_length)
 }
 
-
-
-
-
 #' Depth of tip1 parent immediately after LCA(tip1, tip2)
 #' 
 #' @param tree an object of class phylo
@@ -1121,4 +1117,32 @@ lca_based_depth <- function(tree, tip1, tip2) {
   
   # Return the absolute difference between the depths
   return(lca_child_depth)
+}
+
+#' Depth first traversal of tree.
+#' 
+#' @param tree a rooted tree of class `phylo`
+#' @param postorder a boolean value indicating to return the list of nodes in postorder
+#' @return an ordering of nodes from the traversal
+depth_first_traverse_nodes <- function(tree, postorder=T) {
+    root = find_root(tree)
+
+    traversal = c()
+    queue = c(root)
+    while (length(queue) > 0) {
+        node = queue[[1]]
+        traversal = c(node, traversal)
+        queue = queue[-1]
+        children = get_children(tree, node)
+        for (child in children) {
+            if (!(child %in% traversal)) {
+                queue = c(queue, child)
+            }
+        }
+    }
+    
+    if (!postorder) {
+        return(rev(traversal))
+    }
+    return(traversal)
 }

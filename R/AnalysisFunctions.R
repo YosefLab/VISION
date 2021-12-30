@@ -1057,6 +1057,41 @@ clusterSigScores <- function(object, variables = "All") {
 
 }
 
+#' Compute single-cell effective plasticity scores
+#' 
+#' Computes a single-cell effective plasticity score, capturing the stability
+#' of a particular categorical trait with respect to a tree (as introduced
+#' with the metastatic score in Quinn, Jones et al Science 2021).
+#' 
+#' @importFrom phanghorn parsimony
+#' @param object the PhyloVision object
+#' @return the object with new continuous covariates populated corresponding to the plasticities
+#' @export 
+computeSingleCellPlasticities <- function(object) {
+
+    if (!is(object, "PhyloVision")) {
+        stop("This object is not a PhyloVision object.")
+    }
+
+    tree <- object@tree
+    metaData <- object@metaData
+    categoricalMetaVars <- vapply(colnames(metaData),
+                            function(x) is.factor(metaData[[x]]) | is.character(metaData[[x]]),
+                            FUN.VALUE = TRUE)
+    categoricalMeta <- metaData[, categoricalMetaVars, drop = FALSE]
+    categoricalMeta <- categoricalMeta[tree$tip.label, , drop = FALSE]
+
+    plasticity_scores <- pbmclapply(seq_len(ncol(categoricalMeta)), function(i) {
+      labels <- categoricalMeta[,i,drop=F]
+
+      parsimony_score <- computeFitchHartiganParsimony(tree, labels)
+
+      return(parsimony_score / nrow(tree$edge))
+    })
+    names(plasticity_scores) <- unlist(lapply(colnames(categoricalMeta), function(x) paste0(x,'_plasticity')))
+    
+}
+
 #' Compute pearson correlation between signature scores and components of the Latent Space
 #'
 #' Enables the LCAnnotator portion of the output report
