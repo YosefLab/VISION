@@ -236,6 +236,29 @@
                                         <input type="number" id="de_sub_cells_n" class="form-control" tabindex="-1" value="1000"></input>
                                     </div>
                                 </div>
+                                
+                                <div>
+                                    <div class='label-control no-select' style="align-items: center">
+                                        <span class="label">
+                                            <label for="de_test_type">DE Test Type</label>
+                                        </span>
+                                    </div>
+                                    <div class='label-control max-control'>
+                                        <select id="de_test_type" class="form-control">
+                                            <option value="wilcox">Default (Fast Wilcoxon Rank Sum)</option>
+                                            <option value="swilcox">Wilcoxon Rank Sum (Seurat)</option>
+                                            <option value="sbimod">Bimodal (Seurat)</option>
+                                            <option value="sroc">AUCROC (Seurat)</option>
+                                            <option value="st">T-test (Seurat)</option>
+                                            <option value="spoisson">Poisson (Seurat)</option>
+                                            <option value="snegbinom">Negative Binomial (Seurat)</option>
+                                            <option value="slr">Logistic Regression (Seurat)</option>
+                                            <option value="smast">MAST (Seurat)</option>
+                                            <option value="sdeseq2">DESeq2 (Seurat)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
                               </div>
                           </div>
   

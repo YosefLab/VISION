@@ -889,7 +889,9 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         cells_min <- as.numeric(body$min_cells) # default 1
         subsample_groups <- body$subsample_groups
         subsample_cells_n <- as.numeric(body$subsample_N)
-
+        
+        # Add option for test types
+        de_test_type <- body$de_test_type
         # I want to skip caching a manual selection because the hash would be complicated
         skip_cache <- FALSE;
         if (type_n == "current") {
@@ -897,7 +899,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         } else {
           # hash by the params as a string
           hashed_body <- paste(type_n, type_d, subtype_n, subtype_d, group_num,
-              group_denom, subsample_cells_n, cells_min, subsample_groups, sep = " ")
+              group_denom, subsample_cells_n, cells_min, subsample_groups, de_test_type, sep = " ")
         }
         if (skip_cache || is.null(object@Viewer$de_cache[[hashed_body]])) {
             # The case where we know the de calculation is not cached, so we have to actually
@@ -955,8 +957,43 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             # Needed for sparse subsetting
             cluster_num <- na.omit(as.numeric(cluster_num))
             cluster_denom <- na.omit(as.numeric(cluster_denom))
-
-            out <- matrix_wilcox_cpp(exprDataSubset, cluster_num, cluster_denom)
+            
+            # Calculate the DE using different types
+            if (de_test_type == "wilcox"){
+                out <- matrix_wilcox_cpp(exprDataSubset, cluster_num, cluster_denom)
+            } else { 
+                # Use Seurat
+              use <- ""
+              if (de_test_type =="swilcox") {
+                  use="wilcox"
+              } else if (de_test_type =="sbimod") {
+                  use="bimod"
+              } else if (de_test_type =="sroc") {
+                use="roc"
+              } else if (de_test_type =="st") {
+                use="t"
+              } else if (de_test_type =="spoisson") {
+                  use="poisson"
+              } else if (de_test_type =="snegbinom") {
+                  use="negbinom"
+              } else if (de_test_type =="slr") {
+                  use="LR"
+              } else if (de_test_type =="smast") {
+                  use="MAST"
+              } else if (de_test_type =="sdeseq2") {
+                use="DESeq2"
+              }
+              
+              
+              cell_1_names = colnames(exprDataSubset)[cluster_num]
+              cell_2_names = colnames(exprDataSubset)[cluster_denom]
+              
+              out <- FindMarkers(exprDataSubset, cells.1=cell_1_names, cells.2=cell_2_names, test.use=use, min.pct = -1)
+              out$AUC <- rep(0, length(out$p_val_adj))
+              out$pval <- out$p_val_adj
+              
+              print(out)
+            }
 
             out$stat <- pmax(out$AUC, 1 - out$AUC)
             out$Feature <- rownames(out)

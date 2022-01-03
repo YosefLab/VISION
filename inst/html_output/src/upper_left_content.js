@@ -1624,6 +1624,7 @@ function DE_Select()
     this.min_cells = $(this.dom_node).find('#de_min_cells');
     this.sub_cells_n = $(this.dom_node).find('#de_sub_cells_n');
     this.sub_cells = $(this.dom_node).find('#de_sub_cells');
+    this.de_test_type = $(this.dom_node).find('#de_test_type');
 }
 
 DE_Select.prototype.init = function()
@@ -1786,10 +1787,12 @@ DE_Select.prototype.init = function()
 
         var subtype_n = ""
         var subtype_d = ""
+        
 
         var min_cells = self.min_cells.val();
         var sub_cells_n = self.sub_cells_n.val();
-        var sub_cells = self.sub_cells.is(":checked")
+        var sub_cells = self.sub_cells.is(":checked");
+        var de_test_type = self.de_test_type.val();
 
         if (!min_cells) {
             min_cells = 0;
@@ -1845,7 +1848,7 @@ DE_Select.prototype.init = function()
         api.de(
             type_n, subtype_n, group_num,
             type_d, subtype_d, group_denom,
-            min_cells, sub_cells, sub_cells_n
+            min_cells, sub_cells, sub_cells_n, de_test_type
         ).then(data => {
             set_global_status({"de":data})
         });
