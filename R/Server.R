@@ -962,7 +962,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             if (de_test_type == "wilcox"){
                 out <- matrix_wilcox_cpp(exprDataSubset, cluster_num, cluster_denom)
             } else { 
-                # Use Seurat
+              # Use Seurat
+              # Some of these tests are not in the ui but included in case want to support counts
               use <- ""
               if (de_test_type =="swilcox") {
                   use="wilcox"
@@ -984,28 +985,24 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
                 use="DESeq2"
               }
               
-              
-              cell_1_names = colnames(exprDataSubset)[cluster_num]
-              cell_2_names = colnames(exprDataSubset)[cluster_denom]
-              
-              out <- FindMarkers(exprDataSubset, cells.1=cell_1_names, cells.2=cell_2_names, test.use=use, min.pct = -1)
-              out$AUC <- rep(0, length(out$p_val_adj))
-              out$pval <- out$p_val_adj
-              
-              print(out)
+              cell_1_names <- colnames(exprDataSubset)[cluster_num]
+              cell_2_names <- colnames(exprDataSubset)[cluster_denom]
+              s_obj <- CreateAssayObject(exprDataSubset)
+              out <- FindMarkers(s_obj, cells.1=cell_1_names, cells.2=cell_2_names, test.use=use, min.pct = -1, min.cells.feature = 0, logfc.threshold = 0, verbose = FALSE)
+
+              out$pval <- out$p_val # Gets adjusted later
             }
 
-            out$stat <- pmax(out$AUC, 1 - out$AUC)
             out$Feature <- rownames(out)
             rownames(out) <- NULL
 
             numMean <- rowMeans(exprDataSubset[, cluster_num])
             denomMean <- rowMeans(exprDataSubset[, cluster_denom])
             bias <- 1 / sqrt(length(cluster_num) * length(cluster_denom))
-
+            
             out$logFC <- log2( (numMean + bias) / (denomMean + bias) )
 
-            out <- out[, c("Feature", "logFC", "stat", "pval"), drop = FALSE]
+            out <- out[, c("Feature", "logFC", "pval"), drop = FALSE]
             out$Type <- "Gene"
 
             if (hasProteinData(object)) {
@@ -1023,7 +1020,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
                 out_p$logFC <- log2( (numMean + bias) / (denomMean + bias) )
 
-                out_p <- out_p[, c("Feature", "logFC", "stat", "pval"), drop = FALSE]
+                out_p <- out_p[, c("Feature", "logFC", "pval"), drop = FALSE]
                 out_p$Type <- "Protein"
 
                 out <- rbind(out, out_p)

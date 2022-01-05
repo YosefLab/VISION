@@ -1651,12 +1651,11 @@ DE_Select.prototype.init = function()
                 {'title': 'Feature'},
                 {'title': 'Type'},
                 {'title': 'logFC'},
-                {'title': 'AUC'},
                 {'title': 'FDR'},
             ],
             "pageLength": 500,
             "scrollY": '15vh',
-            "order": [[4, "asc"]],
+            "order": [[3, "asc"]],
             "buttons": {
                 dom: {
                     button: {
@@ -1977,10 +1976,9 @@ DE_Select.prototype.render_de = function()
     var features = get_global_status('de')["Feature"]
     var types = get_global_status('de')["Type"]
     var pvals = get_global_status('de')["pval"]
-    var stats = get_global_status('de')["stat"]
     var logFCs = get_global_status('de')["logFC"]
 
-    var dataSet = _.map(features, (f, i) => [features[i], types[i], logFCs[i], stats[i], pvals[i]]);
+    var dataSet = _.map(features, (f, i) => [features[i], types[i], logFCs[i], pvals[i]]);
 
     this.de_results.show();
 
