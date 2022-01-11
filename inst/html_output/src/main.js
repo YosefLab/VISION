@@ -251,6 +251,12 @@ window.onload = function()
                 .find(".nav-link[data-main-vis='genes']")
                 .removeClass('disabled')
         }
+        
+        
+        if(info.has_seurat){
+            // Enable all seurat options
+            $('#de_test_type > option').prop("disabled", false)
+        }
 
         global_data.meta_sigs = info.meta_sigs
         global_status.pooled = info.pooled

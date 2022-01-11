@@ -964,6 +964,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             } else { 
               # Use Seurat
               # Some of these tests are not in the ui but included in case want to support counts
+              library(Seurat) # make sure it's loaded
               use <- ""
               if (de_test_type =="swilcox") {
                   use="wilcox"
@@ -988,7 +989,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
               cell_1_names <- colnames(exprDataSubset)[cluster_num]
               cell_2_names <- colnames(exprDataSubset)[cluster_denom]
               s_obj <- CreateAssayObject(exprDataSubset)
-              out <- FindMarkers(s_obj, cells.1=cell_1_names, cells.2=cell_2_names, test.use=use, min.pct = -1, min.cells.feature = 0, logfc.threshold = 0, verbose = FALSE)
+              out <- FindMarkers(s_obj, cells.1=cell_1_names, cells.2=cell_2_names, test.use=use, min.pct = -1, min.cells.feature = 0, logfc.threshold = 0, verbose = TRUE)
 
               out$pval <- out$p_val # Gets adjusted later
             }
@@ -999,8 +1000,9 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             numMean <- rowMeans(exprDataSubset[, cluster_num])
             denomMean <- rowMeans(exprDataSubset[, cluster_denom])
             bias <- 1 / sqrt(length(cluster_num) * length(cluster_denom))
-            
-            out$logFC <- log2( (numMean + bias) / (denomMean + bias) )
+            # filter for Seurat
+            lfc <- log2( (numMean + bias) / (denomMean + bias) )
+            out$logFC <- lfc[out$Feature]
 
             out <- out[, c("Feature", "logFC", "pval"), drop = FALSE]
             out$Type <- "Gene"
@@ -1364,6 +1366,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         if (.hasSlot(object, "tree") && !is.null(object@tree)) {
           info[["dendrogram"]] <- write.tree(object@tree)
         }
+        
+        info[["has_seurat"]] <- requireNamespace("Seurat", quietly = TRUE)
         
         info[["has_dendrogram"]] <- .hasSlot(object, "tree") && !is.null(object@tree)
 
