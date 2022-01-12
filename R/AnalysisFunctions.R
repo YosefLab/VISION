@@ -510,9 +510,9 @@ computeSingleCellFitchScores <- function(object) {
 
     message("Computing single cell plasticity scores on tree...\n")
 
-    # if (class(object) != 'PhyloVision') {
-    #     stop('Object must be a PhyloVision object')
-    # }
+    if (class(object) != 'PhyloVision') {
+        stop('Object must be a PhyloVision object')
+    }
     metaData <- object@metaData
     tree <- object@tree
 
