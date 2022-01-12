@@ -907,6 +907,35 @@ ultrametric_tree <- function(tree) {
     return(tree)
 }
 
+#' Depth first traversal of a tree starting a specified node
+#' 
+#' @param tree an rooted tree object of class `phylo`
+#' @param postorder return nodes in postorder (i.e., starting from leaves)
+#' @param source source from which to start traversal. Defaults to root
+depthFirstTraverse <- function(tree, postorder=TRUE, source=NULL) {
+
+    if (is.null(source)) {
+        source <- find_root(tree)
+    }
+    queue <- c(source)
+    traversal <- c()
+    while (length(queue) > 0) {
+        node <- queue[[1]]
+        if (!(node %in% traversal)) {
+            traversal <- c(node, traversal)
+            children <- get_children(tree, node)
+            queue <- c(queue, children)
+        }
+        queue <- queue[-1] # pop off first entry in queue
+    }
+
+    if (!postorder) {
+        traversal <- rev(traversal)
+    }
+    return(traversal)
+
+}
+
 
 #' Find the ancestor of a node above a specific depth
 #'
