@@ -508,12 +508,13 @@ evalSigGeneImportanceSparse <- function(sigScores, sigData, normExpr){
 #' @return an updated object with plasticities as numeric meta data
 computeSingleCellFitchScores <- function(object) {
 
+    message("Computing single cell plasticity scores on tree...\n")
+
+    # if (class(object) != 'PhyloVision') {
+    #     stop('Object must be a PhyloVision object')
+    # }
     metaData <- object@metaData
     tree <- object@tree
-
-    if (is.null(tree)) {
-        stop("Object must have a tree")
-    }
 
     categoricalIndices <- vapply(seq_len(ncol(metaData)),
                           function(i) ( (is.factor(metaData[[i]]) | (is.character(metaData[[i]])))),
@@ -551,9 +552,16 @@ computeSingleCellFitchScores <- function(object) {
             return(df)
         }) 
 
-    metaData <- cbind(metaData, out)
+    # remove existing plasticities if they are there
+    for (entry in 1:length(out)) {
+        df <- out[[entry]]
+        if (!any(colnames(df) %in% colnames(metaData))) {
+            metaData <- cbind(metaData, df)
+        } 
+    }
+
     object@metaData <- metaData
-    
+
     return(object)
 }
 

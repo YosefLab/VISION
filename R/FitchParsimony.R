@@ -8,7 +8,7 @@ computeFitchHartiganParsimonyPerNode <- function(tree, metaData) {
     parsimonyScores <- list()
     for (node in depthFirstTraverse(tree)) {
         if (!is_tip(tree, node)) {
-            score <- computeFitchHartiganParsimony(tree, metaEx, source=node)
+            score <- computeFitchHartiganParsimony(tree, metaData, source=node)
             parsimonyScores[[as.character(node)]] <- score
         }
     }
