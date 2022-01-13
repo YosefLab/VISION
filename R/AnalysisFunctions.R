@@ -523,7 +523,7 @@ computePlasticityScores <- function(object) {
     categoricalMetaLabels <- colnames(metaData)[categoricalIndices]
 
     out <- pbmclapply(categoricalMetaLabels, function(variable){
-        metaSub <- metaData[,variable]
+        metaSub <- as.character(metaData[,variable])
         names(metaSub) <- rownames(metaData)
 
         node.scores <- computeFitchHartiganParsimonyPerNode(tree, metaSub)

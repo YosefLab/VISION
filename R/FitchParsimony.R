@@ -1,24 +1,3 @@
-#' Compute fitch parsimony for each node in a tree
-#' 
-#' This is analagous to running `computeFitchHartiganParsimony` for each node, where
-#' the internal node is the root of a subtree.
-#' 
-#' @param tree a rooted tree of class `phylo`
-#' @param metaData a named list mapping each leaf of the tree to a category
-#' @return a named list mapping each node in the tree to a normalized parsimony score
-computeFitchHartiganParsimonyPerNode <- function(tree, metaData) {
-
-    parsimonyScores <- list()
-    for (node in depthFirstTraverse(tree)) {
-        if (!is_tip(tree, node)) {
-            score <- computeNormalizedFitchHartiganParsimony(tree, metaData, source=node)
-            parsimonyScores[[as.character(node)]] <- score
-        }
-    }
-    return(parsimonyScores)
-
-}
-
 #' Get single-cell plasticity scores
 #' 
 #' Computes a score for each leaf reflecting its relative plasticity. This is
@@ -53,6 +32,28 @@ computeSingleCellFitchScores <- function(tree, nodeScores) {
     return(leaf.scores)
 }
 
+
+#' Compute fitch parsimony for each node in a tree
+#' 
+#' This is analagous to running `computeFitchHartiganParsimony` for each node, where
+#' the internal node is the root of a subtree.
+#' 
+#' @param tree a rooted tree of class `phylo`
+#' @param metaData a named list mapping each leaf of the tree to a category
+#' @return a named list mapping each node in the tree to a normalized parsimony score
+computeFitchHartiganParsimonyPerNode <- function(tree, metaData) {
+
+    parsimonyScores <- list()
+    for (node in depthFirstTraverse(tree)) {
+        if (!is_tip(tree, node)) {
+            score <- computeNormalizedFitchHartiganParsimony(tree, metaData, source=node)
+            parsimonyScores[[as.character(node)]] <- score
+        }
+    }
+    return(parsimonyScores)
+
+}
+
 #' Computes the fitch parsimony of a tree with respect to categorical meta data
 #' 
 #' @param tree a rooted tree of class `phylo`
@@ -65,7 +66,7 @@ computeNormalizedFitchHartiganParsimony <- function(tree, metaData, source=NULL)
         stop("Meta data must be character or factor data.")
     }
 
-    possibleLabels <- bottomUpFitchHartigan(tree, metaData, source=source)
+    possibleLabels <- bottomUpFitchHartigan(tree, metaDataCharacter, source=source)
     assignments <- topDownFitchHartigan(tree, possibleLabels, source=source)
     parsimony <- scoreParsimony(tree, assignments, source=source)
 
