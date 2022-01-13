@@ -66,7 +66,7 @@ computeNormalizedFitchHartiganParsimony <- function(tree, metaData, source=NULL)
         stop("Meta data must be character or factor data.")
     }
 
-    possibleLabels <- bottomUpFitchHartigan(tree, metaDataCharacter, source=source)
+    possibleLabels <- bottomUpFitchHartigan(tree, metaData, source=source)
     assignments <- topDownFitchHartigan(tree, possibleLabels, source=source)
     parsimony <- scoreParsimony(tree, assignments, source=source)
 
