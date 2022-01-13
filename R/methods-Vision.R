@@ -715,6 +715,12 @@ setMethod("analyze", signature(object="Vision"),
     # Populates @SigScores and @SigGeneImportance
     object <- calcSignatureScores(object)
 
+    # Performs plasticity analysis, and adds to @metaData
+    if (class(object) == 'PhyloVision') {
+        object <- computeSingleCellFitchScores(object)
+    }
+
+
     # Populates @LocalAutocorrelation
     object <- analyzeLocalCorrelations(object, tree)
 
