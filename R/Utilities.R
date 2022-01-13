@@ -888,9 +888,6 @@ lcaBasedTreeKNN <- function(tree, minSize=20) {
   return(list("neighbors"=as.matrix(neighbors_no_diag), "weights"=as.matrix(weights_no_diag)))
 }
 
-
-
-
 #' Generate an ultrametric tree
 #'
 #' @param tree an object of class phylo

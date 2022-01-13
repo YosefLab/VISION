@@ -717,7 +717,7 @@ setMethod("analyze", signature(object="Vision"),
 
     # Performs plasticity analysis, and adds to @metaData
     if (class(object) == 'PhyloVision') {
-        object <- computeSingleCellFitchScores(object)
+        object <- computePlasticityScores(object)
     }
 
 

@@ -1,4 +1,7 @@
-#' Comptue fitch parsimony for each node in a tree
+#' Compute fitch parsimony for each node in a tree
+#' 
+#' This is analagous to running `computeFitchHartiganParsimony` for each node, where
+#' the internal node is the root of a subtree.
 #' 
 #' @param tree a rooted tree of class `phylo`
 #' @param metaData a named list mapping each leaf of the tree to a category
@@ -8,12 +11,46 @@ computeFitchHartiganParsimonyPerNode <- function(tree, metaData) {
     parsimonyScores <- list()
     for (node in depthFirstTraverse(tree)) {
         if (!is_tip(tree, node)) {
-            score <- computeFitchHartiganParsimony(tree, metaData, source=node)
+            score <- computeNormalizedFitchHartiganParsimony(tree, metaData, source=node)
             parsimonyScores[[as.character(node)]] <- score
         }
     }
     return(parsimonyScores)
 
+}
+
+#' Get single-cell plasticity scores
+#' 
+#' Computes a score for each leaf reflecting its relative plasticity. This is
+#' calculated as the average of all the node-wise FitchHartigan scores for each
+#' node along the path from the tree root to a leaf.
+#' 
+#' @param tree A rooted tree object of class `phylo`
+#' @param nodeScores a list of FitchHartigan scores for each node in the tree, as computed with `computeFitchHartiganParsimonyPerNode`
+#' @return a named list of per-leaf plasiticities
+computeSingleCellFitchScores <- function(tree, nodeScores) {
+
+    root <- find_root(tree)
+    leaf.scores <- list()
+    for (leafName in tree$tip.label) {
+        leaf.iter = which(tree$tip.label == leafName)
+        parent <- get_parent(tree, leaf.iter)
+        score_sum <- 0
+        number_of_nodes <- 0
+        while (parent != root) {
+            score_sum <- (score_sum + nodeScores[[as.character(parent)]])
+            number_of_nodes <- (number_of_nodes + 1)
+            parent <- get_parent(tree, parent)
+        }
+
+        score_sum <- (score_sum + nodeScores[[as.character(root)]]) # add contribution from root
+        number_of_nodes <- (number_of_nodes + 1)
+
+        leaf.scores[leafName] <- (score_sum / number_of_nodes)
+
+    }
+
+    return(leaf.scores)
 }
 
 #' Computes the fitch parsimony of a tree with respect to categorical meta data
@@ -22,7 +59,7 @@ computeFitchHartiganParsimonyPerNode <- function(tree, metaData) {
 #' @param metaData a named list mapping each leaf of the tree to a category
 #' @param source node to start analysis
 #' @return a normalized parsimony score
-computeFitchHartiganParsimony <- function(tree, metaData, source=NULL) {
+computeNormalizedFitchHartiganParsimony <- function(tree, metaData, source=NULL) {
 
     if (is.numeric(metaData)) {
         stop("Meta data must be character or factor data.")

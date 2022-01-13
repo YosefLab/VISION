@@ -500,14 +500,14 @@ evalSigGeneImportanceSparse <- function(sigScores, sigData, normExpr){
     return(res)
 }
 
-#' Calculate single-cell parsimony scores
+#' Calculate single-cell plasticity scores
 #' 
 #' For each categorical meta data item, calculate a single-cell parsimony score,
 #' which can be interpreted as a plasticity score as in Yang et al, bioRxiv 2021.
 #' 
 #' @param object A PhyloVision object
 #' @return an updated object with plasticities as numeric meta data
-computeSingleCellFitchScores <- function(object) {
+computePlasticityScores <- function(object) {
 
     message("Computing single cell plasticity scores on tree...\n")
 
@@ -523,41 +523,23 @@ computeSingleCellFitchScores <- function(object) {
     categoricalMetaLabels <- colnames(metaData)[categoricalIndices]
 
     out <- pbmclapply(categoricalMetaLabels, function(variable){
-            metaSub <- metaData[,variable]
-            names(metaSub) <- rownames(metaData)
+        metaSub <- metaData[,variable]
+        names(metaSub) <- rownames(metaData)
 
-            leaf.scores <- list()
+        node.scores <- computeFitchHartiganParsimonyPerNode(tree, metaSub)
+        leaf.scores <- computeSingleCellFitchScores(tree, node.scores)
 
-            node.scores <- computeFitchHartiganParsimonyPerNode(tree, metaSub)
-            root <- find_root(tree)
-            for (leafName in rownames(metaData)) {
-                leaf.iter = which(tree$tip.label == leafName)
-                parent <- get_parent(tree, leaf.iter)
-                score_sum <- 0
-                number_of_nodes <- 0
-                while (parent != root) {
-                    score_sum <- (score_sum + node.scores[[as.character(parent)]])
-                    number_of_nodes <- (number_of_nodes + 1)
-                    parent <- get_parent(tree, parent)
-                }
-
-                score_sum <- (score_sum + node.scores[[as.character(root)]]) # add contribution from root
-                number_of_nodes <- (number_of_nodes + 1)
-
-                leaf.scores[leafName] <- (score_sum / number_of_nodes)
-
-            }
-
-            df <- t(data.frame(leaf.scores))
-            colnames(df) <- c(paste0(variable, '_plasticity'))
-            return(df)
-        }) 
+        df <- t(data.frame(leaf.scores))
+        colnames(df) <- c(paste0(variable, '_plasticity'))
+        rownames(df) <- tree$tip.label
+        return(df)
+    }) 
 
     # remove existing plasticities if they are there
     for (entry in 1:length(out)) {
         df <- out[[entry]]
         if (!any(colnames(df) %in% colnames(metaData))) {
-            metaData <- cbind(metaData, df)
+            metaData[,colnames(df)] <- df[rownames(metaData),]
         } 
     }
 
