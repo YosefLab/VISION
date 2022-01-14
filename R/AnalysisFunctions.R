@@ -500,6 +500,54 @@ evalSigGeneImportanceSparse <- function(sigScores, sigData, normExpr){
     return(res)
 }
 
+#' Calculate single-cell plasticity scores
+#' 
+#' For each categorical meta data item, calculate a single-cell parsimony score,
+#' which can be interpreted as a plasticity score as in Yang et al, bioRxiv 2021.
+#' 
+#' @param object A PhyloVision object
+#' @return an updated object with plasticities as numeric meta data
+#' @export
+computePlasticityScores <- function(object) {
+
+    message("Computing single cell plasticity scores on tree...\n")
+
+    if (class(object) != 'PhyloVision') {
+        stop('Object must be a PhyloVision object')
+    }
+    metaData <- object@metaData
+    tree <- object@tree
+
+    categoricalIndices <- vapply(seq_len(ncol(metaData)),
+                          function(i) ( (is.factor(metaData[[i]]) | (is.character(metaData[[i]])))),
+                          FUN.VALUE = TRUE)
+    categoricalMetaLabels <- colnames(metaData)[categoricalIndices]
+
+    out <- pbmclapply(categoricalMetaLabels, function(variable){
+        metaSub <- as.character(metaData[,variable])
+        names(metaSub) <- rownames(metaData)
+
+        node.scores <- computeFitchHartiganParsimonyPerNode(tree, metaSub)
+        leaf.scores <- computeSingleCellFitchScores(tree, node.scores)
+
+        df <- t(data.frame(leaf.scores))
+        colnames(df) <- c(paste0(variable, '_plasticity'))
+        rownames(df) <- tree$tip.label
+        return(df)
+    }) 
+
+    # remove existing plasticities if they are there
+    for (entry in 1:length(out)) {
+        df <- out[[entry]]
+        if (!any(colnames(df) %in% colnames(metaData))) {
+            metaData[,colnames(df)] <- df[rownames(metaData),]
+        } 
+    }
+
+    object@metaData <- metaData
+
+    return(object)
+}
 
 #' Computes the latent space of the expression matrix using PCA
 #'
