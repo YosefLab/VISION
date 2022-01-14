@@ -507,6 +507,7 @@ evalSigGeneImportanceSparse <- function(sigScores, sigData, normExpr){
 #' 
 #' @param object A PhyloVision object
 #' @return an updated object with plasticities as numeric meta data
+#' @export
 computePlasticityScores <- function(object) {
 
     message("Computing single cell plasticity scores on tree...\n")
