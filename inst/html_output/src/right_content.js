@@ -6,7 +6,34 @@ Right_Content.prototype.init = function()
 {
     var self = this;
     self.dom_node = $("#right-content");
+    
+    // Download
 
+    self.download_button = $("#export-object-button")
+    // https://stackoverflow.com/a/42830315
+    function downloadFile(urlToSend) {
+      var req = new XMLHttpRequest();
+      req.open("GET", urlToSend, true);
+      req.responseType = "blob";
+      req.onload = function (event) {
+         var blob = req.response;
+         var fileName = req.getResponseHeader("filename") //if you have the fileName header available
+         var link=document.createElement('a');
+         link.href=window.URL.createObjectURL(blob);
+         link.download=fileName;
+         link.click();
+      };
+      
+      req.send();
+    }
+    self.download_button.click(function() {
+      // selections call
+      downloadFile("/Download/Selections")
+      // de call
+      downloadFile("/Download/DE")
+    });
+    // End download button
+    
     self.scatterColorOptions = $(self.dom_node).find("input[name='scatterColorButtons']")
     self.scatterLayoutOptions = $(self.dom_node).find("input[name='scatterLayoutButtons']")
 
@@ -91,7 +118,7 @@ Right_Content.prototype.init = function()
     }
 
     self.dom_node.get(0).addEventListener('scatter_relayout', _scatter_relayout)
-
+    
     // Allow for clicking to specify selected plot div
     $(self.dom_node).find(".scatter-split-plot-div")
         .on('click', function(e){
