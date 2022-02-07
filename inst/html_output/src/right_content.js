@@ -43,7 +43,7 @@ Right_Content.prototype.init = function()
       // de call
       downloadFile("/Download/DE")
       // download the current scatter plot's data
-      var scatter_json = _.cloneDeep(self.getSelectedPlotData())
+      var scatter_json = _.cloneDeep(right_content.getSelectedPlotData())
       // included the selected cells
       scatter_json["selected_cells"] = get_global_status("selected_cell")
       delete scatter_json["scatter"]
