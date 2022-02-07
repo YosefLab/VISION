@@ -399,19 +399,6 @@ var api = (function(){
         return $.ajax(query, {dataType: "json"}).then(x => x)
     }
     
-    // Download
-    
-    output.downloadDE = function() {
-        var query = "Download/DE"
-        query = postProcess(query)
-        return $.ajax(query, {dataType: "blob"}).then(x => x)
-    }
-    
-    output.downloadSelections = function() {
-        var query = "Download/Selections"
-        query = postProcess(query)
-        return $.ajax(query, {dataType: "blob"}).then(x => x)
-    }
     // Session Info Api
 
     output.sessionInfo = function() {
