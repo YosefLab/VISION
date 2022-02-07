@@ -26,11 +26,28 @@ Right_Content.prototype.init = function()
       
       req.send();
     }
+    
+    // https://stackoverflow.com/a/30800715
+    function downloadObjectAsJson(exportObj, exportName){
+      var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
+      var downloadAnchorNode = document.createElement('a');
+      downloadAnchorNode.setAttribute("href",     dataStr);
+      downloadAnchorNode.setAttribute("download", exportName + ".json");
+      document.body.appendChild(downloadAnchorNode); // required for firefox
+      downloadAnchorNode.click();
+      downloadAnchorNode.remove();
+    }
     self.download_button.click(function() {
       // selections call
       downloadFile("/Download/Selections")
       // de call
       downloadFile("/Download/DE")
+      // download the current scatter plot's data
+      var scatter_json = _.cloneDeep(self.getSelectedPlotData())
+      // included the selected cells
+      scatter_json["selected_cells"] = get_global_status("selected_cell")
+      delete scatter_json["scatter"]
+      downloadObjectAsJson(scatter_json, "vision_scatter")
     });
     // End download button
     
