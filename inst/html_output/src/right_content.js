@@ -8,16 +8,19 @@ Right_Content.prototype.init = function()
     self.dom_node = $("#right-content");
     
     // Download
+    // Set up events for downloading object
+    var saveObjectModal = $('#saveObjectModal')
 
+    
     self.download_button = $("#export-object-button")
     // https://stackoverflow.com/a/42830315
-    function downloadFile(urlToSend) {
+    function downloadFile(urlToSend, file_name) {
       var req = new XMLHttpRequest();
       req.open("GET", urlToSend, true);
       req.responseType = "blob";
       req.onload = function (event) {
          var blob = req.response;
-         var fileName = req.getResponseHeader("filename") //if you have the fileName header available
+         var fileName = file_name + "_" +req.getResponseHeader("filename")
          var link=document.createElement('a');
          link.href=window.URL.createObjectURL(blob);
          link.download=fileName;
@@ -37,18 +40,22 @@ Right_Content.prototype.init = function()
       downloadAnchorNode.click();
       downloadAnchorNode.remove();
     }
-    self.download_button.click(function() {
-      // selections call
-      downloadFile("/Download/Selections")
-      // de call
-      downloadFile("/Download/DE")
-      // download the current scatter plot's data
-      var scatter_json = _.cloneDeep(right_content.getSelectedPlotData())
-      // included the selected cells
-      scatter_json["selected_cells"] = get_global_status("selected_cell")
-      delete scatter_json["scatter"]
-      downloadObjectAsJson(scatter_json, "vision_scatter")
-    });
+ 
+    saveObjectModal.find(".confirm-button").on("click", function() {
+        var prefix = $('#saveObjectName').val()
+        // selections call
+        downloadFile("/Download/Selections", prefix)
+        // de call
+        downloadFile("/Download/DE", prefix)
+        // download the current scatter plot's data
+        var scatter_json = _.cloneDeep(right_content.getSelectedPlotData())
+        // included the selected cells
+        scatter_json["selected_cells"] = get_global_status("selected_cell")
+        delete scatter_json["scatter"]
+        downloadObjectAsJson(scatter_json, prefix + "_scatter")
+        saveObjectModal.modal('hide')
+    })
+    
     // End download button
     
     self.scatterColorOptions = $(self.dom_node).find("input[name='scatterColorButtons']")

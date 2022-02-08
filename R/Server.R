@@ -1432,20 +1432,17 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
     
 
     pr$handle("GET", "/Download/DE", function(req, res) {
-                res$headers[["Content-Disposition"]] <- "attachment; filename=vision_de.json"
-                res$headers[["fileName"]] <- "vision_de.json"
+                res$headers[["Content-Disposition"]] <- "attachment; filename=de.json"
+                res$headers[["fileName"]] <- "de.json"
                 res$headers[["Cache-Control"]] <- NULL
-                #res$headers[["fileName"]] <- "vision_de.json"
-                # print(object@Viewer$de_cache)
+                
                 object@Viewer$de_cache
               })
     
     pr$handle("GET", "/Download/Selections", function(req, res) {
-        res$headers[["Content-Disposition"]] <- "attachment; filename=vision_selections.json"
+        res$headers[["Content-Disposition"]] <- "attachment; filename=selections.json"
         res$headers[["Cache-Control"]] <- NULL
-        res$headers[["fileName"]] <- "vision_selections.json"
-        #res$headers[["fileName"]] <- "vision_selections.json"
-        # print(getSelections(object))
+        res$headers[["fileName"]] <- "selections.json"
         getSelections(object)
       })
     # Assume all other paths are files or 404
