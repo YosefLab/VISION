@@ -9,9 +9,15 @@ vignette: >
 ---
 
 # Introduction
-As of version 3.0.0, VISION now supports the analysis of scRNA-seq data with respect to a user-defined cell lineage, or phylogeny. In this case, VISION uses the relationships between cells as specified by the phylogeny, as opposed to some user-defined latent space, to conduct the autocorrelation analysis. In this vignette, we demonstrate how a user might use this variant of the VISION pipeline - which we term `PhyloVision` - to analyze a recently published dataset that simultaneously profiled the single-cell transcriptomes and lineages of mouse embryogenesis (Chan et al, Nature 2019).
+As of version 3.0.0, VISION now supports the analysis of scRNA-seq data with respect to a user-defined cell lineage, or phylogeny (e.g., the CRISPR/Cas9-based lineage tracing technologies described in [Chan et al, Nature 2019](https://www.nature.com/articles/s41586-019-1184-5)). We refer to this analysis pipeline as PhyloVision. PhyloVision uses the relationships between cells as specified by the phylogeny, as opposed to the cell-cell similarities that can be inferred from the scRNA-seq data, to conduct the autocorrelation analysis. In this way, the analyses performed in PhyloVision identify gene modules that are heritable, or structured meaningfully on a cell lineage.
 
-This tutorial begins by showing users how to create a `PhyloVision` object and performing analysis on it. Then, we demonstrate how this object can be passed into the Hotspot pipeline that will identify de-novo transcriptional gene sets that are autocorrelated on the tree (this is described more below and in the [Spatial Hotspot vignette](spatialHotspot.html). Finally, we show users how to launch a report for viewing.
+While several types of trees can be used to relate cells to one another (e.g., those inferred via B Cell Recpeter sequencing), in this vignette, we focus on applying PhyloVision to a recently published dataset using CRISPR/Cas9-based synthetic lineage tracing from [Quinn et al, Science 2021](https://www.science.org/doi/abs/10.1126/science.abc1944). This technology relies on Cas9 to introduce heritable, irreversible mutations at a defined locus in the 3' UTR of a fluorescent protein ("target site") across cell divisions, encoding nested relationships between cells. Utilizing conventional scRNA-seq platforms, this data simultaenously captures single-cell transcriptomes as well as target sites harboring lineage barcodes. Using this dataset, we demonstrate how a user might use PhyloVision.
+
+Specifically, we discuss four items:
+- Preparing data for input into `PhyloVision`, including passing external meta-data (e.g., metastatic rates) to the pipeline.
+- Performing the `PhyloVision` analysis pipeline
+- Detecting de-novo gene modules with Hotspot (discussed more in the [Spatial Hotspot Vignette](spatialHotspot.html)).
+- Launching an interactive, web-based reort for viewing.
 
 # Preliminaries
 
@@ -22,6 +28,13 @@ require(devtools)
 install_github("YosefLab/VISION")
 ```
 
+You'll also want to be sure that you have `ape`, `Matrix`, and `reticulate` installed:
+
+```r{eval=FALSE}
+install.packages('ape')
+install.packages('Matrix')
+install.packages('reticulate')
+```
 Once VISION and R are installed, you may load in VISION using `library(VISION)`.
 
 To enable the Hotspot analysis below, install it directly from the git repository using the following command:
@@ -43,28 +56,82 @@ library(ape)
 
 ## Creating a PhyloVision Object with a Tree
 
-Vision objects now support dendrograms for visualization and analysis. To create the PhyloVision object, you need all of the same data, an expression matrix, and metadata and/or signatures, but you also include a tree object from the Ape package.
+We'll proceed by reading in the raw expression matrix, tree, and meta data for a single clone (CP007) of approximately 600 cells from [Quinn et al, Science 2021](https://www.science.org/doi/abs/10.1126/science.abc1944).
 
 ```{r create, eval=F}
-# Read the expression and meta data
-file_path <- "data/embryogenesis" # Replace the path
+# Read in expression data
+expression <- read.table('data/metastasis/cp007_expression.tsv.gz', sep='\t', header=T, row.names=1, stringsAsFactors = F)
 
-expr <- read.table(paste(file_path, "expr_filtered.tsv.gz", sep="/"), check.names = FALSE, sep = "\t")
-
-meta <- read.table(paste(file_path, "meta.tsv", sep="/"), check.names = FALSE, sep = "\t", row.names = 1, header=TRUE)
-meta$Cell_Type <- as.factor(meta$Cell_Type)
-# Signature file
-sig <- paste("data", "h.all.v5.2.symbols.gmt", sep="/")
-
-# Read the tree
-tree <- read.tree(paste(file_path, "embryo_tree.newick", sep="/"))
-
+# Read in tree
+tree <- read.tree('data/metastasis/cp007_tree.nwk.gz')
 # Collapse one mutations with ape
 tree <- collapse.singles(tree)
 
-# Construct the Vision object
-vis <- PhyloVision(tree=tree, data=expr, signatures=sig, meta=meta, num_neighbors=30, projection_genes= rownames(expr))
+# Read in meta data
+meta <- read.table('data/metastasis/cp007_meta.tsv.gz', sep='\t', header=T, row.names=1)
+meta$sampleID <- as.factor(meta$sampleID)
+
+# Signature file
+sig <- paste("data", "h.all.v5.2.symbols.gmt", sep="/")
 ```
+
+A quick inspection of the meta data indicates that we have several types of data associated with each of the leaves of this tree. Not only do we have the anataomical site from which the cell was samples (`sampleID`) but also pre-computed statistics like the Metastatic Rate (`scTreeMetRate`). In fact, users can specify an arbitrary number of data items that have been precomputed. For example, if a user has performed fitness inference as in [Yang et al, bioRxiv 2021](https://www.biorxiv.org/content/10.1101/2021.10.12.464111v1), they can add these statistics as a column to the meta data file.
+
+In addition, a user might be interested in defining their own clustering methodology on the tree. A simple clustering would entail cutting the tree at a defined depth and grouping together cells that are below each internal node at the defined depth (similar to the [`cuttree`](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/cutree) method for grouping samples together from a hierarchical clustering). 
+
+```{r create, eval=F}
+clusterByDepth <- function(tree, depth = 2) {
+  
+  clusters <- list()
+  current_depth = 0
+  current_cluster_name <- 1
+  root <- VISION:::find_root(tree)
+  
+  queue <- c(root)
+  while(length(queue) > 0) {
+    
+    if (current_depth == depth) {
+      for (node in queue) {
+        clusters[[as.character(current_cluster_name)]] <- tree$tip.label[VISION:::get_all_children(tree, node)]
+        current_cluster_name <- current_cluster_name + 1
+      }
+      return(clusters)
+    }
+    
+    current_depth <- current_depth + 1
+    
+    new_queue <- c()
+    for (node in queue) {
+      children <- VISION:::get_children(tree, node)
+      if (length(children) == 1 && children == node) {
+        clusters[[as.character(current_cluster_name)]] <- c(tree$tip.label[[node]])
+        current_cluster_name <- current_cluster_name + 1
+      } else {
+        new_queue <- c(new_queue, children)
+      }
+    }
+    queue <- new_queue
+  }
+  stop("Targeted depth is larger than the depth of the tree. Repeat call with smaller target depth.")
+}
+
+# add in depth based cluster annotations
+depth_clusters <- clusterByDepth(tree, depth=1) 
+meta$DepthClusters <- NA
+for (cluster in names(depth_clusters)) {
+  meta[depth_clusters[[cluster]], 'DepthClusters'] <- cluster
+}
+```
+
+
+```{r create, eval=F}
+# Construct the Vision object
+projection_genes <- VISION:::filterGenesFano(expression)
+vis <- PhyloVision(tree=tree, data=expression, signatures=sig, meta=meta, num_neighbors=30, projection_genes= projection_genes)
+```
+
+### More details on input
+
 **Tree**
 
 The `ape` phylogeny object. Singleton edges should be collapsed prior to use. Ensure that leaf names correspond to same names used in the expression matrix. 
