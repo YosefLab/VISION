@@ -236,6 +236,29 @@
                                         <input type="number" id="de_sub_cells_n" class="form-control" tabindex="-1" value="1000"></input>
                                     </div>
                                 </div>
+                                
+                                <div>
+                                    <div class='label-control no-select' style="align-items: center">
+                                        <span class="label">
+                                            <label for="de_test_type">DE Test Type</label>
+                                        </span>
+                                    </div>
+                                    <div class='label-control max-control'>
+                                        <select id="de_test_type" class="form-control">
+                                            <option value="wilcox">Default (Fast Wilcoxon Rank Sum)</option>
+                                            <option value="swilcox" disabled="">Wilcoxon Rank Sum (Seurat)</option>
+                                            <option value="sbimod" disabled>Bimodal (Seurat)</option>
+                                            <!-- <option value="sroc">AUCROC (Seurat)</option>-->
+                                            <option value="st" disabled>T-test (Seurat)</option>
+                                            <!-- <option value="spoisson">Poisson (Seurat)</option>-->
+                                            <!-- <option value="snegbinom">Negative Binomial (Seurat)</option>-->
+                                            <option value="slr" disabled>Logistic Regression (Seurat)</option>
+                                            <!-- <option value="smast">MAST (Seurat)</option> -->
+                                            <!-- <option value="sdeseq2">DESeq2 (Seurat)</option> -->
+                                        </select>
+                                    </div>
+                                </div>
+                                
                               </div>
                           </div>
   
@@ -509,6 +532,13 @@
                                     data-toggle="modal" data-target="#loadSelectionModal" style="margin-left: 5px" >Load</button>
                             </div>
                         </div>
+                        <div id="export-object">
+                            <div class="label">Save Report Info</div>
+                            <div style="display: flex;">
+                                <button id="export-object-button" type="button" class="btn btn-outline-secondary"
+                                    style="margin-left: 5px" data-toggle="modal" data-target="#saveObjectModal">Download</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div id="scatter-container-div">
@@ -571,7 +601,31 @@
       </div>
     </div>
     <!-- End Save Selection Modal -->
-
+    <!-- Download Object Modal -->
+    <div class="modal fade" id="saveObjectModal" tabindex="-1" role="dialog" aria-labelledby="saveObjectModalTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="saveObjectModalTitle">Download Vision Object</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+              <div class="form-group">
+                  <label for="saveObjectName">File names prefix</label>
+                  <input type="text" class="form-control" id="saveObjectName" area-describedby="selectionObjectHelp"></input>
+                  <small id="selectionObjectHelp" class="form-text text-muted" default="vision">Pick a prefix to be added before the downloaded file names.</small>
+              </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary confirm-button">Download</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- End Save Object Modal -->
     <!-- Load Selection Modal -->
     <div class="modal fade" id="loadSelectionModal" tabindex="-1" role="dialog" aria-labelledby="loadSelectionModalTitle" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered" role="document">

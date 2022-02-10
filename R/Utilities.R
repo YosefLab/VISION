@@ -1171,3 +1171,25 @@ depth_first_traverse_nodes <- function(tree, postorder=T) {
     }
     return(traversal)
 }
+
+#' Add a de cache json object (downloaded from server) to vision object
+#' 
+#' @param object the vision object
+#' @param json_file_path path to json object for DE file downloaded from "Download" button
+#' @return the modified vision object
+load_de_cache <- function(object, json_file_path) {
+  de_json <- fromJSON(json_file_path)
+  object@Viewer$de_cache <- de_json
+  return(object)
+}
+
+#' Add selections json object (downloaded from server) to vision object
+#' 
+#' @param object the vision object
+#' @param json_file_path path to json object for selections file downloaded from "Download" button
+#' @return the modified vision object
+load_selections <- function(object, json_file_path) {
+  selections_json <- fromJSON(json_file_path)
+  object@Viewer$selections <- selections_json
+  return(object)
+}
