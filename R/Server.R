@@ -1429,7 +1429,22 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         res$body <- "null"  # Empty body for successful POST
         return(res)
     })
+    
 
+    pr$handle("GET", "/Download/DE", function(req, res) {
+                res$headers[["Content-Disposition"]] <- "attachment; filename=de.json"
+                res$headers[["fileName"]] <- "de.json"
+                res$headers[["Cache-Control"]] <- NULL
+                
+                object@Viewer$de_cache
+              })
+    
+    pr$handle("GET", "/Download/Selections", function(req, res) {
+        res$headers[["Content-Disposition"]] <- "attachment; filename=selections.json"
+        res$headers[["Cache-Control"]] <- NULL
+        res$headers[["fileName"]] <- "selections.json"
+        getSelections(object)
+      })
     # Assume all other paths are files or 404
 
     pr$filter("filterFilter", function(req, res) {
