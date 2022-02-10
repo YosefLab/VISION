@@ -162,7 +162,7 @@ Other options and inputs can be provided to customize how VISION runs.
 
 ## Running PhyloVision analysis
 
-Next, we can perform the normal Vision analysis using the tree as the latent space.
+Next, we can perform the normal Vision analysis using the tree as the latent space. In addition to the typical VISION pipeline, phyloAnlayze will compute plasiticity scores for each categorical meta data. For example, in this case, a plasticity index on the `sampleID` (i.e., which anatomical site a cell was harvested from) would correspond to the scMetRate discussed in the original study.
 
 ``` {r analyze, eval=F}
 vis <- phyloAnalyze(vis)
