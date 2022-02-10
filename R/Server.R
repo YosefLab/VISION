@@ -889,7 +889,9 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         cells_min <- as.numeric(body$min_cells) # default 1
         subsample_groups <- body$subsample_groups
         subsample_cells_n <- as.numeric(body$subsample_N)
-
+        
+        # Add option for test types
+        de_test_type <- body$de_test_type
         # I want to skip caching a manual selection because the hash would be complicated
         skip_cache <- FALSE;
         if (type_n == "current") {
@@ -897,7 +899,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         } else {
           # hash by the params as a string
           hashed_body <- paste(type_n, type_d, subtype_n, subtype_d, group_num,
-              group_denom, subsample_cells_n, cells_min, subsample_groups, sep = " ")
+              group_denom, subsample_cells_n, cells_min, subsample_groups, de_test_type, sep = " ")
         }
         if (skip_cache || is.null(object@Viewer$de_cache[[hashed_body]])) {
             # The case where we know the de calculation is not cached, so we have to actually
@@ -955,20 +957,54 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
             # Needed for sparse subsetting
             cluster_num <- na.omit(as.numeric(cluster_num))
             cluster_denom <- na.omit(as.numeric(cluster_denom))
+            
+            # Calculate the DE using different types
+            if (de_test_type == "wilcox"){
+                out <- matrix_wilcox_cpp(exprDataSubset, cluster_num, cluster_denom)
+            } else { 
+              # Use Seurat
+              # Some of these tests are not in the ui but included in case want to support counts
+              library(Seurat) # make sure it's loaded
+              use <- ""
+              if (de_test_type =="swilcox") {
+                  use="wilcox"
+              } else if (de_test_type =="sbimod") {
+                  use="bimod"
+              } else if (de_test_type =="sroc") {
+                use="roc"
+              } else if (de_test_type =="st") {
+                use="t"
+              } else if (de_test_type =="spoisson") {
+                  use="poisson"
+              } else if (de_test_type =="snegbinom") {
+                  use="negbinom"
+              } else if (de_test_type =="slr") {
+                  use="LR"
+              } else if (de_test_type =="smast") {
+                  use="MAST"
+              } else if (de_test_type =="sdeseq2") {
+                use="DESeq2"
+              }
+              
+              cell_1_names <- colnames(exprDataSubset)[cluster_num]
+              cell_2_names <- colnames(exprDataSubset)[cluster_denom]
+              s_obj <- CreateAssayObject(exprDataSubset)
+              out <- FindMarkers(s_obj, cells.1=cell_1_names, cells.2=cell_2_names, test.use=use, min.pct = -1, min.cells.feature = 0, logfc.threshold = 0, verbose = TRUE)
 
-            out <- matrix_wilcox_cpp(exprDataSubset, cluster_num, cluster_denom)
+              out$pval <- out$p_val # Gets adjusted later
+            }
 
-            out$stat <- pmax(out$AUC, 1 - out$AUC)
             out$Feature <- rownames(out)
             rownames(out) <- NULL
 
             numMean <- rowMeans(exprDataSubset[, cluster_num])
             denomMean <- rowMeans(exprDataSubset[, cluster_denom])
             bias <- 1 / sqrt(length(cluster_num) * length(cluster_denom))
+            # filter for Seurat
+            lfc <- log2( (numMean + bias) / (denomMean + bias) )
+            out$logFC <- lfc[out$Feature]
 
-            out$logFC <- log2( (numMean + bias) / (denomMean + bias) )
-
-            out <- out[, c("Feature", "logFC", "stat", "pval"), drop = FALSE]
+            out <- out[, c("Feature", "logFC", "pval"), drop = FALSE]
             out$Type <- "Gene"
 
             if (hasProteinData(object)) {
@@ -986,7 +1022,7 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
                 out_p$logFC <- log2( (numMean + bias) / (denomMean + bias) )
 
-                out_p <- out_p[, c("Feature", "logFC", "stat", "pval"), drop = FALSE]
+                out_p <- out_p[, c("Feature", "logFC", "pval"), drop = FALSE]
                 out_p$Type <- "Protein"
 
                 out <- rbind(out, out_p)
@@ -1330,6 +1366,8 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
         if (.hasSlot(object, "tree") && !is.null(object@tree)) {
           info[["dendrogram"]] <- write.tree(object@tree)
         }
+        
+        info[["has_seurat"]] <- requireNamespace("Seurat", quietly = TRUE)
         
         info[["has_dendrogram"]] <- .hasSlot(object, "tree") && !is.null(object@tree)
 
