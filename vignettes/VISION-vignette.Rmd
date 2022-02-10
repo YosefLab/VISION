@@ -172,3 +172,78 @@ projection <- read.csv("umap_results.csv")
 
 vis <- addProjection(vis, "UMAP", projection)
 ```
+
+## Reproducing a plot from an interactive plot
+
+As of version 3.0.0, we have enabled users to save the relevant information from an interactive report to reproduce in R. This can be accomplished by downloading the "state" of the report using the `Download` button below "Save Report Info" in the upper right of the interactive web-based report. Below, we provide an example workflow of doing this.
+
+Clicking `Download` will download three files: (1) a DE cache; (2) a cache for selections; and (3) a json file containing the current projection, values being plotted, and selected cells. If you would like to view the state on the UI, you may read in the first two objects into VISION and launch the report again:
+
+```{r, collapse=T, message=F, results=F, eval=F}
+vis_new <- load_de_cache(vis, "de_cache_download_path")
+vis_new <- load_selections(vis, "selections_download_path")
+viewResults(vis, ...)
+```
+
+Else, if you would like to reproduce the plot in R, you can use the third output. This json object contains 5 pieces of information that are useful for reproducing plots:
+
+- The name of the item being plotted (e.g. the signature name; under `item_key`)
+- The values of the item for each cell (under `values`)
+- The 2D embedding of each cell (under `projection`)
+- The name of the embedding dimensions (under `projection_keyX` and `projection_keyY`)
+- The set of cells that are selected.
+
+Below is an example function that will reproduce the visualization in ggplot2. Be sure to have `ggplot2`, `jsonlite`, and `viridis` (for coloring) installed:
+
+```{r, eval=F}
+install.packages('ggplot2')
+install.packages('viridis')
+install.packages('jsonlit')
+```
+
+```{r, collapse=T, message=F, results=F, eval=F}
+plot_saved_state <- function(json_file_path) {
+  library(jsonlite)
+  library(viridis)
+  library(ggplot2)
+  
+  vision_state <- read_json(json_file_path)
+  
+  # extract meaningful info
+  value_name <- vision_state$item_key
+  scatter <- vision_state$projection
+  values <- vision_state$values
+  selection <- vision_state$selected_cells
+  x_name <- vision_state$projection_keyX[[2]]
+  y_name <- vision_state$projection_keyY[[2]]
+  
+  embedding <- data.frame(dim1=unlist(lapply(scatter, function(x) x[[1]])),
+                          dim2=unlist(lapply(scatter, function(x) x[[2]])),
+                          vals=unlist(values))
+  
+  if (length(selection) > 0) {
+    selected_cells = (rownames(embedding) %in% selection)
+    g <- ggplot() +
+      geom_point(data=embedding[!selected_cells,],
+                 aes(x = dim1, y = dim2, color=vals), 
+                 stroke = 0.5, shape=16, alpha = .5) +
+      geom_point(data=embedding[selected_cells,],
+                 aes(x=dim1, y=dim2, color=vals), size=1.6)
+  } else {
+    g <- ggplot() +
+      geom_point(data=embedding, aes(x=dim1, y=dim2, color=vals))
+  }
+  
+  if (is.numeric(embedding$vals)) {
+    g <- g + scale_colour_viridis()
+  } else {
+    g <- g + scale_colour_discrete()
+  }
+  
+  g <- g + 
+    labs(colour=value_name, x=x_name, y=y_name, title=value_name)
+  
+  return(g)
+}
+```
+
