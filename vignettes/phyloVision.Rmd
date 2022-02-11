@@ -11,13 +11,13 @@ vignette: >
 # Introduction
 As of version 3.0.0, VISION now supports the analysis of scRNA-seq data with respect to a user-defined cell lineage, or phylogeny (e.g., the CRISPR/Cas9-based lineage tracing technologies described in [Chan et al, Nature 2019](https://www.nature.com/articles/s41586-019-1184-5)). We refer to this analysis pipeline as PhyloVision. PhyloVision uses the relationships between cells as specified by the phylogeny, as opposed to the cell-cell similarities that can be inferred from the scRNA-seq data, to conduct the autocorrelation analysis. In this way, the analyses performed in PhyloVision identify gene modules that are heritable, or structured meaningfully on a cell lineage.
 
-While several types of trees can be used to relate cells to one another (e.g., those inferred via B Cell Recpeter sequencing), in this vignette, we focus on applying PhyloVision to a recently published dataset using CRISPR/Cas9-based synthetic lineage tracing from [Quinn et al, Science 2021](https://www.science.org/doi/abs/10.1126/science.abc1944). This technology relies on Cas9 to introduce heritable, irreversible mutations at a defined locus in the 3' UTR of a fluorescent protein ("target site") across cell divisions, encoding nested relationships between cells. Utilizing conventional scRNA-seq platforms, this data simultaenously captures single-cell transcriptomes as well as target sites harboring lineage barcodes. Using this dataset, we demonstrate how a user might use PhyloVision.
+While several types of trees can be used to relate cells to one another (e.g., those inferred via B Cell Receptor sequencing), in this vignette, we focus on applying PhyloVision to a recently published dataset using CRISPR/Cas9-based synthetic lineage tracing from [Quinn et al, Science 2021](https://www.science.org/doi/abs/10.1126/science.abc1944). This technology relies on Cas9 to introduce heritable, irreversible mutations at a defined locus in the 3' UTR of a fluorescent protein ("target site") across cell divisions, encoding nested relationships between cells. Utilizing conventional scRNA-seq platforms, this data simultaneously captures single-cell transcriptomes as well as target sites harboring lineage barcodes. Using this dataset, we demonstrate how a user might use PhyloVision.
 
 Specifically, we discuss four items:
 - Preparing data for input into `PhyloVision`, including passing external meta-data (e.g., metastatic rates) to the pipeline.
 - Performing the `PhyloVision` analysis pipeline
 - Detecting de-novo gene modules with Hotspot (discussed more in the [Spatial Hotspot Vignette](spatialHotspot.html)).
-- Launching an interactive, web-based reort for viewing.
+- Launching an interactive, web-based report for viewing.
 
 # Preliminaries
 
@@ -77,7 +77,7 @@ meta <- read.table('data/metastasis/cp007_meta.tsv.gz', sep='\t',
 sig <- paste("data", "h.all.v5.2.symbols.gmt", sep="/")
 ```
 
-A quick inspection of the meta data indicates that we have several types of data associated with each of the leaves of this tree. Not only do we have the anataomical site from which the cell was samples (`sampleID`) but also pre-computed statistics like the Metastatic Rate (`scTreeMetRate`). In fact, users can specify an arbitrary number of data items that have been precomputed. For example, if a user has performed fitness inference as in [Yang et al, bioRxiv 2021](https://www.biorxiv.org/content/10.1101/2021.10.12.464111v1), they can add these statistics as a column to the meta data file.
+A quick inspection of the meta data indicates that we have several types of data associated with each of the leaves of this tree. Not only do we have the anatomical site from which the cell was sampled (`sampleID`) but also pre-computed statistics like the Metastatic Rate (`scTreeMetRate`). In fact, users can specify an arbitrary number of data items that have been precomputed. For example, if a user has performed fitness inference as in [Yang et al, bioRxiv 2021](https://www.biorxiv.org/content/10.1101/2021.10.12.464111v1), they can add these statistics as a column to the meta data file.
 
 In addition, a user might be interested in defining their own clustering methodology on the tree. A simple clustering would entail cutting the tree at a defined depth and grouping together cells that are below each internal node at the defined depth (similar to the [`cuttree`](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/cutree) method for grouping samples together from a hierarchical clustering). 
 
@@ -156,17 +156,23 @@ An R data.frame with cell-level meta-data.  This could be confounding variables 
 
 This input is optional if Signatures are provided.
 
+**Projection Genes**
+These genes are used to infer projections for clustering in the transcriptional space and 2D visualizations.
+
 **Other Options**
 
 Other options and inputs can be provided to customize how VISION runs.
 
 ## Running PhyloVision analysis
 
-Next, we can perform the normal Vision analysis using the tree as the latent space. In addition to the typical VISION pipeline, phyloAnlayze will compute plasiticity scores for each categorical meta data. For example, in this case, a plasticity index on the `sampleID` (i.e., which anatomical site a cell was harvested from) would correspond to the scMetRate discussed in the original study.
+Next, we can perform the normal Vision analysis using the tree as the latent space. In addition to the typical VISION pipeline, phyloAnlayze will compute plasticity scores for each categorical meta data. For example, in this case, a plasticity index on the `sampleID` (i.e., which anatomical site a cell was harvested from) would correspond to the scMetRate discussed in the original study.
 
 ``` {r analyze, eval=F}
 vis <- phyloAnalyze(vis)
 ```
+
+Note: `phyloAnalyze` will add new entries to the `object@metaData` slot that can be viewed on the interactive report and evaluated with autocorrelation statistics. Specifically, a default tree-based clustering will be added (named `VISION_Cluster_Tree`) and numerical plasticity scores will be computed as meta-data for each of the categorical data columns in the user-specified `metaData`. 
+
 ## Running Hotspot analysis
 
 As mentioned above, PhyloVision can take advantage of the new Hotspot functionality in VISION. Briefly, Hotspot is a tool for inferring modules of genes that are significantly autocorrelated with one another and a particular latent space (e.g., the first 30 principal components of a gene expression matrix). When combined with PhyloVision, the Hotspot functionality will use the user-defined phylogeny as the latent space.
@@ -176,7 +182,7 @@ We can invoke the Hotspot analysis with the function `runHotspot` and setting `t
 The full Hotspot API is exposed for analysis as well. For more on the Hotspot API see [here](https://yoseflab.github.io/Hotspot/index.html). To note, while it is typically not recommended to use `model="normal"` and `logdata=FALSE` in Hotpsot, we elect to do so because the data here has been previously log-normalized. In more typical single-cell anlayses where the user is working with a library-normalized count matrix, we suggest setting `model="danb"` and `logdata=TRUE`.
 
 ```{r hotspot, eval=F}
-vis <- runHotspot(vis, model="normal", tree=TRUE, min_gene_threshold=50, n_neighbors = 30, number_top_genes = nrow(expr), logdata=FALSE)
+vis <- runHotspot(vis, model="danb", tree=TRUE, min_gene_threshold=50, n_neighbors = 30, number_top_genes = nrow(expression), logdata=FALSE)
 ```
 
 We have additionally exposed the full Hotspot pipeline should a user want to iterate with different parameters:

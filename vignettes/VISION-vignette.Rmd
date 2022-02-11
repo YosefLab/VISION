@@ -51,7 +51,7 @@ In this example - both are provided.
 library(VISION)
 
 # Read in expression counts (Genes X Cells)
-counts <- read.table("data/expression_counts.txt.gz",
+counts <- read.table("data/expression_matrix.txt.gz",
                      header = TRUE,
                      sep = '\t',
                      row.names = 1)
@@ -181,8 +181,8 @@ Clicking `Download` will download three files: (1) a DE cache; (2) a cache for s
 
 ```{r, collapse=T, message=F, results=F, eval=F}
 vis_new <- load_de_cache(vis, "de_cache_download_path")
-vis_new <- load_selections(vis, "selections_download_path")
-viewResults(vis, ...)
+vis_new <- load_selections(vis_new, "selections_download_path")
+viewResults(vis_new, ...)
 ```
 
 Else, if you would like to reproduce the plot in R, you can use the third output. This json object contains 5 pieces of information that are useful for reproducing plots:
@@ -245,5 +245,8 @@ plot_saved_state <- function(json_file_path) {
   
   return(g)
 }
+
+saved_state_file <- '/path/to/saved_scatter.json'
+plot_saved_state(saved_state_file)
 ```
 
