@@ -1,41 +1,48 @@
 #' Creates clustering of the cells
 #'
-#' Results of this are stored as a new variabe in the object's metaData
+#' Uses the Louvain clustering algorithm to cluster the cells in the
+#' transcriptional latent space (default is the top PCs, unless a user
+#' specifies otherwise). If a tree exists, a tree-based clustering is also
+#' performed.
+#' 
+#' Results of this are stored as a new variable in the object's metaData
 #'
 #' @param object the VISION object for which to cluster the cells
 #' @return the VISION object modifed as described above
 clusterCells <- function(object, tree=FALSE) {
 
-    message("Clustering cells...", appendLF = FALSE)
+    message("Clustering cells...\n", appendLF = FALSE)
 
     res <- object@LatentSpace
+    metaData <- object@metaData
 
     K <- min(object@params$numNeighbors, 30)
     
-    if (!tree) {
-      kn <- find_knn_parallel(res, K)
-      cl <- louvainCluster(kn, res)
-    } else {
+    message("Using latent space to cluster cells...\n", appendLF = FALSE)
+    kn <- find_knn_parallel(res, K)
+    cl <- louvainCluster(kn, res)
+    names(cl) <- paste('Cluster', seq(length(cl)))
+    
+    metaData["VISION_Clusters"] <- factor(levels = names(cl))
+
+    for (cluster in names(cl)) {
+        metaData[cl[[cluster]], 'VISION_Clusters'] <- cluster
+    }
+    
+    if (tree) {
+        # If tree exists, then we'll cluster using the tree as well.
+
         message("Using Tree to compute clusters...\n")
         # Get the MRCA matrix and convert the node indexes to depths
         cl <- maxSizeCladewiseTreeCluster(object@tree)
-    }
+
+        names(cl) <- paste('Cluster', seq(length(cl)))
     
-    names(cl) <- paste('Cluster', seq(length(cl)))
+        metaData["VISION_Clusters_Tree"] <- factor(levels = names(cl))
 
-    # cl is list of character vector
-    if (!tree) {
-      cluster_variable <- "VISION_Clusters"
-    } else {
-      cluster_variable <- "VISION_Clusters_Tree"
-    }
-    
-    metaData <- object@metaData
-
-    metaData[cluster_variable] <- factor(levels = names(cl))
-
-    for (cluster in names(cl)) {
-        metaData[cl[[cluster]], cluster_variable] <- cluster
+        for (cluster in names(cl)) {
+            metaData[cl[[cluster]], 'VISION_Clusters_Tree'] <- cluster
+        }
     }
 
     object@metaData <- metaData

@@ -673,10 +673,12 @@ Selection_Info.prototype.init = function()
             {'title': 'Categorical Variables', 'data': 'Variable'},
             {'title': 'Top Value', 'data': 'TopValue'},
             {'title': 'Percent', 'data': 'Percent', 'render': p => p.toFixed(1)+'%'},
+            {'title': 'Entropy', 'data': 'Entropy', 'render': _formatNum},
         ],
         'paging': false,
-        'order': [[1, 'asc']],
+        'order': [[2, 'asc']],
         'dom': 't',
+        'bFilter': false,
     })
 
     var _metaDetailsFormat = function(data){
@@ -734,7 +736,7 @@ Selection_Info.prototype.update = function(updates)
     self.cell_count_span.text(selected_cells.length)
 
     return api.cells.meta(selected_cells).then(result => {
-
+        
         // Rebuild meta-data table
         var dataSet = _.map(result.numeric, function(v, k){
             return [k, v['Min'], v['Median'], v['Max']]
@@ -745,17 +747,19 @@ Selection_Info.prototype.update = function(updates)
             .draw()
 
         var dataSetMeta = _.map(result.factor, function(value, property){
-            var levels = _(value)
+            var levels = _(value.levels)
                 .map(
                     function(percent, level){ return [level, percent] })
                 .orderBy(1, 'desc')
                 .value()
-
+            
             var top = levels[0]
+            var entropy = value.entropy
             return {
                 'Variable': property,
                 'TopValue': top[0],
                 'Percent': top[1],
+                'Entropy': entropy,
                 'OtherLevels': levels,
             }
         })
