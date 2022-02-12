@@ -138,7 +138,7 @@ vis <- PhyloVision(tree=tree, data=expression, signatures=sig,
 
 **Tree**
 
-The `ape` phylogeny object. Singleton edges should be collapsed prior to use. Ensure that leaf names correspond to same names used in the expression matrix. 
+The `ape` phylogeny object. Singleton edges should be collapsed prior to use. Ensure that leaf names correspond to the same names used in the expression matrix. 
 
 **Expression Data**
 
