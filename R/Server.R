@@ -1412,16 +1412,24 @@ launchServer <- function(object, port=NULL, host=NULL, browser=TRUE) {
 
         metaSummaryFactor <-
             lapply(metaSubset[!numericMeta], function(item){
-               vals <- sort(table(droplevels(item)),
-                            decreasing = TRUE)
-               vals <- vals / length(item) * 100
-               return(as.list(vals))
+                vals <- sort(table(droplevels(item)),
+                            decreasing = TRUE) # top factor
+                vals <- vals / length(item) * 100 # percent
+
+                if (length(unique(item)) == 1) {
+                    entropy <- 0
+                } else {
+                    frequencies <- table(as.character(item)) / length(item)
+                    entropy <- -sum(frequencies * log2(frequencies))
+                }
+
+               return(list(levels=as.list(vals), entropy=entropy))
             })
 
         metaSummary <- list(numeric = metaSummaryNumeric,
                             factor = metaSummaryFactor
                            )
-
+        
         res$body <- toJSON(
             metaSummary, force = TRUE, pretty = TRUE,
             auto_unbox = TRUE, digits = I(4)
