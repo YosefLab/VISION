@@ -173,7 +173,7 @@ projection <- read.csv("umap_results.csv")
 vis <- addProjection(vis, "UMAP", projection)
 ```
 
-## Reproducing a plot from an interactive plot
+## Reproducing a plot from an interactive report
 
 As of version 3.0.0, we have enabled users to save the relevant information from an interactive report to reproduce in R. This can be accomplished by downloading the "state" of the report using the `Download` button below "Save Report Info" in the upper right of the interactive web-based report. Below, we provide an example workflow of doing this.
 
