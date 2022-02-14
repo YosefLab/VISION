@@ -91,7 +91,7 @@ hsInit <- function(object, model="normal", tree=F, num_umi=NULL, logdata=FALSE) 
     message("Using Tree")
     ete3 <- import("ete3", convert=F)
     nwk <- write.tree(object@tree)
-    pyTree <- ete3$Tree(nwk, format = 8L)
+    pyTree <- ete3$Tree(nwk, format = 1)
     if (is.null(num_umi)) {
       hs <- hotspot$Hotspot(exprData, tree=pyTree, model=model)
     } else {
