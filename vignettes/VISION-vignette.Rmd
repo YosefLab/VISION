@@ -173,6 +173,9 @@ projection <- read.csv("umap_results.csv")
 vis <- addProjection(vis, "UMAP", projection)
 ```
 
+## Hotspot analysis
+As of version 3.0.0, we have enabled users to perform de-novo gene module identification [Hotspot](https://www.cell.com/cell-systems/fulltext/S2405-4712(21)00114-9) (DeTomaso and Yosef, _Cell Systems_ 2021) from within VISION. Users can consult the [Spatial Hotspot Vignette](spatialHotspot.html) for instructions for adding this analysis to a user report.
+
 ## Reproducing a plot from an interactive report
 
 As of version 3.0.0, we have enabled users to save the relevant information from an interactive report to reproduce in R. This can be accomplished by downloading the "state" of the report using the `Download` button below "Save Report Info" in the upper right of the interactive web-based report. Below, we provide an example workflow of doing this.
