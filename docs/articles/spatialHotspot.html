@@ -27,6 +27,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -39,7 +41,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">VISION</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.0</span>
       </span>
     </div>
 
@@ -47,7 +49,7 @@
       <ul class="nav navbar-nav">
 <li>
   <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
+    <span class="fa fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -96,7 +98,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/YosefLab/VISION/">
+  <a href="https://github.com/YosefLab/VISION/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -111,102 +113,148 @@
 
       
 
-      </header><script src="spatialHotspot_files/header-attrs-2.8/header-attrs.js"></script><script src="spatialHotspot_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
+      </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Spatial Data and Hotspot</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/YosefLab/VISION/blob/master/vignettes/spatialHotspot.Rmd"><code>vignettes/spatialHotspot.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/YosefLab/VISION/blob/HEAD/vignettes/spatialHotspot.Rmd" class="external-link"><code>vignettes/spatialHotspot.Rmd</code></a></small>
       <div class="hidden name"><code>spatialHotspot.Rmd</code></div>
 
     </div>
 
     
     
-<div id="introduction" class="section level1">
-<h1 class="hasAnchor">
-<a href="#introduction" class="anchor"></a>Introduction</h1>
-<p>In this vignette, we demonstrate how to use the Hotspot pipeline in VISION to identify de-novo transcriptional gene modules and interpret them. To this end, we use Hotspot - an algorithm that identifies modules of genes that are significantly autocorrelated with one another on some latent space that can be used to define cell-cell similarity (e.g., the first 30 principal components). Qualitatively, this can be interpreted as a co-expression analysis that takes into account the distribution of gene expression values and nuanced cell-cell similarities. If you are interested in learning more about the algorithm, you can read the <a href="https://www.cell.com/cell-systems/fulltext/S2405-4712(21)00114-9">original publication</a>.</p>
-<p>In the example below, we use spatial transcriptomic data from the Slide-seq technology for the Hotspot analysis, following the original <a href="https://yoseflab.github.io/Hotspot/Spatial_Tutorial.html">Hotspot tutorial</a>. Though this analysis is extensible to more typical latent spaces, this is an interesting example where we show that VISION can use spatial coordinates to define cell-cell similarities.</p>
+<div class="section level2">
+<h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
+</h2>
+<p>In this vignette, we demonstrate how to use the Hotspot pipeline in
+VISION to identify de-novo transcriptional gene modules and interpret
+them. To this end, we use Hotspot - an algorithm that identifies modules
+of genes that are significantly autocorrelated with one another on some
+latent space that can be used to define cell-cell similarity (e.g., the
+first 30 principal components). Qualitatively, this can be interpreted
+as a co-expression analysis that takes into account the distribution of
+gene expression values and nuanced cell-cell similarities. If you are
+interested in learning more about the algorithm, you can read the <a href="https://www.cell.com/cell-systems/fulltext/S2405-4712(21)00114-9" class="external-link">original
+publication</a>.</p>
+<p>In the example below, we use spatial transcriptomic data from the
+Slide-seq technology for the Hotspot analysis, following the original <a href="https://yoseflab.github.io/Hotspot/Spatial_Tutorial.html" class="external-link">Hotspot
+tutorial</a>. Though this analysis is extensible to more typical latent
+spaces, this is an interesting example where we show that VISION can use
+spatial coordinates to define cell-cell similarities.</p>
 </div>
-<div id="preliminaries" class="section level1">
-<h1 class="hasAnchor">
-<a href="#preliminaries" class="anchor"></a>Preliminaries</h1>
-<p>If you have yet to install VISION, we recommend installing the package from Github to install this package. Full source code can be found at the VISION Github repository, available <a href="http://www.github.com/YosefLab/VISION">here</a>.</p>
-<pre class="r{eval=false}"><code><a href="https://devtools.r-lib.org/">require(devtools)
-install_github("YosefLab/VISION")</a></code></pre>
-<p>Once VISION and R are installed, you may load in VISION using <code><a href="https://yoseflab.github.io/VISION">library(VISION)</a></code>. Also make sure that you have installed <code>reticulate</code> appropriately, as this will be necessary for running Hotspot.</p>
-<p>You’ll also need to install Hotspot, which can be installed directly from the git repository using the following command:</p>
+<div class="section level2">
+<h2 id="preliminaries">Preliminaries<a class="anchor" aria-label="anchor" href="#preliminaries"></a>
+</h2>
+<p>If you have yet to install VISION, we recommend installing the
+package from Github to install this package. Full source code can be
+found at the VISION Github repository, available <a href="http://www.github.com/YosefLab/VISION" class="external-link">here</a>.</p>
+<pre class="r{eval=false}"><code><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/" class="external-link">devtools</a></span><span class="op">)</span>
+<span class="fu"><a href="https://devtools.r-lib.org/reference/remote-reexports.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"YosefLab/VISION"</span><span class="op">)</span></code></pre>
+<p>Once VISION and R are installed, you may load in VISION using
+<code><a href="https://yoseflab.github.io/VISION">library(VISION)</a></code>. Also make sure that you have installed
+<code>reticulate</code> appropriately, as this will be necessary for
+running Hotspot.</p>
+<p>You’ll also need to install Hotspot, which can be installed directly
+from the git repository using the following command:</p>
 <pre><code>pip install git+https://github.com/yoseflab/Hotspot.git</code></pre>
 </div>
-<div id="using-vision" class="section level1">
-<h1 class="hasAnchor">
-<a href="#using-vision" class="anchor"></a>Using VISION</h1>
-<p>Below, we first run the VISION pipeline as usual. In addition to importing VISION, we’ll have to import <code>reticulate</code> for the Hotspot analaysis.</p>
+<div class="section level2">
+<h2 id="using-vision">Using VISION<a class="anchor" aria-label="anchor" href="#using-vision"></a>
+</h2>
+<p>Below, we first run the VISION pipeline as usual. In addition to
+importing VISION, we’ll have to import <code>reticulate</code> for the
+Hotspot analaysis.</p>
 <p>First, we need to load VISION and reticulate.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">knitr</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/knitr/man/opts_chunk.html">opts_chunk</a></span><span class="op">$</span><span class="fu">set</span><span class="op">(</span>echo <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://yoseflab.github.io/VISION">VISION</a></span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/rstudio/reticulate">reticulate</a></span><span class="op">)</span> <span class="co"># for the Hotspot analysis</span></code></pre></div>
-<div id="creating-a-vision-object" class="section level2">
-<h2 class="hasAnchor">
-<a href="#creating-a-vision-object" class="anchor"></a>Creating a Vision Object</h2>
+<code class="sourceCode R"><span class="fu">knitr</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/knitr/man/opts_chunk.html" class="external-link">opts_chunk</a></span><span class="op">$</span><span class="fu">set</span><span class="op">(</span>echo <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://yoseflab.github.io/VISION">VISION</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/rstudio/reticulate" class="external-link">reticulate</a></span><span class="op">)</span> <span class="co"># for the Hotspot analysis</span></code></pre></div>
+<div class="section level3">
+<h3 id="creating-a-vision-object">Creating a Vision Object<a class="anchor" aria-label="anchor" href="#creating-a-vision-object"></a>
+</h3>
 <p>First, we create a Vision object</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># Read the expression and meta data</span>
 <span class="va">file_path</span> <span class="op">&lt;-</span> <span class="st">"data/spatial"</span> <span class="co"># Replace the path</span>
 
-<span class="va">expr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.table</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste</a></span><span class="op">(</span><span class="va">file_path</span>, <span class="st">"expr.tsv.gz"</span>, sep<span class="op">=</span><span class="st">"/"</span><span class="op">)</span>, check.names <span class="op">=</span> <span class="cn">FALSE</span>, sep <span class="op">=</span> <span class="st">"\t"</span><span class="op">)</span>
-<span class="va">meta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.table</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste</a></span><span class="op">(</span><span class="va">file_path</span>, <span class="st">"meta.tsv"</span>, sep<span class="op">=</span><span class="st">"/"</span><span class="op">)</span>, check.names <span class="op">=</span> <span class="cn">FALSE</span>, sep <span class="op">=</span> <span class="st">"\t"</span>, row.names <span class="op">=</span> <span class="fl">1</span>, header<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span>
+<span class="va">expr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">file_path</span>, <span class="st">"expr.tsv.gz"</span>, sep<span class="op">=</span><span class="st">"/"</span><span class="op">)</span>, check.names <span class="op">=</span> <span class="cn">FALSE</span>, sep <span class="op">=</span> <span class="st">"\t"</span><span class="op">)</span>
+<span class="va">meta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">file_path</span>, <span class="st">"meta.tsv"</span>, sep<span class="op">=</span><span class="st">"/"</span><span class="op">)</span>, check.names <span class="op">=</span> <span class="cn">FALSE</span>, sep <span class="op">=</span> <span class="st">"\t"</span>, row.names <span class="op">=</span> <span class="fl">1</span>, header<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span>
 
 <span class="co"># Signature file</span>
-<span class="va">sig</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste</a></span><span class="op">(</span><span class="st">"data"</span>, <span class="st">"h.all.v5.2.symbols.gmt"</span>, sep<span class="op">=</span><span class="st">"/"</span><span class="op">)</span>
+<span class="va">sig</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"data"</span>, <span class="st">"h.all.v5.2.symbols.gmt"</span>, sep<span class="op">=</span><span class="st">"/"</span><span class="op">)</span>
 
 <span class="co"># Read and create the coordinates</span>
-<span class="va">pos</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.table</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste</a></span><span class="op">(</span><span class="va">file_path</span>, <span class="st">"BeadLocationsForR.csv"</span>, sep<span class="op">=</span><span class="st">"/"</span><span class="op">)</span>, sep<span class="op">=</span><span class="st">","</span>, check.names <span class="op">=</span> <span class="cn">FALSE</span>, row.names<span class="op">=</span><span class="fl">1</span>, header<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span>
+<span class="va">pos</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">file_path</span>, <span class="st">"BeadLocationsForR.csv"</span>, sep<span class="op">=</span><span class="st">"/"</span><span class="op">)</span>, sep<span class="op">=</span><span class="st">","</span>, check.names <span class="op">=</span> <span class="cn">FALSE</span>, row.names<span class="op">=</span><span class="fl">1</span>, header<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span>
 <span class="va">pos</span><span class="op">[</span><span class="st">"X"</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">pos</span><span class="op">$</span><span class="va">ycoord</span>
 <span class="va">pos</span><span class="op">[</span><span class="st">"Y"</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="op">-</span><span class="fl">1</span> <span class="op">*</span> <span class="va">pos</span><span class="op">$</span><span class="va">xcoord</span>
-<span class="va">pos</span> <span class="op">&lt;-</span> <span class="va">pos</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"X"</span>, <span class="st">"Y"</span><span class="op">)</span><span class="op">]</span>
+<span class="va">pos</span> <span class="op">&lt;-</span> <span class="va">pos</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"X"</span>, <span class="st">"Y"</span><span class="op">)</span><span class="op">]</span>
 
 <span class="co"># Construct the Vision object</span>
-<span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Vision.html">Vision</a></span><span class="op">(</span><span class="va">expr</span>, signatures<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">sig</span><span class="op">)</span>, latentSpace <span class="op">=</span> <span class="va">pos</span>, meta<span class="op">=</span><span class="va">meta</span><span class="op">)</span> <span class="co"># TODO add relevant signatures</span></code></pre></div>
+<span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/VISION-class.html">Vision</a></span><span class="op">(</span><span class="va">expr</span>, signatures<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">sig</span><span class="op">)</span>, latentSpace <span class="op">=</span> <span class="va">pos</span>, meta<span class="op">=</span><span class="va">meta</span><span class="op">)</span> <span class="co"># TODO add relevant signatures</span></code></pre></div>
 <p><strong>Expression Data</strong></p>
 <p>The provided expression data should be library-normalized.</p>
-<p>The expression data should not be log-transformed prior to loading into VISION. For more information about how to transform the expression data, refer to the central <a href="VISION-vignette.html">VISION vignette</a>.</p>
+<p>The expression data should not be log-transformed prior to loading
+into VISION. For more information about how to transform the expression
+data, refer to the central <a href="VISION-vignette.html">VISION
+vignette</a>.</p>
 <p><strong>Signatures</strong></p>
-<p>Signatures can be provided as a list of paths to signature files (*.gmt) or Signature objects.</p>
-<p>See <a href="Signatures.html">the signature vignette</a> for more information on finding or creating gene Signatures.</p>
+<p>Signatures can be provided as a list of paths to signature files
+(*.gmt) or Signature objects.</p>
+<p>See <a href="Signatures.html">the signature vignette</a> for more
+information on finding or creating gene Signatures.</p>
 <p><strong>Meta Data</strong></p>
-<p>An R data.frame with cell-level meta-data. This could be confounding variables (e.g. percentage of mitochondrial RNA, number of genes detected) or experimental covariates (e.g. genotype, donor, batch).</p>
+<p>An R data.frame with cell-level meta-data. This could be confounding
+variables (e.g. percentage of mitochondrial RNA, number of genes
+detected) or experimental covariates (e.g. genotype, donor, batch).</p>
 <p>This input is optional if Signatures are provided.</p>
 <p><strong>Other Options</strong></p>
-<p>Other options and inputs can be provided to customize how VISION runs.</p>
+<p>Other options and inputs can be provided to customize how VISION
+runs.</p>
 </div>
-<div id="running-an-analysis" class="section level2">
-<h2 class="hasAnchor">
-<a href="#running-an-analysis" class="anchor"></a>Running an analysis</h2>
-<p>Next, we can perform the normal Vision analysis using the spatial coordinates as the latent space.</p>
+<div class="section level3">
+<h3 id="running-an-analysis">Running an analysis<a class="anchor" aria-label="anchor" href="#running-an-analysis"></a>
+</h3>
+<p>Next, we can perform the normal Vision analysis using the spatial
+coordinates as the latent space.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/analyze,Vision-method.html">analyze</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/analyze-Vision-method.html">analyze</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span></code></pre></div>
 </div>
-<div id="running-hotpsot-analysis" class="section level2">
-<h2 class="hasAnchor">
-<a href="#running-hotpsot-analysis" class="anchor"></a>Running Hotpsot analysis</h2>
-<p>Conveniently, the Hotspot analysis can be performed directly on the VISION object we just processed. To do so, we’ll use the <code>runHotspot</code> function which invokes the Hotspot pipeline. For more information about the analysis pipeline &amp; Hotspot API, you can refer the documentation website <a href="https://yoseflab.github.io/Hotspot/index.html">here</a> and <a href="phyloVision.html">the PhyloVision vignette</a>.</p>
-<p>As described in the original Hotspot vignette, we use the <code>bernoulli</code> model because of the low capture rate of the spatial technology. In a typical anlaysis, we would use the <code>danb</code> model.</p>
+<div class="section level3">
+<h3 id="running-hotpsot-analysis">Running Hotpsot analysis<a class="anchor" aria-label="anchor" href="#running-hotpsot-analysis"></a>
+</h3>
+<p>Conveniently, the Hotspot analysis can be performed directly on the
+VISION object we just processed. To do so, we’ll use the
+<code>runHotspot</code> function which invokes the Hotspot pipeline. For
+more information about the analysis pipeline &amp; Hotspot API, you can
+refer the documentation website <a href="https://yoseflab.github.io/Hotspot/index.html" class="external-link">here</a> and <a href="phyloVision.html">the PhyloVision vignette</a>.</p>
+<p>As described in the original Hotspot vignette, we use the
+<code>bernoulli</code> model because of the low capture rate of the
+spatial technology. In a typical anlaysis, we would use the
+<code>danb</code> model.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">vis</span><span class="op">@</span><span class="va">params</span><span class="op">$</span><span class="va">latentSpace</span><span class="op">$</span><span class="va">projectionGenes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html">rownames</a></span><span class="op">(</span><span class="va">vis</span><span class="op">@</span><span class="va">exprData</span><span class="op">)</span> <span class="co"># Use all genes.</span>
+<code class="sourceCode R"><span class="va">vis</span><span class="op">@</span><span class="va">params</span><span class="op">$</span><span class="va">latentSpace</span><span class="op">$</span><span class="va">projectionGenes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">vis</span><span class="op">@</span><span class="va">exprData</span><span class="op">)</span> <span class="co"># Use all genes.</span>
 <span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/runHotspot.html">runHotspot</a></span><span class="op">(</span><span class="va">vis</span>, model<span class="op">=</span><span class="st">"bernoulli"</span>, num_umi<span class="op">=</span><span class="va">meta</span><span class="op">[</span><span class="st">"num_umi"</span><span class="op">]</span>, logdata<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
-<p>The <a href="phyloVision.html">PhyloVision vignette</a> describes the additional API that is exposed for iterating on the Hotspot analysis.</p>
-<p>After running the Hotpsot pipeline, the VISION object will have populated slots storing the gene modules, the scores for each cell with respect to these new gene modules, and the enrichment score between user-specified signatures and the new Hotspot gene modules. These results can be explored in the Hotspot mode of the VISION web-based report.</p>
+<p>The <a href="phyloVision.html">PhyloVision vignette</a> describes the
+additional API that is exposed for iterating on the Hotspot
+analysis.</p>
+<p>After running the Hotpsot pipeline, the VISION object will have
+populated slots storing the gene modules, the scores for each cell with
+respect to these new gene modules, and the enrichment score between
+user-specified signatures and the new Hotspot gene modules. These
+results can be explored in the Hotspot mode of the VISION web-based
+report.</p>
 </div>
-<div id="viewing-results" class="section level2">
-<h2 class="hasAnchor">
-<a href="#viewing-results" class="anchor"></a>Viewing results</h2>
-<p>Finally, we can launch the Vision browser. The results from the Hotspot analysis can be viewed by clicking on the “Hotspot” button on the top-right of the web report.</p>
+<div class="section level3">
+<h3 id="viewing-results">Viewing results<a class="anchor" aria-label="anchor" href="#viewing-results"></a>
+</h3>
+<p>Finally, we can launch the Vision browser. The results from the
+Hotspot analysis can be viewed by clicking on the “Hotspot” button on
+the top-right of the web report.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/viewResults,Vision-method.html">viewResults</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu"><a href="../reference/viewResults.html">viewResults</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span></code></pre></div>
 </div>
 </div>
   </div>
@@ -222,11 +270,15 @@ install_github("YosefLab/VISION")</a></code></pre>
 
 
       <footer><div class="copyright">
-  <p>Developed by Matt Jones, David Detomaso, Tal Ashuach, Yanay Rosen.</p>
+  <p></p>
+<p>Developed by Matt Jones, David Detomaso, Tal Ashuach, Yanay
+Rosen.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a>
+2.0.2.</p>
 </div>
 
       </footer>
@@ -234,6 +286,8 @@ install_github("YosefLab/VISION")</a></code></pre>
 
   
 
+
+  
 
   </body>
 </html>

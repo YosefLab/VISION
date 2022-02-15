@@ -1,513 +1,621 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://yoseflab.github.io/VISION//index.html</loc>
+    <loc>https://yoseflab.github.io/VISION/404.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/Cluster.html</loc>
+    <loc>https://yoseflab.github.io/VISION/API.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/NormData.html</loc>
+    <loc>https://yoseflab.github.io/VISION/LICENSE-text.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/PhyloVision-class.html</loc>
+    <loc>https://yoseflab.github.io/VISION/articles/Signatures.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/ServerExpression.html</loc>
+    <loc>https://yoseflab.github.io/VISION/articles/VISION-vignette.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/ServerSigProjMatrix.html</loc>
+    <loc>https://yoseflab.github.io/VISION/articles/index.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/Signature.html</loc>
+    <loc>https://yoseflab.github.io/VISION/articles/micropooling.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/Trajectory.html</loc>
+    <loc>https://yoseflab.github.io/VISION/articles/phyloVision.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/TrajectoryProjection.html</loc>
+    <loc>https://yoseflab.github.io/VISION/articles/spatialHotspot.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/VISION-class.html</loc>
+    <loc>https://yoseflab.github.io/VISION/articles/trajectories.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/VISION.html</loc>
+    <loc>https://yoseflab.github.io/VISION/articles/web_only/10xData.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/addHotspotToVision.html</loc>
+    <loc>https://yoseflab.github.io/VISION/articles/web_only/Seurat.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/addLatentSpace.html</loc>
+    <loc>https://yoseflab.github.io/VISION/articles/web_only/SignatureAutocorrelation.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/addProjection-Vision-method.html</loc>
+    <loc>https://yoseflab.github.io/VISION/articles/web_only/SignatureConsistency.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/addSignatures.html</loc>
+    <loc>https://yoseflab.github.io/VISION/articles/web_only/Signatures.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/addTSNE.html</loc>
+    <loc>https://yoseflab.github.io/VISION/authors.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/addUMAP.html</loc>
+    <loc>https://yoseflab.github.io/VISION/index.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/analyze-Vision-method.html</loc>
+    <loc>https://yoseflab.github.io/VISION/news/index.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/analyzeHotspotObjectVision.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/Cluster.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/analyzeLocalCorrelations.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/NormData.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/analyzeLocalCorrelationsModules.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/PhyloVision-class.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/analyzeTrajectoryCorrelations.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/ProjectionData.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/ancestor_at_depth.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/ServerExpression.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/annotateLatentComponents.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/ServerSigProjMatrix.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/applyFilters.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/Signature.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/applyICA.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/Trajectory.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/applyISOMap.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/TrajectoryProjection.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/applyMicroClustering.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/VISION-class.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/applyPCA.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/VISION.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/applyPermutationWPCA.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/addHotspotToVision.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/applyRBFPCA.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/addLatentSpace.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/applySimplePPT.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/addProjection-Vision-method.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/applySpectralEmbedding.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/addSignatures.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/applyUMAP.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/addTSNE.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/applytSNE10.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/addUMAP.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/applytSNE30.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/analyze-Vision-method.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/batchSigEvalNorm.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/analyzeHotspotObjectVision.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/batchify.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/analyzeLocalCorrelations.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/calcInterEdgeDistMat.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/analyzeLocalCorrelationsModules.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/calcIntraEdgeDistMat.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/analyzeTrajectoryCorrelations.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/calcModuleScores.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/ancestor_at_depth.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/calcSignatureScores.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/annotateLatentComponents.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/calc_mod_sig_enrichment.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/applyFilters.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/calc_set_enrichment.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/applyICA.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/calculateTrajectoryDistances.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/applyISOMap.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/clipBottom.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/applyMicroClustering.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/clusterCells.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/applyPCA.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/clusterModScores.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/applyPermutationWPCA.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/clusterSigScores.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/applyRBFPCA.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/clusterSignatures.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/applySimplePPT.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/colNormalization.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/applySpectralEmbedding.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/colRankNormalization.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/applyUMAP.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/colVarsSp.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/applyWeightedPCA.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/computeKNNWeights-Trajectory-method.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/applytSNE10.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/computeKNNWeights-matrix-method.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/applytSNE30.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/computeKNNWeights-phylo-method.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/batchSigEval.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/computeLatentSpace.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/batchSigEvalNorm.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/computeProjectionGenes.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/batchify.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/convertGeneIds.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/bottomUpFitchHartigan.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/coordinatesToJSON.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/calcInterEdgeDistMat.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/createGeneSignature.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/calcIntraEdgeDistMat.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/createTrajectoryMetaData.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/calcModuleScores.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/depthBasedCladewiseTreeCluster.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/calcSignatureScores.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/depthBasedTreeCluster.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/calcWeights.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/dot-colNormHelper.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/calc_mod_sig_enrichment.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/draw_hotspot_heatmap.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/calc_set_enrichment.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/evalSigGeneImportance.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/calculatePearsonCorr.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/evalSigGeneImportanceSparse.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/calculateSignatureBackground.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/fbConsistencyScores.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/calculateTrajectoryDistances.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/filterGenesFano.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/clipBottom.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/filterGenesNovar.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/clusterCells.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/filterGenesThreshold.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/clusterModScores.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/find_knn_parallel.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/clusterSigScores.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/find_knn_parallel_tree.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/clusterSignatures.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/find_root.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/colNormalization.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/fitTree.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/colRankNormalization.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/geary_sig_v_proj.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/colVarsSp.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/generateOverlapSignatures.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/computeFitchHartiganParsimony.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/generatePermutationNull.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/computeFitchHartiganParsimonyPerNode.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/generateProjections.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/computeKNNWeights-Trajectory-method.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/generateProjectionsInner.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/computeKNNWeights-matrix-method.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/generateTrajectoryProjections.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/computeKNNWeights-phylo-method.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/getLatentSpace.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/computeLatentSpace.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/getLatentTrajectory.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/computeNormalizedFitchHartiganParsimony.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/getMSE.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/computePlasticityScores.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/getMetaAutocorrelation.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/computeProjectionGenes.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/getMetaDifferential.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/computeSingleCellFitchScores.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/getNormalizedCopy.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/computeSingleCellPlasticities.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/getNormalizedCopySparse.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/computeWeights.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/getParam.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/convertGeneIds.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/getProjections.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/coordinatesToJSON.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/getSelections.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/countTransitions.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/getSignatureAutocorrelation.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/createFalseNegativeMap.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/getSignatureDifferential.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/createGeneSignature.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/getSignatureScores.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/createTrajectoryMetaData.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/get_all_children.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/depthBasedCladewiseTreeCluster.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/get_children.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/depthBasedTreeCluster.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/get_max_cluster_size.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/depthFirstTraverse.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/get_min_cluster_size.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/depth_first_traverse_nodes.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/get_parent.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/dot-colNormHelper.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/group_modules_enrichment.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/draw_hotspot_heatmap.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/hasUnnormalizedData.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/evalSigGeneImportance.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/hsCalculateModuleScores.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/evalSigGeneImportanceSparse.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/hsComputeAutoCorrelations.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/expressionToJSON.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/hsComputeLocalCorrelations.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/fbConsistencyScores.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/hsCreateKnnGraph.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/filterData.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/hsInit.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/filterGenesFano.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/ilog1p.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/filterGenesNovar.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/innerEvalSignatureBatchNorm.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/filterGenesThreshold.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/is_tip.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/findNeighbors.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/knn_tree.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/find_knn_parallel.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/launchServer.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/find_knn_parallel_tree.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/lcaBasedHotspotNeighbors.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/find_root.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/lcaBasedTreeKNN.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/fitTree.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/lca_based_depth.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/geary_sig_v_proj.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/loadHotspotObject.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/generateOverlapSignatures.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/louvainCluster.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/generatePermutationNull.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/matLog2.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/generateProjections.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/matrix_chisq.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/generateProjectionsInner.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/matrix_wilcox.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/generateTrajectoryProjections.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/matrix_wilcox_cpp.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/getLatentSpace.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/maxSizeCladewiseTreeCluster.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/getLatentTrajectory.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/minSizeCladeNeighbors.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/getMSE.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/noNormalization.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/getMetaAutocorrelation.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/pearsonCorrToJSON.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/getMetaDifferential.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/phyloAnalyze-PhyloVision-method.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/getNormalizedCopy.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/poolCells.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/getNormalizedCopySparse.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/poolMatrixCols.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/getParam.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/poolMatrixCols_Inner.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/getProjections.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/poolMatrixRows.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/getSelections.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/poolMetaData.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/getSignatureAutocorrelation.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/processSignatures.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/getSignatureDifferential.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/projectOnTree.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/getSignatureScores.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/readSignaturesInput.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/get_all_children.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/read_10x.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/get_children.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/read_10x_h5.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/get_max_cluster_size.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/read_10x_h5_v2.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/get_min_cluster_size.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/read_10x_h5_v3.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/get_parent.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/readjust_clusters.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/group_modules_enrichment.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/registerMethods.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/hasUnnormalizedData.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/rowAndColNormalization.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/housekeeping.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/rowNormalization.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/hsCalculateModuleScores.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/rowVarsSp.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/hsComputeAutoCorrelations.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/runHotspot.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/hsComputeLocalCorrelations.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/saveAndViewResults-Vision-method.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/hsCreateKnnGraph.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/saveHSBytestToPickle.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/hsInit.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/sigConsistencyScores.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/ilog1p.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/sigProjMatrixToJSON.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/index.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/sigScoresToJSON.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/innerEvalSignatureBatch.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/signatureToJSON.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/innerEvalSignatureBatchNorm.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/sigsToSparseMatrix.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/is_tip.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/sigsVsProjection_n.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/knn_tree.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/sigsVsProjection_pcf.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/launchServer.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/sigsVsProjection_pcn.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/lcaBasedHotspotNeighbors.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/sqdist.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/lcaBasedTreeKNN.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/translateCellPositions.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/lca_based_depth.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/treeClusterMinCladeSize.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/loadHotspotObject.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/trivial_dist.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/load_de_cache.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/ultrametric_tree.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/load_selections.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/versionCheck.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/louvainCluster.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//reference/viewResults.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/matLog2.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//articles/Signatures.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/matrix_chisq.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//articles/VISION-vignette.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/matrix_wilcox.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//articles/micropooling.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/matrix_wilcox_cpp.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//articles/phyloVision.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/maxSizeCladewiseTreeCluster.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//articles/spatialHotspot.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/minSizeCladeNeighbors.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//articles/trajectories.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/noNormalization.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//articles/web_only/10xData.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/pearsonCorrToJSON.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//articles/web_only/Seurat.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/phyloAnalyze-PhyloVision-method.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION//articles/web_only/SignatureAutocorrelation.html</loc>
+    <loc>https://yoseflab.github.io/VISION/reference/poolCells.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/poolMatrixCols.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/poolMatrixCols_Inner.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/poolMatrixRows.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/poolMetaData.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/processSignatures.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/projectOnTree.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/readSignaturesInput.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/read_10x.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/read_10x_h5.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/read_10x_h5_v2.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/read_10x_h5_v3.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/readjust_clusters.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/registerMethods.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/rowAndColNormalization.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/rowNormalization.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/rowVarsSp.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/runHotspot.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/saveAndViewResults-Vision-method.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/saveHSBytestToPickle.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/scoreParsimony.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/sigConsistencyScores.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/sigProjMatrixToJSON.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/sigScoresToJSON.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/signatureToJSON.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/sigsToSparseMatrix.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/sigsVsProjection_n.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/sigsVsProjection_pcf.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/sigsVsProjection_pcn.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/sqdist.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/topDownFitchHartigan.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/translateCellPositions.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/treeClusterMinCladeSize.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/trivial_dist.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/ultrametric_tree.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/versionCheck.html</loc>
+  </url>
+  <url>
+    <loc>https://yoseflab.github.io/VISION/reference/viewResults.html</loc>
   </url>
 </urlset>
