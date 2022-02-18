@@ -13,5 +13,11 @@ clusterCells(object, tree = FALSE)
 the VISION object modifed as described above
 }
 \description{
-Results of this are stored as a new variabe in the object's metaData
+Uses the Louvain clustering algorithm to cluster the cells in the
+transcriptional latent space (default is the top PCs, unless a user
+specifies otherwise). If a tree exists, a tree-based clustering is also
+performed.
+}
+\details{
+Results of this are stored as a new variable in the object's metaData
 }

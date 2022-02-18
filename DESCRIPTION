@@ -42,7 +42,7 @@ Encoding: UTF-8
 LazyData: true
 URL: https://yoseflab.github.io/VISION, https://github.com/yoseflab/VISION
 BugReports: https://github.com/YosefLab/VISION/issues
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 Suggests:
 	Biobase,
 	BiocStyle,

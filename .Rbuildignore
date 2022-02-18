@@ -6,3 +6,6 @@
 ^docs/.*$
 ^vignettes/web_only/.*$
 ^.*.eslintrc.json
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
