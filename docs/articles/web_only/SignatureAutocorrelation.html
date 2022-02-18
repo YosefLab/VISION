@@ -27,6 +27,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -39,7 +41,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../../index.html">VISION</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.0</span>
       </span>
     </div>
 
@@ -47,7 +49,7 @@
       <ul class="nav navbar-nav">
 <li>
   <a href="../../index.html">
-    <span class="fas fa-home fa-lg"></span>
+    <span class="fa fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -96,7 +98,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/YosefLab/VISION/">
+  <a href="https://github.com/YosefLab/VISION/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -111,13 +113,13 @@
 
       
 
-      </header><script src="SignatureAutocorrelation_files/header-attrs-2.8/header-attrs.js"></script><script src="SignatureAutocorrelation_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
+      </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Signature Autocorrelation</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/YosefLab/VISION/blob/master/vignettes/web_only/SignatureAutocorrelation.Rmd"><code>vignettes/web_only/SignatureAutocorrelation.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/YosefLab/VISION/blob/HEAD/vignettes/web_only/SignatureAutocorrelation.Rmd" class="external-link"><code>vignettes/web_only/SignatureAutocorrelation.Rmd</code></a></small>
       <div class="hidden name"><code>SignatureAutocorrelation.Rmd</code></div>
 
     </div>
@@ -134,29 +136,63 @@
     margin: 20px 80px 40px 80px;
 }
 </style>
-<div id="what-is-signature-autocorrelation" class="section level1">
-<h1 class="hasAnchor">
-<a href="#what-is-signature-autocorrelation" class="anchor"></a>What is signature autocorrelation?</h1>
-<p>When analyzing single-cell data using signatures, one goal would be to identify signatures whose values exhibit interesting patterns of variation in the dataset.</p>
-<p>A labor-intensive way to do this would be to plot the expression scores of every signature on top of a visualization of the data (e.g. with tSNE or UMAP) and identify signatures whose scores vary in a coordinated manner. The idea being that signatures that exhibit this property can be used to potentially describe features of the latent space.</p>
-<p>VISION both automates this procedure and makes the process more quantitative. A measure of global autocorrelation is evaluated for each signature in the latent space model. This allows for a natural ranking of signatures as well as testing for significance.</p>
-<p>To better understand this statistic, which varies from 0 (no autocorrelation to 1 (perfect autocorrelation), the graphic below shows a projection of single cells overlaid with signatures of 6 different autocorrelation values (labeled as C’).</p>
+<div class="section level2">
+<h2 id="what-is-signature-autocorrelation">What is signature autocorrelation?<a class="anchor" aria-label="anchor" href="#what-is-signature-autocorrelation"></a>
+</h2>
+<p>When analyzing single-cell data using signatures, one goal would be
+to identify signatures whose values exhibit interesting patterns of
+variation in the dataset.</p>
+<p>A labor-intensive way to do this would be to plot the expression
+scores of every signature on top of a visualization of the data
+(e.g. with tSNE or UMAP) and identify signatures whose scores vary in a
+coordinated manner. The idea being that signatures that exhibit this
+property can be used to potentially describe features of the latent
+space.</p>
+<p>VISION both automates this procedure and makes the process more
+quantitative. A measure of global autocorrelation is evaluated for each
+signature in the latent space model. This allows for a natural ranking
+of signatures as well as testing for significance.</p>
+<p>To better understand this statistic, which varies from 0 (no
+autocorrelation to 1 (perfect autocorrelation), the graphic below shows
+a projection of single cells overlaid with signatures of 6 different
+autocorrelation values (labeled as C’).</p>
 <div class="center-img">
 <div class="figure">
-<img src="cvalue_demo.png" alt=""><p class="caption">Higher values of C’ indicate higher signature autocorrelation. Here the expression of CD4 T cells is visualized using tSNE and colored according to signature score.</p>
+<img src="../../../../Box%20Sync/VISION/articles/web_only/cvalue_demo.png" alt=""><p class="caption">Higher values of C’ indicate higher signature
+autocorrelation. Here the expression of CD4 T cells is visualized using
+tSNE and colored according to signature score.</p>
 </div>
 </div>
 </div>
-<div id="computing-autocorrelation" class="section level1">
-<h1 class="hasAnchor">
-<a href="#computing-autocorrelation" class="anchor"></a>Computing Autocorrelation</h1>
-<p>Signature autocorrelation captures the degree to which a cell’s signature score is similar to that of its ‘nearest neighbors’ in a latent model of gene expression. Or put another way, “Do cells with similar global expression also tend to have similar values for the gene signature being examined?” Signatures whose variation is largely composed of random technical noise would not behave in this way and cell-specific biases are controlled for in the calculation of signature scores (described <a href="Signatures.html">here</a>).</p>
-<p>As a measure of autocorrelation, we use the <a href="https://en.wikipedia.org/wiki/Geary%27s_C">Geary’s C</a> statistic. To compute this statistic, two pieces of information are needed:</p>
+<div class="section level2">
+<h2 id="computing-autocorrelation">Computing Autocorrelation<a class="anchor" aria-label="anchor" href="#computing-autocorrelation"></a>
+</h2>
+<p>Signature autocorrelation captures the degree to which a cell’s
+signature score is similar to that of its ‘nearest neighbors’ in a
+latent model of gene expression. Or put another way, “Do cells with
+similar global expression also tend to have similar values for the gene
+signature being examined?” Signatures whose variation is largely
+composed of random technical noise would not behave in this way and
+cell-specific biases are controlled for in the calculation of signature
+scores (described <a href="Signatures.html">here</a>).</p>
+<p>As a measure of autocorrelation, we use the <a href="https://en.wikipedia.org/wiki/Geary%27s_C" class="external-link">Geary’s C</a>
+statistic. To compute this statistic, two pieces of information are
+needed:</p>
 <ul>
-<li>‘weights’ between measurements indicating how similar (e.g., nearby in the latent model) cells are to one another</li>
+<li>‘weights’ between measurements indicating how similar (e.g., nearby
+in the latent model) cells are to one another</li>
 <li>values to be compared against these weights</li>
 </ul>
-<p>The values consist of the <a href="Signatures.html">signature scores</a>. To calculate the weights, first the nearest <span class="math inline">\(k\)</span> neighbors are determined for each cell in the latent model. If a latent space is provided as the latent model (or if it is computed using PCA), then nearest neighbors are determined using euclidean distance. If a trajectory model is instead provided, neighbors are determined using the distance between cells along the trajectory. Weights are then computed by applying a Gaussian kernel to the distances between nearest neighbors such that higher weights are assigned to similar cells and the weight between distant cells is reduced to zero.</p>
+<p>The values consist of the <a href="Signatures.html">signature
+scores</a>. To calculate the weights, first the nearest <span class="math inline">\(k\)</span> neighbors are determined for each cell
+in the latent model. If a latent space is provided as the latent model
+(or if it is computed using PCA), then nearest neighbors are determined
+using euclidean distance. If a trajectory model is instead provided,
+neighbors are determined using the distance between cells along the
+trajectory. Weights are then computed by applying a Gaussian kernel to
+the distances between nearest neighbors such that higher weights are
+assigned to similar cells and the weight between distant cells is
+reduced to zero.</p>
 <p>Finally, the autocorrelation statistic, C’ is computed as:</p>
 <p><span class="math display">\[
 C' = 1-\frac{
@@ -167,20 +203,36 @@ C' = 1-\frac{
 \]</span></p>
 <ul>
 <li>
-<span class="math inline">\(x_{i}\)</span> represents the signature score of cell <span class="math inline">\(i\)</span>
+<span class="math inline">\(x_{i}\)</span> represents the signature
+score of cell <span class="math inline">\(i\)</span>
 </li>
 <li>
-<span class="math inline">\(w_{ij}\)</span> is the weight between cells <span class="math inline">\(i\)</span> and <span class="math inline">\(j\)</span>
+<span class="math inline">\(w_{ij}\)</span> is the weight between
+cells <span class="math inline">\(i\)</span> and <span class="math inline">\(j\)</span>
 </li>
 <li>
-<span class="math inline">\(W\)</span> is the sum of all weights</li>
+<span class="math inline">\(W\)</span> is the sum of all
+weights</li>
 <li>
 <span class="math inline">\(N\)</span> is the number of cells</li>
 <li>
-<em>Note</em>: This is actually 1 minus the Geary’s C (which is why we label it as <span class="math inline">\(C'\)</span> instead of just <span class="math inline">\(C\)</span>). This alteration was made so that no autocorrelation occurs at a value of zero and maximal autocorrelation occurs at a value of one - which we found to be more intuitive due to its connection with other measures of correlation.</li>
+<em>Note</em>: This is actually 1 minus the Geary’s C (which is why
+we label it as <span class="math inline">\(C'\)</span> instead of
+just <span class="math inline">\(C\)</span>). This alteration was made
+so that no autocorrelation occurs at a value of zero and maximal
+autocorrelation occurs at a value of one - which we found to be more
+intuitive due to its connection with other measures of correlation.</li>
 </ul>
-<p>A permutation test using randomly-generated signatures (of similar size and positive-to-negative ratio) is used to assess the significance of these values. However, due to the large number of cells involved in modern single-cell experiments, it is fairly easy to reject the null hypothesis and so the authors also recommend ranking and filtering using the C’ values and not only the FDR rates (similar to how differential expression tests may be further filtered by the estimated log fold-change).</p>
-<p>More details are <a href="https://www.biorxiv.org/content/early/2018/09/28/403055">available in our Biorxiv preprint.</a></p>
+<p>A permutation test using randomly-generated signatures (of similar
+size and positive-to-negative ratio) is used to assess the significance
+of these values. However, due to the large number of cells involved in
+modern single-cell experiments, it is fairly easy to reject the null
+hypothesis and so the authors also recommend ranking and filtering using
+the C’ values and not only the FDR rates (similar to how differential
+expression tests may be further filtered by the estimated log
+fold-change).</p>
+<p>More details are <a href="https://www.biorxiv.org/content/early/2018/09/28/403055" class="external-link">available
+in our Biorxiv preprint.</a></p>
 </div>
   </div>
 
@@ -195,11 +247,15 @@ C' = 1-\frac{
 
 
       <footer><div class="copyright">
-  <p>Developed by Matt Jones, David Detomaso, Tal Ashuach, Yanay Rosen.</p>
+  <p></p>
+<p>Developed by Matt Jones, David Detomaso, Tal Ashuach, Yanay
+Rosen.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a>
+2.0.2.</p>
 </div>
 
       </footer>
@@ -207,6 +263,8 @@ C' = 1-\frac{
 
   
 
+
+  
 
   </body>
 </html>

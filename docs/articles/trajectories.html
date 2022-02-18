@@ -27,6 +27,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -39,7 +41,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">VISION</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.0</span>
       </span>
     </div>
 
@@ -47,7 +49,7 @@
       <ul class="nav navbar-nav">
 <li>
   <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
+    <span class="fa fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -96,7 +98,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/YosefLab/VISION/">
+  <a href="https://github.com/YosefLab/VISION/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -111,129 +113,153 @@
 
       
 
-      </header><script src="trajectories_files/header-attrs-2.8/header-attrs.js"></script><script src="trajectories_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
+      </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Incorporating a Trajectory Model</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/YosefLab/VISION/blob/master/vignettes/trajectories.Rmd"><code>vignettes/trajectories.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/YosefLab/VISION/blob/HEAD/vignettes/trajectories.Rmd" class="external-link"><code>vignettes/trajectories.Rmd</code></a></small>
       <div class="hidden name"><code>trajectories.Rmd</code></div>
 
     </div>
 
     
     
-<div id="introduction" class="section level1">
-<h1 class="hasAnchor">
-<a href="#introduction" class="anchor"></a>Introduction</h1>
+<div class="section level2">
+<h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
+</h2>
 <p><em>Note: this feature is deprecated in VISION 3.0+.</em></p>
-<p>To compute Signature consistency scores, VISION needs a cell-cell similarity metric in order to build the neighborhood graph. By default, VISION runs PCA and uses euclidean distances in the reduced space for this purpose. However, if the cells’ variation is better modeled by a trajectory (either linear or tree-like), then distances along the trajectory structure can be used instead.</p>
-<p>Many tools exist to perform trajectory inference in single cells. The <a href="https://github.com/dynverse">Dynverse</a> project has developed wrappers for 59 recently-published methods and VISION is able to accept the wrapped output of these methods as an input trajectory model.</p>
-<p>Within the Dynverse trajectory object, VISION depends on two components:</p>
+<p>To compute Signature consistency scores, VISION needs a cell-cell
+similarity metric in order to build the neighborhood graph. By default,
+VISION runs PCA and uses euclidean distances in the reduced space for
+this purpose. However, if the cells’ variation is better modeled by a
+trajectory (either linear or tree-like), then distances along the
+trajectory structure can be used instead.</p>
+<p>Many tools exist to perform trajectory inference in single cells. The
+<a href="https://github.com/dynverse" class="external-link">Dynverse</a> project has developed
+wrappers for 59 recently-published methods and VISION is able to accept
+the wrapped output of these methods as an input trajectory model.</p>
+<p>Within the Dynverse trajectory object, VISION depends on two
+components:</p>
 <ul>
-<li>The <strong>milestone network</strong> (essentially the topology of the trajectory produced from your favorite trajectory method)</li>
-<li>The <strong>progression</strong> of cells along each edge in the milestone network. We expect that each cell is only present on a single edge.</li>
+<li>The <strong>milestone network</strong> (essentially the topology of
+the trajectory produced from your favorite trajectory method)</li>
+<li>The <strong>progression</strong> of cells along each edge in the
+milestone network. We expect that each cell is only present on a single
+edge.</li>
 </ul>
-<div id="installation" class="section level2">
-<h2 class="hasAnchor">
-<a href="#installation" class="anchor"></a>Installation</h2>
-<p>You should have a working installation of <a href="https://github.com/YosefLab/VISION">VISION</a>, <a href="https://github.com/dynverse/dyno">dyno</a>, and <a href="https://github.com/tidyverse/tidyverse">tidyverse</a>.</p>
+<div class="section level3">
+<h3 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h3>
+<p>You should have a working installation of <a href="https://github.com/YosefLab/VISION" class="external-link">VISION</a>, <a href="https://github.com/dynverse/dyno" class="external-link">dyno</a>, and <a href="https://github.com/tidyverse/tidyverse" class="external-link">tidyverse</a>.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org//reference/remote-reexports.html">install_github</a></span><span class="op">(</span><span class="st">"YosefLab/VISION"</span><span class="op">)</span>
-<span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org//reference/remote-reexports.html">install_github</a></span><span class="op">(</span><span class="st">"dynverse/dyno"</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span><span class="op">(</span><span class="st">'tidyverse'</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org/reference/remote-reexports.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"YosefLab/VISION"</span><span class="op">)</span>
+<span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org/reference/remote-reexports.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"dynverse/dyno"</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'tidyverse'</span><span class="op">)</span></code></pre></div>
 </div>
-<div id="data" class="section level2">
-<h2 class="hasAnchor">
-<a href="#data" class="anchor"></a>Data</h2>
-<p>In this vignette, we’ll be analyzing a set of ~5,000 cells during haematopoiesis (<a href="https://www.nature.com/articles/nature25741">Tusi et al, Nature 2018</a>).</p>
+<div class="section level3">
+<h3 id="data">Data<a class="anchor" aria-label="anchor" href="#data"></a>
+</h3>
+<p>In this vignette, we’ll be analyzing a set of ~5,000 cells during
+haematopoiesis (<a href="https://www.nature.com/articles/nature25741" class="external-link">Tusi et al, Nature
+2018</a>).</p>
 </div>
 </div>
-<div id="workflow" class="section level1">
-<h1 class="hasAnchor">
-<a href="#workflow" class="anchor"></a>Workflow</h1>
+<div class="section level2">
+<h2 id="workflow">Workflow<a class="anchor" aria-label="anchor" href="#workflow"></a>
+</h2>
 <p>We begin by loading in the data and requisite libraries:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://yoseflab.github.io/VISION">VISION</a></span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">dyno</span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">tidyverse</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://yoseflab.github.io/VISION">VISION</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">dyno</span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="http://tidyverse.tidyverse.org" class="external-link">tidyverse</a></span><span class="op">)</span></code></pre></div>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">counts</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.table</a></span><span class="op">(</span><span class="st">"data/hemato_counts.csv.gz"</span>, sep<span class="op">=</span><span class="st">','</span>, header<span class="op">=</span><span class="cn">T</span>, row.names<span class="op">=</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></code></pre></div>
-<p>We’ll now follow the <a href="https://github.com/dynverse/dyno">dyno vignette</a> in the github README. You’ll need to make sure you have <a href="https://docs.docker.com/install/">Docker</a> installed. Although we use Slingshot here, there is a wide variety of methods that can be used, as listed on the <a href="https://github.com/dynverse/dynmethods">Dynmethods page</a>.</p>
-<p>Before running the model, we’ll need to perform some gene filtering. We first only select the genes used in the original Tusi et al study, then for further efficiency, we further filter using VISION’s Fano filtering.</p>
+<code class="sourceCode R"><span class="va">counts</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="st">"data/hemato_counts.csv.gz"</span>, sep<span class="op">=</span><span class="st">','</span>, header<span class="op">=</span><span class="cn">T</span>, row.names<span class="op">=</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<p>We’ll now follow the <a href="https://github.com/dynverse/dyno" class="external-link">dyno
+vignette</a> in the github README. You’ll need to make sure you have <a href="https://docs.docker.com/install/" class="external-link">Docker</a> installed. Although
+we use Slingshot here, there is a wide variety of methods that can be
+used, as listed on the <a href="https://github.com/dynverse/dynmethods" class="external-link">Dynmethods page</a>.</p>
+<p>Before running the model, we’ll need to perform some gene filtering.
+We first only select the genes used in the original Tusi et al study,
+then for further efficiency, we further filter using VISION’s Fano
+filtering.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">k.genes</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.table</a></span><span class="op">(</span><span class="st">"data/bBM.filtered_gene_list.paper.txt.gz"</span>, sep<span class="op">=</span><span class="st">','</span><span class="op">)</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span>
+<code class="sourceCode R"><span class="va">k.genes</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="st">"data/bBM.filtered_gene_list.paper.txt.gz"</span>, sep<span class="op">=</span><span class="st">','</span><span class="op">)</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span>
 <span class="va">filt.counts</span> <span class="op">=</span> <span class="va">counts</span><span class="op">[</span><span class="va">k.genes</span>, <span class="op">]</span>
 
 <span class="va">f.genes</span> <span class="op">=</span> <span class="fu">VISION</span><span class="fu">:::</span><span class="fu"><a href="../reference/filterGenesFano.html">filterGenesFano</a></span><span class="op">(</span><span class="va">filt.counts</span><span class="op">)</span>
 <span class="va">filt.counts</span> <span class="op">=</span> <span class="va">filt.counts</span><span class="op">[</span><span class="va">f.genes</span>, <span class="op">]</span></code></pre></div>
 <p>Now, resuming the workflow recommended on the dyno vignette,</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">umis</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html">colSums</a></span><span class="op">(</span><span class="va">counts</span><span class="op">)</span>
-<span class="va">scale.factor</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/median.html">median</a></span><span class="op">(</span><span class="va">umis</span><span class="op">)</span>
-<span class="va">expr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="va">counts</span><span class="op">)</span> <span class="op">/</span> <span class="va">umis</span><span class="op">)</span> <span class="op">*</span> <span class="va">scale.factor</span>
-<span class="va">filt.expr</span> <span class="op">&lt;-</span>  <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">expr</span><span class="op">[</span><span class="va">f.genes</span>,<span class="op">]</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">umis</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colSums</a></span><span class="op">(</span><span class="va">counts</span><span class="op">)</span>
+<span class="va">scale.factor</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/median.html" class="external-link">median</a></span><span class="op">(</span><span class="va">umis</span><span class="op">)</span>
+<span class="va">expr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">counts</span><span class="op">)</span> <span class="op">/</span> <span class="va">umis</span><span class="op">)</span> <span class="op">*</span> <span class="va">scale.factor</span>
+<span class="va">filt.expr</span> <span class="op">&lt;-</span>  <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">expr</span><span class="op">[</span><span class="va">f.genes</span>,<span class="op">]</span><span class="op">)</span>
 
 <span class="va">dataset</span> <span class="op">&lt;-</span> <span class="fu">wrap_expression</span><span class="op">(</span>
-  counts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="va">filt.counts</span><span class="op">)</span>,
-  expression <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="va">filt.expr</span><span class="op">)</span>
+  counts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">filt.counts</span><span class="op">)</span>,
+  expression <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">filt.expr</span><span class="op">)</span>
 <span class="op">)</span>
 
 <span class="va">model</span> <span class="op">&lt;-</span> <span class="fu">infer_trajectory</span><span class="op">(</span><span class="va">dataset</span>, <span class="st">"projected_slingshot"</span>, verbose<span class="op">=</span><span class="cn">T</span><span class="op">)</span>
 
-<span class="va">model</span> <span class="op">&lt;-</span> <span class="va">model</span> <span class="op">%&gt;%</span> <span class="fu">add_dimred</span><span class="op">(</span><span class="fu">dyndimred</span><span class="fu">::</span><span class="va">dimred_mds</span>, expression_source <span class="op">=</span> <span class="va">dataset</span><span class="op">$</span><span class="va">expression</span><span class="op">)</span>
+<span class="va">model</span> <span class="op">&lt;-</span> <span class="va">model</span> <span class="op"><a href="https://tidyr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu">add_dimred</span><span class="op">(</span><span class="fu">dyndimred</span><span class="fu">::</span><span class="va">dimred_mds</span>, expression_source <span class="op">=</span> <span class="va">dataset</span><span class="op">$</span><span class="va">expression</span><span class="op">)</span>
 
 <span class="fu">plot_dimred</span><span class="op">(</span>
   <span class="va">model</span>,
   expression_source <span class="op">=</span> <span class="va">dataset</span><span class="op">$</span><span class="va">expression</span>
 <span class="op">)</span></code></pre></div>
-<p>Now, with this model saved we can pass it to VISION via the <code>latentTrajectory</code> parameter. The model will automatically be analyzed with the same signatures passed to the VISION object, and with this model, the <code>Trajectory</code> tab will be activated in the VISION output report.</p>
+<p>Now, with this model saved we can pass it to VISION via the
+<code>latentTrajectory</code> parameter. The model will automatically be
+analyzed with the same signatures passed to the VISION object, and with
+this model, the <code>Trajectory</code> tab will be activated in the
+VISION output report.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">meta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.table</a></span><span class="op">(</span><span class="st">"data/hemato_covariates.txt.gz"</span>, sep<span class="op">=</span><span class="st">'\t'</span>, header<span class="op">=</span><span class="cn">T</span>, row.names<span class="op">=</span><span class="fl">1</span><span class="op">)</span>
-<span class="va">meta</span> <span class="op">&lt;-</span> <span class="va">meta</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span><span class="op">(</span><span class="va">expr</span><span class="op">)</span>, <span class="op">-</span><span class="fl">1</span><span class="op">]</span>
+<code class="sourceCode R"><span class="va">meta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="st">"data/hemato_covariates.txt.gz"</span>, sep<span class="op">=</span><span class="st">'\t'</span>, header<span class="op">=</span><span class="cn">T</span>, row.names<span class="op">=</span><span class="fl">1</span><span class="op">)</span>
+<span class="va">meta</span> <span class="op">&lt;-</span> <span class="va">meta</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">expr</span><span class="op">)</span>, <span class="op">-</span><span class="fl">1</span><span class="op">]</span>
 
-<span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Vision.html">Vision</a></span><span class="op">(</span><span class="va">expr</span>, signatures <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"data/h.all.v5.2.symbols.gmt"</span><span class="op">)</span>,
+<span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/VISION-class.html">Vision</a></span><span class="op">(</span><span class="va">expr</span>, signatures <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"data/h.all.v5.2.symbols.gmt"</span><span class="op">)</span>,
             meta <span class="op">=</span> <span class="va">meta</span>, latentTrajectory <span class="op">=</span> <span class="va">model</span><span class="op">)</span>
 
-<span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/addProjection,Vision-method.html">addProjection</a></span><span class="op">(</span><span class="va">vis</span>, <span class="st">"MDS"</span>, <span class="va">model</span><span class="op">$</span><span class="va">dimred</span><span class="op">[</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">2</span><span class="op">)</span><span class="op">]</span><span class="op">)</span>
+<span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/addProjection-Vision-method.html">addProjection</a></span><span class="op">(</span><span class="va">vis</span>, <span class="st">"MDS"</span>, <span class="va">model</span><span class="op">$</span><span class="va">dimred</span><span class="op">[</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">2</span><span class="op">)</span><span class="op">]</span><span class="op">)</span>
 
-<span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/analyze,Vision-method.html">analyze</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span></code></pre></div>
+<span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/analyze-Vision-method.html">analyze</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span></code></pre></div>
 </div>
-<div id="session-info" class="section level1">
-<h1 class="hasAnchor">
-<a href="#session-info" class="anchor"></a>Session Info</h1>
+<div class="section level2">
+<h2 id="session-info">Session Info<a class="anchor" aria-label="anchor" href="#session-info"></a>
+</h2>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<pre><code>## R version 4.0.4 (2021-02-15)
-## Platform: x86_64-apple-darwin19.6.0 (64-bit)
-## Running under: macOS Big Sur 10.16
-## 
-## Matrix products: default
-## BLAS:   /usr/local/Cellar/openblas/0.3.13/lib/libopenblasp-r0.3.13.dylib
-## LAPACK: /usr/local/Cellar/r/4.0.4_2/lib/R/lib/libRlapack.dylib
-## 
-## locale:
-## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
-## 
-## attached base packages:
-## [1] stats     graphics  grDevices utils     datasets  methods   base     
-## 
-## other attached packages:
-## [1] BiocStyle_2.18.1
-## 
-## loaded via a namespace (and not attached):
-##  [1] knitr_1.33          magrittr_2.0.1      R6_2.5.0           
-##  [4] ragg_1.1.2          rlang_0.4.11        fastmap_1.1.0      
-##  [7] stringr_1.4.0       tools_4.0.4         xfun_0.23          
-## [10] jquerylib_0.1.4     htmltools_0.5.1.1   systemfonts_1.0.2  
-## [13] yaml_2.2.1          digest_0.6.27       rprojroot_2.0.2    
-## [16] pkgdown_1.6.1       crayon_1.4.1        bookdown_0.22      
-## [19] textshaping_0.3.4   BiocManager_1.30.15 sass_0.4.0         
-## [22] fs_1.5.0            memoise_2.0.0       cachem_1.0.5       
-## [25] evaluate_0.14       rmarkdown_2.8       stringi_1.6.2      
-## [28] compiler_4.0.4      bslib_0.2.5.1       desc_1.3.0         
-## [31] jsonlite_1.7.2</code></pre>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
+<pre><code><span class="co">## R version 3.6.2 (2019-12-12)</span>
+<span class="co">## Platform: x86_64-apple-darwin15.6.0 (64-bit)</span>
+<span class="co">## Running under: macOS Catalina 10.15.7</span>
+<span class="co">## </span>
+<span class="co">## Matrix products: default</span>
+<span class="co">## BLAS:   /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRblas.0.dylib</span>
+<span class="co">## LAPACK: /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRlapack.dylib</span>
+<span class="co">## </span>
+<span class="co">## locale:</span>
+<span class="co">## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8</span>
+<span class="co">## </span>
+<span class="co">## attached base packages:</span>
+<span class="co">## [1] stats     graphics  grDevices utils     datasets  methods   base     </span>
+<span class="co">## </span>
+<span class="co">## other attached packages:</span>
+<span class="co">## [1] BiocStyle_2.20.2</span>
+<span class="co">## </span>
+<span class="co">## loaded via a namespace (and not attached):</span>
+<span class="co">##  [1] knitr_1.33          magrittr_1.5        R6_2.4.1           </span>
+<span class="co">##  [4] ragg_1.2.1          rlang_0.4.11        fastmap_1.1.0      </span>
+<span class="co">##  [7] stringr_1.4.0       tools_3.6.2         xfun_0.25          </span>
+<span class="co">## [10] jquerylib_0.1.4     systemfonts_1.0.4   htmltools_0.5.2    </span>
+<span class="co">## [13] yaml_2.2.1          digest_0.6.23       rprojroot_2.0.2    </span>
+<span class="co">## [16] pkgdown_2.0.2       crayon_1.3.4        bookdown_0.23      </span>
+<span class="co">## [19] textshaping_0.3.6   BiocManager_1.30.16 purrr_0.3.3        </span>
+<span class="co">## [22] sass_0.4.0          fs_1.5.0            memoise_2.0.0      </span>
+<span class="co">## [25] cachem_1.0.6        evaluate_0.14       rmarkdown_2.10     </span>
+<span class="co">## [28] stringi_1.4.5       compiler_3.6.2      bslib_0.3.1        </span>
+<span class="co">## [31] desc_1.3.0          jsonlite_1.6</span></code></pre>
 </div>
   </div>
 
@@ -248,11 +274,15 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Matt Jones, David Detomaso, Tal Ashuach, Yanay Rosen.</p>
+  <p></p>
+<p>Developed by Matt Jones, David Detomaso, Tal Ashuach, Yanay
+Rosen.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a>
+2.0.2.</p>
 </div>
 
       </footer>
@@ -260,6 +290,8 @@
 
   
 
+
+  
 
   </body>
 </html>

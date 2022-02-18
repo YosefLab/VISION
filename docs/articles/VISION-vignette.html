@@ -27,6 +27,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -39,7 +41,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">VISION</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.0</span>
       </span>
     </div>
 
@@ -47,7 +49,7 @@
       <ul class="nav navbar-nav">
 <li>
   <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
+    <span class="fa fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -96,7 +98,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/YosefLab/VISION/">
+  <a href="https://github.com/YosefLab/VISION/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -111,155 +113,303 @@
 
       
 
-      </header><script src="VISION-vignette_files/header-attrs-2.8/header-attrs.js"></script><script src="VISION-vignette_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
+      </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Introduction to VISION</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/YosefLab/VISION/blob/master/vignettes/VISION-vignette.Rmd"><code>vignettes/VISION-vignette.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/YosefLab/VISION/blob/HEAD/vignettes/VISION-vignette.Rmd" class="external-link"><code>vignettes/VISION-vignette.Rmd</code></a></small>
       <div class="hidden name"><code>VISION-vignette.Rmd</code></div>
 
     </div>
 
     
     
-<div id="preliminaries" class="section level1">
-<h1 class="hasAnchor">
-<a href="#preliminaries" class="anchor"></a>Preliminaries</h1>
-<p>If you have yet to install VISION, we recommend installing the package from Github to install this package. Full source code can be found at the VISION Github repository, available <a href="http://www.github.com/YosefLab/VISION">here</a>.</p>
+<div class="section level2">
+<h2 id="preliminaries">Preliminaries<a class="anchor" aria-label="anchor" href="#preliminaries"></a>
+</h2>
+<p>If you have yet to install VISION, we recommend installing the
+package from Github to install this package. Full source code can be
+found at the VISION Github repository, available <a href="http://www.github.com/YosefLab/VISION" class="external-link">here</a>.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">require</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/">devtools</a></span><span class="op">)</span>
-<span class="fu"><a href="https://devtools.r-lib.org//reference/remote-reexports.html">install_github</a></span><span class="op">(</span><span class="st">"YosefLab/VISION"</span><span class="op">)</span></code></pre></div>
-<p>Once VISION and R are installed, you may load in VISION using <code><a href="https://yoseflab.github.io/VISION">library(VISION)</a></code>.</p>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/" class="external-link">devtools</a></span><span class="op">)</span>
+<span class="fu"><a href="https://devtools.r-lib.org/reference/remote-reexports.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"YosefLab/VISION"</span><span class="op">)</span></code></pre></div>
+<p>Once VISION and R are installed, you may load in VISION using
+<code><a href="https://yoseflab.github.io/VISION">library(VISION)</a></code>.</p>
 </div>
-<div id="using-vision" class="section level1">
-<h1 class="hasAnchor">
-<a href="#using-vision" class="anchor"></a>Using VISION</h1>
+<div class="section level2">
+<h2 id="using-vision">Using VISION<a class="anchor" aria-label="anchor" href="#using-vision"></a>
+</h2>
 <p>Running an analysis with vision consists of three steps:</p>
 <ol style="list-style-type: decimal">
 <li>Creating the VISION object</li>
 <li>Running the <code>analyze</code> function</li>
 <li>Browsing results</li>
 </ol>
-<div id="creating-the-vision-object" class="section level2">
-<h2 class="hasAnchor">
-<a href="#creating-the-vision-object" class="anchor"></a>Creating the VISION object</h2>
-<p>Creating the VISION object requires a gene expression matrix and <em>either</em> a list of Gene Signatures or a data.frame of meta-data.</p>
+<div class="section level3">
+<h3 id="creating-the-vision-object">Creating the VISION object<a class="anchor" aria-label="anchor" href="#creating-the-vision-object"></a>
+</h3>
+<p>Creating the VISION object requires a gene expression matrix and
+<em>either</em> a list of Gene Signatures or a data.frame of
+meta-data.</p>
 <p>In this example - both are provided.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># Load VISION</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://yoseflab.github.io/VISION">VISION</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://yoseflab.github.io/VISION">VISION</a></span><span class="op">)</span>
 
 <span class="co"># Read in expression counts (Genes X Cells)</span>
-<span class="va">counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.table</a></span><span class="op">(</span><span class="st">"data/expression_counts.txt.gz"</span>,
+<span class="va">counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="st">"data/expression_matrix.txt.gz"</span>,
                      header <span class="op">=</span> <span class="cn">TRUE</span>,
                      sep <span class="op">=</span> <span class="st">'\t'</span>,
                      row.names <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>
 
 <span class="co"># Scale counts within a sample</span>
-<span class="va">n.umi</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html">colSums</a></span><span class="op">(</span><span class="va">counts</span><span class="op">)</span>
+<span class="va">n.umi</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colSums</a></span><span class="op">(</span><span class="va">counts</span><span class="op">)</span>
 
-<span class="va">scaled_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html">t</a></span><span class="op">(</span><span class="va">counts</span><span class="op">)</span> <span class="op">/</span> <span class="va">n.umi</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/stats/median.html">median</a></span><span class="op">(</span><span class="va">n.umi</span><span class="op">)</span>
+<span class="va">scaled_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">counts</span><span class="op">)</span> <span class="op">/</span> <span class="va">n.umi</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/stats/median.html" class="external-link">median</a></span><span class="op">(</span><span class="va">n.umi</span><span class="op">)</span>
 
 <span class="co"># Read in meta data (Cells x Vars)</span>
-<span class="va">meta</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.table</a></span><span class="op">(</span><span class="st">"data/glio_meta.txt.gz"</span>, sep<span class="op">=</span><span class="st">'\t'</span>, header<span class="op">=</span><span class="cn">T</span>, row.names<span class="op">=</span><span class="fl">1</span><span class="op">)</span>
+<span class="va">meta</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="st">"data/glio_meta.txt.gz"</span>, sep<span class="op">=</span><span class="st">'\t'</span>, header<span class="op">=</span><span class="cn">T</span>, row.names<span class="op">=</span><span class="fl">1</span><span class="op">)</span>
 
-<span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Vision.html">Vision</a></span><span class="op">(</span><span class="va">scaled_counts</span>,
-              signatures <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"data/h.all.v5.2.symbols.gmt"</span><span class="op">)</span>,
+<span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/VISION-class.html">Vision</a></span><span class="op">(</span><span class="va">scaled_counts</span>,
+              signatures <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"data/h.all.v5.2.symbols.gmt"</span><span class="op">)</span>,
               meta <span class="op">=</span> <span class="va">meta</span><span class="op">)</span></code></pre></div>
 <p><strong>Expression Data</strong></p>
-<p>The provided expression data should be scaled and normalized. The example above shows just a simple UMI-scaling, but it is recommended to apply more advanced normalization procedures such as batch correction or removal of technical confounders.</p>
-<p>The expression data should not be log-transformed prior to loading into VISION.</p>
+<p>The provided expression data should be scaled and normalized. The
+example above shows just a simple UMI-scaling, but it is recommended to
+apply more advanced normalization procedures such as batch correction or
+removal of technical confounders.</p>
+<p>The expression data should not be log-transformed prior to loading
+into VISION.</p>
 <p><strong>Signatures</strong></p>
-<p>Signatures can be provided as a list of paths to signature files (*.gmt) or Signature objects.</p>
-<p>See <a href="Signatures.html">the signature vignette</a> for more information on finding or creating gene Signatures.</p>
+<p>Signatures can be provided as a list of paths to signature files
+(*.gmt) or Signature objects.</p>
+<p>See <a href="Signatures.html">the signature vignette</a> for more
+information on finding or creating gene Signatures.</p>
 <p><strong>Meta Data</strong></p>
-<p>An R data.frame with cell-level meta-data. This could be confounding variables (e.g. percentage of mitochondrial RNA, number of genes detected) or experimental covariates (e.g. genotype, donor, batch).</p>
+<p>An R data.frame with cell-level meta-data. This could be confounding
+variables (e.g. percentage of mitochondrial RNA, number of genes
+detected) or experimental covariates (e.g. genotype, donor, batch).</p>
 <p>This input is optional if Signatures are provided.</p>
 <p><strong>Other Options</strong></p>
-<p>Other options and inputs can be provided to customize how VISION runs. For information on this, see the “Customizing VISION Analysis” section below.</p>
+<p>Other options and inputs can be provided to customize how VISION
+runs. For information on this, see the “Customizing VISION Analysis”
+section below.</p>
 </div>
-<div id="running-an-analysis" class="section level2">
-<h2 class="hasAnchor">
-<a href="#running-an-analysis" class="anchor"></a>Running an Analysis</h2>
+<div class="section level3">
+<h3 id="running-an-analysis">Running an Analysis<a class="anchor" aria-label="anchor" href="#running-an-analysis"></a>
+</h3>
 <p>To run an analysis, simply call the analyze function:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># Set the number of threads when running parallel computations</span>
 <span class="co"># On Windows, this must either be omitted or set to 1</span>
-<span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span>mc.cores <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>mc.cores <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>
 
-<span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/analyze,Vision-method.html">analyze</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span></code></pre></div>
+<span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/analyze-Vision-method.html">analyze</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span></code></pre></div>
 </div>
-<div id="viewing-results" class="section level2">
-<h2 class="hasAnchor">
-<a href="#viewing-results" class="anchor"></a>Viewing Results</h2>
-<p>With the processed Vision object, a dynamic web report can be generated with the <code><a href="../reference/viewResults,Vision-method.html">viewResults()</a></code> function.</p>
+<div class="section level3">
+<h3 id="viewing-results">Viewing Results<a class="anchor" aria-label="anchor" href="#viewing-results"></a>
+</h3>
+<p>With the processed Vision object, a dynamic web report can be
+generated with the <code><a href="../reference/viewResults.html">viewResults()</a></code> function.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/viewResults,Vision-method.html">viewResults</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu"><a href="../reference/viewResults.html">viewResults</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span></code></pre></div>
 <p>This will launch a browser running the interactive report.</p>
-<p>Other options (port, host, browser) can be provided to control how this occurs. For example, if you are launching a report on a remote server (such as an AWS instance) and want to make it accessible to others, run this with <code>host="0.0.0.0"</code>, some selected port number (e.g. <code>port=8888</code>), and <code>browser=FALSE</code> (so a browser isn’t auto-opened). Then the report should be available at “&lt;your instance IP address&gt;:8888”. (Note: You will also likely need to enable inbound traffic on your selected port for this to work correctly).</p>
-<p>Alternately, you can work with the VISION object directly in R. For example:</p>
+<p>Other options (port, host, browser) can be provided to control how
+this occurs. For example, if you are launching a report on a remote
+server (such as an AWS instance) and want to make it accessible to
+others, run this with <code>host="0.0.0.0"</code>, some selected port
+number (e.g. <code>port=8888</code>), and <code>browser=FALSE</code> (so
+a browser isn’t auto-opened). Then the report should be available at
+“&lt;your instance IP address&gt;:8888”. (Note: You will also likely
+need to enable inbound traffic on your selected port for this to work
+correctly).</p>
+<p>Alternately, you can work with the VISION object directly in R. For
+example:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># Display autocorrelation coefficients, p-values for signatures</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/getSignatureAutocorrelation,Vision-method.html">getSignatureAutocorrelation</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/getSignatureAutocorrelation.html">getSignatureAutocorrelation</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span><span class="op">)</span>
 
 
 <span class="co"># Plot signature scores for a signature of interest</span>
-<span class="va">tsne</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/getProjections,Vision-method.html">getProjections</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span><span class="op">[[</span><span class="st">"tSNE30"</span><span class="op">]</span><span class="op">]</span>
-<span class="va">sigScores</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/getSignatureScores,Vision-method.html">getSignatureScores</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span><span class="op">[</span>, <span class="st">"HALLMARK_INTERFERON_GAMMA_RESPONSE"</span><span class="op">]</span>
+<span class="va">tsne</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/getProjections.html">getProjections</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span><span class="op">[[</span><span class="st">"tSNE30"</span><span class="op">]</span><span class="op">]</span>
+<span class="va">sigScores</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/getSignatureScores.html">getSignatureScores</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span><span class="op">[</span>, <span class="st">"HALLMARK_INTERFERON_GAMMA_RESPONSE"</span><span class="op">]</span>
 
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org">ggplot2</a></span><span class="op">)</span>
-<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">tsne</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>, y<span class="op">=</span><span class="va">tsne</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span>, color<span class="op">=</span><span class="va">sigScores</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html">geom_point</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<p>For more details on accessing computed data within the VISION object, see the <a href="https://yoseflab.github.io/VISION/reference/index.html">References</a> page.</p>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span>
+<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">tsne</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>, y<span class="op">=</span><span class="va">tsne</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span>, color<span class="op">=</span><span class="va">sigScores</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
+<p>For more details on accessing computed data within the VISION object,
+see the <a href="https://yoseflab.github.io/VISION/reference/index.html">References</a>
+page.</p>
 </div>
-<div id="customizing-the-latent-space" class="section level2">
-<h2 class="hasAnchor">
-<a href="#customizing-the-latent-space" class="anchor"></a>Customizing the Latent Space</h2>
-<p>VISION requires a latent space to model the similarity between cells (used to determine a cell’s local neighborhood).</p>
-<p>By default, this is calculated via PCA on a subset of the genes. A few arguments control this process:</p>
+<div class="section level3">
+<h3 id="customizing-the-latent-space">Customizing the Latent Space<a class="anchor" aria-label="anchor" href="#customizing-the-latent-space"></a>
+</h3>
+<p>VISION requires a latent space to model the similarity between cells
+(used to determine a cell’s local neighborhood).</p>
+<p>By default, this is calculated via PCA on a subset of the genes. A
+few arguments control this process:</p>
 <ul>
 <li>
-<code>projection_genes</code> - controls how genes are selected for PCA. Options are:
+<code>projection_genes</code> - controls how genes are selected for
+PCA. Options are:
 <ul>
 <li>
-<code>"threshold"</code> - use a threshold to select genes. The <code>threshold</code> argument specifies either the number or proportion of genes in which a cell must be expressed to be included.</li>
+<code>"threshold"</code> - use a threshold to select genes. The
+<code>threshold</code> argument specifies either the number or
+proportion of genes in which a cell must be expressed to be
+included.</li>
 <li>
-<code>"fano"</code> - first the “threshold” filter is applied. Then genes are ordered by mean expression into 30 bins and within each bin, genes with a high Fano factor (2 MAD above the median) are retained</li>
-<li>character vector of gene names - specify the genes to use directly</li>
+<code>"fano"</code> - first the “threshold” filter is applied. Then
+genes are ordered by mean expression into 30 bins and within each bin,
+genes with a high Fano factor (2 MAD above the median) are retained</li>
+<li>character vector of gene names - specify the genes to use
+directly</li>
 </ul>
 </li>
 </ul>
-<div id="specifying-a-custom-latent-space" class="section level3">
-<h3 class="hasAnchor">
-<a href="#specifying-a-custom-latent-space" class="anchor"></a>Specifying a Custom Latent Space</h3>
-<p>Alternately, if a latent space has been computed elsewhere (either via PCA, or other factor analysis methods such as <a href="https://github.com/epierson9/ZIFA">ZIFA</a>, <a href="https://github.com/drisso/zinbwave">ZINB-WaVE</a> or <a href="https://github.com/YosefLab/scVI">scVI</a>) it can be provided via the <code>latentSpace</code> argument as a data frame.</p>
+<div class="section level4">
+<h4 id="specifying-a-custom-latent-space">Specifying a Custom Latent Space<a class="anchor" aria-label="anchor" href="#specifying-a-custom-latent-space"></a>
+</h4>
+<p>Alternately, if a latent space has been computed elsewhere (either
+via PCA, or other factor analysis methods such as <a href="https://github.com/epierson9/ZIFA" class="external-link">ZIFA</a>, <a href="https://github.com/drisso/zinbwave" class="external-link">ZINB-WaVE</a> or <a href="https://github.com/YosefLab/scVI" class="external-link">scVI</a>) it can be provided via
+the <code>latentSpace</code> argument as a data frame.</p>
 </div>
 </div>
-<div id="micropooling" class="section level2">
-<h2 class="hasAnchor">
-<a href="#micropooling" class="anchor"></a>Micropooling</h2>
-<p>scRNA-seq experiments have grown in size over the past couple of years, and as such we have provided an algorithm for pooling together similar cells and continuing with analysis, thus reducing the cell-wise time complexity of the VISION pipeline. For more information, please see our micropooling vignette.</p>
-<p>You can control the parameters of the micropooling algorithm using two arguments:</p>
+<div class="section level3">
+<h3 id="micropooling">Micropooling<a class="anchor" aria-label="anchor" href="#micropooling"></a>
+</h3>
+<p>scRNA-seq experiments have grown in size over the past couple of
+years, and as such we have provided an algorithm for pooling together
+similar cells and continuing with analysis, thus reducing the cell-wise
+time complexity of the VISION pipeline. For more information, please see
+our micropooling vignette.</p>
+<p>You can control the parameters of the micropooling algorithm using
+two arguments:</p>
 <ul>
 <li>
-<code>pool</code> - boolean specifying whether or not to apply micropooling. By default this is set to ‘auto’ and micropooling is run when the number of cells exceeds 15,000.</li>
+<code>pool</code> - boolean specifying whether or not to apply
+micropooling. By default this is set to ‘auto’ and micropooling is run
+when the number of cells exceeds 15,000.</li>
 <li>
-<code>cellsPerPartition</code> - integer specifying the target number of cells per micropool.</li>
+<code>cellsPerPartition</code> - integer specifying the target
+number of cells per micropool.</li>
 </ul>
 </div>
-<div id="adding-2d-projections" class="section level2">
-<h2 class="hasAnchor">
-<a href="#adding-2d-projections" class="anchor"></a>Adding 2d Projections</h2>
-<p>Two-dimensional projections are used to visualize the data in the output report.</p>
-<p>By default, VISION computes tSNE on the latent space for visualization. However, other options are availabled via the <code>projection_methods</code> argument.</p>
-<p>Often times, users will have pre-computed projections that they would like to use for visualizing their data (e.g. a pre-computed tSNE, or UMAP projection). In this case, the <code><a href="../reference/addProjection,Vision-method.html">addProjection()</a></code> method can be used to add this view of the data to the output report.</p>
+<div class="section level3">
+<h3 id="adding-2d-projections">Adding 2d Projections<a class="anchor" aria-label="anchor" href="#adding-2d-projections"></a>
+</h3>
+<p>Two-dimensional projections are used to visualize the data in the
+output report.</p>
+<p>By default, VISION computes tSNE on the latent space for
+visualization. However, other options are availabled via the
+<code>projection_methods</code> argument.</p>
+<p>Often times, users will have pre-computed projections that they would
+like to use for visualizing their data (e.g. a pre-computed tSNE, or
+UMAP projection). In this case, the <code><a href="../reference/addProjection-Vision-method.html">addProjection()</a></code> method
+can be used to add this view of the data to the output report.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">projection</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span><span class="op">(</span><span class="st">"umap_results.csv"</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">projection</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="st">"umap_results.csv"</span><span class="op">)</span>
 
 <span class="co"># projection is a matirx or data.frame of dimension (Cells x 2)</span>
 
-<span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/addProjection,Vision-method.html">addProjection</a></span><span class="op">(</span><span class="va">vis</span>, <span class="st">"UMAP"</span>, <span class="va">projection</span><span class="op">)</span></code></pre></div>
+<span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/addProjection-Vision-method.html">addProjection</a></span><span class="op">(</span><span class="va">vis</span>, <span class="st">"UMAP"</span>, <span class="va">projection</span><span class="op">)</span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="hotspot-analysis">Hotspot analysis<a class="anchor" aria-label="anchor" href="#hotspot-analysis"></a>
+</h3>
+<p>As of version 3.0.0, we have enabled users to perform de-novo gene
+module identification <a href="https://www.cell.com/cell-systems/fulltext/S2405-4712(21)00114-9" class="external-link">Hotspot</a>
+(DeTomaso and Yosef, <em>Cell Systems</em> 2021) from within VISION.
+Users can consult the <a href="spatialHotspot.html">Spatial Hotspot
+Vignette</a> for instructions for adding this analysis to a user
+report.</p>
+</div>
+<div class="section level3">
+<h3 id="reproducing-a-plot-from-an-interactive-report">Reproducing a plot from an interactive report<a class="anchor" aria-label="anchor" href="#reproducing-a-plot-from-an-interactive-report"></a>
+</h3>
+<p>As of version 3.0.0, we have enabled users to save the relevant
+information from an interactive report to reproduce in R. This can be
+accomplished by downloading the “state” of the report using the
+<code>Download</code> button below “Save Report Info” in the upper right
+of the interactive web-based report. Below, we provide an example
+workflow of doing this.</p>
+<p>Clicking <code>Download</code> will download three files: (1) a DE
+cache; (2) a cache for selections; and (3) a json file containing the
+current projection, values being plotted, and selected cells. If you
+would like to view the state on the UI, you may read in the first two
+objects into VISION and launch the report again:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">vis_new</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/load_de_cache.html">load_de_cache</a></span><span class="op">(</span><span class="va">vis</span>, <span class="st">"de_cache_download_path"</span><span class="op">)</span>
+<span class="va">vis_new</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/load_selections.html">load_selections</a></span><span class="op">(</span><span class="va">vis_new</span>, <span class="st">"selections_download_path"</span><span class="op">)</span>
+<span class="fu"><a href="../reference/viewResults.html">viewResults</a></span><span class="op">(</span><span class="va">vis_new</span>, <span class="va">...</span><span class="op">)</span></code></pre></div>
+<p>Else, if you would like to reproduce the plot in R, you can use the
+third output. This json object contains 5 pieces of information that are
+useful for reproducing plots:</p>
+<ul>
+<li>The name of the item being plotted (e.g. the signature name; under
+<code>item_key</code>)</li>
+<li>The values of the item for each cell (under
+<code>values</code>)</li>
+<li>The 2D embedding of each cell (under <code>projection</code>)</li>
+<li>The name of the embedding dimensions (under
+<code>projection_keyX</code> and <code>projection_keyY</code>)</li>
+<li>The set of cells that are selected.</li>
+</ul>
+<p>Below is an example function that will reproduce the visualization in
+ggplot2. Be sure to have <code>ggplot2</code>, <code>jsonlite</code>,
+and <code>viridis</code> (for coloring) installed:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'ggplot2'</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'viridis'</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'jsonlit'</span><span class="op">)</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">plot_saved_state</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">json_file_path</span><span class="op">)</span> <span class="op">{</span>
+  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://arxiv.org/abs/1403.2805" class="external-link">jsonlite</a></span><span class="op">)</span>
+  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://sjmgarnier.github.io/viridis/" class="external-link">viridis</a></span><span class="op">)</span>
+  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span>
+  
+  <span class="va">vision_state</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/jsonlite/man/read_json.html" class="external-link">read_json</a></span><span class="op">(</span><span class="va">json_file_path</span><span class="op">)</span>
+  
+  <span class="co"># extract meaningful info</span>
+  <span class="va">value_name</span> <span class="op">&lt;-</span> <span class="va">vision_state</span><span class="op">$</span><span class="va">item_key</span>
+  <span class="va">scatter</span> <span class="op">&lt;-</span> <span class="va">vision_state</span><span class="op">$</span><span class="va">projection</span>
+  <span class="va">values</span> <span class="op">&lt;-</span> <span class="va">vision_state</span><span class="op">$</span><span class="va">values</span>
+  <span class="va">selection</span> <span class="op">&lt;-</span> <span class="va">vision_state</span><span class="op">$</span><span class="va">selected_cells</span>
+  <span class="va">x_name</span> <span class="op">&lt;-</span> <span class="va">vision_state</span><span class="op">$</span><span class="va">projection_keyX</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span>
+  <span class="va">y_name</span> <span class="op">&lt;-</span> <span class="va">vision_state</span><span class="op">$</span><span class="va">projection_keyY</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span>
+  
+  <span class="va">embedding</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>dim1<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">scatter</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="va">x</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">)</span>,
+                          dim2<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">scatter</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="va">x</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">)</span>,
+                          vals<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">values</span><span class="op">)</span><span class="op">)</span>
+  
+  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">selection</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span>
+    <span class="va">selected_cells</span> <span class="op">=</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">embedding</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">selection</span><span class="op">)</span>
+    <span class="va">g</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span>
+      <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data<span class="op">=</span><span class="va">embedding</span><span class="op">[</span><span class="op">!</span><span class="va">selected_cells</span>,<span class="op">]</span>,
+                 <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">dim1</span>, y <span class="op">=</span> <span class="va">dim2</span>, color<span class="op">=</span><span class="va">vals</span><span class="op">)</span>, 
+                 stroke <span class="op">=</span> <span class="fl">0.5</span>, shape<span class="op">=</span><span class="fl">16</span>, alpha <span class="op">=</span> <span class="fl">.5</span><span class="op">)</span> <span class="op">+</span>
+      <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data<span class="op">=</span><span class="va">embedding</span><span class="op">[</span><span class="va">selected_cells</span>,<span class="op">]</span>,
+                 <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">dim1</span>, y<span class="op">=</span><span class="va">dim2</span>, color<span class="op">=</span><span class="va">vals</span><span class="op">)</span>, size<span class="op">=</span><span class="fl">1.6</span><span class="op">)</span>
+  <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span>
+    <span class="va">g</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span>
+      <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>data<span class="op">=</span><span class="va">embedding</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">dim1</span>, y<span class="op">=</span><span class="va">dim2</span>, color<span class="op">=</span><span class="va">vals</span><span class="op">)</span><span class="op">)</span>
+  <span class="op">}</span>
+  
+  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">is.numeric</a></span><span class="op">(</span><span class="va">embedding</span><span class="op">$</span><span class="va">vals</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span>
+    <span class="va">g</span> <span class="op">&lt;-</span> <span class="va">g</span> <span class="op">+</span> <span class="fu">scale_colour_viridis</span><span class="op">(</span><span class="op">)</span>
+  <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span>
+    <span class="va">g</span> <span class="op">&lt;-</span> <span class="va">g</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_colour_discrete.html" class="external-link">scale_colour_discrete</a></span><span class="op">(</span><span class="op">)</span>
+  <span class="op">}</span>
+  
+  <span class="va">g</span> <span class="op">&lt;-</span> <span class="va">g</span> <span class="op">+</span> 
+    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>colour<span class="op">=</span><span class="va">value_name</span>, x<span class="op">=</span><span class="va">x_name</span>, y<span class="op">=</span><span class="va">y_name</span>, title<span class="op">=</span><span class="va">value_name</span><span class="op">)</span>
+  
+  <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="va">g</span><span class="op">)</span>
+<span class="op">}</span>
+
+<span class="va">saved_state_file</span> <span class="op">&lt;-</span> <span class="st">'/path/to/saved_scatter.json'</span>
+<span class="fu">plot_saved_state</span><span class="op">(</span><span class="va">saved_state_file</span><span class="op">)</span></code></pre></div>
 </div>
 </div>
   </div>
@@ -275,11 +425,15 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Matt Jones, David Detomaso, Tal Ashuach, Yanay Rosen.</p>
+  <p></p>
+<p>Developed by Matt Jones, David Detomaso, Tal Ashuach, Yanay
+Rosen.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a>
+2.0.2.</p>
 </div>
 
       </footer>
@@ -287,6 +441,8 @@
 
   
 
+
+  
 
   </body>
 </html>

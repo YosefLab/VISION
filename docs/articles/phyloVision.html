@@ -27,6 +27,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -39,7 +41,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">VISION</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.0</span>
       </span>
     </div>
 
@@ -47,7 +49,7 @@
       <ul class="nav navbar-nav">
 <li>
   <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
+    <span class="fa fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -96,7 +98,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/YosefLab/VISION/">
+  <a href="https://github.com/YosefLab/VISION/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -111,98 +113,245 @@
 
       
 
-      </header><script src="phyloVision_files/header-attrs-2.8/header-attrs.js"></script><script src="phyloVision_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
+      </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Introduction to PhyloVision and Hotspot</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/YosefLab/VISION/blob/master/vignettes/phyloVision.Rmd"><code>vignettes/phyloVision.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/YosefLab/VISION/blob/HEAD/vignettes/phyloVision.Rmd" class="external-link"><code>vignettes/phyloVision.Rmd</code></a></small>
       <div class="hidden name"><code>phyloVision.Rmd</code></div>
 
     </div>
 
     
     
-<div id="introduction" class="section level1">
-<h1 class="hasAnchor">
-<a href="#introduction" class="anchor"></a>Introduction</h1>
-<p>As of version 3.0.0, VISION now supports the analysis of scRNA-seq data with respect to a user-defined cell lineage, or phylogeny. In this case, VISION uses the relationships between cells as specified by the phylogeny, as opposed to some user-defined latent space, to conduct the autocorrelation analysis. In this vignette, we demonstrate how a user might use this variant of the VISION pipeline - which we term <code>PhyloVision</code> - to analyze a recently published dataset that simultaneously profiled the single-cell transcriptomes and lineages of mouse embryogenesis (Chan et al, Nature 2019).</p>
-<p>This tutorial begins by showing users how to create a <code>PhyloVision</code> object and performing analysis on it. Then, we demonstrate how this object can be passed into the Hotspot pipeline that will identify de-novo transcriptional gene sets that are autocorrelated on the tree (this is described more below and in the <a href="spatialHotspot.html">Spatial Hotspot vignette</a>. Finally, we show users how to launch a report for viewing.</p>
+<div class="section level2">
+<h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
+</h2>
+<p>As of version 3.0.0, VISION now supports the analysis of scRNA-seq
+data with respect to a user-defined cell lineage, or phylogeny (e.g.,
+the CRISPR/Cas9-based lineage tracing technologies described in <a href="https://www.nature.com/articles/s41586-019-1184-5" class="external-link">Chan et al,
+Nature 2019</a>). We refer to this analysis pipeline as PhyloVision.
+PhyloVision uses the relationships between cells as specified by the
+phylogeny, as opposed to the cell-cell similarities that can be inferred
+from the scRNA-seq data, to conduct the autocorrelation analysis. In
+this way, the analyses performed in PhyloVision identify gene modules
+that are heritable, or structured meaningfully on a cell lineage.</p>
+<p>While several types of trees can be used to relate cells to one
+another (e.g., those inferred via B Cell Receptor sequencing), in this
+vignette, we focus on applying PhyloVision to a recently published
+dataset using CRISPR/Cas9-based synthetic lineage tracing from <a href="https://www.science.org/doi/abs/10.1126/science.abc1944" class="external-link">Quinn et
+al, Science 2021</a>. This technology relies on Cas9 to introduce
+heritable, irreversible mutations at a defined locus in the 3’ UTR of a
+fluorescent protein (“target site”) across cell divisions, encoding
+nested relationships between cells. Utilizing conventional scRNA-seq
+platforms, this data simultaneously captures single-cell transcriptomes
+as well as target sites harboring lineage barcodes. Using this dataset,
+we demonstrate how a user might use PhyloVision.</p>
+<p>Specifically, we discuss four items: - Preparing data for input into
+<code>PhyloVision</code>, including passing external meta-data (e.g.,
+metastatic rates) to the pipeline. - Performing the
+<code>PhyloVision</code> analysis pipeline - Detecting de-novo gene
+modules with Hotspot (discussed more in the <a href="spatialHotspot.html">Spatial Hotspot Vignette</a>). - Launching an
+interactive, web-based report for viewing.</p>
 </div>
-<div id="preliminaries" class="section level1">
-<h1 class="hasAnchor">
-<a href="#preliminaries" class="anchor"></a>Preliminaries</h1>
-<p>If you have yet to install VISION, we recommend installing the package from Github to install this package. Full source code can be found at the VISION Github repository, available <a href="http://www.github.com/YosefLab/VISION">here</a>.</p>
-<pre class="r{eval=false}"><code><a href="https://devtools.r-lib.org/">require(devtools)
-install_github("YosefLab/VISION")</a></code></pre>
-<p>Once VISION and R are installed, you may load in VISION using <code><a href="https://yoseflab.github.io/VISION">library(VISION)</a></code>.</p>
-<p>To enable the Hotspot analysis below, install it directly from the git repository using the following command:</p>
+<div class="section level2">
+<h2 id="preliminaries">Preliminaries<a class="anchor" aria-label="anchor" href="#preliminaries"></a>
+</h2>
+<p>If you have yet to install VISION, we recommend installing the
+package from Github to install this package. Full source code can be
+found at the VISION Github repository, available <a href="http://www.github.com/YosefLab/VISION" class="external-link">here</a>.</p>
+<pre class="r{eval=false}"><code><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/" class="external-link">devtools</a></span><span class="op">)</span>
+<span class="fu"><a href="https://devtools.r-lib.org/reference/remote-reexports.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"YosefLab/VISION"</span><span class="op">)</span></code></pre>
+<p>You’ll also want to be sure that you have <code>ape</code>,
+<code>Matrix</code>, and <code>reticulate</code> installed:</p>
+<pre class="r{eval=false}"><code><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'ape'</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'Matrix'</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'reticulate'</span><span class="op">)</span></code></pre>
+<p>Once VISION and R are installed, you may load in VISION using
+<code><a href="https://yoseflab.github.io/VISION">library(VISION)</a></code>.</p>
+<p>To enable the Hotspot analysis below, install it directly from the
+git repository using the following command:</p>
 <pre><code>pip install git+https://github.com/yoseflab/Hotspot.git</code></pre>
-<p>If you are having trouble installing Hotspot, please refer to the documentation website <a href="https://yoseflab.github.io/Hotspot/">here</a>.</p>
+<p>If you are having trouble installing Hotspot, please refer to the
+documentation website <a href="https://yoseflab.github.io/Hotspot/" class="external-link">here</a>.</p>
 </div>
-<div id="running-phylovision" class="section level1">
-<h1 class="hasAnchor">
-<a href="#running-phylovision" class="anchor"></a>Running PhyloVision</h1>
+<div class="section level2">
+<h2 id="running-phylovision">Running PhyloVision<a class="anchor" aria-label="anchor" href="#running-phylovision"></a>
+</h2>
 <p>First, we need to load VISION, reticulate and ape.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">knitr</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/knitr/man/opts_chunk.html">opts_chunk</a></span><span class="op">$</span><span class="fu">set</span><span class="op">(</span>echo <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://yoseflab.github.io/VISION">VISION</a></span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/rstudio/reticulate">reticulate</a></span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="http://ape-package.ird.fr/">ape</a></span><span class="op">)</span></code></pre></div>
-<div id="creating-a-phylovision-object-with-a-tree" class="section level2">
-<h2 class="hasAnchor">
-<a href="#creating-a-phylovision-object-with-a-tree" class="anchor"></a>Creating a PhyloVision Object with a Tree</h2>
-<p>Vision objects now support dendrograms for visualization and analysis. To create the PhyloVision object, you need all of the same data, an expression matrix, and metadata and/or signatures, but you also include a tree object from the Ape package.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># Read the expression and meta data</span>
-<span class="va">file_path</span> <span class="op">&lt;-</span> <span class="st">"data/embryogenesis"</span> <span class="co"># Replace the path</span>
-
-<span class="va">expr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.table</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste</a></span><span class="op">(</span><span class="va">file_path</span>, <span class="st">"expr_filtered.tsv.gz"</span>, sep<span class="op">=</span><span class="st">"/"</span><span class="op">)</span>, check.names <span class="op">=</span> <span class="cn">FALSE</span>, sep <span class="op">=</span> <span class="st">"\t"</span><span class="op">)</span>
-
-<span class="va">meta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.table</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste</a></span><span class="op">(</span><span class="va">file_path</span>, <span class="st">"meta.tsv"</span>, sep<span class="op">=</span><span class="st">"/"</span><span class="op">)</span>, check.names <span class="op">=</span> <span class="cn">FALSE</span>, sep <span class="op">=</span> <span class="st">"\t"</span>, row.names <span class="op">=</span> <span class="fl">1</span>, header<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span>
-<span class="va">meta</span><span class="op">$</span><span class="va">Cell_Type</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html">as.factor</a></span><span class="op">(</span><span class="va">meta</span><span class="op">$</span><span class="va">Cell_Type</span><span class="op">)</span>
-<span class="co"># Signature file</span>
-<span class="va">sig</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste</a></span><span class="op">(</span><span class="st">"data"</span>, <span class="st">"h.all.v5.2.symbols.gmt"</span>, sep<span class="op">=</span><span class="st">"/"</span><span class="op">)</span>
-
-<span class="co"># Read the tree</span>
-<span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/ape/man/read.tree.html">read.tree</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste</a></span><span class="op">(</span><span class="va">file_path</span>, <span class="st">"embryo_tree.newick"</span>, sep<span class="op">=</span><span class="st">"/"</span><span class="op">)</span><span class="op">)</span>
-
-<span class="co"># Collapse one mutations with ape</span>
-<span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/ape/man/collapse.singles.html">collapse.singles</a></span><span class="op">(</span><span class="va">tree</span><span class="op">)</span>
-
-<span class="co"># Construct the Vision object</span>
-<span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/PhyloVision.html">PhyloVision</a></span><span class="op">(</span>tree<span class="op">=</span><span class="va">tree</span>, data<span class="op">=</span><span class="va">expr</span>, signatures<span class="op">=</span><span class="va">sig</span>, meta<span class="op">=</span><span class="va">meta</span>, num_neighbors<span class="op">=</span><span class="fl">30</span>, projection_genes<span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html">rownames</a></span><span class="op">(</span><span class="va">expr</span><span class="op">)</span><span class="op">)</span></code></pre></div>
-<p><strong>Tree</strong></p>
-<p>The <code>ape</code> phylogeny object. Singleton edges should be collapsed prior to use. Ensure that leaf names correspond to same names used in the expression matrix.</p>
-<p><strong>Expression Data</strong></p>
-<p>The provided expression data should be library-normalized. The expression data should not be log-transformed prior to loading into VISION. For more information on the input to VISION, please refer to the central <a href="VISION_vignette.html">VISION vignette</a>.</p>
-<p><strong>Signatures</strong></p>
-<p>Signatures can be provided as a list of paths to signature files (*.gmt) or Signature objects.</p>
-<p>See <a href="Signatures.html">the signature vignette</a> for more information on finding or creating gene Signatures.</p>
-<p><strong>Meta Data</strong></p>
-<p>An R data.frame with cell-level meta-data. This could be confounding variables (e.g. percentage of mitochondrial RNA, number of genes detected) or experimental covariates (e.g. genotype, donor, batch).</p>
-<p>This input is optional if Signatures are provided.</p>
-<p><strong>Other Options</strong></p>
-<p>Other options and inputs can be provided to customize how VISION runs.</p>
-</div>
-<div id="running-phylovision-analysis" class="section level2">
-<h2 class="hasAnchor">
-<a href="#running-phylovision-analysis" class="anchor"></a>Running PhyloVision analysis</h2>
-<p>Next, we can perform the normal Vision analysis using the tree as the latent space.</p>
+<code class="sourceCode R"><span class="fu">knitr</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/knitr/man/opts_chunk.html" class="external-link">opts_chunk</a></span><span class="op">$</span><span class="fu">set</span><span class="op">(</span>echo <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://yoseflab.github.io/VISION">VISION</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/rstudio/reticulate" class="external-link">reticulate</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="http://ape-package.ird.fr/" class="external-link">ape</a></span><span class="op">)</span></code></pre></div>
+<div class="section level3">
+<h3 id="creating-a-phylovision-object-with-a-tree">Creating a PhyloVision Object with a Tree<a class="anchor" aria-label="anchor" href="#creating-a-phylovision-object-with-a-tree"></a>
+</h3>
+<p>We’ll proceed by reading in the raw expression matrix, tree, and meta
+data for a single clone (CP007) of approximately 600 cells from <a href="https://www.science.org/doi/abs/10.1126/science.abc1944" class="external-link">Quinn et
+al, Science 2021</a>.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/phyloAnalyze,PhyloVision-method.html">phyloAnalyze</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span></code></pre></div>
-</div>
-<div id="running-hotspot-analysis" class="section level2">
-<h2 class="hasAnchor">
-<a href="#running-hotspot-analysis" class="anchor"></a>Running Hotspot analysis</h2>
-<p>As mentioned above, PhyloVision can take advantage of the new Hotspot functionality in VISION. Briefly, Hotspot is a tool for inferring modules of genes that are significantly autocorrelated with one another and a particular latent space (e.g., the first 30 principal components of a gene expression matrix). When combined with PhyloVision, the Hotspot functionality will use the user-defined phylogeny as the latent space.</p>
-<p>We can invoke the Hotspot analysis with the function <code>runHotspot</code> and setting <code>tree=True</code>. Upon doing so, this will identify modules of genes and add these as Signatures to the VISION object for autocorrelation evaluation. Moreover, to add interpretability to this analysis, VISION will also compute the enrichment between all the user-defined Signatures and each Hotspot module. This information will be accessible on the web-based report by selecting the “Hotspot” mode in the top-right of the web-page.</p>
-<p>The full Hotspot API is exposed for analysis as well. For more on the Hotspot API see <a href="https://yoseflab.github.io/Hotspot/index.html">here</a>. To note, while it is typically not recommended to use <code>model="normal"</code> and <code>logdata=FALSE</code> in Hotpsot, we elect to do so because the data here has been previously log-normalized. In more typical single-cell anlayses where the user is working with a library-normalized count matrix, we suggest setting <code>model="danb"</code> and <code>logdata=TRUE</code>.</p>
+<code class="sourceCode R"><span class="co"># Read in expression data</span>
+<span class="va">expression</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="st">'data/metastasis/cp007_expression.tsv.gz'</span>, sep<span class="op">=</span><span class="st">'\t'</span>,
+                         header<span class="op">=</span><span class="cn">T</span>, row.names<span class="op">=</span><span class="fl">1</span>, check.names <span class="op">=</span> <span class="cn">FALSE</span>,
+                         stringsAsFactors <span class="op">=</span> <span class="cn">F</span><span class="op">)</span>
+
+<span class="co"># Read in tree</span>
+<span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/ape/man/read.tree.html" class="external-link">read.tree</a></span><span class="op">(</span><span class="st">'data/metastasis/cp007_tree.nwk.gz'</span><span class="op">)</span>
+<span class="co"># Collapse one mutations with ape</span>
+<span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/ape/man/collapse.singles.html" class="external-link">collapse.singles</a></span><span class="op">(</span><span class="va">tree</span><span class="op">)</span>
+
+<span class="co"># Read in meta data</span>
+<span class="va">meta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="st">'data/metastasis/cp007_meta.tsv.gz'</span>, sep<span class="op">=</span><span class="st">'\t'</span>,
+                   header<span class="op">=</span><span class="cn">T</span>, row.names<span class="op">=</span><span class="fl">1</span><span class="op">)</span>
+
+<span class="co"># Signature file</span>
+<span class="va">sig</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"data"</span>, <span class="st">"h.all.v5.2.symbols.gmt"</span>, sep<span class="op">=</span><span class="st">"/"</span><span class="op">)</span></code></pre></div>
+<p>A quick inspection of the meta data indicates that we have several
+types of data associated with each of the leaves of this tree. Not only
+do we have the anatomical site from which the cell was sampled
+(<code>sampleID</code>) but also pre-computed statistics like the
+Metastatic Rate (<code>scTreeMetRate</code>). In fact, users can specify
+an arbitrary number of data items that have been precomputed. For
+example, if a user has performed fitness inference as in <a href="https://www.biorxiv.org/content/10.1101/2021.10.12.464111v1" class="external-link">Yang
+et al, bioRxiv 2021</a>, they can add these statistics as a column to
+the meta data file.</p>
+<p>In addition, a user might be interested in defining their own
+clustering methodology on the tree. A simple clustering would entail
+cutting the tree at a defined depth and grouping together cells that are
+below each internal node at the defined depth (similar to the <a href="https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/cutree" class="external-link"><code>cuttree</code></a>
+method for grouping samples together from a hierarchical
+clustering).</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/runHotspot.html">runHotspot</a></span><span class="op">(</span><span class="va">vis</span>, model<span class="op">=</span><span class="st">"normal"</span>, tree<span class="op">=</span><span class="cn">TRUE</span>, min_gene_threshold<span class="op">=</span><span class="fl">50</span>, n_neighbors <span class="op">=</span> <span class="fl">30</span>, number_top_genes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">expr</span><span class="op">)</span>, logdata<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
-<p>We have additionally exposed the full Hotspot pipeline should a user want to iterate with different parameters:</p>
+<code class="sourceCode R"><span class="va">clusterByDepth</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">tree</span>, <span class="va">depth</span> <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">{</span>
+  
+  <span class="va">clusters</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>
+  <span class="va">current_depth</span> <span class="op">=</span> <span class="fl">0</span>
+  <span class="va">current_cluster_name</span> <span class="op">&lt;-</span> <span class="fl">1</span>
+  <span class="va">root</span> <span class="op">&lt;-</span> <span class="fu">VISION</span><span class="fu">:::</span><span class="fu"><a href="../reference/find_root.html">find_root</a></span><span class="op">(</span><span class="va">tree</span><span class="op">)</span>
+  
+  <span class="va">queue</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">root</span><span class="op">)</span>
+  <span class="kw">while</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">queue</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span>
+    
+    <span class="kw">if</span> <span class="op">(</span><span class="va">current_depth</span> <span class="op">==</span> <span class="va">depth</span><span class="op">)</span> <span class="op">{</span>
+      <span class="kw">for</span> <span class="op">(</span><span class="va">node</span> <span class="kw">in</span> <span class="va">queue</span><span class="op">)</span> <span class="op">{</span>
+        <span class="va">clusters</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">current_cluster_name</span><span class="op">)</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">tree</span><span class="op">$</span><span class="va">tip.label</span><span class="op">[</span><span class="fu">VISION</span><span class="fu">:::</span><span class="fu"><a href="../reference/get_all_children.html">get_all_children</a></span><span class="op">(</span><span class="va">tree</span>, <span class="va">node</span><span class="op">)</span><span class="op">]</span>
+        <span class="va">current_cluster_name</span> <span class="op">&lt;-</span> <span class="va">current_cluster_name</span> <span class="op">+</span> <span class="fl">1</span>
+      <span class="op">}</span>
+      <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="va">clusters</span><span class="op">)</span>
+    <span class="op">}</span>
+    
+    <span class="va">current_depth</span> <span class="op">&lt;-</span> <span class="va">current_depth</span> <span class="op">+</span> <span class="fl">1</span>
+    
+    <span class="va">new_queue</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">)</span>
+    <span class="kw">for</span> <span class="op">(</span><span class="va">node</span> <span class="kw">in</span> <span class="va">queue</span><span class="op">)</span> <span class="op">{</span>
+      <span class="va">children</span> <span class="op">&lt;-</span> <span class="fu">VISION</span><span class="fu">:::</span><span class="fu"><a href="../reference/get_children.html">get_children</a></span><span class="op">(</span><span class="va">tree</span>, <span class="va">node</span><span class="op">)</span>
+      <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">children</span><span class="op">)</span> <span class="op">==</span> <span class="fl">1</span> <span class="op">&amp;&amp;</span> <span class="va">children</span> <span class="op">==</span> <span class="va">node</span><span class="op">)</span> <span class="op">{</span>
+        <span class="va">clusters</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">current_cluster_name</span><span class="op">)</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">tree</span><span class="op">$</span><span class="va">tip.label</span><span class="op">[[</span><span class="va">node</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>
+        <span class="va">current_cluster_name</span> <span class="op">&lt;-</span> <span class="va">current_cluster_name</span> <span class="op">+</span> <span class="fl">1</span>
+      <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span>
+        <span class="va">new_queue</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">new_queue</span>, <span class="va">children</span><span class="op">)</span>
+      <span class="op">}</span>
+    <span class="op">}</span>
+    <span class="va">queue</span> <span class="op">&lt;-</span> <span class="va">new_queue</span>
+  <span class="op">}</span>
+  <span class="kw"><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop</a></span><span class="op">(</span><span class="st">"Targeted depth is larger than the depth of the tree.
+       Repeat call with smaller target depth."</span><span class="op">)</span>
+<span class="op">}</span>
+
+<span class="co"># add in depth based cluster annotations</span>
+<span class="va">depth_clusters</span> <span class="op">&lt;-</span> <span class="fu">clusterByDepth</span><span class="op">(</span><span class="va">tree</span>, depth<span class="op">=</span><span class="fl">1</span><span class="op">)</span> 
+<span class="va">meta</span><span class="op">$</span><span class="va">DepthClusters</span> <span class="op">&lt;-</span> <span class="cn">NA</span>
+<span class="kw">for</span> <span class="op">(</span><span class="va">cluster</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">depth_clusters</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span>
+  <span class="va">meta</span><span class="op">[</span><span class="va">depth_clusters</span><span class="op">[[</span><span class="va">cluster</span><span class="op">]</span><span class="op">]</span>, <span class="st">'DepthClusters'</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">cluster</span>
+<span class="op">}</span></code></pre></div>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># Construct the Vision object</span>
+<span class="va">projection_genes</span> <span class="op">&lt;-</span> <span class="fu">VISION</span><span class="fu">:::</span><span class="fu"><a href="../reference/filterGenesFano.html">filterGenesFano</a></span><span class="op">(</span><span class="va">expression</span><span class="op">)</span>
+<span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/PhyloVision-class.html">PhyloVision</a></span><span class="op">(</span>tree<span class="op">=</span><span class="va">tree</span>, data<span class="op">=</span><span class="va">expression</span>, signatures<span class="op">=</span><span class="va">sig</span>,
+                   meta<span class="op">=</span><span class="va">meta</span>, num_neighbors<span class="op">=</span><span class="fl">30</span>, projection_genes<span class="op">=</span> <span class="va">projection_genes</span><span class="op">)</span></code></pre></div>
+<div class="section level4">
+<h4 id="more-details-on-input">More details on input<a class="anchor" aria-label="anchor" href="#more-details-on-input"></a>
+</h4>
+<p><strong>Tree</strong></p>
+<p>The <code>ape</code> phylogeny object. Singleton edges should be
+collapsed prior to use. Ensure that leaf names correspond to the same
+names used in the expression matrix.</p>
+<p><strong>Expression Data</strong></p>
+<p>The provided expression data should be library-normalized. The
+expression data should not be log-transformed prior to loading into
+VISION. For more information on the input to VISION, please refer to the
+central <a href="VISION_vignette.html">VISION vignette</a>.</p>
+<p><strong>Signatures</strong></p>
+<p>Signatures can be provided as a list of paths to signature files
+(*.gmt) or Signature objects.</p>
+<p>See <a href="Signatures.html">the signature vignette</a> for more
+information on finding or creating gene Signatures.</p>
+<p><strong>Meta Data</strong></p>
+<p>An R data.frame with cell-level meta-data. This could be confounding
+variables (e.g. percentage of mitochondrial RNA, number of genes
+detected) or experimental covariates (e.g. genotype, donor, batch).</p>
+<p>This input is optional if Signatures are provided.</p>
+<p><strong>Projection Genes</strong> These genes are used to infer
+projections for clustering in the transcriptional space and 2D
+visualizations.</p>
+<p><strong>Other Options</strong></p>
+<p>Other options and inputs can be provided to customize how VISION
+runs.</p>
+</div>
+</div>
+<div class="section level3">
+<h3 id="running-phylovision-analysis">Running PhyloVision analysis<a class="anchor" aria-label="anchor" href="#running-phylovision-analysis"></a>
+</h3>
+<p>Next, we can perform the normal Vision analysis using the tree as the
+latent space. In addition to the typical VISION pipeline, phyloAnlayze
+will compute plasticity scores for each categorical meta data. For
+example, in this case, a plasticity index on the <code>sampleID</code>
+(i.e., which anatomical site a cell was harvested from) would correspond
+to the scMetRate discussed in the original study.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/phyloAnalyze-PhyloVision-method.html">phyloAnalyze</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span></code></pre></div>
+<p>Note: <code>phyloAnalyze</code> will add new entries to the
+<code>object@metaData</code> slot that can be viewed on the interactive
+report and evaluated with autocorrelation statistics. Specifically, a
+default tree-based clustering will be added (named
+<code>VISION_Cluster_Tree</code>) and numerical plasticity scores will
+be computed as meta-data for each of the categorical data columns in the
+user-specified <code>metaData</code>.</p>
+</div>
+<div class="section level3">
+<h3 id="running-hotspot-analysis">Running Hotspot analysis<a class="anchor" aria-label="anchor" href="#running-hotspot-analysis"></a>
+</h3>
+<p>As mentioned above, PhyloVision can take advantage of the new Hotspot
+functionality in VISION. Briefly, Hotspot is a tool for inferring
+modules of genes that are significantly autocorrelated with one another
+and a particular latent space (e.g., the first 30 principal components
+of a gene expression matrix). When combined with PhyloVision, the
+Hotspot functionality will use the user-defined phylogeny as the latent
+space.</p>
+<p>We can invoke the Hotspot analysis with the function
+<code>runHotspot</code> and setting <code>tree=True</code>. Upon doing
+so, this will identify modules of genes and add these as Signatures to
+the VISION object for autocorrelation evaluation. Moreover, to add
+interpretability to this analysis, VISION will also compute the
+enrichment between all the user-defined Signatures and each Hotspot
+module. This information will be accessible on the web-based report by
+selecting the “Hotspot” mode in the top-right of the web-page.</p>
+<p>The full Hotspot API is exposed for analysis as well. For more on the
+Hotspot API see <a href="https://yoseflab.github.io/Hotspot/index.html" class="external-link">here</a>. To note,
+while it is typically not recommended to use <code>model="normal"</code>
+and <code>logdata=FALSE</code> in Hotpsot, we elect to do so because the
+data here has been previously log-normalized. In more typical
+single-cell anlayses where the user is working with a library-normalized
+count matrix, we suggest setting <code>model="danb"</code> and
+<code>logdata=TRUE</code>.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/runHotspot.html">runHotspot</a></span><span class="op">(</span><span class="va">vis</span>, model<span class="op">=</span><span class="st">"danb"</span>, tree<span class="op">=</span><span class="cn">TRUE</span>, min_gene_threshold<span class="op">=</span><span class="fl">50</span>, n_neighbors <span class="op">=</span> <span class="fl">30</span>, number_top_genes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">expression</span><span class="op">)</span>, logdata<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
+<p>We have additionally exposed the full Hotspot pipeline should a user
+want to iterate with different parameters:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># Init Hotspot</span>
 <span class="va">hs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/hsInit.html">hsInit</a></span><span class="op">(</span><span class="va">vis</span>, model <span class="op">=</span> <span class="st">"normal"</span>, tree<span class="op">=</span><span class="cn">TRUE</span>, logdata<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span>
 <span class="co"># Init Hotspot KNN</span>
@@ -215,31 +364,35 @@ install_github("YosefLab/VISION")</a></code></pre>
 <span class="va">hs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/hsCalculateModuleScores.html">hsCalculateModuleScores</a></span><span class="op">(</span><span class="va">hs</span><span class="op">)</span>
 <span class="co"># Cluster Hotspot modules and perform Vision based analysis on HS Modules and </span>
 <span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/analyzeHotspotObjectVision.html">analyzeHotspotObjectVision</a></span><span class="op">(</span><span class="va">vis</span>, <span class="va">hs</span>, tree<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
-<p>We can also access further Hotspot functionality using Reticulate and Python.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<p>We can also access further Hotspot functionality using Reticulate and
+Python.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">hs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadHotspotObject.html">loadHotspotObject</a></span><span class="op">(</span>bytes<span class="op">=</span><span class="va">vis</span><span class="op">@</span><span class="va">Hotspot</span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/rstudio/reticulate">reticulate</a></span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/pkg/reticulate/man/use_python.html">use_python</a></span><span class="op">(</span><span class="st">'/usr/bin/python3'</span><span class="op">)</span></code></pre></div>
-<div class="sourceCode" id="cb9"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb9-2"><a href="#cb9-2"></a><span class="im">import</span> hotspot</span>
-<span id="cb9-3"><a href="#cb9-3"></a>hs.plot_local_correlations()</span>
-<span id="cb9-4"><a href="#cb9-4"></a>plt.show()</span></code></pre></div>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/rstudio/reticulate" class="external-link">reticulate</a></span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/pkg/reticulate/man/use_python.html" class="external-link">use_python</a></span><span class="op">(</span><span class="st">'/usr/bin/python3'</span><span class="op">)</span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> hotspot</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>hs.plot_local_correlations()</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div>
 <p>Note: the heatmap can also be visualized like so:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">hs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadHotspotObject.html">loadHotspotObject</a></span><span class="op">(</span>bytes<span class="op">=</span><span class="va">vis</span><span class="op">@</span><span class="va">Hotspot</span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/EmilHvitfeldt/paletteer">paletteer</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/EmilHvitfeldt/paletteer" class="external-link">paletteer</a></span><span class="op">)</span>
 <span class="fu"><a href="../reference/draw_hotspot_heatmap.html">draw_hotspot_heatmap</a></span><span class="op">(</span><span class="va">hs</span><span class="op">)</span></code></pre></div>
 </div>
-<div id="viewing-results" class="section level2">
-<h2 class="hasAnchor">
-<a href="#viewing-results" class="anchor"></a>Viewing Results</h2>
-<p>Finally, we can launch the Vision browser. If you are local, the following will work:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/viewResults,Vision-method.html">viewResults</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span></code></pre></div>
-<p>Else, if you would like to launch from a server, you can use the following settings:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/viewResults,Vision-method.html">viewResults</a></span><span class="op">(</span><span class="va">vis</span>, host<span class="op">=</span><span class="st">'0.0.0.0'</span>, port<span class="op">=</span><span class="fl">8100</span>, browser<span class="op">=</span><span class="cn">F</span><span class="op">)</span></code></pre></div>
-<p>Now, the report will be visible from port <code>8100</code> from your server (e.g., <a href="http://server-name:8100/Results.html" class="uri">http://server-name:8100/Results.html</a>)</p>
+<div class="section level3">
+<h3 id="viewing-results">Viewing Results<a class="anchor" aria-label="anchor" href="#viewing-results"></a>
+</h3>
+<p>Finally, we can launch the Vision browser. If you are local, the
+following will work:</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/viewResults.html">viewResults</a></span><span class="op">(</span><span class="va">vis</span><span class="op">)</span></code></pre></div>
+<p>Else, if you would like to launch from a server, you can use the
+following settings:</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/viewResults.html">viewResults</a></span><span class="op">(</span><span class="va">vis</span>, host<span class="op">=</span><span class="st">'0.0.0.0'</span>, port<span class="op">=</span><span class="fl">8100</span>, browser<span class="op">=</span><span class="cn">F</span><span class="op">)</span></code></pre></div>
+<p>Now, the report will be visible from port <code>8100</code> from your
+server (e.g., <a href="http://server-name:8100/Results.html" class="external-link uri">http://server-name:8100/Results.html</a>)</p>
 </div>
 </div>
   </div>
@@ -255,11 +408,15 @@ install_github("YosefLab/VISION")</a></code></pre>
 
 
       <footer><div class="copyright">
-  <p>Developed by Matt Jones, David Detomaso, Tal Ashuach, Yanay Rosen.</p>
+  <p></p>
+<p>Developed by Matt Jones, David Detomaso, Tal Ashuach, Yanay
+Rosen.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a>
+2.0.2.</p>
 </div>
 
       </footer>
@@ -267,6 +424,8 @@ install_github("YosefLab/VISION")</a></code></pre>
 
   
 
+
+  
 
   </body>
 </html>
