@@ -596,6 +596,8 @@ setMethod("Vision", signature(data = "Seurat"),
                        call. = FALSE)
               }
 
+              library(Seurat)
+              
               obj <- data
               args <- list(...)
 
