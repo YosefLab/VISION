@@ -35,7 +35,8 @@ Imports:
 	vegan,
 	ape,
 	reticulate,
-	wordspace
+	wordspace,
+	phytools
 LinkingTo: Rcpp
 License: MIT + file LICENSE
 Encoding: UTF-8
