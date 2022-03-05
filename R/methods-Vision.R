@@ -595,8 +595,6 @@ setMethod("Vision", signature(data = "Seurat"),
                   stop("Package \"Seurat\" needed to load this data object.  Please install it.",
                        call. = FALSE)
               }
-
-              library(Seurat)
               
               obj <- data
               args <- list(...)
@@ -623,13 +621,13 @@ setMethod("Vision", signature(data = "Seurat"),
               }
 
               # Get latent space
-              if (is.null(dimRed) && "pca" %in% Reductions(obj)) {
+              if (is.null(dimRed) && "pca" %in% Seurat:Reductions(obj)) {
                   dimRed <- "pca"
               }
 
               if (!("latentSpace" %in% names(args))){
 
-                  latentSpace <- Embeddings(obj,
+                  latentSpace <- Seurat::Embeddings(obj,
                       reduction = dimRed
                   )
 
@@ -655,7 +653,7 @@ setMethod("Vision", signature(data = "Seurat"),
 
                   message(sprintf("Adding Visualization: %s", name))
 
-                  coordinates <- Embeddings(obj,
+                  coordinates <- Seurat:Embeddings(obj,
                       reduction = method)
 
                   vis <- addProjection(vis,
