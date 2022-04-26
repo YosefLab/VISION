@@ -40,7 +40,7 @@ Once VISION and R are installed, you may load in VISION using `library(VISION)`.
 To enable the Hotspot analysis below, install it directly from the git repository using the following command:
 
 ```
-pip install git+https://github.com/yoseflab/Hotspot.git
+pip install hotspotsc==0.9.1
 ```
 If you are having trouble installing Hotspot, please refer to the documentation website [here](https://yoseflab.github.io/Hotspot/).
 
