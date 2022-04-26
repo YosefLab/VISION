@@ -93,20 +93,20 @@ hsInit <- function(object, model="normal", tree=F, num_umi=NULL, logdata=FALSE) 
     nwk <- write.tree(object@tree)
     pyTree <- ete3$Tree(nwk, format = 1)
     if (is.null(num_umi)) {
-      hs <- hotspot$Hotspot(exprData, tree=pyTree, model=model)
+      hs <- hotspot$Hotspot$legacy_init(exprData, tree=pyTree, model=model)
     } else {
       py$umi_df <- r_to_py(num_umi)
       py_run_string("umi_counts = umi_df.iloc[:, 0]")
-      hs <- hotspot$Hotspot(exprData, tree=pyTree, model=model, umi_counts=py$umi_counts)
+      hs <- hotspot$Hotspot$legacy_init(exprData, tree=pyTree, model=model, umi_counts=py$umi_counts)
     }
     
   } else {
     if (is.null(num_umi)) {
-      hs <- hotspot$Hotspot(exprData, latent=as.data.frame(object@LatentSpace), model=model)
+      hs <- hotspot$Hotspot$legacy_init(exprData, latent=as.data.frame(object@LatentSpace), model=model)
     } else {
       py$umi_df <- r_to_py(num_umi)
       py_run_string("umi_counts = umi_df.iloc[:, 0]")
-      hs <- hotspot$Hotspot(exprData, latent=as.data.frame(object@LatentSpace), model=model, umi_counts=py$umi_counts)
+      hs <- hotspot$Hotspot$legacy_init(exprData, latent=as.data.frame(object@LatentSpace), model=model, umi_counts=py$umi_counts)
     }
   }
   
