@@ -30,7 +30,9 @@ require(devtools)
 install_github("YosefLab/VISION")
 ```
 
-Once VISION and R are installed, you may load in VISION using `library(VISION)`.
+If you encounter errors in the installation, it is likely because a dependency is not installed correctly. Pay special attention to the error message, and in particular whether or not it notifies you that specific dependencies are not found.
+
+After a successful installation, you can proceed by loading VISION using `library(VISION)`.
 
 # Using VISION
 
@@ -174,7 +176,16 @@ vis <- addProjection(vis, "UMAP", projection)
 ```
 
 ## Hotspot analysis
-As of version 3.0.0, we have enabled users to perform de-novo gene module identification [Hotspot](https://www.cell.com/cell-systems/fulltext/S2405-4712(21)00114-9) (DeTomaso and Yosef, _Cell Systems_ 2021) from within VISION. Users can consult the [Spatial Hotspot Vignette](spatialHotspot.html) for instructions for adding this analysis to a user report.
+As of version 3.0.0, we have enabled users to perform de-novo gene module identification [Hotspot](https://www.cell.com/cell-systems/fulltext/S2405-4712(21)00114-9) (DeTomaso and Yosef, _Cell Systems_ 2021) from within VISION.
+
+As described in the original Hotspot vignette, we'll use the `danb` model for standard single-cell RNA-seq datasets. While this works in general, pay special attention to characteristics of your data (e.g., in spatial examples where capture is low, we recommend using the `bernoulli` model).
+```{r hotspot, eval=F}
+vis@params$latentSpace$projectionGenes <- rownames(vis@exprData) # Use all genes.
+vis <- runHotspot(vis, model="danb", num_umi=meta["num_umi"], logdata=FALSE)
+```
+
+For more information about the analysis pipeline & Hotspot API, you can refer the documentation website [here](https://yoseflab.github.io/Hotspot/index.html) and [the PhyloVision vignette](phyloVision.html).
+
 
 ## Reproducing a plot from an interactive report
 
