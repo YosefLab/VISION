@@ -135,8 +135,12 @@ found at the VISION Github repository, available <a href="http://www.github.com/
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/" class="external-link">devtools</a></span><span class="op">)</span>
 <span class="fu"><a href="https://devtools.r-lib.org/reference/remote-reexports.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"YosefLab/VISION"</span><span class="op">)</span></code></pre></div>
-<p>Once VISION and R are installed, you may load in VISION using
-<code><a href="https://yoseflab.github.io/VISION">library(VISION)</a></code>.</p>
+<p>If you encounter errors in the installation, it is likely because a
+dependency is not installed correctly. Pay special attention to the
+error message, and in particular whether or not it notifies you that
+specific dependencies are not found.</p>
+<p>After a successful installation, you can proceed by loading VISION
+using <code><a href="https://yoseflab.github.io/VISION">library(VISION)</a></code>.</p>
 </div>
 <div class="section level2">
 <h2 id="using-vision">Using VISION<a class="anchor" aria-label="anchor" href="#using-vision"></a>
@@ -320,10 +324,17 @@ can be used to add this view of the data to the output report.</p>
 </h3>
 <p>As of version 3.0.0, we have enabled users to perform de-novo gene
 module identification <a href="https://www.cell.com/cell-systems/fulltext/S2405-4712(21)00114-9" class="external-link">Hotspot</a>
-(DeTomaso and Yosef, <em>Cell Systems</em> 2021) from within VISION.
-Users can consult the <a href="spatialHotspot.html">Spatial Hotspot
-Vignette</a> for instructions for adding this analysis to a user
-report.</p>
+(DeTomaso and Yosef, <em>Cell Systems</em> 2021) from within VISION.</p>
+<p>As described in the original Hotspot vignette, we’ll use the
+<code>danb</code> model for standard single-cell RNA-seq datasets. While
+this works in general, pay special attention to characteristics of your
+data (e.g., in spatial examples where capture is low, we recommend using
+the <code>bernoulli</code> model).</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">vis</span><span class="op">@</span><span class="va">params</span><span class="op">$</span><span class="va">latentSpace</span><span class="op">$</span><span class="va">projectionGenes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">vis</span><span class="op">@</span><span class="va">exprData</span><span class="op">)</span> <span class="co"># Use all genes.</span>
+<span class="va">vis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/runHotspot.html">runHotspot</a></span><span class="op">(</span><span class="va">vis</span>, model<span class="op">=</span><span class="st">"danb"</span>, num_umi<span class="op">=</span><span class="va">meta</span><span class="op">[</span><span class="st">"num_umi"</span><span class="op">]</span>, logdata<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
+<p>For more information about the analysis pipeline &amp; Hotspot API,
+you can refer the documentation website <a href="https://yoseflab.github.io/Hotspot/index.html" class="external-link">here</a> and <a href="phyloVision.html">the PhyloVision vignette</a>.</p>
 </div>
 <div class="section level3">
 <h3 id="reproducing-a-plot-from-an-interactive-report">Reproducing a plot from an interactive report<a class="anchor" aria-label="anchor" href="#reproducing-a-plot-from-an-interactive-report"></a>
@@ -339,7 +350,7 @@ cache; (2) a cache for selections; and (3) a json file containing the
 current projection, values being plotted, and selected cells. If you
 would like to view the state on the UI, you may read in the first two
 objects into VISION and launch the report again:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">vis_new</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/load_de_cache.html">load_de_cache</a></span><span class="op">(</span><span class="va">vis</span>, <span class="st">"de_cache_download_path"</span><span class="op">)</span>
 <span class="va">vis_new</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/load_selections.html">load_selections</a></span><span class="op">(</span><span class="va">vis_new</span>, <span class="st">"selections_download_path"</span><span class="op">)</span>
 <span class="fu"><a href="../reference/viewResults.html">viewResults</a></span><span class="op">(</span><span class="va">vis_new</span>, <span class="va">...</span><span class="op">)</span></code></pre></div>
@@ -359,11 +370,11 @@ useful for reproducing plots:</p>
 <p>Below is an example function that will reproduce the visualization in
 ggplot2. Be sure to have <code>ggplot2</code>, <code>jsonlite</code>,
 and <code>viridis</code> (for coloring) installed:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'ggplot2'</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'viridis'</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'jsonlit'</span><span class="op">)</span></code></pre></div>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'jsonlite'</span><span class="op">)</span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">plot_saved_state</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">json_file_path</span><span class="op">)</span> <span class="op">{</span>
   <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://arxiv.org/abs/1403.2805" class="external-link">jsonlite</a></span><span class="op">)</span>
   <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://sjmgarnier.github.io/viridis/" class="external-link">viridis</a></span><span class="op">)</span>

@@ -232,9 +232,6 @@
     <loc>https://yoseflab.github.io/VISION/reference/colVarsSp.html</loc>
   </url>
   <url>
-    <loc>https://yoseflab.github.io/VISION/reference/computeFitchHartiganParsimony.html</loc>
-  </url>
-  <url>
     <loc>https://yoseflab.github.io/VISION/reference/computeFitchHartiganParsimonyPerNode.html</loc>
   </url>
   <url>
@@ -272,9 +269,6 @@
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION/reference/coordinatesToJSON.html</loc>
-  </url>
-  <url>
-    <loc>https://yoseflab.github.io/VISION/reference/countTransitions.html</loc>
   </url>
   <url>
     <loc>https://yoseflab.github.io/VISION/reference/createFalseNegativeMap.html</loc>

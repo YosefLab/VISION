@@ -13,7 +13,7 @@ vignette: >
 knitr::opts_chunk$set(fig.align="center", cache=FALSE,error=FALSE,
                       fig.width=6,fig.height=6,autodep=TRUE,
                       out.width="600px", out.height="600px",
-                      results="markup", echo=TRUE, eval=TRUE)
+                      results="markup", echo=TRUE, eval=FALSE)
 
 options(getClass.msg=FALSE)
 
