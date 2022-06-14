@@ -212,7 +212,7 @@ Below is an example function that will reproduce the visualization in ggplot2. B
 ```{r, eval=F}
 install.packages('ggplot2')
 install.packages('viridis')
-install.packages('jsonlit')
+install.packages('jsonlite')
 ```
 
 ```{r, collapse=T, message=F, results=F, eval=F}
