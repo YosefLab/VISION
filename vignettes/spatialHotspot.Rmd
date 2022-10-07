@@ -27,7 +27,7 @@ Once VISION and R are installed, you may load in VISION using `library(VISION)`.
 You'll also need to install Hotspot, which can be installed directly from the git repository using the following command:
 
 ```
-pip install git+https://github.com/yoseflab/Hotspot.git
+pip install hotspotsc==0.9.1
 ```
 
 # Using VISION
