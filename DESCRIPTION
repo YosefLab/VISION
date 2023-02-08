@@ -1,6 +1,6 @@
 Package: VISION
 Title: Functional interpretation of single cell RNA-seq latent manifolds
-Version: 3.0.0
+Version: 3.0.1
 Authors@R: c(person("Matt", "Jones", email = "mattjones315@gmail.com", role = c("aut", "cre")),
 			 person("David", "Detomaso", email = "david.detomaso@berkeley.edu", role = c("aut", "cre")),
 			 person("Tal", "Ashuach", email = "tal_ashuach@berkeley.edu", role = c("aut")),
@@ -43,7 +43,7 @@ Encoding: UTF-8
 LazyData: true
 URL: https://yoseflab.github.io/VISION, https://github.com/yoseflab/VISION
 BugReports: https://github.com/YosefLab/VISION/issues
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.3
 Suggests:
 	Biobase,
 	BiocStyle,

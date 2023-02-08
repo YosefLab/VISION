@@ -97,6 +97,8 @@ innerEvalSignatureBatchNorm <- function(normData, sigs) {
     C <- (SRsE + SRsRo + SCo) %*% Cs
 
     sigScores <- as.matrix(C)
+    rownames(sigScores) <- rownames(sigSparseMatrix)
+    colnames(sigScores) <- colnames(normData@data)
 
     denom <- rowSums(abs(sigSparseMatrix)) # denom is vector of length N_sigs
 

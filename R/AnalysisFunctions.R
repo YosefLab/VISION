@@ -1118,7 +1118,7 @@ clusterSigScores <- function(object, variables = "All") {
 #' of a particular categorical trait with respect to a tree (as introduced
 #' with the metastatic score in Quinn, Jones et al Science 2021).
 #' 
-#' @importFrom phanghorn parsimony
+#' @importFrom phangorn parsimony
 #' @param object the PhyloVision object
 #' @return the object with new continuous covariates populated corresponding to the plasticities
 #' @export 
