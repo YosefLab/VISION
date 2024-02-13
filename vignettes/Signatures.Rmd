@@ -90,7 +90,7 @@ BCELL_VS_LUPUS_BCELL_minus        GSE10325   VAMP5   WSB2     CCR2   ...
 
 For each signature an overall measure of expression is evaluated for each cell as the *Signature Score*. This is computed as:
 
-$$ s_j = \frac{1}{|G_{pos}| + |G_{neg}} \Bigg(\sum_{g \in G_{pos}}{X_{gj}} - \sum_{g \in G_{neg}}{X_{gj}}\Bigg) $$
+$$ s_j = \frac{1}{|G_{pos}| + |G_{neg}|} \Bigg(\sum_{g \in G_{pos}}{X_{gj}} - \sum_{g \in G_{neg}}{X_{gj}}\Bigg) $$
 
 Where:
 
