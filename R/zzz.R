@@ -12,7 +12,6 @@
 #' @import Rcpp
 #' @importFrom Rcpp evalCpp sourceCpp
 #' @import methods
-#' @import loe
 #' @import Matrix
 #' @import ape
 #' @import reticulate
